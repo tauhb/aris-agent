@@ -20,7 +20,7 @@ const xml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 
 /** Nội dung LaunchAgent: chạy dsh profile aris, chạy lại khi văng (cách nhau ít nhất 10 giây). */
 export function plist({ node, script, home, port, logFile, path }) {
-  const args = [node, script, '--profile', 'aris', 'web', '--no-open', '--port', String(port)]
+  const args = [node, script, '--profile', 'aris', '--no-open', '--port', String(port)]
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">

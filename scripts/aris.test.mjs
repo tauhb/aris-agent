@@ -25,7 +25,7 @@ describe('lệnh aris', () => {
     })
     expect(xml).toContain(`<key>Label</key><string>${LABEL}</string>`)
     expect(xml).toContain(
-      '<string>--profile</string>\n    <string>aris</string>\n    <string>web</string>\n    <string>--no-open</string>',
+      '<string>--profile</string>\n    <string>aris</string>\n    <string>--no-open</string>',
     )
     expect(xml).toContain('<key>KeepAlive</key><true/>')
     expect(xml).toContain('<key>ARIS_DAEMON</key><string>1</string>')
