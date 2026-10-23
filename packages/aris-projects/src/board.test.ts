@@ -59,3 +59,41 @@ describe('bảng việc dự án', () => {
     expect(b.find((c) => c.id === 'task-1')!.column).toBe('ready')
   })
 })
+
+describe('việc lớn trên bảng', () => {
+  it('việc lớn đứng đầu, cột theo trạng thái; vấp vẫn ở Đang làm kèm cờ', () => {
+    const job = (id: string, status: 'running' | 'done' | 'failed', session: string) => ({
+      id,
+      title: `Việc ${id}`,
+      departmentName: 'Tăng trưởng',
+      lead: 'b-tho',
+      session,
+      status,
+      progress: { done: 1, total: 3 },
+    })
+    const b = buildBoard({
+      team: { tasks: new Map(), members: new Map() },
+      drafts: [],
+      botOfHandle: () => undefined,
+      sessionState: (s) => (s === 'wait' ? 'waiting' : 'idle'),
+      jobs: [
+        job('job-a', 'running', 'x'),
+        job('job-b', 'running', 'wait'),
+        job('job-c', 'done', 'y'),
+        job('job-d', 'failed', 'z'),
+      ],
+    })
+    expect(b.map((c) => [c.id, c.column, c.failed ?? false])).toEqual([
+      ['job-a', 'doing', false],
+      ['job-b', 'waiting', false],
+      ['job-c', 'done', false],
+      ['job-d', 'doing', true],
+    ])
+    expect(b[0]).toMatchObject({
+      kind: 'job',
+      department: 'Tăng trưởng',
+      progress: { done: 1, total: 3 },
+      bot: 'b-tho',
+    })
+  })
+})

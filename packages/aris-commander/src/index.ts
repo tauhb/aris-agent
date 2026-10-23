@@ -7,7 +7,9 @@
  * - Hướng dẫn giao việc: ngữ cảnh động chỉ nạp ở phiên của Commander.
  * @module @aris/commander
  */
+import { randomUUID } from 'node:crypto'
 import type { ArisBots } from '@aris/bots'
+import { foldTeam } from '@aris/projects'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-client-connection'
@@ -16,7 +18,8 @@ import { appendPluginRecord } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-storage-domain'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { commanderDomain, type DispatchRecord, type Table } from './domain.js'
+import { commanderDomain, type DispatchRecord, type JobRecord, type Table } from './domain.js'
+import { findDepartment, jobBrief, jobContext, jobReport, textOf, type MemberLike } from './jobs.js'
 import {
   dispatch,
   DispatchError,
@@ -29,6 +32,7 @@ import {
 } from './dispatch.js'
 
 export * from './dispatch.js'
+export * from './jobs.js'
 
 export const name = 'aris-commander'
 export const inject = ['tools', 'systemPrompt', 'storageDomain']
@@ -53,10 +57,30 @@ Bạn chỉ huy đội bot (đội hình ở <aris-bot>). Cách làm việc:
 - Bot đã làm việc trong cuộc này thì giao tiếp cho chính bot đó (nó nhớ việc trước).
 - Việc lặt vặt không cần chuyên môn (đọc một tệp lớn, tra cứu nhỏ): dùng subagent (trợ lý ẩn danh) thay vì giao bot.
 - Việc nhiều bước có thứ tự: chia thành thẻ bằng tao_the (thẻ nào chờ thẻ nào), rồi giao từng thẻ sẵn sàng bằng giao_viec với tham số the.
+- Việc lớn đúng chuyên môn một phòng ban (nhiều phần, cần cả phòng): giao cả phòng bằng giao_phong; trưởng nhóm tự chia cho thành viên phòng, báo cáo của phòng về đây thành tin nhắn sau, không cần đợi.
 </aris-commander>`
 
 interface AgentLike {
   session: { id: string }
+}
+
+/** Tối đa việc lớn của phòng ban chạy cùng lúc. */
+export const MAX_JOBS = 3
+
+/** Phần bộ điều khiển phiên của dsh dùng cho việc lớn. */
+interface SessionPort {
+  create(req: { workspaceId?: string }): Promise<{ sessionId: string }>
+  prompt(
+    req: { requestId: string; sessionId: string; mode: 'queue'; content: { type: 'text'; text: string }[] },
+    signal: AbortSignal,
+  ): Promise<unknown>
+}
+
+interface SessionQueryPort {
+  observeSession(
+    id: string,
+    o: { projectionMode: 'none' },
+  ): Promise<{ events: readonly unknown[]; [Symbol.dispose](): void }>
 }
 
 /** Phần Team dùng để đánh dấu xong thẻ của bot. */
@@ -88,13 +112,41 @@ export async function apply(ctx: Context): Promise<void> {
   const isCommander = (sessionId: string | undefined) =>
     (ctx.get('arisBots') as ArisBots | undefined)?.botOf(sessionId).kind !== 'member'
 
+  // Việc lớn của phòng ban: phiên của trưởng nhóm đang nhận việc được lập đội, chỉ trong phòng.
+  const jobs = domain.table('jobs') as unknown as Table<JobRecord>
+  const allJobs = () => [...jobs.entries()].map(([, j]) => j)
+  const jobOf = (sessionId: string | undefined) =>
+    sessionId ? allJobs().find((j) => j.session === sessionId && j.status === 'running') : undefined
+  const departmentName = (id: string) =>
+    (ctx.get('arisBots') as ArisBots | undefined)?.store.departments().find((d) => d.id === id)?.name ?? id
+  const membersOf = (department: string, except?: string): MemberLike[] =>
+    ((ctx.get('arisBots') as ArisBots | undefined)?.store.list() ?? []).filter(
+      (b) => b.kind === 'member' && b.department === department && b.id !== except,
+    )
+  const leadScope = (sessionId: string) => {
+    const job = jobOf(sessionId)
+    return job
+      ? {
+          department: departmentName(job.department),
+          members: new Set(membersOf(job.department, job.lead).map((b) => b.id)),
+        }
+      : undefined
+  }
+
   // Hướng dẫn giao việc chỉ ở phiên của Commander.
   ctx.effect(
     () =>
       ctx.systemPrompt.context({
         name: 'aris:commander',
         order: CONTEXT_ORDER,
-        text: (c) => (isCommander(c?.agent?.session.id) ? GUIDE : ''),
+        text: (c) => {
+          const id = c?.agent?.session.id
+          if (isCommander(id)) return GUIDE
+          const job = jobOf(id)
+          return job
+            ? jobContext(job, departmentName(job.department), membersOf(job.department, job.lead))
+            : ''
+        },
         interpolate: false,
       }),
     'aris-commander: guide',
@@ -104,11 +156,12 @@ export async function apply(ctx: Context): Promise<void> {
   ctx.on(
     'tools/pre-execute',
     async (exec, next) => {
-      if (exec.name === 'spawn_teammate' && !isCommander(exec.agent?.session.id))
+      const sid = exec.agent?.session.id
+      if (exec.name === 'spawn_teammate' && !isCommander(sid) && !jobOf(sid))
         return {
           kind: 'deny',
           reason:
-            'Chỉ Commander được lập đội và giao việc. Cần đồng đội giúp thì nhắn họ bằng send_message, hoặc báo Commander.',
+            'Chỉ Commander, hoặc trưởng nhóm đang nhận việc lớn của phòng, được lập đội và giao việc. Cần đồng đội giúp thì nhắn họ bằng send_message, hoặc báo Commander.',
         }
       return next()
     },
@@ -169,6 +222,7 @@ export async function apply(ctx: Context): Promise<void> {
               byHandle: (h) => b.store.byHandle(h),
               busyBots: () => b.live.busyBots('aris'),
               cards: (ctx.get('arisProjects') as { cards?: DraftCards } | undefined)?.cards,
+              lead: isCommander(agent.session.id) ? undefined : leadScope(agent.session.id),
               record(entry) {
                 b.live.assigned(entry.bot, entry.title, entry.member)
                 const rest: Omit<DispatchEntry, 'sessionId'> & { sessionId?: string } = { ...entry }
@@ -225,7 +279,8 @@ export async function apply(ctx: Context): Promise<void> {
       output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
       async execute(args, exec) {
         const agent = exec.agent as unknown as AgentLike | undefined
-        if (!agent || !isCommander(agent.session.id)) return 'Chỉ Commander được chia việc thành thẻ.'
+        if (!agent || (!isCommander(agent.session.id) && !jobOf(agent.session.id)))
+          return 'Chỉ Commander, hoặc trưởng nhóm đang nhận việc lớn của phòng, được chia việc thành thẻ.'
         const list = (args.the ?? []) as { tieu_de: string; noi_dung?: string; sau?: string[] }[]
         try {
           const made = await planCards(
@@ -270,13 +325,224 @@ export async function apply(ctx: Context): Promise<void> {
       .finally(() => finishing.delete(session.id))
   })
 
+  // Gửi một tin vào phiên (đánh thức bot của phiên): lời giao cho trưởng nhóm, báo cáo về Commander.
+  const prompt = async (sessionId: string, text: string) => {
+    const sc = ctx.get('sessionController') as SessionPort | undefined
+    if (!sc) throw new DispatchError('Chưa có bộ điều khiển phiên của dsh.')
+    await sc.prompt(
+      { requestId: randomUUID(), sessionId, mode: 'queue', content: [{ type: 'text', text }] },
+      AbortSignal.timeout(30_000),
+    )
+  }
+
+  ctx.tools.register(
+    defineTool({
+      name: 'giao_phong',
+      description:
+        'Chỉ Commander: giao một việc lớn cho cả phòng ban. Trưởng nhóm của phòng nhận việc ở một phiên riêng, tự chia cho thành viên phòng, rồi nộp báo cáo về đây thành tin nhắn (không cần đợi).',
+      parameters: {
+        phong: { type: 'string', required: true, description: 'Tên hoặc mã phòng ban, ví dụ Tăng trưởng.' },
+        tieu_de: { type: 'string', description: 'Tên ngắn của việc.' },
+        noi_dung: {
+          type: 'string',
+          required: true,
+          description: 'Việc cần làm, đủ ngữ cảnh, kết quả mong muốn.',
+        },
+        ly_do: { type: 'string', required: true, description: 'Vì sao giao cho phòng này.' },
+      },
+      output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+      async execute(args, exec) {
+        const agent = exec.agent as unknown as AgentLike | undefined
+        if (!agent || !isCommander(agent.session.id)) return 'Chỉ Commander được giao việc cho cả phòng.'
+        const b = bots()
+        const deps = b.store.departments()
+        const dep = findDepartment(deps, String(args.phong ?? ''))
+        if (!dep)
+          return `Không có phòng «${args.phong}». Các phòng: ${deps.map((d) => d.name).join(', ') || '(chưa có)'}.`
+        const lead = dep.lead ? b.store.get(dep.lead) : undefined
+        if (!lead)
+          return `Phòng ${dep.name} chưa có trưởng nhóm: nhờ người dùng đặt trưởng nhóm ở trang Phòng ban, hoặc giao_viec cho từng bot.`
+        const task = String(args.noi_dung ?? '').trim()
+        if (!task) return 'Cần nội dung việc.'
+        if (allJobs().filter((j) => j.status === 'running').length >= MAX_JOBS)
+          return `Đang có ${MAX_JOBS} việc lớn của phòng ban chạy; đợi bớt rồi giao tiếp.`
+        const title = String(args.tieu_de ?? task)
+          .trim()
+          .split('\n')[0]!
+          .slice(0, 80)
+        try {
+          const sc = ctx.get('sessionController') as SessionPort | undefined
+          const reg = ctx.get('workspaceRegistry') as
+            { list(): readonly { id: string; sessionIds: readonly string[] }[] } | undefined
+          if (!sc) return 'Chưa có bộ điều khiển phiên của dsh.'
+          // Phiên gốc của trưởng nhóm, cùng dự án (thư mục) với phiên đang giao.
+          const ws = reg?.list().find((w) => w.sessionIds.includes(agent.session.id))
+          const { sessionId } = await sc.create(ws ? { workspaceId: ws.id } : {})
+          await b.tag(sessionId, lead.id, 'dispatch')
+          const job: JobRecord = {
+            id: `job-${Date.now().toString(36)}`,
+            department: dep.id,
+            lead: lead.id,
+            title,
+            task,
+            parentSession: agent.session.id,
+            session: sessionId,
+            ...(ws ? { workspace: ws.id } : {}),
+            status: 'running',
+            createdAt: new Date().toISOString(),
+          }
+          await jobs.put(job.id, job)
+          b.live.assigned(lead.id, title, sessionId)
+          const at = new Date().toISOString()
+          void log
+            .put(`${Date.now()}-${lead.handle}`, {
+              at,
+              sessionId: agent.session.id,
+              bot: lead.id,
+              handle: lead.handle,
+              title: `[Phòng ${dep.name}] ${title}`,
+              task,
+              reason: String(args.ly_do ?? ''),
+              member: sessionId,
+              reused: false,
+            })
+            .catch((e: unknown) => logger.warn('nhật ký giao việc: %s', String(e)))
+          await prompt(sessionId, jobBrief(job, lead, dep.name, membersOf(dep.id, lead.id)))
+          return `Đã giao cho phòng ${dep.name}: trưởng nhóm @${lead.handle} nhận ${job.id} «${title}» ở phiên ${sessionId}. Báo cáo của phòng sẽ về đây thành tin nhắn khi xong; giờ báo người dùng là phòng đang làm.`
+        } catch (e) {
+          if (e instanceof DispatchError) return `Không giao được: ${e.message}`
+          throw e
+        }
+      },
+    }),
+  )
+
+  // Đọc log phiên trưởng nhóm (không đánh thức phiên): bảng việc của phòng, báo cáo cuối, số lượt xong.
+  async function leadLog(job: JobRecord) {
+    const empty = { done: 0, total: 0, members: [] as string[], last: '', turns: 0 }
+    const q = ctx.get('sessionQuery') as SessionQueryPort | undefined
+    if (!q) return empty
+    try {
+      const obs = await q.observeSession(job.session, { projectionMode: 'none' })
+      try {
+        const events = obs.events as unknown as { type: string; data?: unknown }[]
+        const team = foldTeam(events)
+        const tasks = [...team.tasks.values()].filter((x) => x.status !== 'deleted')
+        let last = ''
+        let turns = 0
+        for (const e of events) {
+          if (e.type === 'assistant/message') {
+            const text = textOf((e.data as { message?: unknown } | undefined)?.message)
+            if (text.trim()) last = text
+          } else if (
+            e.type === 'turn/end' &&
+            (e.data as { reason?: { kind?: string } })?.reason?.kind === 'completed'
+          )
+            turns++
+        }
+        return {
+          done: tasks.filter((x) => x.status === 'completed').length,
+          total: tasks.length,
+          members: [...team.members.keys()],
+          last,
+          turns,
+        }
+      } finally {
+        obs[Symbol.dispose]()
+      }
+    } catch {
+      return empty
+    }
+  }
+
+  async function finish(job: JobRecord, status: 'done' | 'failed', result?: string) {
+    const next: JobRecord = {
+      ...job,
+      status,
+      finishedAt: new Date().toISOString(),
+      ...(result ? { result: result.slice(0, 6000) } : {}),
+    }
+    await jobs.put(job.id, next)
+    await prompt(job.parentSession, jobReport(next, departmentName(job.department)))
+  }
+
+  /**
+   * Việc lớn xong khi trưởng nhóm đã xong ít nhất một lượt, có câu trả lời, và cả phiên trưởng nhóm
+   * lẫn mọi phiên thành viên phòng đều rảnh: câu trả lời cuối là báo cáo nộp Commander. Gọi khi
+   * trưởng nhóm xong lượt, khi xem danh sách việc lớn, và lúc khởi động (sau khi aris chạy lại).
+   */
+  const settling = new Set<string>()
+  async function settle(job: JobRecord): Promise<void> {
+    if (job.status !== 'running' || settling.has(job.id)) return
+    settling.add(job.id)
+    try {
+      const live = (ctx.get('arisBots') as ArisBots | undefined)?.live
+      const log = await leadLog(job)
+      if (!live || log.turns === 0 || !log.last.trim()) return
+      if ([job.session, ...log.members].some((sid) => live.sessionState(sid) !== 'idle')) return
+      if (jobs.get(job.id)?.status !== 'running') return
+      await finish(job, 'done', log.last)
+    } catch (e) {
+      logger.warn('chốt việc lớn %s: %s', job.id, String(e))
+    } finally {
+      settling.delete(job.id)
+    }
+  }
+
+  ctx.on('session/event', (session, event) => {
+    const job = jobOf(session.id)
+    if (!job || event.type !== 'turn/end') return
+    const kind = (event.data as unknown as { reason?: { kind?: string } }).reason?.kind
+    if (kind === 'error') {
+      void finish(job, 'failed').catch((e: unknown) => logger.warn('báo việc lớn vấp: %s', String(e)))
+      return
+    }
+    // Đợi trạng thái trực tiếp cập nhật xong lượt này rồi mới xét.
+    if (kind === 'completed') setTimeout(() => void settle(job), 1500)
+  })
+  ctx.effect(() => {
+    const timer = setTimeout(() => {
+      for (const j of allJobs()) void settle(j)
+    }, 5000)
+    return () => clearTimeout(timer)
+  }, 'aris-commander: chốt việc lớn sau khởi động')
+
+  /** Tiến độ một việc lớn: thẻ xong / tổng thẻ trên bảng việc của trưởng nhóm. */
+  async function progressOf(job: JobRecord): Promise<{ done: number; total: number }> {
+    const { done, total } = await leadLog(job)
+    return { done, total }
+  }
+  const jobView = async (j: JobRecord) => {
+    await settle(j)
+    return viewOf(jobs.get(j.id) ?? j)
+  }
+  const viewOf = async (j: JobRecord) => ({
+    ...j,
+    departmentName: departmentName(j.department),
+    progress: await progressOf(j),
+  })
+  ctx.provide('arisJobs', {
+    list: allJobs,
+    forWorkspace: (workspace: string) => allJobs().filter((j) => j.workspace === workspace),
+    progressOf,
+  })
+
   ctx.inject(['connection'], (ctx) => {
     ctx.effect(() => {
       const dispose = ctx.connection.fetch.register({
         path: '/api/aris/commander',
         methods: ['GET'],
         requestBody: 'buffered',
-        fetch: async () => {
+        fetch: async (request) => {
+          // ?jobs=1: việc lớn của các phòng (trang Phòng ban), mới trước.
+          if (new URL(request.url).searchParams.get('jobs')) {
+            const list = allJobs()
+              .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+              .slice(0, 30)
+            return new Response(JSON.stringify({ jobs: await Promise.all(list.map(jobView)) }), {
+              headers: { 'content-type': 'application/json; charset=utf-8' },
+            })
+          }
           const recent = [...log.entries()]
             .map(([, r]) => r)
             .sort((a, b) => b.at.localeCompare(a.at))

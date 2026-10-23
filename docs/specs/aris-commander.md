@@ -16,6 +16,16 @@
 
 Chia một việc lớn thành tối đa 12 thẻ trên bảng việc của Team, chưa giao ai. Mỗi thẻ có tiêu đề, nội dung, và `sau`: các thẻ phải xong trước (mã `task-n` có sẵn hoặc tiêu đề một thẻ ghi trước trong cùng lần). Sau đó Commander giao từng thẻ sẵn sàng bằng `giao_viec` với `the`.
 
+## Việc lớn của phòng ban: `giao_phong` (chỉ Commander, bước 3d)
+
+- Tham số: `phong` (tên phòng, có hay không chữ "Phòng" đều được), `tieu_de`, `noi_dung` (đủ ngữ cảnh để trưởng nhóm tự chia). Phòng phải có trưởng nhóm.
+- aris mở **một phiên mới cho trưởng nhóm** trong cùng workspace với phiên giao (dự án thì nằm trong dự án), đánh dấu là phiên giao việc, rồi gửi bản giao việc. Bản ghi việc lớn ở kho `aris_commander`, bảng `jobs`: phòng, trưởng nhóm, tiêu đề, việc, phiên giao, phiên trưởng nhóm, trạng thái (`running`, `done`, `failed`), báo cáo.
+- Trưởng nhóm có ngữ cảnh riêng (`jobContext`): chia việc bằng `tao_the`, giao bằng `giao_viec` **chỉ cho thành viên phòng mình** (giao người ngoài phòng bị từ chối, nêu rõ lý do), tự làm phần nhỏ, cuối cùng trả một báo cáo gọn. Trưởng nhóm được lập đội (`spawn_teammate`) trong phiên việc lớn; Team của phiên đó là bảng việc riêng của phòng.
+- Giới hạn: tối đa 3 việc lớn đang chạy cùng lúc.
+- **Chốt việc lớn**: đọc thẳng log phiên trưởng nhóm (không đánh thức phiên). Xong khi trưởng nhóm đã xong ít nhất một lượt, có câu trả lời, và phiên trưởng nhóm cùng mọi phiên thành viên của đội đó đều rảnh; câu trả lời cuối của trưởng nhóm là báo cáo. Lượt lỗi thì việc lớn thành `failed`. Xét lại khi trưởng nhóm xong lượt, khi xem danh sách việc lớn, và 5 giây sau khi aris khởi động, nên aris chạy lại giữa chừng vẫn chốt được.
+- Chốt xong, báo cáo được gửi vào phiên giao (xếp hàng), Commander đọc và trả lời người dùng.
+- `GET /api/aris/commander?jobs=1`: 30 việc lớn gần nhất kèm tiến độ (thẻ xong / tổng thẻ trên bảng việc của trưởng nhóm). Dịch vụ `arisJobs` (`list`, `forWorkspace`, `progressOf`) cho Kanban của dự án.
+
 ## Thẻ tự đánh dấu xong
 
 Khi một thành viên đội kết thúc lượt bình thường (`turn/end` hoàn tất), aris dùng chính agent của thành viên (chủ thẻ, có quyền) đánh dấu xong **thẻ đang làm cũ nhất** nó giữ. Lượt lỗi thì thẻ giữ nguyên. Giả định: mỗi lần giao là một lượt của bot; bot giữ nhiều thẻ thì lần lượt từng thẻ theo thứ tự giao.
@@ -28,7 +38,7 @@ Khi một thành viên đội kết thúc lượt bình thường (`turn/end` ho
 ## Luật đội
 
 - Chỉ phiên của Commander (phiên chưa gắn bot) dùng được `giao_viec`.
-- Bot thường không tự lập đội: `spawn_teammate` bị chặn ở phiên của bot thường (móc `tools/pre-execute`). Bot vẫn nhắn đồng đội được (`send_message`). Trưởng nhóm phòng ban lập Team riêng ở bước 3.
+- Bot thường không tự lập đội: `spawn_teammate` bị chặn ở phiên của bot thường (móc `tools/pre-execute`). Bot vẫn nhắn đồng đội được (`send_message`). Trưởng nhóm phòng ban lập Team riêng trong phiên việc lớn (bước 3d).
 - Hướng dẫn giao việc (khi nào tự làm, khi nào giao, giao song song hay nối tiếp) là ngữ cảnh động `aris:commander`, chỉ nạp ở phiên của Commander.
 
 ## Model của bot
@@ -41,6 +51,8 @@ Suy từ sự kiện phiên của bot: đang chạy là "đang làm", đang đ�
 
 ## Giao diện
 
+- Trang Phòng ban: thẻ "Việc lớn phòng đang nhận" (tiêu đề, dự án, tiến độ, trạng thái, nút Mở phiên trưởng nhóm).
+- Kanban của dự án: việc lớn là một thẻ có nhãn "Phòng X", thanh tiến độ, nằm ở cột Đang làm hoặc Chờ theo trạng thái phiên trưởng nhóm, xong thì sang Xong.
 - Thanh bên: trạng thái và việc đang làm của từng bot.
 - Sơ đồ 3D, Bản đồ đội: trạng thái thật.
 - Cột phải: việc gần đây thật.

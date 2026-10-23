@@ -125,32 +125,49 @@ function Card({
     }
   }
   const foot =
-    c.kind === 'draft'
-      ? t('kb.foot.draft')
-      : c.column === 'unassigned'
-        ? c.waitingFor.length
-          ? t('kb.foot.blocked', {
-              n: c.waitingFor.length,
-              titles: c.waitingFor.map((w) => w.title).join(', '),
-            })
-          : t('kb.foot.unassigned')
-        : t(`kb.foot.${c.column}`)
+    c.kind === 'job'
+      ? [
+          c.failed ? t('kb.foot.failed') : t(`kb.foot.${c.column}`),
+          c.progress && c.progress.total > 0 ? t('kb.progress', c.progress) : '',
+        ]
+          .filter(Boolean)
+          .join(' · ')
+      : c.kind === 'draft'
+        ? t('kb.foot.draft')
+        : c.column === 'unassigned'
+          ? c.waitingFor.length
+            ? t('kb.foot.blocked', {
+                n: c.waitingFor.length,
+                titles: c.waitingFor.map((w) => w.title).join(', '),
+              })
+            : t('kb.foot.unassigned')
+          : t(`kb.foot.${c.column}`)
   const body = (
     <>
       <span>
         <span className="a-muted a-mono" style={{ fontSize: 11 }}>
-          {c.id}
+          {c.kind === 'job' ? t('kb.jobTag', { department: c.department ?? '' }) : c.id}
         </span>{' '}
         {c.title}
       </span>
+      {c.kind === 'job' && c.progress && c.progress.total > 0 && (
+        <span className="ap-track" style={{ height: 4 }}>
+          <span
+            style={{
+              width: `${(c.progress.done / c.progress.total) * 100}%`,
+              background: c.bot ? branchColor(c.bot) : 'var(--a-accent)',
+            }}
+          />
+        </span>
+      )}
       <div className="ft">
         {bot && <Mascot id={bot.mascot} size={18} />}
         {bot && <b style={{ color: 'var(--a-ink)', fontWeight: 600 }}>{bot.name}</b>}
-        <span>{foot}</span>
+        <span style={c.failed ? { color: 'var(--a-danger)' } : undefined}>{foot}</span>
       </div>
     </>
   )
-  if (c.kind === 'task')
+  if (c.kind !== 'draft')
     return c.session ? (
       <button
         type="button"

@@ -216,3 +216,25 @@ describe('chia việc thành thẻ', () => {
     await expect(planCards(team, cmd, [])).rejects.toThrow('Chưa có thẻ')
   })
 })
+
+describe('trưởng nhóm giao trong phòng', () => {
+  it('trưởng nhóm (không phải Commander) chỉ giao được cho thành viên phòng', async () => {
+    const { deps } = setup()
+    const lead = { ...deps, lead: { department: 'Tăng trưởng', members: new Set(['b-2']) } }
+    const me: A = { session: { id: 'lead' } }
+    const r = await dispatch(
+      lead,
+      me,
+      [
+        { bot: 'tho', task: 'Viết bài', reason: 'r' },
+        { bot: 'minh', task: 'Tự giao mình', reason: 'r' },
+      ],
+      signal,
+    )
+    expect(r.map((x) => x.ok)).toEqual([true, false])
+    expect(r[1]!.error).toContain('không phải thành viên phòng Tăng trưởng')
+    await expect(dispatch(deps, me, [{ bot: 'tho', task: 'x', reason: 'r' }], signal)).rejects.toThrow(
+      'trưởng nhóm đang nhận việc lớn',
+    )
+  })
+})

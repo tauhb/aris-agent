@@ -98,8 +98,8 @@ export function useProjectByPath(path: string | undefined): ProjectEntry | undef
 /** Một thẻ trên bảng việc của dự án (`@aris/projects`, Kanban 4.3). */
 export interface BoardCard {
   id: string
-  /** `task`: thẻ của đội; `draft`: thẻ người dùng tạo, chờ chia. */
-  kind: 'task' | 'draft'
+  /** `task`: thẻ của đội; `draft`: thẻ người dùng tạo, chờ chia; `job`: việc lớn của một phòng ban. */
+  kind: 'task' | 'draft' | 'job'
   title: string
   description?: string
   column: 'unassigned' | 'ready' | 'doing' | 'waiting' | 'done'
@@ -108,6 +108,10 @@ export interface BoardCard {
   /** Phiên của bot nhận thẻ. */
   session?: string
   waitingFor: { id: string; title: string }[]
+  /** Việc lớn: tên phòng, tiến độ thẻ của phòng, có vấp không. */
+  department?: string
+  progress?: { done: number; total: number }
+  failed?: boolean
 }
 
 export interface BoardData {

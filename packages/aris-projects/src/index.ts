@@ -22,14 +22,14 @@ import type {} from '@deepseek-ai/dsh-storage-domain'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import { WorkspaceId } from '@deepseek-ai/dsh-workspace'
 import { handleApi, type WorkspaceLike } from './api.js'
-import { buildBoard, foldTeam, type CardView, type TeamState } from './board.js'
+import { buildBoard, foldTeam, type CardView, type JobLike, type TeamState } from './board.js'
 import { renderProject } from './context.js'
 import { projectsDomain, type CardRecord, type ProjectRecord, type Table } from './domain.js'
 import { CardStore, ProjectError, ProjectStore } from './store.js'
 
 export * from './domain.js'
 export { CardStore, DEFAULT_RULES, ProjectStore, cleanRules } from './store.js'
-export { buildBoard, foldTeam, COLUMNS, type CardView, type Column } from './board.js'
+export { buildBoard, foldTeam, COLUMNS, type CardView, type Column, type JobLike } from './board.js'
 export { renderProject } from './context.js'
 
 export const name = 'aris-projects'
@@ -101,7 +101,21 @@ export async function apply(ctx: Context): Promise<void> {
   }
   async function board(workspaceId: string): Promise<CardView[]> {
     const b = bots()
+    const jobsService = ctx.get('arisJobs') as
+      | {
+          forWorkspace(ws: string): (Omit<JobLike, 'progress' | 'departmentName'> & { department: string })[]
+          progressOf(job: unknown): Promise<{ done: number; total: number }>
+        }
+      | undefined
+    const jobs = await Promise.all(
+      (jobsService?.forWorkspace(workspaceId) ?? []).map(async (j) => ({
+        ...j,
+        departmentName: b?.store.departments().find((d) => d.id === j.department)?.name ?? j.department,
+        progress: await jobsService!.progressOf(j),
+      })),
+    )
     return buildBoard({
+      jobs,
       team: await teamOf(store.get(workspaceId)),
       drafts: cards.list(workspaceId),
       botOfHandle: (h) => b?.store.byHandle(h)?.id,

@@ -79,6 +79,11 @@ export interface DispatchDeps<A> {
   /** Đã giao: ghi nhật ký, việc gần đây. */
   record(entry: DispatchEntry): void
   cards?: DraftCards | undefined
+  /**
+   * Người giao là trưởng nhóm đang nhận việc lớn của phòng (không phải Commander): chỉ giao cho
+   * thành viên phòng (mã nội bộ trong danh sách).
+   */
+  lead?: { department: string; members: ReadonlySet<string> } | undefined
 }
 
 export interface DispatchEntry {
@@ -132,7 +137,8 @@ export async function dispatch<A extends { session: { id: string } }>(
   signal: AbortSignal,
 ): Promise<DispatchResult[]> {
   const me = d.botOf(agent.session.id)
-  if (me.kind !== 'commander') throw new DispatchError('Chỉ Commander được giao việc.')
+  if (me.kind !== 'commander' && !d.lead)
+    throw new DispatchError('Chỉ Commander, hoặc trưởng nhóm đang nhận việc lớn của phòng, được giao việc.')
   if (assignments.length === 0) throw new DispatchError('Chưa có việc nào để giao.')
   if (assignments.length > MAX_PER_CALL) throw new DispatchError(`Mỗi lần giao tối đa ${MAX_PER_CALL} bot.`)
   const seen = new Set<string>()
@@ -157,6 +163,12 @@ export async function dispatch<A extends { session: { id: string } }>(
       const bot = d.byHandle(handle)
       if (!bot) return { handle, ok: false, error: `Không có bot @${handle} trong đội.` }
       if (bot.kind === 'commander') return { handle, ok: false, error: 'Không tự giao việc cho Commander.' }
+      if (d.lead && (!d.lead.members.has(bot.id) || bot.id === me.id))
+        return {
+          handle,
+          ok: false,
+          error: `@${handle} không phải thành viên phòng ${d.lead.department}; chỉ giao trong phòng, phần còn lại tự làm hoặc báo Aris.`,
+        }
       if (!a.task.trim() || !a.reason.trim())
         return { handle, ok: false, error: 'Mỗi việc cần nội dung và lý do chọn bot.' }
       // Thẻ có sẵn: kiểm trước khi nhắn bot để không giao nửa vời.

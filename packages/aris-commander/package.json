@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@aris/bots": "workspace:*",
+    "@aris/projects": "workspace:*",
     "zod": "4.4.3"
   }
 }

@@ -187,6 +187,9 @@ importers:
       '@aris/bots':
         specifier: workspace:*
         version: link:../aris-bots
+      '@aris/projects':
+        specifier: workspace:*
+        version: link:../aris-projects
       zod:
         specifier: 4.4.3
         version: 4.4.3

@@ -42,8 +42,8 @@ export const COLUMNS: readonly Column[] = ['unassigned', 'ready', 'doing', 'wait
 
 export interface CardView {
   id: string
-  /** `task`: thẻ của Team; `draft`: thẻ người dùng tạo, chờ chia. */
-  kind: 'task' | 'draft'
+  /** `task`: thẻ của Team; `draft`: thẻ người dùng tạo, chờ chia; `job`: việc lớn của một phòng ban. */
+  kind: 'task' | 'draft' | 'job'
   title: string
   description?: string
   column: Column
@@ -53,6 +53,21 @@ export interface CardView {
   session?: string
   /** Thẻ đang chặn thẻ này (chưa xong). */
   waitingFor: { id: string; title: string }[]
+  /** Việc lớn: tên phòng, tiến độ thẻ của phòng, có vấp không. */
+  department?: string
+  progress?: { done: number; total: number }
+  failed?: boolean
+}
+
+/** Việc lớn của phòng ban (`@aris/commander`) trong dự án. */
+export interface JobLike {
+  id: string
+  title: string
+  departmentName: string
+  lead: string
+  session: string
+  status: 'running' | 'done' | 'failed'
+  progress: { done: number; total: number }
 }
 
 const order = (id: string) => Number(id.replace(/^\D+/, '')) || 0
@@ -64,6 +79,7 @@ export interface BoardInput {
   botOfHandle: (handle: string) => string | undefined
   /** Trạng thái phiên của bot nhận thẻ. */
   sessionState: (sessionId: string) => 'waiting' | 'running' | 'idle'
+  jobs?: readonly JobLike[]
 }
 
 /**
@@ -118,5 +134,21 @@ export function buildBoard(b: BoardInput): CardView[] {
       waitingFor: [],
     })
   }
-  return out.sort((x, y) => (x.kind === y.kind ? order(x.id) - order(y.id) : x.kind === 'draft' ? 1 : -1))
+  // Việc lớn của phòng: đang chạy là Đang làm (trưởng nhóm đợi người dùng thì Chờ duyệt), vấp vẫn ở
+  // Đang làm kèm cờ để người dùng xem.
+  for (const j of b.jobs ?? [])
+    out.push({
+      id: j.id,
+      kind: 'job',
+      title: j.title,
+      column: j.status === 'done' ? 'done' : b.sessionState(j.session) === 'waiting' ? 'waiting' : 'doing',
+      bot: j.lead,
+      session: j.session,
+      waitingFor: [],
+      department: j.departmentName,
+      progress: j.progress,
+      ...(j.status === 'failed' ? { failed: true } : {}),
+    })
+  const rank = { job: 0, task: 1, draft: 2 } as const
+  return out.sort((x, y) => (x.kind === y.kind ? order(x.id) - order(y.id) : rank[x.kind] - rank[y.kind]))
 }

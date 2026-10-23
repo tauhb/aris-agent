@@ -20,6 +20,7 @@ import {
   TextInput,
   teamAction,
   useDismiss,
+  useProjects,
   useTeam,
   type DepartmentData,
   type PolicyData,
@@ -52,6 +53,69 @@ function useAction() {
     }
   }
   return { error, busy, run, setError }
+}
+
+interface JobView {
+  id: string
+  department: string
+  title: string
+  session: string
+  workspace?: string
+  status: 'running' | 'done' | 'failed'
+  createdAt: string
+  progress: { done: number; total: number }
+}
+
+/** Việc lớn của phòng (`@aris/commander`): Aris giao cả phòng, trưởng nhóm chia cho thành viên. */
+function useJobs(): JobView[] | null {
+  const [jobs, setJobs] = useState<JobView[] | null>(null)
+  useEffect(() => {
+    let live = true
+    const load = () =>
+      fetch(new URL('api/aris/commander?jobs=1', document.baseURI), { credentials: 'same-origin' })
+        .then((r) => (r.ok ? (r.json() as Promise<{ jobs: JobView[] }>) : undefined))
+        .then((d) => d && live && setJobs(d.jobs))
+        .catch(() => {})
+    void load()
+    const timer = setInterval(load, 10_000)
+    return () => {
+      live = false
+      clearInterval(timer)
+    }
+  }, [])
+  return jobs
+}
+
+function Jobs({ t, nav, dep }: { t: T; nav: PageProps['nav']; dep: DepartmentData }) {
+  const jobs = useJobs()?.filter((j) => j.department === dep.id)
+  const projects = useProjects()
+  const projectName = (ws?: string) => {
+    const p = projects?.find((x) => x.workspace === ws)
+    return p ? (p.project?.name ?? p.title) : t('dep.privateChat')
+  }
+  return (
+    <Card title={t('dep.work')} subtitle={t('dep.workHint')}>
+      {jobs?.length === 0 && <CardRow label={<span className="a-muted">{t('dep.noWork')}</span>} />}
+      {jobs?.map((j) => (
+        <CardRow key={j.id}>
+          <span className="grow" style={{ minWidth: 160 }}>
+            <b>{j.title}</b>
+            <div className="a-muted" style={{ fontSize: 12.5 }}>
+              {[projectName(j.workspace), j.progress.total > 0 ? t('dep.jobProgress', j.progress) : '']
+                .filter(Boolean)
+                .join(' · ')}
+            </div>
+          </span>
+          <Pill tone={j.status === 'done' ? 'ok' : j.status === 'failed' ? 'danger' : 'accent'}>
+            {t(`dep.job.${j.status}`)}
+          </Pill>
+          <Button size="sm" variant="ghost" onClick={() => nav.openSession(j.session)}>
+            {t('dep.openJob')}
+          </Button>
+        </CardRow>
+      ))}
+    </Card>
+  )
 }
 
 function Members({
@@ -650,9 +714,7 @@ export function Department({ t, nav, params }: PageProps) {
         <div className="ap-cols">
           <Col basis={360}>
             <Members t={t} nav={nav} team={team} dep={dep} />
-            <Card title={t('dep.work')} subtitle={t('dep.workHint')}>
-              <CardRow label={<span className="a-muted">{t('dep.noWork')}</span>} />
-            </Card>
+            <Jobs t={t} nav={nav} dep={dep} />
           </Col>
           <Col grow={1.4} basis={420}>
             <Policy
