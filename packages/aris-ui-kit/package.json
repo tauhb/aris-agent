@@ -1,0 +1,19 @@
+{
+  "name": "@aris/ui-kit",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Bộ thành phần giao diện dùng chung của aris: màu, 5 trạng thái, 30 linh vật",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    }
+  },
+  "files": [
+    "lib"
+  ],
+  "license": "MIT"
+}

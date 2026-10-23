@@ -1,0 +1,6 @@
+packages:
+  - packages/*
+onlyBuiltDependencies:
+  - '@deepseek-ai/dsh-subprocess-local'
+  - koffi
+  - node-pty

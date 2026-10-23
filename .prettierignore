@@ -1,0 +1,6 @@
+design/
+docs/
+*.md
+pnpm-lock.yaml
+**/lib/
+.dsh-home/

@@ -1,0 +1,23 @@
+{
+  "name": "@aris/bundle",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Lớp cấu hình aris xếp trên các profile dsh (web, acp, headless)",
+  "type": "module",
+  "files": [
+    "cordis.patch.yml"
+  ],
+  "license": "MIT",
+  "engines": {
+    "dsh": ">=0.2.1-rc.2 <0.3.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@aris/hello": "workspace:*",
+    "@aris/web-spike": "workspace:*"
+  }
+}

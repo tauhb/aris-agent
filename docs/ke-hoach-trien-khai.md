@@ -32,6 +32,8 @@ Tổng: khoảng **18 tuần** cho giai đoạn 0–7.
 
 ## Giai đoạn 0 · Nền móng (tuần 1)
 
+> **Đã xong 23/10** · kết quả và kết luận hai thử nghiệm: [spikes/giai-doan-0.md](spikes/giai-doan-0.md). Chọn phương án A cho giao diện.
+
 **Mục tiêu**: có bộ khung chạy được, CI, và trả lời dứt điểm câu hỏi kỹ thuật lớn nhất: *giao diện aris làm bằng plugin Web client của dsh được tới đâu*.
 
 **Việc cần làm**
