@@ -10,10 +10,13 @@ import { Detail } from './plugins/Detail.js'
 import { InstallDialog, type InstallItem } from './plugins/InstallDialog.js'
 import { Installed, type Change, type Update } from './plugins/Installed.js'
 import { entryView, hostOf, MarketTab } from './plugins/Market.js'
-import { MARKET_BUNDLE, marketCard, outcomeOf, stateOf } from './plugins/model.js'
+import { MARKET_BUNDLE, marketCard, outcomeOf, searchUpTo, stateOf } from './plugins/model.js'
 
 /** Mã mục "Plugin có sẵn" của dsh trong `settings.section`: trang này thay nó. */
 export const DSH_PLUGINS_SECTION = 'plugins'
+
+/** Trang Plugins gốc của dsh ở thanh bên: chợ chính thức (gói chính thức, gói cài theo yêu cầu, trang cấu hình riêng của plugin). */
+const DSH_PLUGINS_PANEL = 'plugins'
 
 type T = PageProps['t']
 type Tab = 'installed' | 'market' | 'detail'
@@ -45,7 +48,7 @@ function useUpdates(src: PluginSource, bundles: readonly BundleInfo[] | null) {
       if (!r.ok) return
       const found: Update[] = []
       for (const ix of r.value.filter((x) => !x.error)) {
-        const s = await market.search(ix.url, { sort: { kind: 'index' }, offset: 0, limit: 500 })
+        const s = await searchUpTo(market, ix.url, { sort: { kind: 'index' } }, 2000)
         if (!s.ok) continue
         for (const e of s.value.entries) {
           const card = marketCard(e)
@@ -113,7 +116,7 @@ function RestartBanner({
   )
 }
 
-function PluginPage({ t, src }: { t: T; src: PluginSource }) {
+function PluginPage({ t, src, nav }: { t: T; src: PluginSource; nav: PageProps['nav'] }) {
   const { bundles, entries, error, reload } = useData(src)
   const updates = useUpdates(src, bundles)
   const [tab, setTab] = useState<Tab>('installed')
@@ -205,6 +208,21 @@ function PluginPage({ t, src }: { t: T; src: PluginSource }) {
           onInstall={setInstalling}
         />
       )}
+      {tab === 'market' && (
+        <Card title={t('pl.official.title')}>
+          <CardRow
+            label={
+              <span className="a-muted" style={{ fontSize: 13 }}>
+                {t('pl.official.hint')}
+              </span>
+            }
+          >
+            <Button size="sm" variant="primary" onClick={() => nav.openPanel(DSH_PLUGINS_PANEL)}>
+              {t('pl.official.open')}
+            </Button>
+          </CardRow>
+        </Card>
+      )}
       {tab === 'market' && marketBundle && !marketBundle.enabled && (
         <Card title={t('pl.mk.offTitle')}>
           <CardRow
@@ -249,12 +267,12 @@ function PluginPage({ t, src }: { t: T; src: PluginSource }) {
   )
 }
 
-export function Plugin({ t, plugins }: PageProps) {
+export function Plugin({ t, nav, plugins }: PageProps) {
   if (!plugins)
     return (
       <PageShell title={t('sec.plugin')}>
         <div className="a-muted">{t('pl.unavailable')}</div>
       </PageShell>
     )
-  return <PluginPage t={t} src={plugins} />
+  return <PluginPage t={t} src={plugins} nav={nav} />
 }

@@ -2,7 +2,17 @@
  * Logic thuần của trang Plugin (6.7): phân nhóm gói, trạng thái, kết quả một thay đổi, thẻ chợ.
  * Không phụ thuộc React để kiểm thử.
  */
-import type { BundleInfo, ChangeResult, LocalizedText, MarketEntry, PluginEntry } from '../../page.js'
+import type {
+  BundleInfo,
+  ChangeResult,
+  LocalizedText,
+  MarketEntry,
+  MarketQuery,
+  MarketSearch,
+  Outcome,
+  PluginEntry,
+  PluginSource,
+} from '../../page.js'
 
 /** Gói tính năng aris cần để chạy (Commander lập đội): khoá như lõi. */
 export const REQUIRED_BY_ARIS = new Set(['@deepseek-ai/dsh-experimental-agent-team-profile'])
@@ -178,3 +188,39 @@ export const debrand = (s: string) =>
 /** Chữ cái đầu cho ô biểu tượng. */
 export const letterOf = (title: string) =>
   (title.trim().replace(/^@[^/]+\//, '')[0] ?? '?').toLocaleUpperCase('vi')
+
+/** Một lần tìm của chợ trả tối đa 100 mục. */
+export const MARKET_PAGE_MAX = 100
+
+/**
+ * Lấy tới `want` mục của một nguồn chợ: cần hơn 100 thì lấy tiếp trang sau, giữ cùng bản danh mục
+ * đã đọc (`fetchedAt`). Trang sau lỗi thì trả những gì đã có.
+ */
+export async function searchUpTo(
+  market: NonNullable<PluginSource['market']>,
+  url: string,
+  query: Omit<MarketQuery, 'offset' | 'limit' | 'fetchedAt'>,
+  want: number,
+): Promise<Outcome<MarketSearch>> {
+  let first: MarketSearch | null = null
+  const entries: MarketEntry[] = []
+  let offset = 0
+  let next: number | null = 0
+  while (next !== null && entries.length < want) {
+    const r = await market.search(url, {
+      ...query,
+      offset,
+      limit: Math.min(MARKET_PAGE_MAX, want - entries.length),
+      ...(first?.fetchedAt !== undefined ? { fetchedAt: first.fetchedAt } : {}),
+    })
+    if (!r.ok) {
+      if (!first) return r
+      break
+    }
+    first ??= r.value
+    entries.push(...r.value.entries)
+    next = r.value.nextOffset
+    if (next !== null) offset = next
+  }
+  return { ok: true, value: { ...first!, entries, nextOffset: next } }
+}

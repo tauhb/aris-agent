@@ -155,6 +155,8 @@ export interface MarketSearch {
   entries: readonly MarketEntry[]
   total: number
   nextOffset: number | null
+  /** Thời điểm đọc danh mục; gửi lại khi lấy trang sau để các trang cùng một bản. */
+  fetchedAt?: number
 }
 
 export interface MarketQuery {
@@ -162,7 +164,9 @@ export interface MarketQuery {
   category?: string
   sort: { kind: 'relevance' | 'index' | 'published'; direction?: 'asc' | 'desc' }
   offset: number
+  /** 1–100. */
   limit: number
+  fetchedAt?: number
 }
 
 export interface PluginSource {

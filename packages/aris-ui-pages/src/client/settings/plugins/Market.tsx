@@ -4,9 +4,9 @@
  */
 import { Button, Card, CardRow, SearchIcon, TextInput } from '@aris/ui-kit/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { MarketEntry, MarketIndexSummary, MarketQuery, PageProps, PluginSource } from '../../page.js'
+import type { MarketEntry, MarketIndexSummary, PageProps, PluginSource } from '../../page.js'
 import type { InstallItem } from './InstallDialog.js'
-import { debrand, letterOf, marketCard } from './model.js'
+import { debrand, letterOf, marketCard, searchUpTo } from './model.js'
 
 type T = PageProps['t']
 type Market = NonNullable<PluginSource['market']>
@@ -17,7 +17,7 @@ export interface Listed {
   entry: MarketEntry
 }
 
-const PAGE = 60
+const PAGE = 48
 
 export const hostOf = (url: string) => {
   try {
@@ -212,37 +212,35 @@ export function MarketTab({
   useEffect(() => {
     if (!indexes) return
     let live = true
-    const query: MarketQuery = {
+    const query = {
       ...(text.trim() ? { text: text.trim() } : {}),
       ...(category ? { category } : {}),
-      sort: { kind: sort === 'name' ? 'index' : sort },
-      offset: 0,
-      limit,
+      sort: { kind: sort === 'name' ? ('index' as const) : sort },
     }
     const timer = setTimeout(() => {
-      void Promise.all(indexes.filter((ix) => !ix.error).map((ix) => market.search(ix.url, query))).then(
-        (rs) => {
-          if (!live) return
-          const ok = rs.flatMap((r) => (r.ok ? [r.value] : []))
-          const failed = rs.find((r) => !r.ok)
-          setSearchError(ok.length === 0 && failed && !failed.ok ? failed.error : null)
-          const cats: Record<string, string> = {}
-          for (const s of ok)
-            for (const [id, c] of Object.entries(s.metadata.categories))
-              cats[id] = debrand(src.resolveText(c.title))
-          setCategories(cats)
-          const listed = ok.flatMap((s) => s.entries.map((entry) => ({ url: s.url, entry })))
-          if (sort === 'name')
-            listed.sort((a, b) =>
-              entryView(a.entry, src.resolveText).title.localeCompare(
-                entryView(b.entry, src.resolveText).title,
-                'vi',
-              ),
-            )
-          setItems(listed)
-          setTotal(ok.reduce((n, s) => n + s.total, 0))
-        },
-      )
+      void Promise.all(
+        indexes.filter((ix) => !ix.error).map((ix) => searchUpTo(market, ix.url, query, limit)),
+      ).then((rs) => {
+        if (!live) return
+        const ok = rs.flatMap((r) => (r.ok ? [r.value] : []))
+        const failed = rs.find((r) => !r.ok)
+        setSearchError(ok.length === 0 && failed && !failed.ok ? failed.error : null)
+        const cats: Record<string, string> = {}
+        for (const s of ok)
+          for (const [id, c] of Object.entries(s.metadata.categories))
+            cats[id] = debrand(src.resolveText(c.title))
+        setCategories(cats)
+        const listed = ok.flatMap((s) => s.entries.map((entry) => ({ url: s.url, entry })))
+        if (sort === 'name')
+          listed.sort((a, b) =>
+            entryView(a.entry, src.resolveText).title.localeCompare(
+              entryView(b.entry, src.resolveText).title,
+              'vi',
+            ),
+          )
+        setItems(listed)
+        setTotal(ok.reduce((n, s) => n + s.total, 0))
+      })
     }, 250)
     return () => {
       live = false
@@ -331,7 +329,7 @@ export function MarketTab({
       )}
       {indexes?.length === 0 && <div className="a-muted">{t('pl.mk.noSources')}</div>}
       {!items && !error && indexes?.length !== 0 && <div className="a-muted">{t('pl.loading')}</div>}
-      {items && items.length === 0 && <div className="a-muted">{t('pl.none')}</div>}
+      {items && items.length === 0 && indexes?.length !== 0 && <div className="a-muted">{t('pl.none')}</div>}
       {items && items.length > 0 && (
         <div className="ap-pl-cards">
           {items.map((it) => (
