@@ -297,3 +297,22 @@ export function providerColor(id: string): string {
   for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) % 360
   return `hsl(${h} 55% 50%)`
 }
+
+/** Model chỉ chạy theo lô (OpenRouter `:batch`): không gọi được qua chat, nên không đưa vào ô chọn. */
+export function isChatModel(id: string): boolean {
+  return !id.endsWith(':batch')
+}
+
+export type ProbeReason = 'auth' | 'credits' | 'notFound' | 'rateLimit' | 'timeout' | 'batch' | 'other'
+
+/** Đọc lời báo lỗi của nhà cung cấp ra lý do dễ hiểu (mã HTTP và các câu quen thuộc). */
+export function probeReason(error: string | undefined): ProbeReason {
+  const e = error ?? ''
+  if (/chat\/completions endpoint|batch/i.test(e)) return 'batch'
+  if (/\b401\b|unauthori[sz]ed|invalid (api )?key|incorrect api key/i.test(e)) return 'auth'
+  if (/\b402\b|insufficient (credits|balance|quota)|billing/i.test(e)) return 'credits'
+  if (/\b429\b|rate.?limit/i.test(e)) return 'rateLimit'
+  if (/\b404\b|model_not_found|does not exist|no endpoints found/i.test(e)) return 'notFound'
+  if (/quá thời gian|timed? ?out|timeout/i.test(e)) return 'timeout'
+  return 'other'
+}

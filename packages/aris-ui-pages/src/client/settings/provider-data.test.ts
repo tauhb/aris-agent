@@ -6,6 +6,8 @@ import {
   deriveKeyRef,
   joinProviders,
   modelLines,
+  isChatModel,
+  probeReason,
   profileAt,
   providerName,
   routeIdOf,
@@ -128,5 +130,21 @@ describe('provider-data', () => {
   it('mã route từ tên hiển thị', () => {
     expect(routeIdOf('LiteLLM nội bộ')).toBe('litellm-noi-bo')
     expect(routeIdOf('  vLLM / máy chủ ')).toBe('vllm-may-chu')
+  })
+
+  it('đọc lý do lỗi khi gọi thử model', () => {
+    expect(
+      probeReason('402: {"message":"Insufficient credits. This account never purchased credits."}'),
+    ).toBe('credits')
+    expect(probeReason('404: The model `llama-3.1-8b-instant` does not exist')).toBe('notFound')
+    expect(probeReason('429: google/gemma is temporarily rate-limited upstream')).toBe('rateLimit')
+    expect(
+      probeReason('404: openai/gpt-4.1-nano:batch cannot be used with the chat/completions endpoint'),
+    ).toBe('batch')
+    expect(probeReason('401 Unauthorized')).toBe('auth')
+    expect(probeReason('quá thời gian chờ')).toBe('timeout')
+    expect(probeReason('ECONNRESET')).toBe('other')
+    expect(isChatModel('openai/gpt-4.1-nano:batch')).toBe(false)
+    expect(isChatModel('openrouter/free')).toBe(true)
   })
 })

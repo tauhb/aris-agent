@@ -34,7 +34,9 @@ import {
   buildRows,
   credentialRefs,
   deriveKeyRef,
+  isChatModel,
   modelLines,
+  probeReason,
   profileModel,
   profileModels,
   providerColor,
@@ -194,6 +196,7 @@ function Connection({
   row,
   models,
   served,
+  result,
   onChanged,
   onProbe,
 }: {
@@ -201,13 +204,16 @@ function Connection({
   row: ProviderRow
   models: ModelSettings
   served: ModelGroup | undefined
+  /** Kết quả gọi thử gần nhất của provider này. */
+  result: { ok: boolean; ms: number; model?: string | undefined; error?: string | undefined } | null
   onChanged: () => void
-  onProbe: (r: { ok: boolean; ms: number; error?: string | undefined }) => void
+  onProbe: (r: { ok: boolean; ms: number; model: string; error?: string | undefined }) => void
 }) {
   const { entry } = row
+  const chatModels = useMemo(() => served?.models.filter((m) => isChatModel(m.id)) ?? [], [served])
   const [key, setKey] = useState('')
   const [baseURL, setBaseURL] = useState(str(row.profile.baseURL) ?? '')
-  const [probeModel, setProbeModel] = useState(served?.models[0]?.id ?? '')
+  const [probeModel, setProbeModel] = useState(chatModels[0]?.id ?? '')
   const [busy, setBusy] = useState<'key' | 'url' | 'probe' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
@@ -218,8 +224,8 @@ function Connection({
     setSaved(false)
   }, [entry.id, row.profile.baseURL])
   useEffect(() => {
-    if (!served?.models.some((m) => m.id === probeModel)) setProbeModel(served?.models[0]?.id ?? '')
-  }, [served, probeModel])
+    if (!chatModels.some((m) => m.id === probeModel)) setProbeModel(chatModels[0]?.id ?? '')
+  }, [chatModels, probeModel])
 
   const form = entry.ns ? models.form(entry.ns) : undefined
   const envOnly = row.key && !row.key.writable && row.key.configured
@@ -268,7 +274,7 @@ function Connection({
   async function probe() {
     if (!probeModel) return
     setBusy('probe')
-    onProbe(await models.probe(entry.id, probeModel))
+    onProbe({ ...(await models.probe(entry.id, probeModel)), model: probeModel })
     setBusy(null)
   }
 
@@ -345,14 +351,14 @@ function Connection({
         <span className="a-muted" style={{ fontSize: 12.5 }}>
           {t('pv.probeWith')}
         </span>
-        {served && served.models.length > 0 ? (
+        {chatModels.length > 0 ? (
           <select
             className="ap-sel a-mono"
             value={probeModel}
             aria-label={t('pv.probeWith')}
             onChange={(e) => setProbeModel(e.target.value)}
           >
-            {served.models.map((m) => (
+            {chatModels.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.id}
               </option>
@@ -371,6 +377,22 @@ function Connection({
           {t('pv.probe')}
         </Button>
       </div>
+      {result && !result.ok && (
+        <div style={{ fontSize: 12.5 }}>
+          <div style={{ color: 'var(--a-danger)' }}>
+            {result.model ? `${result.model}: ` : ''}
+            {t(`pv.why.${probeReason(result.error)}`)}
+          </div>
+          {result.error && (
+            <details className="a-muted" style={{ marginTop: 2 }}>
+              <summary style={{ cursor: 'pointer' }}>{t('pv.why.detail')}</summary>
+              <div className="a-mono" style={{ fontSize: 11.5, wordBreak: 'break-word' }}>
+                {result.error}
+              </div>
+            </details>
+          )}
+        </div>
+      )}
       {error && <div style={{ color: 'var(--a-danger)', fontSize: 12.5 }}>{error}</div>}
     </Box>
   )
@@ -467,6 +489,7 @@ function ModelTable({
               {m.id}
             </span>
             <span className="ap-tags">
+              {!isChatModel(m.id) && <Tag>{t('pv.cap.batch')}</Tag>}
               {m.reasoning && <Tag>{t('pv.cap.reasoning')}</Tag>}
               {m.image && <Tag>{t('pv.cap.image')}</Tag>}
               {m.contextWindow !== undefined && (
@@ -725,11 +748,13 @@ function Tasks({
                   {current && !known && <option value={current}>{`${provider} · ${model}`}</option>}
                   {groups.map((g) => (
                     <optgroup key={g.id} label={g.name}>
-                      {g.models.map((m) => (
-                        <option key={m.id} value={pairKey(g.id, m.id)}>
-                          {m.name || m.id}
-                        </option>
-                      ))}
+                      {g.models
+                        .filter((m) => isChatModel(m.id))
+                        .map((m) => (
+                          <option key={m.id} value={pairKey(g.id, m.id)}>
+                            {m.name || m.id}
+                          </option>
+                        ))}
                     </optgroup>
                   ))}
                 </select>
@@ -912,6 +937,7 @@ export function Provider({ t, nav, system, models }: PageProps) {
                   row={row}
                   models={models}
                   served={served}
+                  result={probed}
                   onChanged={reload}
                   onProbe={(r) => setProbe({ id: row.entry.id, ...r })}
                 />
