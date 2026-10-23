@@ -6,17 +6,35 @@
     {
       "id": "nghien-cuu",
       "name": "Nghiên cứu",
-      "lead": "lam"
+      "lead": "lam",
+      "about": "đọc nguồn, so sánh, tổng hợp",
+      "policy": {
+        "web": true,
+        "write": true,
+        "shell": false
+      }
     },
     {
       "id": "van-hanh",
       "name": "Vận hành",
-      "lead": "mai"
+      "lead": "mai",
+      "about": "lịch, thư, giấy tờ, chi tiêu",
+      "policy": {
+        "web": true,
+        "write": true,
+        "shell": false
+      }
     },
     {
       "id": "sang-tao",
       "name": "Sáng tạo · Kỹ thuật",
-      "lead": "ha"
+      "lead": "ha",
+      "about": "nội dung, hình ảnh, mã",
+      "policy": {
+        "web": true,
+        "write": true,
+        "shell": true
+      }
     }
   ],
   "bots": [

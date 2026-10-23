@@ -65,16 +65,33 @@ Tệp `packages/aris-bots/templates/*.json`, mỗi tệp một đội: phòng ba
 
 Lần đầu mở (chưa có bot nào ngoài Commander), Đội hình mời chọn một đội mẫu hoặc tự tạo. Áp mẫu chỉ thêm bot, không xoá bot đang có; trùng tên gọi thì bỏ qua bot đó.
 
+## Phòng ban và chính sách chung (bước 3a)
+
+Phòng ban là nhóm bot bền có trưởng nhóm, mô tả ngắn và **chính sách chung** áp cho mọi bot thường của phòng (Commander không theo chính sách phòng; bot chưa xếp phòng theo chính sách mặc định). Bot chỉ thuộc một phòng; rời phòng thì thôi làm trưởng nhóm ở đó. Xoá phòng: bot về "chưa xếp phòng", giữ hồ sơ, ký ức, model riêng. Giao diện: trang 2.6 (bản vẽ `PhongBan.dc.html`).
+
+| Chính sách | Áp ở đâu |
+|---|---|
+| Model mặc định | Bot không đặt model riêng thì chạy model của phòng: khi mở chat với bot, và khi bot được giao việc (`botModel` của `@aris/providers`). |
+| Ngân sách mỗi ngày (USD, cả phòng) | `@aris/providers` ghi chi phí từng lần gọi model theo phòng của bot (bảng `spend`). Chạm trần mà chọn "Dừng": bước đầu của lượt nhận một lời báo để bot trả lời đúng một câu "dừng vì phòng hết ngân sách", các bước sau bị từ chối; "Chỉ báo": ghi nhật ký, vẫn chạy. |
+| Quyền | `tools/pre-execute`: web (`web_search`, `web_fetch`), ghi tệp (`write`, `edit`, `str_replace_editor` trừ `view`), chạy lệnh (`bash`, `pwsh`, `terminal_open`, `terminal_send`). Công cụ ngoài quyền bị từ chối kèm lý do; ngữ cảnh `aris:bot` nói trước quyền bị tắt để bot không thử. Đọc tệp luôn được; thao tác cần duyệt với bot được giao việc do dsh từ chối sẵn. |
+
+Mặc định: web và ghi tệp, không chạy lệnh, chạm trần thì dừng. Đội mẫu khai `about` và `policy` cho từng phòng (Kỹ thuật, "Sáng tạo · Kỹ thuật" được chạy lệnh); phòng có từ trước bước 3a nhận chính sách theo phòng cùng mã trong đội mẫu khi khởi động. Chưa có: skill dùng chung, vùng Second Brain của phòng.
+
+Chạy thử thật (24/10): Minh (Tăng trưởng, không chạy lệnh) gọi `bash` bị từ chối đúng lời của chính sách và gợi ý nhờ @khoa; chi phí lượt đó ghi vào phòng Tăng trưởng; đặt trần 0 USD thì Minh trả lời một câu "dừng vì phòng Tăng trưởng đã hết ngân sách hôm nay".
+
 ## Đường máy chủ
 
-`/api/aris/bots`: `GET` trả bot, phòng ban, danh sách mẫu. `POST` với `op`:
+`/api/aris/bots`: `GET` trả bot, phòng ban, danh sách mẫu, chi phí hôm nay theo phòng (`spend`). `POST` với `op`:
 
 | `op` | Việc |
 |---|---|
 | `create` `{ bot }` | Tạo bot |
 | `update` `{ id, patch }` | Sửa bot (không đổi `id`, `kind`) |
 | `delete` `{ id }` | Xoá bot (không xoá Commander; ký ức và phiên cũ giữ nguyên) |
-| `department` `{ department }` | Tạo hoặc sửa phòng ban |
+| `department` `{ department }` | Sửa phòng ban theo `id` (tên, mô tả, trưởng nhóm, `policy` chỉ các trường gửi lên) hoặc tạo theo mã cho trước |
+| `department-create` `{ department }` | Phòng mới: mã sinh từ tên, bot chọn rời phòng cũ, trưởng nhóm trong phòng, chép chính sách từ phòng khác |
+| `department-delete` `{ id }` | Xoá phòng, bot về chưa xếp phòng |
+| `move` `{ id, department }` | Chuyển bot sang phòng khác (`null`: chưa xếp phòng) |
 | `apply-template` `{ template }` | Áp đội mẫu |
 | `open` `{ id }` | Tạo phiên chat thẳng với bot, trả `sessionId` |
 

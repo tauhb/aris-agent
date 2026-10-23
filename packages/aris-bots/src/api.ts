@@ -11,6 +11,8 @@ export interface ApiDeps {
   open: (botId: string) => Promise<string>
   /** Trạng thái trực tiếp và việc gần đây (`?live=1`). */
   live?: () => unknown
+  /** Chi phí hôm nay theo phòng ban (USD), để trang Phòng ban hiện thanh ngân sách. */
+  spend?: () => Record<string, number>
   /** Danh mục model đang phục vụ (để chọn model riêng cho bot). */
   catalog?: () => Promise<{ id: string; name: string; models: { id: string; name: string }[] }[]>
 }
@@ -27,6 +29,7 @@ async function snapshot(d: ApiDeps) {
     bots: d.store.list(),
     owner: d.store.owner(),
     departments: d.store.departments(),
+    spend: d.spend?.() ?? {},
     templates: templates.map((t) => ({
       id: t.id,
       name: t.name,
@@ -68,7 +71,33 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
         )
         break
       case 'department':
-        await d.store.upsertDepartment(body.department as { id?: string; name: string; lead?: string | null })
+        // Đổi tên, mô tả, trưởng nhóm, chính sách của phòng có sẵn (hoặc tạo theo mã cho trước).
+        await d.store.upsertDepartment(
+          body.department as {
+            id?: string
+            name: string
+            lead?: string | null
+            about?: string | null
+            policy?: unknown
+          },
+        )
+        break
+      case 'department-create':
+        await d.store.createDepartment(
+          body.department as {
+            name: string
+            about?: string
+            bots?: string[]
+            lead?: string
+            copyPolicyFrom?: string
+          },
+        )
+        break
+      case 'department-delete':
+        await d.store.deleteDepartment(String(body.id))
+        break
+      case 'move':
+        await d.store.moveBot(String(body.id), body.department ? String(body.department) : null)
         break
       case 'apply-template': {
         const t = (await d.templates()).find((x) => x.id === body.template)

@@ -49,6 +49,14 @@ export const ledgerRecord = z.object({
 })
 export type LedgerRecord = z.infer<typeof ledgerRecord>
 
+/** Chi phí một ngày của một phạm vi (phòng ban của bot), để áp trần ngân sách phòng. */
+export const spendRecord = z.object({
+  day: z.string(),
+  scope: z.string(),
+  usd: z.number(),
+})
+export type SpendRecord = z.infer<typeof spendRecord>
+
 /** Phiên vừa chuyển dự phòng: lượt sau trả về model cũ nếu phiên không có model chọn. */
 export const switchRecord = z.object({ from: link, to: link, turn: z.number().int() })
 export type SwitchRecord = z.infer<typeof switchRecord>
@@ -61,6 +69,7 @@ export const providersDomain = defineDomain({
     chain: domainTable<string, ChainRecord>(chainRecord),
     pools: domainTable<string, PoolRecord>(poolRecord),
     ledger: domainTable<string, LedgerRecord>(ledgerRecord),
+    spend: domainTable<string, SpendRecord>(spendRecord),
     switches: domainTable<string, SwitchRecord>(switchRecord),
   },
 })

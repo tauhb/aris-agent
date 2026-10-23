@@ -4,6 +4,7 @@
  */
 import { randomBytes } from 'node:crypto'
 import type { BotRecord, DepartmentRecord, OwnerRecord, SessionRecord, Tables } from './domain.js'
+import { cleanPolicy, DEFAULT_POLICY, type Policy } from './policy.js'
 
 export const COMMANDER_ID = 'aris'
 /** Tên gọi: chữ thường không dấu, số, `-`, bắt đầu bằng chữ. */
@@ -28,7 +29,7 @@ export interface Template {
   id: string
   name: string
   description: string
-  departments: { id: string; name: string; lead?: string }[]
+  departments: { id: string; name: string; lead?: string; about?: string; policy?: Partial<Policy> }[]
   bots: (BotInput & { handle: string })[]
 }
 
@@ -208,6 +209,9 @@ export class BotStore {
     id?: string
     name: string
     lead?: string | null
+    about?: string | null
+    /** Chỉ các trường gửi lên mới đổi (xem `cleanPolicy`). */
+    policy?: unknown
   }): Promise<DepartmentRecord> {
     const name = clean(input.name, 40)
     if (!name) throw new BotError('Phòng ban cần có tên.')
@@ -219,14 +223,109 @@ export class BotStore {
     const rec: DepartmentRecord = { id, name, order: prev?.order ?? this.departments().length }
     const lead = input.lead === undefined ? prev?.lead : (input.lead ?? undefined)
     if (lead) rec.lead = lead
+    const about = input.about === undefined ? prev?.about : clean(input.about ?? '', 120)
+    if (about) rec.about = about
+    const policy =
+      input.policy === undefined ? prev?.policy : cleanPolicy(input.policy, prev?.policy ?? DEFAULT_POLICY)
+    if (policy) rec.policy = policy
     await this.t.departments.put(id, rec)
     return rec
+  }
+
+  /**
+   * Phòng ban mới (hộp "Phòng ban mới"): mã tự sinh từ tên, không trùng; bot chọn rời phòng cũ
+   * (bot chỉ thuộc một phòng); chính sách ban đầu là mặc định hoặc chép từ phòng khác.
+   */
+  async createDepartment(input: {
+    name: string
+    about?: string
+    bots?: readonly string[]
+    lead?: string
+    copyPolicyFrom?: string
+  }): Promise<DepartmentRecord> {
+    const name = clean(input.name, 40)
+    if (!name) throw new BotError('Phòng ban cần có tên.')
+    if (this.departments().some((d) => d.name.toLowerCase() === name.toLowerCase()))
+      throw new BotError(`Đã có phòng ${name}.`)
+    const base = (suggestHandle(name) || 'phong').replace(/^[^a-z]+/, '') || 'phong'
+    let id = base
+    for (let i = 2; this.t.departments.get(id); i++) id = `${base}-${i}`
+    const bots = (input.bots ?? []).filter((b) => this.t.bots.get(b)?.kind === 'member')
+    if (input.lead && !bots.includes(input.lead)) throw new BotError('Trưởng nhóm phải là bot trong phòng.')
+    const from = input.copyPolicyFrom ? this.t.departments.get(input.copyPolicyFrom)?.policy : undefined
+    const rec = await this.upsertDepartment({
+      id,
+      name,
+      ...(input.about ? { about: input.about } : {}),
+      policy: from ?? DEFAULT_POLICY,
+    })
+    for (const b of bots) await this.moveBot(b, id)
+    return input.lead ? this.upsertDepartment({ id, name, lead: input.lead }) : rec
+  }
+
+  /** Chuyển bot sang phòng khác (`null`: chưa xếp phòng); rời phòng cũ thì thôi làm trưởng nhóm ở đó. */
+  async moveBot(botId: string, department: string | null): Promise<void> {
+    const bot = this.t.bots.get(botId)
+    if (!bot || bot.kind !== 'member') throw new BotError('Không có bot này.')
+    if (department && !this.t.departments.get(department))
+      throw new BotError(`Không có phòng ban ${department}.`)
+    const old = bot.department ? this.t.departments.get(bot.department) : undefined
+    if (old && old.id !== department && old.lead === botId) {
+      const next = { ...old }
+      delete next.lead
+      await this.t.departments.put(old.id, next)
+    }
+    const rec = { ...bot }
+    if (department) rec.department = department
+    else delete rec.department
+    await this.t.bots.put(botId, rec)
+  }
+
+  /** Xoá phòng: bot về "chưa xếp phòng", giữ nguyên hồ sơ, ký ức, model riêng. */
+  async deleteDepartment(id: string): Promise<void> {
+    if (!this.t.departments.get(id)) throw new BotError('Không có phòng ban này.')
+    for (const b of this.list()) if (b.department === id) await this.moveBot(b.id, null)
+    await this.t.departments.delete(id)
+  }
+
+  /** Chính sách áp cho bot: của phòng bot thuộc, không thì mặc định. Commander không theo chính sách phòng. */
+  policyOf(botId: string): { department?: DepartmentRecord; policy: Policy } | undefined {
+    const bot = this.t.bots.get(botId)
+    if (!bot || bot.kind === 'commander') return undefined
+    const department = bot.department ? this.t.departments.get(bot.department) : undefined
+    return department
+      ? { department, policy: department.policy ?? DEFAULT_POLICY }
+      : { policy: DEFAULT_POLICY }
+  }
+
+  /** Model bot chạy: model riêng, không có thì model mặc định của phòng. */
+  effectiveModel(botId: string): { provider: string; model: string } | undefined {
+    return this.t.bots.get(botId)?.model ?? this.policyOf(botId)?.policy.model
+  }
+
+  /** Phòng ban cũ chưa có chính sách: lấy theo đội mẫu cùng mã, không thì mặc định. */
+  async ensurePolicies(templates: readonly Template[]): Promise<void> {
+    for (const d of this.departments()) {
+      if (d.policy) continue
+      const tmpl = templates.flatMap((t) => t.departments).find((x) => x.id === d.id)
+      await this.t.departments.put(d.id, {
+        ...d,
+        ...(tmpl?.about && !d.about ? { about: tmpl.about } : {}),
+        policy: cleanPolicy(tmpl?.policy ?? {}, DEFAULT_POLICY),
+      })
+    }
   }
 
   /** Áp đội mẫu: chỉ thêm, không xoá; tên gọi đã có thì bỏ qua bot đó. */
   async applyTemplate(t: Template): Promise<{ added: string[]; skipped: string[] }> {
     for (const d of t.departments)
-      if (!this.t.departments.get(d.id)) await this.upsertDepartment({ id: d.id, name: d.name })
+      if (!this.t.departments.get(d.id))
+        await this.upsertDepartment({
+          id: d.id,
+          name: d.name,
+          ...(d.about ? { about: d.about } : {}),
+          policy: cleanPolicy(d.policy ?? {}, DEFAULT_POLICY),
+        })
     const added: string[] = []
     const skipped: string[] = []
     const ids = new Map<string, string>()

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { LedgerRecord } from './domain.js'
+import type { LedgerRecord, SpendRecord } from './domain.js'
 import { dayOf, Ledger } from './ledger.js'
 import { costOf, createPrices } from './prices.js'
 import { memTable } from './testing.js'
@@ -50,5 +50,24 @@ describe('giá và sổ chi phí', () => {
       { provider: 'groq', model: 'llama', usd: 0, calls: 1, priced: false },
     ])
     expect(dayOf(now)).toBe('2026-10-23')
+  })
+})
+
+describe('chi phí theo phòng ban', () => {
+  it('cộng theo phạm vi trong ngày; không phạm vi thì không cộng; model chưa có giá không tính', async () => {
+    const prices = {
+      of: (_p: string, m: string) =>
+        m === 'free' ? undefined : { input: 1, output: 2, cacheRead: 0, cacheWrite: 0 },
+    } as never
+    const spend = memTable<SpendRecord>()
+    const ledger = new Ledger(memTable<LedgerRecord>(), prices, spend)
+    const at = Date.UTC(2026, 9, 24, 3)
+    const u = { inputTokens: 1_000_000, outputTokens: 0 }
+    await ledger.record('p', 'm', u, at, 'ky-thuat')
+    await ledger.record('p', 'm', u, at, 'ky-thuat')
+    await ledger.record('p', 'm', u, at)
+    await ledger.record('p', 'free', u, at, 'ky-thuat')
+    expect(ledger.spentToday(at)).toEqual({ 'ky-thuat': 2 })
+    expect(ledger.spentToday(at + 86_400_000)).toEqual({})
   })
 })

@@ -26,9 +26,26 @@ export const botRecord = z.object({
 })
 export type BotRecord = z.infer<typeof botRecord>
 
+/** Chính sách chung của phòng ban (xem `policy.ts`). */
+export const policyRecord = z.object({
+  /** Model mặc định cho bot chưa đặt model riêng. */
+  model: modelRef.optional(),
+  /** Trần chi phí mỗi ngày của cả phòng (USD); không có là không giới hạn. */
+  budgetUsd: z.number().nonnegative().optional(),
+  /** Chạm trần: dừng việc mới, hay chỉ báo. */
+  onBudget: z.enum(['stop', 'warn']),
+  web: z.boolean(),
+  write: z.boolean(),
+  shell: z.boolean(),
+})
+export type PolicyRecord = z.infer<typeof policyRecord>
+
 export const departmentRecord = z.object({
   id: z.string(),
   name: z.string(),
+  /** Phòng làm gì (dòng phụ của trang Phòng ban). */
+  about: z.string().optional(),
+  policy: policyRecord.optional(),
   /** Mã nội bộ của bot trưởng nhóm. */
   lead: z.string().optional(),
   order: z.number().int(),

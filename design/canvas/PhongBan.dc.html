@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Phòng ban Vận hành</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2,h3{font-family:'Lexend',sans-serif;letter-spacing:-.01em;margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FCEBE9}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18}
+button,select,input{font-family:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:36px;padding:0 14px;border:0;border-radius:10px;background:var(--ink);color:var(--panel);font-size:13px;font-weight:600;white-space:nowrap}
+.b2{height:36px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font-size:13px;white-space:nowrap}
+.bs{height:30px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-size:12.5px;white-space:nowrap}
+.bg{height:30px;padding:0 10px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:12.5px;white-space:nowrap}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.ch{padding:12px 14px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.r{display:flex;align-items:center;gap:12px;padding:11px 14px;border-top:1px solid var(--line);font-size:13.5px;flex-wrap:wrap}
+.m{color:var(--muted)}
+.lb{font-size:12px;font-weight:600;color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;background:var(--accentSoft);color:var(--accent);white-space:nowrap}
+.tag{font-size:11.5px;border-radius:6px;padding:1px 7px;background:var(--panel2);color:var(--muted);white-space:nowrap}
+.inp{height:34px;box-sizing:border-box;border:1px solid var(--line);border-radius:9px;background:var(--panel);font-size:13px;padding:0 10px}
+.sw{width:36px;height:20px;border-radius:999px;border:0;padding:2px;display:inline-flex;flex:none}
+.knob{width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.chip{height:32px;border:1px solid var(--line);border-radius:999px;background:var(--panel);padding:0 12px;font-size:12.5px;display:inline-flex;align-items:center;gap:6px}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="position: relative; background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="none" bot="none" hint-size="260px,900px"></dc-import>
+
+  <main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 18px 24px 14px; border-bottom: 1px solid var(--line)">
+      <div style="display: flex; flex-direction: column; min-width: 0">
+        <h1 style="font-size: 20px">Phòng Vận hành</h1>
+        <span class="m" style="font-size: 13px">2 bot · trưởng nhóm Mai · việc giấy tờ, lịch, thư, chi tiêu</span>
+      </div>
+      <div style="margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
+        <button type="button" class="b2" onClick="{{openCreate}}">+ Phòng ban mới</button>
+        <a href="TaoBot.dc.html" class="b2" style="display: inline-flex; align-items: center; text-decoration: none">Thêm bot</a>
+        <button type="button" class="ib" aria-label="Thêm thao tác: đổi tên, xoá phòng" onClick="{{toggleMore}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg></button>
+        <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+      </div>
+      <sc-if value="{{more}}" hint-placeholder-val="{{ false }}">
+        <div class="card" role="menu" aria-label="Thao tác phòng" style="position: absolute; right: 70px; top: 62px; z-index: 5; width: 230px; padding: 6px; box-shadow: 0 8px 24px rgba(0,0,0,.12)">
+          <button type="button" role="menuitem" class="bg" style="width: 100%; text-align: left; color: var(--ink); height: 34px">Đổi tên phòng</button>
+          <button type="button" role="menuitem" class="bg" style="width: 100%; text-align: left; color: var(--danger); height: 34px" onClick="{{askDelete}}">Xoá phòng…</button>
+        </div>
+      </sc-if>
+    </header>
+
+    <sc-if value="{{dirty}}" hint-placeholder-val="{{ false }}">
+      <div style="margin: 14px 24px 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border: 1px solid var(--accent); background: var(--accentSoft); border-radius: 12px; padding: 10px 14px; font-size: 13px">
+        <span style="flex: 1; min-width: 200px">Chính sách đã đổi, chưa lưu. Lưu là áp cho việc mới của mọi bot trong phòng; việc đang chạy giữ quyền lúc bắt đầu.</span>
+        <button type="button" class="bg" onClick="{{reset}}">Huỷ thay đổi</button>
+        <button type="button" class="b1" style="height: 32px" onClick="{{save}}">Lưu chính sách</button>
+      </div>
+    </sc-if>
+
+    <div style="flex: 1; padding: 16px 24px 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+      <div style="flex: 1 1 340px; min-width: 0; max-width: 460px; display: flex; flex-direction: column; gap: 16px">
+        <section class="card" aria-label="Thành viên">
+          <div class="ch"><h3 style="font-size: 14px">Thành viên</h3><span class="m" style="font-size: 12.5px">2 bot</span></div>
+          <div class="r">
+            <svg width="30" height="30" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><circle cx="44" cy="58" r="8" fill="#fff"></circle><circle cx="61" cy="58" r="8" fill="#fff"></circle></svg>
+            <span style="flex: 1; min-width: 120px"><b>Mai</b><span class="m" style="display: block; font-size: 12.5px">Thư ký · lịch, thư, giấy tờ</span></span>
+            <span class="pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 8l4 4 4-6 4 6 4-4-1.5 10h-13z"></path></svg>Trưởng nhóm</span>
+            <a href="HoSoBot.dc.html" class="bg" style="display: inline-flex; align-items: center; text-decoration: none">Hồ sơ</a>
+          </div>
+          <div class="r">
+            <svg width="30" height="30" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M39 50h9M55 49h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg>
+            <span style="flex: 1; min-width: 120px"><b>Tín</b><span class="m" style="display: block; font-size: 12.5px">Tài chính · số dư, chi tiêu, hoá đơn</span></span>
+            <button type="button" class="bg">Đặt làm trưởng nhóm</button>
+            <label class="m" style="font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px">Chuyển
+              <select class="inp" style="height: 30px; font-size: 12.5px" aria-label="Chuyển Tín sang phòng khác">
+                <option>Vận hành</option>
+                <option>Nghiên cứu</option>
+                <option>Sáng tạo · Kỹ thuật</option>
+              </select>
+            </label>
+            <a href="HoSoBot.dc.html" class="bg" style="display: inline-flex; align-items: center; text-decoration: none">Hồ sơ</a>
+          </div>
+        </section>
+
+        <section class="card" aria-label="Việc lớn phòng đang nhận">
+          <div class="ch"><h3 style="font-size: 14px">Việc lớn phòng đang nhận</h3></div>
+          <div class="m" style="padding: 0 14px 10px; font-size: 12.5px">Aris giao việc lớn cho cả phòng; trưởng nhóm lập đội riêng, chia cho thành viên rồi nộp kết quả vào thẻ Kanban của dự án.</div>
+          <div class="r">
+            <span style="flex: 1; min-width: 160px"><b>Rà soát chi tiêu tháng 10</b><span class="m" style="display: block; font-size: 12.5px">Dự án Rà soát chi tiêu tháng · Mai chia 4 thẻ</span></span>
+            <span class="tag">2/4 xong</span>
+            <a href="Kanban.dc.html" class="bg" style="display: inline-flex; align-items: center; text-decoration: none">Xem thẻ ›</a>
+          </div>
+          <div class="r">
+            <span style="flex: 1; min-width: 160px"><b>Gom hoá đơn quý 3 cho kế toán</b><span class="m" style="display: block; font-size: 12.5px">Dự án Kế hoạch quý 4 · đang chờ anh duyệt gửi thư</span></span>
+            <span class="tag" style="background: var(--warnSoft); color: var(--warn)">cần anh</span>
+          </div>
+        </section>
+      </div>
+
+      <section class="card" aria-label="Chính sách chung" style="flex: 1.4 1 420px; min-width: 0">
+        <div class="ch"><h3 style="font-size: 14px">Chính sách chung</h3><span class="m" style="font-size: 12.5px">áp cho mọi bot của phòng</span></div>
+
+        <div class="r" style="align-items: flex-start">
+          <span style="flex: 1; min-width: 200px"><b>Model mặc định</b><span class="m" style="display: block; font-size: 12.5px">Bot đặt model riêng ở hồ sơ thì giữ model riêng.</span></span>
+          <select class="inp" aria-label="Model mặc định của phòng" onChange="{{touch}}" style="min-width: 220px">
+            <option>Theo cài đặt chung</option>
+            <option>DeepSeek · deepseek-chat</option>
+            <option>DeepSeek · deepseek-reasoner</option>
+            <option>Anthropic · Claude Haiku 5.5</option>
+          </select>
+          <span class="m" style="flex-basis: 100%; font-size: 12px">Tín dùng model riêng: Anthropic · Claude Sonnet 5.5</span>
+        </div>
+
+        <div class="r" style="align-items: flex-start">
+          <span style="flex: 1; min-width: 200px"><b>Ngân sách mỗi ngày</b><span class="m" style="display: block; font-size: 12.5px">Tính chung cho cả phòng, theo bảng giá model.</span></span>
+          <label style="display: inline-flex; align-items: center; gap: 6px"><input class="inp" type="text" inputmode="decimal" value="2,00" aria-label="Ngân sách mỗi ngày (USD)" onInput="{{touch}}" style="width: 80px; text-align: right"><span class="m" style="font-size: 13px">USD</span></label>
+          <span style="flex-basis: 100%; display: flex; align-items: center; gap: 10px">
+            <span style="flex: 1; height: 6px; border-radius: 999px; background: var(--panel2); overflow: hidden"><span style="display: block; width: 21%; height: 100%; background: var(--ok)"></span></span>
+            <span class="m" style="font-size: 12px; white-space: nowrap">Hôm nay 0,42 / 2,00 USD</span>
+          </span>
+          <span style="flex-basis: 100%; display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
+            <span class="m" style="font-size: 12.5px">Khi chạm trần:</span>
+            <button type="button" class="chip" aria-pressed="{{hit.stop}}" style="{{hitStyle.stop}}" onClick="{{pickStop}}">Dừng việc mới và báo anh</button>
+            <button type="button" class="chip" aria-pressed="{{hit.warn}}" style="{{hitStyle.warn}}" onClick="{{pickWarn}}">Chỉ báo, vẫn chạy</button>
+          </span>
+        </div>
+
+        <div class="ch" style="border-top: 1px solid var(--line); padding-top: 14px"><b style="font-size: 13.5px">Quyền</b><span class="m" style="font-size: 12.5px">bot làm được gì khi được giao việc</span></div>
+        <div class="r">
+          <span style="flex: 1; min-width: 200px">Đọc tệp trong thư mục dự án<span class="m" style="display: block; font-size: 12.5px">Luôn bật để bot làm được việc</span></span>
+          <span class="tag">luôn bật</span>
+        </div>
+        <div class="r">
+          <span style="flex: 1; min-width: 200px">Tìm và đọc web</span>
+          <button type="button" role="switch" class="sw" aria-checked="{{on.web}}" aria-label="Tìm và đọc web" style="{{swStyle.web}}" onClick="{{flip.web}}"><span class="knob"></span></button>
+        </div>
+        <div class="r">
+          <span style="flex: 1; min-width: 200px">Ghi, sửa tệp trong thư mục dự án<span class="m" style="display: block; font-size: 12.5px">Ngoài thư mục dự án luôn bị chặn</span></span>
+          <button type="button" role="switch" class="sw" aria-checked="{{on.write}}" aria-label="Ghi, sửa tệp trong thư mục dự án" style="{{swStyle.write}}" onClick="{{flip.write}}"><span class="knob"></span></button>
+        </div>
+        <div class="r">
+          <span style="flex: 1; min-width: 200px">Chạy lệnh terminal<span class="m" style="display: block; font-size: 12.5px">Trong thư mục dự án. Mặc định chỉ phòng Kỹ thuật bật.</span></span>
+          <button type="button" role="switch" class="sw" aria-checked="{{on.shell}}" aria-label="Chạy lệnh terminal" style="{{swStyle.shell}}" onClick="{{flip.shell}}"><span class="knob"></span></button>
+        </div>
+        <div class="r">
+          <span style="flex: 1; min-width: 200px">Thao tác cần anh duyệt<span class="m" style="display: block; font-size: 12.5px">Gửi thư, tin ra ngoài, xoá tệp, lệnh nguy hiểm. Bị từ chối kèm lý do cho tới khi có Hộp duyệt.</span></span>
+          <span class="tag" style="background: var(--dangerSoft); color: var(--danger)">từ chối</span>
+        </div>
+        <div class="r" style="background: var(--panel2); border-radius: 0 0 12px 12px">
+          <span class="m" style="flex: 1; font-size: 12.5px">Sắp có: skill dùng chung và vùng Second Brain của phòng.</span>
+          <span class="tag">sắp có</span>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <sc-if value="{{create}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; z-index: 10; background: rgba(15,16,19,.45); display: flex; align-items: flex-start; justify-content: center; padding: 70px 16px">
+      <div class="card" role="dialog" aria-modal="true" aria-label="Phòng ban mới" style="width: 100%; max-width: 520px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 16px 48px rgba(0,0,0,.25)">
+        <div style="display: flex; align-items: center"><h2 style="font-size: 17px">Phòng ban mới</h2><button type="button" class="ib" aria-label="Đóng" style="margin-left: auto" onClick="{{closeCreate}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+        <span class="m" style="font-size: 13px; margin-top: -8px">Nhóm bot bền, có trưởng nhóm và chính sách chung. Aris giao việc lớn cho cả phòng.</span>
+        <label style="display: flex; flex-direction: column; gap: 6px"><span class="lb">Tên phòng</span><input class="inp" type="text" value="Bán hàng"></label>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span class="lb">Bot trong phòng</span>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap">
+            <button type="button" class="chip" aria-pressed="true" style="border-color: var(--accent); color: var(--accent); background: var(--accentSoft); font-weight: 600">Lâm · Nghiên cứu</button>
+            <button type="button" class="chip" aria-pressed="false">Hạ · Sáng tạo</button>
+            <button type="button" class="chip" aria-pressed="false">Dev · Kỹ thuật</button>
+          </div>
+          <span class="m" style="font-size: 12px">Bot chọn ở đây rời phòng cũ. Bot chỉ thuộc một phòng.</span>
+        </div>
+        <label style="display: flex; flex-direction: column; gap: 6px"><span class="lb">Trưởng nhóm</span><select class="inp"><option>Lâm</option></select></label>
+        <label style="display: flex; flex-direction: column; gap: 6px"><span class="lb">Chính sách ban đầu</span><select class="inp"><option>Mặc định: web và ghi tệp, không chạy lệnh</option><option>Chép từ phòng Vận hành</option><option>Chép từ phòng Sáng tạo · Kỹ thuật</option></select></label>
+        <div style="display: flex; gap: 8px; justify-content: flex-end; padding-top: 4px"><button type="button" class="b2" onClick="{{closeCreate}}">Huỷ</button><button type="button" class="b1" onClick="{{closeCreate}}">Tạo phòng ban</button></div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{del}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; z-index: 10; background: rgba(15,16,19,.45); display: flex; align-items: flex-start; justify-content: center; padding: 120px 16px">
+      <div class="card" role="dialog" aria-modal="true" aria-label="Xoá phòng Vận hành" style="width: 100%; max-width: 440px; padding: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 16px 48px rgba(0,0,0,.25)">
+        <h2 style="font-size: 17px">Xoá phòng Vận hành?</h2>
+        <span class="m" style="font-size: 13px">Mai và Tín về nhóm "Chưa xếp phòng", giữ nguyên hồ sơ, ký ức và model riêng. Chính sách của phòng bị xoá. Việc lớn đang chạy vẫn chạy tới xong.</span>
+        <div style="display: flex; gap: 8px; justify-content: flex-end"><button type="button" class="b2" onClick="{{closeDelete}}">Huỷ</button><button type="button" class="b1" style="background: var(--danger)" onClick="{{closeDelete}}">Xoá phòng</button></div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const on = Object.assign({ web: true, write: true, shell: false }, s.on || {});
+    const hitMode = s.hit || 'stop';
+    const sw = (v) => 'background:' + (v ? 'var(--accent)' : 'var(--line)') + ';justify-content:' + (v ? 'flex-end' : 'flex-start');
+    const onStr = {}, swStyle = {}, flip = {};
+    ['web', 'write', 'shell'].forEach((k) => {
+      onStr[k] = on[k] ? 'true' : 'false';
+      swStyle[k] = sw(on[k]);
+      flip[k] = () => this.setState({ on: Object.assign({}, on, { [k]: !on[k] }), dirty: true });
+    });
+    const picked = 'border-color: var(--accent); color: var(--accent); background: var(--accentSoft); font-weight: 600';
+    return {
+      themeClass: 't-' + theme,
+      on: onStr, swStyle: swStyle, flip: flip,
+      hit: { stop: hitMode === 'stop' ? 'true' : 'false', warn: hitMode === 'warn' ? 'true' : 'false' },
+      hitStyle: { stop: hitMode === 'stop' ? picked : '', warn: hitMode === 'warn' ? picked : '' },
+      pickStop: () => this.setState({ hit: 'stop', dirty: true }),
+      pickWarn: () => this.setState({ hit: 'warn', dirty: true }),
+      touch: () => this.setState({ dirty: true }),
+      dirty: !!s.dirty,
+      reset: () => this.setState({ dirty: false, on: null, hit: null }),
+      save: () => this.setState({ dirty: false }),
+      more: !!s.more,
+      toggleMore: () => this.setState({ more: !s.more }),
+      askDelete: () => this.setState({ more: false, del: true }),
+      del: !!s.del,
+      closeDelete: () => this.setState({ del: false }),
+      create: !!s.create,
+      openCreate: () => this.setState({ create: true }),
+      closeCreate: () => this.setState({ create: false }),
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -23,6 +23,7 @@ import { handleApi } from './api.js'
 import { botsDomain, type ActivityRecord, type Table, type Tables } from './domain.js'
 import { LiveTracker } from './live.js'
 import { renderPersona } from './persona.js'
+import { denyReason, needOf } from './policy.js'
 import { BotStore } from './store.js'
 import { loadTemplates } from './templates.js'
 
@@ -67,6 +68,7 @@ export async function apply(ctx: Context): Promise<void> {
   ) as unknown as Tables
   const store = new BotStore(tables)
   await store.ensureCommander()
+  await store.ensurePolicies(await loadTemplates())
 
   // Việc gần đây lưu bền: giữ 30 mục mới nhất, nạp lại khi khởi động.
   const activity = domain.table('activity') as unknown as Table<ActivityRecord>
@@ -138,6 +140,20 @@ export async function apply(ctx: Context): Promise<void> {
     }),
   )
 
+  // Quyền theo chính sách phòng ban (2.6): bot thường dùng công cụ ngoài quyền thì bị chặn kèm lý do.
+  ctx.on(
+    'tools/pre-execute',
+    async (exec, next) => {
+      const sid = exec.agent?.session.id
+      const need = needOf(exec.name, exec.arguments)
+      if (!sid || !need) return next()
+      const p = store.policyOf(store.botOf(sid).id)
+      if (p && !p.policy[need]) return { kind: 'deny', reason: denyReason(need, p.department?.name) }
+      return next()
+    },
+    true,
+  )
+
   // Trạng thái trực tiếp: lượt bắt đầu, kết thúc; đợi anh duyệt hoặc trả lời.
   ctx.on('session/event', (session, event) => {
     if (event.type === 'turn/start') live.turnStart(session.id)
@@ -189,12 +205,14 @@ export async function apply(ctx: Context): Promise<void> {
     const home = await ensureHome(ctx.workspaceRegistry as never)
     const { sessionId } = await ctx.sessionController.create({ workspaceId: home.workspaceId as never })
     if (bot.kind !== 'commander') await store.tag(sessionId, bot.id, 'open')
-    if (bot.model)
+    // Model riêng của bot, không có thì model mặc định của phòng.
+    const model = store.effectiveModel(bot.id)
+    if (model)
       await ctx.sessionController
         .selectModel({
           sessionId: SessionId(sessionId),
-          provider: bot.model.provider,
-          model: bot.model.model,
+          provider: model.provider,
+          model: model.model,
         })
         .catch((e: unknown) => logger.warn('chọn model cho %s: %s', bot.handle, String(e)))
     return sessionId
@@ -223,6 +241,8 @@ export async function apply(ctx: Context): Promise<void> {
               open,
               catalog,
               live: () => live.snapshot(store.list().map((b) => b.id)),
+              spend: () =>
+                (ctx.get('arisSpend') as { today(): Record<string, number> } | undefined)?.today() ?? {},
             },
             request,
           ),

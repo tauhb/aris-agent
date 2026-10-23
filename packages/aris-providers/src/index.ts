@@ -17,7 +17,7 @@ import { chainOf, handleState } from './api.js'
 import { providersDomain, type Link, type SwitchRecord, type Table } from './domain.js'
 import { classify, Router, type Failure } from './fallback.js'
 import { KeyPools } from './keys.js'
-import { Ledger } from './ledger.js'
+import { dayOf, Ledger } from './ledger.js'
 import { createPrices } from './prices.js'
 import { probe, probeInputError } from './probe.js'
 
@@ -101,8 +101,32 @@ export async function apply(ctx: Context): Promise<void> {
   const chain = t('chain') as Table<{ links: Link[] }>
   const switches = t('switches') as Table<SwitchRecord>
 
+  // Bot và phòng ban của phiên (gói @aris/bots); không có gói đó thì coi như phiên của Commander.
+  const arisBots = () =>
+    ctx.get('arisBots') as
+      | {
+          store: {
+            tagOf(id: string): { bot: string; via: string } | undefined
+            botOf(id: string): { id: string; kind: string; department?: string }
+            effectiveModel(id: string): Link | undefined
+            policyOf(id: string):
+              | {
+                  department?: { id: string; name: string }
+                  policy: { budgetUsd?: number; onBudget: 'stop' | 'warn' }
+                }
+              | undefined
+          }
+        }
+      | undefined
+  const departmentOf = (sessionId: string) => {
+    const bot = arisBots()?.store.botOf(sessionId)
+    return bot?.kind === 'member' ? bot.department : undefined
+  }
+
   const prices = createPrices()
-  const ledger = new Ledger(t('ledger'), prices)
+  const ledger = new Ledger(t('ledger'), prices, t('spend'))
+  // Chi phí hôm nay theo phòng ban: @aris/bots đọc để áp trần ngân sách và hiện ở trang Phòng ban.
+  ctx.provide('arisSpend', { today: () => ledger.spentToday() })
   const pools = new KeyPools(t('pools'), {
     resolve: async (ref) => (await ctx.credentials.resolve(credentialRef(ref)))?.value,
     set: (ref, value) => ctx.credentials.set(credentialRef(ref), value),
@@ -166,19 +190,12 @@ export async function apply(ctx: Context): Promise<void> {
     },
     recall: (sessionId) => switches.get(sessionId.replace(/[^A-Za-z0-9-]/g, '-')),
     botModel(sessionId) {
-      // Phiên bot được giao việc (thành viên đội) dùng model riêng của bot; phiên chat thẳng
-      // với bot đã chọn model lúc mở nên không đè lựa chọn của anh.
-      const bots = ctx.get('arisBots') as
-        | {
-            store: {
-              tagOf(id: string): { bot: string; via: string } | undefined
-              get(id: string): { model?: Link } | undefined
-            }
-          }
-        | undefined
+      // Phiên bot được giao việc (thành viên đội) dùng model riêng của bot, không có thì model
+      // mặc định của phòng; phiên chat thẳng với bot đã chọn model lúc mở nên không đè lựa chọn của anh.
+      const bots = arisBots()
       const tag = bots?.store.tagOf(sessionId)
       if (!tag || tag.via === 'open') return undefined
-      return bots!.store.get(tag.bot)?.model
+      return bots!.store.effectiveModel(tag.bot)
     },
     logger,
   })
@@ -204,6 +221,60 @@ export async function apply(ctx: Context): Promise<void> {
   )
   // Gắn dòng báo vào bước kế tiếp (cùng cách dsh báo đổi model): bước sau tool trong lượt này,
   // hoặc bước đầu của lượt sau. Không tốn thêm lần gọi model nào.
+  // Trần ngân sách mỗi ngày của phòng ban (2.6). "Dừng": bước đầu của lượt nhận lời báo để bot
+  // trả lời một câu (người giao việc biết vì sao dừng), các bước sau bị từ chối. "Chỉ báo": ghi nhật ký.
+  const budgetNoticed = new Set<string>()
+  const usd = (n: number) => n.toFixed(2).replace('.', ',')
+  const budgetWarned = new Set<string>()
+  ctx.on(
+    'agent/pre-step',
+    async ({ agent, turn, signal }, next) => {
+      const decision = await next()
+      if (decision.kind === 'reject' || signal.aborted) return decision
+      const id = (agent as unknown as AgentLike).session.id
+      const bots = arisBots()
+      const bot = bots?.store.botOf(id)
+      const pol = bot?.kind === 'member' ? bots!.store.policyOf(bot.id) : undefined
+      const dep = pol?.department
+      const budget = pol?.policy.budgetUsd
+      if (!dep || budget === undefined) return decision
+      const spent = ledger.spentToday()[dep.id] ?? 0
+      if (spent < budget) return decision
+      if (pol!.policy.onBudget === 'warn') {
+        const key = `${dayOf(Date.now())}-${dep.id}`
+        if (!budgetWarned.has(key)) {
+          budgetWarned.add(key)
+          logger.warn(
+            'phòng %s vượt trần ngân sách hôm nay (%s / %s USD)',
+            dep.name,
+            spent.toFixed(2),
+            budget,
+          )
+        }
+        return decision
+      }
+      const key = `${id}#${turn}`
+      if (budgetNoticed.has(key)) return { kind: 'reject' }
+      budgetNoticed.add(key)
+      return {
+        ...decision,
+        messages: [
+          ...decision.messages,
+          createUserMessage({
+            content: [
+              {
+                type: 'text',
+                text: `Phòng ${dep.name} đã dùng hết ngân sách hôm nay (${usd(spent)} / ${usd(budget)} USD). Không làm tiếp việc này, không gọi công cụ; trả lời đúng một câu ngắn báo việc dừng vì phòng hết ngân sách hôm nay.`,
+              },
+            ],
+            source: { kind: 'aris-provider', form: 'notice', summary: `hết ngân sách phòng ${dep.name}` },
+          }) as (typeof decision.messages)[number],
+        ],
+      }
+    },
+    true,
+  )
+
   ctx.on(
     'agent/pre-step',
     async ({ agent, messages, signal, step }, next) => {
@@ -220,6 +291,7 @@ export async function apply(ctx: Context): Promise<void> {
   )
   ctx.on('session/event', (session, event) => {
     if (event.type === 'turn/end') {
+      for (const k of budgetNoticed) if (k.startsWith(`${session.id}#`)) budgetNoticed.delete(k)
       router.forget(session.id)
       agents.delete(session.id)
       return
@@ -237,7 +309,9 @@ export async function apply(ctx: Context): Promise<void> {
       usage.totalTokens ??
         usage.inputTokens + usage.outputTokens + (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0),
     )
-    ledger.record(provider, model, usage).catch((e: unknown) => logger.warn('sổ chi phí: %s', String(e)))
+    ledger
+      .record(provider, model, usage, Date.now(), departmentOf(session.id))
+      .catch((e: unknown) => logger.warn('sổ chi phí: %s', String(e)))
   })
 
   ctx.inject(['connection'], (ctx) => {

@@ -52,6 +52,7 @@ export {
   type OwnerAddress,
   type RolePreset,
   type DepartmentData,
+  type PolicyData,
   type TeamSnapshot,
   type TeamView,
   type TemplateData,

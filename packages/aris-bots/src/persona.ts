@@ -3,6 +3,7 @@
  * mỗi lần dựng prompt nên sửa hồ sơ bot có hiệu lực từ bước kế tiếp.
  */
 import type { BotRecord, DepartmentRecord, OwnerRecord } from './domain.js'
+import { DEFAULT_POLICY } from './policy.js'
 
 type Owner = Omit<OwnerRecord, 'updatedAt'>
 
@@ -40,6 +41,19 @@ export function renderPersona(
   if (me.description) lines.push(`Việc của bạn: ${me.description}`)
   if (me.soul) lines.push(`Tính cách và cách làm việc: ${me.soul}`)
   lines.push(...renderAddress(owner))
+  if (me.kind === 'member') {
+    // Quyền theo chính sách phòng: nói trước để bot không thử công cụ bị chặn.
+    const p = dept(me.department)?.policy ?? DEFAULT_POLICY
+    const off = [
+      !p.web && 'tìm và đọc web',
+      !p.write && 'ghi, sửa tệp',
+      !p.shell && 'chạy lệnh terminal',
+    ].filter(Boolean)
+    if (off.length)
+      lines.push(
+        `Quyền của bạn (${dept(me.department) ? `chính sách phòng ${dept(me.department)!.name}` : 'bot chưa xếp phòng'}): không được ${off.join(', ')}. Việc cần các quyền đó thì báo người giao việc hoặc nhờ đồng đội có quyền.`,
+      )
+  }
   const others = team.filter((b) => b.id !== me.id)
   if (others.length) {
     lines.push(

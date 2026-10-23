@@ -21,10 +21,22 @@ export interface BotData {
   createdAt: string
 }
 
+/** Chính sách chung của phòng ban (bản vẽ 2.6). */
+export interface PolicyData {
+  model?: { provider: string; model: string }
+  budgetUsd?: number
+  onBudget: 'stop' | 'warn'
+  web: boolean
+  write: boolean
+  shell: boolean
+}
+
 export interface DepartmentData {
   id: string
   name: string
   lead?: string
+  about?: string
+  policy?: PolicyData
   order: number
 }
 
@@ -57,6 +69,8 @@ export interface TeamSnapshot {
   catalog?: CatalogGroup[]
   /** Vai mẫu (từ các đội mẫu) để điền sẵn khi tạo bot. */
   roles?: RolePreset[]
+  /** Chi phí hôm nay theo phòng ban (USD). */
+  spend?: Record<string, number>
 }
 
 export interface RolePreset {
@@ -91,9 +105,22 @@ const listeners = new Set<() => void>()
 let timer: ReturnType<typeof setInterval> | undefined
 let loading: Promise<void> | undefined
 
+/** Sự kiện trên `window` báo đội vừa đổi: mỗi gói client giữ bản đội riêng, nghe nhau qua đây. */
+const CHANGED = 'aris:team-changed'
+
 function set(next: TeamSnapshot) {
   snap = next
   for (const l of listeners) l()
+}
+
+let listening = false
+function listenOthers() {
+  if (listening || typeof window === 'undefined') return
+  listening = true
+  window.addEventListener(CHANGED, (e) => {
+    const next = (e as CustomEvent<TeamSnapshot>).detail
+    if (next && next !== snap) set(next)
+  })
 }
 
 /** Tải lại đội (sau khi sửa ở nơi khác hoặc định kỳ). */
@@ -118,7 +145,11 @@ export async function teamAction<R = TeamSnapshot>(body: Record<string, unknown>
   })
   const out = (await res.json().catch(() => ({}))) as R & { error?: string; bots?: unknown }
   if (!res.ok) throw new Error(out.error ?? `HTTP ${res.status}`)
-  if (out.bots) set(out as unknown as TeamSnapshot)
+  if (out.bots) {
+    set(out as unknown as TeamSnapshot)
+    // Thanh bên, cột phải… (gói khác) cập nhật ngay thay vì đợi lần tải định kỳ.
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(CHANGED, { detail: snap }))
+  }
   return out
 }
 
@@ -168,6 +199,7 @@ export async function openBotSession(id: string, fresh = false): Promise<string>
 }
 
 function subscribe(fn: () => void) {
+  listenOthers()
   listeners.add(fn)
   if (!snap) void refreshTeam()
   timer ??= setInterval(() => void refreshTeam(), 30_000)
@@ -245,6 +277,8 @@ export interface TeamView {
   roles: RolePreset[]
   /** Cách xưng hô với người dùng. */
   owner: OwnerAddress
+  /** Chi phí hôm nay theo phòng ban (USD). */
+  spend: Record<string, number>
 }
 
 /** Gom đội theo phòng ban, dạng các thành phần hiện có đang dùng. */
@@ -262,17 +296,16 @@ export function teamView(d: TeamSnapshot | null, noDepartment = '', l: TeamLive 
       catalog: [],
       roles: [],
       owner: {},
+      spend: {},
     }
   const cmd = d.bots.find((b) => b.kind === 'commander')
   const others = d.bots.filter((b) => b.kind !== 'commander')
-  const groups: TeamGroup[] = d.departments
-    .map((dep) => ({
-      id: dep.id,
-      label: dep.name,
-      lead: dep.lead ?? '',
-      members: others.filter((b) => b.department === dep.id).map(m),
-    }))
-    .filter((g) => g.members.length > 0)
+  const groups: TeamGroup[] = d.departments.map((dep) => ({
+    id: dep.id,
+    label: dep.name,
+    lead: dep.lead ?? '',
+    members: others.filter((b) => b.department === dep.id).map(m),
+  }))
   const loose = others.filter((b) => !b.department || !d.departments.some((x) => x.id === b.department))
   if (loose.length) groups.push({ id: '', label: noDepartment, lead: '', members: loose.map(m) })
   return {
@@ -286,6 +319,7 @@ export function teamView(d: TeamSnapshot | null, noDepartment = '', l: TeamLive 
     catalog: d.catalog ?? [],
     roles: d.roles ?? [],
     owner: d.owner ?? {},
+    spend: d.spend ?? {},
   }
 }
 

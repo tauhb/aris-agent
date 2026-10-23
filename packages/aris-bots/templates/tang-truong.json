@@ -6,17 +6,35 @@
     {
       "id": "tang-truong",
       "name": "Tăng trưởng",
-      "lead": "tho"
+      "lead": "tho",
+      "about": "nghiên cứu, nội dung, bán hàng",
+      "policy": {
+        "web": true,
+        "write": true,
+        "shell": false
+      }
     },
     {
       "id": "van-hanh",
       "name": "Vận hành",
-      "lead": "an"
+      "lead": "an",
+      "about": "lịch, thư, giấy tờ, chi tiêu",
+      "policy": {
+        "web": true,
+        "write": true,
+        "shell": false
+      }
     },
     {
       "id": "ky-thuat",
       "name": "Kỹ thuật",
-      "lead": "khoa"
+      "lead": "khoa",
+      "about": "mã, hệ thống, dữ liệu",
+      "policy": {
+        "web": true,
+        "write": true,
+        "shell": true
+      }
     }
   ],
   "bots": [

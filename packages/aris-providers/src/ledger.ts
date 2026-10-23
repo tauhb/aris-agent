@@ -1,6 +1,6 @@
 /** Sổ chi phí: cộng dồn số token và tiền của mỗi lần gọi model theo ngày, provider, model. */
 import { createHash } from 'node:crypto'
-import type { LedgerRecord, Table } from './domain.js'
+import type { LedgerRecord, SpendRecord, Table } from './domain.js'
 import { costOf, type Prices, type Usage } from './prices.js'
 
 /** Ngày theo giờ máy, dạng `2026-10-23`. */
@@ -24,12 +24,26 @@ export class Ledger {
   constructor(
     private table: Table<LedgerRecord>,
     private prices: Prices,
+    /** Chi phí theo phạm vi (phòng ban); không có thì không ghi. */
+    private spend?: Table<SpendRecord>,
   ) {}
 
-  async record(provider: string, model: string, usage: Usage, at = Date.now()): Promise<void> {
+  /** Ghi một lần gọi; `scope` (phòng ban của bot) thì cộng thêm vào chi phí ngày của phạm vi đó. */
+  async record(
+    provider: string,
+    model: string,
+    usage: Usage,
+    at = Date.now(),
+    scope?: string,
+  ): Promise<void> {
     const day = dayOf(at)
     const key = keyOf(day, provider, model)
     const price = this.prices.of(provider, model)
+    if (scope && this.spend && price) {
+      const sk = `${day}-${scope}`.replace(/[^A-Za-z0-9-]/g, '-')
+      const prev = this.spend.get(sk)
+      await this.spend.put(sk, { day, scope, usd: (prev?.usd ?? 0) + costOf(price, usage) })
+    }
     const prev = this.table.get(key) ?? {
       day,
       provider,
@@ -52,6 +66,15 @@ export class Ledger {
       usd: prev.usd + (price ? costOf(price, usage) : 0),
       priced: prev.priced && price !== undefined,
     })
+  }
+
+  /** Chi phí hôm nay theo phạm vi. */
+  spentToday(now = Date.now()): Record<string, number> {
+    const day = dayOf(now)
+    const out: Record<string, number> = {}
+    for (const [, r] of this.spend?.entries() ?? [])
+      if (r.day === day) out[r.scope] = (out[r.scope] ?? 0) + r.usd
+    return out
   }
 
   summary(now = Date.now()): CostSummary {

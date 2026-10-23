@@ -210,6 +210,9 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-sys{padding:20px 28px;overflow-y:auto}
 .aris .ap-model-select{height:32px;min-width:200px;max-width:260px;padding:0 8px;font-size:13px}
 .ap-embed{padding:4px 16px 16px}
+.ap-dep-member{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;width:100%;min-width:0}
+.ap-dep-member .who{display:flex;align-items:center;gap:10px;flex:1 1 160px;min-width:0}
+.ap-dep-member .acts{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin-left:auto}
 .ap-pl-tile{width:36px;height:36px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex:none}
 .ap-pl-tile.core{background:var(--a-accentSoft);color:var(--a-accent)}
 .ap-pl-tile.builtin{background:var(--a-okSoft);color:var(--a-ok)}
