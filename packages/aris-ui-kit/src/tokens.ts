@@ -46,6 +46,10 @@ export const FONTS = {
   mono: "'JetBrains Mono', monospace",
 } as const
 
+/** Google Fonts cho ba phông trên (theme aris nạp một lần cho cả app). */
+export const FONT_HREF =
+  'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lexend:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap'
+
 /** Khai báo biến CSS cho một giao diện, ví dụ `--a-bg:#F6F5F2;--a-panel:#FFFFFF…`. */
 export function cssVars(theme: ThemeName, prefix = '--'): string {
   return Object.entries(THEMES[theme])

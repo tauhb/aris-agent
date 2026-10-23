@@ -2,6 +2,7 @@
  * Đầu khung chat aris, cắm vào ba slot đầu khung mà
  * `@deepseek-ai/dsh-client-ui-conversation` khai báo; không thay thế gói nào của dsh.
  */
+import { mountKitCss } from '@aris/ui-kit/react'
 import { NewSessionButton, BotIdentity, SessionSwitcher } from './Header.js'
 import { EN, NS, VI } from './locale.js'
 import { CSS } from './styles.js'
@@ -30,6 +31,7 @@ function injectStyle(): () => void {
 
 export function apply(ctx: ClientContext): void {
   const workspace = ctx.get('uiWorkspace') as { openSession(target: string): void; startSession(): void }
+  ctx.effect(() => mountKitCss(), 'aris-ui-chat-header: kit styles')
   ctx.effect(injectStyle, 'aris-ui-chat-header: styles')
   // Chữ của aris theo ngôn ngữ chọn trong Cài đặt; tiếng Trung lùi về tiếng Anh.
   ctx.effect(() => ctx.locale.register(NS, 'en', EN), 'aris-ui-chat-header: en')

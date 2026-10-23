@@ -3,15 +3,13 @@
  * Đăng ký đúng slot `sidebar` cùng 7 chỗ cắm con và slot `shell.leading` như gói
  * gốc, để mọi plugin khác của dsh vẫn cắm vào được; phần trình bày theo canvas.
  */
+import { mountKitCss } from '@aris/ui-kit/react'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
 import { EN, NS, VI } from './locale.js'
 import { LeadingControls, SidebarRoot } from './SidebarRoot.js'
 import { CSS } from './styles.js'
 import type { PanelEntry } from './types.js'
-
-const FONT_HREF =
-  'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lexend:wght@500;600;700&display=swap'
 
 // Bối cảnh client của dsh; chỉ khai báo phần thanh bên dùng.
 interface ClientContext {
@@ -34,19 +32,13 @@ interface ClientContext {
 
 export const inject = ['slots', 'layout', 'uiWorkspace', 'workspaces', 'locale', 'shortcuts']
 
+// Phông do theme aris (`@aris/ui-theme`) nạp cho cả app.
 function injectStyle(): () => void {
   const style = document.createElement('style')
   style.dataset.plugin = '@aris/ui-sidebar'
   style.textContent = CSS
   document.head.appendChild(style)
-  const font = document.createElement('link')
-  font.rel = 'stylesheet'
-  font.href = FONT_HREF
-  document.head.appendChild(font)
-  return () => {
-    style.remove()
-    font.remove()
-  }
+  return () => style.remove()
 }
 
 export function apply(ctx: ClientContext): void {
@@ -64,6 +56,7 @@ export function apply(ctx: ClientContext): void {
     const created = await ctx.workspaces.create({ path })
     await workspace.openWorkspace(created.workspaceId)
   }
+  ctx.effect(() => mountKitCss(), 'aris-ui-sidebar: kit styles')
   ctx.effect(injectStyle, 'aris-ui-sidebar: styles')
   // Chữ của aris theo ngôn ngữ chọn trong Cài đặt; tiếng Trung lùi về tiếng Anh.
   ctx.effect(() => ctx.locale.register(NS, 'en', EN), 'aris-ui-sidebar: en')

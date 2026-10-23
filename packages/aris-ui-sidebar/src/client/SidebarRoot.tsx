@@ -1,11 +1,24 @@
 /**
  * Thanh bên aris theo canvas "Thanh bên dùng chung": logo, Việc mới, các trang
- * (Chat + trang do plugin đăng ký), Đội hình, vùng phiên của dsh, ô chờ duyệt và
- * chủ nhân. Giữ nguyên các chỗ cắm của dsh nên plugin khác vẫn cắm vào được.
+ * (Chat + trang do plugin đăng ký), Đội hình, Phòng, ô chờ duyệt và chủ nhân.
+ * Ghép từ bộ thành phần `@aris/ui-kit/react`; giữ nguyên các chỗ cắm của dsh nên
+ * plugin khác vẫn cắm vào được.
  */
 import { ShortcutKeys, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { ReactNode } from 'react'
-import { BrandMark, Mascot, PanelIcon, PlusIcon, RoomIcon, StatusGlyph, WaitingIcon } from './icons.js'
+import {
+  BotRow,
+  BrandMark,
+  Button,
+  GroupLabel,
+  IconButton,
+  NavItem,
+  PanelIcon,
+  PlusIcon,
+  RoomIcon,
+  SectionHeader,
+  WaitingIcon,
+} from '@aris/ui-kit/react'
+import type { ReactElement } from 'react'
 import { COMMANDER, DEMO_COST, DEMO_PENDING_APPROVALS, DEMO_TEAM, type TeamMember } from './team.js'
 import { latestRoomSession } from './rooms.js'
 import type { Translate } from './locale.js'
@@ -17,7 +30,7 @@ const FOOT_PANELS = new Set(['plugins'])
 const PANEL_LABELS = { schedules: 'panel.schedules' } as const
 
 /** Trong thanh thu gọn, nhãn chuyển thành tooltip. */
-function Tip({ label, wide, children }: { label: string; wide: boolean; children: React.ReactElement }) {
+function Tip({ label, wide, children }: { label: string; wide: boolean; children: ReactElement }) {
   return (
     <Tooltip label={label} side="right" delayMs={400} disabled={wide}>
       {children}
@@ -25,49 +38,20 @@ function Tip({ label, wide, children }: { label: string; wide: boolean; children
   )
 }
 
-function NavRow({
-  label,
-  wide,
-  active,
-  glyph,
-  onClick,
-}: {
-  label: string
-  wide: boolean
-  active: boolean
-  glyph: ReactNode
-  onClick: () => void
-}) {
-  return (
-    <Tip label={label} wide={wide}>
-      <button
-        type="button"
-        className="navRow"
-        aria-label={label}
-        aria-current={active ? 'page' : undefined}
-        onClick={onClick}
-      >
-        <span className="glyph" aria-hidden="true">
-          {glyph}
-        </span>
-        {wide && <span className="label">{label}</span>}
-      </button>
-    </Tip>
-  )
-}
-
 function PanelNav({ panel, wide, props }: { panel: PanelEntry; wide: boolean; props: SidebarProps }) {
   const active = props.usePanelInfo((info) => info.activePanelId === panel.id)
+  const label =
+    panel.id in PANEL_LABELS ? props.t(PANEL_LABELS[panel.id as keyof typeof PANEL_LABELS]) : panel.label
   return (
-    <NavRow
-      label={
-        panel.id in PANEL_LABELS ? props.t(PANEL_LABELS[panel.id as keyof typeof PANEL_LABELS]) : panel.label
-      }
-      wide={wide}
-      active={active}
-      glyph={props.renderSlot('sidebar.panellist', { size: 18, active }, { only: panel.id })}
-      onClick={() => props.selectPanel(panel.id)}
-    />
+    <Tip label={label} wide={wide}>
+      <NavItem
+        label={label}
+        active={active}
+        collapsed={!wide}
+        icon={props.renderSlot('sidebar.panellist', { size: 18, active }, { only: panel.id })}
+        onClick={() => props.selectPanel(panel.id)}
+      />
+    </Tip>
   )
 }
 
@@ -86,20 +70,16 @@ function Bot({
 }) {
   return (
     <Tip label={`${member.name} · ${member.note}`} wide={wide}>
-      <button type="button" className={lead ? 'bot lead' : 'bot'} onClick={onOpen}>
-        <Mascot id={member.id} size={lead ? 34 : 28} />
-        {wide && (
-          <>
-            <span className="botText">
-              <span className="botName">{member.name}</span>
-              <span className={member.status === 'waiting' ? 'botNote waiting' : 'botNote'}>
-                {member.note}
-              </span>
-            </span>
-            {!lead && <StatusGlyph status={member.status} label={t(`status.${member.status}`)} />}
-          </>
-        )}
-      </button>
+      <BotRow
+        mascot={member.id}
+        name={member.name}
+        note={member.note}
+        status={member.status}
+        statusLabel={t(`status.${member.status}`)}
+        lead={lead}
+        collapsed={!wide}
+        onClick={onOpen}
+      />
     </Tip>
   )
 }
@@ -119,19 +99,16 @@ function Room({
   const count = room.sessionIds.length
   return (
     <Tip label={`${room.title} · ${room.path}`} wide={wide}>
-      <button
-        type="button"
-        className="room"
-        aria-label={t('room.label', { name: room.title })}
+      <NavItem
+        label={t('room.label', { name: room.title })}
         title={room.path}
+        icon={<RoomIcon />}
+        collapsed={!wide}
+        meta={count > 0 ? t('room.sessions', { count }) : undefined}
         onClick={onOpen}
       >
-        <span className="glyph" aria-hidden="true">
-          <RoomIcon />
-        </span>
-        {wide && <span className="label">{room.title}</span>}
-        {wide && count > 0 && <span className="roomMeta">{t('room.sessions', { count })}</span>}
-      </button>
+        {room.title}
+      </NavItem>
     </Tip>
   )
 }
@@ -154,53 +131,49 @@ export function SidebarRoot(props: SidebarProps) {
   const toggleShortcut = props.useShortcuts((rows) => rows.find((r) => r.id === 'sidebar.left.toggle'))
   const openChat = () => selectPanel(null)
   const waiting = t('approvals.waiting', { count: DEMO_PENDING_APPROVALS })
+  const toggleLabel = t(wide ? 'toggle.collapse' : 'toggle.open')
   const money = (n: number) =>
     n.toLocaleString(t('number.locale'), { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })
 
   return (
     <nav
-      className={wide ? 'aris-sb' : 'aris-sb rail'}
+      className={wide ? 'aris aris-sb' : 'aris aris-sb rail'}
       aria-label={t('nav.label')}
       style={wide ? { width } : undefined}
     >
       <div className="brand">
         <BrandMark size={28} />
         {wide && <span className="brandName">aris</span>}
-        <Tooltip
-          label={t(wide ? 'toggle.collapse' : 'toggle.open')}
-          shortcutKeys={toggleShortcut?.keys}
-          side="right"
-          delayMs={400}
-        >
-          <button
-            type="button"
-            className="iconBtn"
+        <Tooltip label={toggleLabel} shortcutKeys={toggleShortcut?.keys} side="right" delayMs={400}>
+          <IconButton
+            label={toggleLabel}
             style={wide ? { marginLeft: 'auto' } : undefined}
-            aria-label={t(wide ? 'toggle.collapse' : 'toggle.open')}
             aria-keyshortcuts={toggleShortcut?.aria}
             onClick={toggleSidebar}
           >
             <PanelIcon />
-          </button>
+          </IconButton>
         </Tooltip>
       </div>
 
       <Tip label={t('session.new')} wide={wide}>
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="lg"
+          block={wide}
           className="newTask"
+          icon={<PlusIcon size={16} />}
           aria-label={t('session.new')}
           aria-keyshortcuts={newShortcut?.aria}
           onClick={() => startSession()}
         >
-          <PlusIcon size={16} />
           {wide && t('session.new')}
           {wide && newShortcut && newShortcut.keys.length > 0 && (
-            <span className="kbd" aria-hidden="true">
+            <span className="a-kbd" aria-hidden="true">
               <ShortcutKeys keys={newShortcut.keys} />
             </span>
           )}
-        </button>
+        </Button>
       </Tip>
 
       <div className="nav" role="list" aria-label={t('panels.label')}>
@@ -212,22 +185,19 @@ export function SidebarRoot(props: SidebarProps) {
       <div className="middle">
         <div className="team">
           {wide && (
-            <div className="section">
-              <span>{t('team.title')}</span>
-              <button
-                type="button"
-                className="iconBtn"
-                style={{ width: 26, height: 26, borderRadius: 8 }}
-                aria-label={t('team.add')}
-              >
-                <PlusIcon size={15} width={2} />
-              </button>
-            </div>
+            <SectionHeader
+              title={t('team.title')}
+              action={
+                <IconButton label={t('team.add')} size="sm">
+                  <PlusIcon size={15} width={2} />
+                </IconButton>
+              }
+            />
           )}
           <Bot member={COMMANDER} lead wide={wide} t={t} onOpen={openChat} />
           {DEMO_TEAM.map((group) => (
             <div key={group.label} style={{ display: 'contents' }}>
-              {wide && <div className="group">{group.label}</div>}
+              {wide && <GroupLabel>{group.label}</GroupLabel>}
               {group.members.map((m) => (
                 <Bot key={m.id} member={m} wide={wide} t={t} onOpen={openChat} />
               ))}
@@ -237,18 +207,14 @@ export function SidebarRoot(props: SidebarProps) {
 
         <div className="rooms">
           {wide && (
-            <div className="section">
-              <span>{t('rooms.title')}</span>
-              <button
-                type="button"
-                className="iconBtn"
-                style={{ width: 26, height: 26, borderRadius: 8 }}
-                aria-label={t('rooms.add')}
-                onClick={props.addRoom}
-              >
-                <PlusIcon size={15} width={2} />
-              </button>
-            </div>
+            <SectionHeader
+              title={t('rooms.title')}
+              action={
+                <IconButton label={t('rooms.add')} size="sm" onClick={props.addRoom}>
+                  <PlusIcon size={15} width={2} />
+                </IconButton>
+              }
+            />
           )}
           {rooms.map((room) => (
             <Room key={room.workspaceId} room={room} wide={wide} t={t} onOpen={() => openRoom(room)} />
@@ -259,10 +225,7 @@ export function SidebarRoot(props: SidebarProps) {
       <div className="foot">
         {DEMO_PENDING_APPROVALS > 0 && (
           <Tip label={waiting} wide={wide}>
-            <button type="button" className="approvals" aria-label={waiting}>
-              <WaitingIcon />
-              {wide && waiting}
-            </button>
+            <NavItem label={waiting} variant="warn" icon={<WaitingIcon />} collapsed={!wide} />
           </Tip>
         )}
         {wide && (
@@ -272,7 +235,7 @@ export function SidebarRoot(props: SidebarProps) {
             </span>
             <span className="ownerText">
               <span className="ownerName">{t('owner.name')}</span>
-              <span className="ownerCost">
+              <span className="ownerCost a-num">
                 {t('owner.cost', { spent: money(DEMO_COST.spent), budget: money(DEMO_COST.budget) })}
               </span>
             </span>
@@ -295,23 +258,13 @@ export function LeadingControls({
   t,
 }: Pick<SidebarProps, 'toggleSidebar' | 'startSession' | 't'>) {
   return (
-    <div
-      className="aris-sb"
-      style={{
-        height: 'auto',
-        border: 0,
-        padding: 0,
-        background: 'transparent',
-        flexDirection: 'row',
-        gap: 8,
-      }}
-    >
-      <button type="button" className="iconBtn" aria-label={t('toggle.open')} onClick={toggleSidebar}>
+    <div className="aris aris-lead">
+      <IconButton label={t('toggle.open')} onClick={toggleSidebar}>
         <PanelIcon />
-      </button>
-      <button type="button" className="iconBtn" aria-label={t('session.new')} onClick={() => startSession()}>
+      </IconButton>
+      <IconButton label={t('session.new')} onClick={() => startSession()}>
         <PlusIcon size={16} />
-      </button>
+      </IconButton>
     </div>
   )
 }

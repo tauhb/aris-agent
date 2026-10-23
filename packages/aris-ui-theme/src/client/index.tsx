@@ -2,10 +2,8 @@
  * Theme aris cho toàn bộ Web UI: một lớp ghi đè token đặt trên theme đang dùng
  * (sáng hoặc tối), nên người dùng vẫn đổi sáng/tối/theo hệ thống như cũ.
  */
+import { FONT_HREF } from '@aris/ui-kit'
 import { ARIS_TOKENS } from './tokens.js'
-
-const FONT_HREF =
-  'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lexend:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap'
 
 interface ClientContext {
   effect(fn: () => () => void, label?: string): void

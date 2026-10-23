@@ -21,7 +21,7 @@
 | **Theme aris** (G2 ✅) | `@aris/ui-theme` gọi `ctx.theme.overrideTokens('aris', { token: { light, dark } })`, ghi đè 403 token `--dsw-*`: nền (`alias-bg-*`), chữ (`alias-label-*`), viền (`alias-border-*`), nút (`alias-button-*`), trạng thái (`alias-state-*`), thương hiệu (`alias-brand-*`, `static-deepseek-*`), bo góc (`radius-*`), bóng (`shadow-*`, `elevation-*`), phông (`font-family-*`). Màu lấy từ `@aris/ui-kit` | Khung chat, ô nhập, cài đặt, hộp thoại, menu, toast của dsh cùng lúc mang dáng aris; hết màu xanh DeepSeek |
 | **Tiếng Việt** (G2 ✅) | Thêm một ngôn ngữ, không thay tiếng Anh: `@aris/ui-locale-vi` gọi `ctx.locale.addLanguage({ id: 'vi', label: 'Tiếng Việt', fallback: 'en' })` rồi đăng ký từ điển `vi` cho 61 namespace của dsh (2.760 chuỗi, dịch đủ 100%). Chữ của aris (thanh bên, đầu khung) có từ điển en/vi riêng (`aris.sidebar`, `aris.chatHeader`). Khi nâng dsh: `node scripts/ui/extract-strings.mjs packages/aris-ui-locale-vi/locales/en.snapshot.json` → `pnpm check:locale` báo chuỗi thiếu, lỗi thời, biến `{tên}` lệch → dịch bằng `scripts/ui/merge-vi.py`. Thuật ngữ và văn phong: `packages/aris-ui-locale-vi/locales/README.md` | Cài đặt › Chung › Ngôn ngữ có 中文 / English / Tiếng Việt; đổi là cả app đổi ngay, không tải lại. Chuỗi dsh thêm mới mà chưa dịch thì hiện tiếng Anh |
 | **Phông** (G2 ✅) | Lexend (tiêu đề), Be Vietnam Pro (nội dung), JetBrains Mono (mã) qua token `font-family` và đặt làm mặc định; người dùng vẫn đổi được trong Cài đặt | Chữ tiếng Việt có dấu hiển thị đẹp, đồng nhất |
-| **Bộ thành phần** (G3) | `@aris/ui-kit` thêm React: nút b1/b2/icon, viên trạng thái, chip, thẻ, dòng cài đặt, nút chọn đoạn, ô nhập, hộp thoại, menu thả, tab, linh vật, glyph trạng thái, khung trang Cài đặt (điều hướng 6.x), khung trang thường (tiêu đề + nội dung) | Mọi màn aris chỉ ghép từ bộ này |
+| **Bộ thành phần** (G3 ✅) | `@aris/ui-kit/react` theo màn "Ngôn ngữ thiết kế mới" và các màn Cài đặt: `Button` (primary/secondary/ghost/danger = b1/b2), `IconButton`, `StatusGlyph`/`StatusPill` (5 trạng thái, xoay/thở), `Pill`, `Tag`, `Card`/`CardRow`, `Switch`/`SwitchRow` (có câu "bật thì sao", màu theo bot), `Checkbox`, `Segmented`, `TextInput`/`Field`, `Tabs`, `Menu`/`MenuItem`/`MenuLabel` + `useDismiss`, `Dialog`, `NavItem`, `BotRow`, `SectionHeader`/`GroupLabel`, `PageShell`, `SettingsShell` (6.x), `Mascot`, `BrandMark`, bộ icon nét 1,75. Không có chữ cố định — nhãn do nơi dùng truyền vào đã dịch. CSS chung `KIT_CSS` gắn một lần (`mountKitCss`), mọi quy tắc chỉ có hiệu lực trong gốc lớp `aris`. Trang thử sáng/tối: [thanh-phan.html](thanh-phan.html), sinh bằng `node scripts/ui/gallery.mjs` | Mọi màn aris chỉ ghép từ bộ này; thanh bên và đầu khung chat đã chuyển sang |
 
 ## 3. 36 màn
 
@@ -120,7 +120,7 @@ Dsh để cài đặt trong **một hộp thoại** (Chung, Models, Built-in plu
 ## 6. Thứ tự làm trong giai đoạn G
 
 1. ✅ **G2** theme + tiếng Việt + phông — một lần cho cả app (23/10).
-2. **G3** bộ thành phần; chuyển thanh bên và đầu khung sang dùng bộ này.
+2. ✅ **G3** bộ thành phần; chuyển thanh bên và đầu khung sang dùng bộ này (23/10).
 3. **G4** khung: ô nhập 1.2, nút hội thoại 1.1 (dòng việc, thẻ duyệt), cột phải "Đội bot", màn trống.
 4. **G5** vỏ các trang P theo thứ tự: Cài đặt (khung + 6.2) → Ký ức 3.1 → Bản đồ 1.3 → Routine 4.1 → Hộp duyệt 3.4 → còn lại.
 5. **G6** script chụp app thật cạnh canvas cho cả 36 màn, sáng/tối; bảng "đạt / lệch" làm cổng nghiệm thu.

@@ -1,0 +1,115 @@
+/**
+ * Bộ icon riêng của aris: lưới 24, nét 1,75, đầu tròn (màn "Ngôn ngữ thiết kế
+ * mới", mục 2). Icon chỉ để nhìn (`aria-hidden`); nhãn đặt ở nút chứa nó.
+ */
+import type { ReactNode } from 'react'
+
+export interface IconProps {
+  size?: number
+  /** Độ dày nét, mặc định 1,75. */
+  width?: number
+}
+
+const stroke = {
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeLinecap: 'round' as const,
+  strokeLinejoin: 'round' as const,
+}
+
+function Icon({ size = 18, children }: { size?: number | undefined; children: ReactNode }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{ flex: 'none' }}>
+      {children}
+    </svg>
+  )
+}
+
+export function PlusIcon({ size, width = 2.2 }: IconProps) {
+  return (
+    <Icon size={size}>
+      <path d="M12 5v14M5 12h14" {...stroke} strokeWidth={width} />
+    </Icon>
+  )
+}
+
+export function PanelIcon({ size, width = 1.75 }: IconProps) {
+  return (
+    <Icon size={size}>
+      <rect x={3.5} y={4.5} width={17} height={15} rx={3.5} {...stroke} strokeWidth={width} />
+      <path d="M9 4.5v15" {...stroke} strokeWidth={width} />
+    </Icon>
+  )
+}
+
+/** Phòng: hai người. */
+export function RoomIcon({ size = 16, width = 1.75 }: IconProps) {
+  return (
+    <Icon size={size}>
+      <circle cx={8} cy={9} r={3} {...stroke} strokeWidth={width} />
+      <circle cx={16.5} cy={9.5} r={2.5} {...stroke} strokeWidth={width} />
+      <path
+        d="M3 19c.6-3 2.6-4.5 5-4.5s4.4 1.5 5 4.5M14 15.2c.8-.5 1.6-.7 2.5-.7 2 0 3.6 1.3 4.1 4"
+        {...stroke}
+        strokeWidth={width}
+      />
+    </Icon>
+  )
+}
+
+/** Việc chờ duyệt: nửa vòng đầy, cùng hình với trạng thái "Chờ anh". */
+export function WaitingIcon({ size = 18 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" aria-hidden="true" style={{ flex: 'none' }}>
+      <circle cx={8} cy={8} r={6} fill="none" stroke="currentColor" strokeWidth={2} />
+      <path d="M8 2a6 6 0 0 1 0 12z" fill="currentColor" />
+    </svg>
+  )
+}
+
+export function ChevronDownIcon({ size = 12, width = 2.4 }: IconProps) {
+  return (
+    <Icon size={size}>
+      <path d="M6 9l6 6 6-6" {...stroke} strokeWidth={width} />
+    </Icon>
+  )
+}
+
+/** Soạn mới: tờ giấy và bút. */
+export function ComposeIcon({ size, width = 1.75 }: IconProps) {
+  return (
+    <Icon size={size}>
+      <path
+        d="M12 4.5H7a2.5 2.5 0 0 0-2.5 2.5v10A2.5 2.5 0 0 0 7 19.5h10a2.5 2.5 0 0 0 2.5-2.5v-5"
+        {...stroke}
+        strokeWidth={width}
+      />
+      <path d="M17.5 3.5a2.1 2.1 0 0 1 3 3L13 14l-4 1 1-4z" {...stroke} strokeWidth={width} />
+    </Icon>
+  )
+}
+
+export function CheckIcon({ size = 14, width = 2.4 }: IconProps) {
+  return (
+    <Icon size={size}>
+      <path d="M5 12.5l4.5 4.5L19 7.5" {...stroke} strokeWidth={width} />
+    </Icon>
+  )
+}
+
+export function CloseIcon({ size, width = 2 }: IconProps) {
+  return (
+    <Icon size={size}>
+      <path d="M6 6l12 12M18 6L6 18" {...stroke} strokeWidth={width} />
+    </Icon>
+  )
+}
+
+export function SearchIcon({ size, width = 1.75 }: IconProps) {
+  return (
+    <Icon size={size}>
+      <circle cx={11} cy={11} r={6.5} {...stroke} strokeWidth={width} />
+      <path d="M16 16l4 4" {...stroke} strokeWidth={width} />
+    </Icon>
+  )
+}

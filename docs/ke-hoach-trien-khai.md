@@ -74,6 +74,8 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 > **G1 xong 23/10**: [giao-dien/ban-do.md](giao-dien/ban-do.md) (36 màn → cách làm), [giao-dien/kiem-ke-dsh.md](giao-dien/kiem-ke-dsh.md) (tự sinh). Phát hiện thêm: mọi chữ của dsh là tiếng Anh (~2.400 chuỗi) → Việt hoá gộp vào G2; cài đặt của dsh là hộp thoại, canvas là trang 6.x → trang Cài đặt aris riêng.
 
+> **G3 xong 23/10**: `@aris/ui-kit/react` có 28 thành phần (nút, trạng thái, pill, thẻ, công tắc, ô tích, chọn đoạn, ô nhập, tab, menu, hộp thoại, dòng điều hướng, dòng bot, khung trang thường và khung Cài đặt 6.x) cùng bộ icon; trang thử sáng/tối [giao-dien/thanh-phan.html](giao-dien/thanh-phan.html) (`node scripts/ui/gallery.mjs`). Thanh bên và đầu khung chat đã ghép lại từ bộ này, chỉ còn CSS bố cục riêng. React 18.3.1 (đúng bản dsh dùng) chỉ là devDependency cho kiểm thử và trang thử; lúc chạy dùng React của dsh.
+
 > **G2 xong 23/10**: theme aris cho toàn app (`@aris/ui-theme`, sáng và tối); tiếng Việt là ngôn ngữ thứ ba bên cạnh tiếng Anh và tiếng Trung, chọn ở Cài đặt › Chung › Ngôn ngữ (`@aris/ui-locale-vi`, 2.760 chuỗi của dsh, 100%); chữ của aris có từ điển en/vi; `pnpm check` chặn bản dịch lệch biến hoặc lỗi thời khi nâng dsh. Còn lại cho G4: tiêu đề tab "DeepSeek Harness", màn trống.
 
 > Thêm ngày 23/10 theo yêu cầu của chủ dự án: làm thanh bên rồi đầu khung theo từng góp ý là cách làm vụn vặt, app sẽ thành chắp vá giữa dáng aris và dáng dsh. Giai đoạn này dựng giao diện theo hệ thống để mọi màn đạt canvas trước khi nối dữ liệu.
