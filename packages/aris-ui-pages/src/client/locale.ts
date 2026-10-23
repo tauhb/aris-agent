@@ -1,5 +1,7 @@
 /** Từ điển các trang aris (namespace `aris.pages`), gộp từ từng khu; tiếng Trung lùi về tiếng Anh. */
 import type { PageText } from './page.js'
+import { AUTO_TEXT } from './auto/text.js'
+import { BRAIN_TEXT } from './brain/text.js'
 import { MIND_TEXT } from './mind/text.js'
 import { SETTINGS_TEXT } from './settings/text.js'
 import { TEAM_TEXT } from './team/text.js'
@@ -11,6 +13,8 @@ export const TEXTS: readonly PageText[] = [
   SETTINGS_TEXT,
   MIND_TEXT,
   TEAM_TEXT,
+  AUTO_TEXT,
+  BRAIN_TEXT,
   // Nhãn mục thanh bên của các trang có mục riêng.
   text(
     { 'nav.map': 'Team map', 'nav.brain': 'Second Brain', 'nav.routine': 'Routines', 'nav.kanban': 'Kanban' },

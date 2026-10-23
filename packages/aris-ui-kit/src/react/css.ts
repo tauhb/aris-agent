@@ -182,6 +182,7 @@ ${scope(`
 .a-approve>.acts{display:flex;gap:6px;flex-wrap:wrap}
 
 .a-orbit{display:block;width:100%;touch-action:none}
+.a-graph{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
 
 .a-page{display:flex;flex-direction:column;min-height:100%;min-width:0;background:var(--a-bg);flex:1}
 .a-page-head{display:flex;align-items:center;gap:12px;padding:12px 24px;border-bottom:1px solid var(--a-line)}

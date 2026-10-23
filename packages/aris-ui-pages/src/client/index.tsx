@@ -17,6 +17,10 @@ import {
   type Params,
   type RouteId,
 } from './routes.js'
+import { Kanban } from './auto/Kanban.js'
+import { Routine } from './auto/Routine.js'
+import { RoutineNew } from './auto/RoutineNew.js'
+import { Brain } from './brain/Brain.js'
 import { Approvals } from './mind/Approvals.js'
 import { Memory } from './mind/Memory.js'
 import { Runs } from './mind/Runs.js'
@@ -62,6 +66,10 @@ const PAGES: Partial<Record<RouteId, ComponentType<PageProps>>> = {
   map: TeamMap,
   bot: BotProfile,
   owner: OwnerProfile,
+  routine: Routine,
+  'routine-new': RoutineNew,
+  kanban: Kanban,
+  brain: Brain,
 }
 
 /** Hộp thoại đã dựng. */

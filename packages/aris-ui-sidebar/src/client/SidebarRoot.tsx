@@ -29,9 +29,10 @@ import type { PanelEntry, SidebarProps, WorkspaceRow } from './types.js'
 
 /** Trang do dsh đăng ký nhưng aris đặt chỗ khác: Plugin nằm ở chân thanh bên (thuộc Cài đặt). */
 const FOOT_PANELS = new Set(['plugins'])
+/** Trang của dsh mà aris thay bằng trang riêng: lịch dsh mở từ nút "Lịch đang chạy" trong trang Routine. */
+const HIDDEN_PANELS = new Set(['schedules'])
 /** Trang của dsh mà aris đặt tên khác ("Automation tasks" thành Routine). */
 const PANEL_LABELS = {
-  schedules: 'panel.schedules',
   'aris-map': 'panel.map',
   'aris-brain': 'panel.brain',
   'aris-routine': 'panel.schedules',
@@ -126,7 +127,7 @@ export function SidebarRoot(props: SidebarProps) {
   const { collapsed, width, startSession, toggleSidebar, selectPanel, renderSlot, t } = props
   const wide = !collapsed
   const panels = props.usePanels((p) => p)
-  const navPanels = panels.filter((p) => !FOOT_PANELS.has(p.id))
+  const navPanels = panels.filter((p) => !FOOT_PANELS.has(p.id) && !HIDDEN_PANELS.has(p.id))
   const footPanels = panels.filter((p) => FOOT_PANELS.has(p.id))
   const rooms = props.useWorkspaces((w) => w.items)
   const sessionsById = props.useSessions((list) => list.byId)
