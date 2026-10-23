@@ -6,7 +6,9 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import type { ReactNode } from 'react'
 import {
+  ApprovalBox,
   BrandMark,
+  BranchStep,
   Button,
   Card,
   CardRow,
@@ -27,6 +29,7 @@ import {
   PanelIcon,
   Pill,
   PlusIcon,
+  Progress,
   RoomIcon,
   SectionHeader,
   Segmented,
@@ -37,6 +40,7 @@ import {
   SwitchRow,
   Tabs,
   Tag,
+  TaskBranch,
   TextInput,
   WaitingIcon,
 } from '../src/react/index.js'
@@ -213,6 +217,27 @@ function Column() {
             Tóm tắt đối thủ tuần này
           </MenuItem>
         </Menu>
+      </Block>
+
+      <Block title="Dòng việc">
+        <div style={{ width: '100%', display: 'flex', flexWrap: 'wrap', gap: 14 }}>
+          <TaskBranch mascot="lam" name="Lâm" task="nghiên cứu 3 đối thủ">
+            <BranchStep status="done">Tìm được 20 nguồn</BranchStep>
+            <BranchStep status="working">
+              Đang đọc · 12/20 <Progress value={0.6} label="12/20" />
+            </BranchStep>
+            <BranchStep status="idle">Gửi tổng hợp cho Aris</BranchStep>
+          </TaskBranch>
+          <TaskBranch mascot="mai" name="Mai" task="lời mời họp thứ 5">
+            <BranchStep status="done">Soạn thư cho 4 người · 14:00, Google Meet</BranchStep>
+            <ApprovalBox title="Mai đợi anh gật đầu">
+              <Button variant="primary" size="sm">
+                Cho Mai gửi
+              </Button>
+              <Button size="sm">Xem thư</Button>
+            </ApprovalBox>
+          </TaskBranch>
+        </div>
       </Block>
 
       <Block title="Hộp thoại">

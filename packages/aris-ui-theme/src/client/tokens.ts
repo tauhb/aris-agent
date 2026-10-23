@@ -99,7 +99,8 @@ export const ARIS_TOKENS: Record<string, TokenModes> = {
   // Ô nhập, bong bóng tin nhắn, thanh bên, menu, gợi ý
   '--dsw-specific-input-major': k('panel'),
   '--dsw-specific-login-input': k('panel2'),
-  '--dsw-specific-bubble': k('panel2'),
+  // Bong bóng tin nhắn của chủ nhân nền mực (màn R3); màu chữ đặt trong overrides.ts.
+  '--dsw-specific-bubble': k('ink'),
   '--dsw-specific-bubble-highlight': k('accentSoft'),
   '--dsw-specific-sidebar-fill': k('panel'),
   '--dsw-specific-sidebar-nav-item-active': k('accentSoft'),

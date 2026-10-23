@@ -21,6 +21,8 @@
     "@aris/web-spike": "workspace:*",
     "@aris/ui-chat-header": "workspace:*",
     "@aris/ui-theme": "workspace:*",
-    "@aris/ui-locale-vi": "workspace:*"
+    "@aris/ui-locale-vi": "workspace:*",
+    "@aris/ui-chat": "workspace:*",
+    "@aris/ui-team-pane": "workspace:*"
   }
 }

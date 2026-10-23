@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { STATUSES, THEMES, getMascot } from '@aris/ui-kit'
-import { COMMANDER, DEMO_TEAM } from './team.js'
+import { COMMANDER, DEMO_ACTIVITY, DEMO_TEAM, STATUSES, THEMES, getMascot } from '@aris/ui-kit'
 import { CSS } from './styles.js'
 
 describe('đội hình ở thanh bên', () => {
@@ -11,6 +10,10 @@ describe('đội hình ở thanh bên', () => {
       expect(getMascot(m.id), m.id).toBeDefined()
       expect(STATUSES[m.status], m.id).toBeDefined()
     }
+  })
+
+  it('việc gần đây chỉ nhắc tới bot có trong đội', () => {
+    for (const a of DEMO_ACTIVITY) expect(members.map((m) => m.id)).toContain(a.id)
   })
 
   it('đủ 6 bot của đội mẫu, không trùng', () => {

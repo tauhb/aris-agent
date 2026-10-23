@@ -32,8 +32,8 @@ Trạng thái: ✅ đã làm · ◐ làm một phần · ○ chưa. "Dữ liệu
 | Màn | Vùng của dsh hiện có | Cách | Gói aris | Trạng thái | Dữ liệu |
 |---|---|---|---|---|---|
 | Thanh bên dùng chung | `ui-sidebar` | R | `@aris/ui-sidebar` | ◐ có Đội hình (mẫu), Phòng (thật), Plugin ở chân; còn thiếu chuyển sang bộ thành phần | Phòng: thật · Đội hình: GĐ2 · việc chờ duyệt: GĐ3 |
-| 1.1 Chat | đầu khung `conversation.session.header.*`; hội thoại `ui-chat`; cột phải `ui-sidebar-right` | C đầu khung · C nút hội thoại (dòng việc, thẻ duyệt) qua `uiConversation.events` · C cột phải "Đội bot lúc này" qua `sidebar.right.pane.tab` | `@aris/ui-chat-header` ✅, `@aris/ui-chat`, `@aris/ui-team-pane` | ◐ đầu khung xong | GĐ1 (phiên), GĐ2 (dòng việc, đội) |
-| 1.2 Khung chat | ô nhập của `ui-conversation`, `ui-input-trigger`, `ui-model-selection`, `ui-attachment`, `ui-goal` | T + C: nhãn model `conversation.input.model.label`, nguồn `@bot` cho `ui-input-trigger`, lệnh `/` của aris; chỉ R nếu đối chiếu G6 còn lệch | `@aris/ui-composer` | ○ | GĐ1 (model), GĐ2 (@bot) |
+| 1.1 Chat | đầu khung `conversation.session.header.*`; hội thoại `ui-chat`, công cụ `ui-tool`; thẻ duyệt `ui-approval`; cột phải `ui-sidebar-right` | C đầu khung · C "dòng việc": mỗi lần gọi công cụ `subagent` vẽ thành nhánh màu bot (`tool.call.toolview`, khoá `subagent`) · T bong bóng tin nhắn nền mực, thẻ duyệt nền cam (CSS bám lớp dsh, có kiểm thử canh lớp) · C cột phải "Đội bot lúc này" chiếm trang bắt đầu (`sidebar.right.tab.guide`), giữ lối mở Tệp/Terminal | `@aris/ui-chat-header` ✅, `@aris/ui-chat` ✅, `@aris/ui-team-pane` ✅, `@aris/ui-theme` ✅ | ◐ G4 xong phần khung; còn: đường đời tin nhắn (chấm xanh + vạch dọc), thẻ duyệt nằm trong nhánh của bot, ghim trí nhớ, đầu khung "nhớ thêm được … điều" | GĐ1 (ghim trí nhớ), GĐ2 (bot thật cho nhánh và đội hình), GĐ3 (duyệt trong nhánh) |
+| 1.2 Khung chat | ô nhập của `ui-conversation`, `ui-input-trigger`, `ui-model-selection`, `ui-attachment`, `ui-goal` | T + C: nút "/" và "@" (`conversation.input.left`, chèn ký tự qua `input.paste` để mở đúng menu của dsh), nhãn model có ô chữ đầu nhà cung cấp, tên kỹ thuật khi rê chuột (`conversation.input.model.label`, tắt row "1017"); đính kèm giữ nút "+" của dsh; nhắn thêm khi bot đang làm giữ Xếp hàng/Chèn vào việc của dsh | `@aris/ui-chat` ✅ | ◐ còn: "@" liệt kê bot của đội, nút ghi âm (dsh chưa bật nhập giọng nói) | GĐ2 (@bot) |
 | 1.3 Bản đồ đội | — | P (trang `main`, mục thanh bên) | `@aris/ui-team-map` (thay `web-spike`) | ◐ thử nghiệm | GĐ2 |
 | 1.4 Phòng | như 1.1 | C: đầu khung hiện thành viên khi phiên thuộc phòng; cột phải thành viên + luật phòng | `@aris/ui-chat-header`, `@aris/ui-team-pane` | ○ | GĐ2 |
 | 1.5 Tạo phòng | `ui-workspace` (chọn thư mục) | P hộp thoại, dùng `uiWorkspace.pickDirectory` + `workspaces.create` | `@aris/ui-rooms` | ◐ nút + chỉ chọn thư mục | GĐ2 (thành viên) |
@@ -98,29 +98,30 @@ Dsh để cài đặt trong **một hộp thoại** (Chung, Models, Built-in plu
 
 | Phần của dsh | Quyết định |
 |---|---|
-| Màn trống "Into the Unknown" (`conversation.hero.*`) | C: thay bằng lời chào của Aris + gợi ý việc; vẽ thêm vào canvas ở G4 |
+| Màn trống "Into the Unknown" (`conversation.hero.*`) | ✅ G4: dấu Aris thay con cá (`conversation.hero.brand.mark`), lời chào "Hôm nay anh muốn làm gì?" từ từ điển; gợi ý việc chờ canvas vẽ |
 | Hộp "Get started" đăng nhập DeepSeek / thêm key (`ui-settings-models`, `ui-settings-account`) | T + Việt hoá; aris không ép đăng nhập tài khoản DeepSeek |
 | Cột phải: Workspace files, Terminal, xem trước tài liệu (`ui-sidebar-right`, `-files`, `-terminal`, `-documentpreview`) | Giữ (T), thêm tab "Đội bot" làm tab mặc định |
 | Tab Trajectory, chi tiết bước, thẻ tệp thay đổi (`ui-trajectory`, `ui-tool`, `ui-deliverables`) | Giữ (T) — công cụ cho người làm kỹ thuật |
-| Chế độ Plan, câu hỏi cho người dùng, duyệt trong ô nhập (`ui-plan`, `ui-user-questions`, `ui-approval`) | Giữ (T); đối chiếu với thẻ duyệt 1.1 ở G4 |
-| Nhãn "1017" cạnh model (`ui-deepseek-model-label-1017`) | Tắt row (nhãn tạm của DeepSeek) |
-| Thương hiệu DeepSeek (`ui-brand-official`) | Thanh bên aris đã vẽ dấu aris; còn tiêu đề tab trình duyệt "DeepSeek Harness" và màn trống — làm ở G4 |
+| Chế độ Plan, câu hỏi cho người dùng, duyệt trong ô nhập (`ui-plan`, `ui-user-questions`, `ui-approval`) | Giữ (T); thẻ duyệt đổi sang dáng canvas (nền cam, nút chính trước) ở G4, giữ phím Enter/Esc của dsh |
+| Nhãn "1017" cạnh model (`ui-deepseek-model-label-1017`) | ✅ Đã tắt row; nhãn model do `@aris/ui-chat` vẽ |
+| Thương hiệu DeepSeek (`ui-brand-official`) | ✅ Thanh bên vẽ dấu aris; tiêu đề tab "… — aris" và biểu tượng tab là dấu aris (`@aris/ui-theme`); màn trống dùng dấu Aris |
 | Danh sách phiên theo workspace (`ui-workspace` trong `sidebar.workspaces`) | Đã bỏ khỏi thanh bên (quyết định số 10); hộp thoại của nó (đổi tên, lưu trữ phiên) vẫn dùng được từ menu phiên |
 
 ## 5. Dữ liệu mẫu đang có
 
 | Hằng | Ở đâu | Gỡ khi |
 |---|---|---|
-| `DEMO_TEAM`, `COMMANDER` (đội 6 bot, trạng thái, dòng phụ) | `packages/aris-ui-sidebar/src/client/team.ts` | GĐ2 (dịch vụ đội bot) |
+| `DEMO_TEAM`, `COMMANDER` (đội 6 bot, trạng thái, dòng phụ), `DEMO_ACTIVITY` (việc gần đây ở cột phải) | `packages/aris-ui-kit/src/demo.ts` | GĐ2 (dịch vụ đội bot) |
 | `DEMO_PENDING_APPROVALS` (3 việc chờ duyệt) | cùng tệp | GĐ3 (hộp duyệt) |
-| `DEMO_COST` (dòng chủ nhân "0,42 / 5 USD hôm nay") | `packages/aris-ui-sidebar/src/client/team.ts` | GĐ1 (theo dõi chi phí) |
+| `DEMO_COST` (dòng chủ nhân "0,42 / 5 USD hôm nay") | `packages/aris-ui-kit/src/demo.ts` | GĐ1 (theo dõi chi phí) |
 | Bot trên đầu khung luôn là Aris | `packages/aris-ui-chat-header/src/client/Header.tsx` | GĐ2 |
+| Bot của nhánh "dòng việc": thành viên đội khi mẫu bot trùng mã, không thì linh vật chưa dùng | `packages/aris-ui-chat/src/client/branch.ts` | GĐ2 |
 | Bản đồ đội 6 bot quay | `packages/aris-web-spike` | G5 (thay bằng `@aris/ui-team-map`) |
 
 ## 6. Thứ tự làm trong giai đoạn G
 
 1. ✅ **G2** theme + tiếng Việt + phông — một lần cho cả app (23/10).
 2. ✅ **G3** bộ thành phần; chuyển thanh bên và đầu khung sang dùng bộ này (23/10).
-3. **G4** khung: ô nhập 1.2, nút hội thoại 1.1 (dòng việc, thẻ duyệt), cột phải "Đội bot", màn trống.
+3. ✅ **G4** khung: ô nhập 1.2, nút hội thoại 1.1 (dòng việc, thẻ duyệt), cột phải "Đội bot", màn trống, tiêu đề tab (23/10).
 4. **G5** vỏ các trang P theo thứ tự: Cài đặt (khung + 6.2) → Ký ức 3.1 → Bản đồ 1.3 → Routine 4.1 → Hộp duyệt 3.4 → còn lại.
 5. **G6** script chụp app thật cạnh canvas cho cả 36 màn, sáng/tối; bảng "đạt / lệch" làm cổng nghiệm thu.

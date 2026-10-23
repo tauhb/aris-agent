@@ -18,8 +18,8 @@ import {
   SectionHeader,
   WaitingIcon,
 } from '@aris/ui-kit/react'
+import { COMMANDER, DEMO_COST, DEMO_PENDING_APPROVALS, DEMO_TEAM, type TeamMember } from '@aris/ui-kit'
 import type { ReactElement } from 'react'
-import { COMMANDER, DEMO_COST, DEMO_PENDING_APPROVALS, DEMO_TEAM, type TeamMember } from './team.js'
 import { latestRoomSession } from './rooms.js'
 import type { Translate } from './locale.js'
 import type { PanelEntry, SidebarProps, WorkspaceRow } from './types.js'

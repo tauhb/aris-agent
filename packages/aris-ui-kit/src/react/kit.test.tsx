@@ -1,7 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import {
+  ApprovalBox,
   BotRow,
+  BranchStep,
   Button,
   Card,
   CardRow,
@@ -17,6 +19,7 @@ import {
   PageShell,
   Pill,
   PlusIcon,
+  Progress,
   Segmented,
   SettingsShell,
   StatusPill,
@@ -24,7 +27,9 @@ import {
   SwitchRow,
   Tabs,
   Tag,
+  TaskBranch,
   TextInput,
+  branchColor,
   rovingIndex,
 } from './index.js'
 
@@ -121,6 +126,13 @@ describe('bộ thành phần', () => {
     expect(mai).toContain('class="note waiting"')
   })
 
+  it('nhánh việc mang màu linh vật của bot, thanh tiến độ báo phần trăm', () => {
+    expect(branchColor('lam')).toMatch(/^#/)
+    expect(html(<TaskBranch mascot="lam" name="Lâm" />)).toContain(`--a-branch:${branchColor('lam')}`)
+    expect(html(<Progress value={0.6} label="12/20" />)).toContain('aria-valuenow="60"')
+    expect(html(<Progress value={3} label="x" />)).toContain('width:100%')
+  })
+
   it('dòng điều hướng thu gọn chỉ còn icon, nhãn vẫn đọc được', () => {
     const out = html(<NavItem label="Routine" icon={<PlusIcon />} collapsed active />)
     expect(out).toContain('aria-label="Routine"')
@@ -163,6 +175,17 @@ describe('bộ thành phần', () => {
           nội dung
         </Dialog>
         <NavItem label="n" icon={<PlusIcon />} meta="4 phiên" variant="warn" />
+        <TaskBranch mascot="lam" name="Lâm" task="nghiên cứu" meta="10:42">
+          <BranchStep status="done">Tìm được 20 nguồn</BranchStep>
+          <BranchStep status="working">
+            Đang đọc <Progress value={0.6} label="12/20" />
+          </BranchStep>
+          <ApprovalBox title="Mai đợi anh gật đầu">
+            <Button variant="primary" size="sm">
+              Cho Mai gửi
+            </Button>
+          </ApprovalBox>
+        </TaskBranch>
         <BotRow mascot="aris" name="Aris" note="Chỉ huy" status="working" statusLabel="Đang làm" lead />
         <BotRow mascot="mai" name="Mai" note="đợi anh" status="waiting" statusLabel="Chờ anh" collapsed />
         <SettingsShell

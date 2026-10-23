@@ -1,8 +1,9 @@
 /**
- * Đội hình hiển thị ở thanh bên. Giai đoạn 0 chưa có dịch vụ đội bot (giai đoạn 2),
- * nên đây là đội mẫu theo canvas; `aris-bots` sẽ thay bằng dữ liệu thật.
+ * Dữ liệu mẫu theo canvas, dùng chung cho thanh bên và cột phải. Chưa có dịch vụ
+ * đội bot (giai đoạn 2), hộp duyệt (giai đoạn 3), sổ chi phí (giai đoạn 1); mỗi
+ * hằng `DEMO_*` được gỡ khi phần dữ liệu thật tương ứng có mặt.
  */
-import type { BotStatus } from '@aris/ui-kit'
+import type { BotStatus } from './status.js'
 
 export interface TeamMember {
   id: string
@@ -50,3 +51,10 @@ export const DEMO_PENDING_APPROVALS = 3
 
 /** Chi phí model hôm nay so với ngân sách, đơn vị USD (mẫu; giai đoạn 5 lấy từ sổ chi phí). */
 export const DEMO_COST = { spent: 0.42, budget: 5 }
+
+/** Việc gần đây của đội cho cột phải "Đội bot lúc này" (mẫu; giai đoạn 2 lấy từ dịch vụ đội bot). */
+export const DEMO_ACTIVITY: readonly { id: string; status: BotStatus; text: string; when: string }[] = [
+  { id: 'lam', status: 'working', text: 'đọc nguồn thứ 12', when: 'vừa xong' },
+  { id: 'mai', status: 'waiting', text: 'soạn xong thư, đợi anh', when: '3 phút' },
+  { id: 'ha', status: 'done', text: 'học thêm 1 skill · lên cấp 2', when: '1 giờ' },
+]

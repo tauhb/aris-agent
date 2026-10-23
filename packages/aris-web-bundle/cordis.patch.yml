@@ -8,6 +8,11 @@
   name: '@deepseek-ai/dsh-client-ui-sidebar'
   disabled: true
 
+# Nhãn "1017" tạm của DeepSeek cạnh tên model: aris vẽ nhãn model riêng (@aris/ui-chat).
+- id: ui-deepseek-model-label-1017
+  name: '@deepseek-ai/dsh-client-ui-deepseek-model-label-1017'
+  disabled: true
+
 - insert:
     # Theme aris cho toàn app: ghi đè token màu, nền, viền, chữ, phông của dsh.
     - id: aris-ui-theme
@@ -23,6 +28,14 @@
     # Đầu khung chat "Bot / Phiên ▾": cắm thêm vào slot đầu khung của dsh.
     - id: aris-ui-chat-header
       name: '@aris/ui-chat-header'
+
+    # Khung chat: màn trống, nút / và @, nhãn model, "dòng việc" khi giao việc cho bot con.
+    - id: aris-ui-chat
+      name: '@aris/ui-chat'
+
+    # Cột phải: "Đội bot lúc này" ở trang bắt đầu.
+    - id: aris-ui-team-pane
+      name: '@aris/ui-team-pane'
 
     # Thử nghiệm giai đoạn 0: trang "Bản đồ đội".
     - id: aris-web-spike

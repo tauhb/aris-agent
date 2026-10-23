@@ -1,8 +1,11 @@
 /**
- * Theme aris cho toàn bộ Web UI: một lớp ghi đè token đặt trên theme đang dùng
- * (sáng hoặc tối), nên người dùng vẫn đổi sáng/tối/theo hệ thống như cũ.
+ * Theme và nhận diện aris cho toàn bộ Web UI: một lớp ghi đè token đặt trên theme
+ * đang dùng (sáng hoặc tối, người dùng vẫn đổi như cũ), vài chỉnh CSS cho mảnh
+ * token không với tới, tiêu đề và biểu tượng tab mang tên aris.
  */
 import { FONT_HREF } from '@aris/ui-kit'
+import { keepArisTitle, useArisFavicon } from './brand.js'
+import { OVERRIDES_CSS } from './overrides.js'
 import { ARIS_TOKENS } from './tokens.js'
 
 interface ClientContext {
@@ -22,4 +25,13 @@ export function apply(ctx: ClientContext): void {
     document.head.appendChild(link)
     return () => link.remove()
   }, 'aris-ui-theme: fonts')
+  ctx.effect(() => {
+    const style = document.createElement('style')
+    style.dataset.plugin = '@aris/ui-theme'
+    style.textContent = OVERRIDES_CSS
+    document.head.appendChild(style)
+    return () => style.remove()
+  }, 'aris-ui-theme: overrides')
+  ctx.effect(() => keepArisTitle(), 'aris-ui-theme: title')
+  ctx.effect(() => useArisFavicon(), 'aris-ui-theme: favicon')
 }

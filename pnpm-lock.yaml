@@ -79,6 +79,12 @@ importers:
         specifier: 0.2.1-rc.2
         version: 0.2.1-rc.2(f4f5dafa2004c02f6afbbbc8518bca23)
 
+  packages/aris-ui-chat:
+    dependencies:
+      '@aris/ui-kit':
+        specifier: workspace:*
+        version: link:../aris-ui-kit
+
   packages/aris-ui-chat-header:
     dependencies:
       '@aris/ui-kit':
@@ -109,6 +115,12 @@ importers:
         specifier: 0.2.1-rc.2
         version: 0.2.1-rc.2(@deepseek-ai/cordis@4.0.5)
 
+  packages/aris-ui-team-pane:
+    dependencies:
+      '@aris/ui-kit':
+        specifier: workspace:*
+        version: link:../aris-ui-kit
+
   packages/aris-ui-theme:
     dependencies:
       '@aris/ui-kit':
@@ -117,6 +129,9 @@ importers:
 
   packages/aris-web-bundle:
     dependencies:
+      '@aris/ui-chat':
+        specifier: workspace:*
+        version: link:../aris-ui-chat
       '@aris/ui-chat-header':
         specifier: workspace:*
         version: link:../aris-ui-chat-header
@@ -126,6 +141,9 @@ importers:
       '@aris/ui-sidebar':
         specifier: workspace:*
         version: link:../aris-ui-sidebar
+      '@aris/ui-team-pane':
+        specifier: workspace:*
+        version: link:../aris-ui-team-pane
       '@aris/ui-theme':
         specifier: workspace:*
         version: link:../aris-ui-theme
