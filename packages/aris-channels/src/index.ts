@@ -131,6 +131,8 @@ export async function apply(ctx: Context): Promise<void> {
     logger: ctx.logger('aris-channels'),
   })
 
+  // Cho lệnh `aris send` (qua @aris/daemon) và các plugin khác gửi Telegram.
+  ctx.provide('arisChannels', hub)
   ctx.on('session/event', (session, event) => hub.onSessionEvent(session.id, event as never))
   ctx.on('agent/assistant-stream', ({ agent, frame }) => hub.onStream(agent.session.id, frame as never))
   // Phiên của kênh: duyệt và câu hỏi đi qua Telegram trước; phiên khác để người trả lời sau lo.

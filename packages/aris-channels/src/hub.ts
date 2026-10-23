@@ -145,6 +145,16 @@ export class ChannelHub {
     this.typing.clear()
   }
 
+  /** Tóm tắt cho `aris status`. */
+  status() {
+    return this.store.bots().map((b) => ({
+      bot: b.bot,
+      username: b.username,
+      running: this.runtimes.has(b.bot),
+      error: b.error ?? null,
+    }))
+  }
+
   api(bot: string): TelegramApi | undefined {
     return this.runtimes.get(bot)?.api
   }
