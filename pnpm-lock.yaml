@@ -53,6 +53,9 @@ importers:
 
   packages/aris-bundle:
     dependencies:
+      '@aris/channels':
+        specifier: workspace:*
+        version: link:../aris-channels
       '@aris/hello':
         specifier: workspace:*
         version: link:../aris-hello
@@ -71,6 +74,9 @@ importers:
 
   packages/aris-channels:
     dependencies:
+      '@aris/home':
+        specifier: workspace:*
+        version: link:../aris-home
       zod:
         specifier: 4.4.3
         version: 4.4.3
