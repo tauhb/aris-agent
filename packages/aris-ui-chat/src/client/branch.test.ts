@@ -28,8 +28,9 @@ describe('nhánh việc từ lần gọi subagent', () => {
     expect(subagentId(result({ isError: true }))).toBeUndefined()
   })
 
-  it('mẫu bot trùng thành viên đội thì dùng bot đó, không thì linh vật chưa dùng và ổn định', () => {
-    expect(branchBot('lam', 'x')).toEqual({ mascot: 'lam', name: 'Lâm' })
+  it('tên bot con trùng tên gọi trong đội thì dùng bot đó, không thì linh vật chưa dùng và ổn định', () => {
+    // Chưa tải đội: chỉ có Commander.
+    expect(branchBot('aris', 'x')).toEqual({ mascot: 'aris', name: 'Aris' })
     const a = branchBot(undefined, 's-42')
     expect(a).toEqual(branchBot(undefined, 's-42'))
     expect(MASCOTS.find((m) => m.id === a.mascot)?.inUse).toBe(false)

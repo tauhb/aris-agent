@@ -7,7 +7,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import type { PageProps } from '../page.js'
 import { Box } from '../ui.js'
 import { useMemory, type MemoryItem, type MemoryOp } from './memory-api.js'
-import { BOT_NAMES, botName, botOptions } from './names.js'
+import { botName, botNames, botOptions } from './names.js'
 
 /** Bỏ dấu để tìm ("hop" khớp "Họp"). */
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase()
@@ -142,7 +142,7 @@ function Editable({
 }
 
 export function Memory({ t, params }: PageProps) {
-  const [bot, setBot] = useState<string>(params.bot && params.bot in BOT_NAMES ? params.bot : 'aris')
+  const [bot, setBot] = useState<string>(params.bot && params.bot in botNames() ? params.bot : 'aris')
   const [tab, setTab] = useState<'core' | 'archive' | 'pending'>('core')
   const [query, setQuery] = useState('')
   const { data, error, loading, act } = useMemory(bot)
@@ -166,7 +166,7 @@ export function Memory({ t, params }: PageProps) {
           label={t('mem.pickBot')}
           value={bot}
           onChange={setBot}
-          options={botOptions(Object.keys(BOT_NAMES))}
+          options={botOptions()}
           searchPlaceholder={t('pick.search')}
           emptyLabel={t('pick.empty')}
         />

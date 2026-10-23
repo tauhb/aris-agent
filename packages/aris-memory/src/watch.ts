@@ -13,6 +13,7 @@ import { appendPluginRecord, type Session, type SessionEvent } from '@deepseek-a
 import type {} from '@deepseek-ai/dsh-tools'
 import { NUDGE_TEXT, emptyTurn, nudgeReason, type TurnSignals } from './nudge.js'
 import { dedupe, parseCandidates, reflectPrompt, transcriptText, type TranscriptLine } from './reflect.js'
+import { bookOwner, itemsFor } from './books.js'
 import type { MemoryStore } from './store.js'
 
 /** Nguồn của lời nhắc trong lịch sử: hiện thành dòng "notice" chứ không thành lời chủ nhân. */
@@ -73,7 +74,7 @@ export interface ReflectStatus {
 export function watchConversation(
   ctx: Context,
   store: MemoryStore,
-  bot: string,
+  botOf: (sessionId: string) => string,
 ): { lastReflect: () => ReflectStatus | undefined } {
   let last: ReflectStatus | undefined
   const logger = ctx.logger('aris-memory')
@@ -142,7 +143,8 @@ export function watchConversation(
       status.skipped = 'short'
       return
     }
-    const existing = store.list(bot).map((m) => m.text)
+    const bot = botOf(session.id)
+    const existing = itemsFor(store, bot).map((m) => m.text)
     const record = {
       compactionId: String(event.data.compactionId),
       lines: lines.length,
@@ -164,7 +166,7 @@ export function watchConversation(
       status.proposed = proposed.length
       for (const c of dedupe(proposed, existing)) {
         const m = await store.save({
-          bot,
+          bot: bookOwner(bot, c.book),
           text: c.text,
           book: c.book,
           kind: c.kind,

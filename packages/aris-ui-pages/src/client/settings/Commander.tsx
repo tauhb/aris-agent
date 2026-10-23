@@ -1,6 +1,5 @@
 /** 2.5 · Commander: bot được giao việc, giới hạn điều phối, quyết định định tuyến gần đây, điều Commander đã học. */
-import { Button, Card, Mascot, PageShell, Pill } from '@aris/ui-kit/react'
-import { COMMANDER } from '@aris/ui-kit'
+import { Button, Card, Mascot, PageShell, Pill, useTeam } from '@aris/ui-kit/react'
 import type { PageProps } from '../page.js'
 import { Bot, Col, Num } from '../ui.js'
 import { DEMO_COMMANDER as C } from './demo.js'
@@ -8,11 +7,12 @@ import { DEMO_COMMANDER as C } from './demo.js'
 const KIND_TONE = { delegate: 'accent', self: 'muted', handoff: 'ok', helpers: 'muted' } as const
 
 export function Commander({ t, nav }: PageProps) {
+  const COMMANDER = useTeam().commander
   return (
     <PageShell
       title={
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-          <Mascot id={COMMANDER.id} size={30} />
+          <Mascot id={COMMANDER.mascot ?? COMMANDER.id} size={30} />
           {t('cmd.title', { name: COMMANDER.name })}
         </span>
       }

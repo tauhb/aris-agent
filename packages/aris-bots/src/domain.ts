@@ -1,0 +1,70 @@
+/**
+ * Storage domain `aris_bots` (backend của dsh, mỗi bản ghi một tệp). Khoá bản ghi chỉ gồm chữ,
+ * số và `-` (ràng buộc của storage dsh).
+ */
+import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
+import { z } from 'zod'
+
+export const modelRef = z.object({ provider: z.string(), model: z.string() })
+
+export const botRecord = z.object({
+  /** Mã nội bộ cố định: `aris` cho Commander, `b-xxxxxx` cho bot khác. */
+  id: z.string(),
+  kind: z.enum(['commander', 'member']),
+  /** Tên gọi `@handle`: chữ thường không dấu, số, `-`. */
+  handle: z.string(),
+  name: z.string(),
+  role: z.string(),
+  /** Mô tả năng lực: Commander dựa vào đây để chọn người. */
+  description: z.string(),
+  /** Tính cách, cách làm việc, giọng văn. */
+  soul: z.string(),
+  mascot: z.string(),
+  model: modelRef.optional(),
+  department: z.string().optional(),
+  createdAt: z.string(),
+})
+export type BotRecord = z.infer<typeof botRecord>
+
+export const departmentRecord = z.object({
+  id: z.string(),
+  name: z.string(),
+  /** Mã nội bộ của bot trưởng nhóm. */
+  lead: z.string().optional(),
+  order: z.number().int(),
+})
+export type DepartmentRecord = z.infer<typeof departmentRecord>
+
+/** Phiên → bot. Phiên không có ở đây là phiên của Commander. */
+export const sessionRecord = z.object({
+  bot: z.string(),
+  via: z.enum(['open', 'team', 'dispatch']),
+  at: z.string(),
+  /** Mã phiên gốc (khoá bản ghi đã thay ký tự lạ). */
+  session: z.string().optional(),
+})
+export type SessionRecord = z.infer<typeof sessionRecord>
+
+export const botsDomain = defineDomain({
+  name: 'aris_bots',
+  version: 1,
+  layout: 'per-record',
+  tables: {
+    bots: domainTable<string, BotRecord>(botRecord),
+    departments: domainTable<string, DepartmentRecord>(departmentRecord),
+    sessions: domainTable<string, SessionRecord>(sessionRecord),
+  },
+})
+
+export interface Table<V> {
+  get(key: string): V | undefined
+  entries(): IterableIterator<[string, V]>
+  put(key: string, value: V): Promise<void>
+  delete(key: string): Promise<boolean>
+}
+
+export interface Tables {
+  bots: Table<BotRecord>
+  departments: Table<DepartmentRecord>
+  sessions: Table<SessionRecord>
+}

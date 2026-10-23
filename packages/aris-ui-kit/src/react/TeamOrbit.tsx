@@ -12,8 +12,10 @@ import type { BotStatus } from '../status.js'
 import { depthOrder, orbitLayout, pickSeat, splitMascot, svgDataUrl, type OrbitSeat } from './orbit.js'
 
 export interface OrbitBot {
-  /** Mã bot, cũng là mã linh vật. */
+  /** Mã bot. */
   id: string
+  /** Mã linh vật; bỏ trống thì dùng mã bot. */
+  mascot?: string | undefined
   name: string
   /** Vai, hiện khi rê chuột. */
   role: string
@@ -235,7 +237,7 @@ export function TeamOrbit(props: TeamOrbitProps) {
 
       const L = orbitLayout(members.length, state.ang, w, h, stage ? 'stage' : 'pane')
       const { K, member: M, commander: CM } = L
-      const cmd = spriteOf(commander.id)
+      const cmd = spriteOf(commander.mascot ?? commander.id)
       const glowAt = (a: number) => rgba(cmd.color, a)
       const selectedIndex = members.findIndex((m) => m.id === selected)
 
@@ -294,7 +296,7 @@ export function TeamOrbit(props: TeamOrbitProps) {
       // Dây từ Commander tới từng bot; nét đứt chạy (và chấm chạy ở bản lớn) khi bot đang làm hoặc chờ anh.
       for (const seat of L.seats) {
         const m = members[seat.i]!
-        const color = spriteOf(m.id).color
+        const color = spriteOf(m.mascot ?? m.id).color
         const active = m.status === 'working' || m.status === 'waiting'
         const ty = seat.y - L.wireTo * seat.s
         const x0 = L.cx
@@ -329,7 +331,7 @@ export function TeamOrbit(props: TeamOrbitProps) {
       hits = []
       const drawMember = (seat: OrbitSeat) => {
         const m = members[seat.i]!
-        const sp = spriteOf(m.id)
+        const sp = spriteOf(m.mascot ?? m.id)
         const hovered = state.hover === seat.i
         const picked = selectedIndex === seat.i
         const s = seat.s * (hovered ? (stage ? 1.1 : 1.12) : 1)

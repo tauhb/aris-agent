@@ -3,6 +3,8 @@
 - insert:
     - id: aris-hello
       name: '@aris/hello'
+    - id: aris-bots
+      name: '@aris/bots'
     - id: aris-memory
       name: '@aris/memory'
     - id: aris-providers

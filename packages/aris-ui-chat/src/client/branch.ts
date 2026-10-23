@@ -2,7 +2,8 @@
  * Đọc một lần gọi công cụ `subagent` của dsh thành một nhánh "dòng việc": bot nào
  * nhận, việc gì, đang ở bước nào. Thuần, không phụ thuộc React.
  */
-import { COMMANDER, DEMO_TEAM, MASCOTS, type BotStatus } from '@aris/ui-kit'
+import { MASCOTS, type BotStatus } from '@aris/ui-kit'
+import { currentTeam } from '@aris/ui-kit/react'
 import type { ChatKey } from './locale.js'
 
 /** Lần gọi ở ba pha mà dsh truyền cho toolview (`tool.call.toolview`). */
@@ -63,17 +64,19 @@ function hash(text: string): number {
 }
 
 /**
- * Bot cho nhánh: thành viên đội có mã trùng mẫu bot; không thì một linh vật chưa
- * dùng, chọn ổn định theo `key` để cùng một bot con luôn cùng màu.
- * Giai đoạn 2 thay bằng bot thật từ dịch vụ đội bot.
+ * Bot cho nhánh: bot trong đội có tên gọi (hoặc mã) trùng tên bot con; không thì một linh vật
+ * chưa dùng, chọn ổn định theo `key` để cùng một bot con luôn cùng màu.
  */
 export function branchBot(
   agentPreset: string | undefined,
   key: string,
 ): { mascot: string; name: string | undefined } {
-  const members = [COMMANDER, ...DEMO_TEAM.flatMap((g) => g.members)]
-  const member = members.find((m) => m.id === agentPreset)
-  if (member) return { mascot: member.id, name: member.name }
+  const team = currentTeam()
+  const members = [team.commander, ...team.members]
+  const member = agentPreset
+    ? members.find((m) => m.handle === agentPreset || m.id === agentPreset)
+    : undefined
+  if (member) return { mascot: member.mascot ?? member.id, name: member.name }
   const free = MASCOTS.filter((m) => !m.inUse)
   return { mascot: free[hash(agentPreset ?? key) % free.length]!.id, name: agentPreset }
 }

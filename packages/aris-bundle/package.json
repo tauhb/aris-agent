@@ -17,6 +17,7 @@
     }
   },
   "dependencies": {
+    "@aris/bots": "workspace:*",
     "@aris/channels": "workspace:*",
     "@aris/daemon": "workspace:*",
     "@aris/hello": "workspace:*",

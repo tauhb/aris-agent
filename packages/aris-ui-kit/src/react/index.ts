@@ -30,3 +30,21 @@ export * from './nav.js'
 export { KnowledgeGraph, ZOOM_MAX, ZOOM_MIN, clampZoom, type KnowledgeGraphProps } from './KnowledgeGraph.js'
 export * from './graph.js'
 export { BotPicker, filterBotOptions, type BotOption } from './BotPicker.js'
+export {
+  currentTeam,
+  openBotSession,
+  refreshTeam,
+  teamAction,
+  teamView,
+  toMember,
+  useSessionBot,
+  useTeam,
+  useTeamData,
+  type BotData,
+  type CatalogGroup,
+  type RolePreset,
+  type DepartmentData,
+  type TeamSnapshot,
+  type TeamView,
+  type TemplateData,
+} from './team.js'

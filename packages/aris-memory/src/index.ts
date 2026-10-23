@@ -13,6 +13,7 @@ import { appendPluginRecord } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-storage-domain'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import { defineTool } from '@deepseek-ai/dsh-tools'
+import { DEFAULT_BOT, bookOwner, itemsFor } from './books.js'
 import { memoryDomain } from './domain.js'
 import { handleApi } from './api.js'
 import { watchConversation } from './watch.js'
@@ -28,12 +29,10 @@ import {
 
 export * from './store.js'
 export { handleApi } from './api.js'
+export { DEFAULT_BOT, bookOwner, itemsFor } from './books.js'
 
 export const name = 'aris-memory'
 export const inject = ['systemPrompt', 'tools', 'storageDomain', 'llm']
-
-/** Bot của phiên. Giai đoạn 1 chỉ có Aris; giai đoạn 2 lấy từ agent preset. */
-export const DEFAULT_BOT = 'aris'
 
 /** Bản ghi trong log phiên mỗi lần ký ức đổi (truy vết: model thấy gì, log có nấy). */
 export const MEMORY_OP_RECORD = 'plugin:aris/memory-op'
@@ -76,7 +75,10 @@ export async function apply(ctx: Context): Promise<void> {
   const domain = await ctx.storageDomain.open(memoryDomain)
   ctx.effect(() => () => void domain.close(), 'aris-memory: domain')
   const store = new MemoryStore(domain.table('items'))
-  const bot = DEFAULT_BOT
+  // Bot của phiên do @aris/bots giữ; không có plugin đó thì mọi phiên là của Commander.
+  const botOf = (sessionId: string | undefined) =>
+    (ctx.get('arisBots') as { botOf(id: string | undefined): { id: string } } | undefined)?.botOf(sessionId)
+      .id ?? DEFAULT_BOT
 
   ctx.effect(
     () => ctx.systemPrompt.section({ name: 'aris:memory-guide', order: SECTION_ORDER, text: GUIDE }),
@@ -88,7 +90,7 @@ export async function apply(ctx: Context): Promise<void> {
         name: 'aris:memory',
         order: CONTEXT_ORDER,
         // Đọc lại mỗi lần dựng prompt: ký ức vừa ghi có ngay ở bước kế tiếp.
-        text: () => renderCore(store.list(bot)),
+        text: (c) => renderCore(itemsFor(store, botOf(c?.agent?.session.id))),
         interpolate: false,
       }),
     'aris-memory: core context',
@@ -131,6 +133,7 @@ export async function apply(ctx: Context): Promise<void> {
       },
       async execute(args, exec) {
         const session = exec.agent?.session
+        const bot = botOf(session?.id)
         const record = (op: MemoryOpRecord['op'], m: MemoryItem) => {
           if (session)
             appendPluginRecord(session, MEMORY_OP_RECORD, {
@@ -144,17 +147,18 @@ export async function apply(ctx: Context): Promise<void> {
         try {
           switch (args.action) {
             case 'save': {
+              const book = (args.book ?? 'owner') as Book
               const m = await store.save({
-                bot,
+                bot: bookOwner(bot, book),
                 text: args.text ?? '',
-                book: (args.book ?? 'owner') as Book,
+                book,
                 tier: (args.tier ?? 'core') as Tier,
                 kind: (args.kind ?? 'fact') as Kind,
                 trust: TRUST[(args.origin ?? 'inferred') as keyof typeof TRUST],
                 sessionId: session?.id,
               })
               record('save', m)
-              const u = store.usage(bot, m.book)
+              const u = store.usage(m.bot, m.book)
               return `Đã lưu ${describe(m)}.${m.tier === 'core' ? ` Cuốn ${m.book}: ${u.used}/${u.cap} ký tự.` : ''}`
             }
             case 'update': {
@@ -168,7 +172,14 @@ export async function apply(ctx: Context): Promise<void> {
               return `Đã quên [${m.id}].`
             }
             case 'search': {
-              const found = await store.search(bot, args.query ?? '')
+              const found = [
+                ...(await store.search(DEFAULT_BOT, args.query ?? '')).filter(
+                  (m) => bot === DEFAULT_BOT || m.book === 'owner',
+                ),
+                ...(bot === DEFAULT_BOT
+                  ? []
+                  : (await store.search(bot, args.query ?? '')).filter((m) => m.book === 'notes')),
+              ]
               return found.length ? found.map(describe).join('\n') : 'Không thấy ký ức nào khớp.'
             }
             default:
@@ -183,7 +194,7 @@ export async function apply(ctx: Context): Promise<void> {
   )
 
   // Tự nhắc lưu và lưu trước khi nén.
-  const watch = watchConversation(ctx, store, bot)
+  const watch = watchConversation(ctx, store, (sessionId) => botOf(sessionId))
 
   // Trang Ký ức của web gọi qua đường /api của dsh (dsh kiểm cookie và chỉ cho chủ nhân).
   ctx.inject(['connection'], (ctx) => {

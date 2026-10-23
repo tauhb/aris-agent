@@ -8,6 +8,10 @@ import type { BotStatus } from './status.js'
 export interface TeamMember {
   id: string
   name: string
+  /** Mã linh vật; bỏ trống thì dùng mã bot (đội mẫu cũ). */
+  mascot?: string | undefined
+  /** Tên gọi `@handle`. */
+  handle?: string | undefined
   /** Vai trong đội, hiện khi rê chuột trên sơ đồ đội. */
   role: string
   /** Dòng phụ: việc đang làm. */

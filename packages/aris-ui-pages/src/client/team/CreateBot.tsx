@@ -1,6 +1,16 @@
 /** 2.1 · Tạo bot mới (bot của aris) và 2.1b · Thêm bot ngoài nói ACP, chung một hộp thoại hai loại. */
 import { MASCOTS, getMascot } from '@aris/ui-kit'
-import { BotPicker, Button, Dialog, Mascot, PlusIcon, Segmented, TextInput } from '@aris/ui-kit/react'
+import {
+  BotPicker,
+  Button,
+  Dialog,
+  Mascot,
+  PlusIcon,
+  Segmented,
+  TextInput,
+  teamAction,
+  useTeam,
+} from '@aris/ui-kit/react'
 import { useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Disclosure, Dot } from '../ui.js'
@@ -9,11 +19,81 @@ import { DEMO_AGENTS, DEMO_CREATE_BOT as C } from './demo.js'
 
 const check = { width: 18, height: 18, accentColor: 'var(--a-accent)' }
 
+/** Gợi ý tên gọi từ tên hiển thị: bỏ dấu, chữ thường (khớp `suggestHandle` ở máy chủ). */
+const handleOf = (name: string) =>
+  name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 24)
+
 function ArisBot({ t, nav }: PageProps) {
+  const team = useTeam()
   const [mascot, setMascot] = useState(C.suggested[0]!)
-  const [template, setTemplate] = useState(C.template)
+  const [role, setRole] = useState('')
+  const [name, setName] = useState('')
+  const [handle, setHandle] = useState('')
+  const [handleEdited, setHandleEdited] = useState(false)
+  const [about, setAbout] = useState('')
+  const [soul, setSoul] = useState('')
+  const [department, setDepartment] = useState('')
+  const [model, setModel] = useState('')
   const [clone, setClone] = useState<string>('blank')
-  const [adv, setAdv] = useState(true)
+  const [adv, setAdv] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const pickRole = (r: string) => {
+    setRole(r)
+    const p = team.roles.find((x) => x.role === r)
+    if (!p) return
+    setAbout(p.description)
+    setSoul(p.soul)
+    setMascot(p.mascot)
+  }
+  const cloneFrom = (id: string) => {
+    setClone(id)
+    const b = team.bots.find((x) => x.id === id)
+    if (!b) return
+    setRole(b.role)
+    setAbout(b.description)
+    setSoul(b.soul)
+    if (b.department) setDepartment(b.department)
+    if (b.model) setModel(`${b.model.provider}\u0000${b.model.model}`)
+  }
+
+  async function create() {
+    setBusy(true)
+    setError(null)
+    const [provider, modelId] = model.split('\u0000')
+    try {
+      const snap = await teamAction<{ bots: { id: string; handle: string }[] }>({
+        op: 'create',
+        bot: {
+          name,
+          handle: handle || handleOf(name),
+          role,
+          description: about,
+          soul,
+          mascot,
+          department: department || null,
+          model: model ? { provider, model: modelId } : null,
+        },
+      })
+      const made = snap.bots.find((b) => b.handle === (handle || handleOf(name)))
+      nav.close()
+      if (made) nav.go('bot', { id: made.id })
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <>
       <div style={{ display: 'flex', gap: 24 }}>
@@ -36,23 +116,26 @@ function ArisBot({ t, nav }: PageProps) {
               {t('cb.mascotHint')}
             </span>
           </div>
-          <div role="radiogroup" aria-label={t('cb.pickMascot')} className="ap-mascots">
-            {C.suggested.map((id) => (
+          <div
+            role="radiogroup"
+            aria-label={t('cb.pickMascot')}
+            className="ap-mascots"
+            style={{ flexWrap: 'wrap' }}
+          >
+            {MASCOTS.map((m) => (
               <button
-                key={id}
+                key={m.id}
                 type="button"
                 role="radio"
-                aria-checked={mascot === id}
-                aria-label={getMascot(id)?.shape}
-                onClick={() => setMascot(id)}
+                aria-checked={mascot === m.id}
+                aria-label={m.shape}
+                title={`${m.shape} · ${m.role}`}
+                onClick={() => setMascot(m.id)}
               >
-                <Mascot id={id} size={30} />
+                <Mascot id={m.id} size={26} />
               </button>
             ))}
           </div>
-          <a className="ap-link" style={{ alignSelf: 'flex-start', fontSize: 12.5 }}>
-            {t('cb.allMascots', { n: MASCOTS.length })}
-          </a>
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
@@ -60,36 +143,57 @@ function ArisBot({ t, nav }: PageProps) {
               {t('cb.template')}
             </div>
             <div className="ap-tags" style={{ gap: 6 }}>
-              {C.templates.map((x) => (
+              {team.roles.map((r) => (
                 <button
-                  key={x}
+                  key={r.role}
                   type="button"
                   className="ap-chip ap-pick"
-                  aria-pressed={template === x}
-                  onClick={() => setTemplate(x)}
+                  aria-pressed={role === r.role}
+                  onClick={() => pickRole(r.role)}
                 >
-                  {x}
+                  {r.role}
                 </button>
               ))}
             </div>
           </div>
-          <label className="a-field">
-            <span className="l">{t('cb.name')}</span>
-            <TextInput defaultValue={C.name} />
-          </label>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <label className="a-field" style={{ flex: 1 }}>
+              <span className="l">{t('cb.name')}</span>
+              <TextInput
+                value={name}
+                autoFocus
+                onChange={(e) => {
+                  setName(e.target.value)
+                  if (!handleEdited) setHandle(handleOf(e.target.value))
+                }}
+              />
+            </label>
+            <label className="a-field" style={{ flex: 1 }}>
+              <span className="l">{t('cb.handle')}</span>
+              <TextInput
+                mono
+                value={handle}
+                onChange={(e) => {
+                  setHandle(e.target.value)
+                  setHandleEdited(true)
+                }}
+              />
+            </label>
+          </div>
           <label className="a-field">
             <span className="l">{t('cb.jobTitle')}</span>
-            <TextInput defaultValue={C.title} />
+            <TextInput value={role} onChange={(e) => setRole(e.target.value)} />
           </label>
           <label className="a-field">
             <span className="l">{t('cb.about')}</span>
             <textarea
               className="a-inp"
               rows={3}
-              defaultValue={C.about}
+              value={about}
+              onChange={(e) => setAbout(e.target.value)}
               style={{ height: 'auto', padding: '10px 12px', resize: 'vertical' }}
             />
-            <span className="h">{t('cb.aboutHint', { name: C.name })}</span>
+            <span className="h">{t('cb.aboutHint', { name: name || t('cb.thisBot') })}</span>
           </label>
         </div>
       </div>
@@ -104,45 +208,66 @@ function ArisBot({ t, nav }: PageProps) {
           <BotPicker
             label={t('cb.cloneFrom')}
             value={clone}
-            onChange={setClone}
+            onChange={cloneFrom}
             options={[
               { id: 'blank', name: t('cb.blank'), note: t('cb.blankNote'), icon: <PlusIcon size={14} /> },
-              ...botOptions(C.cloneFrom.filter((id) => id !== 'blank')),
+              ...botOptions(),
             ]}
             searchPlaceholder={t('pick.search')}
             emptyLabel={t('pick.empty')}
           />
         </div>
-        <div className="ap-frow">
+        <label className="ap-frow">
+          <span>{t('cb.soul')}</span>
+          <textarea
+            className="a-inp"
+            rows={3}
+            value={soul}
+            onChange={(e) => setSoul(e.target.value)}
+            style={{ height: 'auto', padding: '8px 10px', resize: 'vertical', flex: 1 }}
+          />
+        </label>
+        <label className="ap-frow">
+          <span>{t('cb.department')}</span>
+          <select className="ap-sel" value={department} onChange={(e) => setDepartment(e.target.value)}>
+            <option value="">{t('cb.noDepartment')}</option>
+            {team.departments.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="ap-frow">
           <span>{t('cb.model')}</span>
-          <span className="ap-sel">
-            <Dot color="#4D6BFE" size={8} />
-            <span className="a-muted">DeepSeek</span>
-            <b>deepseek-chat</b> ▾
-          </span>
-        </div>
+          <select className="ap-sel" value={model} onChange={(e) => setModel(e.target.value)}>
+            <option value="">{t('cb.modelDefault')}</option>
+            {team.catalog.map((g) => (
+              <optgroup key={g.id} label={g.name}>
+                {g.models.map((m) => (
+                  <option key={m.id} value={`${g.id}\u0000${m.id}`}>
+                    {m.name || m.id}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </label>
         <div className="ap-frow">
           <span>{t('cb.perms')}</span>
-          <span className="a-muted">{t('cb.permsValue')}</span>
+          <span className="a-muted">{t('cb.permsLater')}</span>
         </div>
         <div className="ap-frow">
           <span>{t('cb.channel')}</span>
-          <span className="a-muted">{t('cb.channelValue')}</span>
+          <span className="a-muted">{t('cb.channelLater')}</span>
         </div>
-        <label className="ap-frow">
-          <span>{t('cb.copyKeys')}</span>
-          <input type="checkbox" defaultChecked style={check} />
-        </label>
-        <label className="ap-frow">
-          <span>{t('cb.delegable')}</span>
-          <input type="checkbox" defaultChecked style={check} />
-        </label>
       </Disclosure>
+      {error && <div style={{ color: 'var(--a-danger)', fontSize: 13 }}>{error}</div>}
       <div className="ap-dfoot">
         <Button size="lg" onClick={nav.close}>
           {t('cb.cancel')}
         </Button>
-        <Button variant="primary" size="lg">
+        <Button variant="primary" size="lg" disabled={busy || !name.trim()} onClick={() => void create()}>
           {t('cb.create')}
         </Button>
       </div>

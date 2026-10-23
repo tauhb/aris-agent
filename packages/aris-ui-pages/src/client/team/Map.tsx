@@ -2,15 +2,23 @@
  * 1.3 · Bản đồ đội bot: sân khấu 3D (Commander giữa, bot xoay quanh, kéo để xoay,
  * bấm bot để xem), chú giải, dòng hoạt động trong ngày, cột phải chi tiết bot đang chọn.
  */
-import { COMMANDER, DEMO_TEAM, type BotStatus } from '@aris/ui-kit'
-import { Button, Mascot, PageShell, Segmented, StatusGlyph, TeamOrbit, branchColor } from '@aris/ui-kit/react'
+import type { BotStatus } from '@aris/ui-kit'
+import {
+  Button,
+  Mascot,
+  PageShell,
+  Segmented,
+  StatusGlyph,
+  TeamOrbit,
+  branchColor,
+  openBotSession,
+  useTeam,
+} from '@aris/ui-kit/react'
 import { useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Box } from '../ui.js'
 import { DEMO_MAP, DEMO_TIMELINE } from './demo.js'
 
-const MEMBERS = DEMO_TEAM.flatMap((g) => g.members)
-const ALL = [COMMANDER, ...MEMBERS]
 const TONE: Record<BotStatus, 'accent' | 'warn' | 'ok' | 'danger' | 'muted'> = {
   working: 'accent',
   waiting: 'warn',
@@ -21,9 +29,15 @@ const TONE: Record<BotStatus, 'accent' | 'warn' | 'ok' | 'danger' | 'muted'> = {
 
 export function TeamMap({ t, nav }: PageProps) {
   const [range, setRange] = useState<'live' | '24h' | '7d'>('live')
-  const [selected, setSelected] = useState(MEMBERS[0]!.id)
-  const bot = MEMBERS.find((m) => m.id === selected) ?? MEMBERS[0]!
+  const team = useTeam()
+  const COMMANDER = team.commander
+  const MEMBERS = team.members
+  const ALL = [COMMANDER, ...MEMBERS]
+  const [selected, setSelected] = useState<string>()
+  const bot = ALL.find((m) => m.id === selected) ?? MEMBERS[0] ?? COMMANDER
+  // Chi tiết việc đang làm và dòng hoạt động trong ngày là mẫu tới bước giao việc.
   const detail = DEMO_MAP[bot.id]
+  const timeline = DEMO_TIMELINE.filter((row) => ALL.some((m) => m.id === row.id))
   const orbitStatus = (s: BotStatus) => t(`orbit.${s}`)
   const working = MEMBERS.filter((m) => m.status === 'working').length
   const waiting = MEMBERS.filter((m) => m.status === 'waiting').length
@@ -51,7 +65,7 @@ export function TeamMap({ t, nav }: PageProps) {
             commander={COMMANDER}
             commanderLabel={t('map.commander', { name: COMMANDER.name })}
             members={MEMBERS}
-            selected={selected}
+            selected={bot.id}
             statusLabel={orbitStatus}
             label={t('map.alt', {
               name: COMMANDER.name,
@@ -80,7 +94,8 @@ export function TeamMap({ t, nav }: PageProps) {
             <span>{t('map.span')}</span>
           </div>
           <div className="rows">
-            {DEMO_TIMELINE.map((row) => (
+            {timeline.length === 0 && <span className="a-muted">{t('map.timelineSoon')}</span>}
+            {timeline.map((row) => (
               <div key={row.id} style={{ display: 'contents' }}>
                 <span className="a-muted">{ALL.find((m) => m.id === row.id)?.name}</span>
                 <div
@@ -106,12 +121,13 @@ export function TeamMap({ t, nav }: PageProps) {
       <aside className="ap-aside" aria-label={t('map.selected')}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <span className="ap-tile">
-            <Mascot id={bot.id} size={44} />
+            <Mascot id={bot.mascot ?? bot.id} size={44} />
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
             <span style={{ fontWeight: 700, fontSize: 17 }}>{bot.name}</span>
             <span className="a-muted" style={{ fontSize: 12.5 }}>
-              {bot.role} · DeepSeek
+              {bot.handle ? `@${bot.handle} · ` : ''}
+              {bot.role}
             </span>
           </div>
         </div>
@@ -164,7 +180,18 @@ export function TeamMap({ t, nav }: PageProps) {
             gap: 8,
           }}
         >
-          <Button variant="primary" size="lg" onClick={() => nav.openPanel(null)}>
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={() =>
+              bot.id === COMMANDER.id
+                ? nav.openPanel(null)
+                : void openBotSession(bot.id).then(
+                    (id) => nav.openSession(id),
+                    () => {},
+                  )
+            }
+          >
             {t('map.openChat')}
           </Button>
           <Button size="lg" onClick={() => nav.go('bot', { id: bot.id })}>

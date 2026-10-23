@@ -112,7 +112,7 @@ Dsh để cài đặt trong **một hộp thoại** (Chung, Models, Built-in plu
 
 | Hằng | Ở đâu | Gỡ khi |
 |---|---|---|
-| `DEMO_TEAM`, `COMMANDER` (đội 6 bot, trạng thái, dòng phụ), `DEMO_ACTIVITY` (việc gần đây ở cột phải) | `packages/aris-ui-kit/src/demo.ts` | GĐ2 (dịch vụ đội bot) |
+| `DEMO_TEAM` (đội 6 bot): **đã thay ở GĐ2 bước 1** bằng đội thật (`@aris/bots`, `useTeam`) ở thanh bên, cột phải, Bản đồ đội, Phòng ban, Hồ sơ bot, Tạo bot, Commander, nhánh dòng việc; còn dùng ở cột phải của dự án và Mặt tích hợp. `COMMANDER` chỉ còn là chỗ giữ trước khi đội tải xong. `DEMO_ACTIVITY` (việc gần đây) đã gỡ khỏi cột phải | `packages/aris-ui-kit/src/demo.ts` | GĐ2 bước 2–3 |
 | `DEMO_PENDING_APPROVALS` (3 việc chờ duyệt) | cùng tệp | GĐ3 (hộp duyệt) |
 | `DEMO_PROJECT_ROOM` (thành viên, luật, việc của phiên dự án) và trưởng nhóm trong `DEMO_TEAM` | cùng tệp | GĐ2 (Team của dsh, `aris-departments`) |
 | ~~`DEMO_COST`~~ (dòng chủ nhân "… USD hôm nay") | đã gỡ ở GĐ1 bước 6: số thật từ sổ chi phí `@aris/providers`; trần ngân sách ở GĐ7 | GĐ1 |

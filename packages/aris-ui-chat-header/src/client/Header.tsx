@@ -18,6 +18,7 @@ import {
   Pill,
   PlusIcon,
   useDismiss,
+  useSessionBot,
 } from '@aris/ui-kit/react'
 import { DEMO_PROJECT_ROOM, projectOfSession, type WorkspaceLike } from '@aris/ui-kit'
 import { useCallback, useRef, useState } from 'react'
@@ -50,9 +51,6 @@ interface ShortcutRow {
   readonly keys: readonly string[]
 }
 
-/** Bot đang chat. Chưa có dịch vụ đội bot nên luôn là Aris. */
-const CURRENT_BOT = { id: 'aris', name: 'Aris', role: 'Commander' }
-
 /**
  * Đầu khung bên trái: phiên thuộc dự án (màn 1.4) thì hiện linh vật các thành viên,
  * tên dự án, "n bot và anh"; phiên chat riêng thì hiện bot đang chat.
@@ -68,7 +66,11 @@ export function Leading({
 }) {
   const sessionId = useMounted((id) => id)
   const title = useWorkspaces((w) => projectOfSession(w.items, sessionId)?.title)
-  return title === undefined ? <BotIdentity t={t} /> : <ProjectIdentity t={t} title={title} />
+  return title === undefined ? (
+    <BotIdentity t={t} sessionId={sessionId} />
+  ) : (
+    <ProjectIdentity t={t} title={title} />
+  )
 }
 
 /** Thành viên dự án là mẫu tới giai đoạn 2 (danh sách thành viên của Team dsh). */
@@ -90,12 +92,18 @@ function ProjectIdentity({ t, title }: { t: Translate; title: string }) {
   )
 }
 
-export function BotIdentity({ t }: { t: Translate }) {
+/** Bot của phiên (`@aris/bots`): phiên chưa gắn là của Commander. */
+export function BotIdentity({ t, sessionId }: { t: Translate; sessionId?: string | undefined }) {
+  const bot = useSessionBot(sessionId)
+  const current = {
+    name: bot?.name ?? 'Aris',
+    role: !bot || bot.kind === 'commander' ? 'Commander' : bot.role,
+  }
   return (
-    <span className="aris aris-ch" aria-label={t('bot.chattingWith', CURRENT_BOT)}>
-      <Mascot id={CURRENT_BOT.id} size={26} />
-      <span className="botName">{CURRENT_BOT.name}</span>
-      <Pill>{CURRENT_BOT.role}</Pill>
+    <span className="aris aris-ch" aria-label={t('bot.chattingWith', current)}>
+      <Mascot id={bot?.mascot ?? 'aris'} size={26} />
+      <span className="botName">{current.name}</span>
+      {current.role && <Pill>{current.role}</Pill>}
       <span className="slash" aria-hidden="true">
         /
       </span>
@@ -112,6 +120,8 @@ export function SessionSwitcher(
   },
 ) {
   const { t } = props
+  const bot = useSessionBot(props.sessionId)
+  const CURRENT_BOT = { name: bot?.name ?? 'Aris' }
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLSpanElement>(null)
   const close = useCallback(() => setOpen(false), [])
@@ -179,7 +189,11 @@ export function NewSessionButton({
 }: Pick<HeaderActions, 'startSession'> & { t: Translate }) {
   return (
     <span className="aris aris-ch">
-      <IconButton label={t('session.newWith', CURRENT_BOT)} title={t('session.new')} onClick={startSession}>
+      <IconButton
+        label={t('session.newWith', { name: 'Aris' })}
+        title={t('session.new')}
+        onClick={startSession}
+      >
         <ComposeIcon />
       </IconButton>
     </span>

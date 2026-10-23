@@ -26,7 +26,7 @@ function setup(reply = '[]') {
     put: async (k, v) => void map.set(k, v),
   }
   const store = new MemoryStore(table)
-  const watch = watchConversation(ctx as unknown as Context, store, 'aris')
+  const watch = watchConversation(ctx as unknown as Context, store, () => 'aris')
   const call = (name: string, ...args: unknown[]) =>
     (handlers.get(name) as (...a: unknown[]) => unknown)(...args)
   return { call, store, llmCalls, watch }

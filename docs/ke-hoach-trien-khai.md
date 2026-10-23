@@ -143,6 +143,8 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 ## Giai đoạn 2 · Đội bot và Commander (tuần 6–8)
 
+> **Bước 1 xong 23/10 — bot (`@aris/bots`)** ([đặc tả](specs/aris-bots.md)). Thử Agent Teams trước: hai đội chạy song song không đụng nhau, bảng việc ghi `team/task` đầy đủ; nhưng thành viên đội dùng chung preset và model với phiên chính, nên **bot là dữ liệu của aris gắn vào phiên** chứ không phải preset của dsh. Kho bot (mã nội bộ cố định, tên gọi `@handle` đổi được), phòng ban, ba đội mẫu đi kèm (anh chọn mẫu A: Minh, Thơ, Phát ở Tăng trưởng; An, Ngân ở Vận hành; Khoa ở Kỹ thuật). Phiên gắn bot khi mở chat thẳng với bot, hoặc khi thành viên đội trùng tên gọi (dsh ghi `team/member` trước khi phiên con chạy). Ngữ cảnh `aris:bot` nạp tính cách và đội hình theo phiên; ký ức: hồ sơ chủ nhân dùng chung cả đội, ghi chú riêng từng bot. Giao diện: thanh bên (đội thật, mời chọn đội mẫu, bấm bot là mở chat với bot), đầu khung chat hiện bot của phiên, sơ đồ 3D, Bản đồ đội, Phòng ban (đặt trưởng nhóm), Hồ sơ bot (sửa hồ sơ, tính cách, linh vật, model riêng, xoá), Tạo bot (vai mẫu điền sẵn). Chạy thử thật: chat với Minh, Minh tự giới thiệu đúng vai và chỉ sang Thơ cho bài Facebook; thành viên đội tên `tho` nhận đúng tính cách Thơ. Còn mẫu tới bước sau: trạng thái trực tiếp, việc gần đây, skill, quyền, kênh riêng, cột phải của dự án.
+
 **Mục tiêu**: 5 bot chuyên môn, Aris điều phối, anh thấy cả đội làm việc.
 
 **Việc cần làm**

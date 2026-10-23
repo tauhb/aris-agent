@@ -30,4 +30,7 @@ export const CSS = `
 .aris-sb .a-grp .grp{all:unset;cursor:pointer;border-radius:6px;padding:1px 4px;margin-left:-4px}
 .aris-sb .a-grp .grp:hover{color:var(--a-ink);background:var(--a-hover)}
 .aris-sb .a-grp .grp:focus-visible{outline:2px solid var(--a-accent);outline-offset:1px}
+.aris-sb .pick{display:flex;flex-direction:column;gap:8px;align-items:flex-start;margin:6px 10px 4px;padding:10px 12px;border:1px dashed var(--a-line);border-radius:10px;font-size:12.5px;color:var(--a-muted)}
+.aris .tpl{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--a-line);border-radius:10px;font-size:13px}
+.aris .tpl .a-muted{font-size:12.5px;margin-top:2px}
 `

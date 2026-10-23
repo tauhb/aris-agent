@@ -18,6 +18,7 @@ function fakeContext() {
     inject: () => {},
     on: () => {},
     logger: () => ({ warn: () => {}, info: () => {} }),
+    get: () => undefined,
     systemPrompt: {
       section: (s: { name: string }) => (sections.push(s), () => {}),
       context: (c: (typeof contexts)[number]) => (contexts.push(c), () => {}),

@@ -1,19 +1,18 @@
 /**
  * "Đội bot lúc này" theo màn R3: sơ đồ đội 3D (Commander giữa, các bot xoay
  * quanh), việc gần đây của đội, rồi các lối mở trang khác của cột phải (Tệp,
- * Terminal…) mà dsh vẫn đăng ký như cũ. Đội và việc gần đây là dữ liệu mẫu đến
- * giai đoạn 2.
+ * Terminal…) mà dsh vẫn đăng ký như cũ. Đội là thật (`@aris/bots`); trạng thái trực tiếp và
+ * việc gần đây có từ bước giao việc (GĐ2 bước 2). Cột phải của dự án vẫn là mẫu tới bước 3.
  */
 import {
   COMMANDER,
-  DEMO_ACTIVITY,
   DEMO_PROJECT_ROOM,
   DEMO_TEAM,
   projectOfSession,
   type BotStatus,
   type WorkspaceLike,
 } from '@aris/ui-kit'
-import { Button, Mascot, NavItem, StatusGlyph, TeamOrbit, arisNavigate } from '@aris/ui-kit/react'
+import { Button, Mascot, NavItem, StatusGlyph, TeamOrbit, arisNavigate, useTeam } from '@aris/ui-kit/react'
 import type { ComponentType, ReactNode } from 'react'
 import type { Translate } from './locale.js'
 
@@ -37,6 +36,7 @@ export interface TeamPaneProps {
   useMounted: Selector<string | undefined>
 }
 
+// Cột phải của dự án còn dùng đội mẫu tới bước 3 (dự án = Team của dsh).
 const MEMBERS = DEMO_TEAM.flatMap((g) => g.members)
 const nameOf = (id: string) => [COMMANDER, ...MEMBERS].find((m) => m.id === id)?.name ?? id
 
@@ -189,8 +189,10 @@ export function TeamPane({
   const more = (
     <More t={t} entries={entries} open={(kind) => tab.actions.openTab(kind, { replaceTab: true })} />
   )
+  const team = useTeam()
   if (projectPath !== undefined) return <ProjectPane t={t} path={projectPath} more={more} openMap={openMap} />
   const orbitStatus = (s: BotStatus) => t(`orbit.${s}`)
+  const { commander, members } = team
   return (
     <div className="aris aris-team">
       <div className="head">
@@ -202,13 +204,13 @@ export function TeamPane({
 
       <div className="map">
         <TeamOrbit
-          commander={COMMANDER}
-          commanderLabel={t('commander', { name: COMMANDER.name })}
-          members={MEMBERS}
+          commander={commander}
+          commanderLabel={t('commander', { name: commander.name })}
+          members={members}
           statusLabel={orbitStatus}
           label={t('orbit', {
-            name: COMMANDER.name,
-            members: MEMBERS.map((m) => `${m.name} ${orbitStatus(m.status)}`).join(', '),
+            name: commander.name,
+            members: members.map((m) => `${m.name} ${orbitStatus(m.status)}`).join(', '),
           })}
           height={300}
           onSelect={openMap}
@@ -217,14 +219,7 @@ export function TeamPane({
       <div className="hint">{t('orbitHint')}</div>
 
       <div className="list" aria-label={t('recent')}>
-        {DEMO_ACTIVITY.map((a) => (
-          <div key={a.id} className="act">
-            <StatusGlyph status={a.status} label={t(`status.${a.status}`)} />
-            <span className="txt">
-              <b>{nameOf(a.id)}</b> {a.text} · <span className="a-muted">{a.when}</span>
-            </span>
-          </div>
-        ))}
+        <div className="act a-muted">{t('recentSoon')}</div>
       </div>
 
       {more}

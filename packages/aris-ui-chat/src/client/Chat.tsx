@@ -3,7 +3,7 @@
  * ô nhập (màn 1.2), nhãn model có dấu nhà cung cấp (màn "Ngôn ngữ thiết kế mới"
  * mục 5), và nhánh "dòng việc" cho mỗi lần Aris giao việc cho bot con (màn R3).
  */
-import { BranchStep, Button, IconButton, Mascot, TaskBranch } from '@aris/ui-kit/react'
+import { BranchStep, Button, IconButton, Mascot, TaskBranch, useTeamData } from '@aris/ui-kit/react'
 import { branchBot, branchSteps, subagentArgs, subagentId, type SubagentCall } from './branch.js'
 import type { Translate } from './locale.js'
 
@@ -87,6 +87,8 @@ export function SubagentBranch(
   const running = props.useSessions((list) =>
     childId === undefined ? undefined : list.byId[childId]?.running,
   )
+  // Theo dõi đội để nhánh đổi tên và linh vật khi đội tải xong.
+  useTeamData()
   const bot = branchBot(args.agentPreset, childId ?? props.callId)
   const steps = branchSteps(call, running === undefined ? undefined : { running })
   return (

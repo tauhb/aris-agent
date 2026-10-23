@@ -9,6 +9,7 @@ import {
   BotRow,
   BrandMark,
   Button,
+  Dialog,
   GearIcon,
   GroupLabel,
   IconButton,
@@ -21,15 +22,13 @@ import {
   WaitingIcon,
   arisNavigate,
   onArisRoute,
+  openBotSession,
+  teamAction,
+  useTeam,
   type NavRequest,
+  type TemplateData,
 } from '@aris/ui-kit/react'
-import {
-  COMMANDER,
-  DEMO_PENDING_APPROVALS,
-  DEMO_TEAM,
-  isProjectWorkspace,
-  type TeamMember,
-} from '@aris/ui-kit'
+import { DEMO_PENDING_APPROVALS, isProjectWorkspace, type TeamMember } from '@aris/ui-kit'
 import { useEffect, useState, type ReactElement } from 'react'
 import { useTodayCost } from './cost.js'
 import { latestProjectSession } from './projects.js'
@@ -108,7 +107,7 @@ function Bot({
   return (
     <Tip label={tip} wide={wide}>
       <BotRow
-        mascot={member.id}
+        mascot={member.mascot ?? member.id}
         name={member.name}
         note={member.note}
         status={member.status}
@@ -120,6 +119,61 @@ function Bot({
         onClick={onOpen}
       />
     </Tip>
+  )
+}
+
+/** Đội mới chỉ có Commander: mời chọn một đội mẫu (đi kèm aris) hoặc tự tạo bot. */
+function PickTemplate({ t, templates }: { t: Translate; templates: readonly TemplateData[] }) {
+  const [open, setOpen] = useState(false)
+  const [busy, setBusy] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const use = async (id: string) => {
+    setBusy(id)
+    setError(null)
+    try {
+      await teamAction({ op: 'apply-template', template: id })
+      setOpen(false)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(null)
+    }
+  }
+  return (
+    <div className="pick">
+      <span>{t('team.empty')}</span>
+      <Button size="sm" variant="primary" onClick={() => setOpen(true)}>
+        {t('team.pickTemplate')}
+      </Button>
+      <Dialog
+        open={open}
+        title={t('team.templateTitle')}
+        description={t('team.templateHint')}
+        onClose={() => setOpen(false)}
+        closeLabel={t('team.close')}
+        width={520}
+        footer={
+          <Button variant="ghost" onClick={() => (setOpen(false), arisNavigate('create-bot'))}>
+            {t('team.createOwn')}
+          </Button>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {templates.map((tpl) => (
+            <div key={tpl.id} className="tpl">
+              <div style={{ minWidth: 0 }}>
+                <b>{tpl.name}</b>
+                <div className="a-muted">{tpl.description}</div>
+              </div>
+              <Button size="sm" disabled={busy !== null} onClick={() => void use(tpl.id)}>
+                {busy === tpl.id ? t('team.applying') : t('team.templateUse', { n: tpl.bots })}
+              </Button>
+            </div>
+          ))}
+          {error && <div style={{ color: 'var(--a-danger)' }}>{error}</div>}
+        </div>
+      </Dialog>
+    </div>
   )
 }
 
@@ -169,6 +223,13 @@ export function SidebarRoot(props: SidebarProps) {
   const newShortcut = props.useShortcuts((rows) => rows.find((r) => r.id === 'session.new'))
   const toggleShortcut = props.useShortcuts((rows) => rows.find((r) => r.id === 'sidebar.left.toggle'))
   const openChat = () => selectPanel(null)
+  const team = useTeam(t('team.noDepartment'))
+  // Bấm bot: mở lại phiên chat gần nhất với bot đó (chưa có thì tạo).
+  const chatWith = (id: string) => () =>
+    void openBotSession(id).then(
+      (sessionId) => props.openSession(sessionId),
+      () => {},
+    )
   // Bot đang được xem (hồ sơ, ký ức, hồ sơ chủ nhân) sáng trên Đội hình, như canvas.
   const [route, setRoute] = useState<NavRequest | null>(null)
   useEffect(() => onArisRoute(setRoute), [])
@@ -248,25 +309,32 @@ export function SidebarRoot(props: SidebarProps) {
             />
           )}
           <Bot
-            member={COMMANDER}
+            member={team.commander}
             lead
-            current={viewedBot === COMMANDER.id}
+            current={viewedBot === team.commander.id}
             wide={wide}
             t={t}
             onOpen={openChat}
           />
-          {DEMO_TEAM.map((group) => (
-            <div key={group.id} style={{ display: 'contents' }}>
+          {wide && team.ready && team.members.length === 0 && (
+            <PickTemplate t={t} templates={team.templates} />
+          )}
+          {team.groups.map((group) => (
+            <div key={group.id || '-'} style={{ display: 'contents' }}>
               {wide && (
                 <GroupLabel>
-                  <button
-                    type="button"
-                    className="grp"
-                    title={t('team.openGroup', { name: group.label })}
-                    onClick={() => arisNavigate('department', { id: group.id })}
-                  >
-                    {group.label}
-                  </button>
+                  {group.id ? (
+                    <button
+                      type="button"
+                      className="grp"
+                      title={t('team.openGroup', { name: group.label })}
+                      onClick={() => arisNavigate('department', { id: group.id })}
+                    >
+                      {group.label}
+                    </button>
+                  ) : (
+                    group.label
+                  )}
                 </GroupLabel>
               )}
               {group.members.map((m) => (
@@ -277,7 +345,7 @@ export function SidebarRoot(props: SidebarProps) {
                   current={viewedBot === m.id}
                   wide={wide}
                   t={t}
-                  onOpen={openChat}
+                  onOpen={chatWith(m.id)}
                 />
               ))}
             </div>

@@ -3,7 +3,7 @@
  * dsh (trang có mục thanh bên thì đăng ký thêm `sidebar.panellist`), hộp thoại cắm
  * vào lớp phủ `shell.overlay`. Gói nào cũng mở được trang qua `arisNavigate`.
  */
-import { announceRoute, mountKitCss, onArisNavigate } from '@aris/ui-kit/react'
+import { announceRoute, mountKitCss, onArisNavigate, useTeamData } from '@aris/ui-kit/react'
 import type { ComponentType, ReactNode } from 'react'
 import { EN, NS, VI } from './locale.js'
 import type {
@@ -214,6 +214,8 @@ export function apply(ctx: ClientContext): void {
   // Hộp thoại đang mở vẽ trên lớp phủ của app.
   function DialogHost({ t, useNav }: { t: Translate; useNav: Selector<NavState> }) {
     const dialog = useNav((s) => s.dialog)
+    // Theo dõi đội để vẽ lại khi đội tải xong hoặc đổi (hàm tra tên bot đọc bản đội đang có).
+    useTeamData()
     const Dialog = dialog && DIALOGS[dialog.id]
     if (!dialog || !Dialog) return null
     return (
@@ -367,6 +369,7 @@ export function apply(ctx: ClientContext): void {
       renderSlot?: RenderSlot
     }) {
       const params = useNav((s) => s.params[id] ?? EMPTY)
+      useTeamData()
       const list = useSystemSections?.((s) => s)
       const system: SystemSettings | undefined =
         list && renderSlot

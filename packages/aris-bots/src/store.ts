@@ -1,0 +1,248 @@
+/**
+ * Kho bot: bọc các bảng của domain `aris_bots` bằng các thao tác có nghĩa (tạo, sửa, áp đội
+ * mẫu, gắn bot vào phiên). Đọc đồng bộ từ bộ nhớ, ghi bền qua backend của dsh.
+ */
+import { randomBytes } from 'node:crypto'
+import type { BotRecord, DepartmentRecord, SessionRecord, Tables } from './domain.js'
+
+export const COMMANDER_ID = 'aris'
+/** Tên gọi: chữ thường không dấu, số, `-`, bắt đầu bằng chữ. */
+export const HANDLE_RE = /^[a-z][a-z0-9-]{0,23}$/
+const DEPT_RE = /^[a-z][a-z0-9-]{0,39}$/
+
+export class BotError extends Error {}
+
+/** Phần anh nhập khi tạo hoặc sửa bot. */
+export interface BotInput {
+  handle: string
+  name: string
+  role?: string
+  description?: string
+  soul?: string
+  mascot?: string
+  model?: { provider: string; model: string } | null
+  department?: string | null
+}
+
+export interface Template {
+  id: string
+  name: string
+  description: string
+  departments: { id: string; name: string; lead?: string }[]
+  bots: (BotInput & { handle: string })[]
+}
+
+const COMMANDER_DEFAULT: Omit<BotRecord, 'createdAt'> = {
+  id: COMMANDER_ID,
+  kind: 'commander',
+  handle: 'aris',
+  name: 'Aris',
+  role: 'Chỉ huy',
+  description:
+    'Nhận việc từ chủ nhân, tự làm việc nhỏ, chia việc lớn cho các bot phù hợp rồi tổng hợp kết quả.',
+  soul: 'Điềm tĩnh, rõ ràng, chủ động. Trả lời thẳng vào việc, báo ngắn gọn điều đã làm và điều cần chủ nhân quyết.',
+  mascot: 'aris',
+}
+
+/** Bỏ dấu tiếng Việt và ký tự lạ để gợi ý tên gọi từ tên hiển thị. */
+export function suggestHandle(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 24)
+}
+
+const clean = (s: string | undefined, max: number) => (s ?? '').trim().slice(0, max)
+
+export class BotStore {
+  constructor(
+    private t: Tables,
+    private now: () => Date = () => new Date(),
+  ) {}
+
+  /** Commander luôn có (tạo lần đầu chạy). */
+  async ensureCommander(): Promise<BotRecord> {
+    const c = this.t.bots.get(COMMANDER_ID)
+    if (c) return c
+    const rec: BotRecord = { ...COMMANDER_DEFAULT, createdAt: this.now().toISOString() }
+    await this.t.bots.put(COMMANDER_ID, rec)
+    return rec
+  }
+
+  list(): BotRecord[] {
+    return [...this.t.bots.entries()]
+      .map(([, b]) => b)
+      .sort((a, b) =>
+        a.kind !== b.kind ? (a.kind === 'commander' ? -1 : 1) : a.createdAt.localeCompare(b.createdAt),
+      )
+  }
+
+  get(id: string): BotRecord | undefined {
+    return this.t.bots.get(id)
+  }
+
+  byHandle(handle: string): BotRecord | undefined {
+    const h = handle.trim().replace(/^@/, '').toLowerCase()
+    return this.list().find((b) => b.handle === h)
+  }
+
+  departments(): DepartmentRecord[] {
+    return [...this.t.departments.entries()].map(([, d]) => d).sort((a, b) => a.order - b.order)
+  }
+
+  private validate(input: BotInput, self?: string) {
+    const handle = input.handle.trim().replace(/^@/, '').toLowerCase()
+    if (!HANDLE_RE.test(handle))
+      throw new BotError(
+        'Tên gọi chỉ gồm chữ thường không dấu, số, dấu "-", bắt đầu bằng chữ, tối đa 24 ký tự.',
+      )
+    const taken = this.byHandle(handle)
+    if (taken && taken.id !== self) throw new BotError(`Tên gọi @${handle} đã có bot ${taken.name} dùng.`)
+    const name = clean(input.name, 40)
+    if (!name) throw new BotError('Bot cần có tên.')
+    if (input.department && !this.t.departments.get(input.department))
+      throw new BotError(`Không có phòng ban ${input.department}.`)
+    return { handle, name }
+  }
+
+  async create(input: BotInput): Promise<BotRecord> {
+    const { handle, name } = this.validate(input)
+    let id: string
+    do id = `b-${randomBytes(3).toString('hex')}`
+    while (this.t.bots.get(id))
+    const rec: BotRecord = {
+      id,
+      kind: 'member',
+      handle,
+      name,
+      role: clean(input.role, 60),
+      description: clean(input.description, 1000),
+      soul: clean(input.soul, 2000),
+      mascot: clean(input.mascot, 40) || 'tron',
+      ...(input.model ? { model: input.model } : {}),
+      ...(input.department ? { department: input.department } : {}),
+      createdAt: this.now().toISOString(),
+    }
+    await this.t.bots.put(id, rec)
+    return rec
+  }
+
+  async update(id: string, patch: Partial<BotInput>): Promise<BotRecord> {
+    const prev = this.t.bots.get(id)
+    if (!prev) throw new BotError('Không có bot này.')
+    const merged = { ...prev, ...patch } as BotInput
+    const { handle, name } = this.validate({ ...merged, handle: patch.handle ?? prev.handle }, id)
+    const rec: BotRecord = {
+      ...prev,
+      handle,
+      name,
+      role: patch.role !== undefined ? clean(patch.role, 60) : prev.role,
+      description: patch.description !== undefined ? clean(patch.description, 1000) : prev.description,
+      soul: patch.soul !== undefined ? clean(patch.soul, 2000) : prev.soul,
+      mascot: patch.mascot !== undefined ? clean(patch.mascot, 40) || prev.mascot : prev.mascot,
+    }
+    if (patch.model === null) delete rec.model
+    else if (patch.model) rec.model = patch.model
+    if (patch.department === null) delete rec.department
+    else if (patch.department) rec.department = patch.department
+    await this.t.bots.put(id, rec)
+    return rec
+  }
+
+  /** Xoá bot (không xoá Commander). Ký ức và phiên cũ giữ nguyên; bỏ chức trưởng nhóm nếu có. */
+  async remove(id: string): Promise<void> {
+    const b = this.t.bots.get(id)
+    if (!b) throw new BotError('Không có bot này.')
+    if (b.kind === 'commander') throw new BotError('Không xoá được Commander.')
+    await this.t.bots.delete(id)
+    for (const d of this.departments()) {
+      if (d.lead === id) {
+        const next = { ...d }
+        delete next.lead
+        await this.t.departments.put(d.id, next)
+      }
+    }
+  }
+
+  async upsertDepartment(input: {
+    id?: string
+    name: string
+    lead?: string | null
+  }): Promise<DepartmentRecord> {
+    const name = clean(input.name, 40)
+    if (!name) throw new BotError('Phòng ban cần có tên.')
+    const id = input.id ?? (suggestHandle(name) || 'phong')
+    if (!DEPT_RE.test(id)) throw new BotError('Mã phòng ban không hợp lệ.')
+    if (input.lead && !this.t.bots.get(input.lead))
+      throw new BotError('Trưởng nhóm không phải bot trong đội.')
+    const prev = this.t.departments.get(id)
+    const rec: DepartmentRecord = { id, name, order: prev?.order ?? this.departments().length }
+    const lead = input.lead === undefined ? prev?.lead : (input.lead ?? undefined)
+    if (lead) rec.lead = lead
+    await this.t.departments.put(id, rec)
+    return rec
+  }
+
+  /** Áp đội mẫu: chỉ thêm, không xoá; tên gọi đã có thì bỏ qua bot đó. */
+  async applyTemplate(t: Template): Promise<{ added: string[]; skipped: string[] }> {
+    for (const d of t.departments)
+      if (!this.t.departments.get(d.id)) await this.upsertDepartment({ id: d.id, name: d.name })
+    const added: string[] = []
+    const skipped: string[] = []
+    const ids = new Map<string, string>()
+    for (const b of t.bots) {
+      const existing = this.byHandle(b.handle)
+      if (existing) {
+        skipped.push(b.handle)
+        ids.set(b.handle, existing.id)
+        continue
+      }
+      const rec = await this.create(b)
+      ids.set(b.handle, rec.id)
+      added.push(b.handle)
+    }
+    for (const d of t.departments) {
+      const lead = d.lead ? ids.get(d.lead) : undefined
+      const cur = this.t.departments.get(d.id)
+      if (lead && cur && !cur.lead) await this.upsertDepartment({ id: d.id, name: cur.name, lead })
+    }
+    return { added, skipped }
+  }
+
+  /** Bot của phiên; phiên chưa gắn là của Commander. */
+  botOf(sessionId: string | undefined): BotRecord {
+    const tag = sessionId ? this.t.sessions.get(sessionKey(sessionId)) : undefined
+    return (tag && this.t.bots.get(tag.bot)) || this.t.bots.get(COMMANDER_ID)!
+  }
+
+  /** Phiên chat thẳng gần nhất với bot (mở lại khi bấm bot trên thanh bên). */
+  latestOpen(bot: string): string | undefined {
+    let best: { id: string; at: string } | undefined
+    for (const [key, r] of this.t.sessions.entries())
+      if (r.bot === bot && r.via === 'open' && (!best || r.at > best.at))
+        best = { id: r.session ?? key, at: r.at }
+    return best?.id
+  }
+
+  tagOf(sessionId: string): SessionRecord | undefined {
+    return this.t.sessions.get(sessionKey(sessionId))
+  }
+
+  async tag(sessionId: string, bot: string, via: SessionRecord['via']): Promise<void> {
+    if (!this.t.bots.get(bot)) throw new BotError('Không có bot này.')
+    await this.t.sessions.put(sessionKey(sessionId), {
+      bot,
+      via,
+      at: this.now().toISOString(),
+      session: sessionId,
+    })
+  }
+}
+
+/** Khoá bản ghi phiên: storage dsh chỉ nhận chữ, số và `-`. */
+export const sessionKey = (id: string) => id.replace(/[^A-Za-z0-9-]/g, '-')
