@@ -137,6 +137,7 @@ export function SettingsShell({
   active,
   onSelect,
   navLabel,
+  footer,
   children,
 }: {
   caption?: ReactNode | undefined
@@ -144,6 +145,8 @@ export function SettingsShell({
   active: string
   onSelect: (id: string) => void
   navLabel: string
+  /** Mục thêm ở cuối cột điều hướng, ngăn bằng vạch. */
+  footer?: ReactNode | undefined
   children: ReactNode
 }) {
   return (
@@ -159,6 +162,7 @@ export function SettingsShell({
             onClick={() => onSelect(s.id)}
           />
         ))}
+        {footer && <div className="foot">{footer}</div>}
       </nav>
       {children}
     </div>

@@ -1,0 +1,35 @@
+{
+  "name": "@aris/ui-pages",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Các trang và hộp thoại của aris theo canvas (Cài đặt 6.x, Ký ức, Skill, Hộp duyệt, Bản đồ đội, Hồ sơ bot, Routine, Kanban, Second Brain…), dữ liệu mẫu đến khi từng giai đoạn nối dữ liệu thật",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-shortcuts",
+        "@deepseek-ai/dsh-client-ui-workspace",
+        "@deepseek-ai/dsh-client-locale"
+      ]
+    }
+  },
+  "dependencies": {
+    "@aris/ui-kit": "workspace:*"
+  }
+}

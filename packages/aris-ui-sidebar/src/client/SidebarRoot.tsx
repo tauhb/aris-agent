@@ -9,6 +9,7 @@ import {
   BotRow,
   BrandMark,
   Button,
+  GearIcon,
   GroupLabel,
   IconButton,
   NavItem,
@@ -17,6 +18,7 @@ import {
   RoomIcon,
   SectionHeader,
   WaitingIcon,
+  arisNavigate,
 } from '@aris/ui-kit/react'
 import { COMMANDER, DEMO_COST, DEMO_PENDING_APPROVALS, DEMO_TEAM, type TeamMember } from '@aris/ui-kit'
 import type { ReactElement } from 'react'
@@ -225,7 +227,13 @@ export function SidebarRoot(props: SidebarProps) {
       <div className="foot">
         {DEMO_PENDING_APPROVALS > 0 && (
           <Tip label={waiting} wide={wide}>
-            <NavItem label={waiting} variant="warn" icon={<WaitingIcon />} collapsed={!wide} />
+            <NavItem
+              label={waiting}
+              variant="warn"
+              icon={<WaitingIcon />}
+              collapsed={!wide}
+              onClick={() => arisNavigate('approvals')}
+            />
           </Tip>
         )}
         {wide && (
@@ -239,6 +247,9 @@ export function SidebarRoot(props: SidebarProps) {
                 {t('owner.cost', { spent: money(DEMO_COST.spent), budget: money(DEMO_COST.budget) })}
               </span>
             </span>
+            <IconButton label={t('settings')} size="sm" onClick={() => arisNavigate('settings')}>
+              <GearIcon size={17} />
+            </IconButton>
           </div>
         )}
         {footPanels.map((panel) => (

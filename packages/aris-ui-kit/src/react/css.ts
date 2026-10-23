@@ -191,6 +191,7 @@ ${scope(`
 .a-page-body{padding:18px 24px;display:flex;flex-direction:column;gap:16px}
 .a-settings{display:flex;min-height:100%;background:var(--a-bg)}
 .a-settings-nav{flex:0 1 210px;min-width:190px;border-right:1px solid var(--a-line);padding:16px 10px;display:flex;flex-direction:column;gap:2px}
+.a-settings-nav>.foot{margin-top:auto;border-top:1px solid var(--a-line);padding-top:6px}
 .a-settings-nav>.cap{color:var(--a-muted);padding:0 10px 8px;font-weight:600;font-size:12px}
 
 `)}

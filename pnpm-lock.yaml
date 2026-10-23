@@ -99,6 +99,12 @@ importers:
 
   packages/aris-ui-locale-vi: {}
 
+  packages/aris-ui-pages:
+    dependencies:
+      '@aris/ui-kit':
+        specifier: workspace:*
+        version: link:../aris-ui-kit
+
   packages/aris-ui-sidebar:
     dependencies:
       '@aris/ui-kit':
@@ -138,6 +144,9 @@ importers:
       '@aris/ui-locale-vi':
         specifier: workspace:*
         version: link:../aris-ui-locale-vi
+      '@aris/ui-pages':
+        specifier: workspace:*
+        version: link:../aris-ui-pages
       '@aris/ui-sidebar':
         specifier: workspace:*
         version: link:../aris-ui-sidebar
