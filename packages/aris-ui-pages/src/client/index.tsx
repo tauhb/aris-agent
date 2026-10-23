@@ -12,6 +12,8 @@ import type {
   DiscoveredModel,
   ModelGroup,
   ModelSettings,
+  PluginSnapshot,
+  PluginSource,
   Outcome,
   PageNav,
   PageProps,
@@ -63,6 +65,7 @@ interface ClientContext {
   locale: {
     register(ns: string, locale: string, dict: Record<string, string>): () => void
     subscribe(fn: () => void): () => void
+    resolveText(text: unknown): string
   }
   get(name: string): unknown
 }
@@ -104,6 +107,7 @@ interface Services {
       request: { provider?: string; baseURL?: string; api?: string; apiKey?: string },
     ): Promise<Remote<readonly DiscoveredModel[]>>
   }
+  'remote.pluginInventory': { list(): Promise<Remote<PluginSnapshot>> }
   'remote.credentials': {
     describe(refs: readonly string[]): Promise<Remote<Readonly<Record<string, CredentialState>>>>
     set(ref: string, value: string): Promise<Remote<unknown>>
@@ -267,6 +271,17 @@ export function apply(ctx: ClientContext): void {
     ok: false,
     error: err instanceof Error ? err.message : String(err),
   })
+  // Plugin: danh sách thật của bản cài, vẽ bằng trang Plugin của aris (6.7).
+  const plugins: PluginSource = {
+    async list() {
+      try {
+        return outcome(await service('remote.pluginInventory').list())
+      } catch (err) {
+        return failed(err)
+      }
+    },
+    resolveText: (text) => ctx.locale.resolveText(text),
+  }
   const models: ModelSettings = {
     async catalog() {
       const res = await service('remote.session').modelCatalog()
@@ -388,6 +403,7 @@ export function apply(ctx: ClientContext): void {
             params={params}
             system={system}
             models={id === 'settings' ? models : undefined}
+            plugins={id === 'settings' ? plugins : undefined}
           />
         </div>
       )

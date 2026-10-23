@@ -25,9 +25,12 @@ export interface Config {
 }
 
 export interface Registry {
-  list(): Pick<Workspace, 'id' | 'path'>[]
+  list(): (Pick<Workspace, 'id' | 'path'> & Partial<Pick<Workspace, 'title' | 'setTitle'>>)[]
   create(path: string, title?: string): Promise<Pick<Workspace, 'id' | 'path'>>
 }
+
+/** Tên mới của chỗ chat mặc định cũ của dsh. */
+export const OLD_HOME_TITLE = 'Chat cũ (Documents)'
 
 const trim = (path: string) => path.replace(/[\\/]+$/, '')
 
@@ -43,6 +46,11 @@ export async function ensureHome(
   registry: Registry,
   path = defaultHomePath(),
 ): Promise<{ workspaceId: string; path: string }> {
+  // Workspace mặc định cũ của dsh (trong Documents) cũng mang tên `default-workspace` nên dsh
+  // hiện cả hai là "Dự án mặc định"; đổi tên chỗ cũ để phân biệt (phiên cũ vẫn ở đó).
+  for (const w of registry.list())
+    if (w.title === DEFAULT_WORKSPACE_DIRECTORY && trim(w.path) !== trim(path) && w.setTitle)
+      await w.setTitle(OLD_HOME_TITLE).catch(() => {})
   const found = registry.list().find((w) => trim(w.path) === trim(path))
   if (found) return { workspaceId: found.id, path: found.path }
   await mkdir(path, { recursive: true })

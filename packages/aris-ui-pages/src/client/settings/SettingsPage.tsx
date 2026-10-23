@@ -12,7 +12,7 @@ import { Dashboard } from './Dashboard.js'
 import { Guard } from './Guard.js'
 import { Integrations } from './Integrations.js'
 import { DSH_MODELS_SECTION, Provider } from './Provider.js'
-import { Plugin } from './Plugin.js'
+import { DSH_PLUGINS_SECTION, Plugin } from './Plugin.js'
 import { Screen } from './Screen.js'
 import { Stats } from './Stats.js'
 
@@ -63,9 +63,10 @@ export function SettingsPage(props: PageProps) {
         // "Chung" (ngôn ngữ, giao diện…) của dsh đứng đầu, ngoài nhóm Hệ thống.
         ...(general ? [{ id: SYS + general.id, label: general.label }] : []),
         ...ORDER.map((id) => ({ id, label: t(`sec.${id}`) })),
-        // Mục "Model" của dsh đã nằm trong trang Provider và model (6.2).
+        // Mục "Model" của dsh đã nằm trong trang Provider và model (6.2), "Plugin có sẵn" trong
+        // trang Plugin (6.7).
         ...(system?.sections ?? [])
-          .filter((s) => s.id !== DSH_MODELS_SECTION && s.id !== GENERAL_SECTION)
+          .filter((s) => ![DSH_MODELS_SECTION, DSH_PLUGINS_SECTION, GENERAL_SECTION].includes(s.id))
           .map((s) => ({ id: SYS + s.id, label: s.label, group: t('set.system') })),
       ]}
       onSelect={(id) => nav.go('settings', { section: id })}

@@ -2,14 +2,16 @@ import { mkdtemp, rm, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { ensureHome, type Registry } from './index.js'
+import { ensureHome, OLD_HOME_TITLE, type Registry } from './index.js'
 
 const dirs: string[] = []
 afterEach(async () => {
   for (const d of dirs.splice(0)) await rm(d, { recursive: true, force: true })
 })
 
-function registry(items: { id: string; path: string }[]) {
+function registry(
+  items: { id: string; path: string; title?: string; setTitle?: (t: string) => Promise<void> }[],
+) {
   const created: string[] = []
   const r: Registry = {
     list: () => items as never,
@@ -45,5 +47,19 @@ describe('aris-home', () => {
     expect(await ensureHome(r, path)).toEqual({ workspaceId: 'w-1', path })
     expect(created).toEqual([path])
     expect((await stat(path)).isDirectory()).toBe(true)
+  })
+
+  it('đổi tên chỗ chat mặc định cũ của dsh để không trùng "Dự án mặc định"', async () => {
+    const old = {
+      id: 'old',
+      path: '/Users/a/Documents/deepseek-harness/default-workspace',
+      title: 'default-workspace',
+    }
+    const home = { id: 'home', path: '/Users/a/aris/workspace', title: 'default-workspace' }
+    const titled = { ...old, setTitle: async (t: string) => void (old.title = t) }
+    const { r } = registry([titled as never, home])
+    await ensureHome(r, home.path)
+    expect(old.title).toBe(OLD_HOME_TITLE)
+    expect(home.title).toBe('default-workspace')
   })
 })

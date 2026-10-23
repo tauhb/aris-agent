@@ -23,6 +23,42 @@ export interface PageProps {
   system?: SystemSettings | undefined
   /** Danh mục model và cấu hình model theo việc (chỉ trang Cài đặt nhận). */
   models?: ModelSettings | undefined
+  /** Danh sách plugin của bản cài (chỉ trang Cài đặt nhận). */
+  plugins?: PluginSource | undefined
+}
+
+/** Chữ có thể theo ngôn ngữ (`{ en, vi… }`) trong mô tả plugin. */
+export type LocalizedText = string | { readonly en: string; readonly [locale: string]: string }
+
+/** Một plugin trong bản cài (`remote.pluginInventory` của dsh). */
+export interface PluginEntry {
+  readonly entryId: string
+  readonly moduleName: string
+  readonly meta?: { title?: LocalizedText; description?: LocalizedText; error?: string }
+  readonly enabled: boolean
+  readonly fiberPhase: 'pending' | 'loading' | 'active' | 'failed' | 'unloading' | null
+}
+
+/** Một mẫu bot (preset) và các plugin nó dùng. */
+export interface PluginPreset {
+  readonly id: string
+  readonly name?: string
+  readonly isDefault: boolean
+  readonly broken?: string
+  readonly rows: readonly (Omit<PluginEntry, 'entryId' | 'enabled'> & {
+    entryId: string | null
+    enabled: boolean | 'conditional'
+  })[]
+}
+
+export interface PluginSnapshot {
+  readonly entries: readonly PluginEntry[]
+  readonly agentPresets?: readonly PluginPreset[]
+}
+
+export interface PluginSource {
+  list(): Promise<Outcome<PluginSnapshot>>
+  resolveText(text: LocalizedText): string
 }
 
 /** Một nhà cung cấp và các model dsh đang phục vụ (`session.modelCatalog`). */
