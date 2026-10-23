@@ -55,10 +55,30 @@ Host mở đường `/api/aris/memory` qua `ctx.connection.fetch` của dsh: dsh
 
 Đường này chỉ có ở mặt web. Ở mặt ACP hoặc chạy ngầm, tool và prompt vẫn chạy.
 
+## Tự nhắc lưu
+
+Mỗi lượt chat, plugin ghi lại lời chủ nhân, số lần gọi công cụ và việc bot đã ghi ký ức chưa (`agent/pre-step`, `tools/post-execute`). Đến cuối lượt (`agent/turn-stopping`), nếu chưa ghi gì mà lượt có một trong hai dấu hiệu sau thì cài một lời nhắc dạng "notice" cho **lượt kế tiếp** (`agent.inject`):
+
+- Chủ nhân nói câu có dấu hiệu cần nhớ: "nhớ là", "lần sau", "từ giờ", "đừng bao giờ", "sai rồi", "anh thích"… (so trên chữ đã bỏ dấu).
+- Lượt dài: từ 8 lần gọi công cụ trở lên. Khi đó lời nhắc là rút bài học.
+
+Cách này không tốn thêm lần gọi model và bot không phải nói thêm gì ở lượt đang dở. Hai lượt sau một lần nhắc thì không nhắc nữa. Mỗi lần nhắc để lại bản ghi `plugin:aris/memory-nudge` trong log phiên.
+
+## Lưu trước khi nén
+
+Plugin giữ bản chép gần đây của mỗi phiên (lời chủ nhân và câu trả lời của bot, tối đa 400 dòng) qua sự kiện `session/event`. Khi dsh ghi `compaction/summary`:
+
+1. Lấy đúng các dòng có `seq` nằm trong `shadowedSeqs`.
+2. Đoạn từ 120 ký tự trở lên thì gọi model (cùng model vừa viết bản tóm tắt), kèm danh sách ký ức hiện có, để rút ra điều đáng nhớ lâu dài dưới dạng JSON.
+3. Bỏ những mục gần trùng với ký ức đã có (Jaccard theo từ ≥ 0,6).
+4. Cất phần còn lại vào **lưu trữ** với nhãn `agent-inferred`.
+
+Bước này chạy nền nên không giữ khoá nén. Kết quả ghi vào bản ghi `plugin:aris/memory-reflect`, và lần gần nhất hiện ở trường `reflect` của `GET /api/aris/memory`.
+
+Lưu ý: dsh giữ nguyên câu trả lời mới nhất, nên đoạn bị nén thường chỉ gồm lời chủ nhân và các bước giữa. Bản chép nằm trong bộ nhớ của máy chủ, nên khởi động lại thì phần trước đó không được đọc.
+
 ## Để sau
 
-- Tự nhắc lưu khi lượt dài.
-- Lưu trước khi nén ngữ cảnh.
 - Vòng học nền sinh ký ức chờ duyệt (GĐ3).
 - Gộp hằng đêm.
 - Ký ức riêng theo bot thật (GĐ2).

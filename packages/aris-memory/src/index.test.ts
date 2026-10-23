@@ -16,6 +16,8 @@ function fakeContext() {
   const ctx = {
     effect: (fn: () => unknown) => fn(),
     inject: () => {},
+    on: () => {},
+    logger: () => ({ warn: () => {}, info: () => {} }),
     systemPrompt: {
       section: (s: { name: string }) => (sections.push(s), () => {}),
       context: (c: (typeof contexts)[number]) => (contexts.push(c), () => {}),

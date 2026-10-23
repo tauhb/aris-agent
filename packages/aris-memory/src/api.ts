@@ -5,6 +5,7 @@
  *   POST { op, id, text? }               → update | demote | promote | forget | approve | discard
  */
 import { MemoryError, type MemoryItem, type MemoryStore } from './store.js'
+import type { ReflectStatus } from './watch.js'
 
 export interface MemorySnapshot {
   bot: string
@@ -12,10 +13,13 @@ export interface MemorySnapshot {
   core: MemoryItem[]
   archive: MemoryItem[]
   pending: MemoryItem[]
+  /** Lần rút ký ức khi nén gần nhất (từ lúc máy chủ chạy). */
+  reflect?: ReflectStatus | undefined
 }
 
-export function snapshot(store: MemoryStore, bot: string): MemorySnapshot {
+export function snapshot(store: MemoryStore, bot: string, reflect?: ReflectStatus): MemorySnapshot {
   return {
+    reflect,
     bot,
     usage: { notes: store.usage(bot, 'notes'), owner: store.usage(bot, 'owner') },
     core: store.list(bot, { tier: 'core', status: 'active' }),
@@ -32,11 +36,15 @@ const json = (body: unknown, status = 200) =>
 
 const BOT_RE = /^[a-z0-9-]{1,40}$/
 
-export async function handleApi(store: MemoryStore, request: Request): Promise<Response> {
+export async function handleApi(
+  store: MemoryStore,
+  request: Request,
+  lastReflect: () => ReflectStatus | undefined = () => undefined,
+): Promise<Response> {
   const url = new URL(request.url)
   const bot = url.searchParams.get('bot') ?? 'aris'
   if (!BOT_RE.test(bot)) return json({ error: 'bot không hợp lệ' }, 400)
-  if (request.method === 'GET' || request.method === 'HEAD') return json(snapshot(store, bot))
+  if (request.method === 'GET' || request.method === 'HEAD') return json(snapshot(store, bot, lastReflect()))
 
   let body: { op?: unknown; id?: unknown; text?: unknown }
   try {
@@ -72,5 +80,5 @@ export async function handleApi(store: MemoryStore, request: Request): Promise<R
     if (err instanceof MemoryError) return json({ error: err.message, code: err.code }, 409)
     throw err
   }
-  return json(snapshot(store, bot))
+  return json(snapshot(store, bot, lastReflect()))
 }

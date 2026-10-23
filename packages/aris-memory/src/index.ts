@@ -15,6 +15,7 @@ import type {} from '@deepseek-ai/dsh-system-prompt'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { memoryDomain } from './domain.js'
 import { handleApi } from './api.js'
+import { watchConversation } from './watch.js'
 import {
   MemoryError,
   MemoryStore,
@@ -29,7 +30,7 @@ export * from './store.js'
 export { handleApi } from './api.js'
 
 export const name = 'aris-memory'
-export const inject = ['systemPrompt', 'tools', 'storageDomain']
+export const inject = ['systemPrompt', 'tools', 'storageDomain', 'llm']
 
 /** Bot của phiên. Giai đoạn 1 chỉ có Aris; giai đoạn 2 lấy từ agent preset. */
 export const DEFAULT_BOT = 'aris'
@@ -181,6 +182,9 @@ export async function apply(ctx: Context): Promise<void> {
     }),
   )
 
+  // Tự nhắc lưu và lưu trước khi nén.
+  const watch = watchConversation(ctx, store, bot)
+
   // Trang Ký ức của web gọi qua đường /api của dsh (dsh kiểm cookie và chỉ cho chủ nhân).
   ctx.inject(['connection'], (ctx) => {
     ctx.effect(() => {
@@ -188,7 +192,7 @@ export async function apply(ctx: Context): Promise<void> {
         path: '/api/aris/memory',
         methods: ['GET', 'POST'],
         requestBody: 'buffered',
-        fetch: (request) => handleApi(store, request),
+        fetch: (request) => handleApi(store, request, watch.lastReflect),
       })
       return () => void dispose()
     }, 'aris-memory: /api/aris/memory')
