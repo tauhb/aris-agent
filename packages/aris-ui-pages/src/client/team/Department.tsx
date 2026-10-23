@@ -4,7 +4,18 @@
  * việc). Canvas chưa vẽ màn này; dựng bằng bộ thành phần. Thành viên và trưởng nhóm là thật
  * (`@aris/bots`); chính sách chung và việc lớn của phòng là bước 3.
  */
-import { Button, Card, CardRow, Mascot, Pill, StatusPill, Tag, teamAction, useTeam } from '@aris/ui-kit/react'
+import {
+  Button,
+  Card,
+  CardRow,
+  CrownIcon,
+  Mascot,
+  Pill,
+  StatusPill,
+  Tag,
+  teamAction,
+  useTeam,
+} from '@aris/ui-kit/react'
 import type { PageProps } from '../page.js'
 import { Col } from '../ui.js'
 import { DEMO_DEPARTMENTS } from './demo.js'
@@ -59,7 +70,12 @@ export function Department({ t, nav, params }: PageProps) {
                   }
                 >
                   {m.id === group.lead ? (
-                    <Pill tone="accent">{t('dep.lead')}</Pill>
+                    <Pill tone="accent">
+                      <span className="ic" aria-hidden>
+                        <CrownIcon size={12} />
+                      </span>
+                      {t('dep.lead')}
+                    </Pill>
                   ) : (
                     <Button size="sm" variant="ghost" onClick={() => makeLead(m.id)}>
                       {t('dep.makeLead')}

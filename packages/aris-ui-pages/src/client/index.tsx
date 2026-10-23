@@ -24,6 +24,8 @@ import type {
   ConfigTarget,
   ConfigView,
   PluginConfig,
+  PresetRow,
+  PresetSource,
   SpecInspection,
   Outcome,
   PageNav,
@@ -95,8 +97,15 @@ interface Services {
     pickDirectory(): Promise<string | null>
     openWorkspace(workspaceId: string): Promise<void>
     openSession(sessionId: string): void
+    startSession(
+      workspaceId: string | undefined,
+      options: { clearPreviousDraft?: boolean; agentPreset?: string },
+    ): void
   }
-  configForms: { get(namespace: string): ConfigFormLike }
+  configForms: {
+    get(namespace: string): ConfigFormLike
+    developerTools?: { enabled: { getSnapshot(): boolean; subscribe(fn: () => void): () => void } }
+  }
   'remote.session': { modelCatalog(): Promise<Remote<{ groups: readonly ModelGroup[] }>> }
   'remote.llm': {
     listProviders(): Promise<Remote<readonly { id: string; name: string }[]>>
@@ -139,6 +148,13 @@ interface Services {
     setIndexes(urls: string[]): Promise<Remote<unknown>>
   }
   remote: { $on(event: string, fn: (payload: never) => void): () => void }
+  'remote.agentPresets': {
+    list(): Promise<Remote<{ presets: PresetRow[] }>>
+    read(id: string): Promise<Remote<{ name?: string; content: string }>>
+  }
+  'remote.settings': {
+    update(ns: string, patch: Record<string, unknown>, expectedRevision?: number): Promise<Remote<unknown>>
+  }
   'remote.credentials': {
     describe(refs: readonly string[]): Promise<Remote<Readonly<Record<string, CredentialState>>>>
     set(ref: string, value: string): Promise<Remote<unknown>>
@@ -357,6 +373,25 @@ export function apply(ctx: ClientContext): void {
     'aris-ui-pages: pluginNavigation',
   )
 
+  // Mẫu bot: danh sách và mẫu mặc định của dsh, vẽ bằng trang Mẫu bot của aris.
+  const NO_TOOLS = { getSnapshot: () => true, subscribe: () => () => {} }
+  const presets: PresetSource = {
+    list: async () => {
+      const r = await call(() => service('remote.agentPresets').list())
+      return r.ok ? { ok: true, value: r.value.presets } : r
+    },
+    read: (id) => call(() => service('remote.agentPresets').read(id)),
+    setDefault: (id) =>
+      call(() => service('remote.settings').update('agent-preset-registry', { selectedDefault: id })),
+    startCreator: () =>
+      service('uiWorkspace').startSession(undefined, { clearPreviousDraft: false, agentPreset: 'cordis' }),
+    get codingTools() {
+      return (
+        (ctx.get('configForms') as Services['configForms'] | undefined)?.developerTools?.enabled ?? NO_TOOLS
+      )
+    },
+  }
+
   // Model: danh mục dsh đang phục vụ và cấu hình model theo việc (trang 6.2).
   const failed = (err: unknown): { ok: false; error: string } => ({
     ok: false,
@@ -544,6 +579,7 @@ export function apply(ctx: ClientContext): void {
             models={id === 'settings' ? models : undefined}
             plugins={id === 'settings' ? plugins : undefined}
             pluginConfig={pluginConfig}
+            presets={id === 'settings' ? presets : undefined}
           />
         </div>
       )

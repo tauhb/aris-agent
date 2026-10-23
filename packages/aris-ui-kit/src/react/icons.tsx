@@ -132,3 +132,12 @@ export function PinIcon({ size = 13, width = 1.75 }: IconProps) {
     </Icon>
   )
 }
+
+/** Vương miện: trưởng nhóm của phòng ban. */
+export function CrownIcon({ size = 13, width = 1.75 }: IconProps) {
+  return (
+    <Icon size={size}>
+      <path d="M4 8l4 4 4-6 4 6 4-4-1.5 10h-13z" {...stroke} strokeWidth={width} />
+    </Icon>
+  )
+}

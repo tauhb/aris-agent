@@ -27,6 +27,8 @@ export interface PageProps {
   plugins?: PluginSource | undefined
   /** Trang cấu hình riêng của plugin (chỉ trang Cài đặt nhận). */
   pluginConfig?: PluginConfig | undefined
+  /** Mẫu bot của bản cài (chỉ trang Cài đặt nhận). */
+  presets?: PresetSource | undefined
 }
 
 /** Chữ có thể theo ngôn ngữ (`{ en, vi… }`) trong mô tả plugin. */
@@ -220,6 +222,29 @@ export type ConfigTarget =
 export interface PluginConfig {
   ledger: { getSnapshot(): ConfigLedger; subscribe(fn: () => void): () => void }
   render(target: ConfigTarget, view: ConfigView): ReactNode
+}
+
+/** Một mẫu bot (`agentPresets.list` của dsh): chế độ làm việc một phiên bắt đầu với. */
+export interface PresetRow {
+  id: string
+  isDefault: boolean
+  /** Tên mẫu tự đặt; mẫu có sẵn không có. */
+  name?: string
+  description?: string
+  /** Vì sao mẫu không dùng được. */
+  broken?: string
+}
+
+export interface PresetSource {
+  list(): Promise<Outcome<readonly PresetRow[]>>
+  /** Danh sách plugin mẫu khai báo, dạng YAML để đọc. */
+  read(id: string): Promise<Outcome<{ name?: string; content: string }>>
+  /** Mẫu mặc định cho việc mới (phiên đang chạy giữ mẫu của nó). */
+  setDefault(id: string): Promise<Outcome<unknown>>
+  /** Mở việc mới ở chế độ Sáng tạo để bot tạo mẫu bot hoặc plugin. */
+  startCreator(): void
+  /** Công cụ lập trình (mục Chung) đang bật: hiện thêm PTC và Tối giản. */
+  codingTools: { getSnapshot(): boolean; subscribe(fn: () => void): () => void }
 }
 
 /** Một nhà cung cấp và các model dsh đang phục vụ (`session.modelCatalog`). */

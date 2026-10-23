@@ -1,7 +1,8 @@
 /**
- * Trang Cài đặt 6.x — chỗ cài đặt duy nhất của app: các mục của aris (theo canvas),
- * rồi nhóm "Hệ thống" là các mục cài đặt của dsh (chung, model, tài khoản…) vẽ ngay
- * trong trang thay cho hộp thoại riêng của dsh.
+ * Trang Cài đặt 6.x — chỗ cài đặt duy nhất của app, một nhóm "Cài đặt và vận hành": mục "Chung"
+ * của dsh vẽ ngay trong trang, rồi các mục của aris. Các mục khác của dsh đã có trang aris thay
+ * (Model trong Provider, Plugin có sẵn trong Plugin, Mẫu bot); mục lạ của dsh vẫn mở được bằng
+ * `sys:<mã mục>` nhưng không còn nhóm "Hệ thống" riêng.
  */
 import { SettingsShell } from '@aris/ui-kit/react'
 import type { ComponentType } from 'react'
@@ -11,8 +12,9 @@ import { Commander } from './Commander.js'
 import { Dashboard } from './Dashboard.js'
 import { Guard } from './Guard.js'
 import { Integrations } from './Integrations.js'
-import { DSH_MODELS_SECTION, Provider } from './Provider.js'
-import { DSH_PLUGINS_SECTION, Plugin } from './Plugin.js'
+import { Plugin } from './Plugin.js'
+import { Presets } from './Presets.js'
+import { Provider } from './Provider.js'
 import { Screen } from './Screen.js'
 import { Stats } from './Stats.js'
 
@@ -26,6 +28,7 @@ export const SECTIONS: Record<string, ComponentType<PageProps>> = {
   commander: Commander,
   screen: Screen,
   plugin: Plugin,
+  presets: Presets,
 }
 
 const ORDER = [
@@ -38,6 +41,7 @@ const ORDER = [
   'commander',
   'screen',
   'plugin',
+  'presets',
 ] as const
 
 /** Mã mục "Chung" của dsh. */
@@ -60,14 +64,9 @@ export function SettingsPage(props: PageProps) {
       navLabel={t('set.nav')}
       active={active}
       sections={[
-        // "Chung" (ngôn ngữ, giao diện…) của dsh đứng đầu, ngoài nhóm Hệ thống.
+        // "Chung" (ngôn ngữ, giao diện…) của dsh đứng đầu.
         ...(general ? [{ id: SYS + general.id, label: general.label }] : []),
         ...ORDER.map((id) => ({ id, label: t(`sec.${id}`) })),
-        // Mục "Model" của dsh đã nằm trong trang Provider và model (6.2), "Plugin có sẵn" trong
-        // trang Plugin (6.7).
-        ...(system?.sections ?? [])
-          .filter((s) => ![DSH_MODELS_SECTION, DSH_PLUGINS_SECTION, GENERAL_SECTION].includes(s.id))
-          .map((s) => ({ id: SYS + s.id, label: s.label, group: t('set.system') })),
       ]}
       onSelect={(id) => nav.go('settings', { section: id })}
     >

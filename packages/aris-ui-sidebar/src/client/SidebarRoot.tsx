@@ -10,6 +10,7 @@ import {
   BrandMark,
   Button,
   Dialog,
+  CrownIcon,
   GearIcon,
   GroupLabel,
   IconButton,
@@ -113,7 +114,13 @@ function Bot({
         status={member.status}
         statusLabel={t(`status.${member.status}`)}
         lead={lead}
-        badge={groupLead ? t('team.groupLead') : undefined}
+        badge={
+          groupLead ? (
+            <span role="img" aria-label={t('team.groupLead')}>
+              <CrownIcon size={13} />
+            </span>
+          ) : undefined
+        }
         current={current}
         collapsed={!wide}
         onClick={onOpen}

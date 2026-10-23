@@ -56,7 +56,7 @@ export interface BotRowProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   lead?: boolean | undefined
   /** Bot đang được xem ở vùng chính (hồ sơ, ký ức…). */
   current?: boolean | undefined
-  /** Nhãn nhỏ cạnh tên (ví dụ "trưởng nhóm"). */
+  /** Dấu nhỏ cạnh tên: chữ thì vẽ thành nhãn viền, còn lại (icon) vẽ trơn. */
   badge?: ReactNode | undefined
   collapsed?: boolean | undefined
 }
@@ -81,7 +81,7 @@ export const BotRow = forwardRef<HTMLButtonElement, BotRowProps>(function BotRow
           <span className="txt">
             <span className="nm">
               {name}
-              {badge && <span className="badge">{badge}</span>}
+              {badge && <span className={typeof badge === 'string' ? 'badge' : 'badge-ic'}>{badge}</span>}
             </span>
             <span className={cx('note', status === 'waiting' && 'waiting')}>{note}</span>
           </span>
