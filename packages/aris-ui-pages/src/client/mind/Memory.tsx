@@ -2,13 +2,12 @@
  * 3.1 · Ký ức của một bot: dung lượng ghi chú và hồ sơ chủ nhân, ba loại ký ức (lõi,
  * lưu trữ, chờ duyệt). Dữ liệu thật từ `@aris/memory` qua `/api/aris/memory`.
  */
-import { Button, Card, CloseIcon, IconButton, PageShell, Segmented, Tabs, Tag } from '@aris/ui-kit/react'
+import { Button, Card, CloseIcon, IconButton, BotPicker, PageShell, Tabs, Tag } from '@aris/ui-kit/react'
 import { useMemo, useState, type ReactNode } from 'react'
 import type { PageProps } from '../page.js'
 import { Box } from '../ui.js'
-import { DEMO_MEMORY as M } from './demo.js'
 import { useMemory, type MemoryItem, type MemoryOp } from './memory-api.js'
-import { BOT_NAMES, botName } from './names.js'
+import { BOT_NAMES, botName, botOptions } from './names.js'
 
 /** Bỏ dấu để tìm ("hop" khớp "Họp"). */
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase()
@@ -163,11 +162,13 @@ export function Memory({ t, params }: PageProps) {
       title={t('mem.title', { name })}
       subtitle={t('mem.subtitle')}
       actions={
-        <Segmented
+        <BotPicker
           label={t('mem.pickBot')}
           value={bot}
           onChange={setBot}
-          options={M.bots.map((id) => ({ value: id, label: botName(id) }))}
+          options={botOptions(Object.keys(BOT_NAMES))}
+          searchPlaceholder={t('pick.search')}
+          emptyLabel={t('pick.empty')}
         />
       }
     >

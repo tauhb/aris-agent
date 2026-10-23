@@ -107,6 +107,22 @@
 .a-mi[aria-selected=true]:is(.aris,.aris *){background:var(--a-accentSoft);color:var(--a-accent);font-weight:600}
 .a-mi:is(.aris,.aris *) .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .a-mi:is(.aris,.aris *) .meta{font-size:12px;color:var(--a-muted);font-weight:400;white-space:nowrap}
+.a-bp-btn:is(.aris,.aris *){display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 10px 0 6px;border:1px solid var(--a-line);border-radius:10px;background:var(--a-panel);color:var(--a-ink);font-size:13px;font-weight:600;white-space:nowrap}
+.a-bp-btn:hover:is(.aris,.aris *),.a-bp-btn[aria-expanded=true]:is(.aris,.aris *){background:var(--a-hover)}
+.a-bp-btn:is(.aris,.aris *)>svg:last-child{color:var(--a-muted)}
+.a-bp-menu:is(.aris,.aris *){width:300px;max-width:min(320px,90vw);padding:6px;gap:4px}
+.a-bp-search:is(.aris,.aris *){display:flex;align-items:center;gap:6px;border:1px solid var(--a-line);border-radius:9px;padding:6px 8px;color:var(--a-muted)}
+.a-bp-search:is(.aris,.aris *) input{flex:1;min-width:0;border:0;background:transparent;color:var(--a-ink);font:inherit;font-size:13px;outline:none}
+.a-bp-list:is(.aris,.aris *){display:flex;flex-direction:column;max-height:min(360px,60vh);overflow-y:auto;outline:none}
+.a-bp-grp:is(.aris,.aris *){font-size:11.5px;font-weight:600;color:var(--a-muted);padding:8px 10px 2px}
+.a-bp-opt:is(.aris,.aris *){display:flex;align-items:center;gap:10px;border-radius:9px;padding:6px 10px;width:100%;text-align:left;color:var(--a-ink)}
+.a-bp-opt[data-cursor]:is(.aris,.aris *){background:var(--a-hover)}
+.a-bp-opt[aria-selected=true]:is(.aris,.aris *){color:var(--a-accent)}
+.a-bp-opt:is(.aris,.aris *) .txt{flex:1;min-width:0;display:flex;flex-direction:column}
+.a-bp-opt:is(.aris,.aris *) .nm{font-weight:600;font-size:13.5px}
+.a-bp-opt:is(.aris,.aris *) .note{font-size:12px;color:var(--a-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.a-bp:is(.aris,.aris *) .face{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--a-panel2);color:var(--a-muted);flex:none}
+.a-bp-empty:is(.aris,.aris *){padding:10px;font-size:13px;color:var(--a-muted)}
 .a-ml:is(.aris,.aris *){font-size:12px;color:var(--a-muted);padding:8px 10px 4px}
 .a-ml.sep:is(.aris,.aris *){border-top:1px solid var(--a-line);margin-top:2px}
 .a-mempty:is(.aris,.aris *){font-size:13px;color:var(--a-muted);padding:6px 10px 8px}
@@ -135,11 +151,12 @@
 .a-nav.warn:is(.aris,.aris *) .g{color:inherit}
 .a-nav.icon:is(.aris,.aris *){width:40px;height:40px;padding:0;justify-content:center}
 .a-bot:is(.aris,.aris *){display:flex;align-items:center;gap:10px;border-radius:10px;padding:5px 8px;width:100%}
-.a-bot:hover:is(.aris,.aris *){background:var(--a-hover)}
+.a-bot:hover:is(.aris,.aris *),.a-bot[aria-current=page]:is(.aris,.aris *){background:var(--a-hover)}
 .a-bot.lead:is(.aris,.aris *){border-radius:12px;padding:8px;background:var(--a-panel2)}
 .a-bot.icon:is(.aris,.aris *){width:40px;height:40px;padding:0;justify-content:center}
 .a-bot:is(.aris,.aris *) .txt{flex:1;min-width:0;display:flex;flex-direction:column}
-.a-bot:is(.aris,.aris *) .nm{font-weight:600}
+.a-bot:is(.aris,.aris *) .nm{font-weight:600;display:flex;align-items:center;gap:6px;min-width:0}
+.a-bot:is(.aris,.aris *) .badge{font-size:10.5px;font-weight:500;color:var(--a-muted);border:1px solid var(--a-line);border-radius:999px;padding:0 6px;line-height:16px;white-space:nowrap}
 .a-bot.lead:is(.aris,.aris *) .nm{font-family:'Lexend', sans-serif;font-size:14px}
 .a-bot:is(.aris,.aris *) .note{font-size:12px;color:var(--a-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .a-bot:is(.aris,.aris *) .note.waiting{color:var(--a-warn)}
@@ -173,6 +190,7 @@
 .a-settings-nav:is(.aris,.aris *){flex:0 1 210px;min-width:190px;border-right:1px solid var(--a-line);padding:16px 10px;display:flex;flex-direction:column;gap:2px}
 .a-settings-nav:is(.aris,.aris *)>.foot{margin-top:auto;border-top:1px solid var(--a-line);padding-top:6px}
 .a-settings-nav:is(.aris,.aris *)>.cap{color:var(--a-muted);padding:0 10px 8px;font-weight:600;font-size:12px}
+.a-settings-nav:is(.aris,.aris *)>.cap.grp{padding-top:14px;margin-top:8px;border-top:1px solid var(--a-line)}
 
 
 @media (prefers-reduced-motion:reduce){.aris *{transition:none!important;animation:none!important}}

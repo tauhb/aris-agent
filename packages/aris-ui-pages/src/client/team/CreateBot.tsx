@@ -1,10 +1,10 @@
 /** 2.1 · Tạo bot mới (bot của aris) và 2.1b · Thêm bot ngoài nói ACP, chung một hộp thoại hai loại. */
 import { MASCOTS, getMascot } from '@aris/ui-kit'
-import { Button, Dialog, Mascot, Segmented, TextInput } from '@aris/ui-kit/react'
+import { BotPicker, Button, Dialog, Mascot, PlusIcon, Segmented, TextInput } from '@aris/ui-kit/react'
 import { useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Disclosure, Dot } from '../ui.js'
-import { botName } from '../mind/names.js'
+import { botOptions } from '../mind/names.js'
 import { DEMO_AGENTS, DEMO_CREATE_BOT as C } from './demo.js'
 
 const check = { width: 18, height: 18, accentColor: 'var(--a-accent)' }
@@ -101,14 +101,16 @@ function ArisBot({ t, nav }: PageProps) {
       >
         <div className="ap-frow">
           <span>{t('cb.cloneFrom')}</span>
-          <Segmented
+          <BotPicker
             label={t('cb.cloneFrom')}
             value={clone}
             onChange={setClone}
-            options={C.cloneFrom.map((id) => ({
-              value: id,
-              label: id === 'blank' ? t('cb.blank') : botName(id),
-            }))}
+            options={[
+              { id: 'blank', name: t('cb.blank'), note: t('cb.blankNote'), icon: <PlusIcon size={14} /> },
+              ...botOptions(C.cloneFrom.filter((id) => id !== 'blank')),
+            ]}
+            searchPlaceholder={t('pick.search')}
+            emptyLabel={t('pick.empty')}
           />
         </div>
         <div className="ap-frow">

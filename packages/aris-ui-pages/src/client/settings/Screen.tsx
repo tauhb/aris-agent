@@ -1,28 +1,26 @@
 /** 6.6 · Màn hình của bot: desktop ảo của từng bot, cầm lái khi bot bị chặn, tài nguyên, việc bot vừa làm. */
-import { Button, Card, PageShell, Segmented } from '@aris/ui-kit/react'
-import { COMMANDER, DEMO_TEAM } from '@aris/ui-kit'
+import { BotPicker, Button, Card, PageShell } from '@aris/ui-kit/react'
 import { useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Box, Col } from '../ui.js'
+import { botName, botOptions } from '../mind/names.js'
 import { DEMO_SCREEN as S } from './demo.js'
-
-const NAMES = Object.fromEntries(
-  [COMMANDER, ...DEMO_TEAM.flatMap((g) => g.members)].map((m) => [m.id, m.name]),
-)
 
 export function Screen({ t }: PageProps) {
   const [bot, setBot] = useState<string>(S.current)
-  const name = NAMES[bot] ?? bot
+  const name = botName(bot)
   return (
     <PageShell
       title={t('sec.screen')}
       subtitle={t('scr.subtitle')}
       actions={
-        <Segmented
+        <BotPicker
           label={t('scr.pick')}
           value={bot}
           onChange={setBot}
-          options={S.bots.map((id) => ({ value: id, label: NAMES[id] }))}
+          options={botOptions(S.bots)}
+          searchPlaceholder={t('pick.search')}
+          emptyLabel={t('pick.empty')}
         />
       }
     >

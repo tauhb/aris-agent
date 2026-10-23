@@ -3,11 +3,6 @@
  * nên để nguyên tiếng Việt như canvas; mỗi khối ghi giai đoạn nối dữ liệu thật.
  */
 
-/** 3.1 · Bot có trang ký ức. Ký ức là dữ liệu thật (`@aris/memory`); danh sách bot thật ở GĐ2. */
-export const DEMO_MEMORY = {
-  bots: ['aris', 'mai', 'lam', 'tin', 'dev'],
-}
-
 export type SkillState = 'pending' | 'active' | 'rare' | 'archived'
 
 /** 3.2 · GĐ3 (thư viện skill, vòng học). */

@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import {
   ApprovalBox,
+  BotPicker,
   BotRow,
   BranchStep,
   Button,
@@ -10,6 +11,7 @@ import {
   Checkbox,
   Dialog,
   Field,
+  filterBotOptions,
   IconButton,
   KIT_CSS,
   Menu,
@@ -203,5 +205,25 @@ describe('bộ thành phần', () => {
     const missing = [...used].filter((c) => c.startsWith('a-') && !KIT_CSS.includes(`.${c}`))
     expect(missing).toEqual([])
     expect(KIT_CSS).toContain('[data-ds-dark-theme] .aris{')
+  })
+})
+
+describe('BotPicker', () => {
+  const options = [
+    { id: 'aris', name: 'Aris', note: 'Chỉ huy' },
+    { id: 'lam', name: 'Lâm', note: 'Nghiên cứu' },
+    { id: 'mai', name: 'Mai', note: 'Thư ký' },
+  ]
+  it('lọc theo tên hoặc vai trò, không phân biệt dấu', () => {
+    expect(filterBotOptions(options, 'lam').map((o) => o.id)).toEqual(['lam'])
+    expect(filterBotOptions(options, 'thu ky').map((o) => o.id)).toEqual(['mai'])
+    expect(filterBotOptions(options, '  ')).toHaveLength(3)
+  })
+  it('nút hiện bot đang chọn', () => {
+    const html = renderToStaticMarkup(
+      <BotPicker label="Chọn bot" value="lam" onChange={() => {}} options={options} />,
+    )
+    expect(html).toContain('aria-label="Chọn bot: Lâm"')
+    expect(html).toContain('aria-haspopup="listbox"')
   })
 })

@@ -1,8 +1,8 @@
 /** 2.3 · Bot hiểu gì về chủ nhân: điều bot chưa chắc, nhận định kèm độ tin cậy và bằng chứng, xác nhận hoặc sửa. */
-import { Button, PageShell, Segmented } from '@aris/ui-kit/react'
+import { BotPicker, Button, PageShell } from '@aris/ui-kit/react'
 import { useState } from 'react'
 import type { PageProps } from '../page.js'
-import { botName } from '../mind/names.js'
+import { botName, botOptions } from '../mind/names.js'
 import { DEMO_OWNER as O } from './demo.js'
 
 type Insight = (typeof O.communication)[number]
@@ -55,11 +55,13 @@ export function OwnerProfile({ t, params }: PageProps) {
       subtitle={t('own.subtitle', { n: O.insights })}
       actions={
         <>
-          <Segmented
+          <BotPicker
             label={t('mem.pickBot')}
             value={bot}
             onChange={setBot}
-            options={O.bots.map((id) => ({ value: id, label: botName(id) }))}
+            options={botOptions(O.bots)}
+            searchPlaceholder={t('pick.search')}
+            emptyLabel={t('pick.empty')}
           />
           <Button size="sm">{t('own.copy')}</Button>
         </>
