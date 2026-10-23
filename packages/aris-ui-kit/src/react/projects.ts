@@ -3,7 +3,7 @@
  * phiên chính) theo workspace, dùng chung cho cột phải của dự án, Kanban… Mỗi gói client giữ bản
  * sao riêng; sửa ở đâu thì phát sự kiện `aris:projects-changed` để các gói khác tải lại ngay.
  */
-import { useSyncExternalStore } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 
 export interface ProjectRules {
   maxRounds: number
@@ -19,6 +19,8 @@ export interface ProjectData {
   members: string[]
   rules: ProjectRules
   mainSession?: string
+  /** Chia việc trên Kanban: tự động (mặc định) hay thủ công. */
+  split?: 'auto' | 'manual'
   createdAt: string
 }
 
@@ -91,4 +93,85 @@ export function useProjects(): ProjectEntry[] | null {
 export function useProjectByPath(path: string | undefined): ProjectEntry | undefined {
   const all = useProjects()
   return path ? all?.find((p) => p.path === path) : undefined
+}
+
+/** Một thẻ trên bảng việc của dự án (`@aris/projects`, Kanban 4.3). */
+export interface BoardCard {
+  id: string
+  /** `task`: thẻ của đội; `draft`: thẻ người dùng tạo, chờ chia. */
+  kind: 'task' | 'draft'
+  title: string
+  description?: string
+  column: 'unassigned' | 'ready' | 'doing' | 'waiting' | 'done'
+  /** Bot nhận thẻ, hoặc bot người dùng gợi ý. */
+  bot?: string
+  /** Phiên của bot nhận thẻ. */
+  session?: string
+  waitingFor: { id: string; title: string }[]
+}
+
+export interface BoardData {
+  workspace: string
+  cards: BoardCard[]
+  split: 'auto' | 'manual'
+}
+
+const boards = new Map<string, BoardData>()
+const boardListeners = new Map<string, Set<() => void>>()
+const boardTimers = new Map<string, ReturnType<typeof setInterval>>()
+
+function setBoard(b: BoardData) {
+  boards.set(b.workspace, b)
+  for (const l of boardListeners.get(b.workspace) ?? []) l()
+}
+
+export function refreshBoard(workspace: string): Promise<void> {
+  if (typeof document === 'undefined') return Promise.resolve()
+  const url = endpoint()
+  url.searchParams.set('board', workspace)
+  return fetch(url, { credentials: 'same-origin' })
+    .then((r) => (r.ok ? (r.json() as Promise<BoardData>) : undefined))
+    .then((d) => d && setBoard(d))
+    .catch(() => {})
+}
+
+/** Thao tác thẻ (`card-create`, `card-update`, `card-delete`, `card-dispatch`); trả bảng mới. */
+export async function boardAction(
+  body: Record<string, unknown>,
+): Promise<BoardData & { sessionId?: string }> {
+  const out = await projectAction<BoardData & { sessionId?: string }>(body)
+  if (out.cards) setBoard(out)
+  return out
+}
+
+/** Bảng việc của một dự án, tải lại mỗi 5 giây khi đang mở (`null` khi chưa tải xong). */
+export function useBoard(workspace: string | undefined): BoardData | null {
+  return useSyncExternalStore(
+    useCallback(
+      (fn: () => void) => {
+        if (!workspace) return () => {}
+        let set = boardListeners.get(workspace)
+        if (!set) boardListeners.set(workspace, (set = new Set()))
+        set.add(fn)
+        void refreshBoard(workspace)
+        if (!boardTimers.has(workspace))
+          boardTimers.set(
+            workspace,
+            setInterval(() => void refreshBoard(workspace), 5000),
+          )
+        const onChange = () => void refreshBoard(workspace)
+        window.addEventListener(PROJECTS_CHANGED, onChange)
+        return () => {
+          set!.delete(fn)
+          window.removeEventListener(PROJECTS_CHANGED, onChange)
+          if (set!.size === 0) {
+            clearInterval(boardTimers.get(workspace))
+            boardTimers.delete(workspace)
+          }
+        }
+      },
+      [workspace],
+    ),
+    () => (workspace ? (boards.get(workspace) ?? null) : null),
+  )
 }

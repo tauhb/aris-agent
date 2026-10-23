@@ -17,11 +17,13 @@ import {
   TeamOrbit,
   arisNavigate,
   projectAction,
+  useBoard,
   useDismiss,
   useProjectByPath,
   useTeam,
   useTeamLive,
   type ActivityItem,
+  type BoardCard,
 } from '@aris/ui-kit/react'
 import { useCallback, useRef, useState, type ComponentType, type ReactNode } from 'react'
 import type { Translate } from './locale.js'
@@ -47,6 +49,15 @@ export interface TeamPaneProps {
 }
 
 // Cột phải của dự án còn dùng đội mẫu tới bước 3 (dự án = Team của dsh).
+/** Cột của thẻ → dấu trạng thái. */
+const GLYPH: Record<BoardCard['column'], BotStatus> = {
+  unassigned: 'idle',
+  ready: 'idle',
+  doing: 'working',
+  waiting: 'waiting',
+  done: 'done',
+}
+
 /** Luật mặc định khi dự án chưa có hồ sơ (giống `@aris/projects`). */
 const DEFAULT_RULES = { maxRounds: 3, maxMessages: 10, stopCommand: true, arisSummarizes: true }
 
@@ -196,6 +207,13 @@ function ProjectPane({
     )
   }
   const candidates = team.members.filter((m) => !crew.some((c) => c.id === m.id))
+  // Việc của dự án chưa xong (thẻ đang làm, chờ duyệt trước), tối đa 6.
+  const board = useBoard(entry?.workspace)
+  const rank = { waiting: 0, doing: 1, ready: 2, unassigned: 3, done: 4 } as const
+  const tasks = (board?.cards ?? [])
+    .filter((c) => c.column !== 'done')
+    .sort((a, b) => rank[a.column] - rank[b.column])
+    .slice(0, 6)
   return (
     <div className="aris aris-team aris-project">
       {p?.goal && (
@@ -285,8 +303,24 @@ function ProjectPane({
       </div>
       <div className="sect">
         <div className="a-grp">{t('project.tasks')}</div>
-        <div className="act a-muted">{t('project.noTasks')}</div>
-        <Button variant="ghost" size="sm" onClick={() => arisNavigate('kanban')}>
+        {tasks.length === 0 && <div className="act a-muted">{t('project.noTasks')}</div>}
+        {tasks.map((c) => {
+          const bot = team.members.find((m) => m.id === c.bot)
+          return (
+            <div key={c.id} className="act">
+              <StatusGlyph status={GLYPH[c.column]} label={t(`project.col.${c.column}`)} />
+              <span className="txt">{c.title}</span>
+              <span className="a-muted state">
+                {[bot?.name, t(`project.col.${c.column}`)].filter(Boolean).join(' · ')}
+              </span>
+            </div>
+          )
+        })}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => arisNavigate('kanban', entry ? { project: entry.workspace } : {})}
+        >
           {t('project.board')}
         </Button>
       </div>

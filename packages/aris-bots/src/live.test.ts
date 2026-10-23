@@ -67,3 +67,21 @@ describe('trạng thái trực tiếp', () => {
     expect(b.of('minh')).toMatchObject({ status: 'done', task: 'Việc A' })
   })
 })
+
+describe('trạng thái theo phiên', () => {
+  it('đang chạy, đang chờ duyệt, rảnh', () => {
+    const live = new LiveTracker(
+      () => 'minh',
+      () => 1,
+    )
+    expect(live.sessionState('s1')).toBe('idle')
+    live.turnStart('s1')
+    expect(live.sessionState('s1')).toBe('running')
+    expect(live.sessionState('s2')).toBe('idle')
+    live.waitStart('s1')
+    expect(live.sessionState('s1')).toBe('waiting')
+    live.waitEnd('s1')
+    live.turnEnd('s1', 'completed')
+    expect(live.sessionState('s1')).toBe('idle')
+  })
+})

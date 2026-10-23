@@ -59,6 +59,11 @@ export {
 } from './team.js'
 export {
   PROJECTS_CHANGED,
+  boardAction,
+  refreshBoard,
+  useBoard,
+  type BoardCard,
+  type BoardData,
   projectAction,
   refreshProjects,
   useProjectByPath,

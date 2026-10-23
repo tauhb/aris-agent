@@ -156,6 +156,10 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-kcol{flex:1 1 220px;min-width:200px;background:var(--a-panel2);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
 .ap-kcol .ch{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--a-muted);padding:2px 4px 4px}
 .ap-kc{background:var(--a-panel);border:1px solid var(--a-line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.ap-kc-btn{text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%}
+.ap-kc-btn:hover{border-color:var(--a-muted)}
+.ap-kc-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.ap-kc-acts .ap-sel{max-width:150px}
 .ap-kc .ft{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--a-muted);flex-wrap:wrap}
 .ap-tag{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:var(--a-panel2);font-size:12.5px;color:var(--a-ink)}
 .ap-brain{min-height:100%}

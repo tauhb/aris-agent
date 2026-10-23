@@ -13,6 +13,8 @@ export interface Assignment {
   reason: string
   /** Tên ngắn của việc (thẻ trên bảng việc). */
   title?: string | undefined
+  /** Giao một thẻ có sẵn: `task-n` (thẻ của đội), `c-n` (thẻ người dùng tạo trên Kanban). */
+  card?: string | undefined
 }
 
 export interface BotInfo {
@@ -42,12 +44,29 @@ export interface TeamPort<A> {
   ): Promise<unknown>
   createTask(
     agent: A,
-    req: { subject: string; description: string },
+    req: { subject: string; description: string; blockedBy?: readonly string[] },
   ): Promise<{ id: string; revision: number }>
+  getTask(agent: A, id: string): TaskInfo
   updateTask(
     agent: A,
-    req: { taskId: string; expectedRevision: number; action: 'reassign'; owner: string },
+    req: { taskId: string; expectedRevision: number; action: 'reassign' | 'complete'; owner?: string },
   ): Promise<unknown>
+}
+
+export interface TaskInfo {
+  id: string
+  revision: number
+  subject: string
+  status: string
+  ready: boolean
+}
+
+/** Thẻ người dùng tạo trên Kanban (`@aris/projects`). */
+export interface DraftCards {
+  get(
+    id: string,
+  ): { title: string; description?: string | undefined; taskId?: string | undefined } | undefined
+  dispatched(id: string, taskId: string): Promise<void>
 }
 
 export interface DispatchDeps<A> {
@@ -59,6 +78,7 @@ export interface DispatchDeps<A> {
   busyBots(): number
   /** Đã giao: ghi nhật ký, việc gần đây. */
   record(entry: DispatchEntry): void
+  cards?: DraftCards | undefined
 }
 
 export interface DispatchEntry {
@@ -139,7 +159,25 @@ export async function dispatch<A extends { session: { id: string } }>(
       if (bot.kind === 'commander') return { handle, ok: false, error: 'Không tự giao việc cho Commander.' }
       if (!a.task.trim() || !a.reason.trim())
         return { handle, ok: false, error: 'Mỗi việc cần nội dung và lý do chọn bot.' }
-      const title = clip((a.title ?? a.task).trim().split('\n')[0]!, 80)
+      // Thẻ có sẵn: kiểm trước khi nhắn bot để không giao nửa vời.
+      const ref = a.card?.trim()
+      let known: TaskInfo | undefined
+      let draft: ReturnType<DraftCards['get']>
+      if (ref && /^task-\d+$/.test(ref)) {
+        try {
+          known = d.team.getTask(agent, ref)
+        } catch {
+          return { handle, ok: false, error: `Không có thẻ ${ref}.` }
+        }
+        if (known.status !== 'pending' && known.status !== 'in_progress')
+          return { handle, ok: false, error: `Thẻ ${ref} đã xong hoặc đã xoá.` }
+        if (!known.ready) return { handle, ok: false, error: `Thẻ ${ref} đang chờ thẻ khác xong.` }
+      } else if (ref && /^c-\d+$/.test(ref)) {
+        draft = d.cards?.get(ref)
+        if (!draft) return { handle, ok: false, error: `Không có thẻ ${ref}.` }
+        if (draft.taskId) return { handle, ok: false, error: `Thẻ ${ref} đã giao (${draft.taskId}).` }
+      } else if (ref) return { handle, ok: false, error: `Mã thẻ ${ref} không đúng (task-n hoặc c-n).` }
+      const title = clip((a.title ?? known?.subject ?? draft?.title ?? a.task).trim().split('\n')[0]!, 80)
       const prompt = [{ type: 'text' as const, text: briefFor(bot, a) }]
       try {
         const existing = d.team.listMembers(agent).find((m) => m.name === handle && m.status !== 'failed')
@@ -160,7 +198,8 @@ export async function dispatch<A extends { session: { id: string } }>(
         }
         let taskId: string | undefined
         try {
-          const task = await d.team.createTask(agent, { subject: title, description: a.task.trim() })
+          const task =
+            known ?? (await d.team.createTask(agent, { subject: title, description: a.task.trim() }))
           await d.team.updateTask(agent, {
             taskId: task.id,
             expectedRevision: task.revision,
@@ -168,6 +207,7 @@ export async function dispatch<A extends { session: { id: string } }>(
             owner: handle,
           })
           taskId = task.id
+          if (draft && ref) await d.cards?.dispatched(ref, task.id)
         } catch {
           // Thẻ trên bảng việc chỉ để theo dõi; việc vẫn đã giao.
         }
@@ -216,4 +256,45 @@ export function parseSummary(text: string): { handle: string; sessionId?: string
     out.push({ handle: m[1]!, ok: !m[2]!.includes('không giao được'), ...(sid ? { sessionId: sid } : {}) })
   }
   return out
+}
+
+/** Một thẻ Aris chia (`tao_the`): tiêu đề, nội dung, chờ thẻ nào. */
+export interface PlannedCard {
+  title: string
+  description?: string | undefined
+  /** Mã thẻ đã có (`task-n`) hoặc tiêu đề một thẻ khác trong cùng lần chia. */
+  after?: readonly string[] | undefined
+}
+
+/**
+ * Chia việc thành thẻ trên bảng việc của đội (chưa giao ai); thẻ chờ thẻ khác ghi `after`.
+ * Trả mã và tiêu đề từng thẻ theo thứ tự.
+ */
+export async function planCards<A>(
+  team: Pick<TeamPort<A>, 'createTask'>,
+  agent: A,
+  cards: readonly PlannedCard[],
+): Promise<{ id: string; title: string; after: string[] }[]> {
+  if (cards.length === 0) throw new DispatchError('Chưa có thẻ nào.')
+  if (cards.length > 12) throw new DispatchError('Mỗi lần chia tối đa 12 thẻ.')
+  const made: { id: string; title: string; after: string[] }[] = []
+  for (const c of cards) {
+    const title = clip(c.title.trim(), 200)
+    if (!title) throw new DispatchError('Thẻ cần có tiêu đề.')
+    const after = (c.after ?? []).map((ref) => {
+      const r = ref.trim()
+      if (/^task-\d+$/.test(r)) return r
+      const hit = made.find((m) => m.title.toLowerCase() === r.toLowerCase())
+      if (!hit)
+        throw new DispatchError(`Thẻ «${title}» chờ «${r}» nhưng chưa có thẻ đó (ghi thẻ được chờ trước).`)
+      return hit.id
+    })
+    const task = await team.createTask(agent, {
+      subject: title,
+      description: (c.description ?? title).trim(),
+      ...(after.length ? { blockedBy: after } : {}),
+    })
+    made.push({ id: task.id, title, after })
+  }
+  return made
 }

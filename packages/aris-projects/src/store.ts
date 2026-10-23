@@ -1,5 +1,5 @@
 /** Kho dự án: tạo, sửa (tên, mục tiêu, thành viên, luật), phiên chính. */
-import type { ProjectRecord, Rules, Table } from './domain.js'
+import type { CardRecord, ProjectRecord, Rules, Table } from './domain.js'
 
 export const DEFAULT_RULES: Rules = { maxRounds: 3, maxMessages: 10, stopCommand: true, arisSummarizes: true }
 
@@ -27,6 +27,7 @@ export interface ProjectInput {
   members?: readonly string[]
   rules?: unknown
   mainSession?: string
+  split?: 'auto' | 'manual'
 }
 
 export class ProjectStore {
@@ -66,7 +67,76 @@ export class ProjectStore {
     if (goal) rec.goal = goal
     const main = input.mainSession ?? prev?.mainSession
     if (main) rec.mainSession = main
+    const split = input.split === 'auto' || input.split === 'manual' ? input.split : prev?.split
+    if (split) rec.split = split
     await this.table.put(keyOf(workspace), rec)
     return rec
+  }
+}
+
+/** Thẻ người dùng tạo trên Kanban, chờ chia việc (mã `c-1`, `c-2`…). */
+export class CardStore {
+  constructor(
+    private table: Table<CardRecord>,
+    private now = () => new Date(),
+  ) {}
+
+  get(id: string): CardRecord | undefined {
+    return this.table.get(id)
+  }
+
+  list(workspace: string): CardRecord[] {
+    return [...this.table.entries()].map(([, c]) => c).filter((c) => c.workspace === workspace)
+  }
+
+  async create(
+    workspace: string,
+    input: { title?: unknown; description?: unknown; bot?: string },
+  ): Promise<CardRecord> {
+    const title = clean(input.title, 200)
+    if (!title) throw new ProjectError('Thẻ cần có tiêu đề.')
+    let n = 0
+    for (const [id] of this.table.entries()) n = Math.max(n, Number(id.slice(2)) || 0)
+    const rec: CardRecord = { id: `c-${n + 1}`, workspace, title, createdAt: this.now().toISOString() }
+    const description = clean(input.description, 4000)
+    if (description) rec.description = description
+    if (input.bot) rec.bot = input.bot
+    await this.table.put(rec.id, rec)
+    return rec
+  }
+
+  async update(
+    id: string,
+    patch: { title?: unknown; description?: unknown; bot?: string | null },
+  ): Promise<CardRecord> {
+    const prev = this.get(id)
+    if (!prev) throw new ProjectError('Không có thẻ này.')
+    if (prev.taskId) throw new ProjectError('Thẻ đã giao; sửa trên bảng việc của đội.')
+    const rec: CardRecord = { ...prev }
+    if (patch.title !== undefined) {
+      const title = clean(patch.title, 200)
+      if (!title) throw new ProjectError('Thẻ cần có tiêu đề.')
+      rec.title = title
+    }
+    if (patch.description !== undefined) {
+      const d = clean(patch.description, 4000)
+      if (d) rec.description = d
+      else delete rec.description
+    }
+    if (patch.bot === null) delete rec.bot
+    else if (patch.bot) rec.bot = patch.bot
+    await this.table.put(id, rec)
+    return rec
+  }
+
+  async remove(id: string): Promise<void> {
+    if (!this.get(id)) throw new ProjectError('Không có thẻ này.')
+    await this.table.delete(id)
+  }
+
+  /** Aris đã giao thẻ: thẻ của Team thay chỗ. */
+  async dispatched(id: string, taskId: string): Promise<void> {
+    const prev = this.get(id)
+    if (prev) await this.table.put(id, { ...prev, taskId })
   }
 }

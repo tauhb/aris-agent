@@ -6,6 +6,7 @@
  * - `/api/aris/projects` cho hộp Tạo dự án (1.5) và cột phải của dự án (1.4).
  * @module @aris/projects
  */
+import { randomUUID } from 'node:crypto'
 import { mkdir } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { isAbsolute, join } from 'node:path'
@@ -15,20 +16,30 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-api-session-controller'
 import type {} from '@deepseek-ai/dsh-client-connection'
+import { SessionId } from '@deepseek-ai/dsh-session'
+import type {} from '@deepseek-ai/dsh-session-query'
 import type {} from '@deepseek-ai/dsh-storage-domain'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import { WorkspaceId } from '@deepseek-ai/dsh-workspace'
 import { handleApi, type WorkspaceLike } from './api.js'
+import { buildBoard, foldTeam, type CardView, type TeamState } from './board.js'
 import { renderProject } from './context.js'
-import { projectsDomain, type ProjectRecord, type Table } from './domain.js'
-import { ProjectError, ProjectStore } from './store.js'
+import { projectsDomain, type CardRecord, type ProjectRecord, type Table } from './domain.js'
+import { CardStore, ProjectError, ProjectStore } from './store.js'
 
 export * from './domain.js'
-export { DEFAULT_RULES, ProjectStore, cleanRules } from './store.js'
+export { CardStore, DEFAULT_RULES, ProjectStore, cleanRules } from './store.js'
+export { buildBoard, foldTeam, COLUMNS, type CardView, type Column } from './board.js'
 export { renderProject } from './context.js'
 
 export const name = 'aris-projects'
-export const inject = ['storageDomain', 'systemPrompt', 'sessionController', 'workspaceRegistry']
+export const inject = [
+  'storageDomain',
+  'systemPrompt',
+  'sessionController',
+  'workspaceRegistry',
+  'sessionQuery',
+]
 
 /** Sau tính cách (290), ký ức lõi (300); trước hướng dẫn giao việc của Commander (310). */
 export const CONTEXT_ORDER = 305
@@ -36,7 +47,11 @@ export const CONTEXT_ORDER = 305
 /** Dịch vụ cho plugin khác: dự án của một phiên (Kanban, chat chung ở bước sau). */
 export interface ArisProjects {
   store: ProjectStore
+  /** Thẻ người dùng tạo trên Kanban, chờ chia việc. */
+  cards: CardStore
   ofSession(sessionId: string): { project: ProjectRecord; path: string } | undefined
+  /** Bảng việc của dự án (Kanban, cột phải). */
+  board(workspaceId: string): Promise<CardView[]>
 }
 
 /** Chỗ chat riêng của aris và workspace mặc định của dsh không phải dự án (giống `isProjectWorkspace` của giao diện). */
@@ -64,6 +79,36 @@ export async function apply(ctx: Context): Promise<void> {
     (id) => bots()?.store.get(id)?.kind === 'member',
   )
 
+  const cards = new CardStore(domain.table('cards') as unknown as Table<CardRecord>)
+
+  /** Bảng việc của Team trong phiên chính (đọc log, không đánh thức phiên). */
+  async function teamOf(project: ProjectRecord | undefined): Promise<TeamState> {
+    const empty: TeamState = { tasks: new Map(), members: new Map() }
+    if (!project?.mainSession) return empty
+    try {
+      const obs = await ctx.sessionQuery.observeSession(SessionId(project.mainSession), {
+        projectionMode: 'none',
+      })
+      try {
+        return foldTeam(obs.events as unknown as { type: string; data?: unknown }[])
+      } finally {
+        obs[Symbol.dispose]()
+      }
+    } catch (e) {
+      logger.warn('đọc bảng việc của %s: %s', project.name, String(e))
+      return empty
+    }
+  }
+  async function board(workspaceId: string): Promise<CardView[]> {
+    const b = bots()
+    return buildBoard({
+      team: await teamOf(store.get(workspaceId)),
+      drafts: cards.list(workspaceId),
+      botOfHandle: (h) => b?.store.byHandle(h)?.id,
+      sessionState: (sid) => b?.live.sessionState(sid) ?? 'idle',
+    })
+  }
+
   const workspaces = (): WorkspaceLike[] =>
     ctx.workspaceRegistry
       .list()
@@ -73,6 +118,8 @@ export async function apply(ctx: Context): Promise<void> {
 
   const service: ArisProjects = {
     store,
+    cards,
+    board,
     ofSession(sessionId) {
       const w = workspaceOf(sessionId)
       const project = w ? store.get(w.id) : undefined
@@ -91,7 +138,13 @@ export async function apply(ctx: Context): Promise<void> {
           const found = id ? service.ofSession(id) : undefined
           const b = bots()
           if (!found || !b || !id) return ''
-          return renderProject(found.project, b.store.botOf(id), b.store.list(), found.path)
+          return renderProject(
+            found.project,
+            b.store.botOf(id),
+            b.store.list(),
+            found.path,
+            cards.list(found.project.workspace),
+          )
         },
         interpolate: false,
       }),
@@ -126,6 +179,20 @@ export async function apply(ctx: Context): Promise<void> {
                   .pinSession(sessionId)
                   .catch((e: unknown) => logger.warn('ghim phiên chính của dự án: %s', String(e)))
                 return sessionId
+              },
+              cards,
+              board,
+              handleOf: (id) => bots()?.store.get(id)?.handle,
+              async prompt(sessionId, text) {
+                await ctx.sessionController.prompt(
+                  {
+                    requestId: randomUUID() as never,
+                    sessionId: SessionId(sessionId),
+                    mode: 'queue',
+                    content: [{ type: 'text', text }],
+                  },
+                  AbortSignal.timeout(30_000),
+                )
               },
             },
             request,

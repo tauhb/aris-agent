@@ -28,15 +28,37 @@ export const projectRecord = z.object({
   rules: rulesRecord,
   /** Phiên chính của dự án: Aris làm trưởng nhóm, Team của dự án là Team của phiên này. */
   mainSession: z.string().optional(),
+  /** Chia việc (Kanban 4.3): Aris tự chia thẻ chờ ở lượt sau, hay chỉ khi người dùng bảo. */
+  split: z.enum(['auto', 'manual']).optional(),
   createdAt: z.string(),
 })
 export type ProjectRecord = z.infer<typeof projectRecord>
+
+/**
+ * Thẻ người dùng tạo trên Kanban, chờ chia việc. Bảng việc của Team chỉ ghi được bằng agent đang
+ * chạy của phiên chính, nên thẻ nằm ở đây cho tới khi Aris giao (thành thẻ `task-n` của Team).
+ */
+export const cardRecord = z.object({
+  id: z.string(),
+  workspace: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  /** Bot người dùng gợi ý (mã nội bộ). */
+  bot: z.string().optional(),
+  createdAt: z.string(),
+  /** Đã giao: thẻ của Team thay cho thẻ này. */
+  taskId: z.string().optional(),
+})
+export type CardRecord = z.infer<typeof cardRecord>
 
 export const projectsDomain = defineDomain({
   name: 'aris_projects',
   version: 1,
   layout: 'per-record',
-  tables: { projects: domainTable<string, ProjectRecord>(projectRecord) },
+  tables: {
+    projects: domainTable<string, ProjectRecord>(projectRecord),
+    cards: domainTable<string, CardRecord>(cardRecord),
+  },
 })
 
 export interface Table<V> {

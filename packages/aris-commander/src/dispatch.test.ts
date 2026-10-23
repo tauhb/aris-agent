@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   dispatch,
   parseSummary,
+  planCards,
   summarize,
   type BotInfo,
   type DispatchEntry,
@@ -17,6 +18,18 @@ const BOTS: BotInfo[] = [
 
 function setup(busy = 0) {
   const members: { id: string; name: string; status: string }[] = []
+  const tasks: Record<
+    string,
+    { id: string; revision: number; subject: string; status: string; ready: boolean }
+  > = {
+    'task-7': { id: 'task-7', revision: 3, subject: 'Lịch đăng 8 tuần', status: 'pending', ready: true },
+    'task-8': { id: 'task-8', revision: 1, subject: 'Đăng bài', status: 'pending', ready: false },
+  }
+  const drafts: Record<string, { title: string; taskId?: string }> = {
+    'c-1': { title: 'Kịch bản video ra mắt' },
+    'c-2': { title: 'Đã giao rồi', taskId: 'task-1' },
+  }
+  const dispatchedCards: string[] = []
   const calls: string[] = []
   let n = 0
   const team: TeamPort<A> = {
@@ -36,8 +49,13 @@ function setup(busy = 0) {
       return { id: `task-${++n}`, revision: 1 }
     },
     async updateTask(_a, req) {
-      calls.push(`assign ${req.taskId} → ${req.owner}`)
+      calls.push(`assign ${req.taskId}@${req.expectedRevision} → ${req.owner}`)
       return {}
+    },
+    getTask(_a, id) {
+      const t = tasks[id]
+      if (!t) throw new Error('not found')
+      return t
     },
   }
   const log: DispatchEntry[] = []
@@ -47,8 +65,12 @@ function setup(busy = 0) {
     byHandle: (h: string) => BOTS.find((b) => b.handle === h),
     busyBots: () => busy,
     record: (e: DispatchEntry) => void log.push(e),
+    cards: {
+      get: (id: string) => drafts[id],
+      dispatched: async (id: string, taskId: string) => void dispatchedCards.push(`${id}→${taskId}`),
+    },
   }
-  return { deps, calls, log, members }
+  return { deps, calls, log, members, dispatchedCards }
 }
 const signal = new AbortController().signal
 const cmd: A = { session: { id: 'cmd' } }
@@ -70,7 +92,7 @@ describe('giao việc', () => {
       ['tho', true, 'child-tho', 'task-2'],
     ])
     expect(calls).toContain('spawn minh: Tóm tắt 3 đối thủ')
-    expect(calls).toContain('assign task-1 → minh')
+    expect(calls).toContain('assign task-1@1 → minh')
     expect(log.map((e) => [e.handle, e.title, e.reason])).toEqual([
       ['minh', 'Đối thủ', 'Minh lo nghiên cứu'],
       ['tho', 'Viết nháp bài Facebook', 'Thơ viết nội dung'],
@@ -128,5 +150,69 @@ describe('giao việc', () => {
     await expect(dispatch(deps, cmd, [{ bot: 'minh', task: 'x', reason: 'y' }], signal)).rejects.toThrow(
       'đang chạy',
     )
+  })
+})
+
+describe('giao thẻ có sẵn', () => {
+  it('thẻ task-n: không tạo thẻ mới, giao đúng phiên bản; thẻ đang chờ thì báo, không nhắn bot', async () => {
+    const { deps, calls } = setup()
+    const r = await dispatch(
+      deps,
+      cmd,
+      [{ bot: 'minh', task: 'Làm lịch', reason: 'r', card: 'task-7' }],
+      signal,
+    )
+    expect(r[0]).toMatchObject({ ok: true, taskId: 'task-7' })
+    expect(calls).toEqual(['spawn minh: Làm lịch', 'assign task-7@3 → minh'])
+    const blocked = await dispatch(
+      deps,
+      cmd,
+      [{ bot: 'tho', task: 'Đăng', reason: 'r', card: 'task-8' }],
+      signal,
+    )
+    expect(blocked[0]!.error).toContain('đang chờ thẻ khác')
+    expect(calls.some((c) => c.includes('tho'))).toBe(false)
+    const bad = await dispatch(deps, cmd, [{ bot: 'tho', task: 'x', reason: 'r', card: 'abc' }], signal)
+    expect(bad[0]!.error).toContain('không đúng')
+  })
+
+  it('thẻ c-n của người dùng: tạo thẻ của đội theo tiêu đề thẻ, đánh dấu đã giao; thẻ đã giao thì báo', async () => {
+    const { deps, calls, dispatchedCards, log } = setup()
+    const r = await dispatch(
+      deps,
+      cmd,
+      [{ bot: 'tho', task: 'Viết kịch bản', reason: 'r', card: 'c-1' }],
+      signal,
+    )
+    expect(r[0]).toMatchObject({ ok: true, taskId: 'task-1' })
+    expect(calls).toContain('task Kịch bản video ra mắt')
+    expect(dispatchedCards).toEqual(['c-1→task-1'])
+    expect(log[0]!.title).toBe('Kịch bản video ra mắt')
+    const again = await dispatch(deps, cmd, [{ bot: 'minh', task: 'x', reason: 'r', card: 'c-2' }], signal)
+    expect(again[0]!.error).toContain('đã giao')
+  })
+})
+
+describe('chia việc thành thẻ', () => {
+  it('thẻ chờ thẻ ghi trước (theo tiêu đề) hoặc thẻ có sẵn; chờ thẻ chưa có thì báo', async () => {
+    const made: { subject: string; blockedBy?: readonly string[] }[] = []
+    let n = 10
+    const team = {
+      async createTask(_a: A, req: { subject: string; description: string; blockedBy?: readonly string[] }) {
+        made.push(req)
+        return { id: `task-${++n}`, revision: 1 }
+      },
+    }
+    const r = await planCards(team, cmd, [
+      { title: 'Kịch bản 8 video' },
+      { title: 'Lịch đăng 8 tuần', after: ['kịch bản 8 video', 'task-3'] },
+    ])
+    expect(r).toEqual([
+      { id: 'task-11', title: 'Kịch bản 8 video', after: [] },
+      { id: 'task-12', title: 'Lịch đăng 8 tuần', after: ['task-11', 'task-3'] },
+    ])
+    expect(made[1]!.blockedBy).toEqual(['task-11', 'task-3'])
+    await expect(planCards(team, cmd, [{ title: 'A', after: ['B'] }])).rejects.toThrow('chưa có thẻ đó')
+    await expect(planCards(team, cmd, [])).rejects.toThrow('Chưa có thẻ')
   })
 })

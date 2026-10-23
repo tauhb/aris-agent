@@ -2,7 +2,8 @@
  * `/api/aris/projects`: dự án (workspace của dsh kèm hồ sơ của aris). dsh đã kiểm cookie và quyền
  * chủ nhân trước khi gọi tới đây.
  */
-import { ProjectError, type ProjectInput, type ProjectStore } from './store.js'
+import type { CardView } from './board.js'
+import { ProjectError, type CardStore, type ProjectInput, type ProjectStore } from './store.js'
 
 export interface WorkspaceLike {
   id: string
@@ -20,6 +21,13 @@ export interface ApiDeps {
   renameWorkspace: (id: string, name: string) => Promise<void>
   /** Phiên chính mới của dự án (Aris trưởng nhóm), ghim lên đầu dự án; trả mã phiên. */
   newMainSession: (workspaceId: string) => Promise<string>
+  cards: CardStore
+  /** Bảng việc của dự án (Kanban). */
+  board: (workspaceId: string) => Promise<CardView[]>
+  /** Tên gọi của bot (để nhắn Aris giao thẻ). */
+  handleOf: (botId: string) => string | undefined
+  /** Gửi một tin của người dùng vào phiên (đánh thức Aris ở phiên chính). */
+  prompt: (sessionId: string, text: string) => Promise<void>
 }
 
 const json = (body: unknown, status = 200) =>
@@ -49,8 +57,33 @@ async function ensureMain(d: ApiDeps, w: WorkspaceLike): Promise<string> {
   return sessionId
 }
 
+async function boardOf(d: ApiDeps, workspace: string) {
+  return { workspace, cards: await d.board(workspace), split: d.store.get(workspace)?.split ?? 'auto' }
+}
+
+/** Lời nhắn Aris khi người dùng bấm "Giao ngay" trên một thẻ chờ. */
+export function dispatchPrompt(
+  card: { id: string; title: string; description?: string | undefined },
+  handle?: string,
+): string {
+  return [
+    `Giao thẻ ${card.id} «${card.title}» ${handle ? `cho @${handle}` : 'cho bot hợp nhất trong dự án'} (người dùng bấm "Giao ngay" trên Kanban).`,
+    card.description ? `Nội dung thẻ: ${card.description}` : '',
+    `Dùng giao_viec với the=${card.id}; xong thì báo ngắn đã giao cho ai.`,
+  ]
+    .filter(Boolean)
+    .join('\n')
+}
+
 export async function handleApi(d: ApiDeps, request: Request): Promise<Response> {
-  if (request.method === 'GET') return json(snapshot(d))
+  if (request.method === 'GET') {
+    const board = new URL(request.url).searchParams.get('board')
+    if (board) {
+      if (!d.workspaces().some((w) => w.id === board)) return json({ error: 'Không có dự án này.' }, 400)
+      return json(await boardOf(d, board))
+    }
+    return json(snapshot(d))
+  }
   let body: Record<string, unknown>
   try {
     body = (await request.json()) as Record<string, unknown>
@@ -80,6 +113,41 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
         const rec = await d.store.upsert(id, patch, w.title)
         if (patch.name && rec.name !== w.title) await d.renameWorkspace(id, rec.name)
         break
+      }
+      case 'card-create': {
+        const id = String(body.workspace)
+        if (!d.workspaces().some((x) => x.id === id)) throw new ProjectError('Không có dự án này.')
+        const c = (body.card ?? {}) as { title?: unknown; description?: unknown; bot?: unknown }
+        await d.cards.create(id, {
+          title: c.title,
+          description: c.description,
+          ...(typeof c.bot === 'string' && c.bot ? { bot: c.bot } : {}),
+        })
+        return json(await boardOf(d, id))
+      }
+      case 'card-update': {
+        const card = await d.cards.update(
+          String(body.id),
+          (body.patch ?? {}) as { title?: unknown; bot?: string | null },
+        )
+        return json(await boardOf(d, card.workspace))
+      }
+      case 'card-delete': {
+        const card = d.cards.get(String(body.id))
+        if (!card) throw new ProjectError('Không có thẻ này.')
+        await d.cards.remove(card.id)
+        return json(await boardOf(d, card.workspace))
+      }
+      case 'card-dispatch': {
+        let card = d.cards.get(String(body.id))
+        if (!card) throw new ProjectError('Không có thẻ này.')
+        if (card.taskId) throw new ProjectError('Thẻ đã giao.')
+        if (typeof body.bot === 'string' && body.bot) card = await d.cards.update(card.id, { bot: body.bot })
+        const w = d.workspaces().find((x) => x.id === card!.workspace)
+        if (!w) throw new ProjectError('Không có dự án này.')
+        const main = await ensureMain(d, w)
+        await d.prompt(main, dispatchPrompt(card, card.bot ? d.handleOf(card.bot) : undefined))
+        return json({ ...(await boardOf(d, w.id)), sessionId: main })
       }
       case 'main': {
         const id = String(body.workspace)

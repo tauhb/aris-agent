@@ -32,10 +32,31 @@ Mọi phiên trong một dự án có hồ sơ nạp `<aris-project>` (sau tính
 
 Dịch vụ `arisProjects` (`store`, `ofSession`) cho Kanban và chat chung ở bước sau.
 
+## Bảng việc (Kanban, bước 3c)
+
+Bảng việc của dự án gộp hai nguồn:
+
+- **Thẻ của đội** (`task-n`): bản ghi `team/task` trong phiên chính. Đọc bằng `ctx.sessionQuery.observeSession` (không đánh thức phiên), gom với `team/member` để biết bot nào giữ thẻ. Thẻ của đội chỉ ghi được bằng agent đang chạy, nên do Aris tạo (`tao_the`, `giao_viec`) và bot nhận thẻ đánh dấu xong (xem đặc tả Commander).
+- **Thẻ người dùng tạo** (`c-n`, bảng `cards` của `aris_projects`): chờ chia việc tới khi Aris giao; giao xong thì thẻ của đội thay chỗ (`taskId`).
+
+| Cột | Thẻ |
+|---|---|
+| Chờ chia việc | Thẻ người dùng tạo; thẻ Aris chia chưa giao ai (thẻ chờ thẻ khác ghi "chờ n thẻ: …") |
+| Sẵn sàng | Đã giao, bot chưa bắt đầu, hoặc bot đang làm thẻ cũ hơn |
+| Đang làm / Chờ duyệt | Thẻ cũ nhất bot đang giữ, theo phiên của bot đang chạy hay đang đợi người dùng |
+| Xong | Thẻ hoàn tất |
+
+**Chia việc** (`split` của dự án): tự động (mặc định) thì ngữ cảnh `aris:project` liệt kê thẻ chờ để Aris giao ở lượt này hoặc lượt tới; thủ công thì Aris chỉ giao khi người dùng bảo. Nút "Giao ngay" trên một thẻ chờ (chọn bot hoặc để Aris chọn) gửi một tin vào phiên chính nhờ Aris giao thẻ đó (`giao_viec` với `the`), tốn một lượt của Aris.
+
+Đường máy chủ thêm: `GET ?board=<workspace>` (thẻ, chế độ chia việc); `POST` `card-create`, `card-update`, `card-delete`, `card-dispatch`.
+
+Chạy thử thật (24/10): dự án "Thử dự án aris", chế độ thủ công, thẻ `c-1` «3 ý tưởng bài Facebook…» gợi ý Thơ → "Giao ngay" → Aris giao Thơ (thẻ `task-1`) → Thơ làm xong, thẻ tự sang Xong.
+
 ## Giao diện
 
 - 1.5 Tạo dự án (bản vẽ `TaoPhong.dc.html`): tên, thành viên từ đội thật (Aris chủ trì cố định), thư mục gợi ý `~/aris/projects/<tên>` hoặc chọn bằng bộ chọn thư mục, mục tiêu, luật (Nâng cao). Tạo xong mở phiên chính.
-- 1.4 Cột phải của dự án: mục tiêu, thành viên kèm trạng thái trực tiếp (sơ đồ 3D, Aris giữa), thêm bot (menu các bot chưa ở trong dự án), bỏ bot, luật, việc sinh ra từ dự án (bước 3c), lối mở bảng việc.
+- 1.4 Cột phải của dự án: mục tiêu, thành viên kèm trạng thái trực tiếp (sơ đồ 3D, Aris giữa), thêm bot (menu các bot chưa ở trong dự án), bỏ bot, luật, việc sinh ra từ dự án (thẻ chưa xong, đang làm và chờ duyệt trước), lối mở bảng việc của dự án.
+- 4.3 Kanban (bản vẽ `Kanban.dc.html`): chọn dự án, năm cột, chia việc tự động/thủ công, thẻ mới (tiêu đề, chi tiết, bot gợi ý), thẻ chờ có "Giao ngay" và "Xoá", bấm thẻ đã giao mở phiên của bot; tải lại 5 giây một lần.
 - Đầu khung chat của phiên dự án: linh vật Aris và các thành viên, "n bot và {you}".
 - Bộ thành phần có kho dự án dùng chung (`useProjects`, `projectAction`); sửa ở một gói thì phát `aris:projects-changed` để gói khác tải lại.
 

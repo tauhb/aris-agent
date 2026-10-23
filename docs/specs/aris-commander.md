@@ -8,9 +8,17 @@
 - Mỗi bot là **một thành viên trong Team của phiên Commander** (`agentTeams`), tên thành viên = tên gọi của bot, nên `@aris/bots` gắn phiên con với bot (tính cách, ký ức, model riêng).
   - Bot chưa có trong đội: tạo thành viên mới (`spawnTeammate`, `fresh`).
   - Bot đã có: nhắn tiếp (`sendMessage`), bot nhớ việc trước trong cùng cuộc.
-- Mỗi việc thành một **thẻ trên bảng việc** của Team, gán cho bot (nền cho Kanban ở bước 3).
+- Mỗi việc thành một **thẻ trên bảng việc** của Team, gán cho bot (Kanban). Tham số `the` (tuỳ chọn) giao một thẻ có sẵn thay vì tạo thẻ mới: `task-n` (thẻ đã chia, phải sẵn sàng: thẻ nó chờ đã xong) hoặc `c-n` (thẻ người dùng tạo trên Kanban; giao xong thì thẻ của đội thay chỗ). Thẻ sai hoặc đang chờ thì báo trước, không nhắn bot.
 - Công cụ trả ngay; Commander đợi bằng `wait_agent` rồi tổng hợp. Câu trả lời của công cụ có mã phiên của từng bot (giao diện vẽ nhánh).
 - Giới hạn: tối đa 4 bot mỗi lần, 6 bot chạy cùng lúc; mỗi bot một việc mỗi lần; không giao cho Commander.
+
+## Công cụ `tao_the` (chỉ Commander, bước 3c)
+
+Chia một việc lớn thành tối đa 12 thẻ trên bảng việc của Team, chưa giao ai. Mỗi thẻ có tiêu đề, nội dung, và `sau`: các thẻ phải xong trước (mã `task-n` có sẵn hoặc tiêu đề một thẻ ghi trước trong cùng lần). Sau đó Commander giao từng thẻ sẵn sàng bằng `giao_viec` với `the`.
+
+## Thẻ tự đánh dấu xong
+
+Khi một thành viên đội kết thúc lượt bình thường (`turn/end` hoàn tất), aris dùng chính agent của thành viên (chủ thẻ, có quyền) đánh dấu xong **thẻ đang làm cũ nhất** nó giữ. Lượt lỗi thì thẻ giữ nguyên. Giả định: mỗi lần giao là một lượt của bot; bot giữ nhiều thẻ thì lần lượt từng thẻ theo thứ tự giao.
 
 ## Nhật ký định tuyến
 

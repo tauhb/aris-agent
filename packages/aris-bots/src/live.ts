@@ -32,6 +32,8 @@ const MAX_ACTIVITY = 30
 export class LiveTracker {
   private running = new Map<string, Set<string>>()
   private waiting = new Map<string, number>()
+  /** Phiên đang đợi người dùng duyệt hoặc trả lời (số lần đợi chồng nhau). */
+  private waitingSessions = new Map<string, number>()
   private last = new Map<string, { status: 'done' | 'failed'; at: number; task?: string | undefined }>()
   private since = new Map<string, number>()
   /** Phiên → việc được giao. */
@@ -99,6 +101,7 @@ export class LiveTracker {
   waitStart(sessionId: string) {
     const bot = this.botOf(sessionId)
     this.waiting.set(bot, (this.waiting.get(bot) ?? 0) + 1)
+    this.waitingSessions.set(sessionId, (this.waitingSessions.get(sessionId) ?? 0) + 1)
     this.since.set(bot, this.now())
     this.log({ bot, kind: 'waiting', task: this.tasks.get(sessionId) })
   }
@@ -108,6 +111,16 @@ export class LiveTracker {
     const n = (this.waiting.get(bot) ?? 1) - 1
     if (n <= 0) this.waiting.delete(bot)
     else this.waiting.set(bot, n)
+    const s = (this.waitingSessions.get(sessionId) ?? 1) - 1
+    if (s <= 0) this.waitingSessions.delete(sessionId)
+    else this.waitingSessions.set(sessionId, s)
+  }
+
+  /** Trạng thái một phiên (thẻ Kanban theo phiên của bot nhận thẻ). */
+  sessionState(sessionId: string): 'waiting' | 'running' | 'idle' {
+    if (this.waitingSessions.get(sessionId)) return 'waiting'
+    for (const set of this.running.values()) if (set.has(sessionId)) return 'running'
+    return 'idle'
   }
 
   /** Số bot (trừ Commander) đang có phiên chạy. */

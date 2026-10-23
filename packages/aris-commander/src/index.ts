@@ -20,9 +20,11 @@ import { commanderDomain, type DispatchRecord, type Table } from './domain.js'
 import {
   dispatch,
   DispatchError,
+  planCards,
   summarize,
   type Assignment,
   type DispatchEntry,
+  type DraftCards,
   type TeamPort,
 } from './dispatch.js'
 
@@ -50,10 +52,21 @@ Bạn chỉ huy đội bot (đội hình ở <aris-bot>). Cách làm việc:
 - Sau khi giao: dùng wait_agent đợi kết quả, rồi tổng hợp trả lời người dùng. Nói rõ ai đã làm phần nào.
 - Bot đã làm việc trong cuộc này thì giao tiếp cho chính bot đó (nó nhớ việc trước).
 - Việc lặt vặt không cần chuyên môn (đọc một tệp lớn, tra cứu nhỏ): dùng subagent (trợ lý ẩn danh) thay vì giao bot.
+- Việc nhiều bước có thứ tự: chia thành thẻ bằng tao_the (thẻ nào chờ thẻ nào), rồi giao từng thẻ sẵn sàng bằng giao_viec với tham số the.
 </aris-commander>`
 
 interface AgentLike {
   session: { id: string }
+}
+
+/** Phần Team dùng để đánh dấu xong thẻ của bot. */
+interface CardTeam {
+  tryMembership(agent: AgentLike): { role: 'lead' | 'teammate'; name: string } | undefined
+  listTasks(agent: AgentLike): readonly { id: string; revision: number; status: string; ownerName?: string }[]
+  updateTask(
+    agent: AgentLike,
+    req: { taskId: string; expectedRevision: number; action: 'complete' },
+  ): Promise<unknown>
 }
 
 export async function apply(ctx: Context): Promise<void> {
@@ -120,6 +133,11 @@ export async function apply(ctx: Context): Promise<void> {
               tieu_de: { type: 'string', description: 'Tên ngắn của việc (thẻ trên bảng việc).' },
               noi_dung: { type: 'string', required: true, description: 'Việc cần làm, đủ ngữ cảnh.' },
               ly_do: { type: 'string', required: true, description: 'Vì sao chọn bot này.' },
+              the: {
+                type: 'string',
+                description:
+                  'Mã thẻ có sẵn để giao: task-n (thẻ đã chia) hoặc c-n (thẻ người dùng tạo trên Kanban).',
+              },
             },
           },
         },
@@ -128,12 +146,19 @@ export async function apply(ctx: Context): Promise<void> {
       async execute(args, exec) {
         const agent = exec.agent as unknown as AgentLike | undefined
         if (!agent) return 'Không có phiên để giao việc.'
-        const list = (args.viec ?? []) as { bot: string; tieu_de?: string; noi_dung: string; ly_do: string }[]
+        const list = (args.viec ?? []) as {
+          bot: string
+          tieu_de?: string
+          noi_dung: string
+          ly_do: string
+          the?: string
+        }[]
         const assignments: Assignment[] = list.map((v) => ({
           bot: v.bot,
           title: v.tieu_de,
           task: v.noi_dung,
           reason: v.ly_do,
+          card: v.the,
         }))
         try {
           const b = bots()
@@ -143,6 +168,7 @@ export async function apply(ctx: Context): Promise<void> {
               botOf: (id) => b.botOf(id),
               byHandle: (h) => b.store.byHandle(h),
               busyBots: () => b.live.busyBots('aris'),
+              cards: (ctx.get('arisProjects') as { cards?: DraftCards } | undefined)?.cards,
               record(entry) {
                 b.live.assigned(entry.bot, entry.title, entry.member)
                 const rest: Omit<DispatchEntry, 'sessionId'> & { sessionId?: string } = { ...entry }
@@ -170,6 +196,79 @@ export async function apply(ctx: Context): Promise<void> {
       },
     }),
   )
+
+  ctx.tools.register(
+    defineTool({
+      name: 'tao_the',
+      description:
+        'Chỉ Commander: chia một việc lớn thành các thẻ trên bảng việc của đội (Kanban), chưa giao ai. Thẻ phải đợi thẻ khác xong thì ghi sau (mã task-n hoặc tiêu đề một thẻ ghi trước trong cùng lần). Giao từng thẻ sau bằng giao_viec với the.',
+      parameters: {
+        the: {
+          type: 'array',
+          required: true,
+          description: 'Các thẻ theo thứ tự, tối đa 12.',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              tieu_de: { type: 'string', required: true, description: 'Tên ngắn của thẻ.' },
+              noi_dung: { type: 'string', description: 'Việc cần làm, đủ ngữ cảnh.' },
+              sau: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Thẻ phải xong trước: mã task-n hoặc tiêu đề thẻ ghi trước.',
+              },
+            },
+          },
+        },
+      },
+      output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+      async execute(args, exec) {
+        const agent = exec.agent as unknown as AgentLike | undefined
+        if (!agent || !isCommander(agent.session.id)) return 'Chỉ Commander được chia việc thành thẻ.'
+        const list = (args.the ?? []) as { tieu_de: string; noi_dung?: string; sau?: string[] }[]
+        try {
+          const made = await planCards(
+            team(),
+            agent,
+            list.map((c) => ({ title: c.tieu_de, description: c.noi_dung, after: c.sau })),
+          )
+          return [
+            ...made.map(
+              (m) => `- ${m.id} «${m.title}»${m.after.length ? ` (chờ ${m.after.join(', ')})` : ''}`,
+            ),
+            'Thẻ đã lên bảng việc, chưa giao ai. Giao thẻ sẵn sàng bằng giao_viec với the; thẻ chờ thì giao sau khi thẻ kia xong.',
+          ].join('\n')
+        } catch (e) {
+          if (e instanceof DispatchError) return `Không chia được: ${e.message}`
+          throw e
+        }
+      },
+    }),
+  )
+
+  // Bot làm xong một lượt bình thường: đánh dấu xong thẻ cũ nhất bot đang giữ (chính bot là chủ thẻ
+  // nên có quyền), để bảng việc và Kanban đi đúng tiến độ.
+  const finishing = new Set<string>()
+  ctx.on('session/event', (session, event) => {
+    if (event.type !== 'turn/end') return
+    if ((event.data as unknown as { reason?: { kind?: string } }).reason?.kind !== 'completed') return
+    const agents = ctx.get('agents') as { get(id: string): unknown } | undefined
+    const t = ctx.get('agentTeams') as unknown as CardTeam | undefined
+    const agent = agents?.get(session.id) as AgentLike | undefined
+    if (!agent || !t || finishing.has(session.id)) return
+    const m = t.tryMembership(agent)
+    if (m?.role !== 'teammate') return
+    const mine = t
+      .listTasks(agent)
+      .filter((x) => x.status === 'in_progress' && x.ownerName === m.name)
+      .sort((a, b) => Number(a.id.slice(5)) - Number(b.id.slice(5)))[0]
+    if (!mine) return
+    finishing.add(session.id)
+    t.updateTask(agent, { taskId: mine.id, expectedRevision: mine.revision, action: 'complete' })
+      .catch((e: unknown) => logger.warn('đánh dấu xong thẻ %s: %s', mine.id, String(e)))
+      .finally(() => finishing.delete(session.id))
+  })
 
   ctx.inject(['connection'], (ctx) => {
     ctx.effect(() => {

@@ -47,6 +47,11 @@ export const EN = {
   'project.yes': 'yes',
   'project.no': 'no',
   'project.noTasks': 'Nothing yet. Work Aris hands out in this project shows up here.',
+  'project.col.unassigned': 'not assigned',
+  'project.col.ready': 'assigned',
+  'project.col.doing': 'working',
+  'project.col.waiting': 'needs you',
+  'project.col.done': 'done',
 }
 
 export type PaneKey = keyof typeof EN
@@ -97,6 +102,11 @@ export const VI: Record<PaneKey, string> = {
   'project.yes': 'có',
   'project.no': 'không',
   'project.noTasks': 'Chưa có việc. Việc Aris giao trong dự án sẽ hiện ở đây.',
+  'project.col.unassigned': 'chưa giao',
+  'project.col.ready': 'đã giao',
+  'project.col.doing': 'đang làm',
+  'project.col.waiting': 'chờ {you}',
+  'project.col.done': 'xong',
 }
 
 export type Translate = (key: PaneKey, params?: Record<string, unknown>) => string

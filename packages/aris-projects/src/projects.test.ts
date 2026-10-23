@@ -138,3 +138,38 @@ describe('API dự án', () => {
     expect((await call({ op: 'main', workspace: 'nope' })).error).toContain('Không có dự án')
   })
 })
+
+describe('thẻ chờ chia và giao ngay', () => {
+  it('tạo thẻ mã c-n tăng dần, sửa, xoá; thẻ đã giao không sửa được', async () => {
+    const { CardStore } = await import('./store.js')
+    const cards = new CardStore(memTable(), () => new Date(0))
+    const a = await cards.create('w', { title: ' Kịch bản ', bot: 'b-1' })
+    const b = await cards.create('w', { title: 'Lịch đăng', description: 'tuần' })
+    expect([a.id, b.id]).toEqual(['c-1', 'c-2'])
+    await expect(cards.create('w', { title: '  ' })).rejects.toThrow('tiêu đề')
+    expect((await cards.update('c-1', { bot: null, description: 'x' })).bot).toBeUndefined()
+    await cards.dispatched('c-1', 'task-3')
+    await expect(cards.update('c-1', { title: 'mới' })).rejects.toThrow('đã giao')
+    await cards.remove('c-2')
+    expect(cards.list('w').map((c) => c.id)).toEqual(['c-1'])
+  })
+
+  it('lời nhắn Aris khi giao ngay nêu mã thẻ, bot và cách giao', async () => {
+    const { dispatchPrompt } = await import('./api.js')
+    const t = dispatchPrompt({ id: 'c-4', title: 'Kịch bản', description: 'video 60 giây' }, 'tho')
+    expect(t).toContain('Giao thẻ c-4 «Kịch bản» cho @tho')
+    expect(t).toContain('giao_viec với the=c-4')
+    expect(dispatchPrompt({ id: 'c-5', title: 'X' })).toContain('cho bot hợp nhất')
+  })
+
+  it('ngữ cảnh: thẻ chờ chia theo chế độ tự động / thủ công', () => {
+    const p: ProjectRecord = { workspace: 'w', name: 'P', members: [], rules: DEFAULT_RULES, createdAt: '' }
+    const drafts = [{ id: 'c-1', workspace: 'w', title: 'Ý tưởng', bot: 'b-1', createdAt: '' }]
+    expect(renderProject(p, BOTS[0]!, BOTS, undefined, drafts)).toContain(
+      'c-1 «Ý tưởng» (người dùng gợi ý @minh)',
+    )
+    expect(renderProject({ ...p, split: 'manual' }, BOTS[0]!, BOTS, undefined, drafts)).toContain(
+      'chế độ thủ công',
+    )
+  })
+})
