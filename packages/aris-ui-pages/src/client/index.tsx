@@ -3,7 +3,14 @@
  * dsh (trang có mục thanh bên thì đăng ký thêm `sidebar.panellist`), hộp thoại cắm
  * vào lớp phủ `shell.overlay`. Gói nào cũng mở được trang qua `arisNavigate`.
  */
-import { announceRoute, mountKitCss, onArisNavigate, registerPersonal, useTeamData } from '@aris/ui-kit/react'
+import {
+  announceRoute,
+  mountKitCss,
+  onArisNavigate,
+  PROJECTS_CHANGED,
+  registerPersonal,
+  useTeamData,
+} from '@aris/ui-kit/react'
 import { useMemo, type ComponentType, type ReactNode } from 'react'
 import { EN, NS, VI } from './locale.js'
 import type {
@@ -92,7 +99,6 @@ interface ClientContext {
  */
 interface Services {
   layout: { selectPanel(id: string | null): void }
-  workspaces: { create(input: { path: string }): Promise<{ workspaceId: string }> }
   uiWorkspace: {
     pickDirectory(): Promise<string | null>
     openWorkspace(workspaceId: string): Promise<void>
@@ -258,12 +264,20 @@ export function apply(ctx: ClientContext): void {
     'aris-ui-pages: navigation',
   )
 
-  // Dự án = workspace của dsh: chọn thư mục, tạo workspace rồi mở nó.
+  // Dự án = workspace của dsh kèm hồ sơ của aris (`@aris/projects`): tạo xong mở phiên chính.
   const projects: ProjectActions = {
     pickDirectory: () => service('uiWorkspace').pickDirectory(),
-    async createProject(path) {
-      const created = await service('workspaces').create({ path })
-      await service('uiWorkspace').openWorkspace(created.workspaceId)
+    async createProject(input) {
+      const res = await fetch(new URL('api/aris/projects', document.baseURI), {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ op: 'create', project: input }),
+      })
+      const out = (await res.json().catch(() => ({}))) as { sessionId?: string; error?: string }
+      if (!res.ok || !out.sessionId) throw new Error(out.error ?? `HTTP ${res.status}`)
+      window.dispatchEvent(new CustomEvent(PROJECTS_CHANGED))
+      return out.sessionId
     },
   }
 

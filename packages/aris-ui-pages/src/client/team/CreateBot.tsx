@@ -20,7 +20,7 @@ import { DEMO_AGENTS, DEMO_CREATE_BOT as C } from './demo.js'
 const check = { width: 18, height: 18, accentColor: 'var(--a-accent)' }
 
 /** Gợi ý tên gọi từ tên hiển thị: bỏ dấu, chữ thường (khớp `suggestHandle` ở máy chủ). */
-const handleOf = (name: string) =>
+export const handleOf = (name: string) =>
   name
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')

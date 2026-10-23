@@ -24,6 +24,7 @@
     "@aris/hello": "workspace:*",
     "@aris/home": "workspace:*",
     "@aris/memory": "workspace:*",
+    "@aris/projects": "workspace:*",
     "@aris/providers": "workspace:*",
     "@aris/recall": "workspace:*"
   }

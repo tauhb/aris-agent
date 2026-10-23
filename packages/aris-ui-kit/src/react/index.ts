@@ -57,3 +57,13 @@ export {
   type TeamView,
   type TemplateData,
 } from './team.js'
+export {
+  PROJECTS_CHANGED,
+  projectAction,
+  refreshProjects,
+  useProjectByPath,
+  useProjects,
+  type ProjectData,
+  type ProjectEntry,
+  type ProjectRules,
+} from './projects.js'

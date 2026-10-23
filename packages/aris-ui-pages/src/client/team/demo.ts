@@ -222,20 +222,3 @@ export const DEMO_AGENTS = [
   },
   { id: 'custom', name: '', cmd: '…', note: 'Nhập lệnh của bất kỳ agent nào nói ACP.', state: 'custom' },
 ] as const
-
-/** 1.5 · Tạo dự án. GĐ2 (thành viên, mục tiêu). */
-export const DEMO_PROJECT = {
-  name: 'Ra mắt khoá học AI',
-  members: {
-    aris: true,
-    lam: true,
-    tin: false,
-    mai: true,
-    ha: true,
-    dev: false,
-    'banh-rang': false,
-  } as Record<string, boolean>,
-  external: { 'banh-rang': 'Khoa' } as Record<string, string>,
-  dir: '~/Projects/khoa-hoc-ai',
-  goal: 'Lên kế hoạch ra mắt khoá học AI trong tháng 11: nội dung, giá, lịch quảng bá.',
-}

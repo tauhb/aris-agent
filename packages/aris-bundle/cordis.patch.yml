@@ -7,6 +7,8 @@
       name: '@aris/bots'
     - id: aris-commander
       name: '@aris/commander'
+    - id: aris-projects
+      name: '@aris/projects'
     - id: aris-memory
       name: '@aris/memory'
     - id: aris-providers

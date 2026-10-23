@@ -15,7 +15,9 @@ export const CSS = `
 .aris-project .act{align-items:center}
 .aris-project .act .txt{flex:1}
 .aris-project .act .state{font-size:12px;white-space:nowrap}
-.aris-project .list>.a-btn{align-self:flex-start;margin-top:4px}
+.aris-project .list>.a-btn,.aris-project .list>.a-pop{align-self:flex-start;margin-top:4px}
+.aris-project .goal{display:flex;flex-direction:column;gap:2px;padding-bottom:6px;border-bottom:1px solid var(--a-line)}
+.aris-project .goal .txt{font-size:13px;line-height:1.5}
 .aris-project .sect{display:flex;flex-direction:column;border-top:1px solid var(--a-line);padding-top:6px}
 .aris-project .sect>.a-btn{align-self:flex-start;margin-top:4px}
 .aris-project .kv{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;font-size:13px}

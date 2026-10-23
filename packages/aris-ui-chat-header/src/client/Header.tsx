@@ -19,9 +19,11 @@ import {
   PlusIcon,
   openBotSession,
   useDismiss,
+  useProjectByPath,
   useSessionBot,
+  useTeam,
 } from '@aris/ui-kit/react'
-import { DEMO_PROJECT_ROOM, projectOfSession, type WorkspaceLike } from '@aris/ui-kit'
+import { projectOfSession, type WorkspaceLike } from '@aris/ui-kit'
 import { useCallback, useRef, useState } from 'react'
 import type { Translate } from './locale.js'
 import { chatSessions, whenLabel, type SessionListLike } from './sessions.js'
@@ -67,21 +69,30 @@ export function Leading({
 }) {
   const sessionId = useMounted((id) => id)
   const title = useWorkspaces((w) => projectOfSession(w.items, sessionId)?.title)
+  const path = useWorkspaces((w) => projectOfSession(w.items, sessionId)?.path)
   return title === undefined ? (
     <BotIdentity t={t} sessionId={sessionId} />
   ) : (
-    <ProjectIdentity t={t} title={title} />
+    <ProjectIdentity t={t} title={title} path={path} />
   )
 }
 
-/** Thành viên dự án là mẫu tới giai đoạn 2 (danh sách thành viên của Team dsh). */
-function ProjectIdentity({ t, title }: { t: Translate; title: string }) {
-  const members = DEMO_PROJECT_ROOM.members
+/** Dự án: Aris chủ trì và các bot thành viên (`@aris/projects`). */
+function ProjectIdentity({ t, title, path }: { t: Translate; title: string; path: string | undefined }) {
+  const team = useTeam()
+  const project = useProjectByPath(path)?.project
+  const members = [
+    { id: team.commander.id, mascot: team.commander.mascot ?? 'aris' },
+    ...(project?.members ?? []).flatMap((id) => {
+      const m = team.members.find((b) => b.id === id)
+      return m ? [{ id: m.id, mascot: m.mascot ?? m.id }] : []
+    }),
+  ]
   return (
     <span className="aris aris-ch" aria-label={t('project.label', { name: title, n: members.length })}>
       <span className="stack" aria-hidden="true">
         {members.map((m) => (
-          <Mascot key={m.id} id={m.id} size={24} />
+          <Mascot key={m.id} id={m.mascot} size={24} />
         ))}
       </span>
       <span className="botName">{title}</span>

@@ -74,25 +74,3 @@ export const DEMO_ACTIVITY: readonly { id: string; status: BotStatus; text: stri
   { id: 'mai', status: 'waiting', text: 'soạn xong thư, đợi anh', when: '3 phút' },
   { id: 'ha', status: 'done', text: 'học thêm 1 skill · lên cấp 2', when: '1 giờ' },
 ]
-
-/**
- * Cuộc chat chung của dự án (màn 1.4): trạng thái thành viên, luật, việc sinh ra từ
- * dự án (mẫu; giai đoạn 2 lấy từ Team của dsh: danh sách thành viên và bảng việc).
- */
-export const DEMO_PROJECT_ROOM: {
-  members: readonly { id: string; status: BotStatus; state: string }[]
-  rules: { maxRounds: number; maxMessages: number; stopCommand: boolean }
-  tasks: readonly { text: string; status: BotStatus; state: string; bot: string }[]
-} = {
-  members: [
-    { id: 'aris', status: 'done', state: 'đã nói' },
-    { id: 'lam', status: 'working', state: 'đang nghĩ' },
-    { id: 'tin', status: 'waiting', state: 'chờ Lâm' },
-  ],
-  rules: { maxRounds: 3, maxMessages: 10, stopCommand: true },
-  tasks: [
-    { text: 'Kịch bản 8 video', status: 'working', state: 'đang làm', bot: 'lam' },
-    { text: 'Bảng ngân sách Q4', status: 'waiting', state: 'chờ Lâm', bot: 'tin' },
-    { text: 'Chốt mục tiêu', status: 'waiting', state: 'chờ anh', bot: 'aris' },
-  ],
-}

@@ -37,6 +37,16 @@ export const EN = {
   'project.stopCmd': 'Understand "stop @bot"',
   'project.tasks': 'Work from this project',
   'project.board': 'Open task board ›',
+  'project.goal': 'Goal',
+  'project.leads': 'leads',
+  'project.addBotMenu': 'Add a bot to the project',
+  'project.newBot': 'Create a new bot…',
+  'project.removeBot': 'Remove {name} from the project',
+  'project.noMembers': 'No bot in the project yet: Aris does the work alone.',
+  'project.summarize': 'Aris summarizes each round',
+  'project.yes': 'yes',
+  'project.no': 'no',
+  'project.noTasks': 'Nothing yet. Work Aris hands out in this project shows up here.',
 }
 
 export type PaneKey = keyof typeof EN
@@ -77,6 +87,16 @@ export const VI: Record<PaneKey, string> = {
   'project.stopCmd': 'Hiểu lệnh “dừng @bot”',
   'project.tasks': 'Việc sinh ra từ dự án',
   'project.board': 'Mở bảng việc ›',
+  'project.goal': 'Mục tiêu',
+  'project.leads': 'chủ trì',
+  'project.addBotMenu': 'Thêm bot vào dự án',
+  'project.newBot': 'Tạo bot mới…',
+  'project.removeBot': 'Bỏ {name} khỏi dự án',
+  'project.noMembers': 'Dự án chưa có bot: Aris tự làm.',
+  'project.summarize': 'Aris tổng hợp mỗi vòng',
+  'project.yes': 'có',
+  'project.no': 'không',
+  'project.noTasks': 'Chưa có việc. Việc Aris giao trong dự án sẽ hiện ở đây.',
 }
 
 export type Translate = (key: PaneKey, params?: Record<string, unknown>) => string

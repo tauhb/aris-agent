@@ -2,28 +2,28 @@
  * "Đội bot lúc này" theo màn R3: sơ đồ đội 3D (Commander giữa, các bot xoay
  * quanh), việc gần đây của đội, rồi các lối mở trang khác của cột phải (Tệp,
  * Terminal…) mà dsh vẫn đăng ký như cũ. Đội, trạng thái trực tiếp và việc gần đây là thật
- * (`@aris/bots`); cột phải của dự án vẫn là mẫu tới bước 3.
+ * (`@aris/bots`); cột phải của dự án đọc `@aris/projects`.
  */
-import {
-  COMMANDER,
-  DEMO_PROJECT_ROOM,
-  DEMO_TEAM,
-  projectOfSession,
-  type BotStatus,
-  type WorkspaceLike,
-} from '@aris/ui-kit'
+import { projectOfSession, type BotStatus, type TeamMember, type WorkspaceLike } from '@aris/ui-kit'
 import {
   Button,
+  CloseIcon,
+  IconButton,
   Mascot,
+  Menu,
+  MenuItem,
   NavItem,
   StatusGlyph,
   TeamOrbit,
   arisNavigate,
+  projectAction,
+  useDismiss,
+  useProjectByPath,
   useTeam,
   useTeamLive,
   type ActivityItem,
 } from '@aris/ui-kit/react'
-import type { ComponentType, ReactNode } from 'react'
+import { useCallback, useRef, useState, type ComponentType, type ReactNode } from 'react'
 import type { Translate } from './locale.js'
 
 type Selector<T> = <R>(select: (value: T) => R) => R
@@ -47,8 +47,8 @@ export interface TeamPaneProps {
 }
 
 // Cột phải của dự án còn dùng đội mẫu tới bước 3 (dự án = Team của dsh).
-const MEMBERS = DEMO_TEAM.flatMap((g) => g.members)
-const nameOf = (id: string) => [COMMANDER, ...MEMBERS].find((m) => m.id === id)?.name ?? id
+/** Luật mặc định khi dự án chưa có hồ sơ (giống `@aris/projects`). */
+const DEFAULT_RULES = { maxRounds: 3, maxMessages: 10, stopCommand: true, arisSummarizes: true }
 
 const KIND_STATUS: Record<ActivityItem['kind'], BotStatus> = {
   assigned: 'working',
@@ -111,11 +111,61 @@ const shortPath = (path: string) => {
   return parts.length > 2 ? `…/${parts.slice(-2).join('/')}` : path
 }
 
+/** Thêm bot vào dự án: các bot của đội chưa ở trong dự án. */
+function AddBot({
+  t,
+  onAdd,
+  candidates,
+}: {
+  t: Translate
+  onAdd: (id: string) => void
+  candidates: TeamMember[]
+}) {
+  const [open, setOpen] = useState(false)
+  const root = useRef<HTMLSpanElement>(null)
+  const close = useCallback(() => setOpen(false), [])
+  useDismiss(root, open, close)
+  return (
+    <span className="a-pop" ref={root}>
+      <Button
+        variant="ghost"
+        size="sm"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        {t('project.addBot')}
+      </Button>
+      {open && (
+        <Menu label={t('project.addBotMenu')} width={240}>
+          {candidates.length === 0 && (
+            <MenuItem onSelect={() => (setOpen(false), arisNavigate('create-bot'))}>
+              {t('project.newBot')}
+            </MenuItem>
+          )}
+          {candidates.map((m) => (
+            <MenuItem
+              key={m.id}
+              icon={<Mascot id={m.mascot ?? m.id} size={18} />}
+              meta={m.role}
+              onSelect={() => {
+                setOpen(false)
+                onAdd(m.id)
+              }}
+            >
+              {m.name}
+            </MenuItem>
+          ))}
+        </Menu>
+      )}
+    </span>
+  )
+}
+
 /**
- * Cột phải của phiên thuộc dự án (màn 1.4): thành viên và việc đang làm, luật của
- * dự án, việc sinh ra từ dự án. Thêm so với canvas (anh chọn 23/10): sơ đồ 3D các
- * thành viên của dự án, Aris chủ trì ở giữa. Thành viên, luật, việc là mẫu tới giai
- * đoạn 2 (Team của dsh); thư mục làm việc là thật.
+ * Cột phải của phiên thuộc dự án (màn 1.4): mục tiêu, thành viên và trạng thái của họ (sơ đồ 3D,
+ * Aris chủ trì ở giữa), thêm/bớt bot, luật của dự án, việc sinh ra từ dự án. Dữ liệu thật từ
+ * `@aris/projects`; dự án cũ chưa có hồ sơ thì thêm bot là tạo hồ sơ.
  */
 function ProjectPane({
   t,
@@ -128,15 +178,32 @@ function ProjectPane({
   more: ReactNode
   openMap: () => void
 }) {
-  const R = DEMO_PROJECT_ROOM
-  const orbitStatus = (s: BotStatus) => t(`orbit.${s}`)
-  // Bot của dự án, mang trạng thái trong dự án (đang nghĩ, chờ…), không phải trạng thái chung.
-  const crew = R.members.flatMap((x) => {
-    const m = MEMBERS.find((b) => b.id === x.id)
-    return m && m.id !== COMMANDER.id ? [{ ...m, status: x.status }] : []
+  const team = useTeam()
+  const entry = useProjectByPath(path)
+  const [error, setError] = useState<string | null>(null)
+  const p = entry?.project ?? null
+  const rules = p?.rules ?? DEFAULT_RULES
+  const crew = (p?.members ?? []).flatMap((id) => {
+    const m = team.members.find((b) => b.id === id)
+    return m ? [m] : []
   })
+  const orbitStatus = (s: BotStatus) => t(`orbit.${s}`)
+  const setMembers = (members: string[]) => {
+    if (!entry) return
+    setError(null)
+    projectAction({ op: 'update', workspace: entry.workspace, patch: { members } }).catch((e: unknown) =>
+      setError(e instanceof Error ? e.message : String(e)),
+    )
+  }
+  const candidates = team.members.filter((m) => !crew.some((c) => c.id === m.id))
   return (
     <div className="aris aris-team aris-project">
+      {p?.goal && (
+        <div className="goal">
+          <div className="a-grp">{t('project.goal')}</div>
+          <div className="txt">{p.goal}</div>
+        </div>
+      )}
       <div className="head">
         <h2>{t('project.members')}</h2>
         <Button variant="ghost" size="sm" className="mapLink" onClick={openMap}>
@@ -145,12 +212,12 @@ function ProjectPane({
       </div>
       <div className="map">
         <TeamOrbit
-          commander={COMMANDER}
-          commanderLabel={t('commander', { name: COMMANDER.name })}
+          commander={team.commander}
+          commanderLabel={t('commander', { name: team.commander.name })}
           members={crew}
           statusLabel={orbitStatus}
           label={t('orbit', {
-            name: COMMANDER.name,
+            name: team.commander.name,
             members: crew.map((m) => `${m.name} ${orbitStatus(m.status)}`).join(', '),
           })}
           height={220}
@@ -158,18 +225,38 @@ function ProjectPane({
         />
       </div>
       <div className="list">
-        {R.members.map((m) => (
+        <div className="act">
+          <Mascot id={team.commander.mascot ?? 'aris'} size={22} />
+          <span className="txt">
+            <b>{team.commander.name}</b>
+          </span>
+          <span className="a-muted state">{t('project.leads')}</span>
+        </div>
+        {crew.map((m) => (
           <div key={m.id} className="act">
-            <Mascot id={m.id} size={22} />
+            <Mascot id={m.mascot ?? m.id} size={22} />
             <span className="txt">
-              <b>{nameOf(m.id)}</b>
+              <b>{m.name}</b>
             </span>
-            <span className="a-muted state">{m.state}</span>
+            <span className="a-muted state">{t(`status.${m.status}`)}</span>
+            <IconButton
+              size="sm"
+              label={t('project.removeBot', { name: m.name })}
+              onClick={() => setMembers(crew.filter((c) => c.id !== m.id).map((c) => c.id))}
+            >
+              <CloseIcon size={13} />
+            </IconButton>
           </div>
         ))}
-        <Button variant="ghost" size="sm" onClick={() => arisNavigate('create-bot')}>
-          {t('project.addBot')}
-        </Button>
+        {crew.length === 0 && <div className="act a-muted">{t('project.noMembers')}</div>}
+        {entry && (
+          <AddBot t={t} candidates={candidates} onAdd={(id) => setMembers([...crew.map((c) => c.id), id])} />
+        )}
+        {error && (
+          <div className="act" style={{ color: 'var(--a-danger)' }}>
+            {error}
+          </div>
+        )}
       </div>
       <div className="sect">
         <div className="a-grp">{t('project.rules')}</div>
@@ -181,26 +268,24 @@ function ProjectPane({
         </div>
         <div className="kv">
           <span>{t('project.maxRounds')}</span>
-          <span>{R.rules.maxRounds}</span>
+          <span>{rules.maxRounds}</span>
         </div>
         <div className="kv">
           <span>{t('project.maxMessages')}</span>
-          <span>{R.rules.maxMessages}</span>
+          <span>{rules.maxMessages}</span>
         </div>
-        <label className="kv">
+        <div className="kv">
           <span>{t('project.stopCmd')}</span>
-          <input type="checkbox" defaultChecked={R.rules.stopCommand} />
-        </label>
+          <span>{t(rules.stopCommand ? 'project.yes' : 'project.no')}</span>
+        </div>
+        <div className="kv">
+          <span>{t('project.summarize')}</span>
+          <span>{t(rules.arisSummarizes ? 'project.yes' : 'project.no')}</span>
+        </div>
       </div>
       <div className="sect">
         <div className="a-grp">{t('project.tasks')}</div>
-        {R.tasks.map((task) => (
-          <div key={task.text} className="act">
-            <StatusGlyph status={task.status} label={t(`status.${task.status}`)} />
-            <span className="txt">{task.text}</span>
-            <span className="a-muted state">{task.state}</span>
-          </div>
-        ))}
+        <div className="act a-muted">{t('project.noTasks')}</div>
         <Button variant="ghost" size="sm" onClick={() => arisNavigate('kanban')}>
           {t('project.board')}
         </Button>
