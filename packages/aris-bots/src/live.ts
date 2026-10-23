@@ -1,7 +1,8 @@
 /**
  * Trạng thái trực tiếp của bot và việc gần đây của đội, suy từ sự kiện phiên: phiên của bot đang
  * chạy là "đang làm", đang đợi anh duyệt hoặc trả lời là "chờ anh", lượt vừa xong là "xong" hoặc
- * "lỗi". Chỉ giữ trong bộ nhớ: khởi động lại thì đội về "rảnh".
+ * "lỗi". Việc gần đây (và kết quả gần nhất của mỗi bot) lưu bền qua `onLog`; khởi động lại thì
+ * không còn phiên nào chạy nên đội về "rảnh" hoặc "xong" gần đây.
  */
 
 export type LiveStatus = 'working' | 'waiting' | 'done' | 'failed' | 'idle'
@@ -40,17 +41,32 @@ export class LiveTracker {
   constructor(
     private botOf: (sessionId: string) => string,
     private now: () => number = Date.now,
+    /** Lưu bền từng mục việc gần đây. */
+    private onLog?: (item: ActivityItem) => void,
   ) {}
 
+  /** Nạp lại việc gần đây đã lưu (mới trước) và kết quả gần nhất của từng bot. */
+  restore(items: readonly ActivityItem[]) {
+    const sorted = [...items].sort((a, b) => b.at - a.at).slice(0, MAX_ACTIVITY)
+    this.activity.splice(0, this.activity.length, ...sorted)
+    for (const a of [...sorted].reverse())
+      if (a.kind === 'done' || a.kind === 'failed')
+        this.last.set(a.bot, { status: a.kind, at: a.at, task: a.task })
+  }
+
   private log(item: Omit<ActivityItem, 'at'>) {
-    this.activity.unshift({ ...item, at: this.now() })
+    const full = { ...item, at: this.now() }
+    this.activity.unshift(full)
     this.activity.length = Math.min(this.activity.length, MAX_ACTIVITY)
+    this.onLog?.(full)
   }
 
   /** Commander giao việc cho bot (phiên con khi đã biết). */
   assigned(bot: string, task: string, sessionId?: string) {
     if (sessionId) this.tasks.set(sessionId, task)
     this.log({ bot, kind: 'assigned', task })
+    // Bot mới thường đã chạy trước lúc Commander kịp ghi việc: ghi luôn "bắt đầu".
+    if (sessionId && this.running.get(bot)?.has(sessionId)) this.log({ bot, kind: 'started', task })
   }
 
   /** Gắn việc cho phiên con khi biết mã phiên sau lúc giao. */

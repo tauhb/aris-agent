@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { LiveTracker, RECENT_MS } from './live.js'
+import { LiveTracker, RECENT_MS, type ActivityItem } from './live.js'
 
 describe('trạng thái trực tiếp', () => {
   it('đang làm → chờ anh → xong → rảnh sau một lúc; việc gần đây theo thứ tự mới trước', () => {
@@ -34,5 +34,36 @@ describe('trạng thái trực tiếp', () => {
       'minh:started',
       'minh:assigned',
     ])
+  })
+
+  it('bot đã chạy trước lúc được ghi việc vẫn có mục bắt đầu', () => {
+    const live = new LiveTracker(
+      () => 'minh',
+      () => 5,
+    )
+    live.turnStart('s1')
+    live.assigned('minh', 'Việc A', 's1')
+    expect(live.activity.map((a) => a.kind)).toEqual(['started', 'assigned'])
+    expect(live.of('minh').task).toBe('Việc A')
+  })
+
+  it('việc gần đây lưu bền và nạp lại: kết quả gần nhất còn hiện sau khởi động lại', () => {
+    const saved: ActivityItem[] = []
+    let t = 10
+    const a = new LiveTracker(
+      () => 'minh',
+      () => t++,
+      (i) => saved.push(i),
+    )
+    a.assigned('minh', 'Việc A', 's1')
+    a.turnStart('s1')
+    a.turnEnd('s1', 'completed')
+    const b = new LiveTracker(
+      () => 'minh',
+      () => 20,
+    )
+    b.restore(saved)
+    expect(b.activity.map((x) => x.kind)).toEqual(['done', 'started', 'assigned'])
+    expect(b.of('minh')).toMatchObject({ status: 'done', task: 'Việc A' })
   })
 })

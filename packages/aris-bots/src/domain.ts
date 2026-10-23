@@ -45,6 +45,15 @@ export const sessionRecord = z.object({
 })
 export type SessionRecord = z.infer<typeof sessionRecord>
 
+/** Một mục việc gần đây của đội (giữ 30 mục mới nhất). */
+export const activityRecord = z.object({
+  bot: z.string(),
+  kind: z.enum(['assigned', 'started', 'done', 'failed', 'waiting']),
+  task: z.string().optional(),
+  at: z.number(),
+})
+export type ActivityRecord = z.infer<typeof activityRecord>
+
 export const botsDomain = defineDomain({
   name: 'aris_bots',
   version: 1,
@@ -53,6 +62,7 @@ export const botsDomain = defineDomain({
     bots: domainTable<string, BotRecord>(botRecord),
     departments: domainTable<string, DepartmentRecord>(departmentRecord),
     sessions: domainTable<string, SessionRecord>(sessionRecord),
+    activity: domainTable<string, ActivityRecord>(activityRecord),
   },
 })
 

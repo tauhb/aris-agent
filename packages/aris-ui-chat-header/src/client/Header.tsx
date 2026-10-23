@@ -17,6 +17,7 @@ import {
   MenuLabel,
   Pill,
   PlusIcon,
+  openBotSession,
   useDismiss,
   useSessionBot,
 } from '@aris/ui-kit/react'
@@ -154,7 +155,7 @@ export function SessionSwitcher(
                 <ShortcutKeys keys={newShortcut.keys} />
               ) : undefined
             }
-            onSelect={go(props.startSession)}
+            onSelect={go(newSessionWith(bot, props))}
           >
             {t('session.newWith', CURRENT_BOT)}
           </MenuItem>
@@ -183,16 +184,35 @@ export function SessionSwitcher(
   )
 }
 
+/**
+ * Việc mới với đúng bot của phiên: phiên của bot thường mở phiên mới với bot đó (gắn bot trước
+ * khi mở); phiên của Commander dùng "việc mới" của dsh như cũ.
+ */
+function newSessionWith(
+  bot: ReturnType<typeof useSessionBot>,
+  actions: Pick<HeaderActions, 'startSession' | 'openSession'>,
+): () => void {
+  if (!bot || bot.kind === 'commander') return actions.startSession
+  return () =>
+    void openBotSession(bot.id, true).then(
+      (id) => actions.openSession(id),
+      () => actions.startSession(),
+    )
+}
+
 export function NewSessionButton({
   startSession,
+  openSession,
+  sessionId,
   t,
-}: Pick<HeaderActions, 'startSession'> & { t: Translate }) {
+}: Pick<HeaderActions, 'startSession' | 'openSession'> & { t: Translate; sessionId?: string | undefined }) {
+  const bot = useSessionBot(sessionId)
   return (
     <span className="aris aris-ch">
       <IconButton
-        label={t('session.newWith', { name: 'Aris' })}
+        label={t('session.newWith', { name: bot?.name ?? 'Aris' })}
         title={t('session.new')}
-        onClick={startSession}
+        onClick={newSessionWith(bot, { startSession, openSession })}
       >
         <ComposeIcon />
       </IconButton>

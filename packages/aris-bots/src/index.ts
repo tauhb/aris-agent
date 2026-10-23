@@ -19,7 +19,7 @@ import type {} from '@deepseek-ai/dsh-user-approval'
 import type {} from '@deepseek-ai/dsh-user-questions'
 import type {} from '@deepseek-ai/dsh-workspace'
 import { handleApi } from './api.js'
-import { botsDomain, type Tables } from './domain.js'
+import { botsDomain, type ActivityRecord, type Table, type Tables } from './domain.js'
 import { LiveTracker } from './live.js'
 import { renderPersona } from './persona.js'
 import { BotStore } from './store.js'
@@ -67,7 +67,29 @@ export async function apply(ctx: Context): Promise<void> {
   const store = new BotStore(tables)
   await store.ensureCommander()
 
-  const live = new LiveTracker((sessionId) => store.botOf(sessionId).id)
+  // Việc gần đây lưu bền: giữ 30 mục mới nhất, nạp lại khi khởi động.
+  const activity = domain.table('activity') as unknown as Table<ActivityRecord>
+  const keep = 30
+  const live = new LiveTracker(
+    (sessionId) => store.botOf(sessionId).id,
+    Date.now,
+    (item) => {
+      const rec: ActivityRecord = {
+        bot: item.bot,
+        kind: item.kind,
+        at: item.at,
+        ...(item.task ? { task: item.task } : {}),
+      }
+      void activity
+        .put(`${item.at}-${Math.random().toString(36).slice(2, 8)}`, rec)
+        .then(async () => {
+          const all = [...activity.entries()].sort(([, a], [, b]) => b.at - a.at)
+          for (const [key] of all.slice(keep)) await activity.delete(key)
+        })
+        .catch((e: unknown) => logger.warn('lưu việc gần đây: %s', String(e)))
+    },
+  )
+  live.restore([...activity.entries()].map(([, r]) => r))
   const service: ArisBots = {
     botOf: (id) => store.botOf(id),
     tag: (id, bot, via) => store.tag(id, bot, via),

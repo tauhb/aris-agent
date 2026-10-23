@@ -20,7 +20,10 @@ export function renderPersona(
   if (me.soul) lines.push(`Tính cách và cách làm việc: ${me.soul}`)
   const others = team.filter((b) => b.id !== me.id)
   if (others.length) {
-    lines.push('', 'Đội hình (gọi bằng @tên gọi):')
+    lines.push(
+      '',
+      'Đội hình (nhắc tới đồng đội bằng đúng @tên gọi không dấu dưới đây, ví dụ @' + others[0]!.handle + '):',
+    )
     for (const b of others) {
       const d = dept(b.department)
       const lead = d?.lead === b.id ? ', trưởng nhóm' : ''
