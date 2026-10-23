@@ -18,11 +18,11 @@
 |---|---|---|---|
 | **0 · Nền móng** | 1 tuần | `pnpm aris` mở được Web UI, chat với DeepSeek | — |
 | **1 · Một bot dùng hằng ngày** | 2 tuần | Nhắn Aris qua Telegram, Aris nhớ anh, đổi được model; chạy ngầm 24/7 và `aris ask` trong script | 1.1 (chưa có đội), 3.1, 6.2, 6.3 (Telegram) |
-| **2 · Đội bot và Commander** | 3 tuần | 5 bot có linh vật, Aris giao việc cho đội **kể cả bot ngoài** (Claude Code, Codex, Hermes…), thấy dòng việc rẽ nhánh và bản đồ 3D | 1.1–1.4, 2.1–2.5 |
+| **2 · Đội bot và Commander** | 3 tuần | 5 bot có linh vật, Aris giao việc cho đội **kể cả bot ngoài** (Claude Code, Codex, Hermes…), thấy dòng việc rẽ nhánh và bản đồ 3D | 1.1–1.4, 2.1–2.5, 2.1b |
 | **3 · Tự tiến hoá** | 3 tuần | Bot tự học ký ức, tự đề xuất skill có kiểm thử, anh duyệt qua Telegram | 2.3, 3.2–3.5, 7.1, 7.3 |
 | **4 · Tự động** | 2 tuần | Routine 8h sáng tự gửi, Kanban cho dự án dài | 4.1–4.3, 7.2 |
 | **5 · Second Brain và đồ thị** | 3 tuần | Ghi âm Telegram → ghi chú có liên kết, hỏi bộ não, đồ thị 2D/3D | 5.1–5.4 |
-| **6 · Mở cửa: aris trong nền tảng khác** | 2 tuần | Aris làm agent thành viên trong IDE, **Buzz Desktop**, Open WebUI; gọi và được gọi bởi agent khác (A2A); mở tool cho Claude Desktop/Cursor (MCP) | 6.3 (mục "Mặt tích hợp"), 6.4 |
+| **6 · Mở cửa: aris trong nền tảng khác** | 2 tuần | Aris làm agent thành viên trong IDE, **Buzz Desktop**, Open WebUI; gọi và được gọi bởi agent khác (A2A); mở tool cho Claude Desktop/Cursor (MCP) | 6.3b Mặt tích hợp, 6.4 |
 | **7 · Cứng cáp và lên server** | 2 tuần | Chạy 24/7 trên server, an toàn mạng, ngân sách, Lark + Zalo, đo đối đầu với Hermes | 6.1, 6.4, 6.5 |
 | **8 · Mở rộng** | theo nhu cầu | Màn hình của bot, trình duyệt tự động, chat web trên điện thoại, Buzz như kênh nhắn tin… | 6.6, 7.4 |
 
@@ -113,7 +113,7 @@ Tổng: khoảng **18 tuần** cho giai đoạn 0–7.
 | **Bot ngoài (M3)** | Thêm Claude Code, Codex, Gemini CLI, OpenCode, Hermes vào đội qua `dsh-subagent-acp`: mỗi bot ngoài có linh vật, mô tả năng lực, thư mục làm việc, ngân sách; yêu cầu quyền của bot ngoài chuyển về hộp duyệt của aris (mặc định từ chối); kết quả và sự kiện của nó hiện trên dòng việc như bot nội bộ |
 | Kết nối nền tảng (M4) | Cấu hình MCP server theo bot (GitHub cho Tín, Lark Docs cho Mai…) |
 
-**Giao diện**: 1.1 (đủ: thanh bên đội hình, dòng việc, sơ đồ 3D), 1.2, 1.3, 1.4, 2.1 (chọn linh vật), 2.2, 2.4, 2.5 Commander.
+**Giao diện**: 1.1 (đủ: thanh bên đội hình, dòng việc, sơ đồ 3D), 1.2, 1.3, 1.4, 2.1 (chọn linh vật), 2.1b Thêm bot ngoài, 2.2, 2.4, 2.5 Commander.
 
 **Nghiệm thu**
 - "Tóm tắt 3 đối thủ rồi xếp lịch họp" ⇒ Aris giao Lâm và Mai song song, anh thấy hai nhánh chạy, duyệt lời mời họp ngay trên nhánh hoặc trên Telegram.
@@ -200,7 +200,7 @@ Tổng: khoảng **18 tuần** cho giai đoạn 0–7.
 | `aris-api` (M7) | HTTP + SSE tương thích OpenAI: `/v1/chat/completions`, `/v1/responses`, `/v1/models` (mỗi bot là một model `aris/<bot>`); khoá chống gửi lặp; sự kiện tool trong luồng; bearer token; mặc định chỉ nghe `127.0.0.1` |
 | `aris-a2a` (M5, M8) | Client: `a2a_discover`, `a2a_call`, chia việc cho mọi peer cùng năng lực; Server: Agent Card (mỗi bot một kỹ năng), JSON-RPC, SSE, push webhook có ký HMAC, token theo peer, giới hạn tốc độ, trần số lượt qua lại, nhật ký kiểm toán |
 | `aris-mcp-server` (M9) | Mở `brain_search`, `brain_capture`, `memory_search`, `giao_viec` cho Claude Desktop, Cursor…; từng tool bật/tắt riêng |
-| Giao diện | Mục "Mặt tích hợp" trong 6.3: bật/tắt từng mặt, token, peer tin cậy, bot nào được mở ra mặt nào; nhật ký truy cập |
+| Giao diện | 6.3b Mặt tích hợp: mỗi mặt một thẻ có trạng thái, Bật/Tắt, địa chỉ hoặc lệnh, khoá, peer, bot được mở ra; dẫn sang bộ quyền "Thành viên" và nhật ký truy cập |
 
 **Nghiệm thu**
 - Buzz Desktop tìm thấy aris trong Settings → Runtimes và chat được với Lâm; lệnh xoá tệp bị chặn dù Buzz tự duyệt.

@@ -34,6 +34,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{
     <div role="dialog" aria-modal="true" aria-labelledby="tb-title" style="width: 760px; max-height: 820px; overflow: auto; background: var(--panel); border-radius: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column">
       <div style="display: flex; align-items: center; padding: 18px 22px 6px">
         <h2 id="tb-title" style="margin: 0; font-size: 19px">Tạo bot mới</h2>
+        <span role="tablist" aria-label="Loại bot" style="display: inline-flex; border: 1px solid var(--line); border-radius: 10px; padding: 2px; margin-left: 12px">
+          <span role="tab" aria-selected="true" style="border-radius: 8px; padding: 4px 12px; background: var(--hover); font-size: 13px; font-weight: 600">Bot của aris</span>
+          <a role="tab" aria-selected="false" href="TaoBotNgoai.dc.html" style="border-radius: 8px; padding: 4px 12px; font-size: 13px; color: var(--muted); text-decoration: none">Bot ngoài</a>
+        </span>
         <button type="button" onClick="{{toggleTheme}}" class="b2" style="margin-left: auto; height: 32px; font-size: 12.5px">{{themeLabel}}</button>
         <button type="button" aria-label="Đóng" style="margin-left: 6px; width: 34px; height: 34px; border: 0; border-radius: 9px; background: transparent; font-size: 20px; color: var(--muted)">×</button>
       </div>

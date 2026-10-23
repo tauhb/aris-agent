@@ -540,7 +540,7 @@ Quy tắc thiết kế:
 | M9 | **MCP server**: mở `brain_search`, `memory_search`, `giao_viec`… cho agent khác (Claude Desktop, Cursor…) | Thành viên | Package `aris-mcp-server` | 6 |
 | M10 | Buzz như một kênh nhắn tin (ngang Telegram) | Thành viên + kênh | `aris-gateway-buzz` (Nostr) | 8 |
 
-🖥️ **Cần vẽ thêm giao diện** (chưa có trên canvas): (a) loại **"bot ngoài"** trong 2.1 Tạo bot: chọn Claude Code/Codex/Gemini/OpenCode/Hermes, thư mục làm việc, ngân sách, chính sách quyền; (b) mục **"Mặt tích hợp"** trong 6.3: bật/tắt ACP, API, A2A, MCP, token, peer tin cậy, bot nào mở ra mặt nào, nhật ký truy cập.
+🖥️ **Giao diện đã vẽ (23/10)**, cùng ngôn ngữ với các màn cũ: **2.1b Thêm bot ngoài** là tab "Bot ngoài" trong hộp Tạo bot: chọn agent bằng chip (aris tự dò trên máy), tên, thư mục làm việc; quyền, trần mỗi việc, worktree và lệnh khởi chạy nằm trong "Nâng cao". **6.3b Mặt tích hợp** là một trang Cài đặt kiểu màn Ngân sách: 4 thẻ ACP, API kiểu OpenAI, A2A, MCP, mỗi thẻ có viên trạng thái, nút Bật/Tắt và 1–3 dòng chi tiết (lệnh/địa chỉ, bot được mở ra); thêm một thẻ dẫn sang bộ quyền "Thành viên" và nhật ký truy cập.
 
 ### 15.5 Đánh giá thẳng thắn
 
