@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Chat sau revamp</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--shadow:0 1px 2px rgba(22,23,27,.05)}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--shadow:none}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:10px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.ib:hover{background:var(--hover);color:var(--ink)}
+.nav{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;border-radius:10px;padding:7px 10px;text-align:left;font-size:13.5px;color:var(--ink)}
+.nav:hover{background:var(--hover)}
+.nav svg{flex:none;color:var(--muted)}
+.mem{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;border-radius:10px;padding:5px 8px;text-align:left}
+.mem:hover{background:var(--hover)}
+.grp{font-size:11.5px;font-weight:500;color:var(--muted);padding:8px 10px 2px}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500}
+.lx{font-family:'Lexend',sans-serif}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin 1.2s linear infinite;transform-box:fill-box;transform-origin:center}
+@keyframes breathe{0%,100%{opacity:1}50%{opacity:.4}}
+.breathe{animation:breathe 1.6s ease-in-out infinite}
+.br{flex:1 1 240px;min-width:0;border-left:3px solid;padding:2px 0 2px 14px;display:flex;flex-direction:column;gap:8px}
+.step{display:flex;align-items:center;gap:8px;font-size:13px}
+a{color:var(--accent)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+
+  <nav aria-label="Điều hướng" style="flex: 0 1 260px; min-width: 228px; background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 12px 10px; gap: 1px">
+    <div style="display: flex; align-items: center; gap: 8px; padding: 2px 4px 10px">
+      <svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8C76 8 92 24 92 50C92 76 76 92 50 92C24 92 8 76 8 50C8 24 24 8 50 8Z" fill="var(--ink)"></path><path d="M52 36L48 50M65 34L61 48" stroke="var(--panel)" stroke-width="9" stroke-linecap="round"></path></svg>
+      <span class="lx" style="font-weight: 700; font-size: 18px; letter-spacing: -.02em">aris</span>
+      <button type="button" class="ib" aria-label="Tìm kiếm (⌘K)" style="margin-left: auto"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4-4"></path></svg></button>
+      <button type="button" class="ib" aria-label="Thu gọn thanh bên"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3.5"></rect><path d="M9 4.5v15"></path></svg></button>
+    </div>
+    <button type="button" style="display: flex; align-items: center; gap: 8px; border: 0; background: var(--ink); color: var(--panel); border-radius: 12px; padding: 9px 12px; font-size: 13.5px; font-weight: 600; margin-bottom: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Việc mới<span style="margin-left: auto; font-size: 11px; opacity: .7">⌘N</span></button>
+
+    <button type="button" class="nav" aria-current="page" style="background: var(--accentSoft); color: var(--accent); font-weight: 600"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--accent)"><path d="M20.5 12a8.2 8.2 0 0 1-11.9 7.3L3.5 20.5l1.2-4.7A8.2 8.2 0 1 1 20.5 12z" fill="currentColor" fill-opacity=".2" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"></path><path d="M8.5 11h7M8.5 14h4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"></path></svg>Chat</button>
+    <button type="button" class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="3.2"></circle><circle cx="5" cy="6" r="2.2"></circle><circle cx="19" cy="6" r="2.2"></circle><circle cx="12" cy="21" r="1.6"></circle><path d="M6.7 7.5l3 3M17.3 7.5l-3 3M12 16.2v3.2"></path></svg>Bản đồ đội<span style="margin-left: auto; font-size: 11.5px; color: var(--muted)">2 đang làm</span></button>
+    <button type="button" class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="9" r="3"></circle><circle cx="16.5" cy="9.5" r="2.5"></circle><path d="M3 19c.6-3 2.6-4.5 5-4.5s4.4 1.5 5 4.5M14 15.2c2.6-.6 5.3.6 6 3.8"></path></svg>Phòng nhóm</button>
+    <button type="button" class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5c-1.8-1.4-4.6-1.6-7-.6v15c2.4-1 5.2-.8 7 .6 1.8-1.4 4.6-1.6 7-.6v-15c-2.4-1-5.2-.8-7 .6z"></path><path d="M12 4.5v15"></path></svg>Second Brain</button>
+    <button type="button" class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path></svg>Routine</button>
+    <button type="button" class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="5" height="15" rx="2"></rect><rect x="10.5" y="4.5" width="5" height="9" rx="2"></rect><rect x="17.5" y="4.5" width="3.5" height="12" rx="1.75"></rect></svg>Kanban</button>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 10px 4px"><span class="lx" style="font-size: 13px; font-weight: 600">Đội hình</span><button type="button" class="ib" aria-label="Thêm bot vào đội" style="width: 26px; height: 26px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button></div>
+
+    <button type="button" class="mem" style="background: var(--panel2); padding: 8px">
+      <svg width="34" height="34" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>
+      <span style="flex: 1; min-width: 0"><span class="lx" style="display: block; font-weight: 600; font-size: 14px">Aris</span><span class="st" style="color: var(--muted)"><svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="var(--line)" stroke-width="2.4"></circle><circle class="spin" cx="8" cy="8" r="6" fill="none" stroke="#1084FE" stroke-width="2.4" stroke-dasharray="12 26" stroke-linecap="round"></circle></svg>Chỉ huy · điều phối 2 việc</span></span>
+    </button>
+    <div class="grp">Nghiên cứu</div>
+    <button type="button" class="mem"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><path d="M45 43L43 53M58 41L56 51" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 600; font-size: 13.5px">Lâm</span><span style="display: block; font-size: 12px; color: var(--muted)">đang đọc 12/20 nguồn</span></span><svg width="14" height="14" viewBox="0 0 16 16" aria-label="Đang làm"><circle cx="8" cy="8" r="6" fill="none" stroke="var(--line)" stroke-width="2.4"></circle><circle class="spin" cx="8" cy="8" r="6" fill="none" stroke="#00B5A5" stroke-width="2.4" stroke-dasharray="12 26" stroke-linecap="round"></circle></svg></button>
+    <div class="grp">Vận hành</div>
+    <button type="button" class="mem"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><circle cx="44" cy="58" r="8" fill="#fff"></circle><circle cx="61" cy="58" r="8" fill="#fff"></circle></svg><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 600; font-size: 13.5px">Mai</span><span style="display: block; font-size: 12px; color: var(--warn)">đợi anh cho gửi thư</span></span><svg class="breathe" width="14" height="14" viewBox="0 0 16 16" aria-label="Chờ anh" style="color: var(--warn)"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M8 2a6 6 0 0 1 0 12z" fill="currentColor"></path></svg></button>
+    <button type="button" class="mem"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M39 50h9M55 49h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 600; font-size: 13.5px">Tín</span><span style="display: block; font-size: 12px; color: var(--muted)">kiểm số dư lúc 5 giờ chiều</span></span><svg width="14" height="14" viewBox="0 0 16 16" aria-label="Rảnh" style="color: var(--muted)"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="2.5 2.5"></circle></svg></button>
+    <div class="grp">Sáng tạo · Kỹ thuật</div>
+    <button type="button" class="mem"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M41 44Q46.5 36 52 44M57 42Q62.5 34 68 42" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"></path></svg><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 600; font-size: 13.5px">Hạ</span><span style="display: block; font-size: 12px; color: var(--muted)">xong bài Facebook sáng nay</span></span><svg width="14" height="14" viewBox="0 0 16 16" aria-label="Xong" style="color: var(--ok)"><circle cx="8" cy="8" r="7" fill="currentColor"></circle><path d="M5 8.2l2 2 4-4.2" stroke="var(--panel)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+    <button type="button" class="mem"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 12C80 12 88 20 88 50C88 80 80 88 50 88C20 88 12 80 12 50C12 20 20 12 50 12Z" fill="#00C972"></path><path d="M43 52h9M60 47h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 600; font-size: 13.5px">Dev</span><span style="display: block; font-size: 12px; color: var(--muted)">rảnh</span></span><svg width="14" height="14" viewBox="0 0 16 16" aria-label="Rảnh" style="color: var(--muted)"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="2.5 2.5"></circle></svg></button>
+
+    <div style="margin-top: auto; border-top: 1px solid var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 4px">
+      <button type="button" class="nav" style="background: var(--warnSoft); color: var(--warn); font-weight: 600"><svg class="breathe" width="18" height="18" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--warn)"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M8 2a6 6 0 0 1 0 12z" fill="currentColor"></path></svg>3 việc đợi anh gật đầu</button>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 6px 4px 0 10px">
+        <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--panel); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">C</span>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 600">Chủ nhân</span><span style="font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums">0,42 / 5 USD hôm nay</span></span>
+        <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.6 6.6 0 0 0 9.7 9.7z"></path></svg></button>
+        <button type="button" class="ib" aria-label="Cài đặt"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2.5v2.5M12 19v2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M2.5 12H5M19 12h2.5M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"></path></svg></button>
+      </div>
+    </div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px 10px 20px; border-bottom: 1px solid var(--line)">
+      <svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>
+      <div style="display: flex; flex-direction: column"><span class="lx" style="font-weight: 600; font-size: 15px">Aris</span><span style="font-size: 12px; color: var(--muted)">Chỉ huy của đội · nhớ thêm được khoảng 25 điều</span></div>
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 4px">
+        <button type="button" style="height: 32px; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="var(--line)" stroke-width="2.2"></circle><path d="M8 2a6 6 0 0 1 5.2 3" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"></path></svg>Mục tiêu · lượt 2/20</button>
+        <button type="button" class="ib" aria-label="Ẩn/hiện bảng đội bot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3.5"></rect><path d="M15 4.5v15"></path></svg></button>
+      </div>
+    </div>
+
+    <div style="flex: 1; padding: 18px 20px 8px; display: flex; flex-direction: column; gap: 16px; max-width: 780px; width: 100%; box-sizing: border-box; margin: 0 auto">
+      <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted)"><span style="flex: 1; height: 1px; background: var(--line)"></span>Sáng nay · 10:41<span style="flex: 1; height: 1px; background: var(--line)"></span></div>
+      <div style="align-self: flex-end; max-width: 80%; background: var(--ink); color: var(--panel); padding: 10px 14px; border-radius: 18px 18px 6px 18px">Tóm tắt giúp anh động thái của 3 đối thủ tuần này, rồi xếp lịch họp thứ 5 với team marketing.</div>
+
+      <div style="display: flex; gap: 12px">
+        <div style="flex: none; width: 22px; display: flex; flex-direction: column; align-items: center">
+          <span style="width: 14px; height: 14px; border-radius: 50%; background: #1084FE; margin-top: 4px"></span>
+          <span style="flex: 1; width: 3px; background: #1084FE; border-radius: 2px"></span>
+          <span style="width: 14px; height: 14px; border-radius: 50%; border: 3px solid #1084FE; box-sizing: border-box; background: var(--bg)"></span>
+        </div>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+          <div><b>Em chia làm hai việc</b> và giao cho hai bạn trong đội. Khi cả hai xong em tổng hợp lại cho anh.<div style="font-size: 12px; color: var(--muted)">Aris · 10:42</div></div>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 14px">
+            <div class="br" style="border-color: #00B5A5">
+              <div style="display: flex; align-items: center; gap: 8px"><svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><path d="M45 43L43 53M58 41L56 51" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg><b style="font-size: 13.5px">Lâm</b><span style="font-size: 13px; color: var(--muted)">nghiên cứu 3 đối thủ</span></div>
+              <div class="step"><svg width="16" height="16" viewBox="0 0 16 16" aria-label="Xong" style="color: var(--ok)"><circle cx="8" cy="8" r="7" fill="currentColor"></circle><path d="M5 8.2l2 2 4-4.2" stroke="var(--panel)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>Tìm được 20 nguồn</div>
+              <div class="step"><svg width="16" height="16" viewBox="0 0 16 16" aria-label="Đang làm"><circle cx="8" cy="8" r="6" fill="none" stroke="var(--line)" stroke-width="2.2"></circle><circle class="spin" cx="8" cy="8" r="6" fill="none" stroke="#00B5A5" stroke-width="2.2" stroke-dasharray="12 26" stroke-linecap="round"></circle></svg>Đang đọc · 12/20<span style="flex: 1; max-width: 90px; height: 5px; border-radius: 99px; background: var(--panel2); overflow: hidden"><span style="display: block; width: 60%; height: 100%; background: #00B5A5"></span></span></div>
+              <div class="step" style="color: var(--muted)"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="2.5 2.5"></circle></svg>Gửi tổng hợp cho Aris</div>
+            </div>
+            <div class="br" style="border-color: #FF6700">
+              <div style="display: flex; align-items: center; gap: 8px"><svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><circle cx="44" cy="58" r="8" fill="#fff"></circle><circle cx="61" cy="58" r="8" fill="#fff"></circle></svg><b style="font-size: 13.5px">Mai</b><span style="font-size: 13px; color: var(--muted)">lời mời họp thứ 5</span></div>
+              <div class="step"><svg width="16" height="16" viewBox="0 0 16 16" aria-label="Xong" style="color: var(--ok)"><circle cx="8" cy="8" r="7" fill="currentColor"></circle><path d="M5 8.2l2 2 4-4.2" stroke="var(--panel)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>Soạn thư cho 4 người · 14:00, Google Meet</div>
+              <div style="background: var(--warnSoft); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px">
+                <div class="step" style="color: var(--warn); font-weight: 600"><svg class="breathe" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M8 2a6 6 0 0 1 0 12z" fill="currentColor"></path></svg>Mai đợi anh gật đầu</div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap"><button type="button" style="height: 32px; padding: 0 14px; border-radius: 9px; border: 0; background: var(--ink); color: var(--panel); font-size: 13px; font-weight: 600">Cho Mai gửi</button><button type="button" style="height: 32px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); font-size: 13px">Xem thư</button></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: inline-flex; align-self: flex-start; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); border: 1px dashed var(--line); border-radius: 999px; padding: 4px 6px 4px 10px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5M9 3h6l-1 6 4 4H6l4-4z"></path></svg>
+            Ghim vào trí nhớ của Aris: <b style="color: var(--ink)">họp marketing ưu tiên chiều thứ 5</b>
+            <button type="button" style="border: 0; background: transparent; color: var(--accent); font-size: 12.5px; padding: 0 4px">Bỏ ghim</button>
+          </div>
+          <div style="font-size: 13px; color: var(--muted)">Aris tổng hợp khi hai nhánh xong</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding: 8px 20px 18px; max-width: 780px; width: 100%; box-sizing: border-box; margin: 0 auto">
+      <div style="border: 1px solid var(--line); background: var(--panel); border-radius: 20px; padding: 10px 10px 8px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: var(--shadow)">
+        <label style="display: flex"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Nhắn cho Aris</span><textarea rows="2" placeholder="Giao việc cho đội, hoặc hỏi Aris…" style="flex: 1; resize: none; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 15px; outline: none"></textarea></label>
+        <div style="display: flex; align-items: center; gap: 2px">
+          <button type="button" class="ib" aria-label="Đính kèm"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 11.5l-8.4 8.4a5.5 5.5 0 0 1-7.8-7.8l8.4-8.4a3.7 3.7 0 0 1 5.2 5.2l-8.4 8.4a1.8 1.8 0 0 1-2.6-2.6l7.8-7.8"></path></svg></button>
+          <button type="button" class="ib" aria-label="Lệnh và skill"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"></rect><path d="M14 8l-4 8"></path></svg></button>
+          <button type="button" class="ib" aria-label="Giao cho bot"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.5"></circle><path d="M15.5 12v1.5a2.5 2.5 0 0 0 5 0V12a8.5 8.5 0 1 0-3.3 6.7"></path></svg></button>
+          <button type="button" class="ib" aria-label="Ghi âm"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"></path></svg></button>
+          <span style="flex: 1"></span>
+          <button type="button" style="display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px 0 5px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); font-size: 13px"><span style="width: 24px; height: 24px; border-radius: 8px; background: #4D6BFE; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-family: 'Lexend', sans-serif; font-weight: 700; font-size: 12px">D</span><b>DeepSeek</b><span style="color: var(--muted)">Nhanh</span><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"></path></svg></button>
+          <button type="button" aria-label="Gửi" style="width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; margin-left: 6px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"></path></svg></button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <aside aria-label="Đội bot lúc này" style="flex: 1 1 288px; max-width: 330px; min-width: 260px; border-left: 1px solid var(--line); background: var(--panel); padding: 14px 16px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; justify-content: space-between"><span class="lx" style="font-weight: 600">Đội bot lúc này</span><a href="#" style="font-size: 12.5px; text-decoration: none">Mở bản đồ ›</a></div>
+    <div style="border-radius: 18px; background: var(--bg); border: 1px solid var(--line); overflow: hidden">
+      <canvas data-aris-orbit="1" ref="{{setCv}}" onPointerDown="{{onDown}}" onPointerMove="{{onMove}}" onPointerUp="{{onUp}}" onPointerLeave="{{onLeave}}" role="img" aria-label="Sơ đồ đội 3D: Aris chỉ huy ở giữa; Lâm đang làm, Mai chờ anh duyệt, Hạ xong việc, Tín và Dev rảnh. Kéo để xoay." style="display: block; width: 100%; height: 320px; cursor: grab; touch-action: none"></canvas>
+    </div>
+    <div style="font-size: 11.5px; color: var(--muted); text-align: center; margin-top: -4px">Kéo để xoay · rê chuột vào bot để xem vai trò</div>
+    <div style="display: flex; flex-direction: column; font-size: 13px">
+      <div style="display: flex; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line)"><svg width="16" height="16" viewBox="0 0 16 16" aria-label="Đang làm" style="flex: none; margin-top: 2px"><circle cx="8" cy="8" r="6" fill="none" stroke="var(--line)" stroke-width="2.2"></circle><circle class="spin" cx="8" cy="8" r="6" fill="none" stroke="#00B5A5" stroke-width="2.2" stroke-dasharray="12 26" stroke-linecap="round"></circle></svg><span><b>Lâm</b> đọc nguồn thứ 12 · <span style="color: var(--muted)">vừa xong</span></span></div>
+      <div style="display: flex; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line)"><svg class="breathe" width="16" height="16" viewBox="0 0 16 16" aria-label="Chờ anh" style="flex: none; margin-top: 2px; color: var(--warn)"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M8 2a6 6 0 0 1 0 12z" fill="currentColor"></path></svg><span><b>Mai</b> soạn xong thư, đợi anh · <span style="color: var(--muted)">3 phút</span></span></div>
+      <div style="display: flex; gap: 8px; padding: 8px 0"><svg width="16" height="16" viewBox="0 0 16 16" aria-label="Xong" style="flex: none; margin-top: 2px; color: var(--ok)"><circle cx="8" cy="8" r="7" fill="currentColor"></circle><path d="M5 8.2l2 2 4-4.2" stroke="var(--panel)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg><span><b>Hạ</b> học thêm 1 skill · lên cấp 2</span></div>
+    </div>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  componentDidMount() {
+    this.ang = 0.6;
+    this.hover = -1;
+    this.dragging = false;
+    this.hits = [];
+    this.cssT = -1e9;
+    this.M = [
+      { n: 'Lâm', r: 'Nghiên cứu', s: 'dia', c: '#00B5A5', st: 'work', e: { t: 'dot', a: [[44, 48, 7.5], [59, 46, 5.5]] } },
+      { n: 'Mai', r: 'Thư ký', s: 'drop', c: '#FF6700', st: 'wait', e: { t: 'cap', w: 7.5, a: [[47, 55, 43, 65], [59, 53, 55, 63]] } },
+      { n: 'Tín', r: 'Tài chính', s: 'pent', c: '#FFAA00', st: 'idle', e: { t: 'cap', w: 8, a: [[47, 41, 43, 53], [59, 39, 55, 51]] } },
+      { n: 'Hạ', r: 'Nội dung', s: 'heart', c: '#FF309C', st: 'done', e: { t: 'cap', w: 8, a: [[52, 40, 49, 52], [63, 38, 60, 50]] } },
+      { n: 'Dev', r: 'Lập trình', s: 'sq', c: '#00C972', st: 'idle', e: { t: 'dot', a: [[52, 52, 8], [66, 44, 6]] } }
+    ];
+    this.CMD = { n: 'Aris', s: 'star', c: '#1084FE', st: 'work', e: { t: 'cap', w: 8, a: [[51, 41, 48, 53], [62, 39, 59, 51]] } };
+    const P = {
+      star: 'M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z',
+      dia: 'M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z',
+      drop: 'M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z',
+      pent: 'M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z',
+      sq: 'M50 12C80 12 88 20 88 50C88 80 80 88 50 88C20 88 12 80 12 50C12 20 20 12 50 12Z',
+      heart: 'M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z'
+    };
+    this.paths = {};
+    Object.keys(P).forEach((k) => { this.paths[k] = new Path2D(P[k]); });
+    this.loop = (ts) => { this.draw(ts); this.raf = requestAnimationFrame(this.loop); };
+    this.raf = requestAnimationFrame(this.loop);
+  }
+
+  componentWillUnmount() {
+    cancelAnimationFrame(this.raf);
+  }
+
+  eyeCenters(e) {
+    if (e.t === 'dot') return e.a.map((d) => [d[0], d[1]]);
+    return e.a.map((d) => [(d[0] + d[2]) / 2, (d[1] + d[3]) / 2]);
+  }
+
+  mascot(ctx, m, x, y, size) {
+    ctx.save();
+    ctx.translate(x - size / 2, y - size / 2);
+    ctx.scale(size / 100, size / 100);
+    ctx.fillStyle = m.c;
+    ctx.fill(this.paths[m.s]);
+    ctx.strokeStyle = '#fff';
+    ctx.fillStyle = '#fff';
+    ctx.lineCap = 'round';
+    const cs = this.eyeCenters(m.e);
+    if (m.st === 'idle') {
+      ctx.lineWidth = 6;
+      cs.forEach((c) => { ctx.beginPath(); ctx.moveTo(c[0] - 4.5, c[1]); ctx.lineTo(c[0] + 4.5, c[1]); ctx.stroke(); });
+    } else if (m.st === 'wait') {
+      cs.forEach((c) => { ctx.beginPath(); ctx.arc(c[0], c[1], 8, 0, Math.PI * 2); ctx.fill(); });
+    } else if (m.st === 'done') {
+      ctx.lineWidth = 6;
+      cs.forEach((c) => { ctx.beginPath(); ctx.moveTo(c[0] - 5.5, c[1] + 3); ctx.quadraticCurveTo(c[0], c[1] - 6, c[0] + 5.5, c[1] + 3); ctx.stroke(); });
+    } else if (m.e.t === 'dot') {
+      m.e.a.forEach((d) => { ctx.beginPath(); ctx.arc(d[0], d[1], d[2], 0, Math.PI * 2); ctx.fill(); });
+    } else {
+      ctx.lineWidth = m.e.w;
+      m.e.a.forEach((d) => { ctx.beginPath(); ctx.moveTo(d[0], d[1]); ctx.lineTo(d[2], d[3]); ctx.stroke(); });
+    }
+    ctx.restore();
+  }
+
+  ring(ctx, m, x, y, r, ts, C, hot) {
+    ctx.save();
+    ctx.lineWidth = hot ? 3.5 : 2.5;
+    if (m.st === 'work') {
+      ctx.strokeStyle = C.line;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = m.c;
+      const a = (ts / 380) % (Math.PI * 2);
+      ctx.beginPath(); ctx.arc(x, y, r, a, a + 1.4); ctx.stroke();
+    } else if (m.st === 'wait') {
+      ctx.globalAlpha *= 0.45 + 0.55 * (0.5 + 0.5 * Math.sin(ts / 260));
+      ctx.strokeStyle = C.warn;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+    } else if (m.st === 'done') {
+      ctx.strokeStyle = C.ok;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+    } else {
+      ctx.strokeStyle = C.muted;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  draw(ts) {
+    if (!this.cv) this.cv = document.querySelector('canvas[data-aris-orbit]');
+    const cv = this.cv;
+    if (!cv) return;
+    const w = cv.clientWidth;
+    const h = cv.clientHeight;
+    if (!w || !h) return;
+    const dpr = window.devicePixelRatio || 1;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
+      cv.width = Math.round(w * dpr);
+      cv.height = Math.round(h * dpr);
+    }
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    if (ts - this.cssT > 400) {
+      const s = getComputedStyle(cv);
+      const v = (k, d) => (s.getPropertyValue(k).trim() || d);
+      this.C = { ink: v('--ink', '#16171B'), muted: v('--muted', '#5C616C'), line: v('--line', '#E4E2DC'), warn: v('--warn', '#B45309'), ok: v('--ok', '#15803D') };
+      this.cssT = ts;
+    }
+    const C = this.C;
+    if (!this.dragging) this.ang += this.hover >= 0 ? 0.0012 : 0.0038;
+
+    const cx = w / 2;
+    const fy = h * 0.67;
+    const R = Math.min(w * 0.36, 118);
+    const tilt = 0.36;
+
+    ctx.save();
+    ctx.translate(cx, fy);
+    ctx.scale(1, tilt);
+    const g = ctx.createRadialGradient(0, 0, 6, 0, 0, R * 1.4);
+    g.addColorStop(0, 'rgba(16,132,254,0.26)');
+    g.addColorStop(0.6, 'rgba(16,132,254,0.08)');
+    g.addColorStop(1, 'rgba(16,132,254,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0, 0, R * 1.4, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = C.line;
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([4, 6]);
+    ctx.lineDashOffset = -ts / 80;
+    ctx.beginPath(); ctx.ellipse(cx, fy, R, R * tilt, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath(); ctx.ellipse(cx, fy, R * 0.45, R * 0.45 * tilt, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+
+    const bob = Math.sin(ts / 650) * 3;
+    const cmdY = fy - h * 0.44 + bob;
+
+    const beam = ctx.createLinearGradient(0, cmdY + 20, 0, fy);
+    beam.addColorStop(0, 'rgba(16,132,254,0.18)');
+    beam.addColorStop(1, 'rgba(16,132,254,0)');
+    ctx.fillStyle = beam;
+    ctx.beginPath();
+    ctx.moveTo(cx - 12, cmdY + 22); ctx.lineTo(cx + 12, cmdY + 22);
+    ctx.lineTo(cx + R * 0.45, fy); ctx.lineTo(cx - R * 0.45, fy);
+    ctx.closePath(); ctx.fill();
+
+    const N = this.M.length;
+    const items = this.M.map((m, i) => {
+      const a = this.ang + (i * 2 * Math.PI) / N;
+      const z = Math.sin(a);
+      return { m: m, i: i, z: z, x: cx + R * Math.cos(a), y: fy + R * tilt * z, s: 0.74 + 0.3 * (z + 1) / 2 };
+    });
+
+    items.forEach((it) => {
+      const active = it.m.st === 'work' || it.m.st === 'wait';
+      const tx = it.x;
+      const ty = it.y - 52 * it.s;
+      ctx.save();
+      ctx.globalAlpha = 0.35 + 0.55 * (it.z + 1) / 2;
+      ctx.lineWidth = active ? 2.6 : 1.1;
+      ctx.strokeStyle = active ? it.m.c : C.line;
+      if (active) { ctx.setLineDash([7, 6]); ctx.lineDashOffset = -ts / 28; }
+      ctx.beginPath();
+      ctx.moveTo(cx, cmdY + 24);
+      ctx.quadraticCurveTo((cx + tx) / 2, Math.min(cmdY, ty) + 30, tx, ty);
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    const drawMember = (it) => {
+      const m = it.m;
+      const hot = this.hover === it.i;
+      const s = it.s * (hot ? 1.12 : 1);
+      const lift = m.st === 'work' ? Math.sin(ts / 300 + it.i) * 2.5 : 0;
+      const my = it.y - 34 * s + lift;
+      ctx.save();
+      ctx.globalAlpha = 0.62 + 0.38 * (it.z + 1) / 2;
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.beginPath(); ctx.ellipse(it.x, it.y, 20 * s, 5.5 * s, 0, 0, Math.PI * 2); ctx.fill();
+      this.ring(ctx, m, it.x, my, 35 * s, ts, C, hot);
+      this.mascot(ctx, m, it.x, my, 54 * s);
+      ctx.fillStyle = C.ink;
+      ctx.textAlign = 'center';
+      ctx.font = '600 ' + Math.round(12.5 * s) + 'px "Be Vietnam Pro", system-ui, sans-serif';
+      ctx.fillText(m.n, it.x, it.y + 16 * s);
+      const lab = { work: 'đang làm', wait: 'chờ anh', idle: 'rảnh', done: 'xong' }[m.st];
+      ctx.fillStyle = m.st === 'wait' ? C.warn : (m.st === 'done' ? C.ok : C.muted);
+      ctx.font = '500 ' + Math.round(11 * s) + 'px "Be Vietnam Pro", system-ui, sans-serif';
+      ctx.fillText(hot ? m.r + ' · ' + lab : lab, it.x, it.y + 31 * s);
+      ctx.restore();
+      this.hits[it.i] = { x: it.x, y: my, r: 30 * s };
+    };
+
+    const sorted = items.slice().sort((a, b) => a.z - b.z);
+    sorted.filter((it) => it.z < 0).forEach(drawMember);
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.14)';
+    ctx.beginPath(); ctx.ellipse(cx, fy, 26, 7, 0, 0, Math.PI * 2); ctx.fill();
+    const glow = ctx.createRadialGradient(cx, cmdY, 10, cx, cmdY, 58);
+    glow.addColorStop(0, 'rgba(16,132,254,0.30)');
+    glow.addColorStop(1, 'rgba(16,132,254,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(cx, cmdY, 58, 0, Math.PI * 2); ctx.fill();
+    this.ring(ctx, this.CMD, cx, cmdY, 40, ts, C, false);
+    this.mascot(ctx, this.CMD, cx, cmdY, 64);
+    ctx.fillStyle = C.ink;
+    ctx.textAlign = 'center';
+    ctx.font = '600 13px "Lexend", "Be Vietnam Pro", sans-serif';
+    ctx.fillText('Aris · Chỉ huy', cx, cmdY - 48);
+    ctx.restore();
+
+    sorted.filter((it) => it.z >= 0).forEach(drawMember);
+  }
+
+  pick(e) {
+    const r = this.cv.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    let best = -1;
+    let bd = 1e9;
+    this.hits.forEach((hgt, i) => {
+      if (!hgt) return;
+      const d = Math.hypot(hgt.x - x, hgt.y - y);
+      if (d < hgt.r && d < bd) { bd = d; best = i; }
+    });
+    return best;
+  }
+
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'light';
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      setCv: (el) => { this.cv = el; },
+      onDown: (e) => { this.dragging = true; this.lx = e.clientX; },
+      onMove: (e) => {
+        if (!this.cv) return;
+        if (this.dragging) { this.ang += (e.clientX - this.lx) * 0.012; this.lx = e.clientX; return; }
+        this.hover = this.pick(e);
+        this.cv.style.cursor = this.hover >= 0 ? 'pointer' : 'grab';
+      },
+      onUp: () => { this.dragging = false; },
+      onLeave: () => { this.dragging = false; this.hover = -1; }
+    };
+  }
+}
+</script>
+</body>
+</html>

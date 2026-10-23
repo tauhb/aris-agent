@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Tạo bot mới</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--shadow:0 24px 60px rgba(20,23,28,.22),0 2px 6px rgba(20,23,28,.08);--scrim:rgba(20,23,28,.35)}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--shadow:0 24px 60px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.3);--scrim:rgba(0,0,0,.55)}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.b1{height:38px;padding:0 16px;border:0;border-radius:10px;background:var(--ink);color:var(--panel);font-size:13.5px;font-weight:600}
+.b2{height:38px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font-size:13.5px}
+.lb{font-size:12.5px;font-weight:600;color:var(--ink)}
+.m{color:var(--muted)}
+.inp{height:38px;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font:inherit;font-size:14px;padding:0 12px;width:100%}
+.chip{height:32px;border:1px solid var(--line);border-radius:999px;background:var(--panel);padding:0 12px;font-size:13px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="width: 1440px; height: 900px; position: relative; background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; display: flex; overflow: hidden">
+  <dc-import name="Sidebar" active="chat" bot="none" hint-size="260px,900px"></dc-import>
+  <div style="flex: 1"></div>
+
+  <div style="position: absolute; inset: 0; background: var(--scrim); display: flex; align-items: center; justify-content: center">
+    <div role="dialog" aria-modal="true" aria-labelledby="tb-title" style="width: 760px; max-height: 820px; overflow: auto; background: var(--panel); border-radius: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column">
+      <div style="display: flex; align-items: center; padding: 18px 22px 6px">
+        <h2 id="tb-title" style="margin: 0; font-size: 19px">Tạo bot mới</h2>
+        <button type="button" onClick="{{toggleTheme}}" class="b2" style="margin-left: auto; height: 32px; font-size: 12.5px">{{themeLabel}}</button>
+        <button type="button" aria-label="Đóng" style="margin-left: 6px; width: 34px; height: 34px; border: 0; border-radius: 9px; background: transparent; font-size: 20px; color: var(--muted)">×</button>
+      </div>
+      <p class="m" style="margin: 0; padding: 0 22px 14px; font-size: 13px">Ba ô là đủ. Bot sẽ tự giới thiệu ở tin nhắn đầu tiên trong chat của nó.</p>
+
+      <div style="display: flex; gap: 24px; padding: 4px 22px 8px">
+        <div style="flex: none; width: 210px; display: flex; flex-direction: column; align-items: center; gap: 10px">
+          <div style="width: 128px; height: 128px; border-radius: 32px; background: var(--panel2); display: flex; align-items: center; justify-content: center"><svg width="100" height="100" viewBox="0 0 100 100" role="img" aria-label="Linh vật đang chọn: trái tim hồng"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg></div>
+          <div class="lb" style="align-self: flex-start">Linh vật <span class="m" style="font-weight: 400">· gợi ý cho vai “nội dung”</span></div>
+          <div role="radiogroup" aria-label="Chọn linh vật" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; width: 100%"><button type="button" role="radio" aria-checked="true" aria-label="Trái tim" style="width: 44px; height: 44px; border-radius: 12px; border: 2px solid var(--accent); background: var(--accentSoft); display: inline-flex; align-items: center; justify-content: center; padding: 0"><svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg></button><button type="button" role="radio" aria-checked="false" aria-label="Đám mây" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); display: inline-flex; align-items: center; justify-content: center; padding: 0"><svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 82C18 82 8 74 8 62C8 52 15 45 24 43C25 30 35 20 48 20C57 20 64 25 68 32C71 30 75 29 78 29C88 29 94 37 94 47C94 49 94 51 93 53C96 56 97 60 97 64C97 74 89 82 79 82Z" fill="#00C972"></path><path d="M46 49L43 61M58 47L64 57" stroke="#fff" stroke-width="7" stroke-linecap="round"></path></svg></button><button type="button" role="radio" aria-checked="false" aria-label="Hạt đậu" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); display: inline-flex; align-items: center; justify-content: center; padding: 0"><svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><path d="M40 10C60 8 74 20 72 34C71 40 72 44 78 48C88 54 92 62 90 72C86 88 66 92 48 90C26 88 8 74 8 52C8 30 22 12 40 10Z" fill="#A855F7"></path><path d="M33 34L37 46M47 30L51 42" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg></button><button type="button" role="radio" aria-checked="false" aria-label="Bông hoa" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); display: inline-flex; align-items: center; justify-content: center; padding: 0"><svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><g fill="#FF8A00"><circle cx="50" cy="50" r="27"></circle><circle cx="78" cy="50" r="17"></circle><circle cx="64" cy="74.2" r="17"></circle><circle cx="36" cy="74.2" r="17"></circle><circle cx="22" cy="50" r="17"></circle><circle cx="36" cy="25.8" r="17"></circle><circle cx="64" cy="25.8" r="17"></circle></g><circle cx="43" cy="51" r="7.5" fill="#fff"></circle><circle cx="58" cy="48" r="5.5" fill="#fff"></circle></svg></button><button type="button" role="radio" aria-checked="false" aria-label="Bong bóng thoại" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); display: inline-flex; align-items: center; justify-content: center; padding: 0"><svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><path d="M22 12H78C86 12 92 18 92 26V60C92 68 86 74 78 74H44L28 88C26 90 22 89 22 86V74C14 74 8 68 8 60V26C8 18 14 12 22 12Z" fill="#2563EB"></path><path d="M49 32L46 44M62 30L59 42" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg></button><button type="button" role="radio" aria-checked="false" aria-label="Quả trứng" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); display: inline-flex; align-items: center; justify-content: center; padding: 0"><svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C70 6 86 34 86 58C86 80 70 94 50 94C30 94 14 80 14 58C14 34 30 6 50 6Z" fill="#9259FE"></path><path d="M45 44L42 56M59 44L56 56" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg></button><button type="button" role="radio" aria-checked="false" aria-label="Chiếc lá" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); display: inline-flex; align-items: center; justify-content: center; padding: 0"><svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><path d="M84 12C88 12 90 14 90 18C90 56 70 88 34 88C22 88 12 80 12 66C12 34 44 12 84 12Z" fill="#16A34A"></path><path d="M50 46L47 58M63 42L60 54" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg></button><button type="button" role="radio" aria-checked="false" aria-label="Vương miện" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); display: inline-flex; align-items: center; justify-content: center; padding: 0"><svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><path d="M12 40C12 34 18 32 22 36L32 46L44 24C47 18 53 18 56 24L68 46L78 36C82 32 88 34 88 40V76C88 84 82 90 74 90H26C18 90 12 84 12 76Z" fill="#F59E0B" stroke="#F59E0B" stroke-width="6" stroke-linejoin="round"></path><path d="M43 60L41 72M58 60L56 72" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg></button></div>
+          <a href="ThuVienLinhVat.dc.html" style="align-self: flex-start; font-size: 12.5px; color: var(--accent); text-decoration: none">Xem cả 30 dáng ›</a>
+        </div>
+
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 14px">
+          <div>
+            <div class="lb" style="padding-bottom: 6px">Bắt đầu từ mẫu</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px">
+              <button type="button" class="chip">Thư ký</button>
+              <button type="button" class="chip">Nghiên cứu</button>
+              <button type="button" class="chip">Tài chính</button>
+              <button type="button" class="chip" style="border-color: var(--accent); color: var(--accent); background: var(--accentSoft); font-weight: 600">Viết nội dung</button>
+              <button type="button" class="chip">Lập trình</button>
+              <button type="button" class="chip">Trống</button>
+            </div>
+          </div>
+          <label style="display: flex; flex-direction: column; gap: 6px"><span class="lb">Tên</span><input class="inp" value="Hạ"></label>
+          <label style="display: flex; flex-direction: column; gap: 6px"><span class="lb">Chức danh</span><input class="inp" value="Biên tập nội dung"></label>
+          <label style="display: flex; flex-direction: column; gap: 6px"><span class="lb">Mô tả năng lực</span><textarea rows="3" style="box-sizing: border-box; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); font: inherit; font-size: 14px; padding: 10px 12px; resize: vertical">Viết bài Facebook, kịch bản video ngắn và email theo giọng văn của anh. Sửa bản nháp, đề xuất tiêu đề.</textarea><span class="m" style="font-size: 12px">Commander đọc mô tả này để quyết định giao việc nào cho Hạ.</span></label>
+        </div>
+      </div>
+
+      <div style="margin: 6px 22px 0; border-top: 1px solid var(--line)">
+        <button type="button" onClick="{{toggleAdv}}" aria-expanded="{{advStr}}" style="width: 100%; display: flex; align-items: center; gap: 8px; border: 0; background: transparent; padding: 12px 0; font-size: 13.5px; font-weight: 600; text-align: left">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="{{chev}}"></path></svg>Nâng cao
+          <span class="m" style="font-weight: 400; font-size: 12.5px">nhân bản, model, quyền, kênh</span>
+        </button>
+        <sc-if value="{{adv}}" hint-placeholder-val="{{ true }}">
+          <div style="padding-bottom: 6px">
+            <div class="row"><span>Nhân bản từ</span><span style="display: inline-flex; border: 1px solid var(--line); border-radius: 9px; padding: 2px"><button type="button" style="border: 0; border-radius: 7px; padding: 4px 10px; background: var(--hover); font-size: 12.5px; font-weight: 600">Bot trống</button><button type="button" style="border: 0; border-radius: 7px; padding: 4px 10px; background: transparent; font-size: 12.5px">Aris</button><button type="button" style="border: 0; border-radius: 7px; padding: 4px 10px; background: transparent; font-size: 12.5px">Lâm</button></span></div>
+            <div class="row"><span>Model</span><button type="button" style="height: 32px; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #4D6BFE"></span><span class="m">DeepSeek</span><b>deepseek-chat</b> ▾</button></div>
+            <div class="row"><span>Quyền mặc định</span><span class="m">Ghi trong thư mục làm việc · hỏi trước hành động nguy hiểm</span></div>
+            <div class="row"><span>Kênh riêng</span><span class="m">Thêm token Telegram sau trong Hồ sơ bot</span></div>
+            <label class="row" style="cursor: pointer"><span>Sao chép khoá API từ Aris</span><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--accent)"></label>
+            <label class="row" style="cursor: pointer"><span>Commander được giao việc cho bot này</span><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--accent)"></label>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px; padding: 14px 22px 18px; border-top: 1px solid var(--line)">
+        <button type="button" class="b2">Huỷ</button>
+        <button type="button" class="b1">Tạo bot</button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const adv = s.adv === undefined ? true : s.adv;
+    return {
+      themeClass: 't-' + theme,
+      themeLabel: theme === 'dark' ? 'Sáng' : 'Tối',
+      adv: adv,
+      advStr: adv ? 'true' : 'false',
+      chev: adv ? 'M6 9l6 6 6-6' : 'M9 6l6 6-6 6',
+      toggleAdv: () => this.setState({ adv: !adv }),
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' })
+    };
+  }
+}
+</script>
+</body>
+</html>

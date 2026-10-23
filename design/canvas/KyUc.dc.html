@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Ký ức</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:30px;height:30px;border:0;border-radius:8px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.ib:hover{background:var(--hover);color:var(--ink)}
+.b1{height:32px;padding:0 12px;border:0;border-radius:9px;background:var(--ink);color:var(--panel);font-size:12.5px;font-weight:600}
+.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.m{color:var(--muted)}
+.tag{font-size:11.5px;border-radius:6px;padding:1px 7px;background:var(--panel2);color:var(--muted)}
+.it{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-top:1px solid var(--line);font-size:14px}
+.seg{border:0;border-radius:7px;padding:5px 12px;background:transparent;font-size:13px;color:var(--muted)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="none" bot="aris" hint-size="260px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Ký ức của Aris</span><span class="m" style="font-size: 12px">Ký ức mới có hiệu lực ngay ở lượt sau, không cần mở chat mới</span></div>
+      <span role="group" aria-label="Chọn bot" style="margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 9px; padding: 2px"><button type="button" class="seg" style="background: var(--hover); color: var(--ink); font-weight: 600">Aris</button><button type="button" class="seg">Mai</button><button type="button" class="seg">Lâm</button><button type="button" class="seg">Tín</button><button type="button" class="seg">Dev</button></span>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="width: 34px; height: 34px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+
+    <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 16px; max-width: 1000px; width: 100%; box-sizing: border-box">
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+        <div class="card" style="padding: 12px 14px">
+          <div style="display: flex; justify-content: space-between; font-size: 13px"><b>Ghi chú của Aris</b><span class="m mono" style="font-size: 12px">1.408 / 2.200 ký tự</span></div>
+          <div style="height: 6px; border-radius: 99px; background: var(--panel2); margin-top: 8px"><div style="width: 64%; height: 100%; border-radius: 99px; background: var(--accent)"></div></div>
+        </div>
+        <div class="card" style="padding: 12px 14px">
+          <div style="display: flex; justify-content: space-between; font-size: 13px"><b>Hồ sơ chủ nhân</b><span class="m mono" style="font-size: 12px">1.210 / 1.375 ký tự</span></div>
+          <div style="height: 6px; border-radius: 99px; background: var(--panel2); margin-top: 8px"><div style="width: 88%; height: 100%; border-radius: 99px; background: var(--warn)"></div></div>
+          <div class="m" style="font-size: 12px; margin-top: 6px">Gần đầy · Aris sẽ tự gộp bớt trước khi ghi thêm</div>
+        </div>
+      </div>
+
+      <div role="tablist" aria-label="Loại ký ức" style="display: flex; gap: 18px; border-bottom: 1px solid var(--line)">
+        <button type="button" role="tab" aria-selected="{{sel.core}}" onClick="{{go.core}}" style="border: 0; background: transparent; padding: 8px 0; font-size: 13.5px; color: {{col.core}}; font-weight: {{fw.core}}; border-bottom: 2px solid {{bar.core}}">Lõi · 14</button>
+        <button type="button" role="tab" aria-selected="{{sel.arch}}" onClick="{{go.arch}}" style="border: 0; background: transparent; padding: 8px 0; font-size: 13.5px; color: {{col.arch}}; font-weight: {{fw.arch}}; border-bottom: 2px solid {{bar.arch}}">Lưu trữ · 236</button>
+        <button type="button" role="tab" aria-selected="{{sel.pend}}" onClick="{{go.pend}}" style="border: 0; background: transparent; padding: 8px 0; font-size: 13.5px; color: {{col.pend}}; font-weight: {{fw.pend}}; border-bottom: 2px solid {{bar.pend}}">Chờ duyệt · 2</button>
+      </div>
+
+      <sc-if value="{{is.core}}" hint-placeholder-val="{{ true }}">
+        <div class="card">
+          <div class="it" style="border-top: 0"><span class="tag">sở thích</span><span style="flex: 1">Họp team marketing ưu tiên chiều thứ 5<div class="m" style="font-size: 12px">anh nói · hôm nay 10:43 · <a href="Main.dc.html">mở đoạn chat</a></div></span><button type="button" class="ib" aria-label="Sửa">✎</button><button type="button" class="ib" aria-label="Hạ xuống lưu trữ">↓</button><button type="button" class="ib" aria-label="Xoá">×</button></div>
+          <div class="it"><span class="tag">môi trường</span><span style="flex: 1">Tài liệu dự án nằm trong Google Drive thư mục “Kinh doanh 2026”<div class="m" style="font-size: 12px">anh nói · 12/10</div></span><button type="button" class="ib" aria-label="Sửa">✎</button><button type="button" class="ib" aria-label="Hạ xuống lưu trữ">↓</button><button type="button" class="ib" aria-label="Xoá">×</button></div>
+          <div class="it"><span class="tag">quy ước</span><span style="flex: 1">Báo cáo tiền dùng đơn vị triệu đồng, làm tròn 1 chữ số<div class="m" style="font-size: 12px">Aris suy ra từ 3 lần anh sửa · 08/10</div></span><button type="button" class="ib" aria-label="Sửa">✎</button><button type="button" class="ib" aria-label="Hạ xuống lưu trữ">↓</button><button type="button" class="ib" aria-label="Xoá">×</button></div>
+          <div class="it"><span class="tag">bài học</span><span style="flex: 1">Gửi lời mời họp luôn kèm link Google Meet, không dùng Zoom<div class="m" style="font-size: 12px">Aris suy ra · 02/10 · dùng 6 lần</div></span><button type="button" class="ib" aria-label="Sửa">✎</button><button type="button" class="ib" aria-label="Hạ xuống lưu trữ">↓</button><button type="button" class="ib" aria-label="Xoá">×</button></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{is.arch}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <label style="display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; background: var(--panel)"><span class="m">⌕</span><input type="search" aria-label="Tìm trong ký ức lưu trữ" placeholder="Tìm trong 236 ký ức…" style="flex: 1; border: 0; background: transparent; color: var(--ink); font: inherit; outline: none"></label>
+          <div class="card">
+            <div class="it" style="border-top: 0"><span class="tag">dự án</span><span style="flex: 1">Khoá học AI dự kiến ra mắt tháng 12, giá sớm [GIÁ]<div class="m" style="font-size: 12px">gọi lại 4 lần trong tuần · <b style="color: var(--accent)">đề xuất nâng lên lõi</b></div></span><button type="button" class="b2">Nâng lên lõi</button></div>
+            <div class="it"><span class="tag">người</span><span style="flex: 1">Chị Hà — editor video, làm việc qua Zalo<div class="m" style="font-size: 12px">từ Second Brain · 20/10</div></span></div>
+            <div class="it"><span class="tag">sự kiện</span><span style="flex: 1">Ngày 15/09 đổi nhà cung cấp email marketing<div class="m" style="font-size: 12px">hạ từ lõi xuống · không dùng 30 ngày</div></span></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{is.pend}}" hint-placeholder-val="{{ false }}">
+        <div class="card">
+          <div class="it" style="border-top: 0"><span class="tag">từ Mai</span><span style="flex: 1">Anh không nhận cuộc họp trước 9 giờ sáng<div class="m" style="font-size: 12px">vòng học nền · từ chat 10:35</div></span><button type="button" class="b1">Lưu</button><button type="button" class="b2">Bỏ</button></div>
+          <div class="it"><span class="tag">nội dung ngoài</span><span style="flex: 1">“Giá đối thủ B giảm 20% từ tháng 11”<div class="m" style="font-size: 12px">trích từ trang web · độ tin cậy thấp · không tự lưu</div></span><button type="button" class="b1">Lưu</button><button type="button" class="b2">Bỏ</button></div>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const tab = s.tab || 'core';
+    const is = {}, sel = {}, col = {}, bar = {}, fw = {}, go = {};
+    ['core', 'arch', 'pend'].forEach((id) => {
+      const on = id === tab;
+      is[id] = on; sel[id] = on ? 'true' : 'false';
+      col[id] = on ? 'var(--ink)' : 'var(--muted)';
+      bar[id] = on ? 'var(--ink)' : 'transparent';
+      fw[id] = on ? '600' : '400';
+      go[id] = () => this.setState({ tab: id });
+    });
+    return { themeClass: 't-' + theme, is: is, sel: sel, col: col, bar: bar, fw: fw, go: go,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

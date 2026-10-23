@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Chi tiết skill</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FCEBE9}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:36px;padding:0 14px;border:0;border-radius:10px;background:var(--ink);color:var(--panel);font-size:13px;font-weight:600}
+.b2{height:36px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font-size:13px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.dl{font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:2px 14px;white-space:pre-wrap}
+.er{display:grid;grid-template-columns:minmax(0,1.6fr) 80px 80px 70px;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--line);font-size:13px}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="none" bot="tin" hint-size="260px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <a href="ThuVienSkill.dc.html" class="ib" aria-label="Quay lại thư viện" style="text-decoration: none">‹</a>
+      <div style="display: flex; flex-direction: column"><span class="mono" style="font-weight: 600">bao-cao-doanh-thu-tuan</span><span class="m" style="font-size: 12px">Của Tín · bản vá v3 do vòng học đề xuất sau khi anh sửa báo cáo hôm qua</span></div>
+      <div style="margin-left: auto; display: flex; gap: 8px; align-items: center">
+        <button type="button" class="b2">Từ chối</button>
+        <button type="button" class="b2">Sửa rồi bật</button>
+        <button type="button" class="b1">Duyệt và bật v3</button>
+        <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+      </div>
+    </div>
+
+    <div style="padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start">
+      <div class="card" style="flex: 1.3 1 480px; min-width: 0; overflow: hidden">
+        <div style="padding: 10px 14px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--line)"><b>Thay đổi v2 → v3</b><span class="m mono" style="font-size: 12px">SKILL.md · +4 −1</span></div>
+        <div style="padding: 8px 0">
+          <div class="dl m">## Các bước</div>
+          <div class="dl m">1. Lấy file Excel doanh thu tuần trong Drive</div>
+          <div class="dl m">2. Gộp theo kênh bán, đơn vị triệu đồng</div>
+          <div class="dl" style="background: var(--dangerSoft); color: var(--danger)">− 3. Xuất bảng 3 cột: kênh, doanh thu, tỉ trọng</div>
+          <div class="dl" style="background: var(--okSoft); color: var(--ok)">+ 3. Lấy thêm số tuần trước từ báo cáo đã gửi</div>
+          <div class="dl" style="background: var(--okSoft); color: var(--ok)">+ 4. Xuất bảng 4 cột: kênh, doanh thu, tỉ trọng, so tuần trước (%)</div>
+          <div class="dl m"> </div>
+          <div class="dl m">## Lỗi thường gặp</div>
+          <div class="dl" style="background: var(--okSoft); color: var(--ok)">+ - Tuần có ngày lễ: ghi chú bên dưới bảng, đừng tự điều chỉnh số</div>
+          <div class="dl" style="background: var(--okSoft); color: var(--ok)">+ - Thiếu file tuần trước: để trống cột so sánh và báo anh</div>
+        </div>
+        <div style="padding: 10px 14px; border-top: 1px solid var(--line); font-size: 13px" class="m">Lý do: anh sửa báo cáo ngày 22/10, thêm cột so sánh bằng tay (<a href="Main.dc.html">mở đoạn chat</a>).</div>
+      </div>
+
+      <div style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div class="card" style="padding: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; text-align: center">
+          <div><div class="m" style="font-size: 12px">Đạt</div><div style="font-size: 22px; font-weight: 700; color: var(--ok)">5/5</div><div class="m" style="font-size: 12px">v2: 4/5</div></div>
+          <div><div class="m" style="font-size: 12px">Số bước</div><div style="font-size: 22px; font-weight: 700">−32%</div><div class="m" style="font-size: 12px">9,4 → 6,4</div></div>
+          <div><div class="m" style="font-size: 12px">Token</div><div style="font-size: 22px; font-weight: 700">−18%</div><div class="m" style="font-size: 12px">mỗi lần chạy</div></div>
+        </div>
+        <div class="card">
+          <div style="padding: 10px 14px; display: flex; justify-content: space-between"><b>Ca thử (chạy lại phiên cũ)</b><span class="m" style="font-size: 12px">sandbox · không mạng</span></div>
+          <div class="er m" style="font-size: 12px; font-weight: 600"><span>Ca</span><span>v2</span><span>v3</span><span>Bước</span></div>
+          <div class="er"><span>Tuần 41 — có file đủ</span><span style="color: var(--ok)">đạt</span><span style="color: var(--ok)">đạt</span><span>6</span></div>
+          <div class="er"><span>Tuần 42 — anh sửa thêm cột</span><span style="color: var(--danger)">thiếu cột</span><span style="color: var(--ok)">đạt</span><span>7</span></div>
+          <div class="er"><span>Tuần 39 — có ngày lễ</span><span style="color: var(--ok)">đạt</span><span style="color: var(--ok)">đạt</span><span>6</span></div>
+          <div class="er"><span>Thiếu file tuần trước</span><span style="color: var(--ok)">đạt</span><span style="color: var(--ok)">đạt</span><span>5</span></div>
+          <div class="er"><span>File có thêm kênh mới</span><span style="color: var(--ok)">đạt</span><span style="color: var(--ok)">đạt</span><span>8</span></div>
+        </div>
+        <div class="card" style="padding: 10px 14px; font-size: 13px">
+          <b>Lịch sử</b>
+          <div class="m" style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px"><span>v2 · 10/10 · thêm đơn vị triệu đồng · <a href="#">khôi phục</a></span><span>v1 · 02/10 · tạo sau việc khó đầu tiên</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'light';
+    return { themeClass: 't-' + theme, toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

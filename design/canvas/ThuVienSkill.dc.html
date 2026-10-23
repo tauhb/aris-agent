@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Thư viện skill</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b2{height:34px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:13px}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.chip{height:30px;border:1px solid var(--line);border-radius:999px;background:var(--panel);padding:0 12px;font-size:12.5px;color:var(--muted)}
+.pill{font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 9px;white-space:nowrap}
+.tr{display:grid;grid-template-columns:minmax(0,2fr) 70px 70px 120px 70px 120px 90px;gap:12px;align-items:center;padding:11px 16px;border-top:1px solid var(--line);font-size:13.5px}
+.av{width:22px;height:22px;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:600}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="none" bot="none" hint-size="260px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Thư viện skill</span><span class="m" style="font-size: 12px">62 skill · 9 do bot tự học · người dọn thư viện chạy lần kế 28/10 khi anh rảnh</span></div>
+      <div style="margin-left: auto; display: flex; gap: 8px; align-items: center">
+        <button type="button" class="b2">Học skill từ tài liệu…</button>
+        <button type="button" class="b2">Sao lưu</button>
+        <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+      </div>
+    </div>
+    <div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+        <label style="flex: 0 1 300px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; background: var(--panel)"><span class="m">⌕</span><input type="search" aria-label="Tìm skill" placeholder="Tìm skill…" style="flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; outline: none"></label>
+        <button type="button" class="chip" style="background: var(--hover); color: var(--ink); font-weight: 600">Tất cả</button>
+        <button type="button" class="chip">Chờ duyệt · 2</button>
+        <button type="button" class="chip">Đang dùng</button>
+        <button type="button" class="chip">Ít dùng</button>
+        <button type="button" class="chip">Lưu kho</button>
+        <button type="button" class="chip">Đã ghim</button>
+      </div>
+      <div style="border: 1px solid var(--line); border-radius: 12px; background: var(--panel); overflow-x: auto">
+        <div class="tr" style="border-top: 0; font-size: 12px; font-weight: 600; color: var(--muted); min-width: 760px"><span>Skill</span><span>Bot</span><span>Bản</span><span>Trạng thái</span><span>Dùng</span><span>Thành công</span><span>Cập nhật</span></div>
+        <a href="SkillChiTiet.dc.html" class="tr" style="text-decoration: none; color: inherit; min-width: 760px; background: var(--accentSoft)"><span><span class="mono" style="font-weight: 500">bao-cao-doanh-thu-tuan</span><div class="m" style="font-size: 12px">Bản vá: thêm cột so với tuần trước</div></span><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M47 41L43 53M59 39L55 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="mono">v2 → v3</span><span><span class="pill" style="background: var(--warnSoft); color: var(--warn)">chờ duyệt</span></span><span>12</span><span>83% → <b style="color: var(--ok)">100%</b></span><span class="m">hôm nay</span></a>
+        <div class="tr" style="min-width: 760px"><span><span class="mono" style="font-weight: 500">soan-loi-moi-hop</span><div class="m" style="font-size: 12px">Mới — học từ việc sáng nay</div></span><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path></svg><span class="mono">v1</span><span><span class="pill" style="background: var(--warnSoft); color: var(--warn)">chờ duyệt</span></span><span>0</span><span class="m">eval 5/5 đạt</span><span class="m">hôm nay</span></div>
+        <div class="tr" style="min-width: 760px"><span class="mono" style="font-weight: 500">nghien-cuu-doi-thu</span><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg><span class="mono">v3</span><span><span class="pill" style="background: var(--okSoft); color: var(--ok)">đang dùng</span></span><span>9</span><span>89%</span><span class="m">21/10</span></div>
+        <div class="tr" style="min-width: 760px"><span class="mono" style="font-weight: 500">tom-tat-nguon <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Đã ghim"><path d="M12 17v5M9 3h6l-1 6 4 4H6l4-4z"></path></svg></span><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg><span class="mono">v2</span><span><span class="pill" style="background: var(--okSoft); color: var(--ok)">đang dùng</span></span><span>31</span><span>97%</span><span class="m">03/10</span></div>
+        <div class="tr" style="min-width: 760px"><span class="mono" style="font-weight: 500">dat-lich-routine</span><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="mono">v1</span><span><span class="pill" style="background: var(--panel2); color: var(--muted)">ít dùng · 16 ngày</span></span><span>2</span><span>100%</span><span class="m">07/10</span></div>
+        <div class="tr" style="min-width: 760px"><span class="mono m">xuat-hoa-don-cu</span><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true" style="flex: none; opacity: .5"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M47 41L43 53M59 39L55 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="mono m">v1</span><span><span class="pill" style="background: var(--panel2); color: var(--muted)">lưu kho</span></span><span class="m">0</span><span class="m">—</span><span class="m">12/09</span></div>
+      </div>
+      <p class="m" style="margin: 0; font-size: 12.5px">Skill không dùng 14 ngày chuyển “ít dùng”, 30 ngày vào lưu kho. Skill đã ghim hoặc được routine dùng thì không bị dọn.</p>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'dark';
+    return { themeClass: 't-' + theme, toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

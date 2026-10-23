@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Second Brain</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F6F4;--panel:#FFFFFF;--panel2:#F0F1F3;--ink:#15171C;--muted:#5B6270;--line:#E3E4E8;--accent:#3651D4;--accentSoft:#E8ECFC;--ok:#1F7A4D;--okSoft:#E3F4EA;--warn:#A14A06;--warnSoft:#FDF0E1;--edge:#C9CCD3;--link:#3651D4}
+.t-dark{--bg:#0E1014;--panel:#161920;--panel2:#1D212A;--ink:#ECEEF2;--muted:#9AA2B1;--line:#272C36;--accent:#8EA2FF;--accentSoft:#232A47;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--edge:#3A404C;--link:#A9B8FF}
+button{font-family:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:var(--link)}a:hover{color:var(--ink)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.55; min-height: 900px; display: flex; flex-direction: column">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel)">
+    <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px">
+      <span style="width: 26px; height: 26px; border-radius: 8px; background: var(--ink); color: var(--panel); display: inline-flex; align-items: center; justify-content: center; font-size: 14px">a</span>aris <span style="font-weight: 400; color: var(--muted)">/ Second Brain</span>
+    </div>
+    <div role="group" aria-label="Chế độ xem" style="margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 10px; padding: 3px">
+      <button type="button" style="border: 0; border-radius: 7px; padding: 6px 12px; background: var(--accentSoft); color: var(--accent); font-weight: 600; font-size: 13px">Ghi chú</button>
+      <button type="button" style="border: 0; border-radius: 7px; padding: 6px 12px; background: transparent; color: var(--muted); font-size: 13px">Đồ thị toàn cục</button>
+      <button type="button" style="border: 0; border-radius: 7px; padding: 6px 12px; background: transparent; color: var(--muted); font-size: 13px">Dòng thời gian</button>
+    </div>
+    <button type="button" onClick="{{toggleTheme}}" style="height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font-size: 13px">{{themeLabel}}</button>
+  </header>
+
+  <div style="flex: 1; display: flex; flex-wrap: wrap; min-height: 0">
+
+    <nav aria-label="Cây ghi chú" style="flex: 0 1 256px; min-width: 220px; border-right: 1px solid var(--line); background: var(--panel); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; font-size: 13px">
+      <button type="button" style="display: flex; justify-content: space-between; border: 0; background: var(--warnSoft); color: var(--ink); border-radius: 8px; padding: 8px 10px; text-align: left; font-weight: 600"><span>Hộp thư vào</span><span style="color: var(--warn)">12</span></button>
+      <div style="font-size: 12px; color: var(--muted); padding: 6px 10px 8px">Ghi nhanh từ Telegram, giọng nói, link — aris tự phân loại</div>
+      <button type="button" style="border: 0; background: transparent; color: var(--ink); border-radius: 8px; padding: 7px 10px; text-align: left">Ghi chú hằng ngày · 23/10</button>
+      <div style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 12px 10px 4px">Dự án</div>
+      <button type="button" style="border: 0; background: var(--accentSoft); color: var(--accent); border-radius: 8px; padding: 7px 10px; text-align: left; font-weight: 600">Kênh YouTube quý 4</button>
+      <button type="button" style="border: 0; background: transparent; color: var(--ink); border-radius: 8px; padding: 7px 10px; text-align: left">Ra mắt khoá học AI</button>
+      <div style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 12px 10px 4px">Lĩnh vực</div>
+      <button type="button" style="border: 0; background: transparent; color: var(--ink); border-radius: 8px; padding: 7px 10px; text-align: left">Marketing</button>
+      <button type="button" style="border: 0; background: transparent; color: var(--ink); border-radius: 8px; padding: 7px 10px; text-align: left">Tài chính cá nhân</button>
+      <button type="button" style="border: 0; background: transparent; color: var(--ink); border-radius: 8px; padding: 7px 10px; text-align: left">Sức khoẻ</button>
+      <div style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 12px 10px 4px">Khác</div>
+      <button type="button" style="border: 0; background: transparent; color: var(--ink); border-radius: 8px; padding: 7px 10px; text-align: left">Tài nguyên</button>
+      <button type="button" style="border: 0; background: transparent; color: var(--ink); border-radius: 8px; padding: 7px 10px; text-align: left">Người</button>
+      <button type="button" style="border: 0; background: transparent; color: var(--muted); border-radius: 8px; padding: 7px 10px; text-align: left">Lưu trữ</button>
+      <div style="margin-top: auto; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding: 10px 10px 0">Lưu dạng Markdown · mở được bằng Obsidian</div>
+    </nav>
+
+    <main style="flex: 999 1 520px; min-width: 0; padding: 24px 32px; display: flex; flex-direction: column; gap: 16px">
+      <div style="max-width: 700px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px">
+          <span style="border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; color: var(--muted)">#chiến-lược</span>
+          <span style="border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; color: var(--muted)">#youtube</span>
+          <span style="color: var(--muted); padding: 2px 4px">tạo từ ghi âm Telegram · 21/10 · sửa lần cuối bởi Lâm</span>
+        </div>
+        <h1 style="margin: 0; font-size: 28px; line-height: 1.25; letter-spacing: -0.015em">Chiến lược nội dung YouTube quý 4</h1>
+
+        <div style="border: 1px solid var(--line); background: var(--panel); border-radius: 12px; padding: 12px 14px">
+          <div style="font-size: 12px; font-weight: 600; color: var(--accent)">aris tóm tắt</div>
+          <div style="margin-top: 4px">Tập trung video hướng dẫn, 2 video/tuần, ngân sách 50 triệu. Đang chờ anh chọn ưu tiên giữa người đăng ký và doanh thu.</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <p style="margin: 0">Mục tiêu chính rút ra từ buổi bàn trong phòng <a href="#">Kế hoạch quý 4</a>. Dữ liệu từ <a href="#">[[Báo cáo kênh 90 ngày]]</a> cho thấy nhóm video hướng dẫn giữ chân người xem tốt nhất.</p>
+          <p style="margin: 0">Ngân sách theo đề xuất của Tín trong <a href="#">[[Ngân sách marketing 2026]]</a>. Ý tưởng định dạng ngắn liên quan tới <a href="#">[[Ghi chú: video dưới 60 giây]]</a>.</p>
+        </div>
+
+        <div style="border-top: 1px solid var(--line); padding-top: 14px">
+          <div style="font-weight: 600; font-size: 13px; padding-bottom: 8px">Liên kết ngược <span style="color: var(--muted); font-weight: 400">· 4</span></div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; font-size: 13px">
+            <div style="border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px">Ra mắt khoá học AI</div>
+            <div style="border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px">Ghi chú hằng ngày 22/10</div>
+            <div style="border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px">Phiên chat với Aris 21/10</div>
+            <div style="border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px">Skill: bao-cao-kenh-youtube</div>
+          </div>
+        </div>
+
+        <div style="border: 1px dashed var(--accent); border-radius: 12px; padding: 12px 14px">
+          <div style="font-weight: 600; font-size: 13px">aris gợi ý nối thêm</div>
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px; font-size: 13px">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><span style="flex: 1; min-width: 200px">“Lịch quay tháng 11” — cùng nói về tần suất 2 video/tuần</span><button type="button" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 0; background: var(--accent); color: var(--panel); font-size: 12px; font-weight: 600">Nối</button><button type="button" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--ink); font-size: 12px">Bỏ qua</button></div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><span style="flex: 1; min-width: 200px">Người: “Chị Hà — editor” — được nhắc trong 3 ghi chú về sản xuất</span><button type="button" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 0; background: var(--accent); color: var(--panel); font-size: 12px; font-weight: 600">Nối</button><button type="button" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--ink); font-size: 12px">Bỏ qua</button></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <aside aria-label="Đồ thị và hỏi đáp" style="flex: 1 1 340px; max-width: 380px; min-width: 288px; border-left: 1px solid var(--line); background: var(--panel); padding: 16px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 600">Đồ thị quanh ghi chú</span><span style="font-size: 12px; color: var(--muted)">độ sâu 2</span></div>
+      <div style="border: 1px solid var(--line); border-radius: 12px; background: var(--bg)">
+        <svg viewBox="0 0 340 260" width="100%" role="img" aria-label="Đồ thị: ghi chú Chiến lược YouTube nối với 2 ghi chú, 1 dự án, 1 người, 1 ký ức của bot và 1 phiên chat">
+          <g stroke="var(--edge)" stroke-width="1.5">
+            <line x1="170" y1="130" x2="70" y2="60"></line>
+            <line x1="170" y1="130" x2="280" y2="56"></line>
+            <line x1="170" y1="130" x2="58" y2="190"></line>
+            <line x1="170" y1="130" x2="290" y2="180"></line>
+            <line x1="170" y1="130" x2="170" y2="232"></line>
+            <line x1="170" y1="130" x2="170" y2="30"></line>
+            <line x1="70" y1="60" x2="170" y2="30" stroke-dasharray="3 4"></line>
+            <line x1="290" y1="180" x2="170" y2="232" stroke-dasharray="3 4"></line>
+          </g>
+          <circle cx="170" cy="130" r="18" fill="var(--accent)"></circle>
+          <text x="170" y="164" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">Chiến lược YouTube Q4</text>
+          <circle cx="70" cy="60" r="10" fill="var(--accent)" opacity="0.7"></circle>
+          <text x="70" y="84" text-anchor="middle" font-size="10" fill="var(--muted)">Báo cáo 90 ngày</text>
+          <rect x="270" y="46" width="20" height="20" rx="5" fill="#0F766E"></rect>
+          <text x="280" y="82" text-anchor="middle" font-size="10" fill="var(--muted)">Dự án YouTube</text>
+          <circle cx="58" cy="190" r="10" fill="#C2410C"></circle>
+          <text x="58" y="214" text-anchor="middle" font-size="10" fill="var(--muted)">Chị Hà · editor</text>
+          <polygon points="290,168 302,190 278,190" fill="#6D28D9"></polygon>
+          <text x="290" y="206" text-anchor="middle" font-size="10" fill="var(--muted)">Ký ức của Tín</text>
+          <rect x="160" y="222" width="20" height="20" rx="10" fill="none" stroke="var(--muted)" stroke-width="2"></rect>
+          <text x="214" y="236" text-anchor="start" font-size="10" fill="var(--muted)">Phiên 21/10</text>
+          <circle cx="170" cy="30" r="10" fill="var(--accent)" opacity="0.7"></circle>
+          <text x="212" y="34" text-anchor="start" font-size="10" fill="var(--muted)">Ngân sách 2026</text>
+        </svg>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--muted)">
+        <span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 9px; height: 9px; border-radius: 50%; background: var(--accent)"></span>Ghi chú</span>
+        <span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 9px; height: 9px; border-radius: 2px; background: #0F766E"></span>Dự án</span>
+        <span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 9px; height: 9px; border-radius: 50%; background: #C2410C"></span>Người</span>
+        <span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 9px solid #6D28D9"></span>Ký ức bot</span>
+        <span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--muted)"></span>Phiên chat</span>
+      </div>
+
+      <div style="border-top: 1px solid var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 10px">
+        <div style="font-weight: 600">Hỏi bộ não</div>
+        <label style="display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--bg)"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Câu hỏi</span><input type="text" value="Mình đã quyết gì về ngân sách quảng cáo?" style="flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; outline: none"></label>
+        <div style="font-size: 13px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px">
+          15 triệu cho quảng cáo trong quý 4, theo đề xuất của Tín ngày 23/10 <a href="#">[1]</a>; anh từng muốn giữ quảng cáo dưới 30% ngân sách <a href="#">[2]</a>.
+          <div style="margin-top: 8px; font-size: 12px; color: var(--muted)">[1] Phòng Kế hoạch quý 4 · [2] Ghi chú hằng ngày 02/09</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'dark';
+    return {
+      themeClass: 't-' + theme,
+      themeLabel: theme === 'dark' ? 'Giao diện sáng' : 'Giao diện tối',
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' })
+    };
+  }
+}
+</script>
+</body>
+</html>

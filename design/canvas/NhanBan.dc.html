@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Nhân bản hoặc xuất bot</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--warn:#B45309;--warnSoft:#FCEFDF;--shadow:0 24px 60px rgba(20,23,28,.22),0 2px 6px rgba(20,23,28,.08);--scrim:rgba(20,23,28,.35)}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--warn:#F5A35C;--warnSoft:#3A2614;--shadow:0 24px 60px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.3);--scrim:rgba(0,0,0,.55)}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.b1{height:38px;padding:0 16px;border:0;border-radius:10px;background:var(--ink);color:var(--panel);font-size:13.5px;font-weight:600}
+.b2{height:38px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font-size:13.5px}
+.m{color:var(--muted)}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-top:1px solid var(--line);font-size:14px}
+.ck input{width:18px;height:18px;margin-top:2px;accent-color:var(--accent)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="width: 1440px; height: 900px; position: relative; background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; display: flex; overflow: hidden">
+  <dc-import name="Sidebar" active="none" bot="lam" hint-size="260px,900px"></dc-import>
+  <div style="flex: 1"></div>
+  <div style="position: absolute; inset: 0; background: var(--scrim); display: flex; align-items: center; justify-content: center">
+    <div role="dialog" aria-modal="true" aria-labelledby="nb-title" style="width: 620px; background: var(--panel); border-radius: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 18px 22px 4px">
+        <svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg>
+        <h2 id="nb-title" style="margin: 0; font-size: 18px">Nhân bản hoặc xuất Lâm</h2>
+        <button type="button" onClick="{{toggleTheme}}" style="margin-left: auto; height: 30px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); font-size: 12px">{{themeLabel}}</button>
+      </div>
+      <div role="tablist" style="display: flex; gap: 18px; padding: 8px 22px 0; border-bottom: 1px solid var(--line)">
+        <button type="button" role="tab" aria-selected="true" style="border: 0; background: transparent; padding: 8px 0; border-bottom: 2px solid var(--ink); font-weight: 600; font-size: 13.5px">Nhân bản thành bot mới</button>
+        <button type="button" role="tab" aria-selected="false" style="border: 0; background: transparent; padding: 8px 0; border-bottom: 2px solid transparent; color: var(--muted); font-size: 13.5px">Xuất ra tệp</button>
+      </div>
+      <div style="padding: 10px 22px 4px">
+        <label style="display: flex; flex-direction: column; gap: 6px; padding-bottom: 10px"><span style="font-size: 12.5px; font-weight: 600">Tên bot mới</span><input value="Lâm 2 — nghiên cứu sản phẩm" style="height: 38px; box-sizing: border-box; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); font: inherit; padding: 0 12px"></label>
+        <label class="ck"><input type="checkbox" checked><span style="flex: 1"><b>Cấu hình và model</b><br><span class="m" style="font-size: 13px">Model theo việc, bộ công cụ, quyền</span></span></label>
+        <label class="ck"><input type="checkbox" checked><span style="flex: 1"><b>Tính cách (SOUL)</b></span></label>
+        <label class="ck"><input type="checkbox" checked><span style="flex: 1"><b>Skill · 14</b><br><span class="m" style="font-size: 13px">Bản sao độc lập, sửa bên này không ảnh hưởng bên kia</span></span></label>
+        <label class="ck"><input type="checkbox"><span style="flex: 1"><b>Ký ức và hồ sơ chủ nhân</b><br><span class="m" style="font-size: 13px">Sao chép một lần, sau đó hai bot học riêng</span></span></label>
+        <label class="ck"><input type="checkbox" checked><span style="flex: 1"><b>Khoá API</b></span></label>
+        <div class="ck" style="color: var(--muted)"><input type="checkbox" disabled aria-label="Kênh nhắn tin không được sao chép"><span style="flex: 1"><b>Kênh nhắn tin (token Telegram…)</b><br><span style="font-size: 13px">Không sao chép — mỗi tài khoản bot chỉ thuộc một bot, tránh hai bot giành nhau</span></span></div>
+        <div style="font-size: 13px; color: var(--muted); padding: 4px 0 8px">Lịch sử chat không được sao chép.</div>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; padding: 14px 22px 18px; border-top: 1px solid var(--line)">
+        <button type="button" class="b2">Huỷ</button>
+        <button type="button" class="b1">Tạo bản sao</button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'light';
+    return { themeClass: 't-' + theme, themeLabel: theme === 'dark' ? 'Sáng' : 'Tối', toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

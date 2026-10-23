@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Đồ thị toàn cục 3D</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--edge:#C3C7CF;--isdark:0}
+.t-dark{--bg:#0B0C0F;--panel:#15171C;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--edge:#3A3E47;--isdark:1}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:10px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.m{color:var(--muted)}
+.seg{border:0;border-radius:8px;padding:5px 12px;background:transparent;font-size:13px;color:var(--muted)}
+.fl{display:flex;align-items:center;gap:10px;font-size:13px;padding:5px 0;cursor:pointer}
+.fl input{width:16px;height:16px;accent-color:var(--accent)}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.zb{width:34px;height:34px;border:1px solid var(--line);border-radius:10px;background:var(--panel);display:inline-flex;align-items:center;justify-content:center;font-size:16px}
+.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="brain" bot="none" hint-size="260px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <span style="font-family: 'Lexend', sans-serif; font-weight: 600; font-size: 16px">Đồ thị bộ não</span>
+      <span role="group" aria-label="Loại đồ thị" style="display: inline-flex; border: 1px solid var(--line); border-radius: 10px; padding: 2px"><button type="button" class="seg" style="background: var(--hover); color: var(--ink); font-weight: 600">Tri thức</button><button type="button" class="seg">Đồ thị học</button><a href="BanDo2.dc.html" class="seg" style="text-decoration: none">Đội bot</a></span>
+      <label style="margin-left: auto; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 5px 10px; background: var(--panel); min-width: 220px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true" style="color: var(--muted)"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4-4"></path></svg><input type="search" aria-label="Tìm nút" placeholder="Tìm ghi chú, người, dự án…" style="flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 13px; outline: none"></label>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.6 6.6 0 0 0 9.7 9.7z"></path></svg></button>
+    </div>
+    <div style="flex: 1; display: flex; flex-wrap: wrap; min-height: 0">
+      <div style="flex: 999 1 560px; min-width: 0; position: relative; min-height: 640px">
+        <canvas data-aris-graph="1" ref="{{setCv}}" onPointerDown="{{onDown}}" onPointerMove="{{onMove}}" onPointerUp="{{onUp}}" onPointerLeave="{{onLeave}}" onWheel="{{onWheel}}" role="img" aria-label="Đồ thị tri thức 3D: 5 cụm Kênh YouTube Q4, Ra mắt khoá học AI, Tài chính cá nhân, Marketing, Sức khoẻ. Kéo để xoay, cuộn để phóng to." style="position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none"></canvas>
+        <div style="position: absolute; left: 16px; top: 14px; display: flex; flex-direction: column; gap: 6px">
+          <button type="button" class="zb" onClick="{{zoomIn}}" aria-label="Phóng to">+</button>
+          <button type="button" class="zb" onClick="{{zoomOut}}" aria-label="Thu nhỏ">−</button>
+          <button type="button" class="zb" onClick="{{resetView}}" aria-label="Về góc nhìn ban đầu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"></path></svg></button>
+        </div>
+        <div style="position: absolute; left: 16px; bottom: 14px; display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 7px 12px">
+          <span style="display: inline-flex; align-items: center; gap: 6px"><span class="dot" style="background: #5B8DEF"></span>Ghi chú</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px"><span class="dot" style="background: #00B5A5"></span>Dự án</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px"><span class="dot" style="background: #FFAA00"></span>Lĩnh vực</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px"><span class="dot" style="background: #FF6700"></span>Người</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px"><svg width="11" height="10" viewBox="0 0 11 10" aria-hidden="true"><path d="M5.5 0L11 10H0z" fill="#9259FE"></path></svg>Ký ức bot</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0L10 5 5 10 0 5z" fill="#FF309C"></path></svg>Skill</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px"><span class="dot" style="border: 2px solid var(--muted); box-sizing: border-box"></span>Phiên chat</span>
+        </div>
+        <div style="position: absolute; right: 16px; top: 14px; font-size: 12px; color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px">Kéo để xoay · cuộn để phóng to · bấm nút để xem</div>
+      </div>
+      <aside aria-label="Bộ lọc và chi tiết" style="flex: 1 1 260px; max-width: 290px; min-width: 240px; border-left: 1px solid var(--line); background: var(--panel); padding: 16px; display: flex; flex-direction: column; gap: 16px">
+        <div>
+          <div style="font-weight: 600; font-size: 13.5px; padding-bottom: 4px">Hiển thị</div>
+          <label class="fl"><input type="checkbox" checked="{{show.note}}" onChange="{{tog.note}}"><span class="dot" style="background: #5B8DEF"></span>Ghi chú</label>
+          <label class="fl"><input type="checkbox" checked="{{show.person}}" onChange="{{tog.person}}"><span class="dot" style="background: #FF6700"></span>Người</label>
+          <label class="fl"><input type="checkbox" checked="{{show.memory}}" onChange="{{tog.memory}}"><svg width="11" height="10" viewBox="0 0 11 10" aria-hidden="true"><path d="M5.5 0L11 10H0z" fill="#9259FE"></path></svg>Ký ức của bot</label>
+          <label class="fl"><input type="checkbox" checked="{{show.skill}}" onChange="{{tog.skill}}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0L10 5 5 10 0 5z" fill="#FF309C"></path></svg>Skill</label>
+          <label class="fl"><input type="checkbox" checked="{{show.session}}" onChange="{{tog.session}}"><span class="dot" style="border: 2px solid var(--muted); box-sizing: border-box"></span>Phiên chat</label>
+        </div>
+        <div>
+          <div style="font-weight: 600; font-size: 13.5px; padding-bottom: 6px">Theo thời gian</div>
+          <input type="range" min="10" max="100" value="{{tval}}" onInput="{{onTime}}" onChange="{{onTime}}" aria-label="Chỉ hiện nút tạo trước mốc thời gian" style="width: 100%; accent-color: var(--accent)">
+          <div class="m" style="display: flex; justify-content: space-between; font-size: 11.5px"><span>06/2026</span><span>hôm nay</span></div>
+        </div>
+        <div style="border-top: 1px solid var(--line); padding-top: 14px; font-size: 13px; display: flex; flex-direction: column; gap: 6px">
+          <div class="m" style="font-size: 12px">Đang chọn</div>
+          <b style="font-family: 'Lexend', sans-serif; font-size: 15px">{{selName}}</b>
+          <div class="m">{{selType}} · cụm {{selCl}}</div>
+          <div>Nối với <b>{{selDeg}}</b> nút khác</div>
+          <div style="display: flex; gap: 6px; margin-top: 6px"><a href="GhiChu.dc.html" class="b2" style="display: inline-flex; align-items: center; text-decoration: none">Mở</a><a href="HoiBoNao.dc.html" class="b2" style="display: inline-flex; align-items: center; text-decoration: none">Hỏi về nút này</a></div>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  componentDidMount() {
+    this.rotY = 0.5;
+    this.rotX = -0.28;
+    this.zoom = 1;
+    this.hover = -1;
+    this.dragging = false;
+    this.cssT = -1e9;
+    this.proj = [];
+    this.build();
+    this.selId = this.nodes.findIndex((n) => n.name === 'Ký ức của Tín');
+    this.pushSel(this.selId);
+    this.loop = (ts) => { this.draw(ts); this.raf = requestAnimationFrame(this.loop); };
+    this.raf = requestAnimationFrame(this.loop);
+  }
+
+  componentWillUnmount() {
+    cancelAnimationFrame(this.raf);
+  }
+
+  build() {
+    let seed = 20261023;
+    const rnd = () => {
+      seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    const hubs = [
+      { name: 'Kênh YouTube Q4', type: 'project', c: [0.05, 0.15, 0.05] },
+      { name: 'Ra mắt khoá học AI', type: 'project', c: [1.1, 0.3, 0.45] },
+      { name: 'Tài chính cá nhân', type: 'area', c: [-0.95, -0.4, 0.55] },
+      { name: 'Marketing', type: 'area', c: [0.3, -0.8, -0.9] },
+      { name: 'Sức khoẻ', type: 'area', c: [-0.7, 0.85, -0.75] }
+    ];
+    const named = [
+      [['Chiến lược nội dung', 'note'], ['Báo cáo 90 ngày', 'note'], ['Chị Hà · editor', 'person'], ['Lịch quay tháng 11', 'note'], ['Phiên chat 21/10', 'session'], ['Skill: báo cáo kênh', 'skill']],
+      [['Giáo trình 6 buổi', 'note'], ['Trang bán hàng', 'note'], ['[ĐỐI TÁC]', 'person'], ['Skill: landing-page', 'skill']],
+      [['Ngân sách 2026', 'note'], ['Ký ức của Tín', 'memory'], ['Giữ quảng cáo dưới 30%', 'note']],
+      [['Xu hướng video ngắn', 'note'], ['Đối thủ B', 'note'], ['Ký ức của Lâm', 'memory']],
+      [['Lịch tập', 'note'], ['Ghi chú giấc ngủ', 'note']]
+    ];
+    const pickType = () => {
+      const r = rnd();
+      if (r < 0.46) return 'note';
+      if (r < 0.58) return 'person';
+      if (r < 0.72) return 'memory';
+      if (r < 0.84) return 'skill';
+      return 'session';
+    };
+    const nodes = [];
+    const edges = [];
+    hubs.forEach((hb, ci) => {
+      const hi = nodes.length;
+      nodes.push({ name: hb.name, type: hb.type, x: hb.c[0], y: hb.c[1], z: hb.c[2], hub: true, cl: ci, t: 0.1 });
+      const count = 9 + Math.floor(rnd() * 5);
+      for (let k = 0; k < count; k++) {
+        const nm = named[ci][k];
+        const th = rnd() * Math.PI * 2;
+        const ph = Math.acos(2 * rnd() - 1);
+        const rad = 0.26 + rnd() * 0.24;
+        const si = nodes.length;
+        nodes.push({
+          name: nm ? nm[0] : '',
+          type: nm ? nm[1] : pickType(),
+          x: hb.c[0] + rad * Math.sin(ph) * Math.cos(th),
+          y: hb.c[1] + rad * Math.cos(ph),
+          z: hb.c[2] + rad * Math.sin(ph) * Math.sin(th),
+          hub: false,
+          cl: ci,
+          t: nm ? 0.3 + rnd() * 0.5 : rnd()
+        });
+        edges.push([hi, si]);
+        if (k > 1 && rnd() < 0.22) edges.push([si, si - 1 - Math.floor(rnd() * Math.min(k, 3))]);
+      }
+    });
+    const byName = (n) => nodes.findIndex((x) => x.name === n);
+    [['Ký ức của Tín', 'Kênh YouTube Q4'], ['Ký ức của Tín', 'Ngân sách 2026'], ['Chị Hà · editor', 'Giáo trình 6 buổi'], ['Xu hướng video ngắn', 'Chiến lược nội dung'], ['Ký ức của Lâm', 'Báo cáo 90 ngày'], ['Kênh YouTube Q4', 'Ra mắt khoá học AI'], ['Marketing', 'Kênh YouTube Q4'], ['Giữ quảng cáo dưới 30%', 'Marketing']].forEach((p) => {
+      const a = byName(p[0]);
+      const b = byName(p[1]);
+      if (a >= 0 && b >= 0) edges.push([a, b]);
+    });
+    for (let i = 0; i < 6; i++) {
+      const a = Math.floor(rnd() * nodes.length);
+      const b = Math.floor(rnd() * nodes.length);
+      if (a !== b && nodes[a].cl !== nodes[b].cl && !nodes[a].hub && !nodes[b].hub) edges.push([a, b]);
+    }
+    this.nodes = nodes;
+    this.edges = edges.map((e) => ({ a: e[0], b: e[1], off: rnd() }));
+    this.deg = nodes.map(() => 0);
+    this.edges.forEach((e) => { this.deg[e.a]++; this.deg[e.b]++; });
+    this.hubNames = hubs.map((h) => h.name);
+    this.show = { note: true, project: true, area: true, person: true, memory: true, skill: false, session: false };
+    this.tcut = 1;
+  }
+
+  pushSel(i) {
+    if (i < 0) return;
+    const n = this.nodes[i];
+    const lab = { note: 'Ghi chú', project: 'Dự án', area: 'Lĩnh vực', person: 'Người', memory: 'Ký ức của bot', skill: 'Skill', session: 'Phiên chat' }[n.type];
+    this.setState({ selName: n.name || lab + ' không tên', selType: lab, selDeg: this.deg[i], selCl: this.hubNames[n.cl] });
+  }
+
+  visible(n) {
+    return this.show[n.type] && n.t <= this.tcut + 0.0001;
+  }
+
+  draw(ts) {
+    if (!this.cv) this.cv = document.querySelector('canvas[data-aris-graph]');
+    const cv = this.cv;
+    if (!cv) return;
+    const w = cv.clientWidth;
+    const h = cv.clientHeight;
+    if (!w || !h) return;
+    const dpr = window.devicePixelRatio || 1;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
+      cv.width = Math.round(w * dpr);
+      cv.height = Math.round(h * dpr);
+    }
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    if (ts - this.cssT > 400) {
+      const s = getComputedStyle(cv);
+      const v = (k, d) => (s.getPropertyValue(k).trim() || d);
+      this.C = { ink: v('--ink', '#16171B'), muted: v('--muted', '#5C616C'), line: v('--edge', '#C9CCD3'), accent: v('--accent', '#1D6FE0'), panel: v('--panel', '#fff'), dark: v('--isdark', '0') === '1' };
+      this.cssT = ts;
+    }
+    const C = this.C;
+    if (!this.dragging && this.hover < 0) this.rotY += 0.0016;
+
+    const bg = ctx.createRadialGradient(w / 2, h / 2, 10, w / 2, h / 2, Math.max(w, h) * 0.65);
+    bg.addColorStop(0, C.dark ? 'rgba(90,165,255,0.10)' : 'rgba(29,111,224,0.06)');
+    bg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+
+    const S = Math.min(w, h) * 0.36 * this.zoom;
+    const cyR = Math.cos(this.rotY);
+    const syR = Math.sin(this.rotY);
+    const cxR = Math.cos(this.rotX);
+    const sxR = Math.sin(this.rotX);
+    const D = 3.2;
+    const pr = (x, y, z) => {
+      const x1 = x * cyR - z * syR;
+      const z1 = x * syR + z * cyR;
+      const y2 = y * cxR - z1 * sxR;
+      const z2 = y * sxR + z1 * cxR;
+      const p = D / (D - z2);
+      return { x: w / 2 + x1 * S * p, y: h / 2 + y2 * S * p, z: z2, p: p };
+    };
+    this.proj = this.nodes.map((n) => pr(n.x, n.y, n.z));
+    [[1.55, 0], [1.1, -0.95]].forEach((rg, ri) => {
+      ctx.save();
+      ctx.strokeStyle = C.line;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 7]);
+      ctx.globalAlpha = ri === 0 ? 0.55 : 0.3;
+      ctx.beginPath();
+      for (let k = 0; k <= 72; k++) {
+        const a = (k / 72) * Math.PI * 2;
+        const q = pr(rg[0] * Math.cos(a), rg[1], rg[0] * Math.sin(a));
+        if (k === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    });
+    const P = this.proj;
+    const focus = this.hover >= 0 ? this.hover : this.selId;
+    const dn = (z) => Math.max(0, Math.min(1, (z + 1.4) / 2.8));
+
+    ctx.lineCap = 'round';
+    this.edges.forEach((e) => {
+      const A = this.nodes[e.a];
+      const B = this.nodes[e.b];
+      if (!this.visible(A) || !this.visible(B)) return;
+      const pa = P[e.a];
+      const pb = P[e.b];
+      const hot = e.a === focus || e.b === focus;
+      const d = dn((pa.z + pb.z) / 2);
+      ctx.globalAlpha = hot ? 0.95 : 0.1 + 0.4 * d;
+      ctx.strokeStyle = hot ? C.accent : C.line;
+      ctx.lineWidth = hot ? 1.8 : 0.6 + 0.8 * d;
+      ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+      if (hot || e.off < 0.28) {
+        const t = (ts / 2200 + e.off) % 1;
+        ctx.globalAlpha = hot ? 1 : 0.35 + 0.5 * d;
+        ctx.fillStyle = C.accent;
+        ctx.beginPath(); ctx.arc(pa.x + (pb.x - pa.x) * t, pa.y + (pb.y - pa.y) * t, (hot ? 2.4 : 1.6) * ((pa.p + pb.p) / 2), 0, Math.PI * 2); ctx.fill();
+      }
+    });
+    ctx.globalAlpha = 1;
+
+    const col = { note: '#5B8DEF', project: '#00B5A5', area: '#FFAA00', person: '#FF6700', memory: '#9259FE', skill: '#FF309C', session: C.muted };
+    const base = { note: 5, project: 12.5, area: 11.5, person: 6, memory: 6.4, skill: 6, session: 4.2 };
+    const order = this.nodes.map((n, i) => i).sort((a, b) => P[a].z - P[b].z);
+    order.forEach((i) => {
+      const n = this.nodes[i];
+      if (!this.visible(n)) return;
+      const p = P[i];
+      const d = dn(p.z);
+      const r = base[n.type] * p.p * (i === focus ? 1.35 : 1);
+      const c = col[n.type];
+      ctx.globalAlpha = 0.35 + 0.65 * d;
+      if (n.hub) {
+        const halo = ctx.createRadialGradient(p.x, p.y, r * 0.6, p.x, p.y, r * 2.6);
+        halo.addColorStop(0, c + '55');
+        halo.addColorStop(1, c + '00');
+        ctx.fillStyle = halo;
+        ctx.beginPath(); ctx.arc(p.x, p.y, r * 2.6, 0, Math.PI * 2); ctx.fill();
+      }
+      if (n.type === 'memory') {
+        ctx.fillStyle = c;
+        ctx.beginPath(); ctx.moveTo(p.x, p.y - r * 1.25); ctx.lineTo(p.x + r * 1.15, p.y + r * 0.8); ctx.lineTo(p.x - r * 1.15, p.y + r * 0.8); ctx.closePath(); ctx.fill();
+      } else if (n.type === 'skill') {
+        ctx.fillStyle = c;
+        ctx.beginPath(); ctx.moveTo(p.x, p.y - r * 1.2); ctx.lineTo(p.x + r * 1.2, p.y); ctx.lineTo(p.x, p.y + r * 1.2); ctx.lineTo(p.x - r * 1.2, p.y); ctx.closePath(); ctx.fill();
+      } else if (n.type === 'session') {
+        ctx.strokeStyle = c;
+        ctx.lineWidth = 1.6 * p.p;
+        ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.stroke();
+      } else {
+        const g = ctx.createRadialGradient(p.x - r * 0.35, p.y - r * 0.4, r * 0.1, p.x, p.y, r);
+        g.addColorStop(0, '#ffffff');
+        g.addColorStop(0.28, c);
+        g.addColorStop(1, c);
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+      }
+      if (i === focus) {
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = C.ink;
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(p.x, p.y, r + 5, 0, Math.PI * 2); ctx.stroke();
+      }
+      const showLabel = n.name && (n.hub || i === focus || (d > 0.55 && p.p > 1.02));
+      if (showLabel) {
+        ctx.globalAlpha = n.hub || i === focus ? 1 : 0.85;
+        ctx.font = (n.hub ? '600 13px' : '500 11.5px') + ' "Be Vietnam Pro", system-ui, sans-serif';
+        const tw = ctx.measureText(n.name).width;
+        const lx = p.x - tw / 2;
+        const ly = p.y + r + (n.hub ? 14 : 10);
+        ctx.fillStyle = C.panel;
+        ctx.globalAlpha *= 0.85;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(lx - 6, ly - 11, tw + 12, 17, 8); else ctx.rect(lx - 6, ly - 11, tw + 12, 17);
+        ctx.fill();
+        ctx.globalAlpha = n.hub || i === focus ? 1 : 0.85;
+        ctx.fillStyle = C.ink;
+        ctx.textAlign = 'left';
+        ctx.fillText(n.name, lx, ly + 2);
+      }
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  pick(e) {
+    const r = this.cv.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    let best = -1;
+    let bd = 1e9;
+    this.proj.forEach((p, i) => {
+      if (!this.visible(this.nodes[i])) return;
+      const d = Math.hypot(p.x - x, p.y - y);
+      const lim = (this.nodes[i].hub ? 16 : 9) * p.p;
+      if (d < lim && d < bd) { bd = d; best = i; }
+    });
+    return best;
+  }
+
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'dark';
+    const show = s.show || { note: true, person: true, memory: true, skill: false, session: false };
+    const tog = {};
+    ['note', 'person', 'memory', 'skill', 'session'].forEach((k) => {
+      tog[k] = () => {
+        const nx = Object.assign({}, show);
+        nx[k] = !nx[k];
+        if (this.show) this.show[k] = nx[k];
+        this.setState({ show: nx });
+      };
+    });
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      show: show,
+      tog: tog,
+      tval: s.tval === undefined ? 100 : s.tval,
+      onTime: (e) => { const v = Number(e.target.value); this.tcut = v / 100; this.setState({ tval: v }); },
+      selName: s.selName || '',
+      selType: s.selType || '',
+      selDeg: s.selDeg === undefined ? '' : s.selDeg,
+      selCl: s.selCl || '',
+      zoomIn: () => { this.zoom = Math.min(2.2, this.zoom * 1.2); },
+      zoomOut: () => { this.zoom = Math.max(0.6, this.zoom / 1.2); },
+      resetView: () => { this.rotX = -0.28; this.zoom = 1; },
+      setCv: (el) => { this.cv = el; },
+      onDown: (e) => { this.dragging = true; this.moved = 0; this.lx = e.clientX; this.ly = e.clientY; },
+      onMove: (e) => {
+        if (!this.cv) return;
+        if (this.dragging) {
+          const dx = e.clientX - this.lx;
+          const dy = e.clientY - this.ly;
+          this.moved += Math.abs(dx) + Math.abs(dy);
+          this.rotY += dx * 0.008;
+          this.rotX = Math.max(-1.2, Math.min(1.2, this.rotX + dy * 0.008));
+          this.lx = e.clientX;
+          this.ly = e.clientY;
+          return;
+        }
+        this.hover = this.pick(e);
+        this.cv.style.cursor = this.hover >= 0 ? 'pointer' : 'grab';
+      },
+      onUp: (e) => {
+        this.dragging = false;
+        if (this.moved < 4) {
+          const i = this.pick(e);
+          if (i >= 0) { this.selId = i; this.pushSel(i); }
+        }
+      },
+      onLeave: () => { this.dragging = false; this.hover = -1; },
+      onWheel: (e) => {
+        if (e.preventDefault) e.preventDefault();
+        this.zoom = Math.max(0.6, Math.min(2.2, this.zoom * (e.deltaY < 0 ? 1.08 : 1 / 1.08)));
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Hồ sơ chủ nhân</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.m{color:var(--muted)}
+.lb{font-size:12px;font-weight:600;color:var(--muted)}
+.cl{display:grid;grid-template-columns:minmax(0,1fr) 120px 110px 150px;gap:14px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.bar{height:6px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.seg{border:0;border-radius:7px;padding:5px 12px;background:transparent;font-size:13px;color:var(--muted)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="none" bot="lam" hint-size="260px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Lâm hiểu gì về anh</span><span class="m" style="font-size: 12px">Mỗi bot có hồ sơ riêng · 18 nhận định · cập nhật bởi vòng học</span></div>
+      <span role="group" aria-label="Chọn bot" style="margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 9px; padding: 2px">
+        <button type="button" class="seg">Aris</button><button type="button" class="seg">Mai</button><button type="button" class="seg" style="background: var(--hover); color: var(--ink); font-weight: 600">Lâm</button><button type="button" class="seg">Tín</button>
+      </span>
+      <button type="button" class="b2">Sao chép sang bot khác</button>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+
+    <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 16px; max-width: 1040px; width: 100%; box-sizing: border-box">
+      <div class="card" style="padding: 12px 14px; display: flex; gap: 12px; align-items: center; border-color: var(--warn); background: var(--warnSoft)">
+        <div style="flex: 1"><b>Lâm chưa chắc 1 điều:</b> anh muốn báo cáo nghiên cứu dài 1 trang hay đầy đủ chi tiết? Hai lần gần đây anh phản hồi ngược nhau.</div>
+        <button type="button" class="b2">1 trang</button><button type="button" class="b2">Đầy đủ</button><button type="button" class="b2">Tuỳ việc</button>
+      </div>
+
+      <div class="card">
+        <div class="cl" style="border-top: 0; font-size: 12px; color: var(--muted); font-weight: 600"><span>Cách giao tiếp</span><span>Độ tin cậy</span><span>Bằng chứng</span><span></span></div>
+        <div class="cl"><span>Trả lời tiếng Việt có dấu, ngắn, ưu tiên bảng</span><div class="bar"><div style="width: 94%; height: 100%; background: var(--ok)"></div></div><a href="#">12 lần</a><span style="display: flex; gap: 6px"><button type="button" class="b2">Đúng</button><button type="button" class="b2">Sửa</button></span></div>
+        <div class="cl"><span>Không thích mở đầu bằng lời khen hay rào đón</span><div class="bar"><div style="width: 81%; height: 100%; background: var(--ok)"></div></div><a href="#">5 lần</a><span style="display: flex; gap: 6px"><button type="button" class="b2">Đúng</button><button type="button" class="b2">Sửa</button></span></div>
+        <div class="cl"><span>Bảng so sánh phải có cột “nguồn”</span><div class="bar"><div style="width: 88%; height: 100%; background: var(--ok)"></div></div><a href="#">4 lần</a><span style="display: flex; gap: 6px"><button type="button" class="b2">Đúng</button><button type="button" class="b2">Sửa</button></span></div>
+      </div>
+
+      <div class="card">
+        <div class="cl" style="border-top: 0; font-size: 12px; color: var(--muted); font-weight: 600"><span>Công việc và mục tiêu</span><span>Độ tin cậy</span><span>Bằng chứng</span><span></span></div>
+        <div class="cl"><span>Đang tập trung kênh YouTube và khoá học AI trong quý 4</span><div class="bar"><div style="width: 76%; height: 100%; background: var(--accent)"></div></div><a href="#">7 lần</a><span style="display: flex; gap: 6px"><button type="button" class="b2">Đúng</button><button type="button" class="b2">Sửa</button></span></div>
+        <div class="cl"><span>Theo dõi 3 đối thủ: [ĐỐI THỦ A], [ĐỐI THỦ B], [ĐỐI THỦ C]</span><div class="bar"><div style="width: 70%; height: 100%; background: var(--accent)"></div></div><a href="#">3 lần</a><span style="display: flex; gap: 6px"><button type="button" class="b2">Đúng</button><button type="button" class="b2">Sửa</button></span></div>
+        <div class="cl"><span class="m">Có thể thích nhận báo cáo vào sáng thứ 2</span><div class="bar"><div style="width: 42%; height: 100%; background: var(--warn)"></div></div><a href="#">1 lần</a><span style="display: flex; gap: 6px"><button type="button" class="b2">Đúng</button><button type="button" class="b2">Sai</button></span></div>
+      </div>
+      <p class="m" style="margin: 0; font-size: 12.5px">Nhận định từ 80% trở lên được nạp vào prompt của Lâm. Bấm “bằng chứng” để mở đúng đoạn hội thoại sinh ra nhận định.</p>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'dark';
+    return { themeClass: 't-' + theme, toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

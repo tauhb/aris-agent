@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Việc đang chạy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.h{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.av{flex:none;width:24px;height:24px;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+.tr{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.pulse{animation:pulse 1.6s ease-in-out infinite}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="none" bot="none" hint-size="260px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Việc đang chạy</span><span class="m" style="font-size: 12px">Mục tiêu, việc được giao, vòng lặp và điểm khôi phục của mọi bot</span></div>
+      <button type="button" style="margin-left: auto; height: 34px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--danger); background: transparent; color: var(--danger); font-size: 13px; font-weight: 600">Dừng tất cả</button>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+
+    <div style="padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start">
+      <div style="flex: 1.2 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div class="h">Mục tiêu</div>
+        <div class="card" style="padding: 14px">
+          <div style="display: flex; align-items: center; gap: 10px"><svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><b style="flex: 1">Tóm tắt 3 đối thủ và chốt lịch họp thứ 5</b><span class="mono m" style="font-size: 12px">lượt 2/20</span></div>
+          <div style="height: 6px; border-radius: 99px; background: var(--panel2); margin: 10px 0"><div style="width: 10%; height: 100%; border-radius: 99px; background: var(--accent)"></div></div>
+          <div style="font-size: 13px"><span class="m">Giám khảo (10:44):</span> <b>tiếp tục</b> — còn chờ kết quả của Lâm và anh duyệt lời mời của Mai.</div>
+          <div style="display: flex; gap: 6px; margin-top: 10px"><button type="button" class="b2">Tạm dừng</button><button type="button" class="b2">Sửa mục tiêu</button><button type="button" class="b2">Huỷ</button></div>
+        </div>
+
+        <div class="h">Việc được giao</div>
+        <div class="card">
+          <div class="tr" style="border-top: 0"><svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span>→</span><svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg><span style="flex: 1">Nghiên cứu 3 đối thủ</span><span style="width: 80px; height: 5px; border-radius: 99px; background: var(--panel2); overflow: hidden"><span style="display: block; width: 60%; height: 100%; background: #00B5A5"></span></span><span class="m" style="font-size: 12px; width: 48px">4 phút</span></div>
+          <div class="tr" style="padding-left: 52px"><span class="av" style="background: var(--panel2); color: var(--muted)">?</span><span style="flex: 1" class="m">Trợ lý ẩn · đọc nguồn 1–10</span><span style="font-size: 12px; color: var(--ok)">xong</span></div>
+          <div class="tr" style="padding-left: 52px"><span class="av" style="background: var(--panel2); color: var(--muted)">?</span><span style="flex: 1" class="m">Trợ lý ẩn · đọc nguồn 11–20</span><span class="pulse" style="font-size: 12px; color: var(--accent)">đang chạy</span></div>
+          <div class="tr"><svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span>→</span><svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path></svg><span style="flex: 1">Gửi lời mời họp thứ 5</span><a href="HopDuyet.dc.html" style="font-size: 12.5px; font-weight: 600; color: var(--warn)">chờ anh duyệt ›</a></div>
+        </div>
+      </div>
+
+      <div style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div class="h">Vòng lặp và nhịp tim</div>
+        <div class="card">
+          <div class="tr" style="border-top: 0"><svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 12C80 12 88 20 88 50C88 80 80 88 50 88C20 88 12 80 12 50C12 20 20 12 50 12Z" fill="#00C972"></path><circle cx="52" cy="52" r="8" fill="#fff"></circle><circle cx="66" cy="44" r="6" fill="#fff"></circle></svg><span style="flex: 1">Kiểm tra bản deploy mỗi 5 phút<div class="m" style="font-size: 12px">3 lần · lần kế sau <span class="mono">02:14</span></div></span><button type="button" class="b2">Dừng</button></div>
+          <div class="tr"><svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M47 41L43 53M59 39L55 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span style="flex: 1">Theo dõi tỉ giá, tự giãn nhịp<div class="m" style="font-size: 12px">không đổi 4 lần ⇒ giãn lên 8 phút</div></span><button type="button" class="b2">Dừng</button></div>
+          <div class="tr"><svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span style="flex: 1">Nhịp tim: “có tin quan trọng trong email thì báo”<div class="m" style="font-size: 12px">mỗi 30 phút khi rảnh</div></span><button type="button" class="b2">Tạm dừng</button></div>
+        </div>
+
+        <div class="h">Điểm khôi phục</div>
+        <div class="card">
+          <div class="tr" style="border-top: 0"><span class="mono m" style="font-size: 12px">10:02</span><span style="flex: 1">Trước khi Dev sửa 3 file trong <span class="mono" style="font-size: 12px">landing-page/</span></span><button type="button" class="b2">Xem khác biệt</button><button type="button" class="b2">Khôi phục</button></div>
+          <div class="tr"><span class="mono m" style="font-size: 12px">hôm qua</span><span style="flex: 1">Trước khi Hạ viết lại 2 bài nháp</span><button type="button" class="b2">Khôi phục</button></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'light';
+    return { themeClass: 't-' + theme, toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Thống kê và nhật ký</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--warn:#B45309;--c1:#1084FE;--c2:#00B5A5;--c3:#FF6700;--c4:#FFAA00}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--warn:#F5A35C;--c1:#5AA5FF;--c2:#2CC9BA;--c3:#FF8A3D;--c4:#FFC14D}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b2{height:30px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:12.5px}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.sn{display:block;border-radius:8px;padding:7px 10px;font-size:13.5px;color:var(--ink);text-decoration:none}
+.seg{border:0;border-radius:7px;padding:4px 10px;background:transparent;font-size:12.5px;color:var(--muted)}
+.col{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;flex:1}
+.stk{width:34px;display:flex;flex-direction:column-reverse;border-radius:5px;overflow:hidden}
+.lg{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.sw{width:10px;height:10px;border-radius:3px}
+.lr{display:grid;grid-template-columns:70px 40px minmax(0,1.6fr) 90px 80px 80px;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--line);font-size:13px;min-width:700px}
+.av{width:22px;height:22px;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:600}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="settings" bot="none" hint-size="260px,900px"></dc-import>
+  <nav aria-label="Cài đặt" style="flex: 0 1 210px; min-width: 190px; border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px">
+    <div class="m" style="padding: 0 10px 8px; font-weight: 600; font-size: 12px">Cài đặt và vận hành</div>
+    <a class="sn" href="DieuKhien.dc.html">Bảng điều khiển</a>
+    <a class="sn" href="Provider.dc.html">Provider và model</a>
+    <a class="sn" href="Kenh.dc.html">Kênh và ghép đôi</a>
+    <a class="sn" href="BaoMat.dc.html">Ngân sách, duyệt, mạng</a>
+    <a class="sn" href="ThongKe.dc.html" aria-current="page" style="background: var(--hover); font-weight: 600">Thống kê và nhật ký</a>
+    <a class="sn" href="Commander.dc.html">Commander</a>
+    <a class="sn" href="ManHinhBot.dc.html">Màn hình của bot</a>
+  </nav>
+  <main style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <span style="font-weight: 600">Thống kê và nhật ký</span>
+      <span role="group" aria-label="Khoảng thời gian" style="margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 2px"><button type="button" class="seg">Hôm nay</button><button type="button" class="seg" style="background: var(--hover); color: var(--ink); font-weight: 600">7 ngày</button><button type="button" class="seg">30 ngày</button></span>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+    <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; flex-wrap: wrap; gap: 16px">
+        <div class="card" style="flex: 1.4 1 460px; padding: 14px 16px">
+          <div style="display: flex; align-items: baseline; gap: 10px"><b>Chi phí theo việc</b><span class="m" style="font-size: 13px">7 ngày · 2,96 USD</span></div>
+          <div style="display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0 12px"><span class="lg"><span class="sw" style="background: var(--c1)"></span>Chat</span><span class="lg"><span class="sw" style="background: var(--c2)"></span>Việc được giao</span><span class="lg"><span class="sw" style="background: var(--c3)"></span>Routine</span><span class="lg"><span class="sw" style="background: var(--c4)"></span>Vòng học + kiểm thử</span></div>
+          <div role="img" aria-label="Biểu đồ cột chồng chi phí 7 ngày, cao nhất thứ 5 khoảng 0,6 USD" style="display: flex; gap: 10px; height: 170px; align-items: flex-end; border-bottom: 1px solid var(--line); padding-bottom: 4px">
+            <div class="col"><div class="stk" style="height: 90px"><span style="height: 40%; background: var(--c1)"></span><span style="height: 25%; background: var(--c2)"></span><span style="height: 20%; background: var(--c3)"></span><span style="height: 15%; background: var(--c4)"></span></div></div>
+            <div class="col"><div class="stk" style="height: 110px"><span style="height: 38%; background: var(--c1)"></span><span style="height: 30%; background: var(--c2)"></span><span style="height: 17%; background: var(--c3)"></span><span style="height: 15%; background: var(--c4)"></span></div></div>
+            <div class="col"><div class="stk" style="height: 70px"><span style="height: 45%; background: var(--c1)"></span><span style="height: 20%; background: var(--c2)"></span><span style="height: 20%; background: var(--c3)"></span><span style="height: 15%; background: var(--c4)"></span></div></div>
+            <div class="col"><div class="stk" style="height: 160px"><span style="height: 30%; background: var(--c1)"></span><span style="height: 45%; background: var(--c2)"></span><span style="height: 12%; background: var(--c3)"></span><span style="height: 13%; background: var(--c4)"></span></div></div>
+            <div class="col"><div class="stk" style="height: 100px"><span style="height: 40%; background: var(--c1)"></span><span style="height: 28%; background: var(--c2)"></span><span style="height: 17%; background: var(--c3)"></span><span style="height: 15%; background: var(--c4)"></span></div></div>
+            <div class="col"><div class="stk" style="height: 40px"><span style="height: 30%; background: var(--c1)"></span><span style="height: 10%; background: var(--c2)"></span><span style="height: 50%; background: var(--c3)"></span><span style="height: 10%; background: var(--c4)"></span></div></div>
+            <div class="col"><div class="stk" style="height: 75px"><span style="height: 45%; background: var(--c1)"></span><span style="height: 30%; background: var(--c2)"></span><span style="height: 15%; background: var(--c3)"></span><span style="height: 10%; background: var(--c4)"></span></div></div>
+          </div>
+          <div style="display: flex; gap: 10px; font-size: 12px" class="m"><span style="flex: 1; text-align: center">T6</span><span style="flex: 1; text-align: center">T7</span><span style="flex: 1; text-align: center">CN</span><span style="flex: 1; text-align: center">T2</span><span style="flex: 1; text-align: center">T3</span><span style="flex: 1; text-align: center">T4</span><span style="flex: 1; text-align: center">T5</span></div>
+        </div>
+        <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 12px">
+          <div class="card" style="padding: 12px 14px"><div class="m" style="font-size: 12px">Trúng prompt cache</div><div style="font-size: 22px; font-weight: 700">86%</div><div class="m" style="font-size: 12px">tiết kiệm ước tính 61% chi phí đầu vào</div></div>
+          <div class="card" style="padding: 12px 14px"><div class="m" style="font-size: 12px">Việc hoàn thành không cần anh</div><div style="font-size: 22px; font-weight: 700">78%</div><div class="m" style="font-size: 12px">142 / 182 việc</div></div>
+          <div class="card" style="padding: 12px 14px"><div class="m" style="font-size: 12px">Skill mới được bật</div><div style="font-size: 22px; font-weight: 700">3</div><div class="m" style="font-size: 12px">1 bị rollback</div></div>
+        </div>
+      </div>
+      <div class="card" style="overflow-x: auto">
+        <div style="padding: 12px 14px; display: flex; align-items: center"><b>Nhật ký phiên</b><span class="m" style="font-size: 12.5px; margin-left: 8px">mọi phiên đều phát lại được từng bước</span></div>
+        <div class="lr m" style="font-size: 12px; font-weight: 600"><span>Giờ</span><span>Bot</span><span>Phiên</span><span>Nguồn</span><span>Chi phí</span><span></span></div>
+        <div class="lr"><span class="mono m" style="font-size: 12px">10:42</span><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg><span>Nghiên cứu 3 đối thủ <span class="m">· do Aris giao</span></span><span class="m">Commander</span><span class="mono">0,11</span><button type="button" class="b2">Phát lại</button></div>
+        <div class="lr"><span class="mono m" style="font-size: 12px">10:40</span><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span>Tóm tắt đối thủ + họp thứ 5</span><span class="m">Web</span><span class="mono">0,19</span><button type="button" class="b2">Phát lại</button></div>
+        <div class="lr"><span class="mono m" style="font-size: 12px">08:00</span><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M47 41L43 53M59 39L55 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span>Routine: báo cáo chi tiêu tuần</span><span class="m">Lịch</span><span class="mono">0,03</span><button type="button" class="b2">Phát lại</button></div>
+        <div class="lr"><span class="mono m" style="font-size: 12px">07:55</span><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path></svg><span>Ghi âm: ý tưởng series 5 tập</span><span class="m">Telegram</span><span class="mono">0,01</span><button type="button" class="b2">Phát lại</button></div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'dark';
+    return { themeClass: 't-' + theme, toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

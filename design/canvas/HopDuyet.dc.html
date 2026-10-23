@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Hộp duyệt</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:38px;padding:0 16px;border:0;border-radius:10px;background:var(--ink);color:var(--panel);font-size:13.5px;font-weight:600}
+.b2{height:38px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font-size:13.5px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.m{color:var(--muted)}
+.chip{height:30px;border:1px solid var(--line);border-radius:999px;background:var(--panel);padding:0 11px;font-size:12.5px;color:var(--muted)}
+.li{display:flex;gap:10px;align-items:flex-start;width:100%;border:0;border-top:1px solid var(--line);background:transparent;padding:12px 14px;text-align:left}
+.av{flex:none;width:28px;height:28px;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.kv{display:grid;grid-template-columns:120px minmax(0,1fr);gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="inbox" bot="none" hint-size="260px,900px"></dc-import>
+  <section aria-label="Danh sách chờ duyệt" style="flex: 0 1 380px; min-width: 300px; border-right: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column">
+    <div style="padding: 14px 14px 10px; display: flex; align-items: center"><span style="font-weight: 600">Hộp duyệt</span><span class="m" style="margin-left: 8px; font-size: 12.5px">3 cần anh</span><button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="margin-left: auto"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button></div>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 12px">
+      <button type="button" class="chip" style="background: var(--hover); color: var(--ink); font-weight: 600">Tất cả</button><button type="button" class="chip">Hành động · 1</button><button type="button" class="chip">Ký ức · 1</button><button type="button" class="chip">Skill · 1</button>
+    </div>
+    <button type="button" class="li" style="background: var(--accentSoft)"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path></svg><span style="flex: 1; min-width: 0"><span style="display: flex; justify-content: space-between"><b>Gửi lời mời họp</b><span style="font-size: 12px; color: var(--warn); font-weight: 600">còn 25 phút</span></span><span class="m" style="display: block; font-size: 12.5px">Mai · qua Commander · 4 người nhận</span></span></button>
+    <button type="button" class="li"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M47 41L43 53M59 39L55 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span style="flex: 1; min-width: 0"><span style="display: flex; justify-content: space-between"><b>Bật skill bao-cao-doanh-thu-tuan v3</b></span><span class="m" style="display: block; font-size: 12.5px">Tín · eval 5/5 đạt · −32% số bước</span></span></button>
+    <button type="button" class="li"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path></svg><span style="flex: 1; min-width: 0"><span style="display: flex; justify-content: space-between"><b>Lưu ký ức</b></span><span class="m" style="display: block; font-size: 12.5px">“Anh không nhận họp trước 9 giờ”</span></span></button>
+    <div class="m" style="padding: 14px; font-size: 12px; border-top: 1px solid var(--line)">Đã xử lý hôm nay · 7</div>
+    <div class="card" style="margin: auto 14px 14px; padding: 12px; border-color: var(--accent)">
+      <div style="font-size: 13px"><b>Gợi ý luật</b> — anh đã cho phép “gửi lời mời họp cho người trong công ty” 12 lần.</div>
+      <div style="display: flex; gap: 6px; margin-top: 8px"><button type="button" class="b2" style="height: 32px; font-size: 12.5px">Luôn cho phép</button><button type="button" class="b2" style="height: 32px; font-size: 12.5px">Bỏ qua</button></div>
+    </div>
+  </section>
+
+  <main style="flex: 999 1 520px; min-width: 0; padding: 22px 28px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <svg width="40" height="40" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path></svg>
+      <div style="display: flex; flex-direction: column"><span style="font-size: 18px; font-weight: 700">Mai muốn gửi lời mời họp</span><span class="m" style="font-size: 13px">Commander Aris giao lúc 10:42 · yêu cầu của anh trong chat với Aris</span></div>
+    </div>
+    <div class="card" style="padding: 4px 16px 8px; max-width: 720px">
+      <div class="kv" style="border-top: 0"><span class="m">Thời gian</span><span>Thứ 5, 30/10 · 14:00–15:00</span></div>
+      <div class="kv"><span class="m">Người nhận</span><span>4 người · marketing@[CÔNG TY], [TÊN 1], [TÊN 2], [TÊN 3]</span></div>
+      <div class="kv"><span class="m">Nơi họp</span><span>Google Meet (theo ký ức của Aris)</span></div>
+      <div class="kv"><span class="m">Nội dung</span><span style="white-space: pre-line">Chào cả nhóm, mời mọi người họp thứ 5 để thống nhất kế hoạch nội dung quý 4. Tài liệu: báo cáo đối thủ (Lâm gửi trước buổi họp).</span></div>
+      <div class="kv"><span class="m">Mức rủi ro</span><span style="color: var(--warn); font-weight: 600">Gửi ra ngoài · không hoàn tác được</span></div>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px">
+      <button type="button" class="b1">Cho phép một lần</button>
+      <button type="button" class="b2">Sửa nội dung</button>
+      <button type="button" class="b2">Luôn cho phép loại này với Mai</button>
+      <button type="button" class="b2" style="color: var(--danger)">Từ chối</button>
+    </div>
+    <p class="m" style="margin: 0; font-size: 12.5px">Không trả lời trong 25 phút ⇒ tự từ chối. Thẻ này cũng đã gửi tới Telegram của anh.</p>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'dark';
+    return { themeClass: 't-' + theme, toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

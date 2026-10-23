@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Linh vật và đội hình</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FCEBE9}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.ct{font-family:'Lexend',sans-serif;font-weight:600;font-size:17px;letter-spacing:-.01em}
+.cs{font-size:13px;color:var(--muted)}
+.mv{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.nm{font-family:'Lexend',sans-serif;font-weight:600;font-size:14px}
+.rl{font-size:12px;color:var(--muted)}
+.tile{width:112px;height:112px;border-radius:28px;background:var(--panel2);display:flex;align-items:center;justify-content:center}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.bob{animation:bob 2.8s ease-in-out infinite}
+@keyframes wob{0%,100%{transform:rotate(0)}25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
+.wob{animation:wob .7s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin 1.4s linear infinite;transform-box:fill-box;transform-origin:center}
+@keyframes breathe{0%,100%{opacity:1}50%{opacity:.35}}
+.breathe{animation:breathe 1.6s ease-in-out infinite}
+.mem{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 10px}
+.grp{font-size:12px;font-weight:600;color:var(--muted);padding:0 2px 6px;text-align:center}
+.conn{width:2px;height:16px;background:var(--line);margin:0 auto}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="width: 1440px; height: 1240px; box-sizing: border-box; background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; padding: 32px 36px; display: flex; flex-direction: column; gap: 18px">
+  <div style="display: flex; align-items: flex-end; gap: 16px">
+    <div>
+      <div style="font-family: 'Lexend', sans-serif; font-size: 30px; font-weight: 600; letter-spacing: -0.02em">Linh vật theo phong cách Grokbot</div>
+      <div class="cs" style="font-size: 14px">Theo bộ “bs-grokbot-avatar”: thân một khối màu phẳng, đúng hai mắt trắng, không miệng, không phụ kiện. Mỗi bot một dáng riêng lấy từ bảng mẫu A/B.</div>
+    </div>
+    <button type="button" onClick="{{toggleTheme}}" style="margin-left: auto; height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); font-size: 13px">{{themeLabel}}</button>
+  </div>
+
+  <section class="card" aria-label="Gia đình linh vật">
+    <div class="ct">Gia đình linh vật · mỗi dáng nói lên một vai</div>
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px">
+      <div class="mv"><div class="tile"><svg class="bob" width="88" height="88" viewBox="0 0 100 100" role="img" aria-label="Aris, ngôi sao bốn cánh màu xanh dương"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg></div><span class="nm">Aris</span><span class="rl">Chỉ huy · sao bốn cánh (B8)</span></div>
+      <div class="mv"><div class="tile"><svg width="88" height="88" viewBox="0 0 100 100" role="img" aria-label="Lâm, hình thoi bo tròn màu xanh ngọc"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg></div><span class="nm">Lâm</span><span class="rl">Nghiên cứu · hình thoi (B2)</span></div>
+      <div class="mv"><div class="tile"><svg width="88" height="88" viewBox="0 0 100 100" role="img" aria-label="Mai, giọt nước màu cam"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path></svg></div><span class="nm">Mai</span><span class="rl">Thư ký · giọt nước (A6)</span></div>
+      <div class="mv"><div class="tile"><svg width="88" height="88" viewBox="0 0 100 100" role="img" aria-label="Tín, ngũ giác bo tròn màu hổ phách"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M47 41L43 53M59 39L55 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg></div><span class="nm">Tín</span><span class="rl">Tài chính · ngũ giác (B1)</span></div>
+      <div class="mv"><div class="tile"><svg width="88" height="88" viewBox="0 0 100 100" role="img" aria-label="Dev, hình vuông bo tròn màu xanh lá"><path d="M50 12C80 12 88 20 88 50C88 80 80 88 50 88C20 88 12 80 12 50C12 20 20 12 50 12Z" fill="#00C972"></path><circle cx="52" cy="52" r="8" fill="#fff"></circle><circle cx="66" cy="44" r="6" fill="#fff"></circle></svg></div><span class="nm">Dev</span><span class="rl">Lập trình · vuông bo (A3)</span></div>
+      <div class="mv"><div class="tile"><svg width="88" height="88" viewBox="0 0 100 100" role="img" aria-label="Hạ, trái tim màu hồng"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg></div><span class="nm">Hạ</span><span class="rl">Nội dung · trái tim (B5)</span></div>
+    </div>
+    <div class="rl">Bot mới chọn dáng chưa dùng trong 16 dáng mẫu (đám mây, viên thuốc, hạt đậu, bông hoa, cỏ bốn lá…) để cả đội không trùng hình.</div>
+  </section>
+
+  <div style="display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 18px">
+    <section class="card" aria-label="Biểu cảm theo trạng thái">
+      <div><div class="ct">Đôi mắt + vòng trạng thái</div><div class="cs">Giữ đúng quy tắc “chỉ hai mắt”: cảm xúc nằm ở dáng mắt và chuyển động; vòng quanh linh vật là ngữ pháp 5 trạng thái.</div></div>
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px">
+        <div class="mv"><svg width="80" height="80" viewBox="-14 -14 128 128" role="img" aria-label="Rảnh"><circle cx="50" cy="50" r="58" fill="none" stroke="var(--muted)" stroke-width="3" stroke-dasharray="6 7"></circle><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><path d="M39 50h9M55 49h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg><span class="rl"><b style="color: var(--ink)">Rảnh</b><br>mắt lim dim</span></div>
+        <div class="mv"><svg width="80" height="80" viewBox="-14 -14 128 128" role="img" aria-label="Đang nghĩ"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="48" cy="40" r="6.5" fill="#fff"></circle><circle cx="61" cy="38" r="4.8" fill="#fff"></circle><circle class="breathe" cx="88" cy="8" r="4" fill="var(--muted)"></circle><circle class="breathe" cx="99" cy="-3" r="5.5" fill="var(--muted)"></circle></svg><span class="rl"><b style="color: var(--ink)">Đang nghĩ</b><br>mắt nhìn lên</span></div>
+        <div class="mv"><svg width="80" height="80" viewBox="-14 -14 128 128" role="img" aria-label="Đang làm"><circle cx="50" cy="50" r="58" fill="none" stroke="var(--line)" stroke-width="4"></circle><circle class="spin" cx="50" cy="50" r="58" fill="none" stroke="#00B5A5" stroke-width="4" stroke-dasharray="80 290" stroke-linecap="round"></circle><g class="bob"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><path d="M45 43L43 53M58 41L56 51" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></g></svg><span class="rl"><b style="color: var(--ink)">Đang làm</b><br>mắt tập trung</span></div>
+        <div class="mv"><svg width="80" height="80" viewBox="-14 -14 128 128" role="img" aria-label="Chờ anh"><circle class="breathe" cx="50" cy="50" r="58" fill="none" stroke="var(--warn)" stroke-width="5"></circle><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="43" cy="47" r="9" fill="#fff"></circle><circle cx="60" cy="47" r="9" fill="#fff"></circle></svg><span class="rl"><b style="color: var(--warn)">Chờ anh</b><br>mắt tròn xoe</span></div>
+        <div class="mv"><svg width="80" height="80" viewBox="-14 -14 128 128" role="img" aria-label="Xong"><circle cx="50" cy="50" r="58" fill="none" stroke="var(--ok)" stroke-width="4"></circle><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><path d="M37 51Q42.5 43 48 51M53 49Q58.5 41 64 49" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"></path><circle cx="94" cy="94" r="13" fill="var(--ok)"></circle><path d="M88 94l4 4 8-8" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="rl"><b style="color: var(--ok)">Xong</b><br>mắt cười</span></div>
+        <div class="mv"><svg width="80" height="80" viewBox="-14 -14 128 128" role="img" aria-label="Vấp"><circle cx="50" cy="50" r="58" fill="none" stroke="var(--danger)" stroke-width="4"></circle><g class="wob"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="51" r="4.5" fill="#fff"></circle><circle cx="60" cy="46" r="8" fill="#fff"></circle></g></svg><span class="rl"><b style="color: var(--danger)">Vấp</b><br>mắt lệch, lắc lư</span></div>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Lớn lên theo kinh nghiệm">
+      <div><div class="ct">Lớn lên bằng vòng hào quang</div><div class="cs">Không thêm đồ lên thân (đúng phong cách Grokbot); cấp độ hiện bằng vòng sáng bên ngoài.</div></div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+        <div class="mv"><svg width="84" height="84" viewBox="-16 -16 132 132" role="img" aria-label="Lâm cấp 1"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg><span class="nm" style="font-size: 13px">Cấp 1</span><span class="rl">mới tạo</span></div>
+        <div class="mv"><svg width="84" height="84" viewBox="-16 -16 132 132" role="img" aria-label="Lâm cấp 2 có một vòng sáng"><circle cx="50" cy="50" r="58" fill="none" stroke="#FFAA00" stroke-width="5"></circle><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg><span class="nm" style="font-size: 13px">Cấp 2</span><span class="rl">10 skill học được</span></div>
+        <div class="mv"><svg width="84" height="84" viewBox="-16 -16 132 132" role="img" aria-label="Lâm cấp 3 có hai vòng sáng và huy hiệu sao"><circle cx="50" cy="50" r="64" fill="none" stroke="#FFAA00" stroke-width="3" opacity=".55"></circle><circle cx="50" cy="50" r="57" fill="none" stroke="#FFAA00" stroke-width="5"></circle><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle><circle cx="96" cy="96" r="15" fill="#FFAA00"></circle><path d="M96 86l2.8 5.6 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2-4.5-4.4 6.2-.9z" fill="#fff"></path></svg><span class="nm" style="font-size: 13px">Cấp 3</span><span class="rl">100 việc · 90% đạt</span></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card" aria-label="Đội hình" style="flex: 1">
+    <div><div class="ct">Đội hình</div><div class="cs">Commander đứng đầu, bot xếp theo nhóm việc. Bản 3D động nằm ở cột phải màn Chat (R3).</div></div>
+    <div style="display: flex; gap: 24px; align-items: stretch">
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center">
+        <div class="mem" style="border-color: #1084FE; padding: 10px 16px">
+          <svg width="40" height="40" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>
+          <span style="display: flex; flex-direction: column"><b style="font-family: 'Lexend', sans-serif">Aris · Chỉ huy</b><span class="rl">điều phối 2 việc</span></span>
+        </div>
+        <div style="width: 2px; height: 22px; background: var(--line)"></div>
+        <div style="width: 78%; height: 2px; background: var(--line)"></div>
+        <div style="width: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px">
+          <div><div class="conn"></div><div class="grp">Nghiên cứu</div>
+            <div class="mem"><svg width="30" height="30" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><path d="M45 43L43 53M58 41L56 51" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg><span><b>Lâm</b><br><span class="rl">cấp 2 · đang làm</span></span></div>
+          </div>
+          <div><div class="conn"></div><div class="grp">Vận hành</div>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <div class="mem"><svg width="30" height="30" viewBox="0 0 100 100" aria-hidden="true"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><circle cx="44" cy="58" r="8" fill="#fff"></circle><circle cx="61" cy="58" r="8" fill="#fff"></circle></svg><span><b>Mai</b><br><span class="rl" style="color: var(--warn)">chờ anh</span></span></div>
+              <div class="mem"><svg width="30" height="30" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M39 50h9M55 49h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg><span><b>Tín</b><br><span class="rl">rảnh tới 17:00</span></span></div>
+            </div>
+          </div>
+          <div><div class="conn"></div><div class="grp">Sáng tạo</div>
+            <div class="mem"><svg width="30" height="30" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M41 44Q46.5 36 52 44M57 42Q62.5 34 68 42" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"></path></svg><span><b>Hạ</b><br><span class="rl" style="color: var(--ok)">xong bài sáng nay</span></span></div>
+          </div>
+          <div><div class="conn"></div><div class="grp">Kỹ thuật</div>
+            <div class="mem"><svg width="30" height="30" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 12C80 12 88 20 88 50C88 80 80 88 50 88C20 88 12 80 12 50C12 20 20 12 50 12Z" fill="#00C972"></path><path d="M43 52h9M60 47h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg><span><b>Dev</b><br><span class="rl">rảnh</span></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex: none; width: 270px; border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column">
+        <div style="background: #00B5A5; padding: 16px; display: flex; justify-content: space-between; align-items: center; color: #08302C">
+          <div><div style="font-family: 'Lexend', sans-serif; font-size: 22px; font-weight: 700">Lâm</div><div style="font-size: 12.5px; font-weight: 500">Nghiên cứu · cấp 2</div></div>
+          <svg width="84" height="84" viewBox="-16 -16 132 132" aria-hidden="true"><circle cx="50" cy="50" r="58" fill="none" stroke="#FFD166" stroke-width="5"></circle><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#fff" fill-opacity=".92"></path><circle cx="44" cy="48" r="7.5" fill="#00B5A5"></circle><circle cx="59" cy="46" r="5.5" fill="#00B5A5"></circle></svg>
+        </div>
+        <div style="padding: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; text-align: center">
+          <div><div style="font-family: 'Lexend', sans-serif; font-size: 20px; font-weight: 600">23</div><div class="rl">việc tuần này</div></div>
+          <div><div style="font-family: 'Lexend', sans-serif; font-size: 20px; font-weight: 600">14</div><div class="rl">skill</div></div>
+          <div><div style="font-family: 'Lexend', sans-serif; font-size: 20px; font-weight: 600">91%</div><div class="rl">đạt</div></div>
+        </div>
+        <div style="padding: 0 16px 16px; font-size: 13px">
+          <div class="rl" style="padding-bottom: 4px">Vừa học</div>
+          <span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px 0 4px; border-radius: 8px; background: var(--panel2); font-size: 12px; font-weight: 600"><span style="background: #00B5A5; color: #08302C; border-radius: 5px; padding: 0 5px; font-size: 11px">v3</span>Nghiên cứu đối thủ</span>
+          <div style="height: 6px; border-radius: 99px; background: var(--panel2); margin-top: 12px"><div style="width: 64%; height: 100%; border-radius: 99px; background: #FFAA00"></div></div>
+          <div class="rl" style="margin-top: 4px">Còn 36 việc nữa để lên cấp 3</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'light';
+    return { themeClass: 't-' + theme, themeLabel: theme === 'dark' ? 'Xem nền sáng' : 'Xem nền tối', toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

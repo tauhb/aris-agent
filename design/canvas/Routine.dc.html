@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Routine</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FCEBE9}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:36px;padding:0 14px;border:0;border-radius:10px;background:var(--ink);color:var(--panel);font-size:13px;font-weight:600}
+.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.pill{font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 9px;white-space:nowrap}
+.av{flex:none;width:26px;height:26px;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600}
+.tr{display:grid;grid-template-columns:34px minmax(0,2fr) minmax(0,1.2fr) 120px 140px 110px;gap:12px;align-items:center;padding:12px 16px;border-top:1px solid var(--line);font-size:13.5px;min-width:820px}
+.sw{width:36px;height:20px;border-radius:99px;position:relative;display:inline-block}
+.sw span{position:absolute;top:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="routine" bot="none" hint-size="260px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Routine</span><span class="m" style="font-size: 12px">7 lịch · lần kế: Tín · 17:00 hôm nay</span></div>
+      <div style="margin-left: auto; display: flex; gap: 8px; align-items: center">
+        <button type="button" class="b2" style="height: 36px">Tạm dừng tất cả</button>
+        <a href="TaoRoutine.dc.html" class="b1" style="display: inline-flex; align-items: center; text-decoration: none">+ Routine mới</a>
+        <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+      </div>
+    </div>
+    <div style="padding: 18px 24px">
+      <div style="border: 1px solid var(--line); border-radius: 12px; background: var(--panel); overflow-x: auto">
+        <div class="tr" style="border-top: 0; font-size: 12px; font-weight: 600; color: var(--muted)"><span></span><span>Routine</span><span>Lịch</span><span>Gửi về</span><span>Lần chạy gần nhất</span><span>Bật</span></div>
+        <div class="tr"><svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M47 41L43 53M59 39L55 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span><b>Báo cáo chi tiêu tuần</b><div class="m" style="font-size: 12px">skill bao-cao-chi-tieu</div></span><span>Thứ 2, 08:00</span><span>Telegram</span><span><span class="pill" style="background: var(--okSoft); color: var(--ok)">xong</span> <span class="m" style="font-size: 12px">20/10</span></span><span class="sw" style="background: var(--accent)"><span style="left: 18px"></span></span></div>
+        <div class="tr"><svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path></svg><span><b>Tóm tắt email và lịch buổi sáng</b><div class="m" style="font-size: 12px">chỉ email chưa đọc</div></span><span>Thứ 2–6, 07:30</span><span>Telegram</span><span><span class="pill" style="background: var(--okSoft); color: var(--ok)">xong</span> <span class="m" style="font-size: 12px">hôm nay</span></span><span class="sw" style="background: var(--accent)"><span style="left: 18px"></span></span></div>
+        <div class="tr"><svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg><span><b>Tin đối thủ trong tuần</b><div class="m" style="font-size: 12px">skill nghien-cuu-doi-thu</div></span><span>Thứ 6, 16:00</span><span>Lark · nhóm Marketing</span><span><span class="pill" style="background: var(--dangerSoft); color: var(--danger)">lỗi 2 lần</span> <span class="m" style="font-size: 12px">17/10</span></span><span class="sw" style="background: var(--accent)"><span style="left: 18px"></span></span></div>
+        <div class="tr"><svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M47 41L43 53M59 39L55 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span><b>Kiểm tra số dư tài khoản quảng cáo</b><div class="m" style="font-size: 12px">chỉ chạy script, không dùng AI</div></span><span>Mỗi ngày, 17:00</span><span>Telegram nếu dưới 2 triệu</span><span><span class="pill" style="background: var(--okSoft); color: var(--ok)">xong</span> <span class="m" style="font-size: 12px">hôm qua</span></span><span class="sw" style="background: var(--accent)"><span style="left: 18px"></span></span></div>
+        <div class="tr"><svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span><b>Ôn lại ghi chú cũ liên quan hôm nay</b><div class="m" style="font-size: 12px">Second Brain</div></span><span>Mỗi ngày, 07:00</span><span>Telegram</span><span><span class="pill" style="background: var(--okSoft); color: var(--ok)">xong</span> <span class="m" style="font-size: 12px">hôm nay</span></span><span class="sw" style="background: var(--accent)"><span style="left: 18px"></span></span></div>
+        <div class="tr"><svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true" style="flex: none; opacity: .55"><path d="M50 12C80 12 88 20 88 50C88 80 80 88 50 88C20 88 12 80 12 50C12 20 20 12 50 12Z" fill="#00C972"></path><circle cx="52" cy="52" r="8" fill="#fff"></circle><circle cx="66" cy="44" r="6" fill="#fff"></circle></svg><span class="m"><b>Sao lưu repo dự án</b><div style="font-size: 12px">đang tạm dừng</div></span><span class="m">Chủ nhật, 23:00</span><span class="m">Không gửi</span><span class="m">—</span><span class="sw" style="background: var(--panel2); border: 1px solid var(--line); box-sizing: border-box"><span style="left: 2px; top: 1px; background: var(--muted)"></span></span></div>
+      </div>
+
+      <div style="margin-top: 16px; border: 1px solid var(--danger); background: var(--dangerSoft); border-radius: 12px; padding: 12px 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap">
+        <span style="flex: 1; min-width: 260px"><b>“Tin đối thủ trong tuần” lỗi 2 lần liên tiếp</b> — trang nguồn chặn truy cập tự động. Lâm đề xuất đổi sang nguồn RSS.</span>
+        <button type="button" class="b2">Xem lần chạy</button><button type="button" class="b2">Để Lâm sửa</button>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'dark';
+    return { themeClass: 't-' + theme, toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

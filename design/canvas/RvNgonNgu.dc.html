@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Ngôn ngữ thiết kế mới</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#3651D4;--accentSoft:#E9EDFC;--ok:#1F7A4D;--okSoft:#E2F3E9;--warn:#A14A06;--warnSoft:#FCEFDF;--danger:#B42318;--dangerSoft:#FCEBE9;--old:#9AA0AB}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#8EA2FF;--accentSoft:#222944;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18;--old:#6B7280}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.ct{font-family:'Lexend',sans-serif;font-weight:600;font-size:17px;letter-spacing:-.01em}
+.cs{font-size:13px;color:var(--muted)}
+.ba{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:14px;align-items:stretch}
+.bef{border:1px dashed var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;color:var(--old)}
+.aft{border:1px solid var(--accent);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+.lb{font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--muted)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;border-radius:999px;padding:3px 10px 3px 6px;background:var(--panel2)}
+.sw{width:40px;height:24px;border-radius:99px;position:relative;flex:none}
+.sw i{position:absolute;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.ck{width:20px;height:20px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin 1.2s linear infinite;transform-origin:50% 50%}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.breathe{animation:breathe 1.8s ease-in-out infinite;transform-origin:center}
+.num{font-variant-numeric:tabular-nums}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="width: 1440px; height: 1240px; box-sizing: border-box; background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; padding: 32px 36px; display: flex; flex-direction: column; gap: 20px">
+  <div style="display: flex; align-items: flex-end; gap: 16px">
+    <div>
+      <div style="font-family: 'Lexend', sans-serif; font-size: 30px; font-weight: 600; letter-spacing: -0.02em">Giữ bố cục, đổi cảm giác</div>
+      <div class="cs" style="font-size: 14px">8 thay đổi nhỏ. Mỗi thay đổi có một việc: giúp anh hiểu ngay đội bot đang làm gì và thấy chúng là của mình.</div>
+    </div>
+    <button type="button" onClick="{{toggleTheme}}" style="margin-left: auto; height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); font-size: 13px">{{themeLabel}}</button>
+  </div>
+
+  <div style="flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px">
+
+    <section class="card" aria-label="Chữ">
+      <div><div class="ct">1 · Chữ có cá tính, số thẳng hàng</div><div class="cs">Tiêu đề dùng Lexend tròn và thân thiện; nội dung giữ Be Vietnam Pro; số dùng chữ số đều để cột không nhảy.</div></div>
+      <div class="ba">
+        <div class="bef"><span class="lb">TRƯỚC</span><span style="font-weight: 600; font-size: 16px">Thư viện skill</span><span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em">ĐANG DÙNG</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">0,42 / 5 USD</span></div>
+        <div class="aft"><span class="lb" style="color: var(--accent)">SAU</span><span style="font-family: 'Lexend', sans-serif; font-weight: 600; font-size: 20px; letter-spacing: -.01em">Thư viện skill</span><span style="font-size: 13px; font-weight: 500; color: var(--muted)">Đang dùng</span><span class="num" style="font-size: 15px; font-weight: 600">0,42 <span style="color: var(--muted); font-weight: 400">/ 5 USD hôm nay</span></span></div>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Icon">
+      <div><div class="ct">2 · Icon: rỗng khi nghỉ, đầy khi đang ở đó</div><div class="cs">Một bộ icon riêng trên lưới 20px, nét 1,75. Mục đang mở tô đầy nhẹ màu nhấn — nhìn là biết mình đang ở đâu.</div></div>
+      <div class="ba">
+        <div class="bef"><span class="lb">TRƯỚC</span>
+          <div style="display: flex; gap: 14px">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><circle cx="4" cy="6" r="2"></circle><circle cx="20" cy="6" r="2"></circle></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"></path></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+          </div>
+          <span style="font-size: 12px">Mọi trạng thái trông như nhau</span>
+        </div>
+        <div class="aft"><span class="lb" style="color: var(--accent)">SAU</span>
+          <div style="display: flex; gap: 10px; align-items: center">
+            <span style="width: 40px; height: 40px; border-radius: 12px; background: var(--accentSoft); display: inline-flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12a8.2 8.2 0 0 1-11.9 7.3L3.5 20.5l1.2-4.7A8.2 8.2 0 1 1 20.5 12z" fill="var(--accent)" fill-opacity=".22" stroke="var(--accent)" stroke-width="1.75" stroke-linejoin="round"></path><path d="M8.5 11h7M8.5 14h4" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round"></path></svg></span>
+            <span style="width: 40px; height: 40px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; color: var(--muted)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="3.2"></circle><circle cx="5" cy="6" r="2.2"></circle><circle cx="19" cy="6" r="2.2"></circle><circle cx="12" cy="21" r="1.6"></circle><path d="M6.7 7.5l3 3M17.3 7.5l-3 3M12 16.2v3.2"></path></svg></span>
+            <span style="width: 40px; height: 40px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; color: var(--muted)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5c-1.8-1.4-4.6-1.6-7-.6v15c2.4-1 5.2-.8 7 .6 1.8-1.4 4.6-1.6 7-.6v-15c-2.4-1-5.2-.8-7 .6z"></path><path d="M12 4.5v15"></path></svg></span>
+            <span style="width: 40px; height: 40px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; color: var(--muted)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path></svg></span>
+          </div>
+          <span style="font-size: 12.5px; color: var(--muted)">Chat đang mở · Second Brain là quyển sổ mở, không còn là cuốn sách đóng</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Trạng thái">
+      <div><div class="ct">3 · Năm trạng thái, một ngữ pháp, khắp nơi</div><div class="cs">Thay 7 kiểu pill rời rạc bằng 5 trạng thái có hình + màu + chuyển động. Dùng y hệt ở thanh bên, bản đồ, Kanban, routine, Telegram.</div></div>
+      <div class="ba">
+        <div class="bef"><span class="lb">TRƯỚC</span><span style="display: flex; flex-wrap: wrap; gap: 6px; font-size: 11.5px"><span style="border: 1px solid; border-radius: 99px; padding: 0 8px">đang làm</span><span style="border: 1px solid; border-radius: 99px; padding: 0 8px">chờ duyệt</span><span style="border: 1px solid; border-radius: 99px; padding: 0 8px">cần anh</span><span style="border: 1px solid; border-radius: 99px; padding: 0 8px">xong</span><span style="border: 1px solid; border-radius: 99px; padding: 0 8px">lỗi 2 lần</span><span style="border: 1px solid; border-radius: 99px; padding: 0 8px">đang bật</span></span></div>
+        <div class="aft"><span class="lb" style="color: var(--accent)">SAU</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <span class="st"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="var(--line)" stroke-width="2.2"></circle><circle class="spin" cx="8" cy="8" r="6" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-dasharray="12 26" stroke-linecap="round"></circle></svg>Đang làm</span>
+            <span class="st" style="background: var(--warnSoft); color: var(--warn)"><svg class="breathe" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M8 2a6 6 0 0 1 0 12z" fill="currentColor"></path></svg>Chờ anh</span>
+            <span class="st" style="background: var(--okSoft); color: var(--ok)"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"></circle><path d="M5 8.2l2 2 4-4.2" stroke="var(--panel)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>Xong</span>
+            <span class="st" style="background: var(--dangerSoft); color: var(--danger)"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l6.6 11.6H1.4z" fill="currentColor"></path><path d="M8 6v3.4M8 11.4v.1" stroke="var(--panel)" stroke-width="1.7" stroke-linecap="round"></path></svg>Vấp</span>
+            <span class="st" style="color: var(--muted)"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="2.5 2.5"></circle></svg>Rảnh</span>
+          </div>
+          <span style="font-size: 12.5px; color: var(--muted)">Người mù màu vẫn phân biệt được nhờ hình: vòng quay · nửa đầy · dấu tích · tam giác · nét đứt</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Công tắc và ô chọn">
+      <div><div class="ct">4 · Công tắc nói rõ hệ quả</div><div class="cs">Cài đặt có hiệu lực ngay dùng công tắc; danh sách chọn nhiều dùng ô tích bo tròn. Dưới mỗi công tắc là một câu “bật thì sao”.</div></div>
+      <div class="ba">
+        <div class="bef"><span class="lb">TRƯỚC</span><label style="display: flex; justify-content: space-between; align-items: center; font-size: 13px">Commander được giao việc cho Lâm <input type="checkbox" checked disabled aria-label="Ví dụ cũ"></label><label style="display: flex; justify-content: space-between; align-items: center; font-size: 13px">Skill mới cần duyệt <input type="checkbox" checked disabled aria-label="Ví dụ cũ"></label></div>
+        <div class="aft"><span class="lb" style="color: var(--accent)">SAU</span>
+          <button type="button" onClick="{{toggleSw}}" role="switch" aria-checked="{{swStr}}" style="display: flex; gap: 12px; align-items: flex-start; border: 0; background: transparent; padding: 0; text-align: left">
+            <span style="flex: 1"><span style="display: block; font-weight: 600; font-size: 14px">Aris được giao việc cho Lâm</span><span style="display: block; font-size: 12.5px; color: var(--muted)">{{swHint}}</span></span>
+            <span class="sw" style="background: {{swBg}}"><i style="left: {{swLeft}}"></i></span>
+          </button>
+          <div style="display: flex; gap: 14px; font-size: 13px">
+            <span style="display: inline-flex; gap: 8px; align-items: center"><span class="ck" style="background: #0F766E"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2L9.5 3.6" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>Đọc web</span>
+            <span style="display: inline-flex; gap: 8px; align-items: center"><span class="ck" style="background: #0F766E"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2L9.5 3.6" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>Đọc tệp</span>
+            <span style="display: inline-flex; gap: 8px; align-items: center"><span class="ck" style="border: 1.75px solid var(--line)"></span>Chạy lệnh</span>
+          </div>
+          <span style="font-size: 12px; color: var(--muted)">Ô tích mang màu của bot đang chỉnh (Lâm: xanh ngọc)</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Pill">
+      <div><div class="ct">5 · Pill có dấu nhận diện</div><div class="cs">Model hiện tên dễ hiểu + logo provider; tên kỹ thuật hiện khi rê chuột. Skill là “con tem” có số phiên bản; thẻ là chữ trơn.</div></div>
+      <div class="ba">
+        <div class="bef"><span class="lb">TRƯỚC</span><span style="font-size: 12.5px">● DeepSeek <b>deepseek-chat</b> ▾</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">nghien-cuu-doi-thu v3</span></div>
+        <div class="aft"><span class="lb" style="color: var(--accent)">SAU</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+            <span style="display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px 0 5px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); font-size: 13px"><span style="width: 24px; height: 24px; border-radius: 8px; background: #4D6BFE; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-family: 'Lexend', sans-serif; font-weight: 700; font-size: 12px">D</span><b>DeepSeek</b><span style="color: var(--muted)">Nhanh</span><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"></path></svg></span>
+            <span style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px 0 4px; border-radius: 8px; background: #0F766E; color: #fff; font-size: 12.5px; font-weight: 600"><span style="background: rgba(255,255,255,.22); border-radius: 5px; padding: 0 5px; font-size: 11px">v3</span>Nghiên cứu đối thủ</span>
+            <span style="font-size: 12.5px; color: var(--muted)">#youtube</span>
+          </div>
+          <span style="font-size: 12px; color: var(--muted)">Rê chuột: deepseek-chat · gọi tool · cache</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Lời và nhãn">
+      <div><div class="ct">6 · Nhãn nói như người, bot nói như chính nó</div><div class="cs">Động từ + ai + hệ quả. Con số đổi thành điều anh quan tâm. Mỗi bot có giọng riêng theo tính cách.</div></div>
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1.3fr); gap: 8px 10px; font-size: 13.5px; align-items: center">
+        <span style="color: var(--old)">Cho phép</span><span style="color: var(--muted)">→</span><b>Cho Mai gửi</b>
+        <span style="color: var(--old)">Ký ức lõi 64%</span><span style="color: var(--muted)">→</span><span>Aris còn nhớ thêm được <b>khoảng 25 điều</b></span>
+        <span style="color: var(--old)">Lỗi 2 lần</span><span style="color: var(--muted)">→</span><span>Lâm vấp 2 lần ở cùng một trang — <b>đã có cách sửa</b></span>
+        <span style="color: var(--old)">Hộp duyệt · 3</span><span style="color: var(--muted)">→</span><span><b>3 việc</b> đang đợi anh gật đầu</span>
+        <span style="color: var(--old)">Routine 17:00</span><span style="color: var(--muted)">→</span><span>Tín sẽ kiểm số dư lúc <b>5 giờ chiều</b></span>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Dòng việc">
+      <div><div class="ct">7 · Dòng việc rẽ nhánh ngay trong chat</div><div class="cs">Điểm đột phá: khi Aris giao việc, “đường đời” của tin nhắn tách thành nhánh màu của từng bot, chạy song song rồi nhập lại. Không cần mở bản đồ vẫn thấy đội đang phối hợp.</div></div>
+      <svg viewBox="0 0 620 170" width="100%" role="img" aria-label="Dòng việc: Aris hiểu yêu cầu, tách nhánh cho Lâm và Mai, nhập lại ở bước tổng hợp">
+        <path d="M30 20 V150" stroke="#3651D4" stroke-width="3" stroke-linecap="round"></path>
+        <path d="M30 50 C30 70 90 60 90 85 V120 C90 140 30 130 30 150" stroke="#0F766E" stroke-width="3" fill="none"></path>
+        <path d="M30 50 C30 70 160 60 160 85 V105" stroke="#C2410C" stroke-width="3" fill="none"></path>
+        <path d="M160 105 V120 C160 140 30 130 30 150" stroke="#C2410C" stroke-width="3" fill="none" stroke-dasharray="4 5"></path>
+        <circle cx="30" cy="20" r="7" fill="#3651D4"></circle><text x="46" y="24" font-size="13" fill="var(--ink)">Aris hiểu yêu cầu · 2 việc</text>
+        <circle cx="90" cy="85" r="6" fill="#0F766E"></circle><text x="104" y="89" font-size="12.5" fill="var(--ink)"></text>
+        <circle cx="90" cy="110" r="6" fill="var(--panel)" stroke="#0F766E" stroke-width="3"></circle>
+        <circle cx="160" cy="85" r="6" fill="#C2410C"></circle>
+        <circle cx="160" cy="105" r="7" fill="var(--warnSoft)" stroke="var(--warn)" stroke-width="2.5"></circle>
+        <text x="200" y="89" font-size="12.5" fill="var(--muted)">Lâm: tìm 20 nguồn ✓ · đọc 12/20 · Mai: soạn lời mời ✓</text>
+        <text x="200" y="110" font-size="12.5" fill="var(--warn)" font-weight="600">Mai chờ anh duyệt — bấm ngay trên nhánh</text>
+        <circle cx="30" cy="150" r="7" fill="var(--panel)" stroke="#3651D4" stroke-width="3"></circle><text x="46" y="154" font-size="13" fill="var(--muted)">Tổng hợp khi hai nhánh xong</text>
+      </svg>
+    </section>
+
+    <section class="card" aria-label="Đội hình">
+      <div><div class="ct">8 · Linh vật và đội hình</div><div class="cs">Chữ cái trong vòng tròn đổi thành linh vật biểu cảm theo trạng thái. Danh sách bot đổi thành đội hình: Commander đứng đầu, các bot xếp theo nhóm việc (xem R2).</div></div>
+      <div class="ba">
+        <div class="bef"><span class="lb">TRƯỚC</span><span style="display: flex; gap: 6px"><span style="width: 28px; height: 28px; border-radius: 50%; background: #3651D4; opacity: .5"></span><span style="width: 28px; height: 28px; border-radius: 50%; background: #0F766E; opacity: .5"></span><span style="width: 28px; height: 28px; border-radius: 50%; background: #C2410C; opacity: .5"></span></span><span style="font-size: 12px">Danh sách phẳng, chữ cái đầu</span></div>
+        <div class="aft"><span class="lb" style="color: var(--accent)">SAU</span>
+          <div style="display: flex; gap: 10px; align-items: flex-end">
+            <svg width="46" height="46" viewBox="0 0 100 100" role="img" aria-label="Linh vật Aris, sao bốn cánh"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>
+            <svg width="36" height="36" viewBox="0 0 100 100" role="img" aria-label="Linh vật Lâm, hình thoi"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><path d="M45 43L43 53M58 41L56 51" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg>
+            <svg width="36" height="36" viewBox="0 0 100 100" role="img" aria-label="Linh vật Mai, giọt nước, đang chờ anh"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><circle cx="44" cy="58" r="8" fill="#fff"></circle><circle cx="61" cy="58" r="8" fill="#fff"></circle></svg>
+            <span style="font-size: 12.5px; color: var(--muted); padding-bottom: 4px">Phong cách Grokbot: một khối màu, hai mắt trắng. Aris sao bốn cánh · Lâm hình thoi, mắt tập trung · Mai giọt nước, mắt tròn vì đang chờ anh</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const on = s.sw === undefined ? true : s.sw;
+    return {
+      themeClass: 't-' + theme,
+      themeLabel: theme === 'dark' ? 'Xem nền sáng' : 'Xem nền tối',
+      swStr: on ? 'true' : 'false',
+      swBg: on ? '#0F766E' : 'var(--line)',
+      swLeft: on ? '19px' : '3px',
+      swHint: on ? 'Bật: việc nghiên cứu sẽ tự đến tay Lâm, anh không cần gọi tên' : 'Tắt: Lâm chỉ làm khi anh nhắn thẳng cho Lâm',
+      toggleSw: () => this.setState({ sw: !on }),
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' })
+    };
+  }
+}
+</script>
+</body>
+</html>

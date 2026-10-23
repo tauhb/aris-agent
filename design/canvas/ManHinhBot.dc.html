@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Màn hình của bot</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:36px;padding:0 14px;border:0;border-radius:10px;background:var(--ink);color:var(--panel);font-size:13px;font-weight:600}
+.b2{height:36px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font-size:13px}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.seg{border:0;border-radius:7px;padding:5px 12px;background:transparent;font-size:13px;color:var(--muted)}
+.ev{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:13px}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="settings" bot="lam" hint-size="260px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <a href="DieuKhien.dc.html" class="ib" aria-label="Quay lại cài đặt" style="text-decoration: none">‹</a>
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Màn hình của bot</span><span class="m" style="font-size: 12px">Desktop ảo trên máy chủ · mỗi bot một trình duyệt, một bộ cookie riêng</span></div>
+      <span role="group" aria-label="Chọn bot" style="margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 9px; padding: 2px"><button type="button" class="seg">Aris</button><button type="button" class="seg" style="background: var(--hover); color: var(--ink); font-weight: 600">Lâm</button><button type="button" class="seg">Dev</button></span>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+    <div style="padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+      <div style="flex: 2 1 620px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+        <div class="card" style="padding: 12px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; border-color: var(--warn); background: var(--warnSoft)">
+          <span style="flex: 1; min-width: 260px"><b>Lâm dừng lại:</b> trang yêu cầu đăng nhập hai bước. Anh cầm lái để đăng nhập, xong trả lại cho Lâm làm tiếp.</span>
+          <button type="button" class="b1">Cầm lái</button>
+        </div>
+        <div role="img" aria-label="Màn hình desktop ảo của Lâm đang mở trình duyệt ở trang đăng nhập" style="border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: #1B1E24; aspect-ratio: 16 / 10; display: flex; flex-direction: column">
+          <div style="height: 26px; background: #2A2E36; display: flex; align-items: center; gap: 6px; padding: 0 10px"><span style="width: 9px; height: 9px; border-radius: 50%; background: #F97066"></span><span style="width: 9px; height: 9px; border-radius: 50%; background: #F5A35C"></span><span style="width: 9px; height: 9px; border-radius: 50%; background: #4ADE9B"></span><span style="margin-left: 12px; flex: 1; height: 16px; border-radius: 6px; background: #1B1E24; color: #9AA2B1; font-size: 10.5px; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; padding: 0 8px">https://[DỊCH VỤ]/dang-nhap</span></div>
+          <div style="flex: 1; background: #F4F5F7; display: flex; align-items: center; justify-content: center">
+            <div style="width: 300px; background: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.12); padding: 22px; display: flex; flex-direction: column; gap: 10px; color: #15171C">
+              <b style="font-size: 16px">Xác minh hai bước</b>
+              <span style="font-size: 13px; color: #5B6270">Nhập mã 6 số gửi tới điện thoại của bạn</span>
+              <div style="display: flex; gap: 6px"><span style="flex: 1; height: 38px; border: 1px solid #D0D3DA; border-radius: 8px"></span><span style="flex: 1; height: 38px; border: 1px solid #D0D3DA; border-radius: 8px"></span><span style="flex: 1; height: 38px; border: 1px solid #D0D3DA; border-radius: 8px"></span><span style="flex: 1; height: 38px; border: 1px solid #D0D3DA; border-radius: 8px"></span><span style="flex: 1; height: 38px; border: 1px solid #D0D3DA; border-radius: 8px"></span><span style="flex: 1; height: 38px; border: 1px solid #D0D3DA; border-radius: 8px"></span></div>
+              <span style="height: 36px; border-radius: 8px; background: #15171C"></span>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap"><button type="button" class="b2">Trả lái cho Lâm</button><button type="button" class="b2">Chụp màn hình</button><button type="button" class="b2">Tắt màn hình</button><span class="m" style="margin-left: auto; font-size: 12.5px; align-self: center">Người đang điều khiển: <b style="color: var(--ink)">Lâm</b></span></div>
+      </div>
+      <div style="flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+        <div class="card" style="padding: 12px 14px; font-size: 13px; display: flex; flex-direction: column; gap: 6px">
+          <b>Tài nguyên</b>
+          <div style="display: flex; justify-content: space-between"><span class="m">RAM màn hình + trình duyệt</span><span>1,2 GB</span></div>
+          <div style="display: flex; justify-content: space-between"><span class="m">Tự tắt khi không dùng</span><span>30 phút</span></div>
+          <div style="display: flex; justify-content: space-between"><span class="m">Báo khi bot mở màn hình</span><span>bật</span></div>
+        </div>
+        <div class="card" style="padding: 12px 14px">
+          <b style="font-size: 13.5px">Lâm vừa làm</b>
+          <div class="ev"><span class="mono m" style="font-size: 12px">10:51</span><span>Mở trang báo cáo của đối thủ C</span></div>
+          <div class="ev"><span class="mono m" style="font-size: 12px">10:51</span><span>Bấm “Đăng nhập” → trang xác minh</span></div>
+          <div class="ev"><span class="mono m" style="font-size: 12px">10:52</span><span style="color: var(--warn)">Dừng, chờ anh</span></div>
+        </div>
+        <p class="m" style="margin: 0; font-size: 12px">Màn hình là chỗ làm việc, không phải ranh giới bảo mật: các bot chung máy chủ vẫn dùng chung tài khoản hệ điều hành.</p>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'light';
+    return { themeClass: 't-' + theme, toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

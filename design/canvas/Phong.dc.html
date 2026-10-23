@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Phòng nhóm</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F6F4;--panel:#FFFFFF;--panel2:#F0F1F3;--ink:#15171C;--muted:#5B6270;--line:#E3E4E8;--accent:#3651D4;--accentSoft:#E8ECFC;--ok:#1F7A4D;--okSoft:#E3F4EA;--warn:#A14A06;--warnSoft:#FDF0E1;--danger:#B42318;--edge:#C9CCD3}
+.t-dark{--bg:#0E1014;--panel:#161920;--panel2:#1D212A;--ink:#ECEEF2;--muted:#9AA2B1;--line:#272C36;--accent:#8EA2FF;--accentSoft:#232A47;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--edge:#3A404C}
+button{font-family:inherit;cursor:pointer}
+button:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.pulse{animation:pulse 1.6s ease-in-out infinite}
+a{color:var(--accent)}a:hover{color:var(--ink)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-direction: column">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel)">
+    <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px">
+      <span style="width: 26px; height: 26px; border-radius: 8px; background: var(--ink); color: var(--panel); display: inline-flex; align-items: center; justify-content: center; font-size: 14px">a</span>aris
+    </div>
+    <nav aria-label="Khu vực" style="display: flex; gap: 4px; flex-wrap: wrap">
+      <a href="#" style="text-decoration: none; color: var(--muted); padding: 6px 10px; border-radius: 8px">Chat</a>
+      <a href="#" aria-current="page" style="text-decoration: none; color: var(--ink); background: var(--panel2); font-weight: 600; padding: 6px 10px; border-radius: 8px">Phòng nhóm</a>
+      <a href="#" style="text-decoration: none; color: var(--muted); padding: 6px 10px; border-radius: 8px">Kanban</a>
+      <a href="#" style="text-decoration: none; color: var(--muted); padding: 6px 10px; border-radius: 8px">Second Brain</a>
+    </nav>
+    <div style="margin-left: auto; display: flex; gap: 8px">
+      <button type="button" onClick="{{toggleTheme}}" style="height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font-size: 13px">{{themeLabel}}</button>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: flex; flex-wrap: wrap; min-height: 0">
+    <main style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+        <div style="display: flex">
+          <span style="width: 30px; height: 30px; border-radius: 50%; background: #3651D4; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; border: 2px solid var(--bg)">A</span>
+          <span style="width: 30px; height: 30px; border-radius: 50%; background: #0F766E; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; border: 2px solid var(--bg); margin-left: -8px">L</span>
+          <span style="width: 30px; height: 30px; border-radius: 50%; background: #6D28D9; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; border: 2px solid var(--bg); margin-left: -8px">T</span>
+        </div>
+        <div style="display: flex; flex-direction: column">
+          <span style="font-weight: 700; font-size: 16px">Kế hoạch quý 4</span>
+          <span style="font-size: 12px; color: var(--muted)">Aris, Lâm, Tín và anh</span>
+        </div>
+        <div style="margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
+          <span style="font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px">Vòng <b style="color: var(--ink)">2</b>/3 · 7/10 tin</span>
+          <span style="font-size: 12px; font-weight: 700; color: var(--warn); background: var(--warnSoft); border-radius: 999px; padding: 4px 10px">Cần anh quyết</span>
+        </div>
+      </div>
+
+      <div style="flex: 1; padding: 20px 24px; display: flex; flex-direction: column; gap: 18px; max-width: 820px; width: 100%; box-sizing: border-box; margin: 0 auto">
+
+        <div style="display: flex; gap: 12px">
+          <span style="flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--ink); color: var(--panel); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px">Anh</span>
+          <div><div style="font-size: 12px; color: var(--muted)"><b style="color: var(--ink)">Anh</b> · 10:12</div><div>@all Đề xuất 3 mục tiêu quý 4 cho kênh YouTube, ngân sách tối đa 50 triệu.</div></div>
+        </div>
+
+        <div style="display: flex; gap: 12px">
+          <span style="flex: none; width: 32px; height: 32px; border-radius: 50%; background: #0F766E; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 600">L</span>
+          <div style="min-width: 0">
+            <div style="font-size: 12px; color: var(--muted)"><b style="color: #0F766E">Lâm</b> · Nghiên cứu · 10:13 · vòng 1</div>
+            <div>Nhóm video hướng dẫn có thời lượng xem cao nhất 90 ngày qua. Đề xuất tăng lên 2 video/tuần và thử định dạng ngắn dưới 60 giây.</div>
+            <button type="button" style="margin-top: 6px; border: 0; background: transparent; color: var(--accent); font-size: 12px; padding: 0">2 trả lời trong luồng</button>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px">
+          <span style="flex: none; width: 32px; height: 32px; border-radius: 50%; background: #6D28D9; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 600">T</span>
+          <div style="min-width: 0">
+            <div style="font-size: 12px; color: var(--muted)"><b style="color: #6D28D9">Tín</b> · Tài chính · 10:14 · vòng 1</div>
+            <div>Với 50 triệu: 30 sản xuất, 15 quảng cáo, 5 dự phòng. <span style="color: #0F766E; font-weight: 600">@Lâm</span> 2 video/tuần thì chi phí sản xuất có vượt 30 triệu không?</div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted)">
+          <span style="flex: 1; height: 1px; background: var(--line)"></span>Dev bỏ lượt — không có ý mới<span style="flex: 1; height: 1px; background: var(--line)"></span>
+        </div>
+
+        <div style="display: flex; gap: 12px">
+          <span style="flex: none; width: 32px; height: 32px; border-radius: 50%; background: #3651D4; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 600">A</span>
+          <div style="min-width: 0; flex: 1">
+            <div style="font-size: 12px; color: var(--muted)"><b style="color: #3651D4">Aris</b> · Điều phối · 10:16 · vòng 2</div>
+            <div>Em gộp ý của Lâm và Tín thành 3 mục tiêu. Trước khi chốt, cần anh chọn hướng ưu tiên:</div>
+            <div style="margin-top: 10px; border: 1px solid var(--warn); background: var(--warnSoft); border-radius: 12px; padding: 12px">
+              <div style="font-weight: 600"><span style="color: var(--warn)">@anh</span> Ưu tiên quý 4 là gì?</div>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px">
+                <button type="button" style="height: 38px; padding: 0 14px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font-size: 13px">Tăng người đăng ký</button>
+                <button type="button" style="height: 38px; padding: 0 14px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font-size: 13px">Tăng doanh thu</button>
+                <button type="button" style="height: 38px; padding: 0 14px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font-size: 13px">Cân bằng cả hai</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--muted)">
+          <span class="pulse" style="width: 8px; height: 8px; border-radius: 50%; background: #0F766E"></span>Lâm đang tính chi phí sản xuất cho Tín…
+        </div>
+      </div>
+
+      <div style="padding: 12px 24px 18px; max-width: 820px; width: 100%; box-sizing: border-box; margin: 0 auto">
+        <div style="border: 1px solid var(--line); background: var(--panel); border-radius: 14px; padding: 10px 12px; display: flex; gap: 8px; align-items: flex-end">
+          <label style="flex: 1; display: flex"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Nhắn vào phòng</span><textarea rows="2" placeholder="Nhắn cả phòng, hoặc @tên để gọi riêng một bot… “dừng @Lâm” để giữ một bot lại" style="flex: 1; resize: none; border: 0; background: transparent; color: var(--ink); font: inherit; outline: none"></textarea></label>
+          <button type="button" style="height: 38px; padding: 0 16px; border-radius: 10px; border: 0; background: var(--accent); color: var(--panel); font-weight: 600; font-size: 13px">Gửi</button>
+        </div>
+      </div>
+    </main>
+
+    <aside aria-label="Thông tin phòng" style="flex: 1 1 300px; max-width: 340px; min-width: 272px; border-left: 1px solid var(--line); background: var(--panel); padding: 18px; display: flex; flex-direction: column; gap: 18px">
+      <div>
+        <div style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 8px">Thành viên</div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; align-items: center; gap: 10px"><span style="width: 28px; height: 28px; border-radius: 50%; background: #3651D4; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600">A</span><span style="flex: 1">Aris <span style="color: var(--muted); font-size: 12px">· điều phối</span></span><span style="font-size: 12px; color: var(--muted)">đã nói</span></div>
+          <div style="display: flex; align-items: center; gap: 10px"><span style="width: 28px; height: 28px; border-radius: 50%; background: #0F766E; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600">L</span><span style="flex: 1">Lâm</span><span style="font-size: 12px; color: var(--ok); font-weight: 600">đang nghĩ</span></div>
+          <div style="display: flex; align-items: center; gap: 10px"><span style="width: 28px; height: 28px; border-radius: 50%; background: #6D28D9; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600">T</span><span style="flex: 1">Tín</span><span style="font-size: 12px; color: var(--muted)">chờ Lâm</span></div>
+          <div style="display: flex; align-items: center; gap: 10px"><span style="width: 28px; height: 28px; border-radius: 50%; background: #BE185D; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; opacity: 0.6">D</span><span style="flex: 1; color: var(--muted)">Dev</span><span style="font-size: 12px; color: var(--muted)">bỏ lượt</span></div>
+        </div>
+      </div>
+
+      <div style="border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 13px">
+        <div style="font-weight: 600">Luật của phòng</div>
+        <div style="display: flex; justify-content: space-between"><span style="color: var(--muted)">Số vòng tối đa mỗi tin</span><span>3</span></div>
+        <div style="display: flex; justify-content: space-between"><span style="color: var(--muted)">Số tin tối đa mỗi lượt</span><span>10</span></div>
+        <div style="display: flex; justify-content: space-between"><span style="color: var(--muted)">Không ai được @ thì</span><span>ai có ý mới mới nói</span></div>
+        <label style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="color: var(--muted)">Nhận lệnh “dừng @bot”</span><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--accent)"></label>
+      </div>
+
+      <div>
+        <div style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 8px">Thẻ Kanban sinh ra từ phòng</div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="border: 1px solid var(--line); border-radius: 10px; padding: 10px; font-size: 13px"><div style="font-weight: 500">Kịch bản 8 video hướng dẫn</div><div style="font-size: 12px; color: var(--muted); margin-top: 2px">Lâm · đang làm</div></div>
+          <div style="border: 1px solid var(--line); border-radius: 10px; padding: 10px; font-size: 13px"><div style="font-weight: 500">Bảng ngân sách quý 4</div><div style="font-size: 12px; color: var(--muted); margin-top: 2px">Tín · chờ Lâm</div></div>
+          <div style="border: 1px dashed var(--line); border-radius: 10px; padding: 10px; font-size: 13px; color: var(--muted)">Chốt mục tiêu · chờ anh</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'light';
+    return {
+      themeClass: 't-' + theme,
+      themeLabel: theme === 'dark' ? 'Giao diện sáng' : 'Giao diện tối',
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' })
+    };
+  }
+}
+</script>
+</body>
+</html>
