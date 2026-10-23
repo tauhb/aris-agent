@@ -1,5 +1,6 @@
 /** Phần hợp đồng slot `sidebar` của dsh mà thanh bên aris dùng tới. */
 import type { ReactNode } from 'react'
+import type { Translate } from './locale.js'
 
 export type Selector<T> = <R>(select: (value: T) => R) => R
 
@@ -57,4 +58,6 @@ export interface SidebarProps {
   useWorkspaces: Selector<WorkspaceSnapshot>
   useSessions: Selector<SessionListSnapshot>
   renderSlot: RenderSlot
+  /** Bộ dịch của namespace `aris.sidebar`, dsh truyền vào nhờ `locale: NS` khi đăng ký slot. */
+  t: Translate
 }

@@ -82,6 +82,8 @@ importers:
 
   packages/aris-ui-kit: {}
 
+  packages/aris-ui-locale-vi: {}
+
   packages/aris-ui-sidebar:
     dependencies:
       '@aris/ui-kit':
@@ -98,14 +100,26 @@ importers:
         specifier: 0.2.1-rc.2
         version: 0.2.1-rc.2(@deepseek-ai/cordis@4.0.5)
 
+  packages/aris-ui-theme:
+    dependencies:
+      '@aris/ui-kit':
+        specifier: workspace:*
+        version: link:../aris-ui-kit
+
   packages/aris-web-bundle:
     dependencies:
       '@aris/ui-chat-header':
         specifier: workspace:*
         version: link:../aris-ui-chat-header
+      '@aris/ui-locale-vi':
+        specifier: workspace:*
+        version: link:../aris-ui-locale-vi
       '@aris/ui-sidebar':
         specifier: workspace:*
         version: link:../aris-ui-sidebar
+      '@aris/ui-theme':
+        specifier: workspace:*
+        version: link:../aris-ui-theme
       '@aris/web-spike':
         specifier: workspace:*
         version: link:../aris-web-spike

@@ -5,11 +5,11 @@
  */
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
+import { EN, NS, VI } from './locale.js'
 import { LeadingControls, SidebarRoot } from './SidebarRoot.js'
 import { CSS } from './styles.js'
 import type { PanelEntry } from './types.js'
 
-const NS = 'sidebar'
 const FONT_HREF =
   'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lexend:wght@500;600;700&display=swap'
 
@@ -26,7 +26,7 @@ interface ClientContext {
   layout: { toggleSidebar(): void; selectPanel(id: string | null): void }
   workspaces: { create(input: { path: string }): Promise<{ workspaceId: string }> }
   locale: {
-    register(ns: string, dicts: Record<string, Record<string, string>>): () => void
+    register(ns: string, locale: string, dict: Record<string, string>): () => void
     subscribe(fn: () => void): () => void
   }
   shortcuts: { catalog: unknown }
@@ -65,15 +65,9 @@ export function apply(ctx: ClientContext): void {
     await workspace.openWorkspace(created.workspaceId)
   }
   ctx.effect(injectStyle, 'aris-ui-sidebar: styles')
-  // dsh chỉ có từ điển zh/en; aris hiển thị tiếng Việt cho cả hai.
-  const vi = {
-    'session.new': 'Việc mới',
-    'session.new.label': 'Việc mới',
-    'toggle.open': 'Mở thanh bên',
-    'toggle.collapse': 'Thu gọn thanh bên',
-    'panels.label': 'Các trang',
-  }
-  ctx.effect(() => ctx.locale.register(NS, { zh: vi, en: vi }), 'aris-ui-sidebar: dictionaries')
+  // Chữ của aris theo ngôn ngữ chọn trong Cài đặt; tiếng Trung lùi về tiếng Anh.
+  ctx.effect(() => ctx.locale.register(NS, 'en', EN), 'aris-ui-sidebar: en')
+  ctx.effect(() => ctx.locale.register(NS, 'vi', VI), 'aris-ui-sidebar: vi')
 
   const panels = createSnapshotStore<PanelEntry[]>([])
   const syncPanels = () => {

@@ -15,7 +15,8 @@ export function Mascot({ id, size }: { id: string; size: number }) {
 }
 
 /** Glyph trạng thái 16×16 theo ngữ pháp 5 trạng thái. */
-export function StatusGlyph({ status }: { status: BotStatus }) {
+/** Glyph trạng thái của bot; `label` là nhãn đã dịch, dùng làm aria-label. */
+export function StatusGlyph({ status, label }: { status: BotStatus; label: string }) {
   const s = STATUSES[status]
   return (
     <svg
@@ -23,7 +24,7 @@ export function StatusGlyph({ status }: { status: BotStatus }) {
       height={14}
       viewBox="0 0 16 16"
       role="img"
-      aria-label={s.label}
+      aria-label={label}
       style={{
         color: `var(--a-${s.color})`,
         flex: 'none',

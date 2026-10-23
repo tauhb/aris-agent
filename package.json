@@ -21,14 +21,15 @@
     "vitest": "4.1.11"
   },
   "scripts": {
-    "build": "tsc -b packages/aris-hello packages/aris-ui-kit packages/aris-ui-sidebar packages/aris-ui-chat-header && node scripts/build-client.mjs && tsc -p packages/aris-ui-sidebar/tsconfig.client.json && tsc -p packages/aris-ui-chat-header/tsconfig.client.json",
+    "build": "tsc -b packages/aris-hello packages/aris-ui-kit packages/aris-ui-sidebar packages/aris-ui-chat-header packages/aris-ui-theme packages/aris-ui-locale-vi && node scripts/build-client.mjs && tsc -p packages/aris-ui-sidebar/tsconfig.client.json && tsc -p packages/aris-ui-chat-header/tsconfig.client.json && tsc -p packages/aris-ui-theme/tsconfig.client.json && tsc -p packages/aris-ui-locale-vi/tsconfig.client.json",
     "test": "vitest run",
+    "check:locale": "node scripts/ui/locale-coverage.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:deps": "node scripts/check-deps.mjs",
     "check:licenses": "node scripts/check-licenses.mjs",
-    "check": "pnpm build && pnpm lint && pnpm format:check && pnpm test && pnpm check:deps && pnpm check:licenses",
+    "check": "pnpm build && pnpm lint && pnpm format:check && pnpm test && pnpm check:locale && pnpm check:deps && pnpm check:licenses",
     "aris:setup": "node scripts/setup-profiles.mjs",
     "aris": "node scripts/dsh.mjs --profile aris web",
     "aris:acp": "node scripts/dsh.mjs --profile aris-acp",

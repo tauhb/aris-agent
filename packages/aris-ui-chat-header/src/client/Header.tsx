@@ -8,6 +8,7 @@
 import { ShortcutKeys } from '@deepseek-ai/dsh-client-ui-primitives'
 import { getMascot } from '@aris/ui-kit'
 import { useEffect, useRef, useState } from 'react'
+import type { Translate } from './locale.js'
 import { chatSessions, whenLabel, type SessionListLike } from './sessions.js'
 
 type Selector<T> = <R>(select: (value: T) => R, equal?: (a: R, b: R) => boolean) => R
@@ -72,9 +73,9 @@ function NewIcon({ size = 18 }: { size?: number }) {
   )
 }
 
-export function BotIdentity() {
+export function BotIdentity({ t }: { t: Translate }) {
   return (
-    <span className="aris-ch" aria-label={`Đang chat với ${CURRENT_BOT.name}, ${CURRENT_BOT.role}`}>
+    <span className="aris-ch" aria-label={t('bot.chattingWith', CURRENT_BOT)}>
       <Mascot id={CURRENT_BOT.id} size={26} />
       <span className="botName">{CURRENT_BOT.name}</span>
       <span className="role">{CURRENT_BOT.role}</span>
@@ -87,11 +88,13 @@ export function BotIdentity() {
 
 export function SessionSwitcher(
   props: HeaderActions & {
+    t: Translate
     sessionId: string
     useSessions: Selector<SessionListLike>
     useShortcuts: Selector<readonly ShortcutRow[]>
   },
 ) {
+  const { t } = props
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLSpanElement>(null)
   const sessions = props.useSessions((list) => chatSessions(list, props.sessionId), sameIds)
@@ -125,7 +128,7 @@ export function SessionSwitcher(
         className="chev"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label={`Đổi phiên với ${CURRENT_BOT.name}`}
+        aria-label={t('switcher.open', CURRENT_BOT)}
         onClick={() => setOpen(!open)}
       >
         <svg width={12} height={12} viewBox="0 0 24 24" aria-hidden="true">
@@ -133,20 +136,20 @@ export function SessionSwitcher(
         </svg>
       </button>
       {open && (
-        <span className="menu" role="listbox" aria-label={`Các phiên với ${CURRENT_BOT.name}`}>
+        <span className="menu" role="listbox" aria-label={t('switcher.list', CURRENT_BOT)}>
           <button type="button" className="item new" onClick={go(props.startSession)}>
             <svg width={15} height={15} viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 5v14M5 12h14" {...line} strokeWidth={2.2} />
             </svg>
-            <span className="t">Phiên mới với {CURRENT_BOT.name}</span>
+            <span className="t">{t('session.newWith', CURRENT_BOT)}</span>
             {newShortcut && newShortcut.keys.length > 0 && (
               <span className="meta">
                 <ShortcutKeys keys={newShortcut.keys} />
               </span>
             )}
           </button>
-          <span className="label">Các phiên với {CURRENT_BOT.name}</span>
-          {sessions.length === 0 && <span className="empty">Chưa có phiên nào khác.</span>}
+          <span className="label">{t('switcher.list', CURRENT_BOT)}</span>
+          {sessions.length === 0 && <span className="empty">{t('switcher.empty')}</span>}
           {sessions.map((s) => (
             <button
               key={s.id}
@@ -158,7 +161,11 @@ export function SessionSwitcher(
             >
               <span className="t">{s.displayTitle}</span>
               <span className="meta">
-                {s.id === props.sessionId ? 'đang mở' : s.running ? 'đang chạy' : whenLabel(s.updatedAt)}
+                {s.id === props.sessionId
+                  ? t('meta.open')
+                  : s.running
+                    ? t('meta.running')
+                    : whenLabel(s.updatedAt, t)}
               </span>
             </button>
           ))}
@@ -168,14 +175,17 @@ export function SessionSwitcher(
   )
 }
 
-export function NewSessionButton({ startSession }: Pick<HeaderActions, 'startSession'>) {
+export function NewSessionButton({
+  startSession,
+  t,
+}: Pick<HeaderActions, 'startSession'> & { t: Translate }) {
   return (
     <span className="aris-ch">
       <button
         type="button"
         className="icon"
-        aria-label={`Phiên mới với ${CURRENT_BOT.name}`}
-        title="Phiên mới"
+        aria-label={t('session.newWith', CURRENT_BOT)}
+        title={t('session.new')}
         onClick={startSession}
       >
         <NewIcon />

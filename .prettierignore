@@ -4,3 +4,6 @@ docs/
 pnpm-lock.yaml
 **/lib/
 .dsh-home/
+
+# Từ điển do script sinh/ghi (scripts/ui/extract-strings.mjs, merge-vi.py)
+packages/aris-ui-locale-vi/locales/*.json

@@ -47,3 +47,6 @@ export const DEMO_TEAM: TeamGroup[] = [
 
 /** Số việc đang chờ anh duyệt (mẫu; giai đoạn 3 lấy từ hộp duyệt). */
 export const DEMO_PENDING_APPROVALS = 3
+
+/** Chi phí model hôm nay so với ngân sách, đơn vị USD (mẫu; giai đoạn 5 lấy từ sổ chi phí). */
+export const DEMO_COST = { spent: 0.42, budget: 5 }

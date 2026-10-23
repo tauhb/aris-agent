@@ -9,6 +9,14 @@
   disabled: true
 
 - insert:
+    # Theme aris cho toàn app: ghi đè token màu, nền, viền, chữ, phông của dsh.
+    - id: aris-ui-theme
+      name: '@aris/ui-theme'
+
+    # Thêm "Tiếng Việt" vào Cài đặt › Chung › Ngôn ngữ; tiếng Anh, tiếng Trung giữ nguyên.
+    - id: aris-ui-locale-vi
+      name: '@aris/ui-locale-vi'
+
     - id: aris-ui-sidebar
       name: '@aris/ui-sidebar'
 

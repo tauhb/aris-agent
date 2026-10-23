@@ -74,6 +74,8 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 > **G1 xong 23/10**: [giao-dien/ban-do.md](giao-dien/ban-do.md) (36 màn → cách làm), [giao-dien/kiem-ke-dsh.md](giao-dien/kiem-ke-dsh.md) (tự sinh). Phát hiện thêm: mọi chữ của dsh là tiếng Anh (~2.400 chuỗi) → Việt hoá gộp vào G2; cài đặt của dsh là hộp thoại, canvas là trang 6.x → trang Cài đặt aris riêng.
 
+> **G2 xong 23/10**: theme aris cho toàn app (`@aris/ui-theme`, sáng và tối); tiếng Việt là ngôn ngữ thứ ba bên cạnh tiếng Anh và tiếng Trung, chọn ở Cài đặt › Chung › Ngôn ngữ (`@aris/ui-locale-vi`, 2.760 chuỗi của dsh, 100%); chữ của aris có từ điển en/vi; `pnpm check` chặn bản dịch lệch biến hoặc lỗi thời khi nâng dsh. Còn lại cho G4: tiêu đề tab "DeepSeek Harness", màn trống.
+
 > Thêm ngày 23/10 theo yêu cầu của chủ dự án: làm thanh bên rồi đầu khung theo từng góp ý là cách làm vụn vặt, app sẽ thành chắp vá giữa dáng aris và dáng dsh. Giai đoạn này dựng giao diện theo hệ thống để mọi màn đạt canvas trước khi nối dữ liệu.
 
 **Mục tiêu**: đi khắp app, màn nào cũng giống canvas ở cả sáng và tối; những chỗ chưa có dữ liệu thật dùng dữ liệu mẫu được đánh dấu rõ.
@@ -81,7 +83,7 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 | Bước | Việc | Kết quả nghiệm thu |
 |---|---|---|
 | **G1 · Bản đồ giao diện** | Kiểm kê mọi mảnh giao diện web của dsh (row, chỗ cắm, token theme); đối chiếu 36 màn canvas, mỗi vùng chọn một cách làm: chỉ theme / tắt row và thay / cắm thêm vào chỗ cắm / trang mới / ngoài web | [giao-dien/ban-do.md](giao-dien/ban-do.md): bảng "màn nào làm bằng cách nào, ở gói nào, giai đoạn nào nối dữ liệu" + ảnh chụp hiện trạng |
-| **G2 · Theme aris + tiếng Việt** | `@aris/ui-theme`: `ctx.theme.overrideTokens` ghi đè 403 token `--dsw-*` (màu, nền, viền, chữ, bo góc, bóng) và phông Lexend / Be Vietnam Pro / JetBrains Mono cho cả sáng và tối. `@aris/ui-locale-vi`: thêm ngôn ngữ `vi` và dịch ~2.400 chuỗi của dsh, có script trích chuỗi và báo thiếu khi nâng dsh | Mọi chỗ chưa thay (khung chat, ô nhập, cài đặt, hộp thoại, menu) mang dáng aris và nói tiếng Việt; không còn màu xanh DeepSeek |
+| **G2 · Theme aris + tiếng Việt** | `@aris/ui-theme`: `ctx.theme.overrideTokens` ghi đè 403 token `--dsw-*` (màu, nền, viền, chữ, bo góc, bóng) và phông Lexend / Be Vietnam Pro / JetBrains Mono cho cả sáng và tối. `@aris/ui-locale-vi`: thêm ngôn ngữ `vi` (giữ tiếng Anh, tiếng Trung) và dịch ~2.400 chuỗi của dsh, có script trích chuỗi và báo thiếu khi nâng dsh | Mọi chỗ chưa thay (khung chat, ô nhập, cài đặt, hộp thoại, menu) mang dáng aris; chọn Tiếng Việt thì cả app nói tiếng Việt; không còn màu xanh DeepSeek |
 | **G3 · Bộ thành phần** | `@aris/ui-kit` thêm thành phần React: nút (b1/b2/icon), viên trạng thái, chip, thẻ, dòng cài đặt, nút chọn đoạn, ô nhập, hộp thoại, menu, tab, linh vật, glyph trạng thái, khung trang Cài đặt (thanh điều hướng 6.x); trang thử thành phần | Mỗi thành phần có trang thử sáng/tối; thanh bên và đầu khung chuyển sang dùng bộ này |
 | **G4 · Khung ứng dụng** | Thay các mảnh có bố cục khác canvas: ô nhập 1.2 (lệnh, @bot, đính kèm, model), cách vẽ hội thoại 1.1 (dòng việc rẽ nhánh, thẻ duyệt), cột phải (sơ đồ đội 3D) | 1.1 và 1.2 đạt canvas |
 | **G5 · Vỏ mọi trang** | Dựng các trang trong điều hướng và Cài đặt bằng bộ thành phần, dữ liệu mẫu đánh dấu rõ (`DEMO_*`) | Đi được tới mọi màn trong 36 màn từ app thật |

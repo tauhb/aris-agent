@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { EN, VI, type HeaderKey } from './locale.js'
 import { chatSessions, whenLabel } from './sessions.js'
 
 const s = (id: string, updatedAt: number, extra: { origin?: 'subagent'; blank?: boolean } = {}) => ({
@@ -35,9 +36,20 @@ describe('chatSessions', () => {
 
 describe('whenLabel', () => {
   const now = new Date(2026, 9, 23, 10, 0).getTime()
+  // Bộ dịch giả: thay biến {tên} như dsh.
+  const fill =
+    (dict: Record<HeaderKey, string>) =>
+    (key: HeaderKey, params: Record<string, unknown> = {}) =>
+      dict[key].replace(/\{(\w+)\}/g, (_, name: string) => String(params[name]))
+  const vi = fill(VI)
+  const en = fill(EN)
   it('hôm nay, hôm qua, rồi ngày/tháng', () => {
-    expect(whenLabel(new Date(2026, 9, 23, 8).getTime(), now)).toBe('hôm nay')
-    expect(whenLabel(new Date(2026, 9, 22, 23).getTime(), now)).toBe('hôm qua')
-    expect(whenLabel(new Date(2026, 9, 18, 9).getTime(), now)).toBe('18/10')
+    expect(whenLabel(new Date(2026, 9, 23, 8).getTime(), vi, now)).toBe('hôm nay')
+    expect(whenLabel(new Date(2026, 9, 22, 23).getTime(), vi, now)).toBe('hôm qua')
+    expect(whenLabel(new Date(2026, 9, 18, 9).getTime(), vi, now)).toBe('18/10')
+  })
+  it('theo ngôn ngữ đang chọn', () => {
+    expect(whenLabel(new Date(2026, 9, 22, 23).getTime(), en, now)).toBe('yesterday')
+    expect(whenLabel(new Date(2026, 9, 18, 9).getTime(), en, now)).toBe('10/18')
   })
 })

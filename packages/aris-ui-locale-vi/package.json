@@ -1,0 +1,30 @@
+{
+  "name": "@aris/ui-locale-vi",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Gói ngôn ngữ tiếng Việt cho Web UI của dsh: thêm \"Tiếng Việt\" vào danh sách ngôn ngữ, giữ nguyên tiếng Anh và tiếng Trung",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "locales"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-locale"
+      ]
+    }
+  }
+}
