@@ -4,9 +4,9 @@
  * vào lớp phủ `shell.overlay`. Gói nào cũng mở được trang qua `arisNavigate`.
  */
 import { announceRoute, mountKitCss, onArisNavigate } from '@aris/ui-kit/react'
-import type { ComponentType } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 import { EN, NS, VI } from './locale.js'
-import type { PageNav, PageProps, Translate } from './page.js'
+import type { PageNav, PageProps, SystemSection, SystemSettings, Translate } from './page.js'
 import {
   ROUTES,
   createNavStore,
@@ -44,17 +44,19 @@ interface ClientContext {
   slots: {
     inject(name: string, fn: () => () => void): void
     register(options: Record<string, unknown>, component: unknown): () => void
+    entriesOfSlot(name: string): { options: { id?: string; order?: number; label?: unknown } }[]
+    subscribe(name: string, fn: () => void): () => void
   }
-  locale: { register(ns: string, locale: string, dict: Record<string, string>): () => void }
+  locale: {
+    register(ns: string, locale: string, dict: Record<string, string>): () => void
+    subscribe(fn: () => void): () => void
+  }
   layout: { selectPanel(id: string | null): void }
-  shortcuts: {
-    invoke(id: string, context: { region: 'page'; modal: null; target: null; source: 'menu' }): void
-  }
   workspaces: { create(input: { path: string }): Promise<{ workspaceId: string }> }
   get(name: string): unknown
 }
 
-export const inject = ['slots', 'locale', 'layout', 'shortcuts', 'workspaces', 'uiWorkspace']
+export const inject = ['slots', 'locale', 'layout', 'workspaces', 'uiWorkspace']
 
 /** Trang đã dựng; trang chưa có ở đây thì chưa đăng ký. */
 const PAGES: Partial<Record<RouteId, ComponentType<PageProps>>> = {
@@ -85,6 +87,7 @@ const DIALOGS: Partial<Record<RouteId, ComponentType<PageProps & { projects: Pro
 const EMPTY: Params = {}
 
 type Selector<T> = <R>(select: (value: T) => R) => R
+type RenderSlot = (name: string, props: Record<string, unknown>, options?: { only?: string }) => ReactNode
 
 function injectStyle(): () => void {
   const style = document.createElement('style')
@@ -111,8 +114,6 @@ export function apply(ctx: ClientContext): void {
       }
     },
     openPanel: (id) => ctx.layout.selectPanel(id),
-    openDshSettings: () =>
-      ctx.shortcuts.invoke('settings.open', { region: 'page', modal: null, target: null, source: 'menu' }),
     close: () => store.set({ ...store.getSnapshot(), dialog: null }),
   }
   ctx.effect(
@@ -157,13 +158,59 @@ export function apply(ctx: ClientContext): void {
   // ⌘K vẫn là bộ tìm phiên của dsh (`session.search`, có dữ liệu thật); hộp "Tìm trong
   // mọi phiên" của aris mở từ nút tìm trên thanh bên, nhận ⌘K khi nối dữ liệu ở giai đoạn 1.
 
+  // Các mục cài đặt dsh đăng ký vào `settings.section`; nhãn có thể là hàm theo ngôn ngữ.
+  let sections: SystemSection[] = []
+  const sectionListeners = new Set<() => void>()
+  const syncSections = () => {
+    sections = ctx.slots
+      .entriesOfSlot('settings.section')
+      .map(({ options }) => ({
+        id: options.id ?? '',
+        order: options.order ?? 0,
+        label: String((typeof options.label === 'function' ? options.label() : options.label) ?? options.id),
+      }))
+      .filter((s) => s.id)
+      .sort((a, b) => a.order - b.order)
+      .map(({ id, label }) => ({ id, label }))
+    for (const fn of sectionListeners) fn()
+  }
+  const systemSections = {
+    getSnapshot: () => sections,
+    subscribe(fn: () => void) {
+      sectionListeners.add(fn)
+      return () => void sectionListeners.delete(fn)
+    },
+  }
+  ctx.effect(() => ctx.slots.subscribe('settings.section', syncSections), 'aris-ui-pages: settings sections')
+  ctx.effect(() => ctx.locale.subscribe(syncSections), 'aris-ui-pages: settings labels')
+  syncSections()
+
   for (const [id, Page] of Object.entries(PAGES) as [RouteId, ComponentType<PageProps>][]) {
     if (ROUTES[id].kind !== 'page') continue
-    function Host({ t, useNav }: { t: Translate; useNav: Selector<NavState> }) {
+    function Host({
+      t,
+      useNav,
+      useSystemSections,
+      renderSlot,
+    }: {
+      t: Translate
+      useNav: Selector<NavState>
+      useSystemSections?: Selector<readonly SystemSection[]>
+      renderSlot?: RenderSlot
+    }) {
       const params = useNav((s) => s.params[id] ?? EMPTY)
+      const list = useSystemSections?.((s) => s)
+      const system: SystemSettings | undefined =
+        list && renderSlot
+          ? {
+              sections: list,
+              render: (only) =>
+                renderSlot('settings.section', { close: () => nav.openPanel(null) }, { only }),
+            }
+          : undefined
       return (
         <div className="aris ap-root">
-          <Page t={t} nav={nav} params={params} />
+          <Page t={t} nav={nav} params={params} system={system} />
         </div>
       )
     }
@@ -177,11 +224,16 @@ export function apply(ctx: ClientContext): void {
           ),
         ),
       )
+    // Trang Cài đặt vẽ luôn các mục cài đặt của dsh: một chỗ cài đặt duy nhất.
+    const settings =
+      id === 'settings'
+        ? {
+            children: { 'settings.section': { kind: 'list', scope: 'root' } },
+            inject: () => ({ hooks: { nav: store, systemSections } }),
+          }
+        : { inject: () => ({ hooks: { nav: store } }) }
     ctx.slots.inject('main', () =>
-      ctx.slots.register(
-        { name: 'main', key: panelId(id), locale: NS, inject: () => ({ hooks: { nav: store } }) },
-        Host,
-      ),
+      ctx.slots.register({ name: 'main', key: panelId(id), locale: NS, ...settings }, Host),
     )
   }
 }

@@ -101,6 +101,11 @@ export function apply(ctx: ClientContext): void {
       SidebarRoot,
     ),
   )
+  // Một chỗ cài đặt duy nhất là bánh răng (trang Cài đặt aris, đã gồm các mục của dsh):
+  // chiếm nút mở cài đặt của dsh (menu "…": Cài đặt, Góp ý, Đăng nhập) để nó không hiện.
+  ctx.slots.inject('settings.launcher', () =>
+    ctx.slots.register({ name: 'settings.launcher', id: 'aris-no-launcher', priority: 10 }, () => null),
+  )
   ctx.slots.inject('shell.leading', () =>
     ctx.slots.register({ name: 'shell.leading', locale: NS, inject: injectProps }, LeadingControls),
   )

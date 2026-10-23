@@ -325,12 +325,12 @@ export function SidebarRoot(props: SidebarProps) {
             <IconButton label={t('settings')} size="sm" onClick={() => arisNavigate('settings')}>
               <GearIcon size={17} />
             </IconButton>
-            {/* Menu "Thêm" của dsh (Cài đặt chung, Góp ý, Đăng nhập) thu thành nút nhỏ cạnh bánh răng. */}
-            <span className="seat mini">{renderSlot('sidebar.settings', { wide: false })}</span>
           </div>
         )}
         <div className="seat">{renderSlot('sidebar.footer.action', { wide })}</div>
-        {!wide && <div className="seat">{renderSlot('sidebar.settings', { wide })}</div>}
+        {/* Vỏ cài đặt của dsh: không còn nút mở (xem settings.launcher ở index.tsx), chỉ còn
+            báo mất kết nối, hộp thoại cài đặt (phím tắt) và các bước làm quen. */}
+        <div className="seat">{renderSlot('sidebar.settings', { wide })}</div>
       </div>
     </nav>
   )

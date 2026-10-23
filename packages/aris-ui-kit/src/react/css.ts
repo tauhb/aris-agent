@@ -196,6 +196,7 @@ ${scope(`
 .a-settings-nav{flex:0 1 210px;min-width:190px;border-right:1px solid var(--a-line);padding:16px 10px;display:flex;flex-direction:column;gap:2px}
 .a-settings-nav>.foot{margin-top:auto;border-top:1px solid var(--a-line);padding-top:6px}
 .a-settings-nav>.cap{color:var(--a-muted);padding:0 10px 8px;font-weight:600;font-size:12px}
+.a-settings-nav>.cap.grp{padding-top:14px;margin-top:8px;border-top:1px solid var(--a-line)}
 
 `)}
 @media (prefers-reduced-motion:reduce){.aris *{transition:none!important;animation:none!important}}

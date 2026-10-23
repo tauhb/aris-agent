@@ -1,4 +1,5 @@
 /** Hợp đồng chung giữa khung trang và từng trang aris. */
+import type { ReactNode } from 'react'
 import type { Params, RouteId } from './routes.js'
 
 export type Translate = (key: string, params?: Record<string, unknown>) => string
@@ -8,8 +9,6 @@ export interface PageNav {
   go(to: RouteId, params?: Params): void
   /** Mở một trang của dsh (ví dụ `plugins`, `schedules`) hoặc về chat (`null`). */
   openPanel(id: string | null): void
-  /** Mở hộp thoại Cài đặt của dsh (ngôn ngữ, giao diện, phím tắt…). */
-  openDshSettings(): void
   /** Đóng hộp thoại aris đang mở. */
   close(): void
 }
@@ -18,6 +17,20 @@ export interface PageProps {
   t: Translate
   nav: PageNav
   params: Params
+  /** Các mục cài đặt của dsh (chỉ trang Cài đặt nhận). */
+  system?: SystemSettings | undefined
+}
+
+/** Một mục cài đặt dsh đăng ký vào `settings.section` (Chung, Model, Tài khoản…). */
+export interface SystemSection {
+  id: string
+  label: string
+}
+
+/** Các mục cài đặt của dsh, vẽ ngay trong trang Cài đặt của aris thay cho hộp thoại riêng. */
+export interface SystemSettings {
+  sections: readonly SystemSection[]
+  render(id: string): ReactNode
 }
 
 /** Từ điển của một trang: khoá giống nhau ở hai ngôn ngữ. */

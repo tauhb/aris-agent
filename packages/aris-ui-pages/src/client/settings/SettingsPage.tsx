@@ -1,9 +1,9 @@
 /**
- * Trang Cài đặt 6.x: cột điều hướng các mục (theo canvas) và trang của mục đang
- * chọn. "Plugin" mở trang Plugin của dsh; "Chung" mở hộp thoại cài đặt của dsh
- * (ngôn ngữ, giao diện, phím tắt) vì aris giữ nguyên phần đó.
+ * Trang Cài đặt 6.x — chỗ cài đặt duy nhất của app: các mục của aris (theo canvas),
+ * rồi nhóm "Hệ thống" là các mục cài đặt của dsh (chung, model, tài khoản…) vẽ ngay
+ * trong trang thay cho hộp thoại riêng của dsh.
  */
-import { NavItem, SettingsShell } from '@aris/ui-kit/react'
+import { SettingsShell } from '@aris/ui-kit/react'
 import type { ComponentType } from 'react'
 import type { PageProps } from '../page.js'
 import { Channels } from './Channels.js'
@@ -40,22 +40,36 @@ const ORDER = [
   'plugin',
 ] as const
 
+/** Mã mục của dsh trong trang: `sys:<mã mục dsh>`. */
+const SYS = 'sys:'
+
 export function SettingsPage(props: PageProps) {
-  const { t, nav, params } = props
-  const active = params.section && params.section in SECTIONS ? params.section : 'dashboard'
-  const Section = SECTIONS[active]!
+  const { t, nav, params, system } = props
+  const requested = params.section ?? ''
+  const sysId = requested.startsWith(SYS) ? requested.slice(SYS.length) : undefined
+  const sys = sysId !== undefined ? system?.sections.find((s) => s.id === sysId) : undefined
+  const active = sys ? requested : requested in SECTIONS ? requested : 'dashboard'
+  const Section = SECTIONS[active]
   // Provider có cột danh sách provider riêng thay cho cột điều hướng (theo canvas 6.2).
-  if (active === 'provider') return <Section {...props} />
+  if (active === 'provider' && Section) return <Section {...props} />
   return (
     <SettingsShell
       caption={t('set.caption')}
       navLabel={t('set.nav')}
       active={active}
-      sections={ORDER.map((id) => ({ id, label: t(`sec.${id}`) }))}
+      sections={[
+        ...ORDER.map((id) => ({ id, label: t(`sec.${id}`) })),
+        ...(system?.sections ?? []).map((s) => ({ id: SYS + s.id, label: s.label, group: t('set.system') })),
+      ]}
       onSelect={(id) => nav.go('settings', { section: id })}
-      footer={<NavItem label={t('set.general')} className="a-muted" onClick={nav.openDshSettings} />}
     >
-      <Section {...props} />
+      {sys && system ? (
+        <main className="a-page ap-sys" aria-label={sys.label}>
+          {system.render(sys.id)}
+        </main>
+      ) : (
+        Section && <Section {...props} />
+      )}
     </SettingsShell>
   )
 }

@@ -2,7 +2,7 @@
  * Khung điều hướng và trang: dòng điều hướng (thanh bên, menu Cài đặt), đầu mục,
  * khung trang thường và khung trang Cài đặt 6.x.
  */
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { Fragment, forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
 import { Mascot, StatusGlyph, cx } from './basics.js'
 import type { BotStatus } from '../status.js'
 
@@ -136,6 +136,8 @@ export function PageShell({
 export interface SettingsSection {
   id: string
   label: string
+  /** Nhãn nhóm; mục đầu của mỗi nhóm mới có nhãn nhóm phía trên. */
+  group?: string | undefined
 }
 
 /** Khung trang Cài đặt 6.x: cột điều hướng các mục bên trái, trang của mục bên phải. */
@@ -161,14 +163,16 @@ export function SettingsShell({
     <div className="a-settings">
       <nav className="a-settings-nav" aria-label={navLabel}>
         {caption && <div className="cap">{caption}</div>}
-        {sections.map((s) => (
-          <NavItem
-            key={s.id}
-            label={s.label}
-            variant="plain"
-            active={s.id === active}
-            onClick={() => onSelect(s.id)}
-          />
+        {sections.map((s, i) => (
+          <Fragment key={s.id}>
+            {s.group && s.group !== sections[i - 1]?.group && <div className="cap grp">{s.group}</div>}
+            <NavItem
+              label={s.label}
+              variant="plain"
+              active={s.id === active}
+              onClick={() => onSelect(s.id)}
+            />
+          </Fragment>
         ))}
         {footer && <div className="foot">{footer}</div>}
       </nav>

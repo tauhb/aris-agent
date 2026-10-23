@@ -75,7 +75,7 @@ Trạng thái: ✅ đã làm · ◐ làm một phần · ○ chưa. "Dữ liệu
 
 ### Nhóm 6 · Cài đặt & vận hành
 
-Dsh để cài đặt trong **một hộp thoại** (Chung, Models, Built-in plugins, Agent presets); canvas là **các trang 6.x có điều hướng riêng**. Cách làm: một trang P "Cài đặt" của aris với thanh điều hướng 6.1–6.7; mục "Chung" của dsh (quyền mặc định, ngôn ngữ, giao diện, phông, phím tắt) giữ trong hộp thoại dsh (T) và mở từ mục "Chung" của trang aris. G5 đã dựng trang này (mục "Cài đặt chung" ở chân điều hướng mở hộp thoại dsh qua `settings.open`, mục Plugin mở trang Plugins của dsh); nhúng thẳng các mục của dsh vào trang aris để G6 xét.
+Dsh để cài đặt trong **một hộp thoại** (Chung, Models, Built-in plugins, Agent presets); canvas là **các trang 6.x có điều hướng riêng**. Cách làm: một trang P "Cài đặt" của aris với thanh điều hướng 6.1–6.7; mục "Chung" của dsh (quyền mặc định, ngôn ngữ, giao diện, phông, phím tắt) giữ trong hộp thoại dsh (T) và mở từ mục "Chung" của trang aris. **Một chỗ cài đặt duy nhất** (23/10): bánh răng mở trang Cài đặt aris; nhóm "Hệ thống (DeepSeek Harness)" cuối điều hướng vẽ ngay các mục dsh đăng ký vào `settings.section` (Chung, Model, Plugin có sẵn, Mẫu bot) bằng chỗ cắm con của trang. Menu "…" của dsh (Cài đặt, Góp ý, Đăng nhập tài khoản DeepSeek) bị chiếm chỗ cắm `settings.launcher` nên không hiện; vỏ cài đặt dsh vẫn chạy để báo mất kết nối, các bước làm quen và phím tắt mở hộp thoại cũ. Bỏ theo: Góp ý (gửi DeepSeek) và đăng xuất tài khoản DeepSeek — aris dùng khoá API, không cần tài khoản DeepSeek.
 
 | Màn | Vùng của dsh | Cách | Gói aris | Trạng thái | Dữ liệu |
 |---|---|---|---|---|---|

@@ -189,4 +189,5 @@ export const CSS = `
 .ap-bls{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
 .ap-bl{border:1px solid var(--a-line);border-radius:10px;padding:8px 10px;font-size:13px;background:var(--a-panel)}
 .ap-src-ic{display:inline-flex;align-items:center;gap:6px}
+.ap-sys{padding:20px 28px;overflow-y:auto}
 `
