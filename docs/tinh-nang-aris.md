@@ -405,18 +405,18 @@ Ba hướng **không loại trừ nhau**: đề xuất lấy **A làm khung mặ
 - **Khung chat**: hàng chip đính kèm ở trên; nút trái: đính kèm · `/` lệnh và skill · `@` gọi bot · ghi âm; nút phải: **viên chọn provider/model** (mở bảng: tìm kiếm, nhóm theo provider, nhãn nhanh/rẻ/suy luận, "Thêm provider…", mức suy luận, áp dụng cho chat này hay mặc định của bot) · Gửi. Khi bot đang làm: chọn *chèn vào việc đang làm / xếp hàng / dừng và làm mới* + nút Dừng.
 - **Cột phải** "Đội bot lúc này" ẩn/hiện được, dẫn sang tab Bản đồ.
 
-### 11.3 Màn chi tiết — 31 bảng, 7 nhóm (đã vẽ đủ 23/10)
+### 11.3 Màn chi tiết — 36 bảng, 7 nhóm (cập nhật 23/10)
 
 Mỗi nhóm là một trang trên canvas thiết kế; thanh bên trái là **một thành phần dùng chung** (trang "Thành phần") nên mọi màn đồng bộ, bấm các mục điều hướng chuyển được giữa các màn khi xem thử.
 
 | Nhóm | Bảng | Số | Trạng thái |
 |---|---|---|---|
-| **1 · Khung & Chat** | 1.1 Chat + bảng chọn model · 1.2 Khung chat 4 trạng thái (lệnh, @bot, đính kèm, bot đang bận) · 1.3 Bản đồ đội · 1.4 Phòng nhóm | 4 | Đã duyệt |
-| **2 · Đội bot & Commander** | 2.1 Tạo bot nhanh · 2.2 Hồ sơ bot (tab Tính cách, Model, Skill & tool, Quyền & kênh) · 2.3 Hồ sơ chủ nhân theo bot · 2.4 Nhân bản / xuất bot · **2.5 Commander** (bot được giao việc, giới hạn, nhật ký định tuyến, điều Commander đã học) | 5 | Đã vẽ |
+| **1 · Khung & Chat** | 1.1 Chat với một bot (đầu khung ghi rõ bot, mặc định Aris · Commander; nút Phiên ▾ và Phiên mới) · 1.2 Khung chat 4 trạng thái (lệnh, @bot, đính kèm, bot đang bận) · 1.3 Bản đồ đội (trang tổng quan, không phải nơi chat) · 1.4 Phòng (thành viên, thư mục làm việc, Phiên ▾) · **1.5 Tạo phòng** · **1.6 Tìm trong mọi phiên (⌘K)** | 6 | Đã vẽ |
+| **2 · Đội bot & Commander** | 2.1 Tạo bot nhanh (tab Bot ngoài = 2.1b) · 2.2 Hồ sơ bot (tab Tính cách, Model, Skill & tool, Quyền & kênh) · 2.3 Hồ sơ chủ nhân theo bot · 2.4 Nhân bản / xuất bot · **2.5 Commander** (bot được giao việc, giới hạn, nhật ký định tuyến, điều Commander đã học) | 6 | Đã vẽ |
 | **3 · Trí nhớ & tự tiến hoá** | 3.1 Ký ức (lõi / lưu trữ / chờ duyệt) · 3.2 Thư viện skill · 3.3 Chi tiết skill (diff + kết quả chạy lại phiên cũ) · 3.4 Hộp duyệt (có gợi ý luật) · 3.5 Việc đang chạy (mục tiêu, việc được giao, vòng lặp, điểm khôi phục) | 5 | Đã vẽ |
 | **4 · Tự động** | 4.1 Danh sách routine · 4.2 Tạo routine bằng lời → xác nhận lịch · 4.3 Kanban (chia việc tự động/thủ công, Driver) | 3 | Đã vẽ |
 | **5 · Second Brain & đồ thị** | 5.1 Ghi chú · 5.2 Hộp thư vào · 5.3 Đồ thị toàn cục · 5.4 Hỏi bộ não | 4 | Đã vẽ |
-| **6 · Cài đặt & vận hành** | 6.1 Bảng điều khiển · 6.2 Provider & model (80+ provider, model theo việc, dự phòng) · 6.3 Kênh & ghép đôi · 6.4 Ngân sách, duyệt, mạng · 6.5 Thống kê & nhật ký · 6.6 Màn hình của bot | 6 | Đã vẽ |
+| **6 · Cài đặt & vận hành** | 6.1 Bảng điều khiển · 6.2 Provider & model (80+ provider, model theo việc, dự phòng) · 6.3 Kênh & ghép đôi · 6.4 Ngân sách, duyệt, mạng · 6.5 Thống kê & nhật ký · 6.6 Màn hình của bot · 6.3b Mặt tích hợp · **6.7 Plugin** | 8 | Đã vẽ |
 | **7 · Di động** | 7.1 Thẻ duyệt trên Telegram · 7.2 Thẻ báo cáo routine · 7.3 Thẻ đề xuất ký ức/skill · 7.4 Chat web trên điện thoại | 4 | Đã vẽ |
 
 ### 11.4 Revamp nhẹ — giữ bố cục, đổi cảm giác (đề xuất 23/10)
@@ -479,6 +479,7 @@ Ngày 23/10/2026, chủ dự án chốt:
 7. **Giao diện**: chọn hướng A (giống Grokbot) làm khung, B là tab "Bản đồ đội", C là màn phòng nhóm; đã vẽ lại gọn hơn (mục 11.2).
 8. **Bốn cách dùng** (chốt 23/10): aris phải chạy được cả **ngầm** lẫn **có giao diện**, **điều phối nền tảng và agent khác**, và **làm agent thành viên** của nền tảng khác (như Hermes trong Buzz Desktop). Chi tiết ở mục 15.
 9. **Giao diện** (chốt 23/10): phải giống canvas; làm bằng cách **thay từng row giao diện của Web UI dsh** bằng gói aris cùng hợp đồng slot. Loại phương án app riêng qua `dsh sdk` (SDK quá hẹp: thiếu duyệt quyền, huỷ, danh sách phiên, cài đặt).
+10. **Bố cục điều hướng** (chốt 23/10): thanh bên chỉ trả lời "đi trang nào" (Bản đồ đội, Second Brain, Routine, Kanban), "nói với ai" (**Đội hình**) và "làm chung ở đâu" (**Phòng** = workspace của dsh + bot thành viên). **Phiên** không nằm trên thanh bên: bấm một bot mở phiên đang dở gần nhất; đổi phiên hay mở phiên mới ở đầu khung chat; tìm mọi phiên bằng ⌘K. Chat riêng với bot thuộc phòng ẩn "Cá nhân". **Plugins** chuyển vào Cài đặt (6.7); "Automation tasks" của dsh mang tên Routine.
 
 ## 15. Bốn cách dùng aris và đánh giá ngang/vượt Hermes (23/10)
 

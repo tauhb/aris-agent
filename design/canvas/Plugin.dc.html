@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Plugin</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FCEBE9}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b2{height:30px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:12.5px}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.sn{display:block;border-radius:8px;padding:7px 10px;font-size:13.5px;color:var(--ink);text-decoration:none}
+.r{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.num{width:70px;height:30px;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit;font-size:13px;text-align:center}
+.seg{border:0;border-radius:7px;padding:4px 10px;background:transparent;font-size:12.5px;color:var(--muted)}
+.cb{width:18px;height:18px;accent-color:var(--accent)}
+.chip{font-size:12px;border-radius:6px;padding:2px 8px;background:var(--panel2)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="settings" bot="none" hint-size="260px,900px"></dc-import>
+  <nav aria-label="Cài đặt" style="flex: 0 1 210px; min-width: 190px; border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px">
+    <div class="m" style="padding: 0 10px 8px; font-weight: 600; font-size: 12px">Cài đặt và vận hành</div>
+    <a class="sn" href="DieuKhien.dc.html">Bảng điều khiển</a>
+    <a class="sn" href="Provider.dc.html">Provider và model</a>
+    <a class="sn" href="Kenh.dc.html">Kênh và ghép đôi</a>
+    <a class="sn" href="MatTichHop.dc.html">Mặt tích hợp</a>
+    <a class="sn" href="BaoMat.dc.html">Ngân sách, duyệt, mạng</a>
+    <a class="sn" href="ThongKe.dc.html">Thống kê và nhật ký</a>
+    <a class="sn" href="Commander.dc.html">Commander</a>
+    <a class="sn" href="ManHinhBot.dc.html">Màn hình của bot</a>
+    <a class="sn" href="Plugin.dc.html" aria-current="page" style="background: var(--hover); font-weight: 600">Plugin</a>
+  </nav>
+  <main style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Plugin</span><span class="m" style="font-size: 12px">Gói mở rộng năng lực cho aris và các bot</span></div>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="margin-left: auto"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+    <div style="padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+      <div style="flex: 1 1 440px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div class="card">
+          <div style="padding: 12px 14px; display: flex; align-items: center; gap: 8px"><b>Đã cài</b><span class="m" style="font-size: 12.5px">6 plugin</span></div>
+          <div class="r"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none"></span><span style="flex: 1; min-width: 0"><b style="font-weight: 600">Lõi aris</b> <span class="m" style="font-size: 12.5px">· aris</span><br><span class="m" style="font-size: 12.5px">Đội bot, Commander, trí nhớ, tự học</span></span><span class="m" style="font-size: 12.5px">bắt buộc</span></div>
+          <div class="r"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none"></span><span style="flex: 1; min-width: 0"><b style="font-weight: 600">Giao diện aris</b> <span class="m" style="font-size: 12.5px">· aris</span><br><span class="m" style="font-size: 12.5px">Thanh bên, khung chat, các trang của aris</span></span><span class="m" style="font-size: 12.5px">bắt buộc</span></div>
+          <div class="r"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none"></span><span style="flex: 1; min-width: 0"><b style="font-weight: 600">Chuyển giọng nói thành chữ</b> <span class="m" style="font-size: 12.5px">· DeepSeek Harness</span><br><span class="m" style="font-size: 12.5px">Ghi âm Telegram và nút micro trong khung chat</span></span><button type="button" class="b2">Tắt</button></div>
+          <div class="r"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none"></span><span style="flex: 1; min-width: 0"><b style="font-weight: 600">Tìm trong phiên</b> <span class="m" style="font-size: 12.5px">· DeepSeek Harness</span><br><span class="m" style="font-size: 12.5px">Chỉ mục toàn văn cho mọi phiên (⌘K)</span></span><button type="button" class="b2">Tắt</button></div>
+          <div class="r"><span style="width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--muted); box-sizing: border-box; flex: none"></span><span style="flex: 1; min-width: 0"><b style="font-weight: 600">Trình duyệt tự động</b> <span class="m" style="font-size: 12.5px">· DeepSeek Harness</span><br><span class="m" style="font-size: 12.5px">Bot mở web, bấm, điền biểu mẫu trong sandbox</span></span><button type="button" class="b2">Bật</button></div>
+          <div class="r"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none"></span><span style="flex: 1; min-width: 0"><b style="font-weight: 600">Kết nối GitHub (MCP)</b> <span class="m" style="font-size: 12.5px">· tự thêm</span><br><span class="m" style="font-size: 12.5px">Đọc issue, PR; chỉ Tín và Dev được dùng</span></span><button type="button" class="b2">Tắt</button></div>
+        </div>
+      </div>
+      <div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div class="card">
+          <div style="padding: 12px 14px"><b>Thêm plugin</b></div>
+          <div class="r" style="flex-direction: column; align-items: stretch; gap: 8px">
+            <span style="display: flex; gap: 8px"><input aria-label="Tên gói npm hoặc link GitHub" placeholder="Tên gói hoặc github:…" style="flex: 1; min-width: 0; height: 30px; box-sizing: border-box; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); font: inherit; font-size: 13px; padding: 0 10px"><button type="button" class="b2">Cài</button></span>
+            <span class="m" style="font-size: 12.5px">Cài plugin là cho phép mã của nó chạy trên máy. Chỉ cài từ nguồn anh tin, và ghim phiên bản.</span>
+          </div>
+          <div class="r"><span style="flex: 1" class="m">Chợ plugin của DeepSeek Harness</span><button type="button" class="b2">Mở chợ</button></div>
+        </div>
+        <div class="card">
+          <div class="r" style="border-top: 0"><b style="flex: 1">Cập nhật</b><span style="font-size: 12px; font-weight: 600; color: var(--warn); background: var(--warnSoft); border-radius: 999px; padding: 1px 9px">có 1 bản mới</span><button type="button" class="b2">Xem</button></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'light';
+    return { themeClass: 't-' + theme, toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>
