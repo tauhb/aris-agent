@@ -7,8 +7,11 @@ import { useState } from 'react'
 import type {
   BundleInfo,
   ChangeResult,
+  ConfigLedger,
+  ConfigTarget,
   Outcome,
   PageProps,
+  PluginConfig,
   PluginSource,
   SpecInspection,
 } from '../../page.js'
@@ -32,6 +35,8 @@ function BundleRow({
   update,
   change,
   onUpdate,
+  onInstall,
+  onConfigure,
 }: {
   t: T
   src: PluginSource
@@ -40,6 +45,9 @@ function BundleRow({
   update: Update | undefined
   change: Change
   onUpdate: (u: Update) => void
+  onInstall: (items: InstallItem[]) => void
+  /** Gói có trang cấu hình riêng thì có nút Cấu hình. */
+  onConfigure: ((title: string) => void) | undefined
 }) {
   const group = groupOf(b)
   const { title, description } = bundleText(b, src.resolveText, t)
@@ -97,13 +105,41 @@ function BundleRow({
       </span>
       {group === 'core' ? (
         <Pill tone="muted">{t('pl.required')}</Pill>
-      ) : state === 'missing' ? null : (
+      ) : state === 'missing' ? (
+        b.installTarget && (
+          <Button
+            size="sm"
+            variant="primary"
+            disabled={busy}
+            onClick={() =>
+              b.installTarget &&
+              onInstall([
+                {
+                  title: name,
+                  spec: b.installTarget.spec,
+                  version: b.installTarget.version,
+                  source: t('pl.src.official'),
+                  registry: b.installTarget.registry,
+                  enable: b.name,
+                },
+              ])
+            }
+          >
+            {t('pl.mk.install')}
+          </Button>
+        )
+      ) : (
         <Switch
           checked={b.enabled}
           disabled={busy || !b.optional}
           label={t(b.enabled ? 'pl.turnOff' : 'pl.turnOn', { name })}
           onChange={(on) => void change(name, src.setBundle(b.name, on), b.name)}
         />
+      )}
+      {onConfigure && b.enabled && (
+        <Button size="sm" variant="ghost" onClick={() => onConfigure(name)}>
+          {t('pl.configure')}
+        </Button>
       )}
       {group === 'added' && b.removable && (
         <Button size="sm" variant="ghost" disabled={busy} onClick={remove}>
@@ -224,6 +260,9 @@ export function Installed({
   updates,
   change,
   onInstall,
+  config,
+  ledger,
+  onConfigure,
 }: {
   t: T
   src: PluginSource
@@ -232,6 +271,9 @@ export function Installed({
   updates: readonly Update[]
   change: Change
   onInstall: (items: InstallItem[]) => void
+  config: PluginConfig | undefined
+  ledger: ConfigLedger
+  onConfigure: (target: ConfigTarget, title: string) => void
 }) {
   const groups = groupBundles(bundles, src.resolveText, t)
   // Gói nền đang tắt là chế độ chạy khác (chạy lệnh, SDK, ACP): gộp một dòng, chi tiết ở thẻ Chi tiết.
@@ -245,6 +287,26 @@ export function Installed({
   return (
     <div className="ap-cols">
       <Col grow={1.4} basis={480}>
+        {config && ledger.items.length > 0 && (
+          <Card title={t('pl.cfg.title')} subtitle={t('pl.cfg.hint')}>
+            {ledger.items.map((item) => (
+              <CardRow key={item.id}>
+                <span className="ap-pl-tile builtin" aria-hidden>
+                  {letterOf(item.label)}
+                </span>
+                <span className="grow" style={{ minWidth: 0 }}>
+                  <b>{item.label}</b>
+                  <div className="a-muted" style={{ fontSize: 12.5 }}>
+                    {config.render({ kind: 'item', id: item.id }, 'summary')}
+                  </div>
+                </span>
+                <Button size="sm" onClick={() => onConfigure({ kind: 'item', id: item.id }, item.label)}>
+                  {t('pl.configure')}
+                </Button>
+              </CardRow>
+            ))}
+          </Card>
+        )}
         <Card title={t('pl.installedCount', { n: bundles.length })}>
           {order.map(
             ([g, list]) =>
@@ -261,6 +323,12 @@ export function Installed({
                       update={updateOf(b.name)}
                       change={change}
                       onUpdate={(u) => onInstall([u])}
+                      onInstall={onInstall}
+                      onConfigure={
+                        ledger.bundles.has(b.name)
+                          ? (title) => onConfigure({ kind: 'bundle', key: b.name }, title)
+                          : undefined
+                      }
                     />
                   ))}
                   {g === 'core' && idleCore.length > 0 && (

@@ -25,6 +25,8 @@ export interface PageProps {
   models?: ModelSettings | undefined
   /** Danh sách plugin của bản cài (chỉ trang Cài đặt nhận). */
   plugins?: PluginSource | undefined
+  /** Trang cấu hình riêng của plugin (chỉ trang Cài đặt nhận). */
+  pluginConfig?: PluginConfig | undefined
 }
 
 /** Chữ có thể theo ngôn ngữ (`{ en, vi… }`) trong mô tả plugin. */
@@ -61,7 +63,8 @@ export interface BundleInfo {
   name: string
   official: boolean
   availability: 'installation' | 'profile' | 'missing'
-  installTarget?: { spec: string; version: string }
+  /** Gói chính thức chưa cài: bản cài sẵn sàng cài theo yêu cầu. */
+  installTarget?: { spec: string; version: string; registry?: string }
   version?: string
   meta?: { title?: LocalizedText; description?: LocalizedText; error?: string }
   description?: string
@@ -196,6 +199,27 @@ export interface PluginSource {
   /** Khởi động lại aris (chạy ngầm); chạy tay thì không được. */
   restart(): Promise<Outcome<{ restarting: boolean }>>
   resolveText(text: LocalizedText): string
+}
+
+/**
+ * Các trang cấu hình plugin tự đăng ký vào khe của trang Plugin: `plugins.item` (plugin chính thức,
+ * ví dụ Shell, Bot con), `plugins.bundle.config` (theo tên gói), `plugins.row.config`
+ * (`<tên gói>#<mã hàng>`). Plugin tự giữ form, trang chỉ vẽ.
+ */
+export interface ConfigLedger {
+  items: readonly { id: string; label: string }[]
+  bundles: ReadonlySet<string>
+  rows: ReadonlySet<string>
+}
+
+export type ConfigView = 'page' | 'summary'
+
+export type ConfigTarget =
+  { kind: 'item'; id: string } | { kind: 'bundle'; key: string } | { kind: 'row'; key: string }
+
+export interface PluginConfig {
+  ledger: { getSnapshot(): ConfigLedger; subscribe(fn: () => void): () => void }
+  render(target: ConfigTarget, view: ConfigView): ReactNode
 }
 
 /** Một nhà cung cấp và các model dsh đang phục vụ (`session.modelCatalog`). */

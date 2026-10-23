@@ -4,7 +4,7 @@
  * vào lớp phủ `shell.overlay`. Gói nào cũng mở được trang qua `arisNavigate`.
  */
 import { announceRoute, mountKitCss, onArisNavigate, registerPersonal, useTeamData } from '@aris/ui-kit/react'
-import type { ComponentType, ReactNode } from 'react'
+import { useMemo, type ComponentType, type ReactNode } from 'react'
 import { EN, NS, VI } from './locale.js'
 import type {
   ConfigFormLike,
@@ -20,6 +20,10 @@ import type {
   PluginInfo,
   PluginSnapshot,
   PluginSource,
+  ConfigLedger,
+  ConfigTarget,
+  ConfigView,
+  PluginConfig,
   SpecInspection,
   Outcome,
   PageNav,
@@ -66,7 +70,7 @@ interface ClientContext {
   slots: {
     inject(name: string, fn: () => () => void): void
     register(options: Record<string, unknown>, component: unknown): () => void
-    entriesOfSlot(name: string): { options: { id?: string; order?: number; label?: unknown } }[]
+    entriesOfSlot(name: string): { options: { id?: string; key?: string; order?: number; label?: unknown } }[]
     subscribe(name: string, fn: () => void): () => void
   }
   locale: {
@@ -75,6 +79,7 @@ interface ClientContext {
     resolveText(text: unknown): string
   }
   get(name: string): unknown
+  reflect: { provide(name: string, value: unknown): () => void }
 }
 
 /**
@@ -185,7 +190,11 @@ const UNAVAILABLE_FORM: ConfigFormLike = {
 const UNAVAILABLE_SNAPSHOT = { status: 'unavailable' as const, value: undefined, writable: false }
 
 type Selector<T> = <R>(select: (value: T) => R) => R
-type RenderSlot = (name: string, props: Record<string, unknown>, options?: { only?: string }) => ReactNode
+type RenderSlot = (
+  name: string,
+  props: Record<string, unknown>,
+  options?: { only?: string; entryKey?: string },
+) => ReactNode
 
 function injectStyle(): () => void {
   const style = document.createElement('style')
@@ -291,6 +300,62 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.slots.subscribe('settings.section', syncSections), 'aris-ui-pages: settings sections')
   ctx.effect(() => ctx.locale.subscribe(syncSections), 'aris-ui-pages: settings labels')
   syncSections()
+
+  // Trang cấu hình riêng của plugin (Shell, Bot con, Tìm kiếm web…): aris tắt trang Plugins của
+  // dsh (@aris/web-bundle) nên trang Cài đặt của aris khai báo các khe đó và vẽ trong trang Plugin.
+  const CONFIG_SLOTS = ['plugins.item', 'plugins.bundle.config', 'plugins.row.config'] as const
+  const keysOf = (name: string) =>
+    new Set(ctx.slots.entriesOfSlot(name).flatMap(({ options }) => (options.key ? [options.key] : [])))
+  let ledger: ConfigLedger = { items: [], bundles: new Set(), rows: new Set() }
+  const ledgerListeners = new Set<() => void>()
+  const syncLedger = () => {
+    ledger = {
+      items: ctx.slots
+        .entriesOfSlot('plugins.item')
+        .map(({ options }) => ({
+          id: options.id ?? '',
+          label: String(
+            (typeof options.label === 'function' ? options.label() : options.label) ?? options.id,
+          ),
+        }))
+        .filter((i) => i.id),
+      bundles: keysOf('plugins.bundle.config'),
+      rows: keysOf('plugins.row.config'),
+    }
+    for (const fn of ledgerListeners) fn()
+  }
+  const configLedger = {
+    getSnapshot: () => ledger,
+    subscribe(fn: () => void) {
+      ledgerListeners.add(fn)
+      return () => void ledgerListeners.delete(fn)
+    },
+  }
+  for (const name of CONFIG_SLOTS)
+    ctx.effect(() => ctx.slots.subscribe(name, syncLedger), `aris-ui-pages: ${name}`)
+  ctx.effect(() => ctx.locale.subscribe(syncLedger), 'aris-ui-pages: plugin config labels')
+  syncLedger()
+  const pluginConfigOf = (renderSlot: RenderSlot): PluginConfig => ({
+    ledger: configLedger,
+    render: (target: ConfigTarget, view: ConfigView) =>
+      target.kind === 'item'
+        ? renderSlot('plugins.item', { view }, { only: target.id })
+        : renderSlot(
+            target.kind === 'bundle' ? 'plugins.bundle.config' : 'plugins.row.config',
+            { view },
+            {
+              entryKey: target.key,
+            },
+          ),
+  })
+  // Gói khác (ví dụ Giọng nói) mở trang cấu hình của mình qua `pluginNavigation`.
+  ctx.effect(
+    () =>
+      ctx.reflect.provide('pluginNavigation', {
+        openBundle: (packageName: string) => nav.go('settings', { section: 'plugin', bundle: packageName }),
+      }),
+    'aris-ui-pages: pluginNavigation',
+  )
 
   // Model: danh mục dsh đang phục vụ và cấu hình model theo việc (trang 6.2).
   const failed = (err: unknown): { ok: false; error: string } => ({
@@ -457,6 +522,10 @@ export function apply(ctx: ClientContext): void {
       const params = useNav((s) => s.params[id] ?? EMPTY)
       useTeamData()
       const list = useSystemSections?.((s) => s)
+      const pluginConfig = useMemo(
+        () => (id === 'settings' && renderSlot ? pluginConfigOf(renderSlot) : undefined),
+        [renderSlot],
+      )
       const system: SystemSettings | undefined =
         list && renderSlot
           ? {
@@ -474,6 +543,7 @@ export function apply(ctx: ClientContext): void {
             system={system}
             models={id === 'settings' ? models : undefined}
             plugins={id === 'settings' ? plugins : undefined}
+            pluginConfig={pluginConfig}
           />
         </div>
       )
@@ -492,7 +562,12 @@ export function apply(ctx: ClientContext): void {
     const settings =
       id === 'settings'
         ? {
-            children: { 'settings.section': { kind: 'list', scope: 'root' } },
+            children: {
+              'settings.section': { kind: 'list', scope: 'root' },
+              'plugins.item': { kind: 'list', scope: 'root' },
+              'plugins.bundle.config': { kind: 'keyed', scope: 'root' },
+              'plugins.row.config': { kind: 'keyed', scope: 'root' },
+            },
             inject: () => ({ hooks: { nav: store, systemSections } }),
           }
         : { inject: () => ({ hooks: { nav: store } }) }

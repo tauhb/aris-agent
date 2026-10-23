@@ -15,6 +15,8 @@ export interface InstallItem {
   version?: string | undefined
   source: string
   registry?: string | undefined
+  /** Gói chính thức cài theo yêu cầu: cài xong thì bật gói này. */
+  enable?: string | undefined
 }
 
 type Phase = 'confirm' | 'running' | 'done'

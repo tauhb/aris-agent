@@ -137,10 +137,11 @@ export const SETTINGS_TEXT = text(
     'sec.plugin': 'Plugins',
     'pl.subtitle': 'Bundles that extend what aris and its bots can do',
     'pl.idleCore': '{n} more base bundles for other run modes are off: {names}',
-    'pl.official.title': 'Official plugin market',
-    'pl.official.hint':
-      "Official bundles of the platform: turn on, install on demand, update, and each plugin's own settings page.",
-    'pl.official.open': 'Open official market',
+    'pl.cfg.title': 'Built-in plugin settings',
+    'pl.cfg.hint': "Each plugin's own settings; saving applies to every session",
+    'pl.cfg.back': 'Plugins',
+    'pl.configure': 'Configure',
+    'pl.src.official': 'official',
     'pl.mk.offTitle': 'Extra market sources are off',
     'pl.mk.offHint':
       'Turn it on to add third-party market sources and install bundles from them. aris may need one restart to apply.',
@@ -629,10 +630,11 @@ export const SETTINGS_TEXT = text(
     'sec.plugin': 'Plugin',
     'pl.subtitle': 'Gói mở rộng năng lực cho aris và các bot',
     'pl.idleCore': '{n} gói nền cho chế độ chạy khác đang tắt: {names}',
-    'pl.official.title': 'Chợ plugin chính thức',
-    'pl.official.hint':
-      'Gói chính thức của nền tảng: bật, cài theo yêu cầu, cập nhật, và trang cấu hình riêng của từng plugin.',
-    'pl.official.open': 'Mở chợ chính thức',
+    'pl.cfg.title': 'Cài đặt plugin có sẵn',
+    'pl.cfg.hint': 'Cấu hình riêng của từng plugin; lưu là áp dụng cho mọi phiên',
+    'pl.cfg.back': 'Plugin',
+    'pl.configure': 'Cấu hình',
+    'pl.src.official': 'chính thức',
     'pl.mk.offTitle': 'Nguồn chợ thêm đang tắt',
     'pl.mk.offHint':
       'Bật để thêm nguồn chợ của bên thứ ba và cài gói từ đó. Có thể cần khởi động lại aris một lần để áp dụng.',

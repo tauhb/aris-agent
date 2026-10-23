@@ -8,6 +8,13 @@
   name: '@deepseek-ai/dsh-client-ui-sidebar'
   disabled: true
 
+# Trang Plugins của dsh: gộp vào trang Plugin của aris (Cài đặt › Plugin). Trang aris khai báo các
+# khe cấu hình (plugins.item, plugins.bundle.config, plugins.row.config) và cấp `pluginNavigation`;
+# hai bên không cùng khai báo một khe được nên tắt trang gốc.
+- id: ui-plugin-manager
+  name: '@deepseek-ai/dsh-client-ui-plugin-manager'
+  disabled: true
+
 # Nhãn "1017" tạm của DeepSeek cạnh tên model: aris vẽ nhãn model riêng (@aris/ui-chat).
 - id: ui-deepseek-model-label-1017
   name: '@deepseek-ai/dsh-client-ui-deepseek-model-label-1017'

@@ -4,7 +4,14 @@
  */
 import { Card, SearchIcon, Switch, TextInput } from '@aris/ui-kit/react'
 import { useMemo, useState } from 'react'
-import type { BundleInfo, PageProps, PluginInfo, PluginSource } from '../../page.js'
+import type {
+  BundleInfo,
+  ConfigLedger,
+  ConfigTarget,
+  PageProps,
+  PluginInfo,
+  PluginSource,
+} from '../../page.js'
 import type { Change } from './Installed.js'
 import { bundleText, debrand, entryText, fold, groupOf } from './model.js'
 
@@ -31,6 +38,8 @@ export function Detail({
   bundles,
   busy,
   change,
+  ledger,
+  onConfigure,
 }: {
   t: T
   src: PluginSource
@@ -38,16 +47,23 @@ export function Detail({
   bundles: readonly BundleInfo[]
   busy: ReadonlySet<string>
   change: Change
+  ledger: ConfigLedger
+  onConfigure: (target: ConfigTarget, title: string) => void
 }) {
   const [query, setQuery] = useState('')
   // Mục có trong nhiều gói: lấy gói đang bật trước. Mục thuộc gói lõi đang bật thì khoá.
-  const { bundleOf, coreKeys } = useMemo(() => {
+  const { bundleOf, coreKeys, rowKeyOf } = useMemo(() => {
     const m = new Map<string, string>()
     const core = new Set<string>()
+    // Mục có trang cấu hình riêng: khoá `<tên gói>#<mã hàng>` của gói đang bật.
+    const rowKey = new Map<string, string>()
     for (const b of [...bundles].sort((a, b) => Number(b.enabled) - Number(a.enabled))) {
       const title = debrand(bundleText(b, src.resolveText, t).title)
       const isCore = b.enabled && groupOf(b) === 'core'
       for (const r of b.rows) {
+        const key = `${b.name}#${r.rowId}`
+        if (b.enabled && r.entryId && ledger.rows.has(key) && !rowKey.has(r.entryId))
+          rowKey.set(r.entryId, key)
         for (const k of [r.entryId, r.moduleName]) {
           if (!k) continue
           if (!m.has(k)) m.set(k, title)
@@ -55,8 +71,8 @@ export function Detail({
         }
       }
     }
-    return { bundleOf: m, coreKeys: core }
-  }, [bundles, src, t])
+    return { bundleOf: m, coreKeys: core, rowKeyOf: rowKey }
+  }, [bundles, src, t, ledger])
   const q = fold(query.trim())
   const rows = entries
     .map((p) => ({
@@ -96,6 +112,19 @@ export function Detail({
             <div key={p.entryId} className="ap-pl-table">
               <span style={{ minWidth: 0 }}>
                 <b>{name}</b>
+                {rowKeyOf.has(p.entryId) && (
+                  <>
+                    {' '}
+                    <button
+                      type="button"
+                      className="ap-link"
+                      style={{ border: 0, background: 'none', padding: 0, fontSize: 12, cursor: 'pointer' }}
+                      onClick={() => onConfigure({ kind: 'row', key: rowKeyOf.get(p.entryId)! }, name)}
+                    >
+                      {t('pl.configure')}
+                    </button>
+                  </>
+                )}
                 <div
                   className="a-muted a-mono"
                   style={{ fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis' }}

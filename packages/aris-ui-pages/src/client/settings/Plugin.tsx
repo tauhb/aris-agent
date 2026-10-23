@@ -1,22 +1,33 @@
 /**
  * 6.7 · Plugin (bản vẽ 6.7b): ba thẻ Đã cài · Chợ plugin · Chi tiết kỹ thuật, đọc và đổi thật qua
  * `pluginManager`, `pluginMarket` của bản cài. Thay mục "Plugin có sẵn" (ẩn khỏi nhóm Hệ thống).
- * Thay đổi cần khởi động lại thì gom vào một dải báo, bấm một lần là aris chạy lại.
+ * Thay đổi cần khởi động lại thì gom vào một dải báo, bấm một lần là aris chạy lại. Gộp luôn trang
+ * Plugins của dsh: gói chính thức cài theo yêu cầu và trang cấu hình riêng của plugin vẽ ngay ở đây.
  */
 import { Button, Card, CardRow, PageShell, Pill, Tabs } from '@aris/ui-kit/react'
-import { useCallback, useEffect, useState } from 'react'
-import type { BundleInfo, ChangeResult, Outcome, PageProps, PluginInfo, PluginSource } from '../page.js'
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
+import type {
+  BundleInfo,
+  ChangeResult,
+  ConfigLedger,
+  ConfigTarget,
+  Outcome,
+  PageProps,
+  PluginConfig,
+  PluginInfo,
+  PluginSource,
+} from '../page.js'
 import { Detail } from './plugins/Detail.js'
 import { InstallDialog, type InstallItem } from './plugins/InstallDialog.js'
 import { Installed, type Change, type Update } from './plugins/Installed.js'
 import { entryView, hostOf, MarketTab } from './plugins/Market.js'
-import { MARKET_BUNDLE, marketCard, outcomeOf, searchUpTo, stateOf } from './plugins/model.js'
+import { bundleText, MARKET_BUNDLE, marketCard, outcomeOf, searchUpTo, stateOf } from './plugins/model.js'
 
 /** Mã mục "Plugin có sẵn" của dsh trong `settings.section`: trang này thay nó. */
 export const DSH_PLUGINS_SECTION = 'plugins'
 
-/** Trang Plugins gốc của dsh ở thanh bên: chợ chính thức (gói chính thức, gói cài theo yêu cầu, trang cấu hình riêng của plugin). */
-const DSH_PLUGINS_PANEL = 'plugins'
+const NO_LEDGER: ConfigLedger = { items: [], bundles: new Set(), rows: new Set() }
+const NO_LEDGER_SOURCE = { getSnapshot: () => NO_LEDGER, subscribe: () => () => {} }
 
 type T = PageProps['t']
 type Tab = 'installed' | 'market' | 'detail'
@@ -116,14 +127,74 @@ function RestartBanner({
   )
 }
 
-function PluginPage({ t, src, nav }: { t: T; src: PluginSource; nav: PageProps['nav'] }) {
+/** Trang cấu hình riêng của một plugin, vẽ trong trang Plugin; plugin tự giữ form và nút lưu. */
+function ConfigPage({
+  t,
+  config,
+  target,
+  title,
+  onBack,
+}: {
+  t: T
+  config: PluginConfig
+  target: ConfigTarget
+  title: string
+  onBack: () => void
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div>
+        <button
+          type="button"
+          className="ap-link"
+          style={{ border: 0, background: 'none', padding: 0 }}
+          onClick={onBack}
+        >
+          ← {t('pl.cfg.back')}
+        </button>
+      </div>
+      <h2 style={{ margin: 0, fontSize: 18 }}>{title}</h2>
+      <Card>
+        <div style={{ padding: 16 }} data-plugin-config>
+          {config.render(target, 'page')}
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+function PluginPage({
+  t,
+  src,
+  config,
+  params,
+}: {
+  t: T
+  src: PluginSource
+  config: PluginConfig | undefined
+  params: PageProps['params']
+}) {
   const { bundles, entries, error, reload } = useData(src)
+  const ledgerSource = config?.ledger ?? NO_LEDGER_SOURCE
+  const ledger = useSyncExternalStore(ledgerSource.subscribe, ledgerSource.getSnapshot)
+  const [open, setOpen] = useState<{ target: ConfigTarget; title: string } | null>(null)
   const updates = useUpdates(src, bundles)
   const [tab, setTab] = useState<Tab>('installed')
   const [restart, setRestart] = useState<string[]>([])
   const [notice, setNotice] = useState<Notice | null>(null)
   const [busy, setBusy] = useState<ReadonlySet<string>>(new Set())
   const [installing, setInstalling] = useState<InstallItem[] | null>(null)
+
+  // Gói khác mở trang cấu hình của mình (`pluginNavigation.openBundle`): tới thẳng trang đó.
+  const wanted = params.bundle
+  useEffect(() => {
+    if (!wanted || !bundles) return
+    const b = bundles.find((x) => x.name === wanted)
+    setTab('installed')
+    if (b && ledger.bundles.has(wanted))
+      setOpen({ target: { kind: 'bundle', key: wanted }, title: bundleText(b, src.resolveText, t).title })
+  }, [wanted, bundles, ledger, src, t])
+  const configure = (target: ConfigTarget, title: string) => setOpen({ target, title })
 
   const needRestart = (label: string) => setRestart((xs) => (xs.includes(label) ? xs : [...xs, label]))
 
@@ -166,7 +237,15 @@ function PluginPage({ t, src, nav }: { t: T; src: PluginSource; nav: PageProps['
         failedCount > 0 ? <Pill tone="danger">{t('pl.failedCount', { n: failedCount })}</Pill> : undefined
       }
     >
-      <Tabs label={t('sec.plugin')} tabs={tabs} value={tab} onChange={setTab} />
+      <Tabs
+        label={t('sec.plugin')}
+        tabs={tabs}
+        value={tab}
+        onChange={(v) => {
+          setOpen(null)
+          setTab(v)
+        }}
+      />
       {restart.length > 0 && (
         <RestartBanner t={t} src={src} names={restart} onLater={() => setRestart([])} onNotice={setNotice} />
       )}
@@ -197,7 +276,16 @@ function PluginPage({ t, src, nav }: { t: T; src: PluginSource; nav: PageProps['
         </div>
       )}
       {!bundles && !error && <div className="a-muted">{t('pl.loading')}</div>}
-      {tab === 'installed' && bundles && (
+      {open && config && (
+        <ConfigPage
+          t={t}
+          config={config}
+          target={open.target}
+          title={open.title}
+          onBack={() => setOpen(null)}
+        />
+      )}
+      {!open && tab === 'installed' && bundles && (
         <Installed
           t={t}
           src={src}
@@ -206,24 +294,12 @@ function PluginPage({ t, src, nav }: { t: T; src: PluginSource; nav: PageProps['
           updates={updates}
           change={change}
           onInstall={setInstalling}
+          config={config}
+          ledger={ledger}
+          onConfigure={configure}
         />
       )}
-      {tab === 'market' && (
-        <Card title={t('pl.official.title')}>
-          <CardRow
-            label={
-              <span className="a-muted" style={{ fontSize: 13 }}>
-                {t('pl.official.hint')}
-              </span>
-            }
-          >
-            <Button size="sm" variant="primary" onClick={() => nav.openPanel(DSH_PLUGINS_PANEL)}>
-              {t('pl.official.open')}
-            </Button>
-          </CardRow>
-        </Card>
-      )}
-      {tab === 'market' && marketBundle && !marketBundle.enabled && (
+      {!open && tab === 'market' && marketBundle && !marketBundle.enabled && (
         <Card title={t('pl.mk.offTitle')}>
           <CardRow
             label={
@@ -245,11 +321,20 @@ function PluginPage({ t, src, nav }: { t: T; src: PluginSource; nav: PageProps['
           </CardRow>
         </Card>
       )}
-      {tab === 'market' && market && marketBundle?.enabled !== false && (
+      {!open && tab === 'market' && market && marketBundle?.enabled !== false && (
         <MarketTab t={t} src={src} market={market} onInstall={setInstalling} />
       )}
-      {tab === 'detail' && bundles && entries && (
-        <Detail t={t} src={src} entries={entries} bundles={bundles} busy={busy} change={change} />
+      {!open && tab === 'detail' && bundles && entries && (
+        <Detail
+          t={t}
+          src={src}
+          entries={entries}
+          bundles={bundles}
+          busy={busy}
+          change={change}
+          ledger={ledger}
+          onConfigure={configure}
+        />
       )}
       {installing && (
         <InstallDialog
@@ -260,19 +345,25 @@ function PluginPage({ t, src, nav }: { t: T; src: PluginSource; nav: PageProps['
             setInstalling(null)
             reload()
           }}
-          onResult={(item, r) => settle(item.title, { ok: true, value: r })}
+          onResult={(item, r) => {
+            settle(item.title, { ok: true, value: r })
+            // Gói chính thức cài theo yêu cầu: cài xong thì bật luôn, như trang Plugins gốc.
+            const o = outcomeOf(r)
+            if (item.enable && (o.kind === 'applied' || o.kind === 'restart'))
+              void change(item.title, src.setBundle(item.enable, true), item.enable)
+          }}
         />
       )}
     </PageShell>
   )
 }
 
-export function Plugin({ t, nav, plugins }: PageProps) {
+export function Plugin({ t, plugins, pluginConfig, params }: PageProps) {
   if (!plugins)
     return (
       <PageShell title={t('sec.plugin')}>
         <div className="a-muted">{t('pl.unavailable')}</div>
       </PageShell>
     )
-  return <PluginPage t={t} src={plugins} nav={nav} />
+  return <PluginPage t={t} src={plugins} config={pluginConfig} params={params} />
 }
