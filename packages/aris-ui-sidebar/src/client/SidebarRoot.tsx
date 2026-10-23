@@ -16,6 +16,7 @@ import {
   PanelIcon,
   PlusIcon,
   RoomIcon,
+  SearchIcon,
   SectionHeader,
   WaitingIcon,
   arisNavigate,
@@ -29,7 +30,13 @@ import type { PanelEntry, SidebarProps, WorkspaceRow } from './types.js'
 /** Trang do dsh đăng ký nhưng aris đặt chỗ khác: Plugin nằm ở chân thanh bên (thuộc Cài đặt). */
 const FOOT_PANELS = new Set(['plugins'])
 /** Trang của dsh mà aris đặt tên khác ("Automation tasks" thành Routine). */
-const PANEL_LABELS = { schedules: 'panel.schedules' } as const
+const PANEL_LABELS = {
+  schedules: 'panel.schedules',
+  'aris-map': 'panel.map',
+  'aris-brain': 'panel.brain',
+  'aris-routine': 'panel.schedules',
+  'aris-kanban': 'panel.kanban',
+} as const
 
 /** Trong thanh thu gọn, nhãn chuyển thành tooltip. */
 function Tip({ label, wide, children }: { label: string; wide: boolean; children: ReactElement }) {
@@ -146,13 +153,17 @@ export function SidebarRoot(props: SidebarProps) {
       <div className="brand">
         <BrandMark size={28} />
         {wide && <span className="brandName">aris</span>}
-        <Tooltip label={toggleLabel} shortcutKeys={toggleShortcut?.keys} side="right" delayMs={400}>
+        {wide && (
           <IconButton
-            label={toggleLabel}
-            style={wide ? { marginLeft: 'auto' } : undefined}
-            aria-keyshortcuts={toggleShortcut?.aria}
-            onClick={toggleSidebar}
+            label={t('search')}
+            style={{ marginLeft: 'auto' }}
+            onClick={() => arisNavigate('search')}
           >
+            <SearchIcon />
+          </IconButton>
+        )}
+        <Tooltip label={toggleLabel} shortcutKeys={toggleShortcut?.keys} side="right" delayMs={400}>
+          <IconButton label={toggleLabel} aria-keyshortcuts={toggleShortcut?.aria} onClick={toggleSidebar}>
             <PanelIcon />
           </IconButton>
         </Tooltip>
@@ -190,7 +201,7 @@ export function SidebarRoot(props: SidebarProps) {
             <SectionHeader
               title={t('team.title')}
               action={
-                <IconButton label={t('team.add')} size="sm">
+                <IconButton label={t('team.add')} size="sm" onClick={() => arisNavigate('create-bot')}>
                   <PlusIcon size={15} width={2} />
                 </IconButton>
               }
@@ -212,7 +223,7 @@ export function SidebarRoot(props: SidebarProps) {
             <SectionHeader
               title={t('rooms.title')}
               action={
-                <IconButton label={t('rooms.add')} size="sm" onClick={props.addRoom}>
+                <IconButton label={t('rooms.add')} size="sm" onClick={() => arisNavigate('create-room')}>
                   <PlusIcon size={15} width={2} />
                 </IconButton>
               }

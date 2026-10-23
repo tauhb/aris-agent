@@ -3,7 +3,8 @@
  * ngoài hoặc bấm Esc.
  */
 import { useEffect, useId, useRef, type ReactNode, type RefObject } from 'react'
-import { cx } from './basics.js'
+import { IconButton, cx } from './basics.js'
+import { CloseIcon } from './icons.js'
 
 /** Gọi `close` khi bấm chuột ra ngoài `ref` hoặc bấm Esc, chỉ trong lúc `open`. */
 export function useDismiss(ref: RefObject<HTMLElement | null>, open: boolean, close: () => void): void {
@@ -107,6 +108,9 @@ export function Dialog({
   onClose,
   footer,
   inline,
+  width,
+  aside,
+  closeLabel,
   children,
 }: {
   open: boolean
@@ -116,6 +120,12 @@ export function Dialog({
   footer?: ReactNode | undefined
   /** Vẽ trong luồng trang thay vì phủ màn hình (trang thử thành phần). */
   inline?: boolean | undefined
+  /** Độ rộng tối đa (px), mặc định 480. */
+  width?: number | undefined
+  /** Phần đặt cạnh tiêu đề, ví dụ nút chọn loại. */
+  aside?: ReactNode | undefined
+  /** Có nhãn thì hiện nút đóng ở góc. */
+  closeLabel?: string | undefined
   children?: ReactNode | undefined
 }) {
   const id = useId()
@@ -145,18 +155,27 @@ export function Dialog({
         aria-labelledby={`${id}-t`}
         aria-describedby={description ? `${id}-d` : undefined}
         tabIndex={-1}
+        style={width ? { width: `min(${width}px, 100%)` } : undefined}
       >
         <div className="a-dialog-head">
           <div className="grow">
-            <h2 className="a-dialog-title" id={`${id}-t`}>
-              {title}
-            </h2>
+            <div className="a-dialog-titlebar">
+              <h2 className="a-dialog-title" id={`${id}-t`}>
+                {title}
+              </h2>
+              {aside}
+            </div>
             {description && (
               <div className="a-dialog-desc" id={`${id}-d`}>
                 {description}
               </div>
             )}
           </div>
+          {closeLabel && (
+            <IconButton label={closeLabel} onClick={onClose}>
+              <CloseIcon />
+            </IconButton>
+          )}
         </div>
         {children && <div className="a-dialog-body">{children}</div>}
         {footer && <div className="a-dialog-foot">{footer}</div>}

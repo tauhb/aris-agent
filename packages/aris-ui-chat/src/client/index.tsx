@@ -82,6 +82,8 @@ export function apply(ctx: ClientContext): void {
       {
         name: 'tool.call.toolview',
         key: 'subagent',
+        // dsh đã có hiển thị chung cho `subagent` ở mức 0; mức thấp hơn được vẽ thay.
+        priority: -1,
         locale: NS,
         inject: () => ({
           hooks: { sessions: ctx.sessions.list },

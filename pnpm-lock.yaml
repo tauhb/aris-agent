@@ -156,9 +156,6 @@ importers:
       '@aris/ui-theme':
         specifier: workspace:*
         version: link:../aris-ui-theme
-      '@aris/web-spike':
-        specifier: workspace:*
-        version: link:../aris-web-spike
 
   packages/aris-web-spike: {}
 

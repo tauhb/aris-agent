@@ -40,7 +40,3 @@
     # Các trang và hộp thoại theo canvas: Cài đặt 6.x, Ký ức, Skill, Hộp duyệt, Bản đồ đội…
     - id: aris-ui-pages
       name: '@aris/ui-pages'
-
-    # Thử nghiệm giai đoạn 0: trang "Bản đồ đội".
-    - id: aris-web-spike
-      name: '@aris/web-spike'

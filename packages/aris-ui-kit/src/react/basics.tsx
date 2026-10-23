@@ -162,7 +162,15 @@ export function CardRow({ label, children }: { label?: ReactNode; children?: Rea
 }
 
 /** Linh vật của bot (khối màu, hai mắt). */
-export function Mascot({ id, size = 28, label }: { id: string; size?: number; label?: string }) {
+export function Mascot({
+  id,
+  size = 28,
+  label,
+}: {
+  id: string
+  size?: number | undefined
+  label?: string | undefined
+}) {
   const a11y = label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true as const }
   return (
     <svg

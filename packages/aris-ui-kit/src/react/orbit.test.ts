@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { MASCOTS } from '../mascots.js'
-import { depthOrder, orbitLayout, pickSeat, splitMascot } from './orbit.js'
+import { depthOrder, orbitGeometry, orbitLayout, pickSeat, splitMascot } from './orbit.js'
 
 describe('sơ đồ đội 3D', () => {
   it('mọi linh vật tách được khối màu (không còn phần trắng) và có ít nhất hai mắt', () => {
@@ -34,6 +34,17 @@ describe('sơ đồ đội 3D', () => {
     const far = L.seats.reduce((a, b) => (b.z < a.z ? b : a))
     expect(near.s).toBeGreaterThan(far.s)
     expect(L.cmdY).toBeLessThan(L.fy)
+  })
+
+  it('bản sân khấu co theo khung: hệ số K từ 1 đến 1,8, vòng lớn hơn bản cột phải', () => {
+    expect(orbitGeometry('stage', 300, 300).K).toBe(1)
+    expect(orbitGeometry('stage', 2000, 2000).K).toBe(1.8)
+    expect(orbitGeometry('stage', 900, 700).R).toBeGreaterThan(orbitGeometry('pane', 900, 700).R)
+    const L = orbitLayout(5, 0, 900, 700, 'stage')
+    for (const seat of L.seats) {
+      expect(seat.s).toBeGreaterThanOrEqual(L.K * 0.74)
+      expect(seat.s).toBeLessThanOrEqual(L.K * 1.04)
+    }
   })
 
   it('vẽ xa trước gần sau; chọn bot gần con trỏ nhất trong bán kính', () => {

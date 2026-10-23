@@ -22,7 +22,6 @@ interface ClientContext {
     entriesOfSlot(name: string): { options: { id: string; order?: number; label?: unknown } }[]
   }
   layout: { toggleSidebar(): void; selectPanel(id: string | null): void }
-  workspaces: { create(input: { path: string }): Promise<{ workspaceId: string }> }
   locale: {
     register(ns: string, locale: string, dict: Record<string, string>): () => void
     subscribe(fn: () => void): () => void
@@ -30,7 +29,7 @@ interface ClientContext {
   shortcuts: { catalog: unknown }
 }
 
-export const inject = ['slots', 'layout', 'uiWorkspace', 'workspaces', 'locale', 'shortcuts']
+export const inject = ['slots', 'layout', 'uiWorkspace', 'locale', 'shortcuts']
 
 // Phông do theme aris (`@aris/ui-theme`) nạp cho cả app.
 function injectStyle(): () => void {
@@ -46,15 +45,6 @@ export function apply(ctx: ClientContext): void {
     startSession(workspaceId?: string): void
     openWorkspace(workspaceId: string): Promise<void>
     openSession(sessionId: string): void
-    pickDirectory(): Promise<string | null>
-  }
-  // Phòng = workspace của dsh: chọn thư mục làm việc rồi tạo workspace và mở nó.
-  // Màn 1.5 (tên, thành viên, mục tiêu) làm ở giai đoạn 2 cùng dịch vụ đội bot.
-  const addRoom = async () => {
-    const path = await workspace.pickDirectory()
-    if (!path) return
-    const created = await ctx.workspaces.create({ path })
-    await workspace.openWorkspace(created.workspaceId)
   }
   ctx.effect(() => mountKitCss(), 'aris-ui-sidebar: kit styles')
   ctx.effect(injectStyle, 'aris-ui-sidebar: styles')
@@ -87,7 +77,6 @@ export function apply(ctx: ClientContext): void {
     selectPanel: (id: string | null) => ctx.layout.selectPanel(id),
     openRoom: (workspaceId: string) => void workspace.openWorkspace(workspaceId),
     openSession: (sessionId: string) => workspace.openSession(sessionId),
-    addRoom: () => void addRoom().catch((err: unknown) => console.error('aris: không tạo được phòng', err)),
     hooks: { panels, shortcuts: ctx.shortcuts.catalog },
   })
 

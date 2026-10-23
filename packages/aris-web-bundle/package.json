@@ -18,7 +18,6 @@
   },
   "dependencies": {
     "@aris/ui-sidebar": "workspace:*",
-    "@aris/web-spike": "workspace:*",
     "@aris/ui-chat-header": "workspace:*",
     "@aris/ui-theme": "workspace:*",
     "@aris/ui-locale-vi": "workspace:*",

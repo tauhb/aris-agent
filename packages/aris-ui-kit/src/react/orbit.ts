@@ -67,29 +67,143 @@ export interface OrbitSeat {
   s: number
 }
 
-export interface OrbitLayout {
-  cx: number
+export type OrbitVariant = 'pane' | 'stage'
+
+/**
+ * Kích thước theo biến thể: `pane` cho cột phải (R3), `stage` cho trang bản đồ
+ * (1.3), co theo khung bằng hệ số `K`. Số đo lấy từ canvas.
+ */
+export interface OrbitGeometry {
+  K: number
   /** Cao độ mặt sàn (tâm vòng elip). */
   fy: number
   R: number
   tilt: number
+  /** Commander cao hơn sàn bao nhiêu, theo phần chiều cao khung. */
+  lift: number
+  /** Biên độ nhịp lơ lửng của Commander. */
+  bob: number
+  /** Vẽ thêm vòng elip ngoài mờ. */
+  outerRing: boolean
+  /** Dây: điểm nối dưới Commander, độ cao điểm nối trên đầu bot, độ võng. */
+  wireFrom: number
+  wireTo: number
+  sag: number
+  /** Chấm chạy dọc dây khi bot đang làm hoặc chờ anh. */
+  travel: boolean
+  member: {
+    shadow: [number, number]
+    base: number
+    ring: number
+    mascot: number
+    name: number
+    status: number
+    nameSize: number
+    statusSize: number
+    hit: number
+  }
+  commander: {
+    glow: number
+    ring: number
+    mascot: number
+    label: number
+    labelSize: number
+    shadow: [number, number]
+  }
+}
+
+export interface OrbitLayout extends OrbitGeometry {
+  cx: number
   /** Cao độ Commander, chưa tính nhịp lơ lửng. */
   cmdY: number
   seats: OrbitSeat[]
 }
 
+export function orbitGeometry(variant: OrbitVariant, w: number, h: number): OrbitGeometry {
+  if (variant === 'stage') {
+    const K = Math.max(1, Math.min(1.8, Math.min(w, h) / 330))
+    return {
+      K,
+      fy: h * 0.64,
+      R: Math.min(w * 0.34, h * 0.62),
+      tilt: 0.34,
+      lift: 0.42,
+      bob: 4,
+      outerRing: true,
+      wireFrom: 32 * K,
+      wireTo: 60,
+      sag: 40,
+      travel: true,
+      member: {
+        shadow: [22, 6],
+        base: 36,
+        ring: 37,
+        mascot: 56,
+        name: 18,
+        status: 33,
+        nameSize: 13,
+        statusSize: 11.5,
+        hit: 34,
+      },
+      commander: {
+        glow: 64 * K,
+        ring: 44 * K,
+        mascot: 70 * K,
+        label: 54 * K,
+        labelSize: 14 * K,
+        shadow: [30 * K, 8 * K],
+      },
+    }
+  }
+  return {
+    K: 1,
+    fy: h * 0.67,
+    R: Math.min(w * 0.36, 118),
+    tilt: 0.36,
+    lift: 0.44,
+    bob: 3,
+    outerRing: false,
+    wireFrom: 24,
+    wireTo: 52,
+    sag: 30,
+    travel: false,
+    member: {
+      shadow: [20, 5.5],
+      base: 34,
+      ring: 35,
+      mascot: 54,
+      name: 16,
+      status: 31,
+      nameSize: 12.5,
+      statusSize: 11,
+      hit: 30,
+    },
+    commander: { glow: 58, ring: 40, mascot: 64, label: 48, labelSize: 13, shadow: [26, 7] },
+  }
+}
+
 /** Đặt `count` bot đều trên vòng elip nghiêng, xoay một góc `ang` (radian). */
-export function orbitLayout(count: number, ang: number, w: number, h: number): OrbitLayout {
+export function orbitLayout(
+  count: number,
+  ang: number,
+  w: number,
+  h: number,
+  variant: OrbitVariant = 'pane',
+): OrbitLayout {
+  const g = orbitGeometry(variant, w, h)
   const cx = w / 2
-  const fy = h * 0.67
-  const R = Math.min(w * 0.36, 118)
-  const tilt = 0.36
   const seats = Array.from({ length: count }, (_, i) => {
     const a = ang + (i * 2 * Math.PI) / count
     const z = Math.sin(a)
-    return { i, z, x: cx + R * Math.cos(a), y: fy + R * tilt * z, s: 0.74 + (0.3 * (z + 1)) / 2 }
+    return {
+      i,
+      z,
+      x: cx + g.R * Math.cos(a),
+      y: g.fy + g.R * g.tilt * z,
+      s: g.K * (0.74 + (0.3 * (z + 1)) / 2),
+    }
   })
-  return { cx, fy, R, tilt, cmdY: fy - h * 0.44, seats }
+  return { ...g, cx, cmdY: g.fy - h * g.lift, seats }
 }
 
 /** Thứ tự vẽ: xa trước, gần sau (Commander vẽ giữa hai lớp). */

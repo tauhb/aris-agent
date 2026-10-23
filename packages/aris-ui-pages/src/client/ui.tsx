@@ -65,3 +65,33 @@ export function Col({
     </div>
   )
 }
+
+/** Phần "Nâng cao" thu gọn được trong hộp thoại. */
+export function Disclosure({
+  title,
+  hint,
+  open,
+  onToggle,
+  children,
+}: {
+  title: string
+  hint: string
+  open: boolean
+  onToggle: () => void
+  children: ReactNode
+}) {
+  return (
+    <div className="ap-disc">
+      <button type="button" aria-expanded={open} onClick={onToggle}>
+        <span className="chev" aria-hidden="true">
+          ›
+        </span>
+        {title}
+        <span className="a-muted" style={{ fontWeight: 400, fontSize: 12.5 }}>
+          {hint}
+        </span>
+      </button>
+      {open && <div className="body">{children}</div>}
+    </div>
+  )
+}

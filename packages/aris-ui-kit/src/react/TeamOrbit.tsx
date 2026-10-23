@@ -28,6 +28,11 @@ export interface TeamOrbitProps {
   statusLabel: (status: BotStatus) => string
   /** Mô tả cả sơ đồ cho trình đọc màn hình. */
   label: string
+  /** `pane`: ô trong cột phải; `stage`: sân khấu lớn của trang Bản đồ đội, co theo khung. */
+  variant?: 'pane' | 'stage' | undefined
+  /** Bot đang được xem (vòng chọn dưới chân). */
+  selected?: string | undefined
+  /** Chiều cao ô; bỏ trống thì lấp đầy khung chứa. */
   height?: number | undefined
   onSelect?: ((id: string) => void) | undefined
 }
@@ -46,6 +51,7 @@ interface Colors {
   warn: string
   ok: string
   danger: string
+  accent: string
 }
 
 const FONT = '"Be Vietnam Pro", system-ui, sans-serif'
@@ -124,9 +130,10 @@ function drawRing(
   ts: number,
   C: Colors,
   hot: boolean,
+  stage = false,
 ) {
   ctx.save()
-  ctx.lineWidth = hot ? 3.5 : 2.5
+  ctx.lineWidth = stage ? (hot ? 4 : 2.8) : hot ? 3.5 : 2.5
   ctx.beginPath()
   if (status === 'working') {
     ctx.strokeStyle = C.line
@@ -157,7 +164,7 @@ export function TeamOrbit(props: TeamOrbitProps) {
   // Vòng vẽ đọc props mới nhất mà không phải dựng lại.
   const latest = useRef(props)
   latest.current = props
-  const height = props.height ?? 300
+  const height = props.height ?? (props.variant === 'stage' ? '100%' : 300)
 
   useEffect(() => {
     const cv = canvas.current
@@ -181,6 +188,7 @@ export function TeamOrbit(props: TeamOrbitProps) {
       warn: '#B45309',
       ok: '#15803D',
       danger: '#C0262D',
+      accent: '#1D6FE0',
     }
     let hits: ({ x: number; y: number; r: number } | undefined)[] = []
     const spriteOf = (id: string) => {
@@ -193,7 +201,8 @@ export function TeamOrbit(props: TeamOrbitProps) {
     }
 
     const draw = (ts: number) => {
-      const { commander, commanderLabel, members, statusLabel } = latest.current
+      const { commander, commanderLabel, members, statusLabel, selected } = latest.current
+      const stage = latest.current.variant === 'stage'
       const w = cv.clientWidth
       const h = cv.clientHeight
       if (!w || !h) return
@@ -217,33 +226,38 @@ export function TeamOrbit(props: TeamOrbitProps) {
           warn: v('--a-warn', C.warn),
           ok: v('--a-ok', C.ok),
           danger: v('--a-danger', C.danger),
+          accent: v('--a-accent', C.accent),
         }
         state.colorsAt = ts
       }
-      if (!state.dragging && !reduced) state.ang += state.hover >= 0 ? 0.0012 : 0.0038
+      if (!state.dragging && !reduced) state.ang += (state.hover >= 0 ? 0.0012 : 0.0038) * (stage ? 0.8 : 1)
 
-      const L = orbitLayout(members.length, state.ang, w, h)
+      const L = orbitLayout(members.length, state.ang, w, h, stage ? 'stage' : 'pane')
+      const { K, member: M, commander: CM } = L
       const cmd = spriteOf(commander.id)
       const glowAt = (a: number) => rgba(cmd.color, a)
+      const selectedIndex = members.findIndex((m) => m.id === selected)
 
-      // Quầng sáng trên sàn và hai vòng quỹ đạo.
+      // Quầng sáng trên sàn và các vòng quỹ đạo.
       ctx.save()
       ctx.translate(L.cx, L.fy)
       ctx.scale(1, L.tilt)
-      const g = ctx.createRadialGradient(0, 0, 6, 0, 0, L.R * 1.4)
-      g.addColorStop(0, glowAt(0.26))
+      const halo = stage ? 1.45 : 1.4
+      const g = ctx.createRadialGradient(0, 0, 6, 0, 0, L.R * halo)
+      g.addColorStop(0, glowAt(stage ? 0.28 : 0.26))
       g.addColorStop(0.6, glowAt(0.08))
       g.addColorStop(1, glowAt(0))
       ctx.fillStyle = g
       ctx.beginPath()
-      ctx.arc(0, 0, L.R * 1.4, 0, Math.PI * 2)
+      ctx.arc(0, 0, L.R * halo, 0, Math.PI * 2)
       ctx.fill()
       ctx.restore()
 
+      const inner = stage ? 0.5 : 0.45
       ctx.save()
       ctx.strokeStyle = C.line
-      ctx.lineWidth = 1.2
-      ctx.setLineDash([4, 6])
+      ctx.lineWidth = stage ? 1.3 : 1.2
+      ctx.setLineDash(stage ? [5, 7] : [4, 6])
       ctx.lineDashOffset = -ts / 80
       ctx.beginPath()
       ctx.ellipse(L.cx, L.fy, L.R, L.R * L.tilt, 0, 0, Math.PI * 2)
@@ -251,41 +265,63 @@ export function TeamOrbit(props: TeamOrbitProps) {
       ctx.setLineDash([])
       ctx.globalAlpha = 0.5
       ctx.beginPath()
-      ctx.ellipse(L.cx, L.fy, L.R * 0.45, L.R * 0.45 * L.tilt, 0, 0, Math.PI * 2)
+      ctx.ellipse(L.cx, L.fy, L.R * inner, L.R * inner * L.tilt, 0, 0, Math.PI * 2)
       ctx.stroke()
+      if (L.outerRing) {
+        ctx.globalAlpha = 0.3
+        ctx.beginPath()
+        ctx.ellipse(L.cx, L.fy, L.R * 1.25, L.R * 1.25 * L.tilt, 0, 0, Math.PI * 2)
+        ctx.stroke()
+      }
       ctx.restore()
 
-      const cmdY = L.cmdY + Math.sin(ts / 650) * 3
-      const beam = ctx.createLinearGradient(0, cmdY + 20, 0, L.fy)
-      beam.addColorStop(0, glowAt(0.18))
+      const cmdY = L.cmdY + Math.sin(ts / 650) * L.bob
+      const beamTop = cmdY + (stage ? 30 * K : 22)
+      const beam = ctx.createLinearGradient(0, beamTop - 2, 0, L.fy)
+      beam.addColorStop(0, glowAt(stage ? 0.2 : 0.18))
       beam.addColorStop(1, glowAt(0))
       ctx.fillStyle = beam
       ctx.beginPath()
-      ctx.moveTo(L.cx - 12, cmdY + 22)
-      ctx.lineTo(L.cx + 12, cmdY + 22)
-      ctx.lineTo(L.cx + L.R * 0.45, L.fy)
-      ctx.lineTo(L.cx - L.R * 0.45, L.fy)
+      const bw = stage ? 14 * K : 12
+      ctx.moveTo(L.cx - bw, beamTop)
+      ctx.lineTo(L.cx + bw, beamTop)
+      ctx.lineTo(L.cx + L.R * inner, L.fy)
+      ctx.lineTo(L.cx - L.R * inner, L.fy)
       ctx.closePath()
       ctx.fill()
 
-      // Dây từ Commander tới từng bot; chạy chấm khi bot đang làm hoặc chờ anh.
+      // Dây từ Commander tới từng bot; nét đứt chạy (và chấm chạy ở bản lớn) khi bot đang làm hoặc chờ anh.
       for (const seat of L.seats) {
         const m = members[seat.i]!
         const color = spriteOf(m.id).color
         const active = m.status === 'working' || m.status === 'waiting'
-        const ty = seat.y - 52 * seat.s
+        const ty = seat.y - L.wireTo * seat.s
+        const x0 = L.cx
+        const y0 = cmdY + L.wireFrom
+        const qx = (L.cx + seat.x) / 2
+        const qy = Math.min(cmdY, ty) + L.sag
         ctx.save()
         ctx.globalAlpha = 0.35 + (0.55 * (seat.z + 1)) / 2
-        ctx.lineWidth = active ? 2.6 : 1.1
+        ctx.lineWidth = active ? (stage ? 3 : 2.6) : stage ? 1.2 : 1.1
         ctx.strokeStyle = active ? color : C.line
         if (active) {
-          ctx.setLineDash([7, 6])
-          ctx.lineDashOffset = -ts / 28
+          ctx.setLineDash(stage ? [9, 7] : [7, 6])
+          ctx.lineDashOffset = -ts / (stage ? 26 : 28)
         }
         ctx.beginPath()
-        ctx.moveTo(L.cx, cmdY + 24)
-        ctx.quadraticCurveTo((L.cx + seat.x) / 2, Math.min(cmdY, ty) + 30, seat.x, ty)
+        ctx.moveTo(x0, y0)
+        ctx.quadraticCurveTo(qx, qy, seat.x, ty)
         ctx.stroke()
+        if (active && L.travel) {
+          const t = (ts / 1400 + seat.i * 0.3) % 1
+          const px = (1 - t) * (1 - t) * x0 + 2 * (1 - t) * t * qx + t * t * seat.x
+          const py = (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * qy + t * t * ty
+          ctx.setLineDash([])
+          ctx.fillStyle = color
+          ctx.beginPath()
+          ctx.arc(px, py, 4 * K, 0, Math.PI * 2)
+          ctx.fill()
+        }
         ctx.restore()
       }
 
@@ -293,22 +329,30 @@ export function TeamOrbit(props: TeamOrbitProps) {
       const drawMember = (seat: OrbitSeat) => {
         const m = members[seat.i]!
         const sp = spriteOf(m.id)
-        const hot = state.hover === seat.i
-        const s = seat.s * (hot ? 1.12 : 1)
-        const lift = m.status === 'working' ? Math.sin(ts / 300 + seat.i) * 2.5 : 0
-        const my = seat.y - 34 * s + lift
+        const hovered = state.hover === seat.i
+        const picked = selectedIndex === seat.i
+        const s = seat.s * (hovered ? (stage ? 1.1 : 1.12) : 1)
+        const lift = m.status === 'working' ? Math.sin(ts / 300 + seat.i) * (stage ? 3 : 2.5) : 0
+        const my = seat.y - M.base * s + lift
         ctx.save()
         ctx.globalAlpha = 0.62 + (0.38 * (seat.z + 1)) / 2
-        ctx.fillStyle = 'rgba(0,0,0,0.18)'
+        ctx.fillStyle = stage ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.18)'
         ctx.beginPath()
-        ctx.ellipse(seat.x, seat.y, 20 * s, 5.5 * s, 0, 0, Math.PI * 2)
+        ctx.ellipse(seat.x, seat.y, M.shadow[0] * s, M.shadow[1] * s, 0, 0, Math.PI * 2)
         ctx.fill()
-        drawRing(ctx, m.status, sp.color, seat.x, my, 35 * s, ts, C, hot)
-        drawMascot(ctx, sp, m.status, seat.x, my, 54 * s)
+        if (picked) {
+          ctx.strokeStyle = C.accent
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          ctx.ellipse(seat.x, seat.y, 34 * s, 9 * s, 0, 0, Math.PI * 2)
+          ctx.stroke()
+        }
+        drawRing(ctx, m.status, sp.color, seat.x, my, M.ring * s, ts, C, hovered || picked, stage)
+        drawMascot(ctx, sp, m.status, seat.x, my, M.mascot * s)
         ctx.textAlign = 'center'
         ctx.fillStyle = C.ink
-        ctx.font = `600 ${Math.round(12.5 * s)}px ${FONT}`
-        ctx.fillText(m.name, seat.x, seat.y + 16 * s)
+        ctx.font = `600 ${Math.round(M.nameSize * s)}px ${FONT}`
+        ctx.fillText(m.name, seat.x, seat.y + M.name * s)
         const label = statusLabel(m.status)
         ctx.fillStyle =
           m.status === 'waiting'
@@ -318,33 +362,33 @@ export function TeamOrbit(props: TeamOrbitProps) {
               : m.status === 'failed'
                 ? C.danger
                 : C.muted
-        ctx.font = `500 ${Math.round(11 * s)}px ${FONT}`
-        ctx.fillText(hot ? `${m.role} · ${label}` : label, seat.x, seat.y + 31 * s)
+        ctx.font = `500 ${Math.round(M.statusSize * s)}px ${FONT}`
+        ctx.fillText(hovered ? `${m.role} · ${label}` : label, seat.x, seat.y + M.status * s)
         ctx.restore()
-        hits[seat.i] = { x: seat.x, y: my, r: 30 * s }
+        hits[seat.i] = { x: seat.x, y: my, r: M.hit * s }
       }
 
       const { back, front } = depthOrder(L.seats)
       back.forEach(drawMember)
 
       ctx.save()
-      ctx.fillStyle = 'rgba(0,0,0,0.14)'
+      ctx.fillStyle = stage ? 'rgba(0,0,0,0.16)' : 'rgba(0,0,0,0.14)'
       ctx.beginPath()
-      ctx.ellipse(L.cx, L.fy, 26, 7, 0, 0, Math.PI * 2)
+      ctx.ellipse(L.cx, L.fy, CM.shadow[0], CM.shadow[1], 0, 0, Math.PI * 2)
       ctx.fill()
-      const glow = ctx.createRadialGradient(L.cx, cmdY, 10, L.cx, cmdY, 58)
-      glow.addColorStop(0, glowAt(0.3))
+      const glow = ctx.createRadialGradient(L.cx, cmdY, 10, L.cx, cmdY, CM.glow)
+      glow.addColorStop(0, glowAt(stage ? 0.32 : 0.3))
       glow.addColorStop(1, glowAt(0))
       ctx.fillStyle = glow
       ctx.beginPath()
-      ctx.arc(L.cx, cmdY, 58, 0, Math.PI * 2)
+      ctx.arc(L.cx, cmdY, CM.glow, 0, Math.PI * 2)
       ctx.fill()
-      drawRing(ctx, commander.status, cmd.color, L.cx, cmdY, 40, ts, C, false)
-      drawMascot(ctx, cmd, commander.status, L.cx, cmdY, 64)
+      drawRing(ctx, commander.status, cmd.color, L.cx, cmdY, CM.ring, ts, C, false, stage)
+      drawMascot(ctx, cmd, commander.status, L.cx, cmdY, CM.mascot)
       ctx.fillStyle = C.ink
       ctx.textAlign = 'center'
-      ctx.font = `600 13px "Lexend", ${FONT}`
-      ctx.fillText(commanderLabel, L.cx, cmdY - 48)
+      ctx.font = `600 ${Math.round(CM.labelSize)}px "Lexend", ${FONT}`
+      ctx.fillText(commanderLabel, L.cx, cmdY - CM.label)
       ctx.restore()
 
       front.forEach(drawMember)

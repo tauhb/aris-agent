@@ -140,6 +140,7 @@ ${scope(`
 .a-dialog-head{display:flex;align-items:flex-start;gap:12px;padding:18px 20px 6px}
 .a-dialog-head>.grow{flex:1;min-width:0}
 .a-dialog-title{margin:0;font-family:${FONTS.heading};font-weight:600;font-size:17px;letter-spacing:-.01em}
+.a-dialog-titlebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .a-dialog-desc{font-size:13px;color:var(--a-muted);margin-top:2px}
 .a-dialog-body{padding:8px 20px 14px;display:flex;flex-direction:column;gap:12px}
 .a-dialog-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px 18px}

@@ -51,7 +51,6 @@ export interface SidebarProps {
   selectPanel: (id: string | null) => void
   openRoom: (workspaceId: string) => void
   openSession: (sessionId: string) => void
-  addRoom: () => void
   usePanels: Selector<readonly PanelEntry[]>
   useShortcuts: Selector<readonly ShortcutRow[]>
   usePanelInfo: Selector<PanelInfo>
