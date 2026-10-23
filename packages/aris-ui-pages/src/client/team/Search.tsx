@@ -1,11 +1,11 @@
-/** 1.6 · Tìm trong mọi phiên (⌘K): ô tìm, lọc theo bot hoặc phòng, kết quả có đoạn trích tô sáng. */
+/** 1.6 · Tìm trong mọi phiên (⌘K): ô tìm, lọc theo bot hoặc dự án, kết quả có đoạn trích tô sáng. */
 import { Mascot, SearchIcon } from '@aris/ui-kit/react'
 import { useEffect, useRef, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { botName } from '../mind/names.js'
 import { DEMO_SEARCH as S } from './demo.js'
 
-type Filter = 'all' | 'aris' | 'lam' | 'mai' | 'rooms'
+type Filter = 'all' | 'aris' | 'lam' | 'mai' | 'projects'
 
 export function Search({ t, nav }: PageProps) {
   const [filter, setFilter] = useState<Filter>('all')
@@ -15,7 +15,9 @@ export function Search({ t, nav }: PageProps) {
   const results = S.results.filter(
     (r) =>
       filter === 'all' ||
-      (filter === 'rooms' ? r.where.startsWith('Phòng') : r.bot === filter && !r.where.startsWith('Phòng')),
+      (filter === 'projects'
+        ? r.where.startsWith('Dự án')
+        : r.bot === filter && !r.where.startsWith('Dự án')),
   )
   const onKey = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') nav.close()
@@ -30,7 +32,7 @@ export function Search({ t, nav }: PageProps) {
     ['aris', botName('aris')],
     ['lam', botName('lam')],
     ['mai', botName('mai')],
-    ['rooms', t('search.rooms')],
+    ['projects', t('search.projects')],
   ]
   return (
     <div

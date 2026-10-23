@@ -1,12 +1,12 @@
-/** Chọn phiên để mở khi bấm vào một phòng. */
+/** Chọn phiên để mở khi bấm vào một dự án. */
 
 export interface SessionBrief {
   readonly blank: boolean
   readonly updatedAt: number
 }
 
-/** Phiên có nội dung, cập nhật gần nhất trong phòng; không có thì undefined. */
-export function latestRoomSession(
+/** Phiên có nội dung, cập nhật gần nhất trong dự án; không có thì undefined. */
+export function latestProjectSession(
   sessionIds: readonly string[],
   byId: Readonly<Record<string, SessionBrief>>,
 ): string | undefined {

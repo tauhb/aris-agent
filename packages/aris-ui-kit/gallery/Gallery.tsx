@@ -30,7 +30,7 @@ import {
   Pill,
   PlusIcon,
   Progress,
-  RoomIcon,
+  ProjectIcon,
   SectionHeader,
   Segmented,
   SettingsShell,
@@ -261,14 +261,14 @@ function Column() {
           <NavItem label="Chat" icon={<ComposeIcon size={17} />} active />
           <NavItem label="Routine" icon={<PanelIcon size={17} />} />
           <SectionHeader
-            title="Phòng"
+            title="Dự án"
             action={
-              <IconButton label="Tạo phòng" size="sm">
+              <IconButton label="Tạo dự án" size="sm">
                 <PlusIcon size={15} width={2} />
               </IconButton>
             }
           />
-          <NavItem label="Phòng aris-agent" icon={<RoomIcon />} meta="4 phiên">
+          <NavItem label="Dự án aris-agent" icon={<ProjectIcon />} meta="4 phiên">
             aris-agent
           </NavItem>
           <GroupLabel>Nghiên cứu</GroupLabel>
@@ -276,7 +276,7 @@ function Column() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <NavItem label="Chat" icon={<ComposeIcon size={17} />} active collapsed />
-          <NavItem label="Phòng aris-agent" icon={<RoomIcon />} collapsed />
+          <NavItem label="Dự án aris-agent" icon={<ProjectIcon />} collapsed />
         </div>
       </Block>
 

@@ -10,7 +10,7 @@
 |---|---|---|---|
 | **T** | Chỉ theme + Việt hoá | Mảnh của dsh đã đúng bố cục canvas, chỉ khác màu, chữ, phông | — |
 | **C** | Cắm thêm vào chỗ cắm (slot) của dsh | Canvas thêm một phần vào chỗ dsh đã chừa sẵn | Đầu khung "Aris · Commander / Phiên ▾" (`@aris/ui-chat-header`) |
-| **R** | Tắt row của dsh, chèn gói aris giữ nguyên hợp đồng slot | Bố cục canvas khác hẳn mảnh của dsh | Thanh bên Đội hình + Phòng (`@aris/ui-sidebar` thay `ui-sidebar`) |
+| **R** | Tắt row của dsh, chèn gói aris giữ nguyên hợp đồng slot | Bố cục canvas khác hẳn mảnh của dsh | Thanh bên Đội hình + Dự án (`@aris/ui-sidebar` thay `ui-sidebar`) |
 | **P** | Trang mới ở vùng chính (`main`) hoặc hộp thoại | Canvas có trang/hộp thoại mà dsh không có | Bản đồ đội (thử nghiệm `@aris/web-spike`) |
 | **N** | Ngoài Web UI | Telegram, điện thoại | — |
 
@@ -31,12 +31,12 @@ Trạng thái: ✅ đã làm · ◐ làm một phần · ○ chưa. "Dữ liệu
 
 | Màn | Vùng của dsh hiện có | Cách | Gói aris | Trạng thái | Dữ liệu |
 |---|---|---|---|---|---|
-| Thanh bên dùng chung | `ui-sidebar` | R | `@aris/ui-sidebar` | ✅ dùng bộ thành phần; Đội hình (mẫu), Phòng (thật), mục trang aris (Bản đồ, Second Brain, Routine, Kanban), Plugin ở chân; nút tìm, bánh răng, "+" mở trang/hộp thoại aris | Phòng: thật · Đội hình: GĐ2 · việc chờ duyệt: GĐ3 |
+| Thanh bên dùng chung | `ui-sidebar` | R | `@aris/ui-sidebar` | ✅ dùng bộ thành phần; Đội hình (mẫu), Dự án (thật), mục trang aris (Bản đồ, Second Brain, Routine, Kanban), Plugin ở chân; nút tìm, bánh răng, "+" mở trang/hộp thoại aris | Dự án: thật · Đội hình: GĐ2 · việc chờ duyệt: GĐ3 |
 | 1.1 Chat | đầu khung `conversation.session.header.*`; hội thoại `ui-chat`, công cụ `ui-tool`; thẻ duyệt `ui-approval`; cột phải `ui-sidebar-right` | C đầu khung · C "dòng việc": mỗi lần gọi công cụ `subagent` vẽ thành nhánh màu bot (`tool.call.toolview`, khoá `subagent`) · T bong bóng tin nhắn nền mực, thẻ duyệt nền cam (CSS bám lớp dsh, có kiểm thử canh lớp) · C cột phải "Đội bot lúc này" chiếm trang bắt đầu (`sidebar.right.tab.guide`): sơ đồ đội 3D xoay được (`TeamOrbit`), việc gần đây, giữ lối mở Tệp/Terminal | `@aris/ui-chat-header` ✅, `@aris/ui-chat` ✅, `@aris/ui-team-pane` ✅, `@aris/ui-theme` ✅ | ◐ G4 xong phần khung; còn: đường đời tin nhắn (chấm xanh + vạch dọc), thẻ duyệt nằm trong nhánh của bot, ghim trí nhớ, đầu khung "nhớ thêm được … điều" | GĐ1 (ghim trí nhớ), GĐ2 (bot thật cho nhánh và đội hình), GĐ3 (duyệt trong nhánh) |
 | 1.2 Khung chat | ô nhập của `ui-conversation`, `ui-input-trigger`, `ui-model-selection`, `ui-attachment`, `ui-goal` | T + C: nút "/" và "@" (`conversation.input.left`, chèn ký tự qua `input.paste` để mở đúng menu của dsh), nhãn model có ô chữ đầu nhà cung cấp, tên kỹ thuật khi rê chuột (`conversation.input.model.label`, tắt row "1017"); đính kèm giữ nút "+" của dsh; nhắn thêm khi bot đang làm giữ Xếp hàng/Chèn vào việc của dsh | `@aris/ui-chat` ✅ | ◐ còn: "@" liệt kê bot của đội, nút ghi âm (dsh chưa bật nhập giọng nói) | GĐ2 (@bot) |
 | 1.3 Bản đồ đội | — | P (trang `main`, mục thanh bên): sân khấu `TeamOrbit` cỡ lớn, cột phải bot đang chọn, dòng thời gian hôm nay | `@aris/ui-pages` ✅ | ✅ G5 vỏ | GĐ2 |
-| 1.4 Phòng | như 1.1 | C: đầu khung hiện thành viên khi phiên thuộc phòng; cột phải thành viên + luật phòng | `@aris/ui-chat-header`, `@aris/ui-team-pane` | ○ | GĐ2 |
-| 1.5 Tạo phòng | `ui-workspace` (chọn thư mục) | P hộp thoại, dùng `uiWorkspace.pickDirectory` + `workspaces.create` | `@aris/ui-pages` ✅ | ✅ G5: tạo phòng thật (thư mục → workspace), thành viên và mục tiêu là mẫu | GĐ2 (thành viên) |
+| 1.4 Dự án (canvas ghi "Phòng") | như 1.1 | C: đầu khung hiện thành viên khi phiên thuộc dự án; cột phải thành viên, luật, bảng việc của dự án | `@aris/ui-chat-header`, `@aris/ui-team-pane` | ○ | GĐ2 |
+| 1.5 Tạo dự án (canvas ghi "Tạo phòng") | `ui-workspace` (chọn thư mục) | P hộp thoại, dùng `uiWorkspace.pickDirectory` + `workspaces.create` | `@aris/ui-pages` ✅ | ✅ G5: tạo dự án thật (thư mục → workspace), thành viên và mục tiêu là mẫu | GĐ2 (thành viên) |
 | 1.6 Tìm trong mọi phiên | phím tắt `ctx.shortcuts`; tìm phiên `dsh-experimental-session-search` | P hộp thoại, mở từ nút tìm trên thanh bên; ⌘K vẫn là bộ tìm phiên của dsh (`session.search`) tới GĐ1 | `@aris/ui-pages` ✅ | ✅ G5 vỏ | GĐ1 |
 
 ### Nhóm 2 · Đội bot & Commander
@@ -116,12 +116,12 @@ Dsh để cài đặt trong **một hộp thoại** (Chung, Models, Built-in plu
 | `DEMO_COST` (dòng chủ nhân "0,42 / 5 USD hôm nay") | `packages/aris-ui-kit/src/demo.ts` | GĐ1 (theo dõi chi phí) |
 | Bot trên đầu khung luôn là Aris | `packages/aris-ui-chat-header/src/client/Header.tsx` | GĐ2 |
 | Bot của nhánh "dòng việc": thành viên đội khi mẫu bot trùng mã, không thì linh vật chưa dùng | `packages/aris-ui-chat/src/client/branch.ts` | GĐ2 |
-| Dữ liệu các trang và hộp thoại G5: `DEMO_*` của Cài đặt (6.x, Commander), Trí nhớ (Ký ức, skill, hộp duyệt, việc đang chạy), Đội bot (bản đồ, hồ sơ bot/chủ nhân, tạo bot, agent ngoài, tạo phòng, tìm phiên), Tự động (routine, kanban), Second Brain (cây ghi chú, ghi chú, đồ thị quanh ghi chú, hộp thư vào, hỏi bộ não, `demoGraph()`) | `packages/aris-ui-pages/src/client/{settings,mind,team,auto,brain}/demo.ts` — mỗi hằng ghi giai đoạn gỡ | GĐ tương ứng ở cột "Dữ liệu" phía trên |
+| Dữ liệu các trang và hộp thoại G5: `DEMO_*` của Cài đặt (6.x, Commander), Trí nhớ (Ký ức, skill, hộp duyệt, việc đang chạy), Đội bot (bản đồ, hồ sơ bot/chủ nhân, tạo bot, agent ngoài, tạo dự án, tìm phiên), Tự động (routine, kanban), Second Brain (cây ghi chú, ghi chú, đồ thị quanh ghi chú, hộp thư vào, hỏi bộ não, `demoGraph()`) | `packages/aris-ui-pages/src/client/{settings,mind,team,auto,brain}/demo.ts` — mỗi hằng ghi giai đoạn gỡ | GĐ tương ứng ở cột "Dữ liệu" phía trên |
 
 ## 6. Thứ tự làm trong giai đoạn G
 
 1. ✅ **G2** theme + tiếng Việt + phông — một lần cho cả app (23/10).
 2. ✅ **G3** bộ thành phần; chuyển thanh bên và đầu khung sang dùng bộ này (23/10).
 3. ✅ **G4** khung: ô nhập 1.2, nút hội thoại 1.1 (dòng việc, thẻ duyệt), cột phải "Đội bot", màn trống, tiêu đề tab (23/10).
-4. ✅ **G5** vỏ mọi trang P và hộp thoại trong gói `@aris/ui-pages` (23/10): Cài đặt 6.1–6.7 + Commander, Ký ức, Thư viện/Chi tiết skill, Hộp duyệt, Việc đang chạy, Bản đồ đội, Hồ sơ bot/chủ nhân, Tạo bot/phòng, Nhân bản, Tìm phiên, Routine, Tạo routine, Kanban, Second Brain (4 khung). Còn lại cho G6: 1.4 Phòng (biến thể đầu khung và cột phải), nhóm 7 di động.
+4. ✅ **G5** vỏ mọi trang P và hộp thoại trong gói `@aris/ui-pages` (23/10): Cài đặt 6.1–6.7 + Commander, Ký ức, Thư viện/Chi tiết skill, Hộp duyệt, Việc đang chạy, Bản đồ đội, Hồ sơ bot/chủ nhân, Tạo bot/dự án, Nhân bản, Tìm phiên, Routine, Tạo routine, Kanban, Second Brain (4 khung). Còn lại cho G6: 1.4 Dự án (biến thể đầu khung và cột phải), nhóm 7 di động.
 5. **G6** script chụp app thật cạnh canvas cho cả 36 màn, sáng/tối; bảng "đạt / lệch" làm cổng nghiệm thu.

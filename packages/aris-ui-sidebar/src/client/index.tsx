@@ -75,7 +75,7 @@ export function apply(ctx: ClientContext): void {
     startSession: (workspaceId?: string) => workspace.startSession(workspaceId),
     toggleSidebar: () => ctx.layout.toggleSidebar(),
     selectPanel: (id: string | null) => ctx.layout.selectPanel(id),
-    openRoom: (workspaceId: string) => void workspace.openWorkspace(workspaceId),
+    openProject: (workspaceId: string) => void workspace.openWorkspace(workspaceId),
     openSession: (sessionId: string) => workspace.openSession(sessionId),
     hooks: { panels, shortcuts: ctx.shortcuts.catalog },
   })

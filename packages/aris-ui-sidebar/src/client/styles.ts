@@ -12,8 +12,8 @@ export const CSS = `
 .aris-sb .a-btn.newTask{margin-bottom:8px;border-radius:12px}
 .aris-sb .nav{display:flex;flex-direction:column;gap:1px;flex:none}
 .aris-sb .middle{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;margin:0 -10px 0 0;padding-right:10px;scrollbar-width:thin}
-.aris-sb .team,.aris-sb .rooms{flex:none;display:flex;flex-direction:column}
-.aris-sb .rooms .a-nav .g{width:18px;height:18px}
+.aris-sb .team,.aris-sb .projects{flex:none;display:flex;flex-direction:column}
+.aris-sb .projects .a-nav .g{width:18px;height:18px}
 .aris-sb .foot{flex:none;border-top:1px solid var(--a-line);padding-top:8px;display:flex;flex-direction:column;gap:4px}
 .aris-sb .owner{display:flex;align-items:center;gap:8px;padding:6px 4px 0 10px}
 .aris-sb .avatar{width:28px;height:28px;border-radius:50%;background:var(--a-ink);color:var(--a-panel);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}

@@ -30,7 +30,7 @@ import { SettingsPage } from './settings/SettingsPage.js'
 import { BotProfile } from './team/Bot.js'
 import { CloneBot } from './team/CloneBot.js'
 import { CreateBot } from './team/CreateBot.js'
-import { CreateRoom, type RoomActions } from './team/CreateRoom.js'
+import { CreateProject, type ProjectActions } from './team/CreateProject.js'
 import { TeamMap } from './team/Map.js'
 import { OwnerProfile } from './team/Owner.js'
 import { Search } from './team/Search.js'
@@ -73,10 +73,10 @@ const PAGES: Partial<Record<RouteId, ComponentType<PageProps>>> = {
 }
 
 /** Hộp thoại đã dựng. */
-const DIALOGS: Partial<Record<RouteId, ComponentType<PageProps & { rooms: RoomActions }>>> = {
+const DIALOGS: Partial<Record<RouteId, ComponentType<PageProps & { projects: ProjectActions }>>> = {
   'create-bot': CreateBot,
   'clone-bot': CloneBot,
-  'create-room': CreateRoom,
+  'create-project': CreateProject,
   search: Search,
 }
 
@@ -118,14 +118,14 @@ export function apply(ctx: ClientContext): void {
     'aris-ui-pages: navigation',
   )
 
-  // Phòng = workspace của dsh: chọn thư mục, tạo workspace rồi mở nó.
+  // Dự án = workspace của dsh: chọn thư mục, tạo workspace rồi mở nó.
   const workspace = ctx.get('uiWorkspace') as {
     pickDirectory(): Promise<string | null>
     openWorkspace(workspaceId: string): Promise<void>
   }
-  const rooms: RoomActions = {
+  const projects: ProjectActions = {
     pickDirectory: () => workspace.pickDirectory(),
-    async createRoom(path) {
+    async createProject(path) {
       const created = await ctx.workspaces.create({ path })
       await workspace.openWorkspace(created.workspaceId)
     },
@@ -138,7 +138,7 @@ export function apply(ctx: ClientContext): void {
     if (!dialog || !Dialog) return null
     return (
       <div className="aris">
-        <Dialog t={t} nav={nav} params={dialog.params} rooms={rooms} />
+        <Dialog t={t} nav={nav} params={dialog.params} projects={projects} />
       </div>
     )
   }

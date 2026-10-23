@@ -223,8 +223,8 @@ export const DEMO_AGENTS = [
   { id: 'custom', name: '', cmd: '…', note: 'Nhập lệnh của bất kỳ agent nào nói ACP.', state: 'custom' },
 ] as const
 
-/** 1.5 · Tạo phòng. GĐ2 (thành viên, mục tiêu). */
-export const DEMO_ROOM = {
+/** 1.5 · Tạo dự án. GĐ2 (thành viên, mục tiêu). */
+export const DEMO_PROJECT = {
   name: 'Ra mắt khoá học AI',
   members: {
     aris: true,
@@ -261,7 +261,7 @@ export const DEMO_SEARCH = {
     {
       bot: 'tin',
       title: 'Mục tiêu quý 4',
-      where: 'Phòng · Kế hoạch quý 4',
+      where: 'Dự án · Kế hoạch quý 4',
       when: '21/10',
       snip: ['Tín: so với ', 'đối thủ', ', ngân sách quảng cáo của mình thấp hơn 30%…'],
     },

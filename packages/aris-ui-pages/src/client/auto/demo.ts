@@ -94,7 +94,7 @@ export const DEMO_ROUTINE_DRAFT = {
 /** 4.3 · Bảng Kanban. */
 export const DEMO_KANBAN = {
   board: 'Kênh YouTube quý 4',
-  meta: '9 thẻ · tạo từ phòng “Kế hoạch quý 4”',
+  meta: '9 thẻ · bảng việc của dự án “Kênh YouTube Q4”',
   columns: [
     {
       id: 'triage',

@@ -74,7 +74,7 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 > **G1 xong 23/10**: [giao-dien/ban-do.md](giao-dien/ban-do.md) (36 màn → cách làm), [giao-dien/kiem-ke-dsh.md](giao-dien/kiem-ke-dsh.md) (tự sinh). Phát hiện thêm: mọi chữ của dsh là tiếng Anh (~2.400 chuỗi) → Việt hoá gộp vào G2; cài đặt của dsh là hộp thoại, canvas là trang 6.x → trang Cài đặt aris riêng.
 
-> **G5 xong 23/10**: mọi trang và hộp thoại trong canvas có vỏ trong gói `@aris/ui-pages`, đi tới được từ app thật: thanh bên có mục Bản đồ đội, Second Brain, Routine, Kanban; bánh răng mở Cài đặt (6.1–6.7, Commander; "Cài đặt chung" vẫn là hộp thoại của dsh); Đội hình mở Hồ sơ bot, "+" mở Tạo bot / Tạo phòng (tạo phòng là thật: chọn thư mục → workspace); nút tìm mở "Tìm trong mọi phiên"; hàng việc chờ mở Hộp duyệt. Dữ liệu đều là mẫu `DEMO_*` trong `src/client/*/demo.ts`, mỗi hằng ghi giai đoạn gỡ. Đồ thị tri thức 3D (`KnowledgeGraph`) vào bộ thành phần. Mục lịch của dsh ẩn khỏi thanh bên, mở từ nút "Lịch đang chạy" trong trang Routine. ⌘K vẫn là bộ tìm phiên của dsh tới GĐ1. Còn lại cho G6: 1.4 Phòng (đầu khung và cột phải khi phiên thuộc phòng), nhóm 7 di động.
+> **G5 xong 23/10**: mọi trang và hộp thoại trong canvas có vỏ trong gói `@aris/ui-pages`, đi tới được từ app thật: thanh bên có mục Bản đồ đội, Second Brain, Routine, Kanban; bánh răng mở Cài đặt (6.1–6.7, Commander; "Cài đặt chung" vẫn là hộp thoại của dsh); Đội hình mở Hồ sơ bot, "+" mở Tạo bot / Tạo dự án (tạo dự án là thật: chọn thư mục → workspace; "Phòng" đổi thành "Dự án" theo quyết định 11); nút tìm mở "Tìm trong mọi phiên"; hàng việc chờ mở Hộp duyệt. Dữ liệu đều là mẫu `DEMO_*` trong `src/client/*/demo.ts`, mỗi hằng ghi giai đoạn gỡ. Đồ thị tri thức 3D (`KnowledgeGraph`) vào bộ thành phần. Mục lịch của dsh ẩn khỏi thanh bên, mở từ nút "Lịch đang chạy" trong trang Routine. ⌘K vẫn là bộ tìm phiên của dsh tới GĐ1. Còn lại cho G6: 1.4 Dự án (đầu khung và cột phải khi phiên thuộc dự án), nhóm 7 di động.
 >
 > **G4 xong 23/10**: tiêu đề và biểu tượng tab mang tên aris; màn trống có dấu Aris; ô nhập có nút "/" và "@" mở đúng menu của dsh, nhãn model có dấu nhà cung cấp (tắt nhãn "1017"); mỗi lần Aris giao việc cho bot con (công cụ `subagent`) vẽ thành một nhánh "dòng việc" màu của bot, theo dõi phiên bot con đang làm hay đã xong; bong bóng tin nhắn nền mực và thẻ duyệt nền cam như canvas; cột phải mở ra là "Đội bot lúc này" (sơ đồ đội 3D xoay được như màn R3: Commander lơ lửng giữa, bot xoay quanh, dây nối chạy khi bot đang làm/chờ, mắt đổi theo trạng thái; việc gần đây) và vẫn giữ lối mở Tệp, Terminal. Chưa xem trên dữ liệu thật: nhánh "dòng việc" và thẻ duyệt (cần một lượt model giao việc / xin quyền). Dời sang giai đoạn có dữ liệu: "@" liệt kê bot (GĐ2), duyệt ngay trong nhánh (GĐ3), ghim trí nhớ (GĐ1), đường đời tin nhắn.
 
@@ -139,7 +139,7 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 |---|---|
 | `aris-bots` | Bot = agent preset của dsh + không gian dữ liệu riêng (ký ức, hồ sơ, skill); SOUL; linh vật; model mặc định; quyền; kênh riêng (mỗi bot một token Telegram); tạo / nhân bản / xuất bot |
 | `aris-commander` | 3 lệnh chỉ Commander có: `giao_viec` (nhận kết quả, song song), `chuyen_giao` (bot đích trả lời anh), `tro_ly_an` (subagent ẩn danh); định tuyến theo mô tả năng lực, ghi `aris/dispatch` có lý do; giới hạn đồng thời / độ sâu / ngân sách mỗi việc; bot thường chỉ được `hoi_dong_doi` |
-| `aris-rooms` | Phòng nhóm 2–6 bot: tối đa 3 vòng, 10 tin mỗi lượt, `@tên`, "cần anh", lệnh dừng một bot, chạy tiếp khi đóng ứng dụng |
+| `aris-projects` | Dự án (quyết định 11): thành viên, mục tiêu, luật; chat chung 2–6 bot trên Agent Teams của dsh: tối đa 3 vòng, 10 tin mỗi lượt, `@tên`, "cần anh", lệnh dừng một bot, chạy tiếp khi đóng ứng dụng |
 | Dòng việc | Node chat "dòng việc rẽ nhánh": vẽ các nhánh giao việc từ sự kiện `aris/dispatch` và các bước của bot con; duyệt ngay trên nhánh |
 | Bản đồ 3D | Sơ đồ đội 3D (cột phải 1.1) và tab 1.3, dựng từ trạng thái trực tiếp của các agent |
 | **Bot ngoài (M3)** | Thêm Claude Code, Codex, Gemini CLI, OpenCode, Hermes vào đội qua `dsh-subagent-acp`: mỗi bot ngoài có linh vật, mô tả năng lực, thư mục làm việc, ngân sách; yêu cầu quyền của bot ngoài chuyển về hộp duyệt của aris (mặc định từ chối); kết quả và sự kiện của nó hiện trên dòng việc như bot nội bộ |
@@ -149,7 +149,7 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 **Nghiệm thu**
 - "Tóm tắt 3 đối thủ rồi xếp lịch họp" ⇒ Aris giao Lâm và Mai song song, anh thấy hai nhánh chạy, duyệt lời mời họp ngay trên nhánh hoặc trên Telegram.
-- Phòng nhóm 3 bot bàn một việc, dừng sau tối đa 3 vòng.
+- Dự án có 3 bot bàn một việc trong chat chung, dừng sau tối đa 3 vòng; việc chia ra hiện trên Kanban của dự án.
 - Nhắn thẳng cho Lâm qua bot Telegram riêng của Lâm vẫn được.
 - Bot thường không thể giao việc tiếp (không có vòng lặp).
 - "Sửa lỗi đăng nhập trong repo X" ⇒ Aris giao cho bot ngoài Claude Code, anh thấy từng bước trên nhánh, duyệt lệnh nguy hiểm trên Telegram.

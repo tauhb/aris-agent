@@ -20,7 +20,7 @@ export interface PanelInfo {
   readonly activePanelId: string | null
 }
 
-/** Một workspace của dsh; aris gọi là "Phòng". */
+/** Một workspace của dsh; aris gọi là "Dự án". */
 export interface WorkspaceRow {
   readonly workspaceId: string
   readonly title: string
@@ -28,7 +28,7 @@ export interface WorkspaceRow {
   readonly sessionIds: readonly string[]
 }
 
-/** Phần tóm tắt phiên của dsh mà thanh bên cần để chọn phiên gần nhất của phòng. */
+/** Phần tóm tắt phiên của dsh mà thanh bên cần để chọn phiên gần nhất của dự án. */
 export interface SessionListSnapshot {
   readonly byId: Readonly<Record<string, { readonly blank: boolean; readonly updatedAt: number }>>
 }
@@ -49,7 +49,7 @@ export interface SidebarProps {
   startSession: (workspaceId?: string) => void
   toggleSidebar: () => void
   selectPanel: (id: string | null) => void
-  openRoom: (workspaceId: string) => void
+  openProject: (workspaceId: string) => void
   openSession: (sessionId: string) => void
   usePanels: Selector<readonly PanelEntry[]>
   useShortcuts: Selector<readonly ShortcutRow[]>

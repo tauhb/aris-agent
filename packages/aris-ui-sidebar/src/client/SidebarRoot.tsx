@@ -1,6 +1,6 @@
 /**
  * Thanh bên aris theo canvas "Thanh bên dùng chung": logo, Việc mới, các trang
- * (Chat + trang do plugin đăng ký), Đội hình, Phòng, ô chờ duyệt và chủ nhân.
+ * (Chat + trang do plugin đăng ký), Đội hình, Dự án, ô chờ duyệt và chủ nhân.
  * Ghép từ bộ thành phần `@aris/ui-kit/react`; giữ nguyên các chỗ cắm của dsh nên
  * plugin khác vẫn cắm vào được.
  */
@@ -15,7 +15,7 @@ import {
   NavItem,
   PanelIcon,
   PlusIcon,
-  RoomIcon,
+  ProjectIcon,
   SearchIcon,
   SectionHeader,
   WaitingIcon,
@@ -23,7 +23,7 @@ import {
 } from '@aris/ui-kit/react'
 import { COMMANDER, DEMO_COST, DEMO_PENDING_APPROVALS, DEMO_TEAM, type TeamMember } from '@aris/ui-kit'
 import type { ReactElement } from 'react'
-import { latestRoomSession } from './rooms.js'
+import { latestProjectSession } from './projects.js'
 import type { Translate } from './locale.js'
 import type { PanelEntry, SidebarProps, WorkspaceRow } from './types.js'
 
@@ -94,30 +94,30 @@ function Bot({
   )
 }
 
-/** Một phòng = một workspace của dsh: tên, số phiên; bấm để mở phòng. */
-function Room({
-  room,
+/** Một dự án = một workspace của dsh: tên, số phiên; bấm để mở dự án. */
+function Project({
+  project,
   wide,
   t,
   onOpen,
 }: {
-  room: WorkspaceRow
+  project: WorkspaceRow
   wide: boolean
   t: Translate
   onOpen: () => void
 }) {
-  const count = room.sessionIds.length
+  const count = project.sessionIds.length
   return (
-    <Tip label={`${room.title} · ${room.path}`} wide={wide}>
+    <Tip label={`${project.title} · ${project.path}`} wide={wide}>
       <NavItem
-        label={t('room.label', { name: room.title })}
-        title={room.path}
-        icon={<RoomIcon />}
+        label={t('project.label', { name: project.title })}
+        title={project.path}
+        icon={<ProjectIcon />}
         collapsed={!wide}
-        meta={count > 0 ? t('room.sessions', { count }) : undefined}
+        meta={count > 0 ? t('project.sessions', { count }) : undefined}
         onClick={onOpen}
       >
-        {room.title}
+        {project.title}
       </NavItem>
     </Tip>
   )
@@ -129,13 +129,13 @@ export function SidebarRoot(props: SidebarProps) {
   const panels = props.usePanels((p) => p)
   const navPanels = panels.filter((p) => !FOOT_PANELS.has(p.id) && !HIDDEN_PANELS.has(p.id))
   const footPanels = panels.filter((p) => FOOT_PANELS.has(p.id))
-  const rooms = props.useWorkspaces((w) => w.items)
+  const projects = props.useWorkspaces((w) => w.items)
   const sessionsById = props.useSessions((list) => list.byId)
-  // Bấm phòng: mở phiên gần nhất của phòng; phòng chưa có phiên thì dsh tạo phiên mới.
-  const openRoom = (room: WorkspaceRow) => {
-    const latest = latestRoomSession(room.sessionIds, sessionsById)
+  // Bấm dự án: mở phiên gần nhất của dự án; dự án chưa có phiên thì dsh tạo phiên mới.
+  const openProject = (project: WorkspaceRow) => {
+    const latest = latestProjectSession(project.sessionIds, sessionsById)
     if (latest) props.openSession(latest)
-    else props.openRoom(room.workspaceId)
+    else props.openProject(project.workspaceId)
   }
   const newShortcut = props.useShortcuts((rows) => rows.find((r) => r.id === 'session.new'))
   const toggleShortcut = props.useShortcuts((rows) => rows.find((r) => r.id === 'sidebar.left.toggle'))
@@ -219,19 +219,29 @@ export function SidebarRoot(props: SidebarProps) {
           ))}
         </div>
 
-        <div className="rooms">
+        <div className="projects">
           {wide && (
             <SectionHeader
-              title={t('rooms.title')}
+              title={t('projects.title')}
               action={
-                <IconButton label={t('rooms.add')} size="sm" onClick={() => arisNavigate('create-room')}>
+                <IconButton
+                  label={t('projects.add')}
+                  size="sm"
+                  onClick={() => arisNavigate('create-project')}
+                >
                   <PlusIcon size={15} width={2} />
                 </IconButton>
               }
             />
           )}
-          {rooms.map((room) => (
-            <Room key={room.workspaceId} room={room} wide={wide} t={t} onOpen={() => openRoom(room)} />
+          {projects.map((project) => (
+            <Project
+              key={project.workspaceId}
+              project={project}
+              wide={wide}
+              t={t}
+              onOpen={() => openProject(project)}
+            />
           ))}
         </div>
       </div>

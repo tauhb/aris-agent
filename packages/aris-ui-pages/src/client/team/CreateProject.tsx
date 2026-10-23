@@ -1,6 +1,6 @@
 /**
- * 1.5 · Tạo phòng: tên, thành viên (Aris luôn chủ trì), thư mục làm việc, mục tiêu,
- * luật trò chuyện. "Chọn…" và "Tạo phòng" dùng bộ chọn thư mục và tạo workspace
+ * 1.5 · Tạo dự án: tên, thành viên (Aris luôn chủ trì), thư mục làm việc, mục tiêu,
+ * luật trò chuyện. "Chọn…" và "Tạo dự án" dùng bộ chọn thư mục và tạo workspace
  * thật của dsh; thành viên và mục tiêu nối ở giai đoạn 2.
  */
 import { Button, Dialog, Mascot, TextInput } from '@aris/ui-kit/react'
@@ -8,16 +8,16 @@ import { useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Disclosure } from '../ui.js'
 import { botName } from '../mind/names.js'
-import { DEMO_ROOM as R } from './demo.js'
+import { DEMO_PROJECT as R } from './demo.js'
 
 const check = { width: 18, height: 18, accentColor: 'var(--a-accent)' }
 
-export interface RoomActions {
+export interface ProjectActions {
   pickDirectory(): Promise<string | null>
-  createRoom(path: string): Promise<void>
+  createProject(path: string): Promise<void>
 }
 
-export function CreateRoom({ t, nav, rooms }: PageProps & { rooms: RoomActions }) {
+export function CreateProject({ t, nav, projects }: PageProps & { projects: ProjectActions }) {
   const [members, setMembers] = useState(R.members)
   const [dir, setDir] = useState(R.dir)
   const [adv, setAdv] = useState(false)
@@ -26,10 +26,10 @@ export function CreateRoom({ t, nav, rooms }: PageProps & { rooms: RoomActions }
   const create = async () => {
     setBusy(true)
     try {
-      await rooms.createRoom(dir)
+      await projects.createProject(dir)
       nav.close()
     } catch (err) {
-      console.error('aris: không tạo được phòng', err)
+      console.error('aris: không tạo được dự án', err)
       setBusy(false)
     }
   }
@@ -37,23 +37,23 @@ export function CreateRoom({ t, nav, rooms }: PageProps & { rooms: RoomActions }
     <Dialog
       open
       width={620}
-      title={t('room.title')}
-      description={t('room.intro')}
+      title={t('project.title')}
+      description={t('project.intro')}
       closeLabel={t('cb.close')}
       onClose={nav.close}
     >
       <label className="a-field">
-        <span className="l">{t('room.name')}</span>
+        <span className="l">{t('project.name')}</span>
         <TextInput defaultValue={R.name} />
       </label>
       <div>
         <div className="ap-lb" style={{ color: 'var(--a-ink)', paddingBottom: 6 }}>
-          {t('room.members')}{' '}
+          {t('project.members')}{' '}
           <span className="a-muted" style={{ fontWeight: 400 }}>
-            {t('room.count', { n: count })}
+            {t('project.count', { n: count })}
           </span>
         </div>
-        <div role="group" aria-label={t('room.pick')} className="ap-tags" style={{ gap: 6 }}>
+        <div role="group" aria-label={t('project.pick')} className="ap-tags" style={{ gap: 6 }}>
           {Object.entries(members).map(([id, on]) => (
             <button
               key={id}
@@ -66,32 +66,32 @@ export function CreateRoom({ t, nav, rooms }: PageProps & { rooms: RoomActions }
             >
               <Mascot id={id} size={18} />
               {R.external[id] ?? botName(id)}
-              {id === 'aris' && <span className="a-muted"> {t('room.lead')}</span>}
-              {R.external[id] && <span className="a-muted"> {t('room.external')}</span>}
+              {id === 'aris' && <span className="a-muted"> {t('project.lead')}</span>}
+              {R.external[id] && <span className="a-muted"> {t('project.external')}</span>}
             </button>
           ))}
         </div>
       </div>
       <label className="a-field">
-        <span className="l">{t('room.dir')}</span>
+        <span className="l">{t('project.dir')}</span>
         <span style={{ display: 'flex', gap: 6 }}>
           <TextInput mono value={dir} onChange={(e) => setDir(e.currentTarget.value)} />
           <Button
             onClick={async () => {
-              const picked = await rooms.pickDirectory()
+              const picked = await projects.pickDirectory()
               if (picked) setDir(picked)
             }}
           >
-            {t('room.choose')}
+            {t('project.choose')}
           </Button>
         </span>
-        <span className="h">{t('room.dirHint')}</span>
+        <span className="h">{t('project.dirHint')}</span>
       </label>
       <label className="a-field">
         <span className="l">
-          {t('room.goal')}{' '}
+          {t('project.goal')}{' '}
           <span className="a-muted" style={{ fontWeight: 400 }}>
-            {t('room.optional')}
+            {t('project.optional')}
           </span>
         </span>
         <textarea
@@ -103,24 +103,24 @@ export function CreateRoom({ t, nav, rooms }: PageProps & { rooms: RoomActions }
       </label>
       <Disclosure
         title={t('cb.advanced')}
-        hint={t('room.advancedHint')}
+        hint={t('project.advancedHint')}
         open={adv}
         onToggle={() => setAdv(!adv)}
       >
         <div className="ap-frow">
-          <span>{t('room.maxRounds')}</span>
+          <span>{t('project.maxRounds')}</span>
           <span className="a-muted">3</span>
         </div>
         <div className="ap-frow">
-          <span>{t('room.maxMessages')}</span>
+          <span>{t('project.maxMessages')}</span>
           <span className="a-muted">10</span>
         </div>
         <label className="ap-frow">
-          <span>{t('room.stopCmd')}</span>
+          <span>{t('project.stopCmd')}</span>
           <input type="checkbox" defaultChecked style={check} />
         </label>
         <label className="ap-frow">
-          <span>{t('room.leadSummary')}</span>
+          <span>{t('project.leadSummary')}</span>
           <input type="checkbox" defaultChecked style={check} />
         </label>
       </Disclosure>
@@ -129,7 +129,7 @@ export function CreateRoom({ t, nav, rooms }: PageProps & { rooms: RoomActions }
           {t('cb.cancel')}
         </Button>
         <Button variant="primary" size="lg" disabled={busy} onClick={create}>
-          {t('room.create')}
+          {t('project.create')}
         </Button>
       </div>
     </Dialog>

@@ -84,7 +84,7 @@ export const BotRow = forwardRef<HTMLButtonElement, BotRowProps>(function BotRow
   )
 })
 
-/** Đầu một mục (Đội hình, Phòng…) với nút thao tác bên phải. */
+/** Đầu một mục (Đội hình, Dự án…) với nút thao tác bên phải. */
 export function SectionHeader({ title, action }: { title: ReactNode; action?: ReactNode }) {
   return (
     <div className="a-sec">

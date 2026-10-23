@@ -42,14 +42,12 @@ export function PanelIcon({ size, width = 1.75 }: IconProps) {
   )
 }
 
-/** Phòng: hai người. */
-export function RoomIcon({ size = 16, width = 1.75 }: IconProps) {
+/** Dự án: thư mục làm việc. */
+export function ProjectIcon({ size = 16, width = 1.75 }: IconProps) {
   return (
     <Icon size={size}>
-      <circle cx={8} cy={9} r={3} {...stroke} strokeWidth={width} />
-      <circle cx={16.5} cy={9.5} r={2.5} {...stroke} strokeWidth={width} />
       <path
-        d="M3 19c.6-3 2.6-4.5 5-4.5s4.4 1.5 5 4.5M14 15.2c.8-.5 1.6-.7 2.5-.7 2 0 3.6 1.3 4.1 4"
+        d="M3.5 7.5a2 2 0 0 1 2-2h3.6l2 2h7.4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"
         {...stroke}
         strokeWidth={width}
       />

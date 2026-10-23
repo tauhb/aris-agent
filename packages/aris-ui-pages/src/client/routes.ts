@@ -27,7 +27,7 @@ export const ROUTES = {
   owner: { kind: 'page' },
   'routine-new': { kind: 'page' },
   'create-bot': { kind: 'dialog' },
-  'create-room': { kind: 'dialog' },
+  'create-project': { kind: 'dialog' },
   'clone-bot': { kind: 'dialog' },
   search: { kind: 'dialog' },
 } as const satisfies Record<string, Route>

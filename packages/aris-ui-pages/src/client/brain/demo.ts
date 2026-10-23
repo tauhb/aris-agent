@@ -29,7 +29,7 @@ export const DEMO_NOTE = {
   meta: '#chiến-lược #youtube · từ ghi âm Telegram 21/10 · Lâm sửa lần cuối hôm nay',
   summary: 'Tập trung video hướng dẫn, 2 video/tuần, ngân sách 50 triệu; chờ anh chọn ưu tiên.',
   intro: [
-    'Rút ra từ phòng ',
+    'Rút ra từ dự án ',
     ['Kế hoạch quý 4'],
     '. Dữ liệu trong ',
     ['Báo cáo kênh 90 ngày'],
@@ -123,7 +123,7 @@ export const DEMO_ASK = {
     [
       'Quý 4 dành ',
       { b: '15 triệu' },
-      ' cho quảng cáo trong tổng 50 triệu, theo đề xuất của Tín trong phòng Kế hoạch quý 4 ',
+      ' cho quảng cáo trong tổng 50 triệu, theo đề xuất của Tín trong dự án Kế hoạch quý 4 ',
       { cite: 1 },
       '. Con số này khớp với nguyên tắc anh ghi từ tháng 9: giữ quảng cáo dưới 30% ngân sách ',
       { cite: 2 },
@@ -139,7 +139,7 @@ export const DEMO_ASK = {
   sources: [
     {
       n: 1,
-      title: 'Phòng Kế hoạch quý 4',
+      title: 'Dự án Kế hoạch quý 4',
       note: 'Tín, 23/10 10:14 — “50 triệu chia: 30 sản xuất, 15 quảng cáo, 5 dự phòng”',
     },
     { n: 2, title: 'Ghi chú: Giữ quảng cáo dưới 30%', note: 'Lĩnh vực / Tài chính · 02/09' },
