@@ -139,7 +139,9 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 |---|---|
 | `aris-bots` | Bot = agent preset của dsh + không gian dữ liệu riêng (ký ức, hồ sơ, skill); SOUL; linh vật; model mặc định; quyền; kênh riêng (mỗi bot một token Telegram); tạo / nhân bản / xuất bot |
 | `aris-commander` | 3 lệnh chỉ Commander có: `giao_viec` (nhận kết quả, song song), `chuyen_giao` (bot đích trả lời anh), `tro_ly_an` (subagent ẩn danh); định tuyến theo mô tả năng lực, ghi `aris/dispatch` có lý do; giới hạn đồng thời / độ sâu / ngân sách mỗi việc; bot thường chỉ được `hoi_dong_doi` |
-| `aris-projects` | Dự án (quyết định 11): thành viên, mục tiêu, luật; chat chung 2–6 bot trên Agent Teams của dsh: tối đa 3 vòng, 10 tin mỗi lượt, `@tên`, "cần anh", lệnh dừng một bot, chạy tiếp khi đóng ứng dụng |
+| **Thử Agent Teams** (làm đầu tiên) | Bật `dsh-experimental-agent-team-profile` trong profile `aris`; kiểm: aris đăng ký được bộ sinh thành viên từ hồ sơ bot (tên thành viên = mã bot), đọc được bảng việc qua projection `agentTeam` cho Kanban, Team thứ hai cùng thư mục chạy song song không đụng nhau. Không được thì ghi phương án thay trước khi làm `aris-projects` |
+| `aris-departments` | Phòng ban (quyết định 12): trưởng nhóm, thành viên, chính sách chung (skill, vùng Second Brain, model, ngân sách, quyền) áp lên mọi bot của phòng |
+| `aris-projects` | Dự án (quyết định 11): mỗi dự án một Team của dsh; thành viên, mục tiêu, luật; Kanban đọc bảng việc của Team; việc lớn của phòng ban chạy Team riêng do trưởng nhóm làm Lead; chat chung 2–6 bot: tối đa 3 vòng, 10 tin mỗi lượt, `@tên`, "cần anh", lệnh dừng một bot, chạy tiếp khi đóng ứng dụng |
 | Dòng việc | Node chat "dòng việc rẽ nhánh": vẽ các nhánh giao việc từ sự kiện `aris/dispatch` và các bước của bot con; duyệt ngay trên nhánh |
 | Bản đồ 3D | Sơ đồ đội 3D (cột phải 1.1) và tab 1.3, dựng từ trạng thái trực tiếp của các agent |
 | **Bot ngoài (M3)** | Thêm Claude Code, Codex, Gemini CLI, OpenCode, Hermes vào đội qua `dsh-subagent-acp`: mỗi bot ngoài có linh vật, mô tả năng lực, thư mục làm việc, ngân sách; yêu cầu quyền của bot ngoài chuyển về hộp duyệt của aris (mặc định từ chối); kết quả và sự kiện của nó hiện trên dòng việc như bot nội bộ |
@@ -151,7 +153,8 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 - "Tóm tắt 3 đối thủ rồi xếp lịch họp" ⇒ Aris giao Lâm và Mai song song, anh thấy hai nhánh chạy, duyệt lời mời họp ngay trên nhánh hoặc trên Telegram.
 - Dự án có 3 bot bàn một việc trong chat chung, dừng sau tối đa 3 vòng; việc chia ra hiện trên Kanban của dự án.
 - Nhắn thẳng cho Lâm qua bot Telegram riêng của Lâm vẫn được.
-- Bot thường không thể giao việc tiếp (không có vòng lặp).
+- Bot thường không thể giao việc tiếp (không có vòng lặp); chỉ Commander và trưởng nhóm đang nhận việc của phòng ban được mở Team.
+- Giao "nghiên cứu sâu 5 đối thủ" cho phòng Nghiên cứu ⇒ trưởng nhóm mở Team riêng, nộp 5 báo cáo vào thẻ Kanban của dự án.
 - "Sửa lỗi đăng nhập trong repo X" ⇒ Aris giao cho bot ngoài Claude Code, anh thấy từng bước trên nhánh, duyệt lệnh nguy hiểm trên Telegram.
 
 **Rủi ro**: chi phí tăng khi nhiều bot chạy ⇒ trần ngân sách mỗi việc từ đầu; Commander giao sai ⇒ nhật ký định tuyến có lý do để chỉnh.
