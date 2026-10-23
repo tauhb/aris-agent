@@ -72,7 +72,12 @@ describe('ngữ cảnh dự án', () => {
     expect(t).toContain('@minh (Minh, Nghiên cứu)')
     expect(t).not.toContain('gone')
     expect(t).toContain('hỏi người dùng trước khi giao')
-    expect(t).toContain('tối đa 3 vòng')
+    expect(t).not.toContain('moi_noi')
+    const main = renderProject(p, BOTS[0]!, BOTS, '/u/Projects/q4', [], true)
+    expect(main).toContain('Phòng nhóm')
+    expect(main).toContain('moi_noi')
+    expect(main).toContain('tối đa 3 vòng và 10 tin')
+    expect(main).toContain('dừng @tên')
   })
   it('bot thành viên chỉ nhận mục tiêu và đồng đội', () => {
     const t = renderProject(p, BOTS[1]!, BOTS)

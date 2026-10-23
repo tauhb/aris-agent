@@ -41,6 +41,40 @@ export const jobRecord = z.object({
 })
 export type JobRecord = z.infer<typeof jobRecord>
 
+/** Một tin trong phòng nhóm: bot nói, bỏ lượt, bị bỏ qua (không thuộc dự án, đang bận, bị dừng). */
+export const roomEntry = z.object({
+  bot: z.string(),
+  handle: z.string(),
+  name: z.string(),
+  role: z.string().optional(),
+  at: z.string(),
+  kind: z.enum(['say', 'pass', 'skip', 'stopped', 'error']),
+  /** Vì sao bot không nói (giao diện dịch theo mã này). */
+  reason: z.enum(['not-member', 'busy', 'no-messages', 'user-stopped', 'interrupted', 'timeout']).optional(),
+  text: z.string(),
+})
+export type RoomEntry = z.infer<typeof roomEntry>
+
+/**
+ * Một vòng của phòng nhóm (bước 3e): một lần Aris gọi `moi_noi` trong phiên chính của dự án, khoá
+ * theo mã lần gọi công cụ để khung chat vẽ đúng chỗ.
+ */
+export const roundRecord = z.object({
+  callId: z.string(),
+  session: z.string(),
+  round: z.number().int(),
+  maxRounds: z.number().int(),
+  /** Tin của các bot đã dùng trong lượt (tính cả vòng này), trên tối đa. */
+  used: z.number().int(),
+  maxMessages: z.number().int(),
+  status: z.enum(['running', 'done', 'stopped']),
+  /** Bot đang nói (tên gọi), khi vòng đang chạy. */
+  speaking: z.string().optional(),
+  entries: z.array(roomEntry),
+  createdAt: z.string(),
+})
+export type RoundRecord = z.infer<typeof roundRecord>
+
 export const commanderDomain = defineDomain({
   name: 'aris_commander',
   version: 1,
@@ -48,6 +82,7 @@ export const commanderDomain = defineDomain({
   tables: {
     dispatch: domainTable<string, DispatchRecord>(dispatchRecord),
     jobs: domainTable<string, JobRecord>(jobRecord),
+    rounds: domainTable<string, RoundRecord>(roundRecord),
   },
 })
 

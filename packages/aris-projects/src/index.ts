@@ -158,6 +158,7 @@ export async function apply(ctx: Context): Promise<void> {
             b.store.list(),
             found.path,
             cards.list(found.project.workspace),
+            found.project.mainSession === id,
           )
         },
         interpolate: false,

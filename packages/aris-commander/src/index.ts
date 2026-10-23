@@ -5,6 +5,7 @@
  *   cho trang 2.5 (`/api/aris/commander`).
  * - Luật đội: bot thường không tự lập đội (chặn `spawn_teammate` ở phiên của bot thường).
  * - Hướng dẫn giao việc: ngữ cảnh động chỉ nạp ở phiên của Commander.
+ * - Việc lớn của phòng ban (`giao_phong`) và phòng nhóm của dự án (`moi_noi`).
  * @module @aris/commander
  */
 import { randomUUID } from 'node:crypto'
@@ -18,7 +19,13 @@ import { appendPluginRecord } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-storage-domain'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { commanderDomain, type DispatchRecord, type JobRecord, type Table } from './domain.js'
+import {
+  commanderDomain,
+  type DispatchRecord,
+  type JobRecord,
+  type RoundRecord,
+  type Table,
+} from './domain.js'
 import { findDepartment, jobBrief, jobContext, jobReport, textOf, type MemberLike } from './jobs.js'
 import {
   dispatch,
@@ -31,8 +38,19 @@ import {
   type TeamPort,
 } from './dispatch.js'
 
+import {
+  cannotOpen,
+  roundReport,
+  RoomState,
+  runRound,
+  type RoomBot,
+  type RoomRules,
+  type Spoken,
+} from './room.js'
+
 export * from './dispatch.js'
 export * from './jobs.js'
+export * from './room.js'
 
 export const name = 'aris-commander'
 export const inject = ['tools', 'systemPrompt', 'storageDomain']
@@ -98,6 +116,15 @@ interface SessionQueryPort {
     o: { projectionMode: 'none' },
   ): Promise<{ events: readonly unknown[]; [Symbol.dispose](): void }>
 }
+
+/** Phần dự án Commander đọc: dự án của phiên, thành viên, luật. */
+interface ProjectsPort {
+  ofSession(
+    sessionId: string,
+  ): { project: { name: string; members: string[]; mainSession?: string; rules: RoomRules } } | undefined
+}
+
+type RoomTeam = TeamPort<AgentLike> & { interrupt(agent: AgentLike, name: string): unknown }
 
 /** Phần Team dùng để đánh dấu xong thẻ của bot. */
 interface CardTeam {
@@ -537,6 +564,182 @@ export async function apply(ctx: Context): Promise<void> {
     departmentName: departmentName(j.department),
     progress: await progressOf(j),
   })
+  // Phòng nhóm của dự án (bước 3e): lượt nói của bot đọc từ sự kiện phiên của bot.
+  const rounds = domain.table('rounds') as unknown as Table<RoundRecord>
+  const rooms = new Map<string, RoomState>()
+  const roomOf = (sid: string) => {
+    let r = rooms.get(sid)
+    if (!r) rooms.set(sid, (r = new RoomState()))
+    return r
+  }
+  const mainProject = (sid: string | undefined) => {
+    const found = sid ? (ctx.get('arisProjects') as ProjectsPort | undefined)?.ofSession(sid) : undefined
+    return found && found.project.mainSession === sid ? found.project : undefined
+  }
+  const said = new Map<string, string>()
+  const ended = new Map<string, Spoken & { at: number }>()
+  const waiters = new Map<string, (s: Spoken) => void>()
+  const waitTurn = (sid: string, since: number, signal: AbortSignal) =>
+    new Promise<Spoken>((resolve, reject) => {
+      const done = ended.get(sid)
+      if (done && done.at >= since) return resolve(done)
+      const onAbort = () => {
+        waiters.delete(sid)
+        reject(signal.reason as Error)
+      }
+      if (signal.aborted) return onAbort()
+      signal.addEventListener('abort', onAbort, { once: true })
+      waiters.set(sid, (s) => {
+        signal.removeEventListener('abort', onAbort)
+        resolve(s)
+      })
+    })
+  const interruptSpeaker = (sid: string, room: RoomState) => {
+    const agent = (ctx.get('agents') as { get(id: string): unknown } | undefined)?.get(sid) as
+      AgentLike | undefined
+    const t = ctx.get('agentTeams') as unknown as RoomTeam | undefined
+    if (!agent || !t || !room.speaking) return
+    try {
+      t.interrupt(agent, room.speaking)
+    } catch (e) {
+      logger.warn('dừng bot %s trong phòng: %s', room.speaking, String(e))
+    }
+  }
+  const stopRoom = (sid: string) => {
+    const room = roomOf(sid)
+    interruptSpeaker(sid, room)
+    room.close()
+  }
+  ctx.on('session/event', (session, event) => {
+    const sid = session.id
+    const type = event.type as string
+    if (type === 'turn/start') said.delete(sid)
+    else if (type === 'assistant/message') {
+      const text = textOf((event.data as unknown as { message?: unknown }).message)
+      if (text.trim()) said.set(sid, text)
+    } else if (type === 'turn/end') {
+      const kind = (event.data as unknown as { reason?: { kind?: string } }).reason?.kind
+      const spoken: Spoken = {
+        kind: kind === 'completed' ? 'completed' : kind === 'error' ? 'error' : 'interrupted',
+        text: said.get(sid) ?? '',
+      }
+      ended.set(sid, { ...spoken, at: Date.now() })
+      if (ended.size > 500) ended.delete(ended.keys().next().value!)
+      waiters.get(sid)?.(spoken)
+      waiters.delete(sid)
+    } else if (type === 'user/message') {
+      // Người dùng nhắn vào phòng: "dừng @tên", "dừng phòng" áp ngay; tin mới mở lượt đếm mới.
+      // Chỉ tin người dùng gõ; dsh cũng ghi ngữ cảnh chạy, giờ, nhắc trí nhớ thành tin vai người dùng.
+      if ((event.data as unknown as { source?: { kind?: string } }).source?.kind !== 'user') return
+      const project = mainProject(sid)
+      const text = textOf(event.data)
+      if (!project || !text.trim()) return
+      const room = roomOf(sid)
+      const c = room.userSaid(text, project.rules)
+      if (room.speaking && project.rules.stopCommand && c.stop.includes(room.speaking))
+        interruptSpeaker(sid, room)
+      if (c.stopAll) stopRoom(sid)
+    }
+  })
+  // Vòng đang chạy lúc aris tắt thì không chạy tiếp được: ghi là đã dừng.
+  ctx.effect(() => {
+    for (const [id, r] of rounds.entries())
+      if (r.status === 'running')
+        void rounds
+          .put(id, { ...r, status: 'stopped', speaking: undefined } as RoundRecord)
+          .catch((e: unknown) => logger.warn('khép vòng %s: %s', id, String(e)))
+    return () => {}
+  }, 'aris-commander: khép vòng dở')
+
+  ctx.tools.register(
+    defineTool({
+      name: 'moi_noi',
+      description:
+        'Chỉ Aris trong phiên chính của dự án: mở một vòng bàn trong phòng nhóm. Các bot được mời nói lần lượt, nghe được nhau; công cụ đợi hết vòng rồi trả lại các tin. Luật dự án giới hạn số vòng và số tin cho mỗi tin của người dùng.',
+      parameters: {
+        bot: {
+          type: 'array',
+          items: { type: 'string' },
+          description:
+            'Tên gọi bot được mời nói vòng này, theo thứ tự nói. Bỏ trống là mọi thành viên dự án (@all).',
+        },
+        loi_moi: {
+          type: 'string',
+          required: true,
+          description:
+            'Lời của bạn với phòng ở vòng này: cần bàn gì, mỗi người góp gì. Vòng sau: điểm cần bàn tiếp, ai cần trả lời ai.',
+        },
+      },
+      output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+      async execute(args, exec) {
+        const agent = exec.agent as unknown as AgentLike | undefined
+        const sid = agent?.session.id
+        if (!agent || !sid || !isCommander(sid)) return 'Chỉ Aris (Commander) điều phối phòng nhóm.'
+        const project = mainProject(sid)
+        if (!project)
+          return 'Phòng nhóm chỉ có trong phiên chính của một dự án. Ở đây thì giao việc bằng giao_viec.'
+        const b = bots()
+        const members: RoomBot[] = project.members.flatMap((id) => {
+          const x = b.store.get(id)
+          return x && x.kind === 'member' ? [{ id: x.id, handle: x.handle, name: x.name, role: x.role }] : []
+        })
+        if (!members.length) return 'Dự án chưa có bot thành viên; thêm bot vào dự án trước.'
+        const room = roomOf(sid)
+        const no = cannotOpen(room, project.rules)
+        if (no) return no
+        try {
+          const record = await runRound(
+            {
+              team: team() as unknown as RoomTeam,
+              agent,
+              waitTurn,
+              busy: (id) => b.live.of(id).status === 'working',
+              save: (r) => rounds.put(r.callId, { ...r, entries: [...r.entries] }),
+            },
+            room,
+            {
+              callId: String(exec.callId),
+              session: sid,
+              project: project.name,
+              rules: project.rules,
+              members,
+              invite: ((args.bot ?? []) as string[]).filter((h) => !/^@?all$/i.test(h.trim())),
+              prompt: String(args.loi_moi ?? ''),
+              signal: exec.signal ?? new AbortController().signal,
+            },
+          )
+          return roundReport(record, room, project.rules)
+        } catch (e) {
+          if (e instanceof DispatchError) return `Không mở được vòng: ${e.message}`
+          throw e
+        }
+      },
+    }),
+  )
+
+  /** Trạng thái phòng của một phiên cho thanh phòng trên ô nhập. */
+  const roomView = (sid: string) => {
+    const project = mainProject(sid)
+    if (!project) return { project: false }
+    const room = rooms.get(sid)
+    const latest = [...rounds.entries()]
+      .map(([, r]) => r)
+      .filter((r) => r.session === sid)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
+    const speaking = room?.speaking ? bots().store.byHandle(room.speaking) : undefined
+    return {
+      project: true,
+      running: latest?.status === 'running',
+      round: room?.round ?? 0,
+      maxRounds: project.rules.maxRounds,
+      used: room?.used ?? 0,
+      maxMessages: project.rules.maxMessages,
+      closed: room?.closed ?? false,
+      stopped: [...(room?.stopped ?? [])],
+      ...(speaking ? { speaking: { handle: speaking.handle, name: speaking.name, id: speaking.id } } : {}),
+    }
+  }
+
   ctx.provide('arisJobs', {
     list: allJobs,
     forWorkspace: (workspace: string) => allJobs().filter((j) => j.workspace === workspace),
@@ -547,9 +750,29 @@ export async function apply(ctx: Context): Promise<void> {
     ctx.effect(() => {
       const dispose = ctx.connection.fetch.register({
         path: '/api/aris/commander',
-        methods: ['GET'],
+        methods: ['GET', 'POST'],
         requestBody: 'buffered',
         fetch: async (request) => {
+          const json = (v: unknown, status = 200) =>
+            new Response(JSON.stringify(v), {
+              status,
+              headers: { 'content-type': 'application/json; charset=utf-8' },
+            })
+          const q = new URL(request.url).searchParams
+          if (request.method === 'POST') {
+            const body = (await request.json().catch(() => ({}))) as { op?: string; session?: string }
+            if (body.op === 'room-stop' && body.session) {
+              stopRoom(body.session)
+              return json({ ok: true, room: roomView(body.session) })
+            }
+            return json({ error: 'Thao tác không hợp lệ.' }, 400)
+          }
+          // ?round=<mã lần gọi>: một vòng của phòng nhóm (khung chat vẽ tin của bot).
+          const round = q.get('round')
+          if (round) return json({ round: rounds.get(round) ?? null })
+          // ?room=<phiên>: trạng thái phòng của phiên (thanh phòng trên ô nhập).
+          const roomSession = q.get('room')
+          if (roomSession) return json(roomView(roomSession))
           // ?jobs=1: việc lớn của các phòng (trang Phòng ban), mới trước.
           if (new URL(request.url).searchParams.get('jobs')) {
             const list = allJobs()

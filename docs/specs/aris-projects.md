@@ -9,7 +9,7 @@ Quyết định 11: dự án là nơi vài bot cùng làm một việc lớn, c�
 | `workspace` | Mã workspace của dsh (khoá bản ghi) |
 | `name`, `goal` | Tên (đổi tên thì đổi cả tên workspace), mục tiêu (không bắt buộc) |
 | `members` | Mã nội bộ của bot thường; Aris không nằm trong danh sách vì luôn chủ trì |
-| `rules` | `maxRounds` (1–10, mặc định 3), `maxMessages` (1–30, mặc định 10), `stopCommand`, `arisSummarizes`; chat chung dùng ở bước 3e |
+| `rules` | `maxRounds` (1–10, mặc định 3), `maxMessages` (1–30, mặc định 10), `stopCommand`, `arisSummarizes`; phòng nhóm dùng (bước 3e, xem [aris-commander.md](aris-commander.md#phòng-nhóm-của-dự-án-moi_noi-bước-3e)) |
 | `mainSession` | Phiên chính, Aris làm trưởng nhóm, ghim đầu dự án |
 
 ## Một dự án, một Team
@@ -18,7 +18,7 @@ Team của dsh gắn với một phiên trưởng nhóm (mã Team = mã phiên).
 
 ## Ngữ cảnh `aris:project`
 
-Mọi phiên trong một dự án có hồ sơ nạp `<aris-project>` (sau tính cách, trước hướng dẫn giao việc): tên, thư mục, mục tiêu, thành viên (`@tên gọi`, vai). Aris nhận thêm cách làm trong dự án: giao việc cho thành viên trước, cần bot ngoài dự án thì hỏi người dùng hoặc đề nghị thêm vào dự án; luật trò chuyện. Bot thành viên nhận mục tiêu và đồng đội.
+Mọi phiên trong một dự án có hồ sơ nạp `<aris-project>` (sau tính cách, trước hướng dẫn giao việc): tên, thư mục, mục tiêu, thành viên (`@tên gọi`, vai). Aris nhận thêm cách làm trong dự án: giao việc cho thành viên trước, cần bot ngoài dự án thì hỏi người dùng hoặc đề nghị thêm vào dự án. Riêng phiên chính (phòng nhóm): khi nào mở cuộc bàn bằng `moi_noi`, cách điều phối, luật số vòng và số tin, hỏi người dùng bằng `ask_user_question` trước khi chốt, lệnh dừng. Bot thành viên nhận mục tiêu và đồng đội.
 
 ## Đường máy chủ
 

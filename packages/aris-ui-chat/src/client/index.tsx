@@ -5,6 +5,7 @@
 import { mountKitCss, registerPersonal } from '@aris/ui-kit/react'
 import { DispatchBranches, HeroMark, ModelLabel, SubagentBranch, TriggerButtons } from './Chat.js'
 import { EN, NS, VI } from './locale.js'
+import { RoomDock, RoomRound } from './Room.js'
 import { CSS } from './styles.js'
 
 interface SessionInput {
@@ -109,6 +110,32 @@ export function apply(ctx: ClientContext): void {
         }),
       },
       DispatchBranches,
+    ),
+  )
+
+  // Phòng nhóm của dự án (`moi_noi` của @aris/commander): tin của các bot trong một vòng.
+  ctx.slots.inject('tool.call.toolview', () =>
+    ctx.slots.register({ name: 'tool.call.toolview', key: 'moi_noi', priority: -1, locale: NS }, RoomRound),
+  )
+
+  // Thanh phòng trên ô nhập ở phiên chính của dự án: vòng, số tin, Dừng phòng.
+  ctx.slots.inject('conversation.input.dock', () =>
+    ctx.slots.register(
+      {
+        name: 'conversation.input.dock',
+        id: 'aris-room',
+        order: 20,
+        locale: NS,
+        inject: (sessionId: string) => ({
+          sessionId,
+          insert: (text: string) => {
+            const input = inputOf(sessionId)
+            input?.focus()
+            input?.paste(text)
+          },
+        }),
+      },
+      RoomDock,
     ),
   )
 }

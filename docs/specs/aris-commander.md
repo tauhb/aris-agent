@@ -26,6 +26,20 @@ Chia một việc lớn thành tối đa 12 thẻ trên bảng việc của Team
 - Chốt xong, báo cáo được gửi vào phiên giao (xếp hàng), Commander đọc và trả lời người dùng.
 - `GET /api/aris/commander?jobs=1`: 30 việc lớn gần nhất kèm tiến độ (thẻ xong / tổng thẻ trên bảng việc của trưởng nhóm). Dịch vụ `arisJobs` (`list`, `forWorkspace`, `progressOf`) cho Kanban của dự án.
 
+## Phòng nhóm của dự án: `moi_noi` (chỉ Aris, phiên chính của dự án, bước 3e)
+
+Phiên chính của dự án là phòng chung (bản vẽ `Phong2.dc.html`); Aris điều phối.
+
+- **Mở cuộc bàn**: người dùng nhắn `@all`, gọi `@tên` một hay vài bot, hoặc bảo cả nhóm bàn. Aris gọi `moi_noi` với `bot` (tên gọi, theo thứ tự nói; bỏ trống là mọi thành viên dự án) và `loi_moi` (cần bàn gì ở vòng này). Mỗi lần gọi là **một vòng**; công cụ đợi hết vòng rồi trả các tin cho Aris.
+- **Bot nói lần lượt và nghe được nhau**: mỗi bot là một thành viên trong Team của phiên chính (lần đầu tạo, lần sau nhắn tiếp, nên bot nhớ cả cuộc bàn). Lời mời gửi bot chỉ chứa tin mới trong phòng từ lần trước bot nói (người dùng, Aris, đồng đội). Bot trả lời ngắn, có thể hỏi lại bằng `@tên`; không có ý mới thì trả lời `BỎ LƯỢT` (không tính tin). Câu trả lời cuối của lượt bot (đọc từ sự kiện phiên của bot) là tin trong phòng.
+- **Luật của dự án**: tối đa `maxRounds` vòng và `maxMessages` tin của các bot cho mỗi tin của người dùng. Hết vòng hoặc hết tin thì công cụ từ chối mở thêm và bảo Aris tổng hợp. Mỗi bot nói tối đa 4 phút.
+- **Bot không được mời nói**: không thuộc dự án, đang làm việc khác, đã bị bảo dừng, hết tin: ghi thành dòng ghi chú có lý do.
+- **Điều phối** (ngữ cảnh `aris:project` của phiên chính): vòng sau chỉ mời ai bị hỏi lại hoặc còn ý trái nhau; bàn xong thì Aris gộp ý (nếu `arisSummarizes`); cần người dùng chọn hướng thì hỏi bằng `ask_user_question`; việc sinh ra thì chia thẻ bằng `tao_the`.
+- **Lệnh dừng**: tin người dùng "dừng @tên" (khi `stopCommand` bật) bỏ bot đó khỏi các vòng sau tới khi được gọi lại, bot đang nói thì bị dừng; "dừng phòng" và nút **Dừng phòng** dừng cả cuộc bàn (bot đang nói bị dừng, công cụ trả về, Aris tóm tắt ngắn). Chỉ tin người dùng gõ (`source.kind = user`) mới tính; ngữ cảnh chạy dsh ghi vai người dùng thì bỏ qua.
+- **Lưu trữ**: bảng `rounds` của kho `aris_commander`, khoá theo mã lần gọi công cụ: vòng, số tin đã dùng, ai đang nói, các tin. Đếm vòng và tin của lượt chỉ trong bộ nhớ; vòng đang chạy lúc aris tắt được ghi là đã dừng.
+- **Đường máy chủ**: `GET /api/aris/commander?round=<mã lần gọi>` (một vòng), `GET ?room=<phiên>` (trạng thái phòng), `POST {op: 'room-stop', session}`.
+- **Giao diện** (`@aris/ui-chat`): mỗi lần gọi `moi_noi` vẽ thành các tin của bot (linh vật, tên · vai · giờ, chữ đậm, `@tên` nổi màu), ghi chú "bỏ lượt" hay lý do không nói, dấu "đang nghĩ" của bot đang nói. Thanh phòng trên ô nhập (chỉ phiên chính): "Vòng 2/3 · 6/10 tin", ai đang nói, bot đã dừng, nút Dừng phòng khi đang bàn hoặc Gửi cả phòng (chèn `@all`).
+
 ## Thẻ tự đánh dấu xong
 
 Khi một thành viên đội kết thúc lượt bình thường (`turn/end` hoàn tất), aris dùng chính agent của thành viên (chủ thẻ, có quyền) đánh dấu xong **thẻ đang làm cũ nhất** nó giữ. Lượt lỗi thì thẻ giữ nguyên. Giả định: mỗi lần giao là một lượt của bot; bot giữ nhiều thẻ thì lần lượt từng thẻ theo thứ tự giao.

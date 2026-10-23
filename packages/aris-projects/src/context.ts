@@ -12,12 +12,35 @@ export interface BotLike {
   role: string
 }
 
+/** Phòng nhóm trong phiên chính: khi nào mở cuộc bàn, điều phối thế nào, luật của dự án. */
+function roomGuide(p: ProjectRecord): string[] {
+  const r = p.rules
+  return [
+    'Phòng nhóm (phiên này là phòng chung của dự án, bạn điều phối):',
+    '- Người dùng nhắn @all, gọi @tên một hay vài bot, hoặc bảo cả nhóm bàn: mở cuộc bàn bằng moi_noi. Mỗi lần gọi là một vòng; các bot nói lần lượt và nghe được nhau. @all là mọi thành viên; @tên là đúng bot đó. Tin chỉ hỏi bạn (không @ ai, không bảo bàn) thì tự trả lời hoặc giao việc như thường.',
+    '- Vòng 1 mời những người được gọi, loi_moi nêu rõ cần bàn gì. Vòng sau chỉ mời ai bị hỏi lại bằng @tên hoặc còn ý trái nhau, loi_moi nêu điểm cần bàn tiếp. Không mời lại khi đã đủ ý.',
+    `- Luật: tối đa ${r.maxRounds} vòng và ${r.maxMessages} tin của các bot cho mỗi tin của người dùng; hết thì dừng mời.`,
+    r.arisSummarizes
+      ? '- Bàn xong: gộp ý thành kết luận ngắn, nói rõ ai đề xuất gì.'
+      : '- Bàn xong: không tổng hợp dài, chỉ nêu bước tiếp theo.',
+    '- Cần người dùng chọn hướng trước khi chốt: hỏi bằng ask_user_question kèm các lựa chọn, không tự quyết thay.',
+    '- Việc cần làm sinh ra từ cuộc bàn: chia thẻ bằng tao_the để lên Kanban của dự án; người dùng chưa chốt thì chưa giao.',
+    ...(r.stopCommand
+      ? [
+          '- Người dùng nhắn "dừng @tên": không mời bot đó nữa tới khi họ gọi lại; "dừng phòng": dừng bàn, tóm tắt ngắn.',
+        ]
+      : []),
+  ]
+}
+
 export function renderProject(
   p: ProjectRecord,
   me: BotLike,
   bots: readonly BotLike[],
   path?: string,
   drafts: readonly CardRecord[] = [],
+  /** Phiên chính của dự án: phòng nhóm, Aris điều phối cuộc bàn chung. */
+  main = false,
 ): string {
   const members = p.members.flatMap((id) => {
     const b = bots.find((x) => x.id === id)
@@ -36,9 +59,9 @@ export function renderProject(
       'Cách làm trong dự án:',
       '- Giao việc của dự án cho thành viên dự án trước. Cần bot ngoài dự án thì hỏi người dùng trước khi giao, hoặc đề nghị thêm bot đó vào dự án.',
       '- Mọi việc giao trong phiên chính của dự án là thẻ trên bảng việc chung của dự án; ghi tiêu đề thẻ ngắn, rõ.',
-      `- Luật trò chuyện: tối đa ${p.rules.maxRounds} vòng cho mỗi tin của người dùng, tối đa ${p.rules.maxMessages} tin của các bot mỗi lượt${p.rules.arisSummarizes ? '; Aris tổng hợp cuối mỗi vòng' : ''}.`,
       '- Việc lớn nhiều phần: chia thành thẻ bằng tao_the (ghi thẻ nào chờ thẻ nào) rồi giao từng thẻ bằng giao_viec với tham số the; thẻ chờ thẻ khác thì giao sau khi thẻ kia xong.',
     )
+    if (main) lines.push(...roomGuide(p))
     const pending = drafts.filter((c) => !c.taskId)
     if (pending.length) {
       const bot = (id?: string) => bots.find((b) => b.id === id)
