@@ -114,6 +114,27 @@ export function apply(ctx: Context): void {
     },
   }
 
+  // Trang Plugin: bật/tắt gói cần khởi động lại thì nút "Khởi động lại" gọi đây. Chạy dưới launchd
+  // (`ARIS_DAEMON=1`) thì thoát êm và launchd chạy lại; chạy tay thì báo người dùng tự chạy lại.
+  ctx.inject(['connection'], (ctx) => {
+    ctx.effect(() => {
+      const dispose = ctx.connection.fetch.register({
+        path: '/api/aris/restart',
+        methods: ['POST'],
+        requestBody: 'buffered',
+        fetch: async () => {
+          const managed = process.env.ARIS_DAEMON === '1'
+          if (managed) setTimeout(() => port.stop(), 300)
+          return new Response(JSON.stringify({ restarting: managed }), {
+            status: managed ? 202 : 409,
+            headers: { 'content-type': 'application/json; charset=utf-8' },
+          })
+        },
+      })
+      return () => void dispose()
+    }, 'aris-daemon: /api/aris/restart')
+  })
+
   const path = socketPath()
   ctx.effect(() => {
     let server: Awaited<ReturnType<typeof listen>> | undefined

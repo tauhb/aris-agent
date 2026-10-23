@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Plugin (bản mới)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FCEBE9}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b2{height:30px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:12.5px;white-space:nowrap}
+.bp{height:30px;padding:0 12px;border:0;border-radius:8px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:600;white-space:nowrap}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.sn{display:block;border-radius:8px;padding:7px 10px;font-size:13.5px;color:var(--ink);text-decoration:none}
+.r{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.tab{border:0;background:transparent;padding:10px 2px;margin-right:18px;font-size:13.5px;color:var(--muted);border-bottom:2px solid transparent}
+.chip{font-size:12px;border-radius:999px;padding:3px 10px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.inp{height:32px;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit;font-size:13px;padding:0 10px}
+.sw{width:36px;height:20px;border-radius:999px;border:0;padding:2px;display:inline-flex;flex:none}
+.knob{width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.tile{width:36px;height:36px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex:none}
+.grp{padding:10px 14px 6px;font-size:12px;font-weight:600;border-top:1px solid var(--line)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap; position: relative">
+  <dc-import name="Sidebar" active="settings" bot="none" hint-size="260px,900px"></dc-import>
+  <nav aria-label="Cài đặt" style="flex: 0 1 210px; min-width: 190px; border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px">
+    <div class="m" style="padding: 0 10px 8px; font-weight: 600; font-size: 12px">Cài đặt và vận hành</div>
+    <a class="sn" href="DieuKhien.dc.html">Bảng điều khiển</a>
+    <a class="sn" href="Provider.dc.html">Provider và model</a>
+    <a class="sn" href="Kenh.dc.html">Kênh và ghép đôi</a>
+    <a class="sn" href="MatTichHop.dc.html">Mặt tích hợp</a>
+    <a class="sn" href="BaoMat.dc.html">Ngân sách, duyệt, mạng</a>
+    <a class="sn" href="ThongKe.dc.html">Thống kê và nhật ký</a>
+    <a class="sn" href="Commander.dc.html">Commander</a>
+    <a class="sn" href="ManHinhBot.dc.html">Màn hình của bot</a>
+    <a class="sn" href="Plugin2.dc.html" aria-current="page" style="background: var(--hover); font-weight: 600">Plugin</a>
+    <div class="m" style="padding: 14px 10px 6px; font-weight: 600; font-size: 12px">Hệ thống</div>
+    <a class="sn" href="#">Mẫu bot</a>
+  </nav>
+  <main style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px 0">
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Plugin</span><span class="m" style="font-size: 12px">Gói mở rộng năng lực cho aris và các bot</span></div>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="margin-left: auto"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+    <div role="tablist" aria-label="Plugin" style="display: flex; padding: 4px 24px 0; border-bottom: 1px solid var(--line)">
+      <sc-for list="{{tabs}}" as="tb" hint-placeholder-count="3">
+        <button type="button" role="tab" class="tab" aria-selected="{{tb.on}}" onClick="{{tb.pick}}" style="{{tb.style}}">{{tb.label}}</button>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{showInstalled}}" hint-placeholder-val="{{ true }}">
+    <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 16px">
+      <sc-if value="{{needRestart}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; border: 1px solid var(--warn); background: var(--warnSoft); border-radius: 12px; padding: 10px 14px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="color: var(--warn)"><path d="M21 12a9 9 0 1 1-3-6.7"></path><path d="M21 4v5h-5"></path></svg>
+          <span style="flex: 1; min-width: 220px; font-size: 13.5px"><b>Cần khởi động lại aris</b> để áp dụng: {{restartNames}}. Mọi phiên dùng chung thay đổi này.</span>
+          <button type="button" class="bp" onClick="{{restart}}">Khởi động lại</button>
+          <button type="button" class="b2" onClick="{{later}}">Để sau</button>
+        </div>
+      </sc-if>
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+        <div class="card" style="flex: 1 1 460px; min-width: 0">
+          <div style="padding: 12px 14px; display: flex; align-items: center; gap: 8px"><b>Đã cài</b><span class="m" style="font-size: 12.5px">{{installedCount}} gói</span></div>
+          <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+            <div class="grp m">{{g.title}}</div>
+            <sc-for list="{{g.items}}" as="it" hint-placeholder-count="2">
+              <div class="r" style="border-top: 0">
+                <span class="tile" style="{{it.tileStyle}}" aria-hidden="true">{{it.letter}}</span>
+                <span style="flex: 1; min-width: 0">
+                  <b style="font-weight: 600">{{it.name}}</b> <span class="m" style="font-size: 12px">· {{it.source}}</span>
+                  <span style="display: block" class="m"><span style="font-size: 12.5px">{{it.desc}}</span></span>
+                  <sc-if value="{{it.hasUpdate}}" hint-placeholder-val="{{ false }}"><span style="display: inline-block; margin-top: 3px; font-size: 12px; font-weight: 600; color: var(--warn); background: var(--warnSoft); border-radius: 999px; padding: 0 9px">có bản mới {{it.update}}</span></sc-if>
+                </span>
+                <span class="m" style="font-size: 12px; white-space: nowrap">{{it.statusText}}</span>
+                <sc-if value="{{it.locked}}" hint-placeholder-val="{{ false }}">
+                  <span title="Bắt buộc: tắt là app hỏng" style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px" class="m"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>bắt buộc</span>
+                </sc-if>
+                <sc-if value="{{it.toggleable}}" hint-placeholder-val="{{ true }}">
+                  <button type="button" role="switch" class="sw" aria-checked="{{it.on}}" aria-label="{{it.switchLabel}}" onClick="{{it.toggle}}" style="{{it.swStyle}}"><span class="knob"></span></button>
+                </sc-if>
+                <sc-if value="{{it.removable}}" hint-placeholder-val="{{ false }}">
+                  <button type="button" class="b2" aria-label="Gỡ {{it.name}}">Gỡ</button>
+                </sc-if>
+              </div>
+            </sc-for>
+          </sc-for>
+        </div>
+        <div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+          <div class="card">
+            <div style="padding: 12px 14px"><b>Thêm từ tên gói</b></div>
+            <div class="r" style="flex-direction: column; align-items: stretch; gap: 8px">
+              <label class="m" for="pkg" style="font-size: 12.5px">Tên gói hoặc đường dẫn git</label>
+              <span style="display: flex; gap: 8px"><input id="pkg" class="inp" style="flex: 1; min-width: 0" value="github:acme/aris-plugin-hoa-don"><button type="button" class="b2">Kiểm tra</button></span>
+              <div style="border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13px; display: flex; flex-direction: column; gap: 4px">
+                <span><b>aris-plugin-hoa-don</b> <span class="m mono" style="font-size: 12px">0.3.2</span></span>
+                <span class="m" style="font-size: 12.5px">Nguồn: github.com · có khai gói tính năng · hợp phiên bản</span>
+                <span style="display: flex; justify-content: flex-end; margin-top: 4px"><button type="button" class="bp" onClick="{{openConfirm}}">Cài…</button></span>
+              </div>
+              <span class="m" style="font-size: 12.5px">Cài plugin là cho phép mã của nó chạy trên máy với quyền của tài khoản này. Chỉ cài từ nguồn tin được, và ghim phiên bản.</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="r" style="border-top: 0"><b style="flex: 1">Cập nhật</b><span style="font-size: 12px; font-weight: 600; color: var(--warn); background: var(--warnSoft); border-radius: 999px; padding: 1px 9px">1 bản mới</span><button type="button" class="b2">Cập nhật tất cả</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{showMarket}}" hint-placeholder-val="{{ false }}">
+    <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+        <span style="position: relative; flex: 1 1 260px; min-width: 0; display: flex">
+          <input class="inp" aria-label="Tìm trong chợ plugin" placeholder="Tìm trong chợ plugin" style="width: 100%; padding-left: 32px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="position: absolute; left: 10px; top: 9px; color: var(--muted)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        </span>
+        <label class="m" style="font-size: 12.5px; display: flex; align-items: center; gap: 6px">Sắp xếp <select class="inp" style="height: 30px"><option>Liên quan</option><option>Mới cập nhật</option><option>Tên A–Z</option></select></label>
+        <button type="button" class="b2" onClick="{{toggleSources}}">Nguồn chợ · 2</button>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <sc-for list="{{cats}}" as="c" hint-placeholder-count="6">
+          <button type="button" class="chip" aria-pressed="{{c.on}}" onClick="{{c.pick}}" style="{{c.style}}">{{c.label}}</button>
+        </sc-for>
+      </div>
+      <sc-if value="{{showSources}}" hint-placeholder-val="{{ false }}">
+        <div class="card">
+          <div style="padding: 12px 14px; display: flex; align-items: center; gap: 8px"><b style="flex: 1">Nguồn chợ</b><span class="m" style="font-size: 12.5px">Danh mục do bên thứ ba cung cấp; chỉ thêm nguồn tin được</span></div>
+          <div class="r"><span style="flex: 1; min-width: 0"><b style="font-weight: 600">Chính thức</b><span class="m mono" style="display: block; font-size: 12px">market.example/official/index.json</span></span><span class="m" style="font-size: 12.5px">đang dùng</span></div>
+          <div class="r"><span style="flex: 1; min-width: 0"><b style="font-weight: 600">Cộng đồng aris</b><span style="display: block" class="m mono">[ĐỊA CHỈ NGUỒN]</span></span><button type="button" class="b2">Bỏ</button></div>
+          <div class="r"><input class="inp" aria-label="Địa chỉ nguồn chợ mới" placeholder="https://…/index.json" style="flex: 1; min-width: 0"><button type="button" class="b2">Thêm nguồn</button></div>
+        </div>
+      </sc-if>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px">
+        <sc-for list="{{market}}" as="p" hint-placeholder-count="6">
+          <div class="card" style="padding: 14px; display: flex; flex-direction: column; gap: 10px">
+            <div style="display: flex; gap: 10px; align-items: flex-start">
+              <span class="tile" style="{{p.tileStyle}}" aria-hidden="true">{{p.letter}}</span>
+              <span style="flex: 1; min-width: 0"><b style="font-weight: 600">{{p.name}}</b><span style="display: block" class="m"><span class="mono" style="font-size: 11.5px">{{p.version}}</span> · <span style="font-size: 12px">{{p.cat}}</span></span></span>
+            </div>
+            <span class="m" style="font-size: 12.5px; flex: 1">{{p.desc}}</span>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <sc-if value="{{p.installed}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; font-weight: 600; color: var(--ok); background: var(--okSoft); border-radius: 999px; padding: 1px 9px">Đã cài</span></sc-if>
+              <sc-if value="{{p.incompatible}}" hint-placeholder-val="{{ false }}"><span class="m" style="font-size: 12px">Chưa hợp phiên bản đang chạy</span></sc-if>
+              <span style="flex: 1"></span>
+              <button type="button" class="b2">Xem</button>
+              <sc-if value="{{p.canInstall}}" hint-placeholder-val="{{ true }}"><button type="button" class="bp" onClick="{{p.install}}">Cài</button></sc-if>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{showDetail}}" hint-placeholder-val="{{ false }}">
+    <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+        <input class="inp" aria-label="Tìm trong 216 mục" placeholder="Tìm trong 216 mục" style="flex: 1 1 260px; min-width: 0">
+        <span class="m" style="font-size: 12.5px">Tắt từng mục lẻ có thể làm hỏng tính năng. Dành cho người rành; thường chỉ cần bật/tắt theo gói ở tab Đã cài.</span>
+      </div>
+      <div class="card" style="overflow-x: auto">
+        <div style="min-width: 640px">
+          <div class="r m" style="border-top: 0; font-size: 12px; font-weight: 600"><span style="width: 260px">Mục</span><span style="flex: 1">Gói</span><span style="width: 90px">Trạng thái</span><span style="width: 60px">Bật</span></div>
+          <sc-for list="{{entries}}" as="e" hint-placeholder-count="8">
+            <div class="r">
+              <span style="width: 260px; min-width: 0"><b style="font-weight: 600">{{e.title}}</b><span style="display: block" class="m mono"><span style="font-size: 11.5px">{{e.id}}</span></span></span>
+              <span class="m" style="flex: 1; font-size: 12.5px">{{e.bundle}}</span>
+              <span style="width: 90px; font-size: 12.5px; {{e.statusStyle}}">{{e.status}}</span>
+              <span style="width: 60px">
+                <sc-if value="{{e.locked}}" hint-placeholder-val="{{ false }}"><span class="m" title="{{e.lockWhy}}" style="font-size: 12px">khoá</span></sc-if>
+                <sc-if value="{{e.toggleable}}" hint-placeholder-val="{{ true }}"><button type="button" role="switch" class="sw" aria-checked="{{e.on}}" aria-label="Bật/tắt {{e.title}}" style="{{e.swStyle}}"><span class="knob"></span></button></sc-if>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{showConfirm}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(15,16,19,.45); display: flex; align-items: center; justify-content: center; padding: 24px">
+      <div role="dialog" aria-modal="true" aria-label="Cài plugin" class="card" style="width: 100%; max-width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,.3)">
+        <div style="padding: 16px 18px; display: flex; align-items: center; gap: 10px"><b style="flex: 1; font-size: 15px">Cài «{{confirmName}}»?</b><button type="button" class="ib" aria-label="Đóng" onClick="{{closeConfirm}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+        <sc-if value="{{installing}}" hint-placeholder-val="{{ false }}">
+          <div class="r" style="flex-direction: column; align-items: stretch; gap: 8px">
+            <span style="font-size: 13px"><b>Đang cài…</b> <span class="m">nguồn 1/2</span></span>
+            <span style="height: 6px; border-radius: 999px; background: var(--panel2); overflow: hidden"><span style="display: block; width: 62%; height: 100%; background: var(--accent)"></span></span>
+            <pre class="mono m" style="margin: 0; font-size: 11.5px; background: var(--panel2); border-radius: 8px; padding: 8px 10px; white-space: pre-wrap">Đang tải gói…
+Kiểm tra phiên bản: hợp
+Đang cài phụ thuộc…</pre>
+            <span style="display: flex; justify-content: flex-end"><button type="button" class="b2" onClick="{{closeConfirm}}">Huỷ cài</button></span>
+          </div>
+        </sc-if>
+        <sc-if value="{{notInstalling}}" hint-placeholder-val="{{ true }}">
+          <div class="r" style="flex-direction: column; align-items: stretch; gap: 6px; font-size: 13px">
+            <span><span class="m">Gói</span> <span class="mono">{{confirmPkg}}</span></span>
+            <span><span class="m">Phiên bản</span> <span class="mono">{{confirmVersion}}</span></span>
+            <span><span class="m">Nguồn</span> {{confirmSource}}</span>
+            <span style="margin-top: 6px; border-radius: 10px; background: var(--warnSoft); padding: 8px 10px">Plugin chạy trên máy này với quyền của tài khoản. Sau khi cài, nó có mặt ở mọi phiên.</span>
+          </div>
+          <div class="r" style="justify-content: flex-end"><button type="button" class="b2" onClick="{{closeConfirm}}">Huỷ</button><button type="button" class="bp" onClick="{{startInstall}}">Cài</button></div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"tab":{"editor":"enum","options":["installed","market","detail"],"default":"installed"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const tab = s.tab || this.props.tab || 'installed';
+    const on = Object.assign({ voice: true, teams: true, browser: false, search: true, github: true }, s.on || {});
+    const restart = s.restart || [];
+    const tile = (bg, fg) => 'background:' + bg + ';color:' + fg;
+    const sw = (v) => 'background:' + (v ? 'var(--accent)' : 'var(--line)') + ';justify-content:' + (v ? 'flex-end' : 'flex-start');
+    const item = (key, o) => {
+      const v = on[key];
+      return Object.assign({}, o, {
+        on: v ? 'true' : 'false',
+        statusText: v ? 'đang chạy' : 'tắt',
+        swStyle: sw(v),
+        switchLabel: (v ? 'Tắt ' : 'Bật ') + o.name,
+        toggle: () => {
+          const next = Object.assign({}, on, { [key]: !v });
+          const names = o.hot ? restart : restart.indexOf(o.name) >= 0 ? restart : restart.concat([o.name]);
+          this.setState({ on: next, restart: names });
+        },
+      });
+    };
+    const groups = [
+      { title: 'Lõi (bắt buộc)', items: [
+        { name: 'Lõi aris', source: 'aris', desc: 'Đội bot, Commander, ký ức, kênh, chạy ngầm', letter: 'A', tileStyle: tile('var(--accentSoft)', 'var(--accent)'), locked: true, toggleable: false, removable: false, statusText: 'đang chạy' },
+        { name: 'Giao diện aris', source: 'aris', desc: 'Thanh bên, khung chat, các trang, theme, tiếng Việt', letter: 'G', tileStyle: tile('var(--accentSoft)', 'var(--accent)'), locked: true, toggleable: false, removable: false, statusText: 'đang chạy' },
+      ] },
+      { title: 'Tính năng có sẵn', items: [
+        item('voice', { name: 'Chuyển giọng nói thành chữ', source: 'có sẵn', desc: 'Nút micro trong khung chat, ghi âm Telegram', letter: 'G', tileStyle: tile('var(--okSoft)', 'var(--ok)'), toggleable: true, hot: true }),
+        item('teams', { name: 'Làm việc theo đội', source: 'có sẵn', desc: 'Aris lập đội, giao việc, bảng việc chung', letter: 'Đ', tileStyle: tile('var(--okSoft)', 'var(--ok)'), toggleable: true }),
+        item('browser', { name: 'Trình duyệt tự động', source: 'có sẵn', desc: 'Bot mở web, bấm, điền biểu mẫu trong sandbox', letter: 'T', tileStyle: tile('var(--okSoft)', 'var(--ok)'), toggleable: true }),
+        item('search', { name: 'Tìm trong mọi phiên', source: 'có sẵn', desc: 'Chỉ mục toàn văn (⌘K), Aris tìm lại chuyện cũ', letter: 'T', tileStyle: tile('var(--okSoft)', 'var(--ok)'), toggleable: true, hot: true }),
+      ] },
+      { title: 'Tự thêm', items: [
+        item('github', { name: 'Kết nối GitHub (MCP)', source: 'từ chợ · 1.2.0', desc: 'Đọc issue, PR cho bot Kỹ thuật', letter: 'K', tileStyle: tile('var(--warnSoft)', 'var(--warn)'), toggleable: true, removable: true, hasUpdate: true, update: '1.3.0' }),
+      ] },
+    ];
+    const tabs = [['installed', 'Đã cài · 7'], ['market', 'Chợ plugin'], ['detail', 'Chi tiết kỹ thuật · 216']].map(([id, label]) => ({
+      label, on: tab === id ? 'true' : 'false', pick: () => this.setState({ tab: id }),
+      style: tab === id ? 'color:var(--ink);font-weight:600;border-bottom-color:var(--accent)' : '',
+    }));
+    const cat = s.cat || 'Tất cả';
+    const cats = ['Tất cả', 'Lịch và email', 'Ghi chú', 'Bán hàng', 'Mạng xã hội', 'Lập trình'].map((label) => ({
+      label, on: cat === label ? 'true' : 'false', pick: () => this.setState({ cat: label }),
+      style: cat === label ? 'background:var(--ink);color:var(--bg);border-color:var(--ink)' : '',
+    }));
+    const pick = (p) => () => this.setState({ confirm: p, installing: false });
+    const market = [
+      { name: 'Lịch Google', cat: 'Lịch và email', version: '0.4.1', desc: 'Bot đọc và xếp lịch, gửi lời mời họp sau khi được duyệt', letter: 'L', pkg: '@example/aris-google-calendar' },
+      { name: 'Gmail', cat: 'Lịch và email', version: '0.6.0', desc: 'Tóm tắt thư chưa đọc, soạn trả lời để duyệt', letter: 'G', pkg: '@example/aris-gmail' },
+      { name: 'Ghi chú Obsidian', cat: 'Ghi chú', version: '1.1.0', desc: 'Đọc và ghi kho ghi chú Markdown', letter: 'O', pkg: '@example/aris-obsidian' },
+      { name: 'Kết nối GitHub (MCP)', cat: 'Lập trình', version: '1.3.0', desc: 'Issue, PR, review cho bot Kỹ thuật', letter: 'K', installed: true, pkg: '@example/aris-github' },
+      { name: 'Facebook Page', cat: 'Mạng xã hội', version: '0.2.0', desc: 'Lên lịch bài, đọc bình luận để bot trả lời nháp', letter: 'F', pkg: '@example/aris-facebook-page' },
+      { name: 'CRM bán hàng', cat: 'Bán hàng', version: '0.9.0', desc: 'Đồng bộ lead, nhắc chăm khách', letter: 'C', incompatible: true, pkg: '@example/aris-crm' },
+    ].filter((p) => cat === 'Tất cả' || p.cat === cat).map((p) => Object.assign({}, p, {
+      tileStyle: tile('var(--panel2)', 'var(--ink)'),
+      canInstall: !p.installed && !p.incompatible,
+      install: pick({ name: p.name, pkg: p.pkg, version: p.version, source: 'Chợ · Chính thức' }),
+    }));
+    const st = (txt, c) => ({ status: txt, statusStyle: 'color:' + c });
+    const entries = [
+      Object.assign({ title: 'Đội bot', id: '@aris/bots', bundle: 'Lõi aris', locked: true, toggleable: false, lockWhy: 'Thuộc gói bắt buộc' }, st('đang chạy', 'var(--ok)')),
+      Object.assign({ title: 'Ký ức', id: '@aris/memory', bundle: 'Lõi aris', locked: true, toggleable: false, lockWhy: 'Thuộc gói bắt buộc' }, st('đang chạy', 'var(--ok)')),
+      Object.assign({ title: 'Nhận dạng giọng nói', id: 'speech-to-text', bundle: 'Chuyển giọng nói thành chữ', toggleable: true, on: 'true', swStyle: sw(true) }, st('đang chạy', 'var(--ok)')),
+      Object.assign({ title: 'Nút micro', id: 'ui-voice-input', bundle: 'Chuyển giọng nói thành chữ', toggleable: true, on: 'true', swStyle: sw(true) }, st('đang chạy', 'var(--ok)')),
+      Object.assign({ title: 'Bảng việc của đội', id: 'agent-team', bundle: 'Làm việc theo đội', toggleable: true, on: 'true', swStyle: sw(true) }, st('đang chạy', 'var(--ok)')),
+      Object.assign({ title: 'Trình duyệt', id: 'tool-browser', bundle: 'Trình duyệt tự động', toggleable: true, on: 'false', swStyle: sw(false) }, st('tắt', 'var(--muted)')),
+      Object.assign({ title: 'Công cụ của mẫu Sáng tạo', id: 'cordis/tool-plugin-manager', bundle: 'Mẫu bot · Sáng tạo', locked: true, toggleable: false, lockWhy: 'Mục của mẫu bot chỉ đọc' }, st('tắt', 'var(--muted)')),
+      Object.assign({ title: 'Đồng bộ tệp', id: 'sidebar-files', bundle: 'Giao diện có sẵn', toggleable: true, on: 'true', swStyle: sw(true) }, st('lỗi', 'var(--danger)')),
+    ];
+    const confirm = s.confirm;
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      tabs,
+      showInstalled: tab === 'installed', showMarket: tab === 'market', showDetail: tab === 'detail',
+      groups, installedCount: 7,
+      needRestart: restart.length > 0, restartNames: restart.join(', '),
+      restart: () => this.setState({ restart: [] }), later: () => this.setState({ restart: [] }),
+      cats, market, entries,
+      showSources: !!s.sources, toggleSources: () => this.setState({ sources: !s.sources }),
+      showConfirm: !!confirm,
+      confirmName: confirm ? confirm.name : '', confirmPkg: confirm ? confirm.pkg : '',
+      confirmVersion: confirm ? confirm.version : '', confirmSource: confirm ? confirm.source : '',
+      installing: !!s.installing, notInstalling: !s.installing,
+      openConfirm: () => this.setState({ confirm: { name: 'aris-plugin-hoa-don', pkg: 'github:acme/aris-plugin-hoa-don', version: '0.3.2', source: 'github.com' }, installing: false }),
+      closeConfirm: () => this.setState({ confirm: null, installing: false }),
+      startInstall: () => this.setState({ installing: true }),
+    };
+  }
+}
+</script>
+</body>
+</html>

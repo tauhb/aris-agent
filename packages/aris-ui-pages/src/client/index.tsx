@@ -12,8 +12,15 @@ import type {
   DiscoveredModel,
   ModelGroup,
   ModelSettings,
+  BundleInfo,
+  ChangeResult,
+  MarketIndexSummary,
+  MarketQuery,
+  MarketSearch,
+  PluginInfo,
   PluginSnapshot,
   PluginSource,
+  SpecInspection,
   Outcome,
   PageNav,
   PageProps,
@@ -108,6 +115,25 @@ interface Services {
     ): Promise<Remote<readonly DiscoveredModel[]>>
   }
   'remote.pluginInventory': { list(): Promise<Remote<PluginSnapshot>> }
+  'remote.pluginManager': {
+    listPlugins(): Promise<Remote<PluginInfo[]>>
+    listBundles(): Promise<Remote<BundleInfo[]>>
+    setBundleEnabled(name: string, enabled: boolean): Promise<Remote<ChangeResult>>
+    setPluginEnabled(id: string, enabled: boolean): Promise<Remote<ChangeResult>>
+    removeBundle(name: string): Promise<Remote<ChangeResult>>
+    inspect(spec: string): Promise<Remote<SpecInspection>>
+    installBundle(
+      spec: string,
+      options: { requestId: string; saveExact?: boolean; registry?: string },
+    ): Promise<Remote<ChangeResult>>
+    cancelInstall(requestId: string): Promise<Remote<{ status: string }>>
+  }
+  'remote.pluginMarket': {
+    listIndexes(): Promise<Remote<MarketIndexSummary[]>>
+    search(url: string, query: MarketQuery): Promise<Remote<MarketSearch>>
+    setIndexes(urls: string[]): Promise<Remote<unknown>>
+  }
+  remote: { $on(event: string, fn: (payload: never) => void): () => void }
   'remote.credentials': {
     describe(refs: readonly string[]): Promise<Remote<Readonly<Record<string, CredentialState>>>>
     set(ref: string, value: string): Promise<Remote<unknown>>
@@ -272,10 +298,54 @@ export function apply(ctx: ClientContext): void {
     error: err instanceof Error ? err.message : String(err),
   })
   // Plugin: danh sách thật của bản cài, vẽ bằng trang Plugin của aris (6.7).
+  const call = async <T,>(fn: () => Promise<Remote<T>>): Promise<Outcome<T>> => {
+    try {
+      return outcome(await fn())
+    } catch (err) {
+      return failed(err)
+    }
+  }
+  const manager = () => service('remote.pluginManager')
+  const marketService = () => ctx.get('remote.pluginMarket') as Services['remote.pluginMarket'] | undefined
   const plugins: PluginSource = {
-    async list() {
+    list: () => call(() => service('remote.pluginInventory').list()),
+    plugins: () => call(() => manager().listPlugins()),
+    bundles: () => call(() => manager().listBundles()),
+    setBundle: (name, enabled) => call(() => manager().setBundleEnabled(name, enabled)),
+    setPlugin: (id, enabled) => call(() => manager().setPluginEnabled(id, enabled)),
+    remove: (name) => call(() => manager().removeBundle(name)),
+    inspect: (spec) => call(() => manager().inspect(spec)),
+    install: (spec, requestId, registry) =>
+      call(() =>
+        manager().installBundle(spec, { requestId, saveExact: true, ...(registry ? { registry } : {}) }),
+      ),
+    cancel: (requestId) => call(() => manager().cancelInstall(requestId)),
+    on(event: 'log' | 'state' | 'changed', fn: (payload: never) => void) {
+      const remote = ctx.get('remote') as Services['remote'] | undefined
+      const name = {
+        log: 'plugin-manager/install-log',
+        state: 'plugin-manager/install-state',
+        changed: 'plugin-manager/changed',
+      }[event]
+      return remote ? remote.$on(name, fn) : () => {}
+    },
+    get market() {
+      const m = marketService()
+      if (!m) return undefined
+      return {
+        indexes: () => call(() => m.listIndexes()),
+        search: (url: string, query: MarketQuery) => call(() => m.search(url, query)),
+        setIndexes: (urls: readonly string[]) => call(() => m.setIndexes([...urls])),
+      }
+    },
+    async restart() {
       try {
-        return outcome(await service('remote.pluginInventory').list())
+        const res = await fetch(new URL('api/aris/restart', document.baseURI), {
+          method: 'POST',
+          credentials: 'same-origin',
+        })
+        const body = (await res.json().catch(() => ({}))) as { restarting?: boolean }
+        return { ok: true, value: { restarting: !!body.restarting } }
       } catch (err) {
         return failed(err)
       }

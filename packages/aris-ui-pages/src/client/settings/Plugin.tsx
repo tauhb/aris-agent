@@ -1,122 +1,160 @@
 /**
- * 6.7 · Plugin: mọi plugin của bản cài (của aris và có sẵn của dsh), đọc thật từ
- * `remote.pluginInventory` của dsh, kèm các mẫu bot dùng plugin nào. Gộp mục "Plugin có sẵn"
- * của dsh vào đây (mục đó ẩn khỏi nhóm Hệ thống). Bật/tắt và chợ plugin ở trang Plugins của dsh.
+ * 6.7 · Plugin (bản vẽ 6.7b): ba thẻ Đã cài · Chợ plugin · Chi tiết kỹ thuật, đọc và đổi thật qua
+ * `pluginManager`, `pluginMarket` của bản cài. Thay mục "Plugin có sẵn" (ẩn khỏi nhóm Hệ thống).
+ * Thay đổi cần khởi động lại thì gom vào một dải báo, bấm một lần là aris chạy lại.
  */
-import { Button, Card, CardRow, PageShell, Pill, SearchIcon, TextInput } from '@aris/ui-kit/react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { PageProps, PluginEntry, PluginSnapshot, PluginSource } from '../page.js'
-import { Col, Dot } from '../ui.js'
+import { Button, Card, CardRow, PageShell, Pill, Tabs } from '@aris/ui-kit/react'
+import { useCallback, useEffect, useState } from 'react'
+import type { BundleInfo, ChangeResult, Outcome, PageProps, PluginInfo, PluginSource } from '../page.js'
+import { Detail } from './plugins/Detail.js'
+import { InstallDialog, type InstallItem } from './plugins/InstallDialog.js'
+import { Installed, type Change, type Update } from './plugins/Installed.js'
+import { entryView, hostOf, MarketTab } from './plugins/Market.js'
+import { MARKET_BUNDLE, marketCard, outcomeOf, stateOf } from './plugins/model.js'
 
 /** Mã mục "Plugin có sẵn" của dsh trong `settings.section`: trang này thay nó. */
 export const DSH_PLUGINS_SECTION = 'plugins'
 
 type T = PageProps['t']
-type Status = 'active' | 'failed' | 'off' | 'loading'
+type Tab = 'installed' | 'market' | 'detail'
+type Notice = { tone: 'ok' | 'warn' | 'danger'; text: string }
 
-const statusOf = (p: Pick<PluginEntry, 'enabled' | 'fiberPhase'>): Status =>
-  !p.enabled
-    ? 'off'
-    : p.fiberPhase === 'failed'
-      ? 'failed'
-      : p.fiberPhase === 'active' || p.fiberPhase === null
-        ? 'active'
-        : 'loading'
-
-const DOT: Record<Status, string> = {
-  active: 'var(--a-ok)',
-  failed: 'var(--a-danger)',
-  off: 'var(--a-muted)',
-  loading: 'var(--a-warn)',
-}
-
-/** Tên ngắn khi plugin không khai tên hiển thị: bỏ phạm vi gói và tiền tố `dsh-`. */
-export const shortName = (moduleName: string) =>
-  moduleName
-    .replace(/^@[^/]+\//, '')
-    .replace(/^dsh-/, '')
-    .replace(/\/.*$/, '')
-
-const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').toLowerCase()
-
-function text(p: PluginEntry, source: PluginSource) {
-  const title = p.meta?.title ? source.resolveText(p.meta.title) : shortName(p.moduleName)
-  const description = p.meta?.description ? source.resolveText(p.meta.description) : undefined
-  return { title, description }
-}
-
-/** Plugin của aris đứng trước, rồi plugin có sẵn của dsh; mỗi nhóm theo tên. */
-export function groupPlugins(entries: readonly PluginEntry[]) {
-  const aris = entries.filter((e) => e.moduleName.startsWith('@aris/'))
-  const builtIn = entries.filter((e) => !e.moduleName.startsWith('@aris/'))
-  return { aris, builtIn }
-}
-
-function useInventory(source: PluginSource | undefined) {
-  const [data, setData] = useState<PluginSnapshot | null>(null)
+function useData(src: PluginSource) {
+  const [bundles, setBundles] = useState<readonly BundleInfo[] | null>(null)
+  const [entries, setEntries] = useState<readonly PluginInfo[] | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const load = useCallback(() => {
-    if (!source) return
-    setError(null)
-    void source.list().then((r) => (r.ok ? setData(r.value) : setError(r.error)))
-  }, [source])
-  useEffect(load, [load])
-  return { data, error, reload: load }
+  const reload = useCallback(() => {
+    void src.bundles().then((r) => (r.ok ? (setBundles(r.value), setError(null)) : setError(r.error)))
+    void src.plugins().then((r) => r.ok && setEntries(r.value))
+  }, [src])
+  useEffect(() => {
+    reload()
+    return src.on('changed', reload)
+  }, [src, reload])
+  return { bundles, entries, error, reload }
 }
 
-function Row({ t, p, source }: { t: T; p: PluginEntry; source: PluginSource }) {
-  const st = statusOf(p)
-  const { title, description } = text(p, source)
+/** Bản mới của các gói đã cài, tìm trên mọi nguồn chợ. */
+function useUpdates(src: PluginSource, bundles: readonly BundleInfo[] | null) {
+  const [updates, setUpdates] = useState<Update[]>([])
+  useEffect(() => {
+    const market = src.market
+    if (!market || !bundles) return
+    let live = true
+    void market.indexes().then(async (r) => {
+      if (!r.ok) return
+      const found: Update[] = []
+      for (const ix of r.value.filter((x) => !x.error)) {
+        const s = await market.search(ix.url, { sort: { kind: 'index' }, offset: 0, limit: 500 })
+        if (!s.ok) continue
+        for (const e of s.value.entries) {
+          const card = marketCard(e)
+          if (!card.update || !card.version || !bundles.some((b) => b.name === e.name)) continue
+          if (found.some((u) => u.bundle === e.name)) continue
+          found.push({
+            bundle: e.name,
+            title: entryView(e, src.resolveText).title,
+            spec: card.version.install.spec,
+            version: card.version.version,
+            source: hostOf(ix.url),
+            registry: card.version.install.registry,
+          })
+        }
+      }
+      if (live) setUpdates(found)
+    })
+    return () => {
+      live = false
+    }
+  }, [src, bundles])
+  return updates
+}
+
+function RestartBanner({
+  t,
+  src,
+  names,
+  onLater,
+  onNotice,
+}: {
+  t: T
+  src: PluginSource
+  names: readonly string[]
+  onLater: () => void
+  onNotice: (n: Notice) => void
+}) {
+  const [restarting, setRestarting] = useState(false)
+  const restart = async () => {
+    setRestarting(true)
+    const r = await src.restart()
+    if (r.ok && r.value.restarting) {
+      // aris chạy ngầm tự lên lại; chờ một lúc rồi nạp lại trang.
+      setTimeout(() => window.location.reload(), 5000)
+      return
+    }
+    setRestarting(false)
+    onNotice({
+      tone: 'warn',
+      text: r.ok ? t('pl.restart.manual') : t('pl.result.failed', { error: r.error }),
+    })
+  }
   return (
-    <CardRow>
-      <Dot color={DOT[st]} size={8} />
+    <div className="ap-pl-banner" role="status">
       <span className="grow" style={{ minWidth: 0 }}>
-        <b>{title}</b>{' '}
-        <span className="a-muted a-mono" style={{ fontSize: 11.5 }}>
-          {p.moduleName}
-        </span>
-        {description && (
-          <div className="a-muted" style={{ fontSize: 12.5 }}>
-            {description}
-          </div>
-        )}
-        {p.meta?.error && (
-          <div style={{ fontSize: 12, color: 'var(--a-danger)' }}>
-            {t('pl.metaError', { error: p.meta.error })}
-          </div>
-        )}
+        {restarting ? t('pl.restart.doing') : t('pl.restart.need', { names: names.join(', ') })}
       </span>
-      <span
-        className={st === 'active' ? undefined : 'a-muted'}
-        style={{ fontSize: 12.5, whiteSpace: 'nowrap' }}
-      >
-        {t(`pl.status.${st}`)}
-      </span>
-    </CardRow>
+      <Button size="sm" variant="primary" disabled={restarting} onClick={() => void restart()}>
+        {t('pl.restart.now')}
+      </Button>
+      <Button size="sm" variant="ghost" disabled={restarting} onClick={onLater}>
+        {t('pl.restart.later')}
+      </Button>
+    </div>
   )
 }
 
-export function Plugin({ t, nav, plugins }: PageProps) {
-  const { data, error, reload } = useInventory(plugins)
-  const [query, setQuery] = useState('')
-  const q = fold(query.trim())
-  const match = useMemo(
-    () => (p: PluginEntry) => {
-      if (!q || !plugins) return true
-      const { title, description } = text(p, plugins)
-      return fold(`${title} ${description ?? ''} ${p.moduleName}`).includes(q)
-    },
-    [q, plugins],
-  )
-  if (!plugins)
-    return (
-      <PageShell title={t('sec.plugin')}>
-        <div className="a-muted">{t('pl.unavailable')}</div>
-      </PageShell>
-    )
-  const groups = data ? groupPlugins(data.entries.filter(match)) : null
-  const total = data?.entries.length ?? 0
-  const failedCount = data?.entries.filter((e) => statusOf(e) === 'failed').length ?? 0
+function PluginPage({ t, src }: { t: T; src: PluginSource }) {
+  const { bundles, entries, error, reload } = useData(src)
+  const updates = useUpdates(src, bundles)
+  const [tab, setTab] = useState<Tab>('installed')
+  const [restart, setRestart] = useState<string[]>([])
+  const [notice, setNotice] = useState<Notice | null>(null)
+  const [busy, setBusy] = useState<ReadonlySet<string>>(new Set())
+  const [installing, setInstalling] = useState<InstallItem[] | null>(null)
+
+  const needRestart = (label: string) => setRestart((xs) => (xs.includes(label) ? xs : [...xs, label]))
+
+  const settle = (label: string, r: Outcome<ChangeResult>) => {
+    if (!r.ok) return setNotice({ tone: 'danger', text: t('pl.result.failed', { error: r.error }) })
+    const o = outcomeOf(r.value)
+    if (o.kind === 'restart') needRestart(label)
+    else if (o.kind === 'failed')
+      setNotice({ tone: 'danger', text: t('pl.result.failed', { error: o.detail }) })
+    else if (o.kind === 'overridden') setNotice({ tone: 'warn', text: t('pl.result.overridden') })
+    else setNotice(null)
+  }
+
+  const change: Change = async (label, p, key) => {
+    setBusy((s) => new Set(s).add(key))
+    const r = await p
+    setBusy((s) => {
+      const n = new Set(s)
+      n.delete(key)
+      return n
+    })
+    settle(label, r)
+    reload()
+  }
+
+  const market = src.market
+  const marketBundle = bundles?.find((b) => b.name === MARKET_BUNDLE)
+  const failedCount = bundles?.filter((b) => stateOf(b) === 'failed').length ?? 0
+  const tabs: { value: Tab; label: string }[] = [
+    { value: 'installed', label: t('pl.tab.installed', { n: bundles?.length ?? 0 }) },
+    ...(market ? [{ value: 'market' as const, label: t('pl.tab.market') }] : []),
+    { value: 'detail', label: t('pl.tab.detail', { n: entries?.length ?? 0 }) },
+  ]
+
   return (
     <PageShell
       title={t('sec.plugin')}
@@ -125,117 +163,98 @@ export function Plugin({ t, nav, plugins }: PageProps) {
         failedCount > 0 ? <Pill tone="danger">{t('pl.failedCount', { n: failedCount })}</Pill> : undefined
       }
     >
-      <div className="ap-cols">
-        <Col grow={1.3} basis={460}>
-          <label className="a-field">
-            <span style={{ position: 'relative', display: 'flex' }}>
-              <TextInput
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t('pl.search', { n: total })}
-                aria-label={t('pl.search', { n: total })}
-                style={{ paddingLeft: 32, width: '100%' }}
-              />
-              <span
-                className="a-muted"
-                style={{ position: 'absolute', left: 10, top: 8, pointerEvents: 'none' }}
-              >
-                <SearchIcon size={15} />
+      <Tabs label={t('sec.plugin')} tabs={tabs} value={tab} onChange={setTab} />
+      {restart.length > 0 && (
+        <RestartBanner t={t} src={src} names={restart} onLater={() => setRestart([])} onNotice={setNotice} />
+      )}
+      {notice && (
+        <div
+          role="alert"
+          className="ap-pl-banner"
+          style={{
+            borderColor: `var(--a-${notice.tone})`,
+            background: `var(--a-${notice.tone}Soft)`,
+          }}
+        >
+          <span className="grow">{notice.text}</span>
+          <Button size="sm" variant="ghost" onClick={() => setNotice(null)}>
+            {t('pl.close')}
+          </Button>
+        </div>
+      )}
+      {error && (
+        <div
+          className="ap-pl-banner"
+          style={{ borderColor: 'var(--a-danger)', background: 'var(--a-dangerSoft)' }}
+        >
+          <span className="grow">{t('pl.loadError', { error })}</span>
+          <Button size="sm" onClick={reload}>
+            {t('pl.retry')}
+          </Button>
+        </div>
+      )}
+      {!bundles && !error && <div className="a-muted">{t('pl.loading')}</div>}
+      {tab === 'installed' && bundles && (
+        <Installed
+          t={t}
+          src={src}
+          bundles={bundles}
+          busy={busy}
+          updates={updates}
+          change={change}
+          onInstall={setInstalling}
+        />
+      )}
+      {tab === 'market' && marketBundle && !marketBundle.enabled && (
+        <Card title={t('pl.mk.offTitle')}>
+          <CardRow
+            label={
+              <span className="a-muted" style={{ fontSize: 13 }}>
+                {t('pl.mk.offHint')}
               </span>
-            </span>
-          </label>
-          {error && (
-            <Card>
-              <CardRow
-                label={<span style={{ color: 'var(--a-danger)' }}>{t('pl.loadError', { error })}</span>}
-              >
-                <Button size="sm" onClick={reload}>
-                  {t('pl.retry')}
-                </Button>
-              </CardRow>
-            </Card>
-          )}
-          {!data && !error && <div className="a-muted">{t('pl.loading')}</div>}
-          {groups && (
-            <>
-              <Card
-                title={
-                  <>
-                    {t('pl.aris')}{' '}
-                    <span className="a-muted" style={{ fontWeight: 400 }}>
-                      {t('pl.count', { n: groups.aris.length })}
-                    </span>
-                  </>
-                }
-              >
-                {groups.aris.map((p) => (
-                  <Row key={p.entryId} t={t} p={p} source={plugins} />
-                ))}
-                {groups.aris.length === 0 && (
-                  <CardRow label={<span className="a-muted">{t('pl.none')}</span>} />
-                )}
-              </Card>
-              <Card
-                title={
-                  <>
-                    {t('pl.builtIn')}{' '}
-                    <span className="a-muted" style={{ fontWeight: 400 }}>
-                      {t('pl.count', { n: groups.builtIn.length })}
-                    </span>
-                  </>
-                }
-                subtitle={t('pl.builtInHint')}
-              >
-                {groups.builtIn.map((p) => (
-                  <Row key={p.entryId} t={t} p={p} source={plugins} />
-                ))}
-                {groups.builtIn.length === 0 && (
-                  <CardRow label={<span className="a-muted">{t('pl.none')}</span>} />
-                )}
-              </Card>
-            </>
-          )}
-        </Col>
-        <Col basis={340}>
-          <Card title={t('pl.manage')}>
-            <CardRow>
-              <span className="grow" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <span className="a-muted" style={{ fontSize: 12.5 }}>
-                  {t('pl.manageHint')}
-                </span>
-                <span className="a-muted" style={{ fontSize: 12.5 }}>
-                  {t('pl.warn')}
-                </span>
-              </span>
-            </CardRow>
-            <CardRow label={<span className="a-muted">{t('pl.market')}</span>}>
-              <Button size="sm" onClick={() => nav.openPanel('plugins')}>
-                {t('pl.openMarket')}
-              </Button>
-            </CardRow>
-          </Card>
-          {data?.agentPresets && data.agentPresets.length > 0 && (
-            <Card title={t('pl.presets')} subtitle={t('pl.presetsHint')}>
-              {data.agentPresets.map((g) => (
-                <CardRow
-                  key={g.id}
-                  label={
-                    <span>
-                      <b>{g.name ?? g.id}</b>{' '}
-                      {g.isDefault && <span className="a-muted">· {t('pl.presetDefault')}</span>}
-                      {g.broken && <div style={{ fontSize: 12, color: 'var(--a-danger)' }}>{g.broken}</div>}
-                    </span>
-                  }
-                >
-                  <span className="a-muted" style={{ fontSize: 12.5 }}>
-                    {t('pl.count', { n: g.rows.filter((r) => r.enabled !== false).length })}
-                  </span>
-                </CardRow>
-              ))}
-            </Card>
-          )}
-        </Col>
-      </div>
+            }
+          >
+            <Button
+              size="sm"
+              variant="primary"
+              disabled={busy.has(MARKET_BUNDLE)}
+              onClick={() =>
+                void change(t('pl.b.plugin-market'), src.setBundle(MARKET_BUNDLE, true), MARKET_BUNDLE)
+              }
+            >
+              {t('pl.mk.turnOn')}
+            </Button>
+          </CardRow>
+        </Card>
+      )}
+      {tab === 'market' && market && marketBundle?.enabled !== false && (
+        <MarketTab t={t} src={src} market={market} onInstall={setInstalling} />
+      )}
+      {tab === 'detail' && bundles && entries && (
+        <Detail t={t} src={src} entries={entries} bundles={bundles} busy={busy} change={change} />
+      )}
+      {installing && (
+        <InstallDialog
+          t={t}
+          src={src}
+          items={installing}
+          onClose={() => {
+            setInstalling(null)
+            reload()
+          }}
+          onResult={(item, r) => settle(item.title, { ok: true, value: r })}
+        />
+      )}
     </PageShell>
   )
+}
+
+export function Plugin({ t, plugins }: PageProps) {
+  if (!plugins)
+    return (
+      <PageShell title={t('sec.plugin')}>
+        <div className="a-muted">{t('pl.unavailable')}</div>
+      </PageShell>
+    )
+  return <PluginPage t={t} src={plugins} />
 }

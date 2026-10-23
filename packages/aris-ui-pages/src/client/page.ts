@@ -56,8 +56,141 @@ export interface PluginSnapshot {
   readonly agentPresets?: readonly PluginPreset[]
 }
 
+/** Một gói tính năng của bản cài (`pluginManager.listBundles`). */
+export interface BundleInfo {
+  name: string
+  official: boolean
+  availability: 'installation' | 'profile' | 'missing'
+  installTarget?: { spec: string; version: string }
+  version?: string
+  meta?: { title?: LocalizedText; description?: LocalizedText; error?: string }
+  description?: string
+  enabled: boolean
+  installed: boolean
+  source?: string
+  optional: boolean
+  removable: boolean
+  readOnlyReason?: string
+  error?: ManagementError
+  rows: { rowId: string; moduleName: string; meta?: PluginEntry['meta']; entryId?: string }[]
+}
+
+export interface ManagementError {
+  code: string
+  diagnostic?: string
+}
+
+/** Một mục lẻ và quyền bật/tắt của nó (`pluginManager.listPlugins`). */
+export type PluginInfo = PluginEntry & { patchId?: string; readOnlyReason?: string }
+
+/** Kết quả một thay đổi: áp dụng ngay, cần khởi động lại, hay lỗi. */
+export interface ChangeResult {
+  changed: boolean
+  application: 'applied' | 'restart-required' | 'overridden' | 'failed' | 'cancelled'
+  restartReason?: string
+  target: string
+  enabled?: boolean
+  error?: ManagementError
+  bundle?: string
+  version?: string
+  packageResult?: { output: string; kind?: string }
+}
+
+/** Đọc trước một gói sắp cài. */
+export type SpecInspection =
+  | {
+      status: 'accepted'
+      kind: 'registry' | 'path' | 'git' | 'tarball'
+      name?: string
+      version?: string
+      description?: string
+      bundle: boolean | null
+      host?: string
+    }
+  | { status: 'refused'; problem: string; reason: string }
+
+export interface InstallLogChunk {
+  requestId?: string
+  text: string
+  exitCode?: number | null
+}
+
+export interface InstallProgress {
+  requestId: string
+  phase: 'installing' | 'cancelling' | 'applying'
+  attempt?: { index: number; total: number }
+}
+
+/** Chợ plugin (`pluginMarket`). */
+export interface MarketIndexSummary {
+  url: string
+  title?: LocalizedText
+  description?: LocalizedText
+  error?: string
+}
+
+export interface MarketEntry {
+  name: string
+  title?: LocalizedText
+  description?: LocalizedText
+  icon?: string
+  author?: string
+  metadata: { category?: string; labels: readonly string[]; keywords: readonly string[] }
+  versions: readonly {
+    version: string
+    install: { spec: string; registry?: string }
+    compatibility: { compatible: boolean }
+  }[]
+  defaultVersion?: string
+  installation: {
+    status: 'not-installed' | 'installed' | 'update-available' | 'different-version' | 'provided'
+    installedVersion?: string
+  }
+}
+
+export interface MarketSearch {
+  url: string
+  title: LocalizedText
+  metadata: { categories: Readonly<Record<string, { title: LocalizedText }>> }
+  entries: readonly MarketEntry[]
+  total: number
+  nextOffset: number | null
+}
+
+export interface MarketQuery {
+  text?: string
+  category?: string
+  sort: { kind: 'relevance' | 'index' | 'published'; direction?: 'asc' | 'desc' }
+  offset: number
+  limit: number
+}
+
 export interface PluginSource {
+  /** Mọi mục lẻ và mẫu bot (chỉ đọc). */
   list(): Promise<Outcome<PluginSnapshot>>
+  /** Mục lẻ kèm quyền bật/tắt. */
+  plugins(): Promise<Outcome<readonly PluginInfo[]>>
+  bundles(): Promise<Outcome<readonly BundleInfo[]>>
+  setBundle(name: string, enabled: boolean): Promise<Outcome<ChangeResult>>
+  setPlugin(entryId: string, enabled: boolean): Promise<Outcome<ChangeResult>>
+  remove(name: string): Promise<Outcome<ChangeResult>>
+  inspect(spec: string): Promise<Outcome<SpecInspection>>
+  install(spec: string, requestId: string, registry?: string): Promise<Outcome<ChangeResult>>
+  cancel(requestId: string): Promise<Outcome<{ status: string }>>
+  /** Nhật ký cài, pha cài, thay đổi của bản cài; trả hàm huỷ theo dõi. */
+  on(event: 'log', fn: (c: InstallLogChunk) => void): () => void
+  on(event: 'state', fn: (p: InstallProgress) => void): () => void
+  on(event: 'changed', fn: () => void): () => void
+  /** Chợ plugin; không có khi bản cài không bật dịch vụ chợ. */
+  readonly market:
+    | {
+        indexes(): Promise<Outcome<readonly MarketIndexSummary[]>>
+        search(url: string, query: MarketQuery): Promise<Outcome<MarketSearch>>
+        setIndexes(urls: readonly string[]): Promise<Outcome<unknown>>
+      }
+    | undefined
+  /** Khởi động lại aris (chạy ngầm); chạy tay thì không được. */
+  restart(): Promise<Outcome<{ restarting: boolean }>>
   resolveText(text: LocalizedText): string
 }
 
