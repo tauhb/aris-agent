@@ -11,6 +11,17 @@ describe('highlight', () => {
     ])
   })
 
+  it('gõ không dấu vẫn tô được chữ có dấu', () => {
+    expect(highlight('Trang bán khoá học AI', 'khoa hoc')).toEqual([
+      ['Trang bán ', 'khoá', ''],
+      [' ', 'học', ' AI'],
+    ])
+    expect(highlight('Đà Nẵng', 'da nang')).toEqual([
+      ['', 'Đà', ''],
+      [' ', 'Nẵng', ''],
+    ])
+  })
+
   it('không khớp thì giữ nguyên đoạn trích', () => {
     expect(highlight('không có gì', 'xyz')).toEqual([['không có gì', '', '']])
     expect(highlight('a (b)', '(b')).toEqual([['a ', '(b', ')']])

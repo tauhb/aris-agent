@@ -57,22 +57,42 @@ export function useRecallSearch(query: string): RecallState {
   return state
 }
 
-/** Tách đoạn trích quanh chỗ khớp để tô sáng (không phân biệt hoa thường). */
+/** Bỏ dấu một ký tự ("á" → "a", "đ" → "d"), giữ nguyên độ dài để tra ngược vị trí. */
+const foldChar = (c: string) => {
+  const f = c
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .toLowerCase()
+  return f.length === 1 ? f : c.toLowerCase().slice(0, 1) || c
+}
+
+/** Tách đoạn trích quanh chỗ khớp để tô sáng (không phân biệt hoa thường và dấu). */
 export function highlight(snippet: string, query: string): [string, string, string][] {
+  const chars = [...snippet]
+  const folded = chars.map(foldChar).join('')
   const words = query
     .trim()
     .split(/\s+/)
     .filter((w) => w.length > 1)
-    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .map((w) =>
+      [...w]
+        .map(foldChar)
+        .join('')
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+    )
   if (!words.length) return [[snippet, '', '']]
-  const re = new RegExp(`(${words.join('|')})`, 'giu')
+  const re = new RegExp(`(${words.join('|')})`, 'gu')
   const parts: [string, string, string][] = []
   let last = 0
-  for (const m of snippet.matchAll(re)) {
-    parts.push([snippet.slice(last, m.index), m[0], ''])
-    last = m.index + m[0].length
+  for (const m of folded.matchAll(re)) {
+    // `folded` dài đúng bằng số ký tự của đoạn trích nên vị trí dùng chung được.
+    const start = [...folded.slice(0, m.index)].length
+    const end = start + [...m[0]].length
+    parts.push([chars.slice(last, start).join(''), chars.slice(start, end).join(''), ''])
+    last = end
   }
   if (!parts.length) return [[snippet, '', '']]
-  parts[parts.length - 1]![2] = snippet.slice(last)
+  parts[parts.length - 1]![2] = chars.slice(last).join('')
   return parts
 }

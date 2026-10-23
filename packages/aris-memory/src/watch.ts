@@ -154,7 +154,8 @@ export function watchConversation(
         provider: event.data.provider,
         model: event.data.model,
         messages: [{ role: 'user', content: [{ type: 'text', text: reflectPrompt(text, existing) }] }],
-        maxTokens: 1500,
+        // Model có suy luận tính cả phần suy nghĩ vào trần: trần thấp thì không còn chữ nào.
+        maxTokens: 6000,
         sessionId: session.id,
         purpose: 'compaction',
       }))

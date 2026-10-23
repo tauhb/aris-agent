@@ -19,11 +19,19 @@ const bot = (seq: number, text: string) => ({
   data: { message: { content: [{ type: 'text', text }] } },
 })
 const tool = (seq: number) => ({ type: 'tool/result', seq, time: T + seq, data: {} })
+const injected = (seq: number, text: string) => ({
+  type: 'user/message',
+  seq,
+  time: T + seq,
+  data: { source: { kind: 'context' }, content: [{ type: 'text', text }] },
+})
 
 const LOGS: Record<string, unknown[]> = {
   a: [user(1, 'Mình chốt giá gói Pro là 490k nhé'), bot(2, 'Đã ghi: gói Pro 490k/tháng.'), tool(3)],
   b: [user(1, 'Lịch họp với Lâm thứ Sáu'), bot(2, 'Đã xếp 15:00 thứ Sáu.')],
   now: [user(1, 'giá gói Pro là bao nhiêu?')],
+  c: [injected(1, 'Chỉ dẫn nội bộ: dùng DeepSeek cho đội'), user(2, 'Hôm nay dùng DeepSeek thử nhé')],
+  d: [injected(1, 'Chỉ dẫn nội bộ có chữ DeepSeek')],
 }
 
 function fakeEngine() {
@@ -41,9 +49,18 @@ function fakeEngine() {
         })),
       }
     },
-    async readEvent(req: { sessionId: string; seq: number; before?: number; after?: number }) {
+    async searchEvents(req: { sessionId: string; query: string }) {
       const events = LOGS[req.sessionId]! as { seq: number; time: number }[]
-      return { target: events.find((e) => e.seq === req.seq)!, events, startSeq: 1, endSeq: events.length }
+      return {
+        items: events.filter((e) => JSON.stringify(e).toLowerCase().includes(req.query.toLowerCase())),
+      }
+    },
+    async readEvent(req: { sessionId: string; seq: number; before?: number; after?: number }) {
+      const all = LOGS[req.sessionId]! as { seq: number; time: number }[]
+      const events = all.filter(
+        (e) => e.seq >= req.seq - (req.before ?? 0) && e.seq <= req.seq + (req.after ?? 0),
+      )
+      return { target: all.find((e) => e.seq === req.seq)!, events, startSeq: 1, endSeq: all.length }
     },
     async readTitleSnapshots(ids: string[]) {
       return ids.map((id) =>
@@ -67,12 +84,19 @@ describe('aris-recall', () => {
     const hits = await searchHits(engine, { query: 'gói Pro', exclude: 'now', days: 7 }, T + 86_400_000)
     expect(hits.map((h) => h.sessionId)).toEqual(['a'])
     expect(hits[0]).toMatchObject({ title: 'Giá gói Pro', seq: 1 })
-    expect(calls[0]!.limit).toBe(6)
+    expect(calls[0]!.limit).toBe(11)
     expect(calls[0]!.eventFilters).toEqual([
       { kind: 'type', values: ['user/message', 'assistant/message'] },
       { kind: 'surface', values: ['current', 'shadowed'] },
       { kind: 'time', from: T + 86_400_000 - 7 * 86_400_000 },
     ])
+  })
+
+  it('tin khớp là chỉ dẫn nội bộ thì lấy lời thật trong phiên, không có thì bỏ phiên', async () => {
+    const { engine } = fakeEngine()
+    const hits = await searchHits(engine, { query: 'DeepSeek' })
+    expect(hits.map((h) => [h.sessionId, h.seq])).toEqual([['c', 2]])
+    expect(hits[0]!.snippet).toBe('Hôm nay dùng DeepSeek thử nhé')
   })
 
   it('đoạn trích chỉ có lời, gắn nhãn S1; prompt yêu cầu dẫn nguồn', async () => {
@@ -106,6 +130,21 @@ describe('aris-recall', () => {
     expect(failed.summarized).toBe(false)
     expect(failed.text).toContain('Không tóm tắt được: 402')
     expect(failed.text).toContain('[S1#2] Bot: Đã ghi: gói Pro 490k/tháng.')
+  })
+
+  it('model suy luận hết trần token thì báo rõ lý do', async () => {
+    const { engine } = fakeEngine()
+    const sources = await findSources(engine, await searchHits(engine, { query: 'gói Pro', exclude: 'now' }))
+    const r = await summarize(
+      streamOf(
+        { type: 'reasoning-delta', index: 0, text: 'nghĩ…' },
+        { type: 'finish', reason: { kind: 'max-tokens' } },
+      ),
+      { provider: 'p', model: 'm' },
+      'giá?',
+      sources,
+    )
+    expect(r.text).toContain('model hết trần token khi đang suy luận')
   })
 
   it('open đọc nguyên văn quanh một tin', async () => {
