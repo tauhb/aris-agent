@@ -177,7 +177,7 @@ describe('trung tâm kênh', () => {
     const s = await setup()
     await pairOwner(s)
     expect(s.store.roleOf(OWNER)).toBe('owner')
-    expect(String(s.tg.sent().at(-1)!.text)).toContain('chủ nhân')
+    expect(String(s.tg.sent().at(-1)!.text)).toContain('người dùng chính')
     expect(s.store.bot('aris')?.home).toEqual({ chatId: OWNER })
 
     s.tg.push(dm(OWNER, 'Giá gói Pro là bao nhiêu?'))
@@ -237,7 +237,7 @@ describe('trung tâm kênh', () => {
     })
     await settle()
     expect(s.store.roleOf(STRANGER)).toBeUndefined()
-    expect(s.tg.sent('answerCallbackQuery').at(-1)).toMatchObject({ text: 'Chỉ chủ nhân bấm được.' })
+    expect(s.tg.sent('answerCallbackQuery').at(-1)).toMatchObject({ text: 'Chỉ người dùng chính bấm được.' })
   })
 
   it('nhóm lạ: báo chủ nhân; cho phép rồi thì @ bot mới vào phiên, kèm tên người nói', async () => {
@@ -269,7 +269,7 @@ describe('trung tâm kênh', () => {
     const pending = s.hub.approve('s1', { toolName: 'send_email', reason: 'Gửi thư tới mai@x.vn' })
     await settle()
     const card = s.tg.sent().at(-1)!
-    expect(String(card.text)).toContain('Cần anh duyệt')
+    expect(String(card.text)).toContain('Cần duyệt')
     const data = (card.reply_markup as { inline_keyboard: { callback_data: string }[][] })
       .inline_keyboard[0]![0]!.callback_data
     s.tg.push({ callback_query: { id: 'c4', from: { id: OWNER, is_bot: false, first_name: 'O' }, data } })

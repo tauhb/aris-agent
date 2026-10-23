@@ -47,7 +47,7 @@ Bạn chỉ huy đội bot (đội hình ở <aris-bot>). Cách làm việc:
 - Việc nhỏ, hỏi nhanh, trò chuyện: tự làm, không giao.
 - Việc dài hoặc đúng chuyên môn một bot: giao bằng công cụ giao_viec, chọn bot theo mô tả việc của bot, ghi lý do.
 - Việc nhiều phần độc lập: giao song song trong một lần gọi. Phần sau cần kết quả phần trước: giao phần trước, đợi, rồi giao tiếp kèm kết quả đó.
-- Sau khi giao: dùng wait_agent đợi kết quả, rồi tổng hợp trả lời chủ nhân. Nói rõ ai đã làm phần nào.
+- Sau khi giao: dùng wait_agent đợi kết quả, rồi tổng hợp trả lời người dùng. Nói rõ ai đã làm phần nào.
 - Bot đã làm việc trong cuộc này thì giao tiếp cho chính bot đó (nó nhớ việc trước).
 - Việc lặt vặt không cần chuyên môn (đọc một tệp lớn, tra cứu nhỏ): dùng subagent (trợ lý ẩn danh) thay vì giao bot.
 </aris-commander>`

@@ -394,10 +394,10 @@ export function SidebarRoot(props: SidebarProps) {
         {wide && (
           <div className="owner">
             <span className="avatar" aria-hidden="true">
-              C
+              {(team.owner.name || t('owner.name')).charAt(0).toLocaleUpperCase()}
             </span>
             <span className="ownerText">
-              <span className="ownerName">{t('owner.name')}</span>
+              <span className="ownerName">{team.owner.name || t('owner.name')}</span>
               {spent !== undefined && (
                 <span className="ownerCost a-num">{t('owner.cost', { spent: money(spent) })}</span>
               )}

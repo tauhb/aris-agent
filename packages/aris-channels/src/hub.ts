@@ -79,7 +79,7 @@ interface BotRuntime {
 
 interface Waiter<T> {
   resolve(v: T): void
-  /** Ai được bấm: chỉ chủ nhân, hoặc người hỏi. */
+  /** Ai được bấm: chỉ người dùng chính, hoặc người hỏi. */
   owner: boolean
   chatId: number
   messageId?: number
@@ -224,7 +224,7 @@ export class ChannelHub {
     await this.store.putBot(cur)
     await api
       .setMyCommands(
-        // Menu lệnh của Telegram: chỉ các lệnh ai cũng dùng được (lệnh chủ nhân vẫn gõ được).
+        // Menu lệnh của Telegram: chỉ các lệnh ai cũng dùng được (lệnh người dùng vẫn gõ được).
         [
           { command: 'new', description: 'Mở phiên mới' },
           { command: 'stop', description: 'Dừng việc đang làm' },
@@ -400,7 +400,10 @@ export class ChannelHub {
       await rt.api
         .sendMessage(o.userId, html, { html: true, buttons })
         .catch((e: unknown) =>
-          this.d.logger.warn('aris-channels: nhắn chủ nhân: %s', e instanceof Error ? e.message : String(e)),
+          this.d.logger.warn(
+            'aris-channels: nhắn người dùng: %s',
+            e instanceof Error ? e.message : String(e),
+          ),
         )
   }
 
@@ -498,7 +501,7 @@ export class ChannelHub {
       }
     }
     if (!body && !parts.length) return undefined
-    // Trong nhóm, bot cần biết ai đang nói; người không phải chủ nhân thì nhắc giới hạn quyền.
+    // Trong nhóm, bot cần biết ai đang nói; người không phải người dùng chính thì nhắc giới hạn quyền.
     const who =
       m.chat.type === 'private'
         ? ''
@@ -506,7 +509,7 @@ export class ChannelHub {
     const limit =
       trust === 'owner'
         ? ''
-        : '\n(Người này không phải chủ nhân: chỉ trả lời câu hỏi, không làm việc có tác động như gửi tin, sửa tệp, chạy lệnh.)'
+        : '\n(Người này không phải người dùng chính: chỉ trả lời câu hỏi, không làm việc có tác động như gửi tin, sửa tệp, chạy lệnh.)'
     if (body || who) parts.unshift({ type: 'text', text: `${who}${body || '(gửi tệp)'}${limit}` })
     return parts
   }
@@ -863,7 +866,7 @@ export class ChannelHub {
     const done = (text?: string) => api.answerCallback(q.id, text).catch(() => undefined)
     const [kind, a, b, c] = data.split(':')
     const ownerOnly = !['q'].includes(kind ?? '')
-    if (ownerOnly && !isOwner) return done('Chỉ chủ nhân bấm được.')
+    if (ownerOnly && !isOwner) return done('Chỉ người dùng chính bấm được.')
     const edit = (html: string, buttons?: InlineButton[][]) =>
       msg
         ? api
@@ -1167,14 +1170,14 @@ export class ChannelHub {
   // Bot chủ động nhắn
   // ======================================================================================
 
-  /** Gửi tới nơi nhận (`/sethome`) của bot; không có thì gửi chủ nhân. */
+  /** Gửi tới nơi nhận (`/sethome`) của bot; không có thì gửi người dùng. */
   async sendHome(bot: string, markdown: string): Promise<string> {
     const rt = this.runtimes.get(bot)
     if (!rt) return 'Bot chưa kết nối Telegram.'
     const home =
       this.store.bot(bot)?.home ??
       (this.store.owners()[0] ? { chatId: this.store.owners()[0]!.userId } : undefined)
-    if (!home) return 'Chưa có nơi nhận: chủ nhân chưa ghép đôi hoặc chưa /sethome.'
+    if (!home) return 'Chưa có nơi nhận: người dùng chưa ghép đôi hoặc chưa /sethome.'
     const rec: OutboxRecord = {
       id: `${keyNum(home.chatId)}-${this.now()}-${randomId()}`,
       bot,

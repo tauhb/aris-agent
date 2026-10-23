@@ -41,7 +41,15 @@ export interface CatalogGroup {
   models: { id: string; name: string }[]
 }
 
+/** Cách xưng hô với người dùng (hồ sơ do bot hỏi rồi lưu, hoặc sửa ở trang Hồ sơ). */
+export interface OwnerAddress {
+  name?: string
+  call?: string
+  self?: string
+}
+
 export interface TeamSnapshot {
+  owner?: OwnerAddress
   bots: BotData[]
   departments: DepartmentData[]
   templates: TemplateData[]
@@ -90,6 +98,8 @@ function set(next: TeamSnapshot) {
 
 /** Tải lại đội (sau khi sửa ở nơi khác hoặc định kỳ). */
 export function refreshTeam(): Promise<void> {
+  // Ngoài trình duyệt (kiểm thử): không có máy chủ để tải.
+  if (typeof document === 'undefined') return Promise.resolve()
   loading ??= fetch(endpoint(), { credentials: 'same-origin' })
     .then((r) => (r.ok ? (r.json() as Promise<TeamSnapshot>) : undefined))
     .then((d) => d && set(d))
@@ -110,6 +120,46 @@ export async function teamAction<R = TeamSnapshot>(body: Record<string, unknown>
   if (!res.ok) throw new Error(out.error ?? `HTTP ${res.status}`)
   if (out.bots) set(out as unknown as TeamSnapshot)
   return out
+}
+
+/** Cách gọi người dùng trong chữ giao diện: theo hồ sơ, chưa có thì trung tính ("bạn"). */
+export function youWord(o: OwnerAddress | undefined): string {
+  return o?.call?.trim() || 'bạn'
+}
+
+const cap = (w: string) => w.charAt(0).toLocaleUpperCase('vi') + w.slice(1)
+
+/** Điền `{you}` / `{You}` trong bộ chữ tiếng Việt bằng cách gọi người dùng. */
+export function personalize(dict: Readonly<Record<string, string>>, o: OwnerAddress | undefined) {
+  const you = youWord(o)
+  return Object.fromEntries(
+    Object.entries(dict).map(([k, v]) => [k, v.replaceAll('{you}', you).replaceAll('{You}', cap(you))]),
+  )
+}
+
+/**
+ * Đăng ký bộ chữ có `{you}`: điền theo hồ sơ xưng hô, đăng ký lại khi hồ sơ đổi. Không viết cứng
+ * "anh", "chị", "chủ nhân" trong chữ giao diện.
+ */
+export function registerPersonal(
+  locale: { register(ns: string, lang: string, dict: Record<string, string>): () => void },
+  ns: string,
+  lang: string,
+  dict: Readonly<Record<string, string>>,
+): () => void {
+  let you = youWord(snap?.owner)
+  let dispose = locale.register(ns, lang, personalize(dict, snap?.owner))
+  const off = subscribe(() => {
+    const next = youWord(snap?.owner)
+    if (next === you) return
+    you = next
+    dispose()
+    dispose = locale.register(ns, lang, personalize(dict, snap?.owner))
+  })
+  return () => {
+    off()
+    dispose()
+  }
 }
 
 /** Mở phiên chat với bot: phiên gần nhất, hoặc phiên mới khi `fresh`. Trả mã phiên. */
@@ -193,6 +243,8 @@ export interface TeamView {
   templates: TemplateData[]
   catalog: CatalogGroup[]
   roles: RolePreset[]
+  /** Cách xưng hô với người dùng. */
+  owner: OwnerAddress
 }
 
 /** Gom đội theo phòng ban, dạng các thành phần hiện có đang dùng. */
@@ -209,6 +261,7 @@ export function teamView(d: TeamSnapshot | null, noDepartment = '', l: TeamLive 
       templates: [],
       catalog: [],
       roles: [],
+      owner: {},
     }
   const cmd = d.bots.find((b) => b.kind === 'commander')
   const others = d.bots.filter((b) => b.kind !== 'commander')
@@ -232,6 +285,7 @@ export function teamView(d: TeamSnapshot | null, noDepartment = '', l: TeamLive 
     templates: d.templates,
     catalog: d.catalog ?? [],
     roles: d.roles ?? [],
+    owner: d.owner ?? {},
   }
 }
 

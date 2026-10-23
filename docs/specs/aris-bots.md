@@ -41,6 +41,18 @@ Phòng ban (bảng `departments`): `id`, `name`, `lead` (mã bot trưởng nhóm
 - **Ký ức**: `@aris/memory` lấy bot của phiên thay vì luôn là `aris`. Mỗi bot có hai cuốn lõi và lưu trữ riêng. Phiên chưa gắn dùng ký ức của Commander.
 - **Model**: chọn khi mở phiên (mục 1). Thành viên đội và việc được giao dùng model do Commander chọn (bước 2).
 
+## Xưng hô với người dùng
+
+Không viết cứng "anh", "chị", "chủ nhân" ở bất cứ đâu (lời nhắc cho model, chữ giao diện, tin Telegram):
+
+- **Hồ sơ xưng hô** (bảng `owner` của `aris_bots`): tên người dùng, bot gọi người dùng là gì, bot tự xưng là gì. Cả đội dùng chung.
+- **Lần đầu**: ngữ cảnh `aris:bot` báo chưa biết; bot vẫn làm việc được nhờ rồi hỏi ngắn một lần, nhận câu trả lời thì lưu bằng tool `xung_ho`. Người dùng không muốn trả lời thì thôi. Trước khi biết, dùng cách gọi trung tính hợp với ngôn ngữ người dùng đang viết.
+- **Biết rồi**: ngữ cảnh ghi rõ tên, cách gọi, cách xưng; mọi bot theo.
+- **Lời nhắc cho model** gọi là "người dùng" (vai "người dùng chính" khi cần phân biệt với người khác trên Telegram).
+- **Chữ giao diện tiếng Việt** (của aris và bản dịch chữ dsh) dùng `{you}` / `{You}`, điền lúc đăng ký chữ theo hồ sơ (`registerPersonal` trong `@aris/ui-kit/react`), chưa có thì "bạn"; đổi hồ sơ thì chữ đổi theo. Chân thanh bên hiện tên người dùng.
+- **Tin hệ thống trên Telegram** viết không cần đại từ.
+- Sửa tay ở trang Hồ sơ (2.3), mục "Đội gọi … thế nào".
+
 ## Đội mẫu
 
 Tệp `packages/aris-bots/templates/*.json`, mỗi tệp một đội: phòng ban và bot (trừ `id`, sinh khi áp). Đi kèm aris:

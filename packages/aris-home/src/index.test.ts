@@ -24,14 +24,15 @@ function registry(items: { id: string; path: string }[]) {
 }
 
 describe('aris-home', () => {
-  it('dùng workspace chat riêng đã đăng ký, không tạo thêm', async () => {
+  it('dùng workspace chat riêng đã đăng ký đúng đường, không dùng workspace mặc định cũ trong Documents', async () => {
     const { r, created } = registry([
       { id: 'proj', path: '/Users/a/code/aris' },
-      { id: 'home', path: '/Users/a/Documents/deepseek-harness/default-workspace/' },
+      { id: 'old', path: '/Users/a/Documents/deepseek-harness/default-workspace' },
+      { id: 'home', path: '/Users/a/aris/workspace/' },
     ])
-    expect(await ensureHome(r, '/không-dùng')).toEqual({
+    expect(await ensureHome(r, '/Users/a/aris/workspace')).toEqual({
       workspaceId: 'home',
-      path: '/Users/a/Documents/deepseek-harness/default-workspace/',
+      path: '/Users/a/aris/workspace/',
     })
     expect(created).toEqual([])
   })

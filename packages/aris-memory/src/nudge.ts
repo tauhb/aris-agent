@@ -1,5 +1,5 @@
 /**
- * Tự nhắc lưu: theo dõi một lượt chat (lời chủ nhân, số lần gọi công cụ, có ghi ký ức
+ * Tự nhắc lưu: theo dõi một lượt chat (lời người dùng, số lần gọi công cụ, có ghi ký ức
  * chưa). Lượt có dấu hiệu cần nhớ mà chưa ghi thì cài một lời nhắc cho lượt kế tiếp
  * (không tốn thêm lần gọi model, bot không phải nói thêm gì ở lượt này).
  */
@@ -7,7 +7,7 @@ import { fold } from './store.js'
 
 export interface TurnSignals {
   turn: number
-  /** Lời chủ nhân trong lượt. */
+  /** Lời người dùng trong lượt. */
   userText: string[]
   toolCalls: number
   /** Số lần tool `memory` ghi (save/update/forget) trong lượt. */
@@ -21,7 +21,7 @@ export const emptyTurn = (turn: number): TurnSignals => ({
   memoryWrites: 0,
 })
 
-/** Dấu hiệu chủ nhân muốn bot nhớ hoặc vừa sửa cách bot làm (so trên chữ đã bỏ dấu). */
+/** Dấu hiệu người dùng muốn bot nhớ hoặc vừa sửa cách bot làm (so trên chữ đã bỏ dấu). */
 export const CUE_RE =
   /\b(nho la|ghi nho|hay nho|nho giup|lan sau|tu gio|tu nay|dung bao gio|luon luon|sai roi|khong phai the|(anh|em|minh|toi|tao) (thich|muon|ghet|khong thich|hay|quen)|uu tien|remember|always|never|next time|from now on|i prefer)\b/
 
@@ -48,6 +48,6 @@ export function nudgeReason(
 }
 
 export const NUDGE_TEXT: Record<'cue' | 'long', string> = {
-  cue: 'Nhắc của trí nhớ: ở lượt trước chủ nhân có nói điều có thể cần nhớ lâu dài (sở thích, quy ước, việc sửa lại cách bạn làm) nhưng chưa được lưu. Nếu đúng là điều nên nhớ, lưu bằng tool memory trước khi trả lời tiếp; nếu không, bỏ qua nhắc này và đừng nhắc tới nó.',
+  cue: 'Nhắc của trí nhớ: ở lượt trước người dùng có nói điều có thể cần nhớ lâu dài (sở thích, quy ước, việc sửa lại cách bạn làm) nhưng chưa được lưu. Nếu đúng là điều nên nhớ, lưu bằng tool memory trước khi trả lời tiếp; nếu không, bỏ qua nhắc này và đừng nhắc tới nó.',
   long: 'Nhắc của trí nhớ: lượt trước là một việc dài. Nếu bạn rút ra được bài học hoặc quy ước dùng lại được (cách làm hiệu quả, chỗ dễ sai, nơi để tài liệu), lưu ngắn gọn bằng tool memory trước khi trả lời tiếp; nếu không, bỏ qua nhắc này và đừng nhắc tới nó.',
 }

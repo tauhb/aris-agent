@@ -19,16 +19,16 @@ export interface Candidate {
 
 /** Ghép đoạn hội thoại thành văn bản cho model đọc, cắt bớt khi quá dài (giữ phần cuối). */
 export function transcriptText(lines: readonly TranscriptLine[], maxChars = 24000): string {
-  const out = lines.map((l) => `${l.role === 'user' ? 'Chủ nhân' : 'Bot'}: ${l.text.trim()}`).join('\n\n')
+  const out = lines.map((l) => `${l.role === 'user' ? 'Người dùng' : 'Bot'}: ${l.text.trim()}`).join('\n\n')
   return out.length > maxChars ? `…${out.slice(out.length - maxChars)}` : out
 }
 
 export function reflectPrompt(transcript: string, existing: readonly string[]): string {
-  return `Bạn là bộ phận trí nhớ của trợ lý cá nhân. Đoạn hội thoại dưới đây sắp được tóm tắt để tiết kiệm ngữ cảnh. Hãy rút ra những điều đáng nhớ LÂU DÀI mà nếu mất sẽ đáng tiếc: sở thích, thói quen, quy ước làm việc của chủ nhân; người, dự án, sự kiện quan trọng; bài học về cách làm. Bỏ qua tiến độ tạm thời của việc đang làm, chuyện xã giao, và bí mật (mật khẩu, khoá, token).
+  return `Bạn là bộ phận trí nhớ của trợ lý cá nhân. Đoạn hội thoại dưới đây sắp được tóm tắt để tiết kiệm ngữ cảnh. Hãy rút ra những điều đáng nhớ LÂU DÀI mà nếu mất sẽ đáng tiếc: sở thích, thói quen, quy ước làm việc của người dùng; người, dự án, sự kiện quan trọng; bài học về cách làm. Bỏ qua tiến độ tạm thời của việc đang làm, chuyện xã giao, và bí mật (mật khẩu, khoá, token).
 
 Không lặp lại điều đã có trong danh sách ký ức hiện có.
 
-Trả về DUY NHẤT một mảng JSON, mỗi phần tử {"text": "một câu ngắn", "book": "owner" (về chủ nhân) hoặc "notes" (môi trường, quy ước, bài học), "kind": một trong ${KINDS.join(', ')}}. Không có gì đáng nhớ thì trả về [].
+Trả về DUY NHẤT một mảng JSON, mỗi phần tử {"text": "một câu ngắn", "book": "owner" (về người dùng) hoặc "notes" (môi trường, quy ước, bài học), "kind": một trong ${KINDS.join(', ')}}. Không có gì đáng nhớ thì trả về [].
 
 Ký ức hiện có:
 ${existing.length ? existing.map((t) => `- ${t}`).join('\n') : '(trống)'}

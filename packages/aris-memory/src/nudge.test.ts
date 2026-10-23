@@ -28,7 +28,7 @@ describe('lưu trước khi nén', () => {
       { seq: 1, role: 'user', text: 'xin chào' },
       { seq: 2, role: 'assistant', text: 'chào anh' },
     ])
-    expect(t).toBe('Chủ nhân: xin chào\n\nBot: chào anh')
+    expect(t).toBe('Người dùng: xin chào\n\nBot: chào anh')
     expect(transcriptText([{ seq: 1, role: 'user', text: 'x'.repeat(100) }], 20)).toHaveLength(21)
   })
   it('đọc mảng JSON trong câu trả lời, bỏ phần tử sai', () => {

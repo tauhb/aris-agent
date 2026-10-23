@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { EN, TEXTS, VI } from './locale.js'
 
-const vars = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort()
+// `{you}`/`{You}` là cách gọi người dùng, điền lúc đăng ký chữ (registerPersonal), không phải biến.
+const vars = (s: string) =>
+  [...s.matchAll(/\{(\w+)\}/g)]
+    .map((m) => m[1])
+    .filter((v) => v !== 'you' && v !== 'You')
+    .sort()
 
 describe('chữ các trang aris', () => {
   it('mỗi khu có đủ khoá ở hai ngôn ngữ, cùng biến {tên}', () => {

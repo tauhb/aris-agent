@@ -11,4 +11,9 @@ export function memTable<V>(): Table<V> {
   }
 }
 
-export const memTables = (): Tables => ({ bots: memTable(), departments: memTable(), sessions: memTable() })
+export const memTables = (): Tables => ({
+  bots: memTable(),
+  departments: memTable(),
+  sessions: memTable(),
+  owner: memTable(),
+})

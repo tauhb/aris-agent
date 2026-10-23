@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { handleApi } from './api.js'
-import { renderPersona } from './persona.js'
+import { renderAddress, renderPersona } from './persona.js'
 import { BotStore, COMMANDER_ID, suggestHandle } from './store.js'
 import { loadTemplates } from './templates.js'
 import { memTables } from './testing.js'
@@ -120,5 +120,28 @@ describe('/api/aris/bots', () => {
     const bad = await post({ op: 'create', bot: { handle: 'minh', name: 'X' } })
     expect(bad.status).toBe(400)
     expect(((await bad.json()) as { error: string }).error).toContain('@minh')
+  })
+})
+
+describe('xưng hô', () => {
+  it('chưa biết thì bảo bot hỏi một lần; biết rồi thì theo hồ sơ, không viết cứng anh/chị/chủ nhân', async () => {
+    const s = await store()
+    expect(renderAddress(s.owner()).join('\n')).toContain('hỏi ngắn một lần')
+    await s.setOwner({ name: 'Tầu', call: 'anh', self: 'em' })
+    expect(renderAddress(s.owner())).toEqual(['Người dùng: tên Tầu, gọi người dùng là «anh», tự xưng «em».'])
+    await s.setOwner({ call: '  ' })
+    expect(s.owner()).toEqual({ name: 'Tầu', self: 'em' })
+    const text = renderPersona(s.get(COMMANDER_ID)!, s.list(), s.departments(), s.owner())
+    expect(text).not.toMatch(/chủ nhân/i)
+    expect(text).toContain('hỏi ngắn một lần')
+  })
+
+  it('bot cũ có chữ "chủ nhân" viết cứng được đổi khi khởi động', async () => {
+    const t = memTables()
+    const old = new BotStore(t)
+    await old.ensureCommander()
+    const b = await old.create({ handle: 'tho', name: 'Thơ', soul: 'Bám giọng văn của chủ nhân.' })
+    await new BotStore(t).ensureCommander()
+    expect(t.bots.get(b.id)!.soul).toBe('Bám giọng văn của người dùng.')
   })
 })

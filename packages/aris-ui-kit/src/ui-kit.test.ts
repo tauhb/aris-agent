@@ -15,10 +15,10 @@ describe('tokens', () => {
 describe('trạng thái', () => {
   it('có đúng 5 trạng thái với nhãn khác nhau', () => {
     const labels = Object.values(STATUSES).map((s) => s.label)
-    expect(labels).toEqual(['Đang làm', 'Chờ anh', 'Xong', 'Vấp', 'Rảnh'])
+    expect(labels).toEqual(['Đang làm', 'Chờ duyệt', 'Xong', 'Vấp', 'Rảnh'])
   })
   it('glyph có nhãn cho trình đọc màn hình', () => {
-    expect(statusSvg('waiting')).toContain('aria-label="Chờ anh"')
+    expect(statusSvg('waiting')).toContain('aria-label="Chờ duyệt"')
   })
 })
 

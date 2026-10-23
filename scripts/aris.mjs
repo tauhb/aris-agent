@@ -18,8 +18,25 @@ const LOG = join(LOG_DIR, 'daemon.log')
 
 const xml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
+/**
+ * node chạy ngầm: `ARIS_NODE` nếu đặt; không thì node đang chạy lệnh này, trừ khi nó thuộc một
+ * bản cài agent khác (ví dụ `~/.hermes/node`, hay được trỏ tới từ `~/.local/bin/node`); khi đó
+ * lấy node của hệ thống (`/usr/local/bin`, Homebrew).
+ */
+export function pickNode(env = process.env, current = process.execPath, exists = existsSync) {
+  if (env.ARIS_NODE) return env.ARIS_NODE
+  if (!/[\\/]\.hermes[\\/]/.test(current)) return current
+  return ['/usr/local/bin/node', '/opt/homebrew/bin/node'].find((p) => exists(p)) ?? current
+}
+
+/**
+ * Thư mục chạy của aris chạy ngầm: chỗ chat riêng (`@aris/home`), ngoài Desktop và Documents mà
+ * macOS bảo vệ (tiến trình launchd chưa được cấp quyền thì bị giữ lại ngay khi mở thư mục).
+ */
+export const ARIS_WORKSPACE = join(homedir(), 'aris', 'workspace')
+
 /** Nội dung LaunchAgent: chạy dsh profile aris, chạy lại khi văng (cách nhau ít nhất 10 giây). */
-export function plist({ node, script, home, port, logFile, path }) {
+export function plist({ node, script, home, port, logFile, path, cwd = ARIS_WORKSPACE }) {
   const args = [node, script, '--profile', 'aris', '--no-open', '--port', String(port)]
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -36,7 +53,7 @@ ${args.map((a) => `    <string>${xml(a)}</string>`).join('\n')}
     <key>ARIS_DAEMON</key><string>1</string>
     <key>PATH</key><string>${xml(path)}</string>
   </dict>
-  <key>WorkingDirectory</key><string>${xml(repoRoot)}</string>
+  <key>WorkingDirectory</key><string>${xml(cwd)}</string>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
   <key>ThrottleInterval</key><integer>10</integer>
@@ -124,11 +141,12 @@ async function main(argv) {
         process.exit(1)
       }
       mkdirSync(LOG_DIR, { recursive: true })
+      mkdirSync(ARIS_WORKSPACE, { recursive: true })
       mkdirSync(join(homedir(), 'Library', 'LaunchAgents'), { recursive: true })
       writeFileSync(
         PLIST,
         plist({
-          node: process.execPath,
+          node: pickNode(),
           script: join(repoRoot, 'scripts', 'dsh.mjs'),
           home: arisHome(),
           port: PORT,

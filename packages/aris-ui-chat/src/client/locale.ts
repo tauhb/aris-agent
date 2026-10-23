@@ -37,7 +37,7 @@ export const VI: Record<ChatKey, string> = {
   'branch.stopped': 'Đã dừng',
   'branch.open': 'Xem diễn biến',
   'status.working': 'Đang làm',
-  'status.waiting': 'Chờ anh',
+  'status.waiting': 'Chờ {you}',
   'status.done': 'Xong',
   'status.failed': 'Vấp',
   'status.idle': 'Rảnh',

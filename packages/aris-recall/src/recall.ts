@@ -43,7 +43,7 @@ export interface Hit {
   cwd?: string | undefined
 }
 
-/** Chỉ lời chủ nhân và lời bot, bỏ tin chỉ có trong log (nhắc, bản ghi nội bộ). */
+/** Chỉ lời người dùng và lời bot, bỏ tin chỉ có trong log (nhắc, bản ghi nội bộ). */
 const EVENT_FILTERS = [
   { kind: 'type', values: ['user/message', 'assistant/message'] },
   { kind: 'surface', values: ['current', 'shadowed'] },
@@ -116,7 +116,7 @@ export function snippetAround(text: string, query: string, width = 200): string 
 }
 
 /**
- * Tin khớp là lời chủ nhân hoặc lời bot. Tin "user" do dsh chèn (chỉ dẫn, ngữ cảnh động)
+ * Tin khớp là lời người dùng hoặc lời bot. Tin "user" do dsh chèn (chỉ dẫn, ngữ cảnh động)
  * cũng là `user/message` nên bộ lọc loại tin không loại được: gặp thì tìm tiếp trong phiên.
  */
 async function spokenMatch(
@@ -149,7 +149,7 @@ async function spokenMatch(
   return undefined
 }
 
-/** Lời chủ nhân và lời bot quanh một tin. */
+/** Lời người dùng và lời bot quanh một tin. */
 export async function readLines(
   engine: QueryEngine,
   sessionId: string,
@@ -249,10 +249,10 @@ export async function openText(
     const line = lineOf(e)
     return line ? [line] : []
   })
-  if (!lines.length) return `Phiên ${sessionId}, tin ${seq}: không có lời chủ nhân hay lời bot quanh đây.`
+  if (!lines.length) return `Phiên ${sessionId}, tin ${seq}: không có lời người dùng hay lời bot quanh đây.`
   const head = `Phiên ${sessionId} · ${dayOf(window.target.time)}`
   return [
     head,
-    ...lines.map((l) => `#${l.seq} ${l.role === 'user' ? 'Chủ nhân' : 'Bot'}: ${clip(l.text, 6000)}`),
+    ...lines.map((l) => `#${l.seq} ${l.role === 'user' ? 'Người dùng' : 'Bot'}: ${clip(l.text, 6000)}`),
   ].join('\n')
 }

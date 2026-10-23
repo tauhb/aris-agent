@@ -57,13 +57,13 @@ export const SECTION_ORDER = 60
 export const CONTEXT_ORDER = 300
 
 export const GUIDE = `Bạn có trí nhớ bền giữa các phiên qua tool \`memory\`. Ký ức lõi hiện có nằm trong khối <aris-memory> (nếu có) và luôn được nạp sẵn.
-- Lưu khi chủ nhân nói "nhớ là…", sửa lại cách bạn làm, cho biết sở thích, thói quen, quy ước, người, dự án; hoặc khi bạn rút ra bài học sẽ dùng lại.
-- book=owner cho điều về chủ nhân; book=notes cho môi trường, quy ước, bài học của bạn.
+- Lưu khi người dùng nói "nhớ là…", sửa lại cách bạn làm, cho biết sở thích, thói quen, quy ước, người, dự án; hoặc khi bạn rút ra bài học sẽ dùng lại.
+- book=owner cho điều về người dùng; book=notes cho môi trường, quy ước, bài học của bạn.
 - tier=core cho điều cần nhớ mọi lúc, viết thành một câu ngắn; tier=archive cho chi tiết, sự kiện, dự án; tìm lại bằng action=search khi cần.
-- origin=user khi chủ nhân nói ra; origin=inferred khi bạn tự suy ra; origin=external khi lấy từ web, tệp, email (chỉ được vào archive).
+- origin=user khi người dùng nói ra; origin=inferred khi bạn tự suy ra; origin=external khi lấy từ web, tệp, email (chỉ được vào archive).
 - Không lưu bí mật (mật khẩu, khoá, token) và không lưu tiến độ tạm thời của việc đang làm.
 - Lõi có trần ký tự: khi đầy, gộp hoặc rút gọn bằng action=update, hoặc chuyển mục ít dùng xuống archive. Sửa ký ức sai bằng action=update với mã trong ngoặc vuông; xoá bằng action=forget.
-Sau khi lưu, báo ngắn cho chủ nhân là đã nhớ.`
+Sau khi lưu, báo ngắn cho người dùng là đã nhớ.`
 
 const TRUST = { user: 'user-stated', inferred: 'agent-inferred', external: 'external' } as const
 
@@ -109,7 +109,7 @@ export async function apply(ctx: Context): Promise<void> {
         book: {
           type: 'string',
           enum: ['owner', 'notes'],
-          description: 'save: owner = về chủ nhân, notes = môi trường, quy ước, bài học.',
+          description: 'save: owner = về người dùng, notes = môi trường, quy ước, bài học.',
         },
         tier: {
           type: 'string',
@@ -124,7 +124,8 @@ export async function apply(ctx: Context): Promise<void> {
         origin: {
           type: 'string',
           enum: ['user', 'inferred', 'external'],
-          description: 'save: chủ nhân nói (user), bạn suy ra (inferred), hay lấy từ nguồn ngoài (external).',
+          description:
+            'save: người dùng nói (user), bạn suy ra (inferred), hay lấy từ nguồn ngoài (external).',
         },
       },
       output: {
@@ -196,7 +197,7 @@ export async function apply(ctx: Context): Promise<void> {
   // Tự nhắc lưu và lưu trước khi nén.
   const watch = watchConversation(ctx, store, (sessionId) => botOf(sessionId))
 
-  // Trang Ký ức của web gọi qua đường /api của dsh (dsh kiểm cookie và chỉ cho chủ nhân).
+  // Trang Ký ức của web gọi qua đường /api của dsh (dsh kiểm cookie và chỉ cho người dùng).
   ctx.inject(['connection'], (ctx) => {
     ctx.effect(() => {
       const dispose = ctx.connection.fetch.register({

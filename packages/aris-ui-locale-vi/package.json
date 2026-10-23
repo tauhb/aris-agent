@@ -26,5 +26,8 @@
         "@deepseek-ai/dsh-client-locale"
       ]
     }
+  },
+  "dependencies": {
+    "@aris/ui-kit": "workspace:*"
   }
 }

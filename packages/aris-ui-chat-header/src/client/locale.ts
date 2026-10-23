@@ -34,8 +34,8 @@ export const VI: Record<HeaderKey, string> = {
   'meta.running': 'đang chạy',
   'when.today': 'hôm nay',
   'when.yesterday': 'hôm qua',
-  'project.members': '{n} bot và anh',
-  'project.label': 'Dự án {name}, {n} bot và anh',
+  'project.members': '{n} bot và {you}',
+  'project.label': 'Dự án {name}, {n} bot và {you}',
 }
 
 export type Translate = (key: HeaderKey, params?: Record<string, unknown>) => string

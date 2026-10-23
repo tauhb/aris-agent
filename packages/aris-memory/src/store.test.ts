@@ -106,6 +106,6 @@ describe('MemoryStore', () => {
       text: 'Tài liệu ở Google Drive "Kinh doanh 2026"',
     })
     const out = renderCore(s.list('aris'))
-    expect(out).toMatch(/Ghi chú của bot[\s\S]*Google Drive[\s\S]*Hồ sơ chủ nhân[\s\S]*bảng so sánh/)
+    expect(out).toMatch(/Ghi chú của bot[\s\S]*Google Drive[\s\S]*Hồ sơ người dùng[\s\S]*bảng so sánh/)
   })
 })

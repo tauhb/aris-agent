@@ -3,7 +3,7 @@
  * Đăng ký đúng slot `sidebar` cùng 7 chỗ cắm con và slot `shell.leading` như gói
  * gốc, để mọi plugin khác của dsh vẫn cắm vào được; phần trình bày theo canvas.
  */
-import { mountKitCss } from '@aris/ui-kit/react'
+import { mountKitCss, registerPersonal } from '@aris/ui-kit/react'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
 import { EN, NS, VI } from './locale.js'
@@ -50,7 +50,8 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(injectStyle, 'aris-ui-sidebar: styles')
   // Chữ của aris theo ngôn ngữ chọn trong Cài đặt; tiếng Trung lùi về tiếng Anh.
   ctx.effect(() => ctx.locale.register(NS, 'en', EN), 'aris-ui-sidebar: en')
-  ctx.effect(() => ctx.locale.register(NS, 'vi', VI), 'aris-ui-sidebar: vi')
+  // Chữ tiếng Việt có `{you}`: điền cách gọi người dùng theo hồ sơ xưng hô.
+  ctx.effect(() => registerPersonal(ctx.locale, NS, 'vi', VI), 'aris-ui-sidebar: vi')
 
   const panels = createSnapshotStore<PanelEntry[]>([])
   const syncPanels = () => {

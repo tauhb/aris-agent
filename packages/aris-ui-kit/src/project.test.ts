@@ -13,6 +13,7 @@ describe('dự án', () => {
     expect(isProjectWorkspace({ path: '/home/a/.dsh/default-workspace' })).toBe(false)
     expect(isProjectWorkspace({ path: '/home/a/.dsh/default-workspace/' })).toBe(false)
     expect(isProjectWorkspace({ path: 'C:\\Users\\a\\default-workspace' })).toBe(false)
+    expect(isProjectWorkspace({ path: '/Users/a/aris/workspace/' })).toBe(false)
     expect(isProjectWorkspace({ path: '/home/a/Projects/khoa-hoc-ai' })).toBe(true)
   })
 

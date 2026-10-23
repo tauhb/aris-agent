@@ -14,12 +14,12 @@ export interface WorkspaceLike {
 }
 
 /** Workspace là dự án khi không phải workspace mặc định. */
+/** Chỗ chat riêng mặc định của aris (`~/aris/workspace`, xem `@aris/home`). */
+const ARIS_HOME = /[\\/]aris[\\/]workspace$/
+
 export function isProjectWorkspace(w: Pick<WorkspaceLike, 'path'>): boolean {
-  const last = w.path
-    .replace(/[\\/]+$/, '')
-    .split(/[\\/]/)
-    .pop()
-  return last !== DEFAULT_WORKSPACE_DIRECTORY
+  const path = w.path.replace(/[\\/]+$/, '')
+  return path.split(/[\\/]/).pop() !== DEFAULT_WORKSPACE_DIRECTORY && !ARIS_HOME.test(path)
 }
 
 /** Dự án chứa phiên; phiên chat riêng hoặc chưa thuộc workspace nào thì undefined. */

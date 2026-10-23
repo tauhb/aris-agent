@@ -1,4 +1,8 @@
-/** Lời bot nói trên Telegram (tiếng Việt). HTML của Telegram: chỉ thoát giá trị chèn vào. */
+/**
+ * Tin hệ thống của bot trên Telegram (tiếng Việt). Không dùng đại từ (anh, chị, em, chủ nhân):
+ * cách xưng hô do người dùng chọn chỉ có trong lời của bot (model), không trong tin hệ thống.
+ * HTML của Telegram: chỉ thoát giá trị chèn vào.
+ */
 import type { Trust } from './access.js'
 import { escapeHtml as h } from './telegram/format.js'
 
@@ -16,7 +20,7 @@ export const COMMANDS: { command: string; description: string; owner?: true }[] 
 ]
 
 export const ROLE_LABEL: Record<Trust, string> = {
-  owner: 'chủ nhân (toàn quyền)',
+  owner: 'người dùng chính (toàn quyền)',
   member: 'người được phép (chỉ hỏi đáp)',
   guest: 'khách trong nhóm (chỉ hỏi đáp)',
 }
@@ -24,19 +28,19 @@ export const ROLE_LABEL: Record<Trust, string> = {
 export const T = {
   paired: (name: string, owner: boolean) =>
     owner
-      ? `Chào ${h(name)}, em đã nhận anh là <b>chủ nhân</b>. Từ giờ cứ nhắn ở đây như trên web nhé.\n\nGõ /help để xem lệnh.`
-      : `Chào ${h(name)}, bạn đã được thêm làm <b>người được phép</b>: bạn hỏi đáp được với em, nhưng em sẽ không làm việc có tác động (gửi thư, chạy lệnh…) theo lời bạn.`,
+      ? `Chào ${h(name)}! Đã ghép đôi: tài khoản này là <b>người dùng chính</b> của bot. Từ giờ cứ nhắn ở đây như trên web.\n\nGõ /help để xem lệnh.`
+      : `Chào ${h(name)}! Tài khoản này đã là <b>người được phép</b>: hỏi đáp được với bot, nhưng bot không làm việc có tác động (gửi thư, chạy lệnh…) theo lời người được phép.`,
   help: (trust: Trust) =>
     [
-      `<b>Lệnh</b> (bạn là ${ROLE_LABEL[trust]})`,
+      `<b>Lệnh</b> (vai: ${ROLE_LABEL[trust]})`,
       ...COMMANDS.filter((c) => trust === 'owner' || !c.owner).map(
         (c) => `/${c.command} — ${h(c.description)}`,
       ),
     ].join('\n'),
   whoami: (trust: Trust, userId: number, chatId: number) =>
-    `Bạn là <b>${ROLE_LABEL[trust]}</b>.\nMã Telegram của bạn: <code>${userId}</code>\nMã cuộc trò chuyện: <code>${chatId}</code>`,
-  ownerOnly: 'Lệnh này chỉ chủ nhân dùng được.',
-  newSession: 'Đã mở phiên mới. Em bắt đầu lại từ đầu, ký ức lâu dài vẫn giữ nguyên.',
+    `Vai: <b>${ROLE_LABEL[trust]}</b>.\nMã Telegram: <code>${userId}</code>\nMã cuộc trò chuyện: <code>${chatId}</code>`,
+  ownerOnly: 'Lệnh này chỉ người dùng chính dùng được.',
+  newSession: 'Đã mở phiên mới: bắt đầu lại từ đầu, ký ức lâu dài vẫn giữ nguyên.',
   stopped: 'Đã dừng.',
   nothingRunning: 'Không có việc nào đang chạy.',
   status: (o: {
@@ -61,41 +65,41 @@ export const T = {
   sessions: 'Các phiên của cuộc trò chuyện này (bấm để quay lại):',
   resumed: (title: string) => `Đã quay lại phiên: ${h(title)}`,
   badIndex: 'Số phiên không đúng. Gõ /sessions để xem danh sách.',
-  homeSet: 'Đã chọn nơi này nhận báo cáo routine và tin em chủ động gửi.',
-  voice: (on: boolean) => (on ? 'Từ giờ em trả lời kèm giọng nói.' : 'Đã tắt trả lời bằng giọng nói.'),
+  homeSet: 'Đã chọn nơi này nhận báo cáo routine và tin bot chủ động gửi.',
+  voice: (on: boolean) => (on ? 'Từ giờ bot trả lời kèm giọng nói.' : 'Đã tắt trả lời bằng giọng nói.'),
   voiceUsage: 'Dùng: /voice on hoặc /voice off',
   modelPick: (current?: string) => `Chọn nhà cung cấp${current ? ` (đang dùng: ${h(current)})` : ''}:`,
   modelList: (provider: string) => `Chọn model của ${h(provider)}:`,
   modelSet: (name: string) => `Đã chuyển sang <b>${h(name)}</b>, áp dụng từ lượt kế tiếp.`,
   modelFail: (e: string) => `Không đổi được model: ${h(e)}`,
   stranger: (name: string, username: string | undefined, id: number, text: string) =>
-    `Có người lạ nhắn em: <b>${h(name)}</b>${username ? ` (@${h(username)})` : ''}, mã <code>${id}</code>\n«${h(text.slice(0, 300))}»\n\nEm chưa trả lời. Cho phép người này hỏi đáp với em?`,
+    `Có người lạ nhắn bot: <b>${h(name)}</b>${username ? ` (@${h(username)})` : ''}, mã <code>${id}</code>\n«${h(text.slice(0, 300))}»\n\nBot chưa trả lời. Cho phép người này hỏi đáp với bot?`,
   strangerAllowed: (name: string) => `Đã cho phép ${h(name)} hỏi đáp (người được phép).`,
   strangerIgnored: 'Đã bỏ qua.',
-  welcomeMember: 'Chủ nhân đã cho phép bạn hỏi đáp với em. Cứ nhắn nhé!',
+  welcomeMember: 'Tài khoản này đã được cho phép hỏi đáp với bot. Cứ nhắn nhé!',
   unknownGroup: (title: string, id: number) =>
-    `Em vừa được gọi trong nhóm <b>${h(title)}</b> (mã <code>${id}</code>) chưa có trong danh sách cho phép. Em chưa trả lời gì.`,
+    `Bot vừa được gọi trong nhóm <b>${h(title)}</b> (mã <code>${id}</code>) chưa có trong danh sách cho phép. Bot chưa trả lời gì.`,
   addedToGroup: (title: string, id: number) =>
-    `Em vừa được thêm vào nhóm <b>${h(title)}</b> (mã <code>${id}</code>). Nhóm chưa được phép nên em sẽ im lặng.`,
+    `Bot vừa được thêm vào nhóm <b>${h(title)}</b> (mã <code>${id}</code>). Nhóm chưa được phép nên bot im lặng.`,
   groupAllowed: (title: string) =>
-    `Đã cho phép nhóm ${h(title)}. Trong nhóm, em chỉ trả lời khi được @ hoặc khi có người trả lời vào tin của em.`,
+    `Đã cho phép nhóm ${h(title)}. Trong nhóm, bot chỉ trả lời khi được @ hoặc khi có người trả lời vào tin của bot.`,
   groupLeft: (title: string) => `Đã rời nhóm ${h(title)}.`,
   approval: (tool: string, reason?: string) =>
-    `🔐 <b>Cần anh duyệt</b>: <code>${h(tool)}</code>${reason ? `\n${h(reason)}` : ''}`,
+    `🔐 <b>Cần duyệt</b>: <code>${h(tool)}</code>${reason ? `\n${h(reason)}` : ''}`,
   approvalDone: (ok: boolean) => (ok ? '✅ Đã cho phép một lần.' : '⛔ Đã từ chối.'),
   approvalExpired: '⌛ Hết giờ chờ duyệt, hành động bị chặn.',
   approvalNotOwner: (tool: string) =>
-    `Việc này (<code>${h(tool)}</code>) cần chủ nhân duyệt, người khác gọi em thì em không làm.`,
+    `Việc này (<code>${h(tool)}</code>) cần người dùng chính duyệt; người khác gọi thì bot không làm.`,
   askOther: '✏️ Khác (gõ trả lời)',
   askDone: 'Xong',
-  askTypeAnswer: 'Gõ câu trả lời của anh ở tin kế tiếp.',
+  askTypeAnswer: 'Gõ câu trả lời ở tin kế tiếp.',
   askAnswered: (answer: string) => `Đã trả lời: ${h(answer)}`,
-  restarted: '♻️ aris vừa khởi động lại giữa chừng, em làm tiếp tin này.',
+  restarted: '♻️ aris vừa khởi động lại giữa chừng, đang làm tiếp tin này.',
   recovered: '♻️ Câu trả lời khôi phục sau khi khởi động lại, có thể trùng.',
   stoppedTurn: 'Đã dừng việc này.',
-  failedTurn: (e: string) => `Em gặp lỗi: ${h(e)}`,
-  voiceFail: (e: string) => `Em chưa nghe được ghi âm: ${h(e)}`,
-  fileTooBig: 'Tệp lớn hơn 20 MB, Telegram không cho bot tải. Anh gửi qua web nhé.',
-  fileFail: (e: string) => `Em chưa nhận được tệp: ${h(e)}`,
+  failedTurn: (e: string) => `Bot gặp lỗi: ${h(e)}`,
+  voiceFail: (e: string) => `Chưa nghe được ghi âm: ${h(e)}`,
+  fileTooBig: 'Tệp lớn hơn 20 MB, Telegram không cho bot tải. Gửi qua web nhé.',
+  fileFail: (e: string) => `Chưa nhận được tệp: ${h(e)}`,
   voiceNote: '🎙️ (ghi âm)',
 }

@@ -1,9 +1,9 @@
 /**
- * Chỗ chat riêng của aris. Quyết định 11: mọi workspace khác là một dự án; workspace mặc định
- * (thư mục `default-workspace`, theo quy ước của dsh) là nơi chat riêng với Aris. dsh chỉ tự
- * tạo workspace này khi chưa có phiên nào, nên ai mở app từ một thư mục khác sẽ không có
- * nó và mọi "Việc mới" rơi vào dự án. Đường `POST /api/aris/home` tìm hoặc tạo workspace
- * ấy rồi trả mã cho nút "Việc mới".
+ * Chỗ chat riêng của aris. Quyết định 11: mọi workspace khác là một dự án; workspace chat riêng
+ * là nơi chat với Aris và đội bot. Mặc định ở `~/aris/workspace`, không theo `~/Documents` như
+ * dsh: macOS bảo vệ Documents, aris chạy ngầm (launchd) chưa được cấp quyền thì mọi lệnh bash
+ * trong đó bị giữ lại chờ quyền. Đường `POST /api/aris/home` tìm hoặc tạo workspace ấy rồi trả
+ * mã cho nút "Việc mới".
  * @module @aris/home
  */
 import { mkdir } from 'node:fs/promises'
@@ -20,7 +20,7 @@ export const inject = ['workspaceRegistry']
 export const DEFAULT_WORKSPACE_DIRECTORY = 'default-workspace'
 
 export interface Config {
-  /** Thư mục chat riêng; bỏ trống thì như dsh: `<Documents>/deepseek-harness/default-workspace`. */
+  /** Thư mục chat riêng; bỏ trống là `~/aris/workspace`. */
   path?: string | undefined
 }
 
@@ -29,22 +29,21 @@ export interface Registry {
   create(path: string, title?: string): Promise<Pick<Workspace, 'id' | 'path'>>
 }
 
-const isHome = (path: string) =>
-  path
-    .replace(/[\\/]+$/, '')
-    .split(/[\\/]/)
-    .pop() === DEFAULT_WORKSPACE_DIRECTORY
+const trim = (path: string) => path.replace(/[\\/]+$/, '')
 
 export function defaultHomePath(): string {
-  return join(homedir(), 'Documents', 'deepseek-harness', DEFAULT_WORKSPACE_DIRECTORY)
+  return join(homedir(), 'aris', 'workspace')
 }
 
-/** Workspace chat riêng: dùng cái đã đăng ký, chưa có thì tạo thư mục và đăng ký. */
+/**
+ * Workspace chat riêng ở đúng `path`: dùng cái đã đăng ký, chưa có thì tạo thư mục và đăng ký.
+ * Workspace mặc định cũ của dsh (`default-workspace`) vẫn giữ phiên cũ, không dùng cho phiên mới.
+ */
 export async function ensureHome(
   registry: Registry,
   path = defaultHomePath(),
 ): Promise<{ workspaceId: string; path: string }> {
-  const found = registry.list().find((w) => isHome(w.path))
+  const found = registry.list().find((w) => trim(w.path) === trim(path))
   if (found) return { workspaceId: found.id, path: found.path }
   await mkdir(path, { recursive: true })
   const created = await registry.create(path, DEFAULT_WORKSPACE_DIRECTORY)

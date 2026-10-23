@@ -3,7 +3,7 @@
  * dsh (trang có mục thanh bên thì đăng ký thêm `sidebar.panellist`), hộp thoại cắm
  * vào lớp phủ `shell.overlay`. Gói nào cũng mở được trang qua `arisNavigate`.
  */
-import { announceRoute, mountKitCss, onArisNavigate, useTeamData } from '@aris/ui-kit/react'
+import { announceRoute, mountKitCss, onArisNavigate, registerPersonal, useTeamData } from '@aris/ui-kit/react'
 import type { ComponentType, ReactNode } from 'react'
 import { EN, NS, VI } from './locale.js'
 import type {
@@ -169,7 +169,8 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => mountKitCss(), 'aris-ui-pages: kit styles')
   ctx.effect(injectStyle, 'aris-ui-pages: styles')
   ctx.effect(() => ctx.locale.register(NS, 'en', EN), 'aris-ui-pages: en')
-  ctx.effect(() => ctx.locale.register(NS, 'vi', VI), 'aris-ui-pages: vi')
+  // Chữ tiếng Việt có `{you}`: điền cách gọi người dùng theo hồ sơ xưng hô.
+  ctx.effect(() => registerPersonal(ctx.locale, NS, 'vi', VI), 'aris-ui-pages: vi')
 
   const service = <K extends keyof Services>(name: K): Services[K] => {
     const found = ctx.get(name) as Services[K] | undefined

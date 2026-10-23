@@ -1,5 +1,5 @@
 /**
- * Phần thuần của tìm lại: đọc lời chủ nhân và lời bot từ sự kiện phiên, dựng prompt tóm
+ * Phần thuần của tìm lại: đọc lời người dùng và lời bot từ sự kiện phiên, dựng prompt tóm
  * tắt có dẫn nguồn, định dạng kết quả cho model.
  */
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
@@ -33,7 +33,7 @@ const textOf = (blocks: readonly ContentBlock[]) =>
     .join('\n')
     .trim()
 
-/** Lời chủ nhân hoặc lời bot trong một sự kiện; undefined với sự kiện khác (tool, nhắc…). */
+/** Lời người dùng hoặc lời bot trong một sự kiện; undefined với sự kiện khác (tool, nhắc…). */
 export function lineOf(event: SessionEvent): Line | undefined {
   if (event.type === 'user/message' && event.data.source.kind === 'user') {
     const text = textOf(event.data.content)
@@ -57,7 +57,7 @@ export function dayOf(time: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
-const ROLE = { user: 'Chủ nhân', assistant: 'Bot' } as const
+const ROLE = { user: 'Người dùng', assistant: 'Bot' } as const
 
 /** Đoạn trích của một phiên, mỗi tin có nhãn `[S1#12]`. */
 export function excerpt(source: Source): string {
@@ -68,7 +68,7 @@ export function excerpt(source: Source): string {
 
 /** Prompt cho model tóm tắt: chỉ dùng đoạn trích, dẫn nguồn từng ý. */
 export function summaryPrompt(query: string, sources: readonly Source[]): string {
-  return `Bạn giúp một trợ lý nhớ lại các cuộc trò chuyện cũ với chủ nhân. Câu cần trả lời:
+  return `Bạn giúp một trợ lý nhớ lại các cuộc trò chuyện cũ với người dùng. Câu cần trả lời:
 "${query}"
 
 Dưới đây là đoạn trích từ các phiên cũ tìm được. Hãy trả lời câu trên CHỈ dựa vào các đoạn trích:

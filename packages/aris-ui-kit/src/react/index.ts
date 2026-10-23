@@ -33,6 +33,9 @@ export { BotPicker, filterBotOptions, type BotOption } from './BotPicker.js'
 export {
   currentTeam,
   openBotSession,
+  personalize,
+  registerPersonal,
+  youWord,
   refreshTeam,
   teamAction,
   teamView,
@@ -46,6 +49,7 @@ export {
   type TeamLive,
   type BotData,
   type CatalogGroup,
+  type OwnerAddress,
   type RolePreset,
   type DepartmentData,
   type TeamSnapshot,

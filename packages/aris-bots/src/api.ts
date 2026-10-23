@@ -25,6 +25,7 @@ async function snapshot(d: ApiDeps) {
   const templates = await d.templates()
   return {
     bots: d.store.list(),
+    owner: d.store.owner(),
     departments: d.store.departments(),
     templates: templates.map((t) => ({
       id: t.id,
@@ -60,6 +61,11 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
         break
       case 'delete':
         await d.store.remove(String(body.id))
+        break
+      case 'owner':
+        await d.store.setOwner(
+          body.owner as { name?: string | null; call?: string | null; self?: string | null },
+        )
         break
       case 'department':
         await d.store.upsertDepartment(body.department as { id?: string; name: string; lead?: string | null })

@@ -4,7 +4,7 @@
  * (bảng của storage domain dsh, hoặc Map khi kiểm thử).
  */
 
-/** Ghi chú của bot (môi trường, quy ước, bài học) và hồ sơ chủ nhân (sở thích, thói quen). */
+/** Ghi chú của bot (môi trường, quy ước, bài học) và hồ sơ người dùng (sở thích, thói quen). */
 export const BOOKS = ['notes', 'owner'] as const
 export type Book = (typeof BOOKS)[number]
 
@@ -236,7 +236,7 @@ export class MemoryStore {
 
 const BOOK_TITLE: Record<Book, string> = {
   notes: 'Ghi chú của bot (môi trường, quy ước, bài học)',
-  owner: 'Hồ sơ chủ nhân (sở thích, thói quen)',
+  owner: 'Hồ sơ người dùng (sở thích, thói quen)',
 }
 
 /** Đoạn ký ức lõi đưa vào prompt; rỗng khi chưa có gì để không thêm tin thừa. */

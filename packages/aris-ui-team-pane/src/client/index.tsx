@@ -2,7 +2,7 @@
  * Cột phải aris: "Đội bot lúc này" chiếm trang bắt đầu của cột phải dsh (chỗ cắm
  * dạng chuỗi `sidebar.right.tab.guide`), các lối mở Tệp, Terminal… vẫn ở cuối trang.
  */
-import { mountKitCss } from '@aris/ui-kit/react'
+import { mountKitCss, registerPersonal } from '@aris/ui-kit/react'
 import { EN, NS, VI } from './locale.js'
 import { CSS } from './styles.js'
 import { TeamPane, TeamTitle } from './TeamPane.js'
@@ -58,7 +58,8 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => mountKitCss(), 'aris-ui-team-pane: kit styles')
   ctx.effect(injectStyle, 'aris-ui-team-pane: styles')
   ctx.effect(() => ctx.locale.register(NS, 'en', EN), 'aris-ui-team-pane: en')
-  ctx.effect(() => ctx.locale.register(NS, 'vi', VI), 'aris-ui-team-pane: vi')
+  // Chữ tiếng Việt có `{you}`: điền cách gọi người dùng theo hồ sơ xưng hô.
+  ctx.effect(() => registerPersonal(ctx.locale, NS, 'vi', VI), 'aris-ui-team-pane: vi')
 
   const guideEntries = {
     subscribe: (listener: () => void) => ctx.sidebarRightTabs.subscribe(listener),

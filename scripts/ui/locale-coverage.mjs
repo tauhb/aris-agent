@@ -8,10 +8,14 @@ import { repoRoot } from '../paths.mjs'
 
 const dir = join(repoRoot, 'packages/aris-ui-locale-vi/locales')
 
-/** Tập biến `{tên}` trong một chuỗi, đã sắp xếp. */
+/**
+ * Tập biến `{tên}` trong một chuỗi, đã sắp xếp. Bỏ `{you}`/`{You}`: đó là cách gọi người dùng,
+ * gói tiếng Việt điền lúc đăng ký theo hồ sơ xưng hô, không phải biến của dsh.
+ */
 export const placeholders = (text) =>
   [...text.matchAll(/\{(\w+)\}/g)]
     .map((m) => m[1])
+    .filter((v) => v !== 'you' && v !== 'You')
     .sort()
     .join(',')
 

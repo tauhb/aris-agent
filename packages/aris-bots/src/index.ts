@@ -15,6 +15,7 @@ import type {} from '@deepseek-ai/dsh-client-connection'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-storage-domain'
 import type {} from '@deepseek-ai/dsh-system-prompt'
+import { defineTool } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-user-approval'
 import type {} from '@deepseek-ai/dsh-user-questions'
 import type {} from '@deepseek-ai/dsh-workspace'
@@ -39,7 +40,7 @@ export {
 export type { BotRecord, DepartmentRecord } from './domain.js'
 
 export const name = 'aris-bots'
-export const inject = ['storageDomain', 'systemPrompt', 'sessionController', 'workspaceRegistry']
+export const inject = ['storageDomain', 'systemPrompt', 'sessionController', 'workspaceRegistry', 'tools']
 
 /** Ngữ cảnh tính cách: trước ký ức lõi (300) để model đọc "mình là ai" trước. */
 export const CONTEXT_ORDER = 290
@@ -62,7 +63,7 @@ export async function apply(ctx: Context): Promise<void> {
   const domain = await ctx.storageDomain.open(botsDomain)
   ctx.effect(() => () => void domain.close(), 'aris-bots: domain')
   const tables = Object.fromEntries(
-    (['bots', 'departments', 'sessions'] as const).map((t) => [t, domain.table(t)]),
+    (['bots', 'departments', 'sessions', 'owner'] as const).map((t) => [t, domain.table(t)]),
   ) as unknown as Tables
   const store = new BotStore(tables)
   await store.ensureCommander()
@@ -103,7 +104,8 @@ export async function apply(ctx: Context): Promise<void> {
       ctx.systemPrompt.context({
         name: 'aris:bot',
         order: CONTEXT_ORDER,
-        text: (c) => renderPersona(store.botOf(c.agent?.session.id), store.list(), store.departments()),
+        text: (c) =>
+          renderPersona(store.botOf(c?.agent?.session.id), store.list(), store.departments(), store.owner()),
         interpolate: false,
         // Bot phải biết mình là ai kể cả khi tắt ngữ cảnh tuỳ chọn.
         required: true,
@@ -113,6 +115,29 @@ export async function apply(ctx: Context): Promise<void> {
 
   // Thành viên đội trùng tên gọi với một bot: dsh ghi `team/member` (đang tạo) vào phiên chính
   // trước khi phiên con chạy, nên gắn kịp trước lần gọi model đầu tiên của phiên con.
+  // Cách xưng hô: bot hỏi người dùng lần đầu rồi lưu ở đây.
+  ctx.tools.register(
+    defineTool({
+      name: 'xung_ho',
+      description:
+        'Lưu cách xưng hô với người dùng sau khi hỏi: tên, người dùng muốn được gọi là gì, bạn xưng là gì. Chỉ điền phần người dùng vừa nói; cả đội bot dùng chung.',
+      parameters: {
+        ten: { type: 'string', description: 'Tên người dùng.' },
+        goi: { type: 'string', description: 'Gọi người dùng là gì, ví dụ "anh", "chị Hà", "bạn", "sếp".' },
+        xung: { type: 'string', description: 'Bạn tự xưng là gì, ví dụ "em", "tôi", "mình".' },
+      },
+      output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+      async execute(args) {
+        const o = await store.setOwner({
+          ...(args.ten !== undefined ? { name: args.ten } : {}),
+          ...(args.goi !== undefined ? { call: args.goi } : {}),
+          ...(args.xung !== undefined ? { self: args.xung } : {}),
+        })
+        return `Đã lưu: ${[o.name && `tên ${o.name}`, o.call && `gọi «${o.call}»`, o.self && `xưng «${o.self}»`].filter(Boolean).join(', ') || 'chưa có gì'}.`
+      },
+    }),
+  )
+
   // Trạng thái trực tiếp: lượt bắt đầu, kết thúc; đợi anh duyệt hoặc trả lời.
   ctx.on('session/event', (session, event) => {
     if (event.type === 'turn/start') live.turnStart(session.id)

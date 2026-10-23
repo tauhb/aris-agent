@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { LABEL, callSocket, parseArgs, plist } from './aris.mjs'
+import { LABEL, callSocket, parseArgs, pickNode, plist } from './aris.mjs'
 
 describe('lệnh aris', () => {
   it('tách lệnh, cờ và nội dung', () => {
@@ -40,5 +40,12 @@ describe('lệnh aris', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }
+  })
+
+  it('node chạy ngầm không lấy node của bản cài agent khác', () => {
+    const has = (p) => p === '/usr/local/bin/node'
+    expect(pickNode({}, '/Users/a/.hermes/node/bin/node', has)).toBe('/usr/local/bin/node')
+    expect(pickNode({}, '/opt/homebrew/bin/node', has)).toBe('/opt/homebrew/bin/node')
+    expect(pickNode({ ARIS_NODE: '/x/node' }, '/Users/a/.hermes/node/bin/node', has)).toBe('/x/node')
   })
 })

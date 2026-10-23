@@ -201,7 +201,7 @@ export function summarize(results: readonly DispatchResult[]): string {
   return [
     ...lines,
     ok
-      ? 'Dùng wait_agent để đợi; kết quả của bot về thành tin nhắn của đội. Khi đủ kết quả thì tổng hợp trả lời chủ nhân.'
+      ? 'Dùng wait_agent để đợi; kết quả của bot về thành tin nhắn của đội. Khi đủ kết quả thì tổng hợp trả lời người dùng.'
       : 'Chưa giao được việc nào.',
   ].join('\n')
 }

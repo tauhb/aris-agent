@@ -104,7 +104,7 @@ describe('aris-recall', () => {
     const sources = await findSources(engine, await searchHits(engine, { query: 'gói Pro', exclude: 'now' }))
     expect(sources[0]!.lines.map((l) => l.role)).toEqual(['user', 'assistant'])
     const prompt = summaryPrompt('giá gói Pro?', sources)
-    expect(prompt).toContain('[S1#1] Chủ nhân: Mình chốt giá gói Pro là 490k nhé')
+    expect(prompt).toContain('[S1#1] Người dùng: Mình chốt giá gói Pro là 490k nhé')
     expect(prompt).toContain('[S1#12]')
   })
 

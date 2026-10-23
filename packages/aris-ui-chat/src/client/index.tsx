@@ -2,7 +2,7 @@
  * Khung chat aris: cắm vào chỗ cắm hội thoại, ô nhập và công cụ của dsh, không thay
  * gói nào (trừ nhãn model "1017" tạm của DeepSeek, row này tắt trong patch).
  */
-import { mountKitCss } from '@aris/ui-kit/react'
+import { mountKitCss, registerPersonal } from '@aris/ui-kit/react'
 import { DispatchBranches, HeroMark, ModelLabel, SubagentBranch, TriggerButtons } from './Chat.js'
 import { EN, NS, VI } from './locale.js'
 import { CSS } from './styles.js'
@@ -42,7 +42,8 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => mountKitCss(), 'aris-ui-chat: kit styles')
   ctx.effect(injectStyle, 'aris-ui-chat: styles')
   ctx.effect(() => ctx.locale.register(NS, 'en', EN), 'aris-ui-chat: en')
-  ctx.effect(() => ctx.locale.register(NS, 'vi', VI), 'aris-ui-chat: vi')
+  // Chữ tiếng Việt có `{you}`: điền cách gọi người dùng theo hồ sơ xưng hô.
+  ctx.effect(() => registerPersonal(ctx.locale, NS, 'vi', VI), 'aris-ui-chat: vi')
 
   ctx.slots.inject('conversation.hero.brand.mark', () =>
     ctx.slots.register({ name: 'conversation.hero.brand.mark', locale: NS }, HeroMark),

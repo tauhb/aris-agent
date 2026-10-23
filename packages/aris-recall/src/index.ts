@@ -38,8 +38,8 @@ declare module '@deepseek-ai/dsh-session' {
 /** Sau đoạn hướng dẫn trí nhớ (60). */
 export const SECTION_ORDER = 61
 
-export const GUIDE = `Bạn tìm lại được các cuộc trò chuyện cũ với chủ nhân qua tool \`recall\`.
-- Khi chủ nhân hỏi về chuyện đã bàn ở phiên trước ("hôm trước", "tuần trước", "lần đó mình chốt gì") mà ký ức không có, gọi recall action=search với từ khoá đặc trưng (tên riêng, thuật ngữ), không dùng cả câu hỏi; thêm days nếu chủ nhân nói khoảng thời gian.
+export const GUIDE = `Bạn tìm lại được các cuộc trò chuyện cũ với người dùng qua tool \`recall\`.
+- Khi người dùng hỏi về chuyện đã bàn ở phiên trước ("hôm trước", "tuần trước", "lần đó mình chốt gì") mà ký ức không có, gọi recall action=search với từ khoá đặc trưng (tên riêng, thuật ngữ), không dùng cả câu hỏi; thêm days nếu người dùng nói khoảng thời gian.
 - Trả lời kèm nguồn như kết quả ghi (ví dụ [S1#12]). Cần trích nguyên văn hay số liệu chính xác thì gọi action=open với mã phiên và số tin.
 - Không thấy thì nói thật là không tìm thấy, có thể thử lại một lần với từ khoá khác.`
 
@@ -49,7 +49,7 @@ const json = (body: unknown, status = 200) =>
     headers: { 'content-type': 'application/json; charset=utf-8' },
   })
 
-/** GET ?q=…&limit=… → { hits }. dsh đã kiểm Host/Origin, cookie và quyền chủ nhân. */
+/** GET ?q=…&limit=… → { hits }. dsh đã kiểm Host/Origin, cookie và quyền người dùng. */
 export async function handleApi(engine: QueryEngine, request: Request): Promise<Response> {
   const url = new URL(request.url)
   const q = (url.searchParams.get('q') ?? '').trim()
@@ -82,7 +82,7 @@ export function apply(ctx: Context, config: Config = {}): void {
     defineTool({
       name: 'recall',
       description:
-        'Tìm lại các cuộc trò chuyện cũ với chủ nhân (các phiên trước). search: tìm và tóm tắt có dẫn nguồn; open: đọc nguyên văn quanh một tin.',
+        'Tìm lại các cuộc trò chuyện cũ với người dùng (các phiên trước). search: tìm và tóm tắt có dẫn nguồn; open: đọc nguyên văn quanh một tin.',
       parameters: {
         action: { type: 'string', enum: ['search', 'open'], required: true },
         query: { type: 'string', description: 'search: từ khoá đặc trưng cần tìm.' },

@@ -45,6 +45,21 @@ export const sessionRecord = z.object({
 })
 export type SessionRecord = z.infer<typeof sessionRecord>
 
+/**
+ * Cách xưng hô với người dùng (một bản ghi, khoá `main`). Không viết cứng "anh", "chị", "chủ nhân":
+ * bot hỏi lần đầu rồi lưu bằng tool `xung_ho`; sửa được ở trang Hồ sơ.
+ */
+export const ownerRecord = z.object({
+  /** Tên người dùng. */
+  name: z.string().optional(),
+  /** Bot gọi người dùng là gì ("anh", "chị Hà", "bạn", "sếp"…). */
+  call: z.string().optional(),
+  /** Bot tự xưng là gì ("em", "tôi", "mình"…). */
+  self: z.string().optional(),
+  updatedAt: z.string(),
+})
+export type OwnerRecord = z.infer<typeof ownerRecord>
+
 /** Một mục việc gần đây của đội (giữ 30 mục mới nhất). */
 export const activityRecord = z.object({
   bot: z.string(),
@@ -63,6 +78,7 @@ export const botsDomain = defineDomain({
     departments: domainTable<string, DepartmentRecord>(departmentRecord),
     sessions: domainTable<string, SessionRecord>(sessionRecord),
     activity: domainTable<string, ActivityRecord>(activityRecord),
+    owner: domainTable<string, OwnerRecord>(ownerRecord),
   },
 })
 
@@ -77,4 +93,5 @@ export interface Tables {
   bots: Table<BotRecord>
   departments: Table<DepartmentRecord>
   sessions: Table<SessionRecord>
+  owner?: Table<OwnerRecord>
 }

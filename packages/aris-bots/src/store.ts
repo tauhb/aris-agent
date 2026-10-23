@@ -3,7 +3,7 @@
  * mẫu, gắn bot vào phiên). Đọc đồng bộ từ bộ nhớ, ghi bền qua backend của dsh.
  */
 import { randomBytes } from 'node:crypto'
-import type { BotRecord, DepartmentRecord, SessionRecord, Tables } from './domain.js'
+import type { BotRecord, DepartmentRecord, OwnerRecord, SessionRecord, Tables } from './domain.js'
 
 export const COMMANDER_ID = 'aris'
 /** Tên gọi: chữ thường không dấu, số, `-`, bắt đầu bằng chữ. */
@@ -39,8 +39,8 @@ const COMMANDER_DEFAULT: Omit<BotRecord, 'createdAt'> = {
   name: 'Aris',
   role: 'Chỉ huy',
   description:
-    'Nhận việc từ chủ nhân, tự làm việc nhỏ, chia việc lớn cho các bot phù hợp rồi tổng hợp kết quả.',
-  soul: 'Điềm tĩnh, rõ ràng, chủ động. Trả lời thẳng vào việc, báo ngắn gọn điều đã làm và điều cần chủ nhân quyết.',
+    'Nhận việc từ người dùng, tự làm việc nhỏ, chia việc lớn cho các bot phù hợp rồi tổng hợp kết quả.',
+  soul: 'Điềm tĩnh, rõ ràng, chủ động. Trả lời thẳng vào việc, báo ngắn gọn điều đã làm và điều cần người dùng quyết.',
   mascot: 'aris',
 }
 
@@ -67,11 +67,46 @@ export class BotStore {
 
   /** Commander luôn có (tạo lần đầu chạy). */
   async ensureCommander(): Promise<BotRecord> {
+    await this.dropHardcodedAddress()
     const c = this.t.bots.get(COMMANDER_ID)
     if (c) return c
     const rec: BotRecord = { ...COMMANDER_DEFAULT, createdAt: this.now().toISOString() }
     await this.t.bots.put(COMMANDER_ID, rec)
     return rec
+  }
+
+  /**
+   * Bot tạo từ đội mẫu cũ có chữ "chủ nhân" viết cứng trong mô tả và tính cách; đổi thành
+   * "người dùng" (cách gọi thật lấy từ hồ sơ xưng hô). Chạy mỗi lần khởi động, không còn gì thì thôi.
+   */
+  private async dropHardcodedAddress() {
+    const fix = (s: string) => s.replace(/chủ nhân/g, 'người dùng').replace(/Chủ nhân/g, 'Người dùng')
+    for (const [id, b] of this.t.bots.entries())
+      if (/chủ nhân/i.test(b.description + b.soul))
+        await this.t.bots.put(id, { ...b, description: fix(b.description), soul: fix(b.soul) })
+  }
+
+  /** Cách xưng hô với người dùng (trống khi chưa hỏi). */
+  owner(): Omit<OwnerRecord, 'updatedAt'> {
+    const o = this.t.owner?.get('main')
+    if (!o) return {}
+    const rest: Partial<OwnerRecord> = { ...o }
+    delete rest.updatedAt
+    return rest
+  }
+
+  async setOwner(patch: { name?: string | null; call?: string | null; self?: string | null }) {
+    if (!this.t.owner) throw new BotError('Chưa có kho hồ sơ người dùng.')
+    const next: OwnerRecord = { ...this.owner(), updatedAt: this.now().toISOString() }
+    for (const k of ['name', 'call', 'self'] as const) {
+      const v = patch[k]
+      if (v === undefined) continue
+      const t = (v ?? '').trim().slice(0, 40)
+      if (t) next[k] = t
+      else delete next[k]
+    }
+    await this.t.owner.put('main', next)
+    return this.owner()
   }
 
   list(): BotRecord[] {

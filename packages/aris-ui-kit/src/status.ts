@@ -20,7 +20,7 @@ export const STATUSES: Record<BotStatus, StatusSpec> = {
     body: '<circle cx="8" cy="8" r="6" fill="none" stroke="var(--line)" stroke-width="2.4"/><path d="M8 2a6 6 0 0 1 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
   },
   waiting: {
-    label: 'Chờ anh',
+    label: 'Chờ duyệt',
     color: 'warn',
     body: '<circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 2a6 6 0 0 1 0 12z" fill="currentColor"/>',
   },
