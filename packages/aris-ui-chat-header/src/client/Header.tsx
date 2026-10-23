@@ -19,6 +19,7 @@ import {
   PlusIcon,
   useDismiss,
 } from '@aris/ui-kit/react'
+import { DEMO_PROJECT_ROOM, projectOfSession, type WorkspaceLike } from '@aris/ui-kit'
 import { useCallback, useRef, useState } from 'react'
 import type { Translate } from './locale.js'
 import { chatSessions, whenLabel, type SessionListLike } from './sessions.js'
@@ -51,6 +52,43 @@ interface ShortcutRow {
 
 /** Bot đang chat. Chưa có dịch vụ đội bot nên luôn là Aris. */
 const CURRENT_BOT = { id: 'aris', name: 'Aris', role: 'Commander' }
+
+/**
+ * Đầu khung bên trái: phiên thuộc dự án (màn 1.4) thì hiện linh vật các thành viên,
+ * tên dự án, "n bot và anh"; phiên chat riêng thì hiện bot đang chat.
+ */
+export function Leading({
+  t,
+  useWorkspaces,
+  useMounted,
+}: {
+  t: Translate
+  useWorkspaces: Selector<{ readonly items: readonly WorkspaceLike[] }>
+  useMounted: Selector<string | undefined>
+}) {
+  const sessionId = useMounted((id) => id)
+  const title = useWorkspaces((w) => projectOfSession(w.items, sessionId)?.title)
+  return title === undefined ? <BotIdentity t={t} /> : <ProjectIdentity t={t} title={title} />
+}
+
+/** Thành viên dự án là mẫu tới giai đoạn 2 (danh sách thành viên của Team dsh). */
+function ProjectIdentity({ t, title }: { t: Translate; title: string }) {
+  const members = DEMO_PROJECT_ROOM.members
+  return (
+    <span className="aris aris-ch" aria-label={t('project.label', { name: title, n: members.length })}>
+      <span className="stack" aria-hidden="true">
+        {members.map((m) => (
+          <Mascot key={m.id} id={m.id} size={24} />
+        ))}
+      </span>
+      <span className="botName">{title}</span>
+      <span className="members">{t('project.members', { n: members.length })}</span>
+      <span className="slash" aria-hidden="true">
+        /
+      </span>
+    </span>
+  )
+}
 
 export function BotIdentity({ t }: { t: Translate }) {
   return (

@@ -183,4 +183,6 @@ export const CSS = `
 .aris .ap-cit{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:6px;background:var(--a-accentSoft);color:var(--a-accent);font-size:11px;font-weight:700;text-decoration:none;vertical-align:1px;flex:none}
 .ap-askbox{display:flex;align-items:flex-end;gap:10px;padding:10px 12px;margin-top:auto}
 .ap-src{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;padding:10px 0;border-top:1px solid var(--a-line)}
+.aris .ap-picker{display:inline-flex;align-items:center;gap:6px;font:inherit;color:inherit;border-radius:8px;padding:2px 6px;margin-left:-6px}
+.aris .ap-picker:hover{background:var(--a-hover)}
 `

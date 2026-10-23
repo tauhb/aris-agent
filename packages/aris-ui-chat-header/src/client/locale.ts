@@ -16,6 +16,8 @@ export const EN = {
   'meta.running': 'running',
   'when.today': 'today',
   'when.yesterday': 'yesterday',
+  'project.members': '{n} bots and you',
+  'project.label': 'Project {name}, {n} bots and you',
 }
 
 export type HeaderKey = keyof typeof EN
@@ -32,6 +34,8 @@ export const VI: Record<HeaderKey, string> = {
   'meta.running': 'đang chạy',
   'when.today': 'hôm nay',
   'when.yesterday': 'hôm qua',
+  'project.members': '{n} bot và anh',
+  'project.label': 'Dự án {name}, {n} bot và anh',
 }
 
 export type Translate = (key: HeaderKey, params?: Record<string, unknown>) => string

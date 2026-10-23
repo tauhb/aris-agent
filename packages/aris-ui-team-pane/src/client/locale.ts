@@ -19,6 +19,16 @@ export const EN = {
   'status.done': 'Done',
   'status.failed': 'Stuck',
   'status.idle': 'Idle',
+  'project.title': 'Project',
+  'project.members': 'Members',
+  'project.addBot': '+ Add a bot',
+  'project.rules': 'Project rules',
+  'project.dir': 'Work folder',
+  'project.maxRounds': 'Max rounds per message',
+  'project.maxMessages': 'Max messages per turn',
+  'project.stopCmd': 'Understand "stop @bot"',
+  'project.tasks': 'Work from this project',
+  'project.board': 'Open task board ›',
 }
 
 export type PaneKey = keyof typeof EN
@@ -41,6 +51,16 @@ export const VI: Record<PaneKey, string> = {
   'status.done': 'Xong',
   'status.failed': 'Vấp',
   'status.idle': 'Rảnh',
+  'project.title': 'Dự án',
+  'project.members': 'Thành viên',
+  'project.addBot': '+ Thêm bot',
+  'project.rules': 'Luật của dự án',
+  'project.dir': 'Thư mục làm việc',
+  'project.maxRounds': 'Vòng tối đa mỗi tin',
+  'project.maxMessages': 'Tin tối đa mỗi lượt',
+  'project.stopCmd': 'Hiểu lệnh “dừng @bot”',
+  'project.tasks': 'Việc sinh ra từ dự án',
+  'project.board': 'Mở bảng việc ›',
 }
 
 export type Translate = (key: PaneKey, params?: Record<string, unknown>) => string

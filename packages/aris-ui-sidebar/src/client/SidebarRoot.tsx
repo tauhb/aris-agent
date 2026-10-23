@@ -68,18 +68,24 @@ function PanelNav({ panel, wide, props }: { panel: PanelEntry; wide: boolean; pr
 function Bot({
   member,
   lead,
+  groupLead,
   wide,
   t,
   onOpen,
 }: {
   member: TeamMember
   lead?: boolean
+  /** Trưởng nhóm của phòng ban. */
+  groupLead?: boolean
   wide: boolean
   t: Translate
   onOpen: () => void
 }) {
+  const tip = groupLead
+    ? `${member.name} · ${t('team.groupLead')} · ${member.note}`
+    : `${member.name} · ${member.note}`
   return (
-    <Tip label={`${member.name} · ${member.note}`} wide={wide}>
+    <Tip label={tip} wide={wide}>
       <BotRow
         mascot={member.id}
         name={member.name}
@@ -87,6 +93,7 @@ function Bot({
         status={member.status}
         statusLabel={t(`status.${member.status}`)}
         lead={lead}
+        badge={groupLead ? t('team.groupLead') : undefined}
         collapsed={!wide}
         onClick={onOpen}
       />
@@ -210,10 +217,28 @@ export function SidebarRoot(props: SidebarProps) {
           )}
           <Bot member={COMMANDER} lead wide={wide} t={t} onOpen={openChat} />
           {DEMO_TEAM.map((group) => (
-            <div key={group.label} style={{ display: 'contents' }}>
-              {wide && <GroupLabel>{group.label}</GroupLabel>}
+            <div key={group.id} style={{ display: 'contents' }}>
+              {wide && (
+                <GroupLabel>
+                  <button
+                    type="button"
+                    className="grp"
+                    title={t('team.openGroup', { name: group.label })}
+                    onClick={() => arisNavigate('department', { id: group.id })}
+                  >
+                    {group.label}
+                  </button>
+                </GroupLabel>
+              )}
               {group.members.map((m) => (
-                <Bot key={m.id} member={m} wide={wide} t={t} onOpen={openChat} />
+                <Bot
+                  key={m.id}
+                  member={m}
+                  groupLead={m.id === group.lead}
+                  wide={wide}
+                  t={t}
+                  onOpen={openChat}
+                />
               ))}
             </div>
           ))}

@@ -91,10 +91,26 @@ export const DEMO_ROUTINE_DRAFT = {
   catchUp: 'Chạy bù khi bật lại nếu trễ dưới 3 giờ',
 }
 
-/** 4.3 · Bảng Kanban. */
-export const DEMO_KANBAN = {
-  board: 'Kênh YouTube quý 4',
-  meta: '9 thẻ · bảng việc của dự án “Kênh YouTube Q4”',
+/** Một bảng Kanban: bảng việc của một dự án (GĐ2 đọc từ bảng việc của Team dsh). */
+export interface KanbanBoard {
+  id: string
+  project: string
+  columns: {
+    id: string
+    cards: {
+      title: string
+      bot: string
+      foot: string
+      blockedBy?: string
+      progress?: number
+      warn?: boolean
+    }[]
+  }[]
+}
+
+const YOUTUBE: KanbanBoard = {
+  id: 'kenh-youtube-q4',
+  project: 'Kênh YouTube Q4',
   columns: [
     {
       id: 'triage',
@@ -144,15 +160,40 @@ export const DEMO_KANBAN = {
         { title: 'Khảo sát giá đối thủ', bot: 'lam', foot: 'Lâm · 22/10' },
       ],
     },
-  ] as {
-    id: string
-    cards: {
-      title: string
-      bot: string
-      foot: string
-      blockedBy?: string
-      progress?: number
-      warn?: boolean
-    }[]
-  }[],
+  ],
 }
+
+const COURSE: KanbanBoard = {
+  id: 'khoa-hoc-ai',
+  project: 'Ra mắt khoá học AI',
+  columns: [
+    { id: 'triage', cards: [] },
+    {
+      id: 'ready',
+      cards: [
+        { title: 'Viết trang bán hàng', bot: 'ha', foot: 'Hạ · chờ 1 thẻ:', blockedBy: 'Đề xuất giá' },
+        { title: 'Lịch quảng bá tháng 11', bot: 'mai', foot: 'Mai · chờ 1 thẻ:', blockedBy: 'Đề xuất giá' },
+      ],
+    },
+    {
+      id: 'doing',
+      cards: [
+        { title: 'Đề xuất giá khoá học', bot: 'tin', foot: 'Tín · 8 phút', progress: 60 },
+        {
+          title: 'Nghiên cứu sâu 5 đối thủ',
+          bot: 'lam',
+          foot: 'Phòng Nghiên cứu · Lâm chủ trì · 2/5 báo cáo',
+          progress: 40,
+        },
+      ],
+    },
+    {
+      id: 'review',
+      cards: [{ title: 'Chốt giá bán', bot: 'aris', foot: 'Aris · cần anh chọn 1 trong 3 mức', warn: true }],
+    },
+    { id: 'done', cards: [{ title: 'Tìm giá khoá học của đối thủ', bot: 'lam', foot: 'Lâm · hôm nay' }] },
+  ],
+}
+
+/** 4.3 · Bảng Kanban của từng dự án. */
+export const DEMO_BOARDS: readonly KanbanBoard[] = [YOUTUBE, COURSE]

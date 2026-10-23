@@ -161,7 +161,8 @@ ${scope(`
 .a-bot.lead{border-radius:12px;padding:8px;background:var(--a-panel2)}
 .a-bot.icon{width:40px;height:40px;padding:0;justify-content:center}
 .a-bot .txt{flex:1;min-width:0;display:flex;flex-direction:column}
-.a-bot .nm{font-weight:600}
+.a-bot .nm{font-weight:600;display:flex;align-items:center;gap:6px;min-width:0}
+.a-bot .badge{font-size:10.5px;font-weight:500;color:var(--a-muted);border:1px solid var(--a-line);border-radius:999px;padding:0 6px;line-height:16px;white-space:nowrap}
 .a-bot.lead .nm{font-family:${FONTS.heading};font-size:14px}
 .a-bot .note{font-size:12px;color:var(--a-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .a-bot .note.waiting{color:var(--a-warn)}

@@ -26,6 +26,7 @@ export const ROUTES = {
   bot: { kind: 'page' },
   owner: { kind: 'page' },
   'routine-new': { kind: 'page' },
+  department: { kind: 'page' },
   'create-bot': { kind: 'dialog' },
   'create-project': { kind: 'dialog' },
   'clone-bot': { kind: 'dialog' },

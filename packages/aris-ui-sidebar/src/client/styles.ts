@@ -27,4 +27,7 @@ export const CSS = `
 .aris-sb.rail .middle{margin:0;padding:0;align-items:center}
 .aris-sb.rail .foot{align-items:center;width:100%}
 .aris-lead{display:flex;flex-direction:row;gap:8px}
+.aris-sb .a-grp .grp{all:unset;cursor:pointer;border-radius:6px;padding:1px 4px;margin-left:-4px}
+.aris-sb .a-grp .grp:hover{color:var(--a-ink);background:var(--a-hover)}
+.aris-sb .a-grp .grp:focus-visible{outline:2px solid var(--a-accent);outline-offset:1px}
 `

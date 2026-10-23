@@ -3,7 +3,7 @@
  * `@deepseek-ai/dsh-client-ui-conversation` khai báo; không thay thế gói nào của dsh.
  */
 import { mountKitCss } from '@aris/ui-kit/react'
-import { NewSessionButton, BotIdentity, SessionSwitcher } from './Header.js'
+import { Leading, NewSessionButton, SessionSwitcher } from './Header.js'
 import { EN, NS, VI } from './locale.js'
 import { CSS } from './styles.js'
 
@@ -17,9 +17,10 @@ interface ClientContext {
   }
   locale: { register(ns: string, locale: string, dict: Record<string, string>): () => void }
   shortcuts: { catalog: unknown }
+  sidebarRight: { mounted: unknown }
 }
 
-export const inject = ['slots', 'uiWorkspace', 'locale', 'shortcuts']
+export const inject = ['slots', 'uiWorkspace', 'locale', 'shortcuts', 'sidebarRight']
 
 function injectStyle(): () => void {
   const style = document.createElement('style')
@@ -44,7 +45,15 @@ export function apply(ctx: ClientContext): void {
   })
 
   ctx.slots.inject('conversation.header.leading', () =>
-    ctx.slots.register({ name: 'conversation.header.leading', locale: NS }, BotIdentity),
+    ctx.slots.register(
+      {
+        name: 'conversation.header.leading',
+        locale: NS,
+        // Phiên đang hiện ở vùng chính, để biết phiên thuộc dự án nào.
+        inject: () => ({ hooks: { mounted: ctx.sidebarRight.mounted } }),
+      },
+      Leading,
+    ),
   )
   ctx.slots.inject('conversation.session.header.actions', () =>
     ctx.slots.register(

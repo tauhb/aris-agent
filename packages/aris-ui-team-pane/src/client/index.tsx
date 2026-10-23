@@ -17,9 +17,10 @@ interface ClientContext {
   locale: { register(ns: string, locale: string, dict: Record<string, string>): () => void }
   layout: { selectPanel(id: string | null): void }
   sidebarRightTabs: { guide(): readonly unknown[]; subscribe(listener: () => void): () => void }
+  sidebarRight: { mounted: unknown }
 }
 
-export const inject = ['slots', 'locale', 'layout', 'sidebarRightTabs']
+export const inject = ['slots', 'locale', 'layout', 'sidebarRightTabs', 'sidebarRight']
 
 /** Trang bản đồ đội (tạm là trang thử của `@aris/web-spike`; G5 thay bằng `@aris/ui-team-map`). */
 const MAP_PANEL = 'aris-map'
@@ -51,7 +52,8 @@ export function apply(ctx: ClientContext): void {
         // Luôn nhận: trang bắt đầu của cột phải là "Đội bot lúc này".
         select: () => ({}),
         inject: () => ({
-          hooks: { guideEntries },
+          // `mounted`: phiên đang hiện, để biết phiên thuộc dự án nào (màn 1.4).
+          hooks: { guideEntries, mounted: ctx.sidebarRight.mounted },
           openMap: () => ctx.layout.selectPanel(MAP_PANEL),
         }),
       },

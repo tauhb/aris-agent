@@ -12,4 +12,13 @@ export const CSS = `
 .aris-team .act .a-glyph{margin-top:2px}
 .aris-team .act .txt{min-width:0}
 .aris-team .more{display:flex;flex-direction:column;gap:1px;border-top:1px solid var(--a-line);padding-top:6px}
+.aris-project .act{align-items:center}
+.aris-project .act .txt{flex:1}
+.aris-project .act .state{font-size:12px;white-space:nowrap}
+.aris-project .list>.a-btn{align-self:flex-start;margin-top:4px}
+.aris-project .sect{display:flex;flex-direction:column;border-top:1px solid var(--a-line);padding-top:6px}
+.aris-project .sect>.a-btn{align-self:flex-start;margin-top:4px}
+.aris-project .kv{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;font-size:13px}
+.aris-project .kv .path{max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.aris-project .kv input{width:16px;height:16px;accent-color:var(--a-accent)}
 `

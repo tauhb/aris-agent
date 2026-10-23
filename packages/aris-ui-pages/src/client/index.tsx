@@ -31,6 +31,7 @@ import { BotProfile } from './team/Bot.js'
 import { CloneBot } from './team/CloneBot.js'
 import { CreateBot } from './team/CreateBot.js'
 import { CreateProject, type ProjectActions } from './team/CreateProject.js'
+import { Department } from './team/Department.js'
 import { TeamMap } from './team/Map.js'
 import { OwnerProfile } from './team/Owner.js'
 import { Search } from './team/Search.js'
@@ -66,6 +67,7 @@ const PAGES: Partial<Record<RouteId, ComponentType<PageProps>>> = {
   map: TeamMap,
   bot: BotProfile,
   owner: OwnerProfile,
+  department: Department,
   routine: Routine,
   'routine-new': RoutineNew,
   kanban: Kanban,

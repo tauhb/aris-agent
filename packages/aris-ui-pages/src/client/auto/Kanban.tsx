@@ -1,16 +1,78 @@
-/** 4.3 · Kanban: các cột theo trạng thái thẻ, bot nhận thẻ, thẻ bị chặn, tiến độ, thẻ chờ duyệt. */
-import { Button, PageShell, Segmented, branchColor } from '@aris/ui-kit/react'
-import { useState } from 'react'
+/**
+ * 4.3 · Kanban: mỗi dự án một bảng (quyết định 11), chọn ở tiêu đề; các cột theo
+ * trạng thái thẻ, bot nhận thẻ, thẻ bị chặn, tiến độ, thẻ chờ duyệt.
+ */
+import {
+  Button,
+  ChevronDownIcon,
+  Menu,
+  MenuItem,
+  PageShell,
+  Segmented,
+  branchColor,
+  useDismiss,
+} from '@aris/ui-kit/react'
+import { useCallback, useRef, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Bot } from '../ui.js'
-import { DEMO_KANBAN as K } from './demo.js'
+import { DEMO_BOARDS } from './demo.js'
 
-export function Kanban({ t }: PageProps) {
+function BoardPicker({
+  t,
+  current,
+  onPick,
+}: {
+  t: PageProps['t']
+  current: string
+  onPick: (id: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const root = useRef<HTMLSpanElement>(null)
+  const close = useCallback(() => setOpen(false), [])
+  useDismiss(root, open, close)
+  const board = DEMO_BOARDS.find((b) => b.id === current)!
+  return (
+    <span className="a-pop" ref={root}>
+      <button
+        type="button"
+        className="ap-picker"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={t('kb.pick')}
+        onClick={() => setOpen(!open)}
+      >
+        {board.project}
+        <ChevronDownIcon />
+      </button>
+      {open && (
+        <Menu label={t('kb.pick')} role="listbox" width={260}>
+          {DEMO_BOARDS.map((b) => (
+            <MenuItem
+              key={b.id}
+              role="option"
+              selected={b.id === current}
+              onSelect={() => {
+                setOpen(false)
+                onPick(b.id)
+              }}
+            >
+              {b.project}
+            </MenuItem>
+          ))}
+        </Menu>
+      )}
+    </span>
+  )
+}
+
+export function Kanban({ t, nav, params }: PageProps) {
   const [mode, setMode] = useState<'auto' | 'manual'>('auto')
+  const K = DEMO_BOARDS.find((b) => b.id === params.project) ?? DEMO_BOARDS[0]!
+  const count = K.columns.reduce((n, c) => n + c.cards.length, 0)
   return (
     <PageShell
-      title={`${K.board} ▾`}
-      subtitle={K.meta}
+      title={<BoardPicker t={t} current={K.id} onPick={(id) => nav.go('kanban', { project: id })} />}
+      subtitle={t('kb.meta', { n: count, project: K.project })}
       actions={
         <>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13 }}>

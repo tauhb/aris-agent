@@ -15,8 +15,12 @@ export interface TeamMember {
   status: BotStatus
 }
 
+/** Phòng ban (quyết định 12): nhóm bền của Đội hình, có trưởng nhóm. */
 export interface TeamGroup {
+  id: string
   label: string
+  /** Mã bot trưởng nhóm. */
+  lead: string
   members: TeamMember[]
 }
 
@@ -30,20 +34,26 @@ export const COMMANDER: TeamMember = {
 
 export const DEMO_TEAM: TeamGroup[] = [
   {
+    id: 'research',
     label: 'Nghiên cứu',
+    lead: 'lam',
     members: [
       { id: 'lam', name: 'Lâm', role: 'Nghiên cứu', note: 'đang đọc 12/20 nguồn', status: 'working' },
     ],
   },
   {
+    id: 'ops',
     label: 'Vận hành',
+    lead: 'mai',
     members: [
       { id: 'mai', name: 'Mai', role: 'Thư ký', note: 'đợi anh cho gửi thư', status: 'waiting' },
       { id: 'tin', name: 'Tín', role: 'Tài chính', note: 'kiểm số dư lúc 5 giờ chiều', status: 'idle' },
     ],
   },
   {
+    id: 'creative',
     label: 'Sáng tạo · Kỹ thuật',
+    lead: 'ha',
     members: [
       { id: 'ha', name: 'Hạ', role: 'Nội dung', note: 'xong bài sáng nay', status: 'done' },
       { id: 'dev', name: 'Dev', role: 'Lập trình', note: 'rảnh', status: 'idle' },
@@ -63,3 +73,25 @@ export const DEMO_ACTIVITY: readonly { id: string; status: BotStatus; text: stri
   { id: 'mai', status: 'waiting', text: 'soạn xong thư, đợi anh', when: '3 phút' },
   { id: 'ha', status: 'done', text: 'học thêm 1 skill · lên cấp 2', when: '1 giờ' },
 ]
+
+/**
+ * Cuộc chat chung của dự án (màn 1.4): trạng thái thành viên, luật, việc sinh ra từ
+ * dự án (mẫu; giai đoạn 2 lấy từ Team của dsh: danh sách thành viên và bảng việc).
+ */
+export const DEMO_PROJECT_ROOM: {
+  members: readonly { id: string; status: BotStatus; state: string }[]
+  rules: { maxRounds: number; maxMessages: number; stopCommand: boolean }
+  tasks: readonly { text: string; status: BotStatus; state: string; bot: string }[]
+} = {
+  members: [
+    { id: 'aris', status: 'done', state: 'đã nói' },
+    { id: 'lam', status: 'working', state: 'đang nghĩ' },
+    { id: 'tin', status: 'waiting', state: 'chờ Lâm' },
+  ],
+  rules: { maxRounds: 3, maxMessages: 10, stopCommand: true },
+  tasks: [
+    { text: 'Kịch bản 8 video', status: 'working', state: 'đang làm', bot: 'lam' },
+    { text: 'Bảng ngân sách Q4', status: 'waiting', state: 'chờ Lâm', bot: 'tin' },
+    { text: 'Chốt mục tiêu', status: 'waiting', state: 'chờ anh', bot: 'aris' },
+  ],
+}

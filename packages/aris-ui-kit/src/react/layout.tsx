@@ -54,12 +54,14 @@ export interface BotRowProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   statusLabel: string
   /** Commander: thẻ nổi, linh vật lớn hơn, không hiện glyph trạng thái. */
   lead?: boolean | undefined
+  /** Nhãn nhỏ cạnh tên (ví dụ "trưởng nhóm"). */
+  badge?: ReactNode | undefined
   collapsed?: boolean | undefined
 }
 
 /** Một bot trong đội hình: linh vật, tên, việc đang làm, glyph trạng thái. */
 export const BotRow = forwardRef<HTMLButtonElement, BotRowProps>(function BotRow(
-  { mascot, name, note, status, statusLabel, lead, collapsed, className, ...rest },
+  { mascot, name, note, status, statusLabel, lead, badge, collapsed, className, ...rest },
   ref,
 ) {
   return (
@@ -74,7 +76,10 @@ export const BotRow = forwardRef<HTMLButtonElement, BotRowProps>(function BotRow
       {!collapsed && (
         <>
           <span className="txt">
-            <span className="nm">{name}</span>
+            <span className="nm">
+              {name}
+              {badge && <span className="badge">{badge}</span>}
+            </span>
             <span className={cx('note', status === 'waiting' && 'waiting')}>{note}</span>
           </span>
           {!lead && <StatusGlyph status={status} label={statusLabel} />}
