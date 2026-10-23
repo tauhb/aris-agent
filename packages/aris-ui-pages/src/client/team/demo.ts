@@ -240,41 +240,6 @@ export const DEMO_PROJECT = {
   goal: 'Lên kế hoạch ra mắt khoá học AI trong tháng 11: nội dung, giá, lịch quảng bá.',
 }
 
-/** 1.6 · Kết quả tìm trong mọi phiên. GĐ1. */
-export const DEMO_SEARCH = {
-  query: 'đối thủ',
-  results: [
-    {
-      bot: 'aris',
-      title: 'Đối thủ và lịch họp',
-      where: 'Aris',
-      when: 'hôm nay',
-      snip: ['Tóm tắt động thái của 3 ', 'đối thủ', ' tuần này, rồi xếp lịch họp thứ 5…'],
-    },
-    {
-      bot: 'lam',
-      title: 'Nghiên cứu 3 đối thủ',
-      where: 'Lâm',
-      when: 'hôm nay',
-      snip: ['…kênh A tăng 18% lượt xem nhờ video ngắn; ', 'đối thủ', ' B giảm giá khoá học…'],
-    },
-    {
-      bot: 'tin',
-      title: 'Mục tiêu quý 4',
-      where: 'Dự án · Kế hoạch quý 4',
-      when: '21/10',
-      snip: ['Tín: so với ', 'đối thủ', ', ngân sách quảng cáo của mình thấp hơn 30%…'],
-    },
-    {
-      bot: 'aris',
-      title: 'Giá khoá học AI',
-      where: 'Aris',
-      when: '15/10',
-      snip: ['Mức giá của 4 ', 'đối thủ', ' nằm trong khoảng 1,2–2,5 triệu…'],
-    },
-  ] as { bot: string; title: string; where: string; when: string; snip: [string, string, string] }[],
-}
-
 /** Phòng ban (quyết định 12): chính sách chung và việc lớn đang nhận. GĐ2. */
 export const DEMO_DEPARTMENTS: Record<
   string,

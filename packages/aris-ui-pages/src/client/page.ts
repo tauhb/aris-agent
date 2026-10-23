@@ -9,6 +9,8 @@ export interface PageNav {
   go(to: RouteId, params?: Params): void
   /** Mở một trang của dsh (ví dụ `plugins`, `schedules`) hoặc về chat (`null`). */
   openPanel(id: string | null): void
+  /** Mở một phiên chat (đóng hộp thoại đang mở). */
+  openSession(sessionId: string): void
   /** Đóng hộp thoại aris đang mở. */
   close(): void
 }

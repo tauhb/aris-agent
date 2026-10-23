@@ -76,7 +76,11 @@ interface ClientContext {
 interface Services {
   layout: { selectPanel(id: string | null): void }
   workspaces: { create(input: { path: string }): Promise<{ workspaceId: string }> }
-  uiWorkspace: { pickDirectory(): Promise<string | null>; openWorkspace(workspaceId: string): Promise<void> }
+  uiWorkspace: {
+    pickDirectory(): Promise<string | null>
+    openWorkspace(workspaceId: string): Promise<void>
+    openSession(sessionId: string): void
+  }
   configForms: { get(namespace: string): ConfigFormLike }
   'remote.session': { modelCatalog(): Promise<Remote<{ groups: readonly ModelGroup[] }>> }
   'remote.llm': {
@@ -184,6 +188,10 @@ export function apply(ctx: ClientContext): void {
       }
     },
     openPanel: (id) => service('layout').selectPanel(id),
+    openSession(sessionId) {
+      store.set({ ...store.getSnapshot(), dialog: null })
+      service('uiWorkspace').openSession(sessionId)
+    },
     close: () => store.set({ ...store.getSnapshot(), dialog: null }),
   }
   ctx.effect(

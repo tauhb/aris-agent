@@ -7,3 +7,14 @@
       name: '@aris/memory'
     - id: aris-providers
       name: '@aris/providers'
+    - id: aris-recall
+      name: '@aris/recall'
+
+# Tìm lại phiên cũ (aris-recall, hộp tìm trong mọi phiên, ô tìm ⌘K của dsh) cần chỉ mục
+# toàn văn của dsh. dsh-base mount nó nhưng tắt tìm nội dung (`openAt: never`); lớp aris
+# bật lên, mở khi tìm lần đầu cho khởi động nhẹ, và lưu bền để khỏi dựng lại mỗi lần chạy.
+# Chỉ mục là dữ liệu suy ra từ log phiên: xoá tệp thì dsh dựng lại.
+- id: session-query-sqlite
+  config:
+    path: !!js dshHomePath('session-search.sqlite')
+    openAt: first-search
