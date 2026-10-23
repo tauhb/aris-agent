@@ -17,6 +17,11 @@ import {
   type Params,
   type RouteId,
 } from './routes.js'
+import { Approvals } from './mind/Approvals.js'
+import { Memory } from './mind/Memory.js'
+import { Runs } from './mind/Runs.js'
+import { Skill } from './mind/Skill.js'
+import { Skills } from './mind/Skills.js'
 import { SettingsPage } from './settings/SettingsPage.js'
 import { CSS } from './styles.js'
 
@@ -39,6 +44,11 @@ export const inject = ['slots', 'locale', 'layout', 'shortcuts']
 /** Trang đã dựng; trang chưa có ở đây thì chưa đăng ký. */
 const PAGES: Partial<Record<RouteId, ComponentType<PageProps>>> = {
   settings: SettingsPage,
+  memory: Memory,
+  skills: Skills,
+  skill: Skill,
+  approvals: Approvals,
+  runs: Runs,
 }
 
 const EMPTY: Params = {}

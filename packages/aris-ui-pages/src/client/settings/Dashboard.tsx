@@ -17,7 +17,7 @@ export function Dashboard({ t, nav }: PageProps) {
       }
     >
       <div className="ap-stats">
-        <div className="ap-stat">
+        <div className="ap-stat ap-click" role="link" tabIndex={0} onClick={() => nav.go('runs')}>
           <div className="ap-k">{t('dash.bots')}</div>
           <div className="ap-v">
             {s.bots} <small>{t('dash.working', { n: s.working })}</small>
@@ -37,7 +37,7 @@ export function Dashboard({ t, nav }: PageProps) {
           <div className="ap-k">{t('dash.memory')}</div>
           <div className="ap-v">{s.memory}</div>
         </div>
-        <div className="ap-stat">
+        <div className="ap-stat ap-click" role="link" tabIndex={0} onClick={() => nav.go('approvals')}>
           <div className="ap-k">{t('dash.waiting')}</div>
           <div className="ap-v" style={{ color: 'var(--a-warn)' }}>
             {s.waiting}

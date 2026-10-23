@@ -126,3 +126,11 @@ export function GearIcon({ size, width = 1.75 }: IconProps) {
     </Icon>
   )
 }
+
+export function PinIcon({ size = 13, width = 1.75 }: IconProps) {
+  return (
+    <Icon size={size}>
+      <path d="M9 4h6l-1 6 3 3H7l3-3zM12 13v7" {...stroke} strokeWidth={width} />
+    </Icon>
+  )
+}
