@@ -2,7 +2,7 @@
  * 2.2 · Hồ sơ bot (đặc tả: docs/specs/aris-bots.md): hồ sơ và tính cách sửa thật, model riêng,
  * mở chat với bot. Skill, quyền, kênh riêng và tóm tắt hoạt động còn là mẫu tới các bước sau.
  */
-import { MASCOTS, getMascot } from '@aris/ui-kit'
+import { getMascot } from '@aris/ui-kit'
 import {
   Button,
   Card,
@@ -20,6 +20,7 @@ import { useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Box } from '../ui.js'
 import { DEMO_PROFILE as P } from './demo.js'
+import { MascotPicker } from './MascotPicker.js'
 
 type Tab = 'soul' | 'model' | 'skills' | 'perms'
 type T = PageProps['t']
@@ -146,26 +147,7 @@ function ProfileForm({
         <div className="ap-lb" style={{ paddingBottom: 6, color: 'var(--a-ink)' }}>
           {t('bot.mascot')}
         </div>
-        <div
-          role="radiogroup"
-          aria-label={t('bot.mascot')}
-          className="ap-mascots"
-          style={{ flexWrap: 'wrap' }}
-        >
-          {MASCOTS.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              role="radio"
-              aria-checked={form.mascot === m.id}
-              aria-label={m.shape}
-              title={`${m.shape} · ${m.role}`}
-              onClick={() => set({ mascot: m.id })}
-            >
-              <Mascot id={m.id} size={26} />
-            </button>
-          ))}
-        </div>
+        <MascotPicker t={t} value={form.mascot} onChange={(mascot) => set({ mascot })} />
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         {bot.kind !== 'commander' && (
