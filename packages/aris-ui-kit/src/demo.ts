@@ -8,7 +8,9 @@ import type { BotStatus } from './status.js'
 export interface TeamMember {
   id: string
   name: string
-  /** Dòng phụ: việc đang làm hoặc vai. */
+  /** Vai trong đội, hiện khi rê chuột trên sơ đồ đội. */
+  role: string
+  /** Dòng phụ: việc đang làm. */
   note: string
   status: BotStatus
 }
@@ -21,6 +23,7 @@ export interface TeamGroup {
 export const COMMANDER: TeamMember = {
   id: 'aris',
   name: 'Aris',
+  role: 'Chỉ huy',
   note: 'Chỉ huy · điều phối 2 việc',
   status: 'working',
 }
@@ -28,20 +31,22 @@ export const COMMANDER: TeamMember = {
 export const DEMO_TEAM: TeamGroup[] = [
   {
     label: 'Nghiên cứu',
-    members: [{ id: 'lam', name: 'Lâm', note: 'đang đọc 12/20 nguồn', status: 'working' }],
+    members: [
+      { id: 'lam', name: 'Lâm', role: 'Nghiên cứu', note: 'đang đọc 12/20 nguồn', status: 'working' },
+    ],
   },
   {
     label: 'Vận hành',
     members: [
-      { id: 'mai', name: 'Mai', note: 'đợi anh cho gửi thư', status: 'waiting' },
-      { id: 'tin', name: 'Tín', note: 'kiểm số dư lúc 5 giờ chiều', status: 'idle' },
+      { id: 'mai', name: 'Mai', role: 'Thư ký', note: 'đợi anh cho gửi thư', status: 'waiting' },
+      { id: 'tin', name: 'Tín', role: 'Tài chính', note: 'kiểm số dư lúc 5 giờ chiều', status: 'idle' },
     ],
   },
   {
     label: 'Sáng tạo · Kỹ thuật',
     members: [
-      { id: 'ha', name: 'Hạ', note: 'xong bài sáng nay', status: 'done' },
-      { id: 'dev', name: 'Dev', note: 'rảnh', status: 'idle' },
+      { id: 'ha', name: 'Hạ', role: 'Nội dung', note: 'xong bài sáng nay', status: 'done' },
+      { id: 'dev', name: 'Dev', role: 'Lập trình', note: 'rảnh', status: 'idle' },
     ],
   },
 ]

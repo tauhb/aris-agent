@@ -180,6 +180,8 @@ ${scope(`
 .a-approve>.a-step{color:var(--a-warn);font-weight:600}
 .a-approve>.acts{display:flex;gap:6px;flex-wrap:wrap}
 
+.a-orbit{display:block;width:100%;touch-action:none}
+
 .a-page{display:flex;flex-direction:column;min-height:100%;min-width:0;background:var(--a-bg);flex:1}
 .a-page-head{display:flex;align-items:center;gap:12px;padding:12px 24px;border-bottom:1px solid var(--a-line)}
 .a-page-head>.grow{display:flex;flex-direction:column;min-width:0}
