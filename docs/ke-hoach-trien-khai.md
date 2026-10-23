@@ -103,6 +103,8 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 ## Giai đoạn 1 · Một bot dùng hằng ngày (tuần 4–5)
 
+> **Bước 1 xong 23/10 — ký ức (`@aris/memory`)**: đặc tả [docs/specs/aris-memory.md](specs/aris-memory.md). Hai cuốn lõi có trần (ghi chú của bot 2.200 ký tự, hồ sơ chủ nhân 1.375) nạp vào mọi lượt qua ngữ cảnh động của dsh; lưu trữ tìm không dấu; tool `memory` (save/update/forget/search); bản ghi `plugin:aris/memory-op` trong log phiên; lưu bền ở storage domain `aris_memory`; trang 3.1 đọc/sửa qua `/api/aris/memory` (dsh kiểm cookie, chỉ chủ nhân). Chạy thử thật với DeepSeek: "nhớ là…" được lưu đúng cuốn và loại; phiên mới trả lời đúng mà không cần gọi tool; sửa ký ức từ trang thì lượt kế tiếp trong cùng phiên đã dùng bản mới, lượt đó trúng bộ nhớ đệm 81%. Chưa làm (để sau trong GĐ1): tự nhắc lưu khi lượt dài, lưu trước khi nén ngữ cảnh.
+
 **Mục tiêu**: Aris sống trên Telegram của anh, nhớ anh, đổi được model.
 
 **Việc cần làm**

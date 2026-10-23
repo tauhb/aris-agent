@@ -1,10 +1,23 @@
-/** 3.1 · Ký ức của một bot: dung lượng ghi chú và hồ sơ chủ nhân, ba loại ký ức (lõi, lưu trữ, chờ duyệt). */
+/**
+ * 3.1 · Ký ức của một bot: dung lượng ghi chú và hồ sơ chủ nhân, ba loại ký ức (lõi,
+ * lưu trữ, chờ duyệt). Dữ liệu thật từ `@aris/memory` qua `/api/aris/memory`.
+ */
 import { Button, Card, CloseIcon, IconButton, PageShell, Segmented, Tabs, Tag } from '@aris/ui-kit/react'
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import type { PageProps } from '../page.js'
 import { Box } from '../ui.js'
 import { DEMO_MEMORY as M } from './demo.js'
+import { useMemory, type MemoryItem, type MemoryOp } from './memory-api.js'
 import { BOT_NAMES, botName } from './names.js'
+
+/** Bỏ dấu để tìm ("hop" khớp "Họp"). */
+const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase()
+
+const two = (n: number) => String(n).padStart(2, '0')
+const when = (iso: string) => {
+  const d = new Date(iso)
+  return `${two(d.getDate())}/${two(d.getMonth() + 1)} ${two(d.getHours())}:${two(d.getMinutes())}`
+}
 
 function Item({
   tag,
@@ -35,15 +48,14 @@ function Meter({
   title,
   amount,
   pct,
-  warn,
   note,
 }: {
   title: string
   amount: string
   pct: number
-  warn?: boolean
-  note?: string
+  note?: string | undefined
 }) {
+  const warn = pct >= 80
   return (
     <Box style={{ padding: '12px 14px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
@@ -53,9 +65,11 @@ function Meter({
         </span>
       </div>
       <div className="ap-meter">
-        <span style={{ width: `${pct}%`, background: warn ? 'var(--a-warn)' : 'var(--a-accent)' }} />
+        <span
+          style={{ width: `${Math.min(100, pct)}%`, background: warn ? 'var(--a-warn)' : 'var(--a-accent)' }}
+        />
       </div>
-      {note && (
+      {warn && note && (
         <div className="a-muted" style={{ fontSize: 12, marginTop: 6 }}>
           {note}
         </div>
@@ -64,11 +78,86 @@ function Meter({
   )
 }
 
-export function Memory({ t, nav, params }: PageProps) {
+/** Một ký ức có thể sửa tại chỗ. */
+function Editable({
+  m,
+  t,
+  name,
+  act,
+  children,
+}: {
+  m: MemoryItem
+  t: PageProps['t']
+  name: string
+  act: (op: MemoryOp, id: string, text?: string) => Promise<boolean>
+  children?: ReactNode
+}) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const source = (
+    <>
+      {t(`mem.trust.${m.trust}`, { name })} · {when(m.source.at)} · {t(`mem.book.${m.book}`)}
+      {m.uses > 0 && <> · {t('mem.uses', { n: m.uses })}</>}
+    </>
+  )
+  if (draft !== null)
+    return (
+      <Item
+        tag={t(`mem.kind.${m.kind}`)}
+        text={
+          <textarea
+            className="a-inp"
+            rows={2}
+            value={draft}
+            aria-label={t('mem.edit')}
+            onChange={(e) => setDraft(e.target.value)}
+            style={{ width: '100%', resize: 'vertical' }}
+          />
+        }
+        source={source}
+      >
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={async () => {
+            if (await act('update', m.id, draft)) setDraft(null)
+          }}
+        >
+          {t('mem.save')}
+        </Button>
+        <Button size="sm" onClick={() => setDraft(null)}>
+          {t('mem.cancel')}
+        </Button>
+      </Item>
+    )
+  return (
+    <Item tag={t(`mem.kind.${m.kind}`)} text={m.text} source={source}>
+      <IconButton label={t('mem.edit')} onClick={() => setDraft(m.text)}>
+        ✎
+      </IconButton>
+      {children}
+      <IconButton label={t('mem.delete')} onClick={() => void act('forget', m.id)}>
+        <CloseIcon size={16} />
+      </IconButton>
+    </Item>
+  )
+}
+
+export function Memory({ t, params }: PageProps) {
   const [bot, setBot] = useState<string>(params.bot && params.bot in BOT_NAMES ? params.bot : 'aris')
   const [tab, setTab] = useState<'core' | 'archive' | 'pending'>('core')
+  const [query, setQuery] = useState('')
+  const { data, error, loading, act } = useMemory(bot)
   const name = botName(bot)
-  const chars = (used: string, cap: string) => t('mem.chars', { used, cap })
+  const archive = useMemo(() => {
+    const q = fold(query.trim())
+    return (data?.archive ?? []).filter((m) => !q || fold(m.text).includes(q))
+  }, [data, query])
+  const usage = (u: { used: number; cap: number }) => ({
+    amount: t('mem.chars', { used: u.used.toLocaleString('vi-VN'), cap: u.cap.toLocaleString('vi-VN') }),
+    pct: Math.round((u.used / u.cap) * 100),
+  })
+  const empty = (key: string) => <div className="ap-pad a-muted">{t(key, { name })}</div>
+
   return (
     <PageShell
       title={t('mem.title', { name })}
@@ -83,102 +172,86 @@ export function Memory({ t, nav, params }: PageProps) {
       }
     >
       <div style={{ maxWidth: 1000, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div className="ap-grid-2">
-          <Meter
-            title={t('mem.notes', { name })}
-            amount={chars(M.notes.used, M.notes.cap)}
-            pct={M.notes.pct}
-          />
-          <Meter
-            title={t('mem.owner')}
-            amount={chars(M.owner.used, M.owner.cap)}
-            pct={M.owner.pct}
-            warn
-            note={t('mem.nearlyFull', { name })}
-          />
-        </div>
+        {error && (
+          <div className="ap-alert" role="alert">
+            {t('mem.error', { error })}
+          </div>
+        )}
+        {data && (
+          <div className="ap-grid-2">
+            <Meter
+              title={t('mem.notes', { name })}
+              {...usage(data.usage.notes)}
+              note={t('mem.nearlyFull', { name })}
+            />
+            <Meter title={t('mem.owner')} {...usage(data.usage.owner)} note={t('mem.nearlyFull', { name })} />
+          </div>
+        )}
         <Tabs
           label={t('mem.kinds')}
           value={tab}
           onChange={setTab}
           tabs={[
-            { value: 'core', label: t('mem.core', { n: M.counts.core }) },
-            { value: 'archive', label: t('mem.archive', { n: M.counts.archive }) },
-            { value: 'pending', label: t('mem.pending', { n: M.counts.pending }) },
+            { value: 'core', label: t('mem.core', { n: data?.core.length ?? 0 }) },
+            { value: 'archive', label: t('mem.archive', { n: data?.archive.length ?? 0 }) },
+            { value: 'pending', label: t('mem.pending', { n: data?.pending.length ?? 0 }) },
           ]}
         />
-        {tab === 'core' && (
+        {loading && !data && <div className="a-muted">{t('mem.loading')}</div>}
+        {data && tab === 'core' && (
           <Card>
-            {M.core.map((m) => (
-              <Item
-                key={m.text}
-                tag={m.tag}
-                text={m.text}
-                source={
-                  <>
-                    {m.source}
-                    {m.chat && (
-                      <>
-                        {' · '}
-                        <a className="ap-link" style={{ fontSize: 12 }} onClick={() => nav.openPanel(null)}>
-                          {t('mem.openChat')}
-                        </a>
-                      </>
-                    )}
-                  </>
-                }
-              >
-                <IconButton label={t('mem.edit')}>✎</IconButton>
-                <IconButton label={t('mem.demote')}>↓</IconButton>
-                <IconButton label={t('mem.delete')}>
-                  <CloseIcon size={16} />
+            {data.core.length === 0 && empty('mem.empty.core')}
+            {data.core.map((m) => (
+              <Editable key={m.id} m={m} t={t} name={name} act={act}>
+                <IconButton label={t('mem.demote')} onClick={() => void act('demote', m.id)}>
+                  ↓
                 </IconButton>
-              </Item>
+              </Editable>
             ))}
           </Card>
         )}
-        {tab === 'archive' && (
+        {data && tab === 'archive' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <label className="ap-search" style={{ margin: 0, padding: '8px 12px', borderRadius: 10 }}>
               ⌕
               <input
                 type="search"
-                aria-label={t('mem.search', { n: M.counts.archive })}
-                placeholder={t('mem.search', { n: M.counts.archive })}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label={t('mem.search', { n: data.archive.length })}
+                placeholder={t('mem.search', { n: data.archive.length })}
               />
             </label>
             <Card>
-              {M.archive.map((m) => (
-                <Item
-                  key={m.text}
-                  tag={m.tag}
-                  text={m.text}
-                  source={
-                    <>
-                      {m.source}
-                      {m.promote && (
-                        <>
-                          {' · '}
-                          <b style={{ color: 'var(--a-accent)' }}>{t('mem.suggestPromote')}</b>
-                        </>
-                      )}
-                    </>
-                  }
-                >
-                  {m.promote && <Button size="sm">{t('mem.promote')}</Button>}
-                </Item>
+              {archive.length === 0 && empty('mem.empty.archive')}
+              {archive.map((m) => (
+                <Editable key={m.id} m={m} t={t} name={name} act={act}>
+                  {m.trust !== 'external' && (
+                    <Button size="sm" onClick={() => void act('promote', m.id)}>
+                      {t('mem.promote')}
+                    </Button>
+                  )}
+                </Editable>
               ))}
             </Card>
           </div>
         )}
-        {tab === 'pending' && (
+        {data && tab === 'pending' && (
           <Card>
-            {M.pending.map((m) => (
-              <Item key={m.text} tag={m.tag} text={m.text} source={m.source}>
-                <Button variant="primary" size="sm">
+            {data.pending.length === 0 && empty('mem.empty.pending')}
+            {data.pending.map((m) => (
+              <Item
+                key={m.id}
+                tag={t(`mem.kind.${m.kind}`)}
+                text={m.text}
+                source={`${t(`mem.trust.${m.trust}`, { name })} · ${when(m.source.at)}`}
+              >
+                <Button variant="primary" size="sm" onClick={() => void act('approve', m.id)}>
                   {t('mem.save')}
                 </Button>
-                <Button size="sm">{t('mem.discard')}</Button>
+                <Button size="sm" onClick={() => void act('discard', m.id)}>
+                  {t('mem.discard')}
+                </Button>
               </Item>
             ))}
           </Card>

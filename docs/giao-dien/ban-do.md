@@ -54,7 +54,7 @@ Trạng thái: ✅ đã làm · ◐ làm một phần · ○ chưa. "Dữ liệu
 
 | Màn | Vùng của dsh | Cách | Gói aris | Trạng thái | Dữ liệu |
 |---|---|---|---|---|---|
-| 3.1 Ký ức | — | P trang | `@aris/ui-pages` ✅ | ✅ G5 vỏ | GĐ1 |
+| 3.1 Ký ức | — | P trang; đọc/sửa qua `/api/aris/memory` của `@aris/memory` | `@aris/ui-pages` ✅ | ✅ dữ liệu thật (GĐ1 bước 1) | ✅ |
 | 3.2 Thư viện skill · 3.3 Chi tiết skill | `ui-skill` (tham chiếu skill trong chat) | P trang | `@aris/ui-pages` ✅ | ✅ G5 vỏ | GĐ3 |
 | 3.4 Hộp duyệt | `ui-approval` (duyệt ngay trong ô nhập) | P trang + giữ T cho duyệt trong ô nhập | `@aris/ui-pages` ✅ | ✅ G5 vỏ | GĐ3 |
 | 3.5 Việc đang chạy | `ui-jobs`, `ui-goal` | P trang | `@aris/ui-pages` ✅ | ✅ G5 vỏ | GĐ3 |

@@ -17,6 +17,7 @@
     }
   },
   "dependencies": {
-    "@aris/hello": "workspace:*"
+    "@aris/hello": "workspace:*",
+    "@aris/memory": "workspace:*"
   }
 }

@@ -3,3 +3,5 @@
 - insert:
     - id: aris-hello
       name: '@aris/hello'
+    - id: aris-memory
+      name: '@aris/memory'

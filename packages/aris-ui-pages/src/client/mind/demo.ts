@@ -3,70 +3,9 @@
  * nên để nguyên tiếng Việt như canvas; mỗi khối ghi giai đoạn nối dữ liệu thật.
  */
 
-/** 3.1 · GĐ1 (kho ký ức của aris). */
+/** 3.1 · Bot có trang ký ức. Ký ức là dữ liệu thật (`@aris/memory`); danh sách bot thật ở GĐ2. */
 export const DEMO_MEMORY = {
   bots: ['aris', 'mai', 'lam', 'tin', 'dev'],
-  notes: { used: '1.408', cap: '2.200', pct: 64 },
-  owner: { used: '1.210', cap: '1.375', pct: 88 },
-  counts: { core: 14, archive: 236, pending: 2 },
-  core: [
-    {
-      tag: 'sở thích',
-      text: 'Họp team marketing ưu tiên chiều thứ 5',
-      source: 'anh nói · hôm nay 10:43',
-      chat: true,
-    },
-    {
-      tag: 'môi trường',
-      text: 'Tài liệu dự án nằm trong Google Drive thư mục “Kinh doanh 2026”',
-      source: 'anh nói · 12/10',
-      chat: false,
-    },
-    {
-      tag: 'quy ước',
-      text: 'Báo cáo tiền dùng đơn vị triệu đồng, làm tròn 1 chữ số',
-      source: 'Aris suy ra từ 3 lần anh sửa · 08/10',
-      chat: false,
-    },
-    {
-      tag: 'bài học',
-      text: 'Gửi lời mời họp luôn kèm link Google Meet, không dùng Zoom',
-      source: 'Aris suy ra · 02/10 · dùng 6 lần',
-      chat: false,
-    },
-  ],
-  archive: [
-    {
-      tag: 'dự án',
-      text: 'Khoá học AI dự kiến ra mắt tháng 12, giá sớm [GIÁ]',
-      source: 'gọi lại 4 lần trong tuần',
-      promote: true,
-    },
-    {
-      tag: 'người',
-      text: 'Chị Hà — editor video, làm việc qua Zalo',
-      source: 'từ Second Brain · 20/10',
-      promote: false,
-    },
-    {
-      tag: 'sự kiện',
-      text: 'Ngày 15/09 đổi nhà cung cấp email marketing',
-      source: 'hạ từ lõi xuống · không dùng 30 ngày',
-      promote: false,
-    },
-  ],
-  pending: [
-    {
-      tag: 'từ Mai',
-      text: 'Anh không nhận cuộc họp trước 9 giờ sáng',
-      source: 'vòng học nền · từ chat 10:35',
-    },
-    {
-      tag: 'nội dung ngoài',
-      text: '“Giá đối thủ B giảm 20% từ tháng 11”',
-      source: 'trích từ trang web · độ tin cậy thấp · không tự lưu',
-    },
-  ],
 }
 
 export type SkillState = 'pending' | 'active' | 'rare' | 'archived'
