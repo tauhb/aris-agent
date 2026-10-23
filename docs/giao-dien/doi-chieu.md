@@ -11,7 +11,7 @@
 
 Script không cần gói nào ngoài Node 22 và Google Chrome: điều khiển Chrome qua giao thức DevTools ([`scripts/ui/cdp.mjs`](../../scripts/ui/cdp.mjs)). Danh sách màn và cách mở từng màn trong app: [`scripts/ui/screens.mjs`](../../scripts/ui/screens.mjs) (có kiểm thử: đủ 36 màn, trỏ đúng bảng canvas và trang có thật).
 
-Lưu ý khi đọc ảnh: Chrome của script là hồ sơ mới, nên với màn chat script mở phiên gần nhất của dự án đầu tiên và mở cột phải, như khi anh dùng thật. Máy thử chỉ có phiên thuộc dự án, nên 1.1 hiện biến thể dự án (1.4).
+Lưu ý khi đọc ảnh: Chrome của script là hồ sơ mới, nên với màn chat script mở phiên gần nhất của dự án đầu tiên và mở cột phải, như khi anh dùng thật. Phiên chat thường nằm ở workspace mặc định (`default-workspace`); từ 23/10 nút "Việc mới" luôn mở phiên ở đó (`@aris/home` tìm hoặc tạo workspace này), nên chat với Aris hiện cột phải 1.1 có sơ đồ 3D. Phiên trong workspace khác là phiên dự án (1.4).
 
 Phông: từ 23/10 app dùng phông hệ thống như DeepSeek (anh chọn), còn canvas vẫn vẽ bằng Lexend / Be Vietnam Pro. Chữ khác nét giữa hai bên là chủ ý, không tính là lệch.
 
@@ -24,7 +24,7 @@ Phông: từ 23/10 app dùng phông hệ thống như DeepSeek (anh chọn), cò
 | 1.1 Chat | ◐ | Hội thoại chưa có dòng việc, thẻ duyệt, ghim trí nhớ; có thêm tab "Chat / Diễn biến" và dòng số liệu dưới ô nhập của dsh | Dòng việc và thẻ duyệt cần một lượt model giao việc thật (GĐ2/GĐ3); tab Diễn biến giữ theo quyết định ở mục 4 của [bản đồ](ban-do.md) |
 | 1.2 Khung chat | ◐ | Canvas vẽ 4 trạng thái của ô nhập; app chỉ chụp được trạng thái nghỉ. Menu "/" và "@" là menu của dsh | "@" liệt kê bot ở GĐ2; nút ghi âm chờ dsh bật nhập giọng nói |
 | 1.3 Bản đồ đội 3D | ✅ | — | — |
-| 1.4 Dự án | ◐ | Ô nhập chưa có "Gửi tới Cả dự án" và nút Dừng; chưa có tin nhiều bot theo vòng, thẻ "cần anh quyết"; hàng dự án đang mở chưa sáng trên thanh bên; cột phải còn dải tab của dsh phía trên | Cần Team của dsh (GĐ2) |
+| 1.4 Dự án | ◐ | Ô nhập chưa có "Gửi tới Cả dự án" và nút Dừng; chưa có tin nhiều bot theo vòng, thẻ "cần anh quyết"; hàng dự án đang mở chưa sáng trên thanh bên; cột phải còn dải tab của dsh phía trên; cột phải có thêm sơ đồ 3D thành viên dự án (anh chọn 23/10, canvas không có) | Cần Team của dsh (GĐ2) |
 | 1.5 Tạo dự án | ✅ | Chữ "Phòng" của canvas thành "Dự án" | Quyết định 11 |
 | 1.6 Tìm trong mọi phiên | ✅ | — | — |
 | 2.1 Tạo bot | ◐ | Hộp thoại cao hơn canvas, phải cuộn mới thấy nút cuối | Sửa khi làm hộp thoại thật (GĐ2) |

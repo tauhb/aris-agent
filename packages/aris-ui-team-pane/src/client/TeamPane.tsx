@@ -77,15 +77,49 @@ const shortPath = (path: string) => {
 
 /**
  * Cột phải của phiên thuộc dự án (màn 1.4): thành viên và việc đang làm, luật của
- * dự án, việc sinh ra từ dự án. Thành viên, luật, việc là mẫu tới giai đoạn 2 (Team
- * của dsh); thư mục làm việc là thật.
+ * dự án, việc sinh ra từ dự án. Thêm so với canvas (anh chọn 23/10): sơ đồ 3D các
+ * thành viên của dự án, Aris chủ trì ở giữa. Thành viên, luật, việc là mẫu tới giai
+ * đoạn 2 (Team của dsh); thư mục làm việc là thật.
  */
-function ProjectPane({ t, path, more }: { t: Translate; path: string; more: ReactNode }) {
+function ProjectPane({
+  t,
+  path,
+  more,
+  openMap,
+}: {
+  t: Translate
+  path: string
+  more: ReactNode
+  openMap: () => void
+}) {
   const R = DEMO_PROJECT_ROOM
+  const orbitStatus = (s: BotStatus) => t(`orbit.${s}`)
+  // Bot của dự án, mang trạng thái trong dự án (đang nghĩ, chờ…), không phải trạng thái chung.
+  const crew = R.members.flatMap((x) => {
+    const m = MEMBERS.find((b) => b.id === x.id)
+    return m && m.id !== COMMANDER.id ? [{ ...m, status: x.status }] : []
+  })
   return (
     <div className="aris aris-team aris-project">
       <div className="head">
         <h2>{t('project.members')}</h2>
+        <Button variant="ghost" size="sm" className="mapLink" onClick={openMap}>
+          {t('openMap')} ›
+        </Button>
+      </div>
+      <div className="map">
+        <TeamOrbit
+          commander={COMMANDER}
+          commanderLabel={t('commander', { name: COMMANDER.name })}
+          members={crew}
+          statusLabel={orbitStatus}
+          label={t('orbit', {
+            name: COMMANDER.name,
+            members: crew.map((m) => `${m.name} ${orbitStatus(m.status)}`).join(', '),
+          })}
+          height={220}
+          onSelect={openMap}
+        />
       </div>
       <div className="list">
         {R.members.map((m) => (
@@ -155,7 +189,7 @@ export function TeamPane({
   const more = (
     <More t={t} entries={entries} open={(kind) => tab.actions.openTab(kind, { replaceTab: true })} />
   )
-  if (projectPath !== undefined) return <ProjectPane t={t} path={projectPath} more={more} />
+  if (projectPath !== undefined) return <ProjectPane t={t} path={projectPath} more={more} openMap={openMap} />
   const orbitStatus = (s: BotStatus) => t(`orbit.${s}`)
   return (
     <div className="aris aris-team">

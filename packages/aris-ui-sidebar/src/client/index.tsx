@@ -71,8 +71,27 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.slots.subscribe('sidebar.panellist', syncPanels), 'aris-ui-sidebar: panel entries')
   ctx.effect(() => ctx.locale.subscribe(syncPanels), 'aris-ui-sidebar: panel labels')
 
+  // "Việc mới" không chỉ định dự án thì mở chat riêng với Aris (workspace mặc định, do
+  // `@aris/home` tìm hoặc tạo), không rơi vào dự án đang mở. Lỗi thì như dsh: workspace hiện tại.
+  let home: string | undefined
+  async function startPrivate() {
+    try {
+      if (!home) {
+        const res = await fetch(new URL('api/aris/home', document.baseURI), { method: 'POST' })
+        const body = (await res.json()) as { workspaceId?: string; error?: string }
+        if (!res.ok || !body.workspaceId) throw new Error(body.error ?? `HTTP ${res.status}`)
+        home = body.workspaceId
+      }
+      workspace.startSession(home)
+    } catch (err) {
+      console.warn('aris-ui-sidebar: không mở được chat riêng, dùng workspace hiện tại', err)
+      workspace.startSession()
+    }
+  }
+
   const injectProps = () => ({
-    startSession: (workspaceId?: string) => workspace.startSession(workspaceId),
+    startSession: (workspaceId?: string) =>
+      workspaceId ? workspace.startSession(workspaceId) : void startPrivate(),
     toggleSidebar: () => ctx.layout.toggleSidebar(),
     selectPanel: (id: string | null) => ctx.layout.selectPanel(id),
     openProject: (workspaceId: string) => void workspace.openWorkspace(workspaceId),

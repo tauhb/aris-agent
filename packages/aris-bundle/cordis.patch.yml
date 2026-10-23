@@ -9,6 +9,8 @@
       name: '@aris/providers'
     - id: aris-recall
       name: '@aris/recall'
+    - id: aris-home
+      name: '@aris/home'
 
 # Tìm lại phiên cũ (aris-recall, hộp tìm trong mọi phiên, ô tìm ⌘K của dsh) cần chỉ mục
 # toàn văn của dsh. dsh-base mount nó nhưng tắt tìm nội dung (`openAt: never`); lớp aris

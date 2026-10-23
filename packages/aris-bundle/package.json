@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@aris/hello": "workspace:*",
+    "@aris/home": "workspace:*",
     "@aris/memory": "workspace:*",
     "@aris/providers": "workspace:*",
     "@aris/recall": "workspace:*"

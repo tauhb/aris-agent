@@ -23,7 +23,14 @@ import {
   onArisRoute,
   type NavRequest,
 } from '@aris/ui-kit/react'
-import { COMMANDER, DEMO_COST, DEMO_PENDING_APPROVALS, DEMO_TEAM, type TeamMember } from '@aris/ui-kit'
+import {
+  COMMANDER,
+  DEMO_COST,
+  DEMO_PENDING_APPROVALS,
+  DEMO_TEAM,
+  isProjectWorkspace,
+  type TeamMember,
+} from '@aris/ui-kit'
 import { useEffect, useState, type ReactElement } from 'react'
 import { latestProjectSession } from './projects.js'
 import type { Translate } from './locale.js'
@@ -150,7 +157,8 @@ export function SidebarRoot(props: SidebarProps) {
   const wide = !collapsed
   const panels = props.usePanels((p) => p)
   const navPanels = panels.filter((p) => !SETTINGS_PANELS.has(p.id) && !HIDDEN_PANELS.has(p.id))
-  const projects = props.useWorkspaces((w) => w.items)
+  // Workspace mặc định là chỗ chat riêng với Aris (quyết định 11), không phải dự án.
+  const projects = props.useWorkspaces((w) => w.items).filter(isProjectWorkspace)
   const sessionsById = props.useSessions((list) => list.byId)
   // Bấm dự án: mở phiên gần nhất của dự án; dự án chưa có phiên thì dsh tạo phiên mới.
   const openProject = (project: WorkspaceRow) => {
