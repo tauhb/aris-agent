@@ -3,7 +3,6 @@
  * đang dùng (sáng hoặc tối, người dùng vẫn đổi như cũ), vài chỉnh CSS cho mảnh
  * token không với tới, tiêu đề và biểu tượng tab mang tên aris.
  */
-import { FONT_HREF } from '@aris/ui-kit'
 import { keepArisTitle, useArisFavicon } from './brand.js'
 import { OVERRIDES_CSS } from './overrides.js'
 import { ARIS_TOKENS } from './tokens.js'
@@ -17,14 +16,6 @@ export const inject = ['theme']
 
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.theme.overrideTokens('@aris/ui-theme', ARIS_TOKENS), 'aris-ui-theme: tokens')
-  ctx.effect(() => {
-    const link = document.createElement('link')
-    link.rel = 'stylesheet'
-    link.href = FONT_HREF
-    link.dataset.plugin = '@aris/ui-theme'
-    document.head.appendChild(link)
-    return () => link.remove()
-  }, 'aris-ui-theme: fonts')
   ctx.effect(() => {
     const style = document.createElement('style')
     style.dataset.plugin = '@aris/ui-theme'

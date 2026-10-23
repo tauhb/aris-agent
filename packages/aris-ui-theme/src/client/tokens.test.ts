@@ -23,8 +23,8 @@ describe('theme aris', () => {
     expect(ARIS_TOKENS['--dsw-static-deepseek-500']?.light).toBe(THEMES.light.accent)
   })
 
-  it('phông mặc định là Be Vietnam Pro và JetBrains Mono', () => {
-    expect(ARIS_TOKENS['--dsh-font-family-text-default']?.light).toMatch(/^'Be Vietnam Pro'/)
-    expect(ARIS_TOKENS['--dsh-font-family-code-default']?.light).toMatch(/^'JetBrains Mono'/)
+  it('phông là bộ phông mặc định của DeepSeek (hệ thống, SF Mono)', () => {
+    expect(ARIS_TOKENS['--dsh-font-family-text-default']?.light).toMatch(/^-apple-system/)
+    expect(ARIS_TOKENS['--dsh-font-family-code-default']?.light).toMatch(/^"SF Mono"/)
   })
 })

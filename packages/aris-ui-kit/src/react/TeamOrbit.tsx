@@ -5,6 +5,7 @@
  * xoay, rê chuột để xem vai trò, bấm vào bot để mở. Vẽ bằng `<canvas>`; khi người
  * dùng tắt chuyển động thì đứng yên và chỉ vẽ lại khi cần.
  */
+import { FONTS } from '../tokens.js'
 import { useEffect, useRef } from 'react'
 import { getMascot } from '../mascots.js'
 import type { BotStatus } from '../status.js'
@@ -54,7 +55,7 @@ interface Colors {
   accent: string
 }
 
-const FONT = '"Be Vietnam Pro", system-ui, sans-serif'
+const FONT = FONTS.canvas
 
 function rgba(hex: string, a: number): string {
   const m = hex.match(/^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i)
@@ -387,7 +388,7 @@ export function TeamOrbit(props: TeamOrbitProps) {
       drawMascot(ctx, cmd, commander.status, L.cx, cmdY, CM.mascot)
       ctx.fillStyle = C.ink
       ctx.textAlign = 'center'
-      ctx.font = `600 ${Math.round(CM.labelSize)}px "Lexend", ${FONT}`
+      ctx.font = `600 ${Math.round(CM.labelSize)}px ${FONT}`
       ctx.fillText(commanderLabel, L.cx, cmdY - CM.label)
       ctx.restore()
 

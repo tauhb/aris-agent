@@ -8,8 +8,11 @@ import type { ComponentType, ReactNode } from 'react'
 import { EN, NS, VI } from './locale.js'
 import type {
   ConfigFormLike,
+  CredentialState,
+  DiscoveredModel,
   ModelGroup,
   ModelSettings,
+  Outcome,
   PageNav,
   PageProps,
   SystemSection,
@@ -36,6 +39,7 @@ import { Runs } from './mind/Runs.js'
 import { Skill } from './mind/Skill.js'
 import { Skills } from './mind/Skills.js'
 import { SettingsPage } from './settings/SettingsPage.js'
+import { joinProviders } from './settings/provider-data.js'
 import { BotProfile } from './team/Bot.js'
 import { CloneBot } from './team/CloneBot.js'
 import { CreateBot } from './team/CreateBot.js'
@@ -60,30 +64,55 @@ interface ClientContext {
     register(ns: string, locale: string, dict: Record<string, string>): () => void
     subscribe(fn: () => void): () => void
   }
-  layout: { selectPanel(id: string | null): void }
-  workspaces: { create(input: { path: string }): Promise<{ workspaceId: string }> }
-  configForms: { get(namespace: string): ConfigFormLike }
-  remote: {
-    session: {
-      modelCatalog(): Promise<
-        | { ok: true; value: { groups: readonly ModelGroup[] } }
-        | { ok: false; error: { code: string; message: string } }
-      >
-    }
-  }
   get(name: string): unknown
 }
 
-export const inject = [
-  'slots',
-  'locale',
-  'layout',
-  'workspaces',
-  'uiWorkspace',
-  'configForms',
-  'remote',
-  'remote.session',
-]
+/**
+ * Dịch vụ của dsh mà các trang dùng lúc chạy, lấy bằng `ctx.get` thay vì khai trong
+ * `inject`. Plugin chỉ chờ `slots` và `locale` nên kích hoạt sớm, trước plugin "Chung"
+ * của dsh (chờ kết nối): trang Cài đặt của aris nhờ vậy luôn là chỗ khai báo
+ * `settings.section` (hai bên không cùng khai báo được, ai sau sẽ bị từ chối).
+ */
+interface Services {
+  layout: { selectPanel(id: string | null): void }
+  workspaces: { create(input: { path: string }): Promise<{ workspaceId: string }> }
+  uiWorkspace: { pickDirectory(): Promise<string | null>; openWorkspace(workspaceId: string): Promise<void> }
+  configForms: { get(namespace: string): ConfigFormLike }
+  'remote.session': { modelCatalog(): Promise<Remote<{ groups: readonly ModelGroup[] }>> }
+  'remote.llm': {
+    listProviders(): Promise<Remote<readonly { id: string; name: string }[]>>
+    listConfigurableProviders(): Promise<
+      Remote<
+        readonly {
+          provider: string
+          displayName: string
+          settingsNs: string
+          settingsPath: readonly string[]
+          declared?: boolean
+          defaultBaseURL?: string
+          nativeAuth?: { env: readonly string[] }
+          error?: string
+        }[]
+      >
+    >
+    discoverModels(
+      settingsNs: string,
+      request: { provider?: string; baseURL?: string; api?: string; apiKey?: string },
+    ): Promise<Remote<readonly DiscoveredModel[]>>
+  }
+  'remote.credentials': {
+    describe(refs: readonly string[]): Promise<Remote<Readonly<Record<string, CredentialState>>>>
+    set(ref: string, value: string): Promise<Remote<unknown>>
+  }
+}
+
+/** Kết quả một lời gọi remote của dsh. */
+type Remote<T> = { ok: true; value: T } | { ok: false; error: { code: string; message: string } }
+
+const outcome = <T,>(res: Remote<T>): Outcome<T> =>
+  res.ok ? { ok: true, value: res.value } : { ok: false, error: res.error.message }
+
+export const inject = ['slots', 'locale']
 
 /** Trang đã dựng; trang chưa có ở đây thì chưa đăng ký. */
 const PAGES: Partial<Record<RouteId, ComponentType<PageProps>>> = {
@@ -113,6 +142,14 @@ const DIALOGS: Partial<Record<RouteId, ComponentType<PageProps & { projects: Pro
 
 const EMPTY: Params = {}
 
+/** Namespace cấu hình khi dịch vụ cấu hình của dsh chưa sẵn sàng. */
+const UNAVAILABLE_FORM: ConfigFormLike = {
+  getSnapshot: () => UNAVAILABLE_SNAPSHOT,
+  subscribe: () => () => {},
+  mutate: async () => false,
+}
+const UNAVAILABLE_SNAPSHOT = { status: 'unavailable' as const, value: undefined, writable: false }
+
 type Selector<T> = <R>(select: (value: T) => R) => R
 type RenderSlot = (name: string, props: Record<string, unknown>, options?: { only?: string }) => ReactNode
 
@@ -130,17 +167,23 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, 'en', EN), 'aris-ui-pages: en')
   ctx.effect(() => ctx.locale.register(NS, 'vi', VI), 'aris-ui-pages: vi')
 
+  const service = <K extends keyof Services>(name: K): Services[K] => {
+    const found = ctx.get(name) as Services[K] | undefined
+    if (!found) throw new Error(`${name} chưa sẵn sàng`)
+    return found
+  }
+
   const store = createNavStore()
   const nav: PageNav = {
     go(to, params) {
       if (!PAGES[to] && !DIALOGS[to]) return
       const panel = navigate(store, to, params)
       if (panel) {
-        ctx.layout.selectPanel(panel)
+        service('layout').selectPanel(panel)
         announceRoute(to, { ...params })
       }
     },
-    openPanel: (id) => ctx.layout.selectPanel(id),
+    openPanel: (id) => service('layout').selectPanel(id),
     close: () => store.set({ ...store.getSnapshot(), dialog: null }),
   }
   ctx.effect(
@@ -152,15 +195,11 @@ export function apply(ctx: ClientContext): void {
   )
 
   // Dự án = workspace của dsh: chọn thư mục, tạo workspace rồi mở nó.
-  const workspace = ctx.get('uiWorkspace') as {
-    pickDirectory(): Promise<string | null>
-    openWorkspace(workspaceId: string): Promise<void>
-  }
   const projects: ProjectActions = {
-    pickDirectory: () => workspace.pickDirectory(),
+    pickDirectory: () => service('uiWorkspace').pickDirectory(),
     async createProject(path) {
-      const created = await ctx.workspaces.create({ path })
-      await workspace.openWorkspace(created.workspaceId)
+      const created = await service('workspaces').create({ path })
+      await service('uiWorkspace').openWorkspace(created.workspaceId)
     },
   }
 
@@ -213,17 +252,97 @@ export function apply(ctx: ClientContext): void {
   syncSections()
 
   // Model: danh mục dsh đang phục vụ và cấu hình model theo việc (trang 6.2).
+  const failed = (err: unknown): { ok: false; error: string } => ({
+    ok: false,
+    error: err instanceof Error ? err.message : String(err),
+  })
   const models: ModelSettings = {
     async catalog() {
-      const res = await ctx.remote.session.modelCatalog()
+      const res = await service('remote.session').modelCatalog()
       if (!res.ok) throw new Error(`${res.error.code}: ${res.error.message}`)
       return res.value.groups.map((g) => ({
         id: g.id,
         name: g.name,
-        models: g.models.map((m) => ({ id: m.id, name: m.name })),
+        models: g.models.map((m) => ({ id: m.id, name: m.name, reasoning: !!m.reasoning })),
       }))
     },
-    form: (namespace) => ctx.configForms.get(namespace),
+    form: (namespace) => {
+      const forms = ctx.get('configForms') as Services['configForms'] | undefined
+      return forms ? forms.get(namespace) : UNAVAILABLE_FORM
+    },
+    async providers() {
+      try {
+        const llm = service('remote.llm')
+        const [registered, declared] = await Promise.all([
+          llm.listProviders(),
+          llm.listConfigurableProviders(),
+        ])
+        if (!registered.ok) return outcome(registered)
+        if (!declared.ok) return outcome(declared)
+        return {
+          ok: true,
+          value: joinProviders(
+            registered.value,
+            declared.value.map((d) => ({
+              id: d.provider,
+              name: d.displayName,
+              ns: d.settingsNs,
+              path: d.settingsPath,
+              declared: d.declared,
+              defaultBaseURL: d.defaultBaseURL,
+              nativeEnv: d.nativeAuth?.env ?? [],
+              error: d.error,
+            })),
+          ),
+        }
+      } catch (err) {
+        return failed(err)
+      }
+    },
+    async credentials(refs) {
+      try {
+        // dsh nhận tối đa 64 tên khoá mỗi lần hỏi.
+        const all: Record<string, CredentialState> = {}
+        for (let i = 0; i < refs.length; i += 64) {
+          const res = await service('remote.credentials').describe(refs.slice(i, i + 64))
+          if (!res.ok) return outcome(res)
+          Object.assign(all, res.value)
+        }
+        return { ok: true, value: all }
+      } catch (err) {
+        return failed(err)
+      }
+    },
+    async setCredential(ref, value) {
+      try {
+        const res = await service('remote.credentials').set(ref, value)
+        return res.ok ? { ok: true, value: undefined } : outcome(res)
+      } catch (err) {
+        return failed(err)
+      }
+    },
+    async discover(namespace, request) {
+      try {
+        return outcome(await service('remote.llm').discoverModels(namespace, request))
+      } catch (err) {
+        return failed(err)
+      }
+    },
+    async probe(provider, model) {
+      try {
+        const res = await fetch(new URL('api/aris/providers/probe', document.baseURI), {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ provider, model }),
+        })
+        const body = (await res.json()) as { ok?: boolean; ms?: number; error?: string }
+        return res.ok
+          ? { ok: !!body.ok, ms: body.ms ?? 0, error: body.error }
+          : { ok: false, ms: 0, error: body.error ?? `HTTP ${res.status}` }
+      } catch (err) {
+        return { ok: false, ms: 0, error: String(err) }
+      }
+    },
   }
 
   for (const [id, Page] of Object.entries(PAGES) as [RouteId, ComponentType<PageProps>][]) {

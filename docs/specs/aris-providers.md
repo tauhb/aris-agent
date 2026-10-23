@@ -15,15 +15,32 @@ Vì vậy aris không viết lại các phần trên. aris gom chúng về **m�
 
 ## Trang 6.2 "Provider và model"
 
-- **Nhà cung cấp và khoá** (cột trái): chính trang "Model" của dsh, vẽ ngay trong trang aris qua chỗ cắm `settings.section` (mã `models`). Mục "Model" bị bỏ khỏi nhóm "Hệ thống (DeepSeek Harness)" để không còn hai chỗ.
-- **Model theo việc** (cột phải): mỗi việc chọn một model trong danh mục mà dsh đang phục vụ (`session.modelCatalog`). Ghi thẳng vào cấu hình của gói dsh lo việc đó (`configForms`):
+Bố cục theo canvas, mọi số liệu là thật, đọc và ghi thẳng vào dịch vụ của dsh (trang không giữ bản sao):
+
+- **Cột trái, danh bạ nhà cung cấp**: `llm.listProviders` (route đang chạy) nối với `llm.listConfigurableProviders` (route cấu hình được), giống trang Model của dsh. "Đã kết nối" là route đã có hồ sơ hoặc đang chạy, chấm màu cho biết có khoá chưa; "Có sẵn" là phần còn lại (hiện 6, bấm để xem hết). Ô tìm không phân biệt dấu. Route dsh chỉ trả mã thì aris đặt tên quen (`openai` → OpenAI).
+- **Giữa, provider đang chọn**:
+  - **Khoá API** chỉ ghi (`credentials.set`), không đọc lại. Tên khoá là tên hồ sơ ghi (`apiKeyEnv`) hoặc `<ROUTE>_API_KEY`, đúng quy ước của dsh. Route pi-ai chưa có hồ sơ thì nút là "Kết nối": tạo hồ sơ có `apiKeyEnv` rồi lưu khoá. Khoá lấy từ biến môi trường thì chỉ báo, không sửa.
+  - **Base URL** ghi vào hồ sơ (`baseURL`), để trống là dùng endpoint mặc định của route.
+  - **Kiểm tra kết nối**: gọi thử một model đang phục vụ qua plugin máy chủ `@aris/providers` (`POST /api/aris/providers/probe`), đo thời gian tới chữ đầu. Không dùng việc dò model của dsh để đo, vì route dsh biết sẵn model thì trả lời mà không gọi mạng.
+  - **Bảng model**: model đang phục vụ (`session.modelCatalog`), model tự khai trong hồ sơ, và model vừa "Tải danh sách mới" (`llm.discoverModels`). Model trong danh mục sẵn của provider luôn bật; model tải về thì tích để thêm vào `models` của hồ sơ (route pi-ai). Năng lực: suy luận, đọc ảnh, cửa sổ ngữ cảnh. Cột Giá để sau.
+- **Thêm provider tuỳ chỉnh**: tên, mã route, Base URL, kiểu API (tương thích OpenAI Chat Completions, OpenAI Responses, tương thích Anthropic), khoá (không bắt buộc) → "Dò model" → tích model → ghi `llm-pi-ai` `providers.<mã>` rồi lưu khoá.
+- **Nâng cao**: mở chính trang Model của dsh trong hộp thoại cho phần trang này không vẽ (sửa cửa sổ ngữ cảnh, mức suy luận, gỡ route). Mục "Model" vẫn bị bỏ khỏi nhóm "Hệ thống (DeepSeek Harness)" để không còn hai chỗ.
+- **Cột phải, model theo việc**: mỗi việc của canvas một dòng:
 
 | Việc | Hiện trạng |
 |---|---|
 | Chat với bot (mặc định cho phiên mới) | Chỉnh được: ghi `agent-default-model` (`provider`, `model`), có hiệu lực từ phiên mới. Phiên đang mở đổi bằng viên chọn model hoặc `/model` |
-| Tóm tắt khi nén ngữ cảnh, đặt tên phiên | Theo model của phiên. dsh có trường cấu hình (`compaction-basic`, `session-title-llm`) nhưng máy chủ không mở chúng cho trang cài đặt sửa lúc chạy, chỉ sửa được trong `cordis.patch.yml` |
-| Rút ký ức khi nén (aris) | Theo model tóm tắt khi nén |
-| Commander điều phối, giám khảo mục tiêu, kiểm thử skill | Hiện mờ, có ở GĐ2/GĐ3. Model cho bot con nằm ở namespace `subagent-model-selection` của dsh, dùng khi làm Commander |
+| Nén ngữ cảnh, đặt tên phiên | Theo model của phiên. dsh có trường cấu hình (`compaction-basic`, `session-title-llm`) nhưng máy chủ không mở chúng cho trang cài đặt sửa lúc chạy, chỉ sửa được trong `cordis.patch.yml` |
+| Rút ký ức (aris) | Theo model nén |
+| Tóm tắt khi tìm lại, nhúng (tìm ngữ nghĩa) | Bước 3 (`aris-recall`) |
+| Commander điều phối | GĐ2. Model cho bot con nằm ở namespace `subagent-model-selection` của dsh |
+| Vòng học nền, giám khảo mục tiêu, kiểm thử skill | GĐ3 |
+
+- **Thứ tự dự phòng**: hiện các provider đã kết nối và có khoá, provider mặc định đứng đầu; chưa có tác dụng (xem dưới).
+
+Lưu ý: route DeepSeek chính thức của dsh gọi endpoint tương thích Anthropic (`https://api.deepseek.com/anthropic`).
+
+Trang aris chỉ chờ `slots` và `locale` khi kích hoạt, các dịch vụ khác lấy lúc dùng. Lý do: trang Cài đặt của aris và plugin "Chung" của dsh cùng muốn khai báo chỗ cắm `settings.section`, ai sau bị từ chối; dsh phải chờ kết nối nên aris kích hoạt trước.
 
 ## Để sau trong giai đoạn 1
 

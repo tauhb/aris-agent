@@ -431,7 +431,7 @@ Trang "Revamp nhẹ · đề xuất" trên canvas (bảng R1 ngôn ngữ thiết
 | **2c** | **Đồ thị Second Brain 3D động** (5.3): ~70 nút trong 5 cụm, tự xoay chậm, kéo để xoay, cuộn để phóng to, nút gần sáng/to hơn nút xa, hạt sáng chạy dọc liên kết, bấm nút để xem chi tiết, lọc theo loại và thời gian. Nút dùng hình học (cầu, tam giác, thoi, vòng), **không dùng linh vật** | Khám phá tri thức như một không gian, không phải sơ đồ phẳng |
 | **3** | **Ngữ pháp 5 trạng thái** dùng khắp nơi: Đang làm (vòng quay) · Chờ anh (nửa tròn, “thở”) · Xong (tích) · Vấp (tam giác) · Rảnh (nét đứt) | Liếc là hiểu; phân biệt được cả khi mù màu |
 | 4 | **Đội hình** thay danh sách: Commander đứng đầu, bot xếp theo nhóm việc (Nghiên cứu, Vận hành, Sáng tạo, Kỹ thuật) | Thấy cấu trúc đội, không chỉ một danh sách tên |
-| 5 | **Chữ**: tiêu đề Lexend, nội dung Be Vietnam Pro, số chữ đều (tabular) | Có cá tính, số liệu thẳng cột |
+| 5 | **Chữ**: phông hệ thống như DeepSeek (23/10 thay Lexend / Be Vietnam Pro của canvas), số chữ đều (tabular) | Quen mắt, số liệu thẳng cột |
 | 6 | **Icon** riêng lưới 20px nét 1,75: rỗng khi nghỉ, tô đầy nhẹ khi đang ở mục đó | Biết ngay mình đang ở đâu |
 | 7 | **Công tắc nói rõ hệ quả** (câu “bật thì sao” dưới mỗi công tắc); ô tích bo tròn mang màu bot | Bớt sợ bấm nhầm |
 | 8 | **Pill có dấu nhận diện** (logo provider + tên dễ hiểu “DeepSeek · Nhanh”, tên kỹ thuật khi rê chuột; skill là “con tem” có số phiên bản) và **nhãn nói như người** (“Cho Mai gửi”, “Aris còn nhớ thêm được khoảng 25 điều”, “3 việc đợi anh gật đầu”) | Dễ hiểu, thân thiện, có giọng riêng |

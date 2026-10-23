@@ -2,7 +2,7 @@
 export const CSS = `
 .aris-team{display:flex;flex-direction:column;gap:12px;padding:14px 16px 18px;height:100%;overflow-y:auto;background:var(--a-panel);font-size:13px}
 .aris-team .head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.aris-team h2{margin:0;font-family:'Lexend',sans-serif;font-size:14px;font-weight:600}
+.aris-team h2{margin:0;font-size:14px;font-weight:600}
 .aris .aris-team .mapLink{color:var(--a-accent);font-size:12.5px;font-weight:500;padding:0 6px}
 .aris-team .map{border-radius:18px;background:var(--a-bg);border:1px solid var(--a-line);overflow:hidden;flex:none}
 .aris-team .hint{font-size:11.5px;color:var(--a-muted);text-align:center;margin-top:-4px}

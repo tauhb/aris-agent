@@ -30,7 +30,7 @@ export function TeamMap({ t, nav }: PageProps) {
   return (
     <div className="ap-split">
       <PageShell
-        title={<span style={{ fontFamily: "'Lexend', sans-serif", fontSize: 16 }}>{t('map.title')}</span>}
+        title={<span style={{ fontSize: 16 }}>{t('map.title')}</span>}
         subtitle={t('map.subtitle', { working, waiting })}
         actions={
           <Segmented
@@ -109,9 +109,7 @@ export function TeamMap({ t, nav }: PageProps) {
             <Mascot id={bot.id} size={44} />
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-            <span style={{ fontFamily: "'Lexend', sans-serif", fontWeight: 700, fontSize: 17 }}>
-              {bot.name}
-            </span>
+            <span style={{ fontWeight: 700, fontSize: 17 }}>{bot.name}</span>
             <span className="a-muted" style={{ fontSize: 12.5 }}>
               {bot.role} · DeepSeek
             </span>

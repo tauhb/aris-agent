@@ -130,12 +130,8 @@ export const ARIS_TOKENS: Record<string, TokenModes> = {
   '--dsw-alias-scrollbar-hover-l1': pair('#C9C6BE', '#3C414B'),
   '--dsw-alias-scrollbar-hover-l2': pair('#C9C6BE', '#3C414B'),
   // Phông: mặc định của aris; người dùng vẫn đổi được trong Cài đặt
-  '--dsh-font-family-text-default': same(
-    `${FONTS.body.replace(', sans-serif', '')}, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif`,
-  ),
-  '--dsh-font-family-code-default': same(
-    `${FONTS.mono.replace(', monospace', '')}, "SF Mono", Menlo, Consolas, monospace`,
-  ),
+  '--dsh-font-family-text-default': same(FONTS.body),
+  '--dsh-font-family-code-default': same(FONTS.mono),
   '--dsw-font-family-brand': same(FONTS.heading),
 }
 

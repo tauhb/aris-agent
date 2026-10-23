@@ -39,16 +39,21 @@ export const THEMES = {
 export type ThemeName = keyof typeof THEMES
 export type Token = keyof (typeof THEMES)['light']
 
-/** Phông chữ: Lexend cho tiêu đề, Be Vietnam Pro cho nội dung, JetBrains Mono cho mã. */
-export const FONTS = {
-  heading: "'Lexend', sans-serif",
-  body: "'Be Vietnam Pro', system-ui, sans-serif",
-  mono: "'JetBrains Mono', monospace",
-} as const
+/**
+ * Phông chữ: dùng đúng bộ phông mặc định của DeepSeek Harness — phông hệ thống của máy
+ * (San Francisco trên Mac, Segoe UI trên Windows) cho chữ và tiêu đề, SF Mono cho mã.
+ * Không tải phông từ mạng.
+ */
+const SYSTEM =
+  '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif'
 
-/** Google Fonts cho ba phông trên (theme aris nạp một lần cho cả app). */
-export const FONT_HREF =
-  'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lexend:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap'
+export const FONTS = {
+  heading: SYSTEM,
+  body: SYSTEM,
+  mono: '"SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Liberation Mono", Menlo, Courier, monospace',
+  /** Cho vẽ canvas 2D (chỉ nhận tên phông thường gặp). */
+  canvas: 'system-ui, -apple-system, "Segoe UI", sans-serif',
+} as const
 
 /** Khai báo biến CSS cho một giao diện, ví dụ `--a-bg:#F6F5F2;--a-panel:#FFFFFF…`. */
 export function cssVars(theme: ThemeName, prefix = '--'): string {

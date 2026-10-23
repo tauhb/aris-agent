@@ -23,6 +23,8 @@ export const CSS = `
 .ap-track{height:8px;border-radius:4px;background:var(--a-panel2);overflow:hidden}
 .ap-track>span{display:block;height:100%;border-radius:4px}
 .ap-sel{height:32px;border:1px solid var(--a-line);border-radius:999px;background:var(--a-panel);padding:0 12px;font-size:12.5px;display:inline-flex;align-items:center;gap:6px;justify-self:start;color:var(--a-ink)}
+select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:12.5px;text-overflow:ellipsis}
+.ap-sel.a-muted{color:var(--a-muted);border-style:dashed}
 .ap-grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--a-line);font-size:13px}
 .ap-link{color:var(--a-accent);font-size:13px;cursor:pointer}
 .ap-warnbox{border:1px solid var(--a-warn);background:var(--a-warnSoft);border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
@@ -51,7 +53,7 @@ export const CSS = `
 .ap-desk{border-radius:12px;overflow:hidden;border:1px solid var(--a-line);background:#1B1E24;aspect-ratio:16/10;display:flex;flex-direction:column}
 .ap-desk .bar{height:26px;background:#2A2E36;display:flex;align-items:center;gap:6px;padding:0 10px}
 .ap-desk .bar>span{width:9px;height:9px;border-radius:50%}
-.ap-desk .bar>.url{width:auto;height:auto;border-radius:6px;background:#1B1E24;color:#9CA3B0;font-size:11.5px;padding:2px 10px;margin-left:10px;font-family:'JetBrains Mono',monospace}
+.ap-desk .bar>.url{width:auto;height:auto;border-radius:6px;background:#1B1E24;color:#9CA3B0;font-size:11.5px;padding:2px 10px;margin-left:10px;font-family:var(--dsh-font-family-code-default)}
 .ap-desk .view{flex:1;background:#F4F5F7;display:flex;align-items:center;justify-content:center}
 .ap-desk .dlg{width:300px;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:22px;display:flex;flex-direction:column;gap:10px;color:#15171C}
 .ap-desk .dlg b{font-size:16px}
@@ -70,7 +72,7 @@ export const CSS = `
 .aris .ap-sk{display:grid;grid-template-columns:minmax(0,2fr) 70px 70px 120px 70px 120px 90px;gap:12px;align-items:center;padding:11px 16px;border-top:1px solid var(--a-line);font-size:13.5px;min-width:760px;width:100%;text-align:left}
 .aris button.ap-sk:hover{background:var(--a-hover)}
 .aris .ap-sk[data-hot]{background:var(--a-accentSoft)}
-.ap-dl{font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:2px 14px;white-space:pre-wrap;color:var(--a-muted)}
+.ap-dl{font-family:var(--dsh-font-family-code-default);font-size:12.5px;padding:2px 14px;white-space:pre-wrap;color:var(--a-muted)}
 .ap-dl[data-kind="+"]{background:var(--a-okSoft);color:var(--a-ok)}
 .ap-dl[data-kind="-"]{background:var(--a-dangerSoft);color:var(--a-danger)}
 .ap-er{display:grid;grid-template-columns:minmax(0,1.6fr) 80px 80px 70px;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--a-line);font-size:13px}
@@ -150,7 +152,7 @@ export const CSS = `
 .ap-note-main{flex:999 1 520px;min-width:0;display:flex;flex-direction:column}
 .ap-note-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 24px;border-bottom:1px solid var(--a-line);font-size:13.5px}
 .ap-note{max-width:680px;width:100%;margin:0 auto;padding:28px 24px 40px;display:flex;flex-direction:column;gap:12px;font-size:15px;line-height:1.65}
-.ap-note h1{font-family:'Lexend',var(--a-font,system-ui),sans-serif;font-size:26px;line-height:1.3;margin:0}
+.ap-note h1{font-size:26px;line-height:1.3;margin:0}
 .ap-note h2{font-size:17px;margin:10px 0 0}
 .ap-note p,.ap-note ul{margin:0}
 .ap-sum{background:var(--a-accentSoft);border-radius:10px;padding:10px 14px;font-size:14px}

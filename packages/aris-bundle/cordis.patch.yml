@@ -5,3 +5,5 @@
       name: '@aris/hello'
     - id: aris-memory
       name: '@aris/memory'
+    - id: aris-providers
+      name: '@aris/providers'

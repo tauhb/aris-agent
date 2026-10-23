@@ -4,6 +4,7 @@
  * xem và dây của nó tô màu nhấn. Kéo để xoay hai trục, cuộn để phóng to, bấm nút để
  * chọn. Tắt chuyển động thì không tự xoay; ngoài khung nhìn thì ngừng vẽ.
  */
+import { FONTS } from '../tokens.js'
 import { useEffect, useRef } from 'react'
 import {
   NODE_COLORS,
@@ -31,7 +32,7 @@ export interface KnowledgeGraphProps {
   label: string
 }
 
-const FONT = '"Be Vietnam Pro", system-ui, sans-serif'
+const FONT = FONTS.canvas
 export const ZOOM_MIN = 0.6
 export const ZOOM_MAX = 2.2
 const clampZoom = (z: number) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z))

@@ -13,6 +13,8 @@ Script không cần gói nào ngoài Node 22 và Google Chrome: điều khiển 
 
 Lưu ý khi đọc ảnh: Chrome của script là hồ sơ mới, nên với màn chat script mở phiên gần nhất của dự án đầu tiên và mở cột phải, như khi anh dùng thật. Máy thử chỉ có phiên thuộc dự án, nên 1.1 hiện biến thể dự án (1.4).
 
+Phông: từ 23/10 app dùng phông hệ thống như DeepSeek (anh chọn), còn canvas vẫn vẽ bằng Lexend / Be Vietnam Pro. Chữ khác nét giữa hai bên là chủ ý, không tính là lệch.
+
 ## Kết quả
 
 Đạt ✅ · đạt, còn lệch nhỏ có lý do ◐ · lệch, có kế hoạch ✗ · chưa có trong app ○
@@ -44,7 +46,7 @@ Lưu ý khi đọc ảnh: Chrome của script là hồ sơ mới, nên với mà
 | 5.3 Đồ thị | ✅ | Nút đang chọn ban đầu khác (đồ thị sinh từ hạt giống) | — |
 | 5.4 Hỏi bộ não | ◐ | Nút gửi là chữ "Gửi", canvas là nút tròn mũi tên | Nhỏ, sửa cùng ô hỏi thật (GĐ5) |
 | 6.1 Bảng điều khiển | ✅ | — | — |
-| 6.2 Provider & model | ✅ | — | — |
+| 6.2 Provider & model | ◐ | Chạy bằng dữ liệu thật nên danh sách provider, model và mức trễ khác số mẫu; một khoá mỗi provider; cột Giá ghi "để sau"; thứ tự dự phòng chỉ hiển thị | Xoay vòng khoá, giá và chuyển provider khi lỗi làm ở phần sau của GĐ1 ([đặc tả](../specs/aris-providers.md)) |
 | 6.3 Kênh & ghép đôi | ✅ | — | — |
 | 6.3b Mặt tích hợp | ✅ | — | — |
 | 6.4 Ngân sách, duyệt, mạng | ✅ | — | — |

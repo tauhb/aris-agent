@@ -44,7 +44,7 @@ import {
   TextInput,
   WaitingIcon,
 } from '../src/react/index.js'
-import { FONT_HREF, FONTS } from '../src/tokens.js'
+import { FONTS } from '../src/tokens.js'
 import { STATUSES, type BotStatus } from '../src/status.js'
 
 const noop = () => {}
@@ -347,7 +347,6 @@ export function renderGallery(): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Bộ thành phần aris</title>
-<link rel="stylesheet" href="${FONT_HREF}">
 <style>${KIT_CSS}${PAGE_CSS}</style>
 </head>
 <body>${body}</body>

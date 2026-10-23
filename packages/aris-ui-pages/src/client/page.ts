@@ -27,11 +27,11 @@ export interface PageProps {
 export interface ModelGroup {
   id: string
   name: string
-  models: readonly { id: string; name: string }[]
+  models: readonly { id: string; name: string; reasoning?: boolean | undefined }[]
 }
 
 /** Thao tác ghi cấu hình của dsh (đường dẫn tính trong namespace). */
-export type SettingsOp = { op: 'set'; path: string[]; value: string } | { op: 'unset'; path: string[] }
+export type SettingsOp = { op: 'set'; path: string[]; value: unknown } | { op: 'unset'; path: string[] }
 
 /** Một namespace cấu hình của dsh (`ctx.configForms.get`). */
 export interface ConfigFormLike {
@@ -40,9 +40,55 @@ export interface ConfigFormLike {
   mutate(ops: readonly SettingsOp[]): Promise<boolean>
 }
 
+/** Một route trong danh bạ nhà cung cấp của dsh (`llm.listConfigurableProviders` + `llm.listProviders`). */
+export interface ProviderEntry {
+  id: string
+  name: string
+  /** Namespace cấu hình của gói lo route này; rỗng khi route không cấu hình được. */
+  ns: string
+  /** Đường tới hồ sơ route trong namespace; rỗng khi cả namespace là hồ sơ. */
+  path: readonly string[]
+  /** Route đang chạy. */
+  active: boolean
+  /** Route có do người dùng tự khai (cổng riêng, máy chủ tự dựng). */
+  declared?: boolean | undefined
+  defaultBaseURL?: string | undefined
+  /** Biến môi trường route tự đọc khoá khi hồ sơ không ghi tên khoá. */
+  nativeEnv: readonly string[]
+  error?: string | undefined
+}
+
+/** Trạng thái một khoá trong kho bí mật: chỉ biết có hay không. */
+export interface CredentialState {
+  configured: boolean
+  writable: boolean
+  source?: string | undefined
+}
+
+export interface DiscoveredModel {
+  id: string
+  name?: string | undefined
+  contextWindow?: number | undefined
+  maxTokens?: number | undefined
+  inputModalities?: readonly string[] | undefined
+}
+
+export type Outcome<T = undefined> = { ok: true; value: T } | { ok: false; error: string }
+
 export interface ModelSettings {
   catalog(): Promise<readonly ModelGroup[]>
   form(namespace: string): ConfigFormLike
+  /** Danh bạ route của dsh. */
+  providers(): Promise<Outcome<readonly ProviderEntry[]>>
+  credentials(refs: readonly string[]): Promise<Outcome<Readonly<Record<string, CredentialState>>>>
+  setCredential(ref: string, value: string): Promise<Outcome>
+  /** Dò model của một route có sẵn, hoặc của một endpoint đang nhập (không lưu khoá). */
+  discover(
+    namespace: string,
+    request: { provider?: string; baseURL?: string; api?: string; apiKey?: string },
+  ): Promise<Outcome<readonly DiscoveredModel[]>>
+  /** Gọi thử một model (plugin @aris/providers), đo thời gian tới chữ đầu. */
+  probe(provider: string, model: string): Promise<{ ok: boolean; ms: number; error?: string | undefined }>
 }
 
 /** Một mục cài đặt dsh đăng ký vào `settings.section` (Chung, Model, Tài khoản…). */

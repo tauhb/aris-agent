@@ -50,6 +50,8 @@ export function SettingsPage(props: PageProps) {
   const sys = sysId !== undefined ? system?.sections.find((s) => s.id === sysId) : undefined
   const active = sys ? requested : requested in SECTIONS ? requested : 'dashboard'
   const Section = SECTIONS[active]
+  // Provider có cột danh bạ provider riêng thay cho cột điều hướng (theo canvas 6.2).
+  if (active === 'provider' && Section) return <Section {...props} />
   return (
     <SettingsShell
       caption={t('set.caption')}
