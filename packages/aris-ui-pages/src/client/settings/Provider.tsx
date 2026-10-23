@@ -3,20 +3,10 @@
  * - Cột trái: danh bạ nhà cung cấp của dsh (đã kết nối / có sẵn), ô tìm, thêm provider tuỳ chỉnh.
  * - Giữa: provider đang chọn: khoá (chỉ ghi), Base URL, gọi thử model, bảng model.
  * - Cột phải: model theo việc, thứ tự dự phòng.
- * Mọi thứ đọc và ghi thẳng vào dịch vụ của dsh (cấu hình, kho khoá, danh mục model);
- * phần dsh có mà trang này không vẽ (sửa cửa sổ ngữ cảnh, gỡ route…) mở ở "Nâng cao".
+ * Nằm trong khung Cài đặt như các mục khác. Mọi thứ đọc và ghi thẳng vào dịch vụ của dsh
+ * (cấu hình, kho khoá, danh mục model).
  */
-import {
-  Button,
-  Card,
-  Dialog,
-  NavItem,
-  PageShell,
-  Pill,
-  SearchIcon,
-  Tag,
-  TextInput,
-} from '@aris/ui-kit/react'
+import { Button, Card, NavItem, PageShell, Pill, SearchIcon, Tag, TextInput } from '@aris/ui-kit/react'
 import { Fragment, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import type {
   ConfigFormLike,
@@ -45,7 +35,7 @@ import {
   type ProviderRow,
 } from './provider-data.js'
 
-/** Mã mục "Model" của dsh trong `settings.section` (mở ở hộp "Nâng cao"). */
+/** Mã mục "Model" của dsh trong `settings.section`: trang này thay nó, nên nó không hiện trong Cài đặt. */
 export const DSH_MODELS_SECTION = 'models'
 
 /** Namespace của route pi-ai: nơi thêm provider tuỳ chỉnh và tự khai model. */
@@ -125,7 +115,6 @@ function Directory({
   adding,
   onSelect,
   onAdd,
-  onBack,
 }: {
   t: T
   rows: readonly ProviderRow[]
@@ -133,7 +122,6 @@ function Directory({
   adding: boolean
   onSelect: (id: string) => void
   onAdd: () => void
-  onBack: () => void
 }) {
   const [query, setQuery] = useState('')
   const [all, setAll] = useState(false)
@@ -153,10 +141,7 @@ function Directory({
   )
   return (
     <nav className="ap-side" aria-label={t('sec.provider')}>
-      <a className="ap-link a-muted" style={{ padding: '7px 10px', fontSize: 12.5 }} onClick={onBack}>
-        {t('set.back')}
-      </a>
-      <div style={{ fontWeight: 600, padding: '6px 10px 8px' }}>{t('sec.provider')}</div>
+      <div style={{ fontWeight: 600, padding: '2px 10px 8px' }}>{t('pv.directory')}</div>
       <label className="ap-search">
         <SearchIcon size={14} />
         <input
@@ -772,7 +757,7 @@ function Tasks({
   )
 }
 
-export function Provider({ t, nav, system, models }: PageProps) {
+export function Provider({ t, models }: PageProps) {
   const [entries, setEntries] = useState<readonly ProviderEntry[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [groups, setGroups] = useState<readonly ModelGroup[]>([])
@@ -781,7 +766,6 @@ export function Provider({ t, nav, system, models }: PageProps) {
   const [rev, setRev] = useState(0)
   const [picked, setPicked] = useState<string | undefined>()
   const [adding, setAdding] = useState(false)
-  const [advanced, setAdvanced] = useState(false)
   const [probe, setProbe] = useState<{
     id: string
     ok: boolean
@@ -832,7 +816,6 @@ export function Provider({ t, nav, system, models }: PageProps) {
     rows.find((r) => r.entry.id === defaultProvider) ??
     rows.find((r) => r.configured)
   const served = row ? groups.find((g) => g.id === row.entry.id) : undefined
-  const hasAdvanced = !!system?.sections.some((s) => s.id === DSH_MODELS_SECTION)
 
   const select = (id: string) => {
     setPicked(id)
@@ -877,7 +860,6 @@ export function Provider({ t, nav, system, models }: PageProps) {
         adding={adding}
         onSelect={select}
         onAdd={() => setAdding(true)}
-        onBack={() => nav.go('settings', {})}
       />
       <PageShell
         title={
@@ -898,20 +880,13 @@ export function Provider({ t, nav, system, models }: PageProps) {
             : (subtitle ?? (loadError ? t('pv.loadError', { error: loadError }) : t('pv.loading')))
         }
         actions={
-          <>
-            {probed && (
-              <span title={probed.error}>
-                <Pill tone={probed.ok ? 'ok' : 'danger'}>
-                  {probed.ok ? t('pv.probeOk', { ms: probed.ms }) : t('pv.probeFail')}
-                </Pill>
-              </span>
-            )}
-            {hasAdvanced && (
-              <Button size="sm" variant="ghost" onClick={() => setAdvanced(true)}>
-                {t('pv.advanced')}
-              </Button>
-            )}
-          </>
+          probed && (
+            <span title={probed.error}>
+              <Pill tone={probed.ok ? 'ok' : 'danger'}>
+                {probed.ok ? t('pv.probeOk', { ms: probed.ms }) : t('pv.probeFail')}
+              </Pill>
+            </span>
+          )
         }
       >
         <div className="ap-cols">
@@ -964,20 +939,6 @@ export function Provider({ t, nav, system, models }: PageProps) {
           </Col>
         </div>
       </PageShell>
-      {hasAdvanced && system && (
-        <Dialog
-          open={advanced}
-          width={820}
-          title={t('pv.advancedTitle')}
-          closeLabel={t('pv.close')}
-          onClose={() => {
-            setAdvanced(false)
-            reload()
-          }}
-        >
-          <div className="ap-embed">{system.render(DSH_MODELS_SECTION)}</div>
-        </Dialog>
-      )}
     </div>
   )
 }

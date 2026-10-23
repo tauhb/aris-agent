@@ -40,6 +40,9 @@ const ORDER = [
   'plugin',
 ] as const
 
+/** Mã mục "Chung" của dsh. */
+const GENERAL_SECTION = 'general'
+
 /** Mã mục của dsh trong trang: `sys:<mã mục dsh>`. */
 const SYS = 'sys:'
 
@@ -50,18 +53,19 @@ export function SettingsPage(props: PageProps) {
   const sys = sysId !== undefined ? system?.sections.find((s) => s.id === sysId) : undefined
   const active = sys ? requested : requested in SECTIONS ? requested : 'dashboard'
   const Section = SECTIONS[active]
-  // Provider có cột danh bạ provider riêng thay cho cột điều hướng (theo canvas 6.2).
-  if (active === 'provider' && Section) return <Section {...props} />
+  const general = system?.sections.find((s) => s.id === GENERAL_SECTION)
   return (
     <SettingsShell
       caption={t('set.caption')}
       navLabel={t('set.nav')}
       active={active}
       sections={[
+        // "Chung" (ngôn ngữ, giao diện…) của dsh đứng đầu, ngoài nhóm Hệ thống.
+        ...(general ? [{ id: SYS + general.id, label: general.label }] : []),
         ...ORDER.map((id) => ({ id, label: t(`sec.${id}`) })),
         // Mục "Model" của dsh đã nằm trong trang Provider và model (6.2).
         ...(system?.sections ?? [])
-          .filter((s) => s.id !== DSH_MODELS_SECTION)
+          .filter((s) => s.id !== DSH_MODELS_SECTION && s.id !== GENERAL_SECTION)
           .map((s) => ({ id: SYS + s.id, label: s.label, group: t('set.system') })),
       ]}
       onSelect={(id) => nav.go('settings', { section: id })}

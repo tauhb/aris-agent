@@ -231,3 +231,17 @@ export function TeamPane({
     </div>
   )
 }
+
+/**
+ * Tên tab bắt đầu của cột phải (thay chữ "Bắt đầu" của dsh): gọi đúng thứ đang hiện,
+ * "Đội bot" ở chat riêng, "Dự án" ở phiên dự án.
+ */
+export function TeamTitle({
+  t,
+  useWorkspaces,
+  useMounted,
+}: Pick<TeamPaneProps, 't' | 'useWorkspaces' | 'useMounted'>) {
+  const sessionId = useMounted((id) => id)
+  const inProject = useWorkspaces((w) => projectOfSession(w.items, sessionId) !== undefined)
+  return <>{inProject ? t('tab.project') : t('tab.team')}</>
+}

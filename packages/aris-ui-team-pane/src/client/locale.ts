@@ -3,6 +3,8 @@ export const NS = 'aris.teamPane'
 
 export const EN = {
   title: 'Team right now',
+  'tab.team': 'Team',
+  'tab.project': 'Project',
   openMap: 'Open map',
   commander: '{name} · Commander',
   orbit: '3D team map: {name} leads in the middle; {members}. Drag to rotate.',
@@ -35,6 +37,8 @@ export type PaneKey = keyof typeof EN
 
 export const VI: Record<PaneKey, string> = {
   title: 'Đội bot lúc này',
+  'tab.team': 'Đội bot',
+  'tab.project': 'Dự án',
   openMap: 'Mở bản đồ',
   commander: '{name} · Chỉ huy',
   orbit: 'Sơ đồ đội 3D: {name} chỉ huy ở giữa; {members}. Kéo để xoay.',
