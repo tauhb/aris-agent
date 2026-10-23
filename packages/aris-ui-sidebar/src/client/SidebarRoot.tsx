@@ -5,9 +5,15 @@
  */
 import { ShortcutKeys, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ReactNode } from 'react'
-import { BrandMark, ChatIcon, Mascot, PanelIcon, PlusIcon, StatusGlyph, WaitingIcon } from './icons.js'
+import { BrandMark, Mascot, PanelIcon, PlusIcon, RoomIcon, StatusGlyph, WaitingIcon } from './icons.js'
 import { COMMANDER, DEMO_PENDING_APPROVALS, DEMO_TEAM, type TeamMember } from './team.js'
-import type { PanelEntry, SidebarProps } from './types.js'
+import { latestRoomSession } from './rooms.js'
+import type { PanelEntry, SidebarProps, WorkspaceRow } from './types.js'
+
+/** Trang do dsh đăng ký nhưng aris đặt chỗ khác: Plugin nằm ở chân thanh bên (thuộc Cài đặt). */
+const FOOT_PANELS = new Set(['plugins'])
+/** Tên aris dùng cho trang của dsh. */
+const PANEL_LABELS: Record<string, string> = { schedules: 'Routine', plugins: 'Plugin' }
 
 /** Trong thanh thu gọn, nhãn chuyển thành tooltip. */
 function Tip({ label, wide, children }: { label: string; wide: boolean; children: React.ReactElement }) {
@@ -53,7 +59,7 @@ function PanelNav({ panel, wide, props }: { panel: PanelEntry; wide: boolean; pr
   const active = props.usePanelInfo((info) => info.activePanelId === panel.id)
   return (
     <NavRow
-      label={panel.label}
+      label={PANEL_LABELS[panel.id] ?? panel.label}
       wide={wide}
       active={active}
       glyph={props.renderSlot('sidebar.panellist', { size: 18, active }, { only: panel.id })}
@@ -93,11 +99,42 @@ function Bot({
   )
 }
 
+/** Một phòng = một workspace của dsh: tên, số phiên; bấm để mở phòng. */
+function Room({ room, wide, onOpen }: { room: WorkspaceRow; wide: boolean; onOpen: () => void }) {
+  const count = room.sessionIds.length
+  return (
+    <Tip label={`${room.title} · ${room.path}`} wide={wide}>
+      <button
+        type="button"
+        className="room"
+        aria-label={`Phòng ${room.title}`}
+        title={room.path}
+        onClick={onOpen}
+      >
+        <span className="glyph" aria-hidden="true">
+          <RoomIcon />
+        </span>
+        {wide && <span className="label">{room.title}</span>}
+        {wide && count > 0 && <span className="roomMeta">{count} phiên</span>}
+      </button>
+    </Tip>
+  )
+}
+
 export function SidebarRoot(props: SidebarProps) {
   const { collapsed, width, startSession, toggleSidebar, selectPanel, renderSlot } = props
   const wide = !collapsed
   const panels = props.usePanels((p) => p)
-  const chatActive = props.usePanelInfo((info) => info.activePanelId === null)
+  const navPanels = panels.filter((p) => !FOOT_PANELS.has(p.id))
+  const footPanels = panels.filter((p) => FOOT_PANELS.has(p.id))
+  const rooms = props.useWorkspaces((w) => w.items)
+  const sessionsById = props.useSessions((list) => list.byId)
+  // Bấm phòng: mở phiên gần nhất của phòng; phòng chưa có phiên thì dsh tạo phiên mới.
+  const openRoom = (room: WorkspaceRow) => {
+    const latest = latestRoomSession(room.sessionIds, sessionsById)
+    if (latest) props.openSession(latest)
+    else props.openRoom(room.workspaceId)
+  }
   const newShortcut = props.useShortcuts((rows) => rows.find((r) => r.id === 'session.new'))
   const toggleShortcut = props.useShortcuts((rows) => rows.find((r) => r.id === 'sidebar.left.toggle'))
   const openChat = () => selectPanel(null)
@@ -149,14 +186,7 @@ export function SidebarRoot(props: SidebarProps) {
       </Tip>
 
       <div className="nav" role="list">
-        <NavRow
-          label="Chat"
-          wide={wide}
-          active={chatActive}
-          glyph={<ChatIcon active={chatActive} />}
-          onClick={openChat}
-        />
-        {panels.map((panel) => (
+        {navPanels.map((panel) => (
           <PanelNav key={panel.id} panel={panel} wide={wide} props={props} />
         ))}
       </div>
@@ -187,8 +217,24 @@ export function SidebarRoot(props: SidebarProps) {
           ))}
         </div>
 
-        <div className="sessions">
-          {renderSlot('sidebar.workspaces', { wide, expandSidebar: () => collapsed && toggleSidebar() })}
+        <div className="rooms">
+          {wide && (
+            <div className="section">
+              <span>Phòng</span>
+              <button
+                type="button"
+                className="iconBtn"
+                style={{ width: 26, height: 26, borderRadius: 8 }}
+                aria-label="Tạo phòng mới"
+                onClick={props.addRoom}
+              >
+                <PlusIcon size={15} width={2} />
+              </button>
+            </div>
+          )}
+          {rooms.map((room) => (
+            <Room key={room.workspaceId} room={room} wide={wide} onOpen={() => openRoom(room)} />
+          ))}
         </div>
       </div>
 
@@ -216,6 +262,9 @@ export function SidebarRoot(props: SidebarProps) {
             </span>
           </div>
         )}
+        {footPanels.map((panel) => (
+          <PanelNav key={panel.id} panel={panel} wide={wide} props={props} />
+        ))}
         <div className="seat">{renderSlot('sidebar.footer.action', { wide })}</div>
         <div className="seat">{renderSlot('sidebar.settings', { wide })}</div>
       </div>

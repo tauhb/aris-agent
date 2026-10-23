@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@aris/ui-sidebar": "workspace:*",
-    "@aris/web-spike": "workspace:*"
+    "@aris/web-spike": "workspace:*",
+    "@aris/ui-chat-header": "workspace:*"
   }
 }

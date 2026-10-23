@@ -46,16 +46,26 @@ export const FONTS = {
   mono: "'JetBrains Mono', monospace",
 } as const
 
+/** Khai báo biến CSS cho một giao diện, ví dụ `--a-bg:#F6F5F2;--a-panel:#FFFFFF…`. */
+export function cssVars(theme: ThemeName, prefix = '--'): string {
+  return Object.entries(THEMES[theme])
+    .map(([k, v]) => `${prefix}${k}:${v}`)
+    .join(';')
+}
+
+/**
+ * CSS cho một khối giao diện aris cắm vào Web UI của dsh: biến màu sáng dưới
+ * `selector`, biến màu tối khi theme dsh đặt `data-ds-dark-theme` trên `<body>`.
+ */
+export function dshScopedVars(selector: string, prefix = '--a-'): string {
+  return `${selector}{${cssVars('light', prefix)}}\n[data-ds-dark-theme] ${selector}{${cssVars('dark', prefix)}}`
+}
+
 /** CSS khai báo token thành biến `--tên` dưới selector của từng giao diện. */
 export function themeCss(
   selectors: Record<ThemeName, string> = { light: '.t-light', dark: '.t-dark' },
 ): string {
   return (Object.keys(THEMES) as ThemeName[])
-    .map((theme) => {
-      const vars = Object.entries(THEMES[theme])
-        .map(([k, v]) => `--${k}:${v}`)
-        .join(';')
-      return `${selectors[theme]}{${vars}}`
-    })
+    .map((theme) => `${selectors[theme]}{${cssVars(theme)}}`)
     .join('\n')
 }

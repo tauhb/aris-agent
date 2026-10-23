@@ -12,6 +12,10 @@
     - id: aris-ui-sidebar
       name: '@aris/ui-sidebar'
 
+    # Đầu khung chat "Bot / Phiên ▾": cắm thêm vào slot đầu khung của dsh.
+    - id: aris-ui-chat-header
+      name: '@aris/ui-chat-header'
+
     # Thử nghiệm giai đoạn 0: trang "Bản đồ đội".
     - id: aris-web-spike
       name: '@aris/web-spike'

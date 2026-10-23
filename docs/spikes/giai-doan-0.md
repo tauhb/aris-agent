@@ -73,6 +73,24 @@ Chưa giống canvas / còn tạm:
 - Biểu tượng của Plugins, Automation tasks và menu More vẫn là của dsh; nút tìm kiếm trên canvas chưa làm.
 - Vùng chính (khung chat) vẫn là giao diện dsh — mảnh tiếp theo cần thay.
 
+### Bước tiếp: Đội hình + Phòng, đầu khung "Bot / Phiên" (23/10)
+
+Theo quyết định số 10 (bố cục điều hướng) và canvas 1.1/1.4:
+
+- **Thanh bên** (`@aris/ui-sidebar`): bỏ mục "Chat"; trang `schedules` của dsh hiện tên **Routine**; trang `plugins` chuyển xuống chân thanh bên (thuộc Cài đặt); mục **Phòng** lấy từ workspace thật của dsh (`useWorkspaces`), ghi số phiên. Bấm phòng mở **phiên có nội dung gần nhất** của phòng (`latestRoomSession`), phòng chưa có phiên thì mở phiên mới; nút + chọn thư mục rồi tạo workspace. Danh sách phiên của dsh (`sidebar.workspaces`) không còn hiện trên thanh bên.
+- **Đầu khung chat** (`@aris/ui-chat-header`, gói mới, không thay gói nào của dsh) cắm vào 3 chỗ cắm sẵn của `dsh-client-ui-conversation`:
+  - `conversation.header.leading`: linh vật + "Aris" + nhãn "Commander" + "/" (dấu "/" tự ẩn khi chưa có phiên).
+  - `conversation.session.header.actions`: nút ▾ ngay sau tên phiên, mở danh sách: "Phiên mới với Aris" kèm phím tắt, rồi các phiên mới nhất (bỏ phiên bot con và phiên trống), phiên đang mở được tô.
+  - `conversation.session.header.utilities`: icon phiên mới.
+  - Không dùng được `conversation.session.header.lineage` vì `dsh-client-ui-subagent` đã chiếm (slot đơn).
+- Đã chạy thật: mở phòng → đúng phiên gần nhất; đầu khung "Aris · Commander / Tóm tắt đối thủ tuần ▾"; danh sách phiên mở/đóng (bấm ngoài, Esc); sáng/tối; không lỗi console.
+
+Còn tạm / chưa làm:
+- Bot luôn là Aris: chưa có dịch vụ đội bot nên chưa biết phiên thuộc bot nào (giai đoạn 2: bot = agent preset của phiên). Bấm bot khác trong Đội hình chưa mở chat riêng.
+- Phòng đang mở chưa được tô trên thanh bên (chưa có nguồn "phiên hiện tại" ở phạm vi thanh bên).
+- Tạo phòng mới là chọn thư mục rồi tạo workspace; màn 1.5 (tên, thành viên, mục tiêu) làm cùng dịch vụ đội bot. Màn 1.6 (⌘K) và lối "Tìm trong mọi phiên" trong danh sách chưa làm.
+- Nhãn "Standard mode" ngay sau tên phiên là của `dsh-client-ui-agent-preset`; giữ lại vì đó là chế độ của bot.
+
 **Kết luận: chốt "A+" — thay từng row giao diện của dsh bằng gói aris**, ưu tiên theo mức khác biệt với canvas: thanh bên (xong bản đầu) → theme → khung chat và dòng việc → danh sách phiên theo bot.
 
 ## Cần anh

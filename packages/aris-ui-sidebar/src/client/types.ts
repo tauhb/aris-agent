@@ -19,6 +19,23 @@ export interface PanelInfo {
   readonly activePanelId: string | null
 }
 
+/** Một workspace của dsh; aris gọi là "Phòng". */
+export interface WorkspaceRow {
+  readonly workspaceId: string
+  readonly title: string
+  readonly path: string
+  readonly sessionIds: readonly string[]
+}
+
+/** Phần tóm tắt phiên của dsh mà thanh bên cần để chọn phiên gần nhất của phòng. */
+export interface SessionListSnapshot {
+  readonly byId: Readonly<Record<string, { readonly blank: boolean; readonly updatedAt: number }>>
+}
+
+export interface WorkspaceSnapshot {
+  readonly items: readonly WorkspaceRow[]
+}
+
 export type RenderSlot = (
   name: string,
   props: Record<string, unknown>,
@@ -31,8 +48,13 @@ export interface SidebarProps {
   startSession: (workspaceId?: string) => void
   toggleSidebar: () => void
   selectPanel: (id: string | null) => void
+  openRoom: (workspaceId: string) => void
+  openSession: (sessionId: string) => void
+  addRoom: () => void
   usePanels: Selector<readonly PanelEntry[]>
   useShortcuts: Selector<readonly ShortcutRow[]>
   usePanelInfo: Selector<PanelInfo>
+  useWorkspaces: Selector<WorkspaceSnapshot>
+  useSessions: Selector<SessionListSnapshot>
   renderSlot: RenderSlot
 }

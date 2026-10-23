@@ -1,17 +1,11 @@
-import { FONTS, THEMES } from '@aris/ui-kit'
-
-const vars = (theme: keyof typeof THEMES) =>
-  Object.entries(THEMES[theme])
-    .map(([k, v]) => `--a-${k}:${v}`)
-    .join(';')
+import { FONTS, dshScopedVars } from '@aris/ui-kit'
 
 /**
  * CSS của thanh bên. Màu lấy từ @aris/ui-kit; giao diện tối theo thuộc tính
  * `data-ds-dark-theme` mà theme của dsh đặt trên `<body>`.
  */
 export const CSS = `
-.aris-sb{${vars('light')}}
-[data-ds-dark-theme] .aris-sb{${vars('dark')}}
+${dshScopedVars('.aris-sb')}
 .aris-sb{box-sizing:border-box;height:100%;display:flex;flex-direction:column;gap:1px;padding:12px 10px;background:var(--a-panel);border-right:1px solid var(--a-line);color:var(--a-ink);font-family:${FONTS.body};font-size:13.5px;line-height:1.45;overflow:hidden}
 .aris-sb *{box-sizing:border-box}
 .aris-sb button{font:inherit;color:inherit;cursor:pointer;border:0;background:transparent;text-align:left}
@@ -40,7 +34,11 @@ export const CSS = `
 .aris-sb .lead .botName{font-family:${FONTS.heading};font-size:14px}
 .aris-sb .botNote{font-size:12px;color:var(--a-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .aris-sb .botNote.waiting{color:var(--a-warn)}
-.aris-sb .sessions{flex:1 0 260px;min-height:260px;display:flex;flex-direction:column;overflow:hidden;margin:8px -10px 0 -4px;padding-left:4px}
+.aris-sb .rooms{flex:none;display:flex;flex-direction:column}
+.aris-sb .room{display:flex;align-items:center;gap:9px;border-radius:10px;padding:6px 10px;width:100%}
+.aris-sb .room:hover{background:var(--a-hover)}
+.aris-sb .room .glyph{width:18px;height:18px;color:var(--a-muted)}
+.aris-sb .roomMeta{margin-left:auto;font-size:11.5px;color:var(--a-muted);white-space:nowrap}
 .aris-sb.rail .middle{margin:0;padding:0;align-items:center}
 .aris-sb .foot{flex:none;border-top:1px solid var(--a-line);padding-top:8px;display:flex;flex-direction:column;gap:4px}
 .aris-sb .approvals{display:flex;align-items:center;gap:10px;border-radius:10px;padding:7px 10px;background:var(--a-warnSoft);color:var(--a-warn);font-weight:600}
@@ -53,7 +51,7 @@ export const CSS = `
 .aris-sb.rail{padding:12px 8px;align-items:center}
 .aris-sb.rail .brand{padding:2px 0 10px;flex-direction:column}
 .aris-sb.rail .newTask{width:40px;height:40px;padding:0;justify-content:center}
-.aris-sb.rail .navRow,.aris-sb.rail .bot{width:40px;height:40px;padding:0;justify-content:center}
+.aris-sb.rail .navRow,.aris-sb.rail .bot,.aris-sb.rail .room{width:40px;height:40px;padding:0;justify-content:center}
 .aris-sb.rail .bot.lead{padding:0}
 .aris-sb.rail .foot{align-items:center;width:100%}
 @media (prefers-reduced-motion:reduce){.aris-sb *{transition:none!important;animation:none!important}}

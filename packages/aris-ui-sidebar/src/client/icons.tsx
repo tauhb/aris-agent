@@ -50,18 +50,17 @@ export function BrandMark({ size }: { size: number }) {
 
 const line = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.75, strokeLinecap: 'round' as const }
 
-export function ChatIcon({ active }: { active: boolean }) {
+/** Biểu tượng phòng: hai người, như canvas. */
+export function RoomIcon() {
   return (
-    <svg width={20} height={20} viewBox="0 0 24 24" aria-hidden="true">
+    <svg width={16} height={16} viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx={8} cy={9} r={3} {...line} />
+      <circle cx={16.5} cy={9.5} r={2.5} {...line} />
       <path
-        d="M20.5 12a8.2 8.2 0 0 1-11.9 7.3L3.5 20.5l1.2-4.7A8.2 8.2 0 1 1 20.5 12z"
-        fill="currentColor"
-        fillOpacity={active ? 0.2 : 0}
-        stroke="currentColor"
-        strokeWidth={1.75}
+        d="M3 19c.6-3 2.6-4.5 5-4.5s4.4 1.5 5 4.5M14 15.2c.8-.5 1.6-.7 2.5-.7 2 0 3.6 1.3 4.1 4"
+        {...line}
         strokeLinejoin="round"
       />
-      <path d="M8.5 11h7M8.5 14h4" {...line} />
     </svg>
   )
 }

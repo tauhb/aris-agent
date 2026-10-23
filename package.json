@@ -21,7 +21,7 @@
     "vitest": "4.1.11"
   },
   "scripts": {
-    "build": "tsc -b packages/aris-hello packages/aris-ui-kit packages/aris-ui-sidebar && node scripts/build-client.mjs && tsc -p packages/aris-ui-sidebar/tsconfig.client.json",
+    "build": "tsc -b packages/aris-hello packages/aris-ui-kit packages/aris-ui-sidebar packages/aris-ui-chat-header && node scripts/build-client.mjs && tsc -p packages/aris-ui-sidebar/tsconfig.client.json && tsc -p packages/aris-ui-chat-header/tsconfig.client.json",
     "test": "vitest run",
     "lint": "eslint .",
     "format": "prettier --write .",
