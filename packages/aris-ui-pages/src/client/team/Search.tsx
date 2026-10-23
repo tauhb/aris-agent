@@ -10,7 +10,7 @@ import type { PageProps } from '../page.js'
 import { botName } from '../mind/names.js'
 import { highlight, useRecallSearch, type RecallHit } from './recall-api.js'
 
-type Filter = 'all' | 'aris' | 'projects'
+type Filter = 'all' | 'aris' | 'lam' | 'mai' | 'projects'
 
 const projectName = (cwd: string | undefined) =>
   cwd && isProjectWorkspace({ path: cwd })
@@ -37,7 +37,10 @@ export function Search({ t, nav }: PageProps) {
   useEffect(() => input.current?.focus(), [])
   const state = useRecallSearch(query)
   const hits: RecallHit[] = state.status === 'ready' ? state.hits : []
-  const results = hits.filter((h) => filter !== 'projects' || projectName(h.cwd))
+  // Giai đoạn 1 mọi phiên là của Aris: lọc theo Lâm, Mai ra rỗng cho tới khi có đội bot (GĐ2).
+  const results = hits.filter((h) =>
+    filter === 'all' ? true : filter === 'projects' ? !!projectName(h.cwd) : filter === 'aris',
+  )
   useEffect(() => setActive(0), [state, filter])
 
   const open = (h: RecallHit | undefined) => {
@@ -54,6 +57,8 @@ export function Search({ t, nav }: PageProps) {
   const filters: [Filter, string][] = [
     ['all', t('search.all')],
     ['aris', botName('aris')],
+    ['lam', botName('lam')],
+    ['mai', botName('mai')],
     ['projects', t('search.projects')],
   ]
   const status =
@@ -98,8 +103,7 @@ export function Search({ t, nav }: PageProps) {
               type="button"
               role="radio"
               aria-checked={filter === id}
-              aria-pressed={filter === id}
-              className="ap-chip ap-pick"
+              className="fchip"
               onClick={() => setFilter(id)}
             >
               {label}
@@ -108,12 +112,8 @@ export function Search({ t, nav }: PageProps) {
         </div>
         <div role="listbox" aria-label={t('search.results')} className="list">
           <div
-            className="a-muted"
-            style={{
-              fontSize: 12,
-              padding: '4px 10px 6px',
-              color: state.status === 'error' ? 'var(--a-danger)' : undefined,
-            }}
+            className="a-muted count"
+            style={state.status === 'error' ? { color: 'var(--a-danger)' } : undefined}
           >
             {status}
           </div>
@@ -128,10 +128,10 @@ export function Search({ t, nav }: PageProps) {
                 onPointerEnter={() => setActive(i)}
                 onClick={() => open(h)}
               >
-                <Mascot id="aris" size={26} />
+                <Mascot id="aris" size={22} />
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
-                    <b>{h.title}</b>
+                    <b style={{ fontWeight: 600 }}>{h.title}</b>
                     <span className="a-muted" style={{ fontSize: 12 }}>
                       {project ? t('search.project', { name: project }) : botName('aris')}
                     </span>
