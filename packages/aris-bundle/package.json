@@ -17,7 +17,6 @@
     }
   },
   "dependencies": {
-    "@aris/hello": "workspace:*",
-    "@aris/web-spike": "workspace:*"
+    "@aris/hello": "workspace:*"
   }
 }

@@ -1,0 +1,17 @@
+# Lớp giao diện web của aris, chỉ gắn vào profile `aris` (web), xếp sau
+# dsh-web-app và @aris/bundle. Mỗi mảnh giao diện của dsh khác với canvas được
+# tắt đi và thay bằng một gói aris giữ nguyên hợp đồng slot (dsh không cho đổi
+# tên gói của row có sẵn, nên phải tắt row gốc rồi chèn row mới).
+
+# Thanh bên trái: Đội hình, Việc mới, các trang theo canvas.
+- id: ui-sidebar
+  name: '@deepseek-ai/dsh-client-ui-sidebar'
+  disabled: true
+
+- insert:
+    - id: aris-ui-sidebar
+      name: '@aris/ui-sidebar'
+
+    # Thử nghiệm giai đoạn 0: trang "Bản đồ đội".
+    - id: aris-web-spike
+      name: '@aris/web-spike'

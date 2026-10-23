@@ -1,5 +1,6 @@
 // Tạo (hoặc tạo lại) ba profile aris trong DSH_HOME của repo: mỗi profile lấy
-// từ mẫu dsh tương ứng rồi gắn @aris/bundle bằng link tới packages/aris-bundle.
+// từ mẫu dsh tương ứng rồi gắn các bundle aris (link tới packages/*); profile web
+// có thêm @aris/web-bundle cho giao diện.
 // Chạy lại an toàn: profile đã có bundle thì bỏ qua.
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -11,17 +12,18 @@ mkdirSync(home, { recursive: true })
 const env = { ...process.env, DSH_HOME: home }
 const dsh = (args) =>
   execFileSync(process.execPath, [dshBin(), ...args], { env, stdio: ['ignore', 'pipe', 'inherit'] })
-const bundleDir = join(repoRoot, 'packages', 'aris-bundle')
 const reset = process.argv.includes('--reset')
 
-for (const { name, template } of PROFILES) {
+for (const { name, template, bundles: wanted } of PROFILES) {
   const manifest = join(home, 'profiles', name, 'package.json')
   if (reset || !existsSync(manifest)) {
     dsh(['--profile', name, '--from-default-profile', template, '--dump-config'])
   }
-  const bundles = JSON.parse(readFileSync(manifest, 'utf8')).dsh?.profile?.bundles ?? []
-  if (!bundles.includes('@aris/bundle')) {
-    dsh(['plugin', '--profile', name, 'add', bundleDir])
+  for (const dir of wanted) {
+    const bundleDir = join(repoRoot, 'packages', dir)
+    const pkgName = JSON.parse(readFileSync(join(bundleDir, 'package.json'), 'utf8')).name
+    const bundles = JSON.parse(readFileSync(manifest, 'utf8')).dsh?.profile?.bundles ?? []
+    if (!bundles.includes(pkgName)) dsh(['plugin', '--profile', name, 'add', bundleDir])
   }
   const layers = String(dsh(['--profile', name, '--dump-config']))
     .split('\n')

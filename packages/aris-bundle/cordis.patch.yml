@@ -3,7 +3,3 @@
 - insert:
     - id: aris-hello
       name: '@aris/hello'
-
-    # Thử nghiệm giai đoạn 0: một trang "Bản đồ đội" trong Web client của dsh.
-    - id: aris-web-spike
-      name: '@aris/web-spike'

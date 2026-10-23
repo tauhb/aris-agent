@@ -1,0 +1,115 @@
+/**
+ * Thanh bên aris, nạp thay `@deepseek-ai/dsh-client-ui-sidebar` (row `ui-sidebar`).
+ * Đăng ký đúng slot `sidebar` cùng 7 chỗ cắm con và slot `shell.leading` như gói
+ * gốc, để mọi plugin khác của dsh vẫn cắm vào được; phần trình bày theo canvas.
+ */
+import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
+import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
+import { LeadingControls, SidebarRoot } from './SidebarRoot.js'
+import { CSS } from './styles.js'
+import type { PanelEntry } from './types.js'
+
+const NS = 'sidebar'
+const FONT_HREF =
+  'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lexend:wght@500;600;700&display=swap'
+
+// Bối cảnh client của dsh; chỉ khai báo phần thanh bên dùng.
+interface ClientContext {
+  get(name: string): unknown
+  effect(fn: () => () => void, label?: string): void
+  slots: {
+    inject(name: string, fn: () => () => void): void
+    register(options: Record<string, unknown>, component: unknown): () => void
+    subscribe(name: string, fn: () => void): () => void
+    entriesOfSlot(name: string): { options: { id: string; order?: number; label?: unknown } }[]
+  }
+  layout: { toggleSidebar(): void; selectPanel(id: string | null): void }
+  locale: {
+    register(ns: string, dicts: Record<string, Record<string, string>>): () => void
+    subscribe(fn: () => void): () => void
+  }
+  shortcuts: { catalog: unknown }
+}
+
+export const inject = ['slots', 'layout', 'uiWorkspace', 'locale', 'shortcuts']
+
+function injectStyle(): () => void {
+  const style = document.createElement('style')
+  style.dataset.plugin = '@aris/ui-sidebar'
+  style.textContent = CSS
+  document.head.appendChild(style)
+  const font = document.createElement('link')
+  font.rel = 'stylesheet'
+  font.href = FONT_HREF
+  document.head.appendChild(font)
+  return () => {
+    style.remove()
+    font.remove()
+  }
+}
+
+export function apply(ctx: ClientContext): void {
+  const workspace = ctx.get('uiWorkspace') as { startSession(workspaceId?: string): void }
+  ctx.effect(injectStyle, 'aris-ui-sidebar: styles')
+  // dsh chỉ có từ điển zh/en; aris hiển thị tiếng Việt cho cả hai.
+  const vi = {
+    'session.new': 'Việc mới',
+    'session.new.label': 'Việc mới',
+    'toggle.open': 'Mở thanh bên',
+    'toggle.collapse': 'Thu gọn thanh bên',
+    'panels.label': 'Các trang',
+  }
+  ctx.effect(() => ctx.locale.register(NS, { zh: vi, en: vi }), 'aris-ui-sidebar: dictionaries')
+
+  const panels = createSnapshotStore<PanelEntry[]>([])
+  const syncPanels = () => {
+    const next = ctx.slots
+      .entriesOfSlot('sidebar.panellist')
+      .map(({ options }) => ({
+        id: options.id,
+        order: options.order ?? 0,
+        label: resolveSlotLabel(options.label as Parameters<typeof resolveSlotLabel>[0]) ?? options.id,
+      }))
+      .sort((a, b) => a.order - b.order)
+    const prev = panels.getSnapshot()
+    const same =
+      prev.length === next.length &&
+      prev.every((p, i) => p.id === next[i]!.id && p.order === next[i]!.order && p.label === next[i]!.label)
+    if (!same) panels.set(next)
+  }
+  ctx.effect(() => ctx.slots.subscribe('sidebar.panellist', syncPanels), 'aris-ui-sidebar: panel entries')
+  ctx.effect(() => ctx.locale.subscribe(syncPanels), 'aris-ui-sidebar: panel labels')
+
+  const injectProps = () => ({
+    startSession: (workspaceId?: string) => workspace.startSession(workspaceId),
+    toggleSidebar: () => ctx.layout.toggleSidebar(),
+    selectPanel: (id: string | null) => ctx.layout.selectPanel(id),
+    hooks: { panels, shortcuts: ctx.shortcuts.catalog },
+  })
+
+  const single = { kind: 'single', scope: 'root' }
+  const list = { kind: 'list', scope: 'root' }
+  ctx.slots.inject('sidebar', () =>
+    ctx.slots.register(
+      {
+        name: 'sidebar',
+        locale: NS,
+        children: {
+          'sidebar.brand.mark': single,
+          'sidebar.brand.name': single,
+          'sidebar.toggle.badge': single,
+          'sidebar.panellist': list,
+          'sidebar.workspaces': single,
+          'sidebar.settings': single,
+          'sidebar.footer.action': list,
+        },
+        inject: injectProps,
+      },
+      SidebarRoot,
+    ),
+  )
+  ctx.slots.inject('shell.leading', () =>
+    ctx.slots.register({ name: 'shell.leading', locale: NS, inject: injectProps }, LeadingControls),
+  )
+  syncPanels()
+}

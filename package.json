@@ -11,6 +11,8 @@
     "@deepseek-ai/dsh": "0.2.1-rc.2",
     "@eslint/js": "10.0.1",
     "@types/node": "22.20.5",
+    "@types/react": "18.3.12",
+    "esbuild": "0.28.2",
     "eslint": "10.13.0",
     "globals": "17.13.0",
     "prettier": "3.9.10",
@@ -19,7 +21,7 @@
     "vitest": "4.1.11"
   },
   "scripts": {
-    "build": "tsc -b packages/aris-hello packages/aris-ui-kit",
+    "build": "tsc -b packages/aris-hello packages/aris-ui-kit packages/aris-ui-sidebar && node scripts/build-client.mjs && tsc -p packages/aris-ui-sidebar/tsconfig.client.json",
     "test": "vitest run",
     "lint": "eslint .",
     "format": "prettier --write .",

@@ -50,7 +50,30 @@ Giới hạn đã thấy:
 - Gói client phải ở định dạng `window.__ModuleLoader__` mà dsh build bằng tsdown; thử nghiệm viết tay. Giai đoạn 1 cần dựng chuỗi build React + TypeScript cho client.
 - Danh sách phiên, khung chat và thanh bên trái là của dsh; aris thêm vào được nhưng chưa chắc đổi được toàn bộ bố cục như canvas (ví dụ thay danh sách "Workspaces" bằng "Đội hình"). Cần thử tiếp ở giai đoạn 1–2 trước khi chốt.
 
-**Kết luận: chọn phương án A** (giao diện aris là plugin của Web client dsh). Phương án B (app web riêng nói chuyện qua `dsh sdk`) giữ làm dự phòng nếu không thay được bố cục thanh bên.
+**Kết luận ban đầu: chọn phương án A** (giao diện aris là plugin của Web client dsh).
+
+## Thử nghiệm 3 · thay hẳn một mảnh giao diện của dsh (23/10)
+
+Chủ dự án chốt: giao diện phải giống canvas, được sửa thẳng lớp web của dsh. Phương án B (app riêng qua `dsh sdk`) bị loại: SDK chỉ có 7 lệnh, thiếu duyệt quyền, huỷ, danh sách phiên, cài đặt.
+
+Cách làm đã kiểm chứng — **thay từng row giao diện**:
+- Web UI của dsh ghép từ các row trong `dsh-web-app` (`ui-sidebar`, `ui-layout`, `ui-theme`, `ui-conversation`…).
+- dsh **không cho đổi tên gói** của row có sẵn (`patch: name mismatch … skipping`), nên `@aris/web-bundle` **tắt row gốc** (`disabled: true`) rồi **chèn row aris** giữ nguyên hợp đồng slot.
+- `@aris/web-bundle` chỉ gắn vào profile web; `@aris/bundle` (lõi) vẫn dùng chung cho web, ACP, headless.
+- Chuỗi build client: `scripts/build-client.mjs` dùng esbuild đóng `src/client/index.tsx` (React + TypeScript) thành `lib/client.js` dạng `window.__ModuleLoader__`; React và `@deepseek-ai/*` để ngoài cho dsh cung cấp.
+
+Kết quả với thanh bên trái (`@aris/ui-sidebar` thay `@deepseek-ai/dsh-client-ui-sidebar`):
+- Giao diện theo canvas: dấu aris, nút "Việc mới" màu mực, Chat + các trang, **Đội hình** nhóm theo vai với linh vật và glyph trạng thái, ô "3 việc đợi anh gật đầu", dòng chủ nhân; sáng/tối theo theme dsh; thu gọn còn thanh 56px với linh vật.
+- Giữ đủ 7 chỗ cắm của dsh: trang Plugins, Automation tasks, Bản đồ đội vẫn tự cắm vào; danh sách phiên (`sidebar.workspaces`) và menu More (`sidebar.settings`) vẫn chạy.
+- Không lỗi console; chuyển trang, thu gọn/mở, giao diện sáng đều đúng.
+
+Chưa giống canvas / còn tạm:
+- Đội hình, số việc chờ duyệt, chi phí hôm nay là **dữ liệu mẫu** (`src/client/team.ts`) — giai đoạn 2–3 nối với dịch vụ đội bot và hộp duyệt.
+- Danh sách phiên của dsh (tiêu đề "Workspaces") vẫn nằm dưới Đội hình vì aris chưa gắn phiên với từng bot; giai đoạn 2 thay `ui-workspace` để mỗi bot có cuộc chat riêng như canvas.
+- Biểu tượng của Plugins, Automation tasks và menu More vẫn là của dsh; nút tìm kiếm trên canvas chưa làm.
+- Vùng chính (khung chat) vẫn là giao diện dsh — mảnh tiếp theo cần thay.
+
+**Kết luận: chốt "A+" — thay từng row giao diện của dsh bằng gói aris**, ưu tiên theo mức khác biệt với canvas: thanh bên (xong bản đầu) → theme → khung chat và dòng việc → danh sách phiên theo bot.
 
 ## Cần anh
 

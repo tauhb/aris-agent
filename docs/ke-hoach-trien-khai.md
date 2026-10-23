@@ -9,7 +9,7 @@
 3. **Không sửa DeepSeek Harness (dsh)**: mọi thứ là plugin trong profile `aris`. Ghim chính xác phiên bản dsh; nâng cấp có kiểm thử hợp đồng.
 4. **Mỗi giai đoạn = một nhánh + một PR**, có danh sách nghiệm thu; anh duyệt bằng cách dùng thử.
 5. **Đặc tả trước khi viết mã**: mỗi package có `docs/specs/<tên>.md` viết bằng lời của mình (đúng quy trình tham khảo Hermes).
-6. **Giao diện bám canvas**: mã giao diện dùng chung một bộ thành phần (`aris-ui-kit`): màu, chữ, 5 trạng thái, 30 linh vật, thanh bên.
+6. **Giao diện bám canvas**: mã giao diện dùng chung một bộ thành phần (`aris-ui-kit`): màu, chữ, 5 trạng thái, 30 linh vật. Mảnh giao diện nào của dsh khác canvas thì thay hẳn row đó bằng gói aris giữ nguyên hợp đồng slot (`@aris/web-bundle`); không fork cả dsh.
 7. **Một lõi, nhiều mặt**: toàn bộ năng lực nằm trong `aris-bundle`; Web UI, Telegram, `aris ask`, ACP, API, A2A, MCP chỉ là các mặt mở ra ngoài. Daemon là chủ duy nhất của trạng thái.
 
 ## Tổng quan
@@ -32,7 +32,7 @@ Tổng: khoảng **18 tuần** cho giai đoạn 0–7.
 
 ## Giai đoạn 0 · Nền móng (tuần 1)
 
-> **Đã xong 23/10** · kết quả và kết luận hai thử nghiệm: [spikes/giai-doan-0.md](spikes/giai-doan-0.md). Chọn phương án A cho giao diện.
+> **Đã xong 23/10** · kết quả các thử nghiệm: [spikes/giai-doan-0.md](spikes/giai-doan-0.md). Giao diện: **thay từng row giao diện của dsh bằng gói aris** (`@aris/web-bundle` tắt row gốc, chèn row aris cùng hợp đồng slot); thanh bên trái đã thay xong bản đầu.
 
 **Mục tiêu**: có bộ khung chạy được, CI, và trả lời dứt điểm câu hỏi kỹ thuật lớn nhất: *giao diện aris làm bằng plugin Web client của dsh được tới đâu*.
 

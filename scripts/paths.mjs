@@ -17,9 +17,9 @@ export function dshBin() {
   return join(dirname(pkg), typeof bin === 'string' ? bin : bin.dsh)
 }
 
-/** Ba mặt của aris: tên profile và mẫu profile dsh nó dựa vào. */
+/** Ba mặt của aris: tên profile, mẫu profile dsh nó dựa vào, và các bundle aris gắn thêm. */
 export const PROFILES = [
-  { name: 'aris', template: 'web' },
-  { name: 'aris-acp', template: 'acp' },
-  { name: 'aris-headless', template: 'headless' },
+  { name: 'aris', template: 'web', bundles: ['aris-bundle', 'aris-web-bundle'] },
+  { name: 'aris-acp', template: 'acp', bundles: ['aris-bundle'] },
+  { name: 'aris-headless', template: 'headless', bundles: ['aris-bundle'] },
 ]

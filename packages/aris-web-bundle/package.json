@@ -1,0 +1,23 @@
+{
+  "name": "@aris/web-bundle",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Lớp giao diện web của aris: thay các row giao diện của dsh-web-app bằng gói aris",
+  "type": "module",
+  "files": [
+    "cordis.patch.yml"
+  ],
+  "license": "MIT",
+  "engines": {
+    "dsh": ">=0.2.1-rc.2 <0.3.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@aris/ui-sidebar": "workspace:*",
+    "@aris/web-spike": "workspace:*"
+  }
+}

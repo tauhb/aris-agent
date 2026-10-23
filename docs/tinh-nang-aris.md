@@ -478,6 +478,7 @@ Ngày 23/10/2026, chủ dự án chốt:
 6. **Thêm tính năng**: Second Brain và đồ thị (mục 9).
 7. **Giao diện**: chọn hướng A (giống Grokbot) làm khung, B là tab "Bản đồ đội", C là màn phòng nhóm; đã vẽ lại gọn hơn (mục 11.2).
 8. **Bốn cách dùng** (chốt 23/10): aris phải chạy được cả **ngầm** lẫn **có giao diện**, **điều phối nền tảng và agent khác**, và **làm agent thành viên** của nền tảng khác (như Hermes trong Buzz Desktop). Chi tiết ở mục 15.
+9. **Giao diện** (chốt 23/10): phải giống canvas; làm bằng cách **thay từng row giao diện của Web UI dsh** bằng gói aris cùng hợp đồng slot. Loại phương án app riêng qua `dsh sdk` (SDK quá hẹp: thiếu duyệt quyền, huỷ, danh sách phiên, cài đặt).
 
 ## 15. Bốn cách dùng aris và đánh giá ngang/vượt Hermes (23/10)
 
