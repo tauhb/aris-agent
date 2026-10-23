@@ -1,8 +1,8 @@
 /**
  * "Đội bot lúc này" theo màn R3: sơ đồ đội 3D (Commander giữa, các bot xoay
  * quanh), việc gần đây của đội, rồi các lối mở trang khác của cột phải (Tệp,
- * Terminal…) mà dsh vẫn đăng ký như cũ. Đội là thật (`@aris/bots`); trạng thái trực tiếp và
- * việc gần đây có từ bước giao việc (GĐ2 bước 2). Cột phải của dự án vẫn là mẫu tới bước 3.
+ * Terminal…) mà dsh vẫn đăng ký như cũ. Đội, trạng thái trực tiếp và việc gần đây là thật
+ * (`@aris/bots`); cột phải của dự án vẫn là mẫu tới bước 3.
  */
 import {
   COMMANDER,
@@ -12,7 +12,17 @@ import {
   type BotStatus,
   type WorkspaceLike,
 } from '@aris/ui-kit'
-import { Button, Mascot, NavItem, StatusGlyph, TeamOrbit, arisNavigate, useTeam } from '@aris/ui-kit/react'
+import {
+  Button,
+  Mascot,
+  NavItem,
+  StatusGlyph,
+  TeamOrbit,
+  arisNavigate,
+  useTeam,
+  useTeamLive,
+  type ActivityItem,
+} from '@aris/ui-kit/react'
 import type { ComponentType, ReactNode } from 'react'
 import type { Translate } from './locale.js'
 
@@ -39,6 +49,32 @@ export interface TeamPaneProps {
 // Cột phải của dự án còn dùng đội mẫu tới bước 3 (dự án = Team của dsh).
 const MEMBERS = DEMO_TEAM.flatMap((g) => g.members)
 const nameOf = (id: string) => [COMMANDER, ...MEMBERS].find((m) => m.id === id)?.name ?? id
+
+const KIND_STATUS: Record<ActivityItem['kind'], BotStatus> = {
+  assigned: 'working',
+  started: 'working',
+  done: 'done',
+  failed: 'failed',
+  waiting: 'waiting',
+}
+
+const nameIn = (team: ReturnType<typeof useTeam>, id: string) =>
+  [team.commander, ...team.members].find((m) => m.id === id)?.name ?? id
+
+/** Một dòng việc gần đây: "Minh nhận việc: Tóm tắt 3 đối thủ · 14:02". */
+function Activity({ t, a, name }: { t: Translate; a: ActivityItem; name: string }) {
+  const at = new Date(a.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const status = KIND_STATUS[a.kind]
+  return (
+    <div className="act">
+      <StatusGlyph status={status} label={t(`status.${status}`)} />
+      <span className="txt">
+        <b>{name}</b> {t(`act.${a.kind}`)}
+        {a.task ? `: ${a.task}` : ''} · <span className="a-muted">{at}</span>
+      </span>
+    </div>
+  )
+}
 
 /** Lối mở các trang khác của cột phải (Tệp, Terminal…) như dsh đăng ký. */
 function More({
@@ -190,6 +226,7 @@ export function TeamPane({
     <More t={t} entries={entries} open={(kind) => tab.actions.openTab(kind, { replaceTab: true })} />
   )
   const team = useTeam()
+  const activity = useTeamLive()?.activity ?? []
   if (projectPath !== undefined) return <ProjectPane t={t} path={projectPath} more={more} openMap={openMap} />
   const orbitStatus = (s: BotStatus) => t(`orbit.${s}`)
   const { commander, members } = team
@@ -219,7 +256,10 @@ export function TeamPane({
       <div className="hint">{t('orbitHint')}</div>
 
       <div className="list" aria-label={t('recent')}>
-        <div className="act a-muted">{t('recentSoon')}</div>
+        {activity.length === 0 && <div className="act a-muted">{t('recentSoon')}</div>}
+        {activity.slice(0, 8).map((a) => (
+          <Activity key={`${a.at}-${a.bot}-${a.kind}`} t={t} a={a} name={nameIn(team, a.bot)} />
+        ))}
       </div>
 
       {more}

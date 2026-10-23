@@ -165,6 +165,21 @@ export async function apply(ctx: Context): Promise<void> {
       else await switches.delete(key)
     },
     recall: (sessionId) => switches.get(sessionId.replace(/[^A-Za-z0-9-]/g, '-')),
+    botModel(sessionId) {
+      // Phiên bot được giao việc (thành viên đội) dùng model riêng của bot; phiên chat thẳng
+      // với bot đã chọn model lúc mở nên không đè lựa chọn của anh.
+      const bots = ctx.get('arisBots') as
+        | {
+            store: {
+              tagOf(id: string): { bot: string; via: string } | undefined
+              get(id: string): { model?: Link } | undefined
+            }
+          }
+        | undefined
+      const tag = bots?.store.tagOf(sessionId)
+      if (!tag || tag.via === 'open') return undefined
+      return bots!.store.get(tag.bot)?.model
+    },
     logger,
   })
 

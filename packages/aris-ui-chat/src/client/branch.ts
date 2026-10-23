@@ -103,3 +103,56 @@ export function branchSteps(call: SubagentCall, child: { running: boolean } | un
     child.running ? { status: 'working', key: 'branch.running' } : { status: 'done', key: 'branch.done' },
   ]
 }
+
+/** Một việc trong lần gọi `giao_viec` của Commander. */
+export interface DispatchItem {
+  handle: string
+  title?: string | undefined
+  /** Mã phiên của bot (có khi đã giao xong). */
+  sessionId?: string | undefined
+  /** Giao không được (lời báo trong kết quả). */
+  error?: string | undefined
+}
+
+/** Đọc lần gọi `giao_viec`: các việc trong tham số, ghép với phiên của từng bot trong kết quả. */
+export function dispatchItems(call: SubagentCall): DispatchItem[] {
+  const raw =
+    call.phase === 'start'
+      ? call.block.argsRaw
+      : call.phase === 'result'
+        ? call.block.call?.argsRaw
+        : undefined
+  let items: DispatchItem[] = []
+  try {
+    const v = JSON.parse(raw ?? '{}') as { viec?: { bot?: unknown; tieu_de?: unknown; noi_dung?: unknown }[] }
+    items = (v.viec ?? []).flatMap((x) =>
+      typeof x.bot === 'string'
+        ? [
+            {
+              handle: x.bot.replace(/^@/, '').toLowerCase(),
+              title:
+                typeof x.tieu_de === 'string'
+                  ? x.tieu_de
+                  : typeof x.noi_dung === 'string'
+                    ? x.noi_dung.split('\n')[0]
+                    : undefined,
+            },
+          ]
+        : [],
+    )
+  } catch {
+    // Tham số đang truyền dở: chưa có việc nào để vẽ.
+  }
+  if (call.phase !== 'result') return items
+  const text = call.block.content.map((c) => c.text ?? '').join('\n')
+  for (const line of text.split('\n')) {
+    const m = line.match(/^- @([a-z0-9-]+)(.*)$/)
+    const item = m && items.find((i) => i.handle === m[1])
+    if (!item) continue
+    const sid = m[2]!.match(/phiên (\S+)$/)?.[1]
+    if (sid) item.sessionId = sid
+    const err = m[2]!.match(/không giao được — (.*)$/)?.[1]
+    if (err) item.error = err
+  }
+  return items
+}

@@ -72,6 +72,8 @@ export interface RouterDeps {
   /** Phiên vừa chuyển ở lượt `turn`: nhớ để lượt sau trả về model cũ. */
   remember(sessionId: string, rec: { from: Link; to: Link; turn: number } | undefined): Promise<void>
   recall(sessionId: string): { from: Link; to: Link; turn: number } | undefined
+  /** Model riêng của bot cho phiên được giao việc (thành viên đội); không có thì theo phiên. */
+  botModel?(sessionId: string): Link | undefined
   logger?: { info(fmt: string, ...a: unknown[]): void }
 }
 
@@ -98,6 +100,8 @@ export class Router {
   /** `agent/request`: cấu hình lần gọi sắp tới. */
   async request(sessionId: string, turn: number, step: number, resolved: Config): Promise<Config> {
     const s = this.state(sessionId, turn, step)
+    const own = this.d.botModel?.(sessionId)
+    if (own && !sameLink(resolved, own)) resolved = withLink(resolved, own)
     s.origin ??= { provider: resolved.provider, model: resolved.model }
     if (s.override) return withLink(resolved, s.override)
     // Lượt mới: phiên không có model chọn thì header còn giữ model dự phòng; trả về model cũ.

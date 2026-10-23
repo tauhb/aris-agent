@@ -3,7 +3,7 @@
  * gói nào (trừ nhãn model "1017" tạm của DeepSeek, row này tắt trong patch).
  */
 import { mountKitCss } from '@aris/ui-kit/react'
-import { HeroMark, ModelLabel, SubagentBranch, TriggerButtons } from './Chat.js'
+import { DispatchBranches, HeroMark, ModelLabel, SubagentBranch, TriggerButtons } from './Chat.js'
 import { EN, NS, VI } from './locale.js'
 import { CSS } from './styles.js'
 
@@ -91,6 +91,23 @@ export function apply(ctx: ClientContext): void {
         }),
       },
       SubagentBranch,
+    ),
+  )
+
+  // Commander giao việc (`giao_viec` của @aris/commander): mỗi bot một nhánh.
+  ctx.slots.inject('tool.call.toolview', () =>
+    ctx.slots.register(
+      {
+        name: 'tool.call.toolview',
+        key: 'giao_viec',
+        priority: -1,
+        locale: NS,
+        inject: () => ({
+          hooks: { sessions: ctx.sessions.list },
+          openSession: (sessionId: string) => workspace.openSession(sessionId),
+        }),
+      },
+      DispatchBranches,
     ),
   )
 }

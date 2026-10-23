@@ -9,6 +9,8 @@ export interface ApiDeps {
   templates: () => Promise<Template[]>
   /** Tạo phiên trong chat riêng, gắn bot, chọn model của bot; trả mã phiên. */
   open: (botId: string) => Promise<string>
+  /** Trạng thái trực tiếp và việc gần đây (`?live=1`). */
+  live?: () => unknown
   /** Danh mục model đang phục vụ (để chọn model riêng cho bot). */
   catalog?: () => Promise<{ id: string; name: string; models: { id: string; name: string }[] }[]>
 }
@@ -36,8 +38,10 @@ async function snapshot(d: ApiDeps) {
 export async function handleApi(d: ApiDeps, request: Request): Promise<Response> {
   if (request.method === 'GET') {
     // ?session=…: bot của một phiên (đầu khung chat).
-    const session = new URL(request.url).searchParams.get('session')
+    const q = new URL(request.url).searchParams
+    const session = q.get('session')
     if (session) return json({ bot: d.store.botOf(session).id })
+    if (q.get('live') && d.live) return json(d.live())
     return json(await snapshot(d))
   }
   let body: Record<string, unknown>

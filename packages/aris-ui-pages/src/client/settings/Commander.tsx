@@ -1,13 +1,46 @@
 /** 2.5 · Commander: bot được giao việc, giới hạn điều phối, quyết định định tuyến gần đây, điều Commander đã học. */
 import { Button, Card, Mascot, PageShell, Pill, useTeam } from '@aris/ui-kit/react'
+import { useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Bot, Col, Num } from '../ui.js'
 import { DEMO_COMMANDER as C } from './demo.js'
 
 const KIND_TONE = { delegate: 'accent', self: 'muted', handoff: 'ok', helpers: 'muted' } as const
 
+/** Một lần giao việc trong nhật ký của `@aris/commander`. */
+interface Dispatch {
+  at: string
+  bot: string
+  handle: string
+  title: string
+  reason: string
+  reused: boolean
+}
+
+function useDispatchLog(): Dispatch[] | null {
+  const [log, setLog] = useState<Dispatch[] | null>(null)
+  useEffect(() => {
+    let live = true
+    const load = () =>
+      fetch(new URL('api/aris/commander', document.baseURI), { credentials: 'same-origin' })
+        .then((r) => (r.ok ? (r.json() as Promise<{ recent: Dispatch[] }>) : undefined))
+        .then((d) => live && d && setLog(d.recent))
+        .catch(() => {})
+    void load()
+    const timer = setInterval(() => void load(), 10_000)
+    return () => {
+      live = false
+      clearInterval(timer)
+    }
+  }, [])
+  return log
+}
+
 export function Commander({ t, nav }: PageProps) {
-  const COMMANDER = useTeam().commander
+  const team = useTeam()
+  const COMMANDER = team.commander
+  const log = useDispatchLog()
+  const nameOf = (id: string) => team.members.find((m) => m.id === id)?.name ?? id
   return (
     <PageShell
       title={
@@ -27,16 +60,18 @@ export function Commander({ t, nav }: PageProps) {
       <div className="ap-cols">
         <Col basis={380}>
           <Card title={t('cmd.delegates')} subtitle={t('cmd.delegatesHint')}>
-            {C.delegates.map((d) => (
-              <label className="a-row" key={d.bot}>
-                <Bot id={d.bot} size={24} />
+            {team.members.map((m) => (
+              <label className="a-row" key={m.id}>
+                <Mascot id={m.mascot ?? m.id} size={24} />
                 <span className="grow">
-                  {d.text} {d.approve && <span className="a-muted">{t('cmd.approveEach')}</span>}
+                  {m.name} <span className="a-muted">· {m.role}</span>
                 </span>
                 <input
                   type="checkbox"
-                  defaultChecked={d.on}
-                  aria-label={d.text}
+                  checked
+                  readOnly
+                  title={t('cmd.alwaysOn')}
+                  aria-label={m.name}
                   style={{ width: 18, height: 18, accentColor: 'var(--a-accent)' }}
                 />
               </label>
@@ -57,11 +92,11 @@ export function Commander({ t, nav }: PageProps) {
           <Card title={t('cmd.limits')}>
             <div className="a-row">
               <span className="grow">{t('cmd.parallel')}</span>
-              <Num value={C.limits.parallel} label={t('cmd.parallel')} />
+              <Num value="6" label={t('cmd.parallel')} />
             </div>
             <div className="a-row">
               <span className="grow">{t('cmd.nested')}</span>
-              <Num value={C.limits.nested} label={t('cmd.nested')} />
+              <Num value="0" label={t('cmd.nested')} />
             </div>
             <div className="a-row">
               <span className="grow">{t('cmd.talkBack')}</span>
@@ -98,16 +133,27 @@ export function Commander({ t, nav }: PageProps) {
               <span>{t('cmd.reason')}</span>
               <span>{t('cmd.result')}</span>
             </div>
-            {C.routing.map((r) => (
-              <div className="ap-dr" key={r.at + r.req}>
-                <span className="a-mono a-muted">{r.at}</span>
-                <span>{r.req}</span>
-                <span>
-                  <Pill tone={KIND_TONE[r.kind]}>{t(`cmd.kind.${r.kind}`, { n: r.bot })}</Pill>{' '}
-                  {r.kind !== 'helpers' && r.bot}
+            {log?.length === 0 && (
+              <div className="ap-dr a-muted" style={{ display: 'block' }}>
+                {t('cmd.noRouting')}
+              </div>
+            )}
+            {log?.map((r) => (
+              <div className="ap-dr" key={r.at + r.handle}>
+                <span className="a-mono a-muted">
+                  {new Date(r.at).toLocaleString([], {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
                 </span>
-                <span className="a-muted">{r.why}</span>
-                <span>{r.result}</span>
+                <span>{r.title}</span>
+                <span>
+                  <Pill tone={KIND_TONE.delegate}>{t('cmd.kind.delegate', { n: 1 })}</Pill> {nameOf(r.bot)}
+                </span>
+                <span className="a-muted">{r.reason}</span>
+                <span>{r.reused ? t('cmd.followUp') : t('cmd.newTask')}</span>
               </div>
             ))}
           </Card>

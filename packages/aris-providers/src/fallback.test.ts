@@ -8,7 +8,10 @@ const ds: Link = { provider: 'deepseek-official', model: 'deepseek-flash' }
 const or: Link = { provider: 'openrouter', model: 'deepseek/deepseek-chat' }
 const gq: Link = { provider: 'groq', model: 'openai/gpt-oss-120b' }
 
-function router(chain: Link[], opts: { fits?: (l: Link) => boolean; pools?: KeyPools } = {}) {
+function router(
+  chain: Link[],
+  opts: { fits?: (l: Link) => boolean; pools?: KeyPools; botModel?: (s: string) => Link | undefined } = {},
+) {
   const saved = new Map<string, { from: Link; to: Link; turn: number }>()
   const switched = vi.fn()
   const r = new Router({
@@ -18,6 +21,7 @@ function router(chain: Link[], opts: { fits?: (l: Link) => boolean; pools?: KeyP
     switched,
     remember: async (s, rec) => void (rec ? saved.set(s, rec) : saved.delete(s)),
     recall: (s) => saved.get(s),
+    ...(opts.botModel ? { botModel: opts.botModel } : {}),
   })
   return { r, switched, saved }
 }
@@ -128,5 +132,14 @@ describe('dự phòng', () => {
     const { r, switched } = router([ds, or, gq], { fits: (l) => l !== or })
     await r.error('s1', 1, 1, ds.provider, ds.model, quota, pass)
     expect(switched).toHaveBeenCalledWith('s1', ds, gq, quota)
+  })
+
+  it('phiên bot được giao việc chạy bằng model riêng của bot; vẫn dự phòng được', async () => {
+    const { r, switched } = router([or, gq], { botModel: (sid) => (sid === 'child' ? or : undefined) })
+    expect(await r.request('child', 1, 1, cfg(ds))).toEqual(or)
+    expect(await r.request('other', 1, 1, cfg(ds))).toEqual(cfg(ds))
+    await r.error('child', 1, 1, or.provider, or.model, quota, pass)
+    expect(switched).toHaveBeenCalledWith('child', or, gq, quota)
+    expect(await r.request('child', 1, 1, cfg(ds))).toEqual(gq)
   })
 })

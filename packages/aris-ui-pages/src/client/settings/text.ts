@@ -346,6 +346,10 @@ export const SETTINGS_TEXT = text(
     'cmd.kind.handoff': 'Hand off',
     'cmd.kind.helpers': '{n} hidden helpers',
     'cmd.learned': 'What Commander has learned',
+    'cmd.alwaysOn': 'Every bot can receive tasks for now',
+    'cmd.noRouting': 'No tasks handed out yet.',
+    'cmd.followUp': 'follow-up',
+    'cmd.newTask': 'new task',
   },
   {
     'set.caption': 'Cài đặt và vận hành',
@@ -689,5 +693,9 @@ export const SETTINGS_TEXT = text(
     'cmd.kind.handoff': 'Chuyển giao',
     'cmd.kind.helpers': '{n} trợ lý ẩn',
     'cmd.learned': 'Commander đã học',
+    'cmd.alwaysOn': 'Hiện bot nào cũng nhận việc được',
+    'cmd.noRouting': 'Chưa giao việc nào.',
+    'cmd.followUp': 'nhắn tiếp',
+    'cmd.newTask': 'việc mới',
   },
 )

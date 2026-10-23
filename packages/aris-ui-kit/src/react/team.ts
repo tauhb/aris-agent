@@ -5,6 +5,7 @@
  */
 import { useSyncExternalStore } from 'react'
 import { COMMANDER, type TeamGroup, type TeamMember } from '../demo.js'
+import type { BotStatus } from '../status.js'
 
 export interface BotData {
   id: string
@@ -55,6 +56,25 @@ export interface RolePreset {
   description: string
   soul: string
   mascot: string
+}
+
+export interface BotLive {
+  status: BotStatus
+  task?: string
+  since: number
+  running: number
+}
+
+export interface ActivityItem {
+  bot: string
+  kind: 'assigned' | 'started' | 'done' | 'failed' | 'waiting'
+  task?: string
+  at: number
+}
+
+export interface TeamLive {
+  status: Record<string, BotLive>
+  activity: ActivityItem[]
 }
 
 const endpoint = () => new URL('api/aris/bots', document.baseURI)
@@ -114,12 +134,48 @@ export function useTeamData(): TeamSnapshot | null {
   return useSyncExternalStore(subscribe, () => snap)
 }
 
-export const toMember = (b: BotData): TeamMember => ({
+// Trạng thái trực tiếp: tải lại vài giây một lần khi có thành phần đang hiện.
+let live: TeamLive | null = null
+const liveListeners = new Set<() => void>()
+let liveTimer: ReturnType<typeof setInterval> | undefined
+
+function loadLive() {
+  const url = endpoint()
+  url.searchParams.set('live', '1')
+  void fetch(url, { credentials: 'same-origin' })
+    .then((r) => (r.ok ? (r.json() as Promise<TeamLive>) : undefined))
+    .then((d) => {
+      if (!d) return
+      live = d
+      for (const l of liveListeners) l()
+    })
+    .catch(() => {})
+}
+
+function subscribeLive(fn: () => void) {
+  liveListeners.add(fn)
+  if (!live) loadLive()
+  liveTimer ??= setInterval(loadLive, 4000)
+  return () => {
+    liveListeners.delete(fn)
+    if (liveListeners.size === 0 && liveTimer) {
+      clearInterval(liveTimer)
+      liveTimer = undefined
+    }
+  }
+}
+
+export function useTeamLive(): TeamLive | null {
+  return useSyncExternalStore(subscribeLive, () => live)
+}
+
+export const toMember = (b: BotData, l?: BotLive): TeamMember => ({
   id: b.id,
   name: b.name,
   role: b.role,
-  note: b.role,
-  status: 'idle',
+  // Dòng phụ: việc đang làm (khi biết), không thì vai.
+  note: l && l.status !== 'idle' && l.task ? l.task : b.role,
+  status: l?.status ?? 'idle',
   mascot: b.mascot,
   handle: b.handle,
 })
@@ -140,7 +196,8 @@ export interface TeamView {
 }
 
 /** Gom đội theo phòng ban, dạng các thành phần hiện có đang dùng. */
-export function teamView(d: TeamSnapshot | null, noDepartment = ''): TeamView {
+export function teamView(d: TeamSnapshot | null, noDepartment = '', l: TeamLive | null = null): TeamView {
+  const m = (b: BotData) => toMember(b, l?.status[b.id])
   if (!d)
     return {
       ready: false,
@@ -160,14 +217,14 @@ export function teamView(d: TeamSnapshot | null, noDepartment = ''): TeamView {
       id: dep.id,
       label: dep.name,
       lead: dep.lead ?? '',
-      members: others.filter((b) => b.department === dep.id).map(toMember),
+      members: others.filter((b) => b.department === dep.id).map(m),
     }))
     .filter((g) => g.members.length > 0)
   const loose = others.filter((b) => !b.department || !d.departments.some((x) => x.id === b.department))
-  if (loose.length) groups.push({ id: '', label: noDepartment, lead: '', members: loose.map(toMember) })
+  if (loose.length) groups.push({ id: '', label: noDepartment, lead: '', members: loose.map(m) })
   return {
     ready: true,
-    commander: cmd ? { ...toMember(cmd), note: cmd.role } : COMMANDER,
+    commander: cmd ? m(cmd) : COMMANDER,
     groups,
     members: groups.flatMap((g) => g.members),
     bots: d.bots,
@@ -209,6 +266,7 @@ export function useSessionBot(sessionId: string | undefined): BotData | undefine
   return data?.bots.find((b) => b.id === id) ?? data?.bots.find((b) => b.kind === 'commander')
 }
 
+/** Đội kèm trạng thái trực tiếp (tải lại vài giây một lần khi đang hiện). */
 export function useTeam(noDepartment = ''): TeamView {
-  return teamView(useTeamData(), noDepartment)
+  return teamView(useTeamData(), noDepartment, useTeamLive())
 }
