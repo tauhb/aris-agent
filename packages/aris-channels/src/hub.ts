@@ -203,7 +203,8 @@ export class ChannelHub {
     if (!token) throw new Error('chưa có token trong kho khoá')
     const api = this.newApi(token)
     const me = await api.getMe()
-    const { error: _old, ...prev } = this.store.bot(rec.bot) ?? rec
+    const prev: BotRecord = { ...(this.store.bot(rec.bot) ?? rec) }
+    delete prev.error
     const cur: BotRecord = {
       ...prev,
       username: me.username ?? rec.username,

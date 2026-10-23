@@ -27,23 +27,6 @@ export const DEMO_DASHBOARD = {
   warning: 'routine “Tin đối thủ trong tuần” lỗi 2 lần · ký ức hồ sơ của Aris đã dùng 88%',
 }
 
-/** 6.3 · GĐ1 (Telegram), GĐ6 (Lark, Zalo). */
-export const DEMO_CHANNELS = {
-  telegram: [
-    { bot: 'aris', name: 'Aris', handle: '@aris_chunhan_bot', note: 'cửa vào chính' },
-    { bot: 'lam', name: 'Lâm', handle: '@lam_nghiencuu_bot', note: 'chat riêng' },
-    { bot: 'mai', name: 'Mai', handle: '@mai_thuky_bot', note: 'chat riêng' },
-  ],
-  lark: [
-    { bot: 'aris', text: 'Aris trong nhóm “Marketing”', note: 'chỉ trả lời khi được @' },
-    { bot: 'lam', text: 'Lâm gửi routine vào nhóm “Marketing”', note: 'chỉ gửi' },
-  ],
-  zaloNeeds: 'Official Account đã xác thực · App ID · khoá bí mật · đường webhook công khai',
-  pairCode: '4KX7-29QM',
-  pairExpires: '9:42',
-  paired: ['Chủ nhân · Telegram', 'Chủ nhân · Lark'],
-}
-
 /** 6.3b · GĐ6 (mặt tích hợp ACP, API, MCP, A2A). */
 export const DEMO_INTEGRATIONS = {
   summary: 'đang chạy nền, 4 ứng dụng đang nối · chỉ trên máy này',

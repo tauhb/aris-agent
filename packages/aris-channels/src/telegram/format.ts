@@ -18,12 +18,12 @@ export function inline(md: string): string {
   const codes: string[] = []
   let s = md.replace(/`([^`\n]+)`/g, (_m, code: string) => {
     codes.push(`<code>${escapeHtml(code)}</code>`)
-    return `\u0000${codes.length - 1}\u0000`
+    return `\uE000${codes.length - 1}\uE000`
   })
   const links: string[] = []
   s = s.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, (_m, label: string, url: string) => {
     links.push(`<a href="${escapeAttr(url)}">${escapeHtml(label)}</a>`)
-    return `\u0001${links.length - 1}\u0001`
+    return `\uE001${links.length - 1}\uE001`
   })
   s = escapeHtml(s)
     .replace(/\*\*(?=\S)([^*\n]+?)\*\*/g, '<b>$1</b>')
@@ -32,8 +32,8 @@ export function inline(md: string): string {
     .replace(/(^|[^\w*])\*(?=\S)([^*\n]+?)\*(?!\w)/g, '$1<i>$2</i>')
     .replace(/(^|[^\w])_(?=\S)([^_\n]+?)_(?!\w)/g, '$1<i>$2</i>')
   return s
-    .replace(/\u0001(\d+)\u0001/g, (_m, i: string) => links[+i]!)
-    .replace(/\u0000(\d+)\u0000/g, (_m, i: string) => codes[+i]!)
+    .replace(/\uE001(\d+)\uE001/g, (_m, i: string) => links[+i]!)
+    .replace(/\uE000(\d+)\uE000/g, (_m, i: string) => codes[+i]!)
 }
 
 const isRow = (line: string) => /^\s*\|.*\|\s*$/.test(line)
