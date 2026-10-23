@@ -19,6 +19,30 @@ export interface PageProps {
   params: Params
   /** Các mục cài đặt của dsh (chỉ trang Cài đặt nhận). */
   system?: SystemSettings | undefined
+  /** Danh mục model và cấu hình model theo việc (chỉ trang Cài đặt nhận). */
+  models?: ModelSettings | undefined
+}
+
+/** Một nhà cung cấp và các model dsh đang phục vụ (`session.modelCatalog`). */
+export interface ModelGroup {
+  id: string
+  name: string
+  models: readonly { id: string; name: string }[]
+}
+
+/** Thao tác ghi cấu hình của dsh (đường dẫn tính trong namespace). */
+export type SettingsOp = { op: 'set'; path: string[]; value: string } | { op: 'unset'; path: string[] }
+
+/** Một namespace cấu hình của dsh (`ctx.configForms.get`). */
+export interface ConfigFormLike {
+  getSnapshot(): { status: 'loading' | 'ready' | 'unavailable'; value: unknown; writable: boolean }
+  subscribe(listener: () => void): () => void
+  mutate(ops: readonly SettingsOp[]): Promise<boolean>
+}
+
+export interface ModelSettings {
+  catalog(): Promise<readonly ModelGroup[]>
+  form(namespace: string): ConfigFormLike
 }
 
 /** Một mục cài đặt dsh đăng ký vào `settings.section` (Chung, Model, Tài khoản…). */

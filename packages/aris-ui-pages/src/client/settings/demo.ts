@@ -27,49 +27,6 @@ export const DEMO_DASHBOARD = {
   warning: 'routine “Tin đối thủ trong tuần” lỗi 2 lần · ký ức hồ sơ của Aris đã dùng 88%',
 }
 
-/** 6.2 · GĐ1 (danh mục model của dsh, kho khoá). */
-export const DEMO_PROVIDERS = {
-  connected: [
-    { id: 'deepseek', name: 'DeepSeek', color: '#4D6BFE', ok: true },
-    { id: 'anthropic', name: 'Anthropic', color: '#D97757', ok: true },
-    { id: 'ollama', name: 'Ollama · trên máy', color: 'var(--a-ink)', ok: true },
-    { id: 'litellm', name: 'LiteLLM nội bộ', color: '#7C3AED', ok: false, custom: true },
-  ],
-  available: [
-    'OpenAI',
-    'Google Gemini',
-    'OpenRouter',
-    'Qwen · Moonshot · Zhipu',
-    'Groq · Mistral · xAI',
-    'LM Studio · vLLM',
-  ],
-  current: {
-    name: 'DeepSeek',
-    color: '#4D6BFE',
-    sdk: 'Kiểu SDK: tương thích OpenAI · provider mặc định',
-    latency: '210 ms',
-    key: 'sk-••••••••••••••••3f2a',
-    keys: 2,
-    baseUrl: 'https://api.deepseek.com',
-    probe: 'deepseek-chat',
-    models: [
-      { id: 'deepseek-chat', caps: ['gọi tool', 'đầu ra JSON', 'cache'], on: true },
-      { id: 'deepseek-reasoner', caps: ['suy luận', 'gọi tool', 'cache'], on: true },
-    ],
-  },
-  byTask: [
-    { task: 'Chat với bot', model: null, color: null },
-    { task: 'Commander điều phối', model: 'Claude Opus 5.5', color: '#D97757' },
-    { task: 'Vòng học nền', model: 'deepseek-chat', color: '#4D6BFE' },
-    { task: 'Tóm tắt khi tìm lại', model: 'deepseek-chat', color: '#4D6BFE' },
-    { task: 'Giám khảo mục tiêu', model: 'Claude Haiku 5.5', color: '#D97757' },
-    { task: 'Nén ngữ cảnh', model: 'deepseek-chat', color: '#4D6BFE' },
-    { task: 'Kiểm thử skill', model: 'deepseek-chat', color: '#4D6BFE' },
-    { task: 'Nhúng (tìm ngữ nghĩa)', model: 'Ollama · nomic-embed-text', color: 'var(--a-ink)' },
-  ],
-  fallback: ['DeepSeek', 'Anthropic', 'Ollama trên máy'],
-}
-
 /** 6.3 · GĐ1 (Telegram), GĐ6 (Lark, Zalo). */
 export const DEMO_CHANNELS = {
   telegram: [

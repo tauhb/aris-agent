@@ -80,7 +80,7 @@ Dsh để cài đặt trong **một hộp thoại** (Chung, Models, Built-in plu
 | Màn | Vùng của dsh | Cách | Gói aris | Trạng thái | Dữ liệu |
 |---|---|---|---|---|---|
 | 6.1 Bảng điều khiển | — | P | `@aris/ui-pages` ✅ | ✅ G5 vỏ | GĐ7 |
-| 6.2 Provider & model | `ui-settings-models` (Models) | P, đọc danh mục model của dsh | `@aris/ui-pages` ✅ | ✅ G5 vỏ | GĐ1 |
+| 6.2 Provider & model | `ui-settings-models` (Models) | P: cột trái vẽ chính mục "Model" của dsh (khoá chỉ ghi, thêm nhà cung cấp, API tuỳ chỉnh, dò model) qua `settings.section`; cột phải "Model theo việc" ghi `agent-default-model` qua `configForms`, danh mục từ `session.modelCatalog`. Mục "Model" bỏ khỏi nhóm Hệ thống. Đặc tả: [aris-providers.md](../specs/aris-providers.md) | `@aris/ui-pages` ✅ | ✅ dữ liệu thật (GĐ1 bước 2) | còn: dự phòng, xoay vòng khoá, giá |
 | 6.3 Kênh & ghép đôi | — | P | `@aris/ui-pages` ✅ | ✅ G5 vỏ | GĐ1 (Telegram) |
 | 6.3b Mặt tích hợp | — | P | `@aris/ui-pages` ✅ | ✅ G5 vỏ | GĐ6 |
 | 6.4 Ngân sách, duyệt, mạng | `ui-permission` (quyền mặc định) | P | `@aris/ui-pages` ✅ | ✅ G5 vỏ | GĐ3 / GĐ7 |

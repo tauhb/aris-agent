@@ -190,4 +190,6 @@ export const CSS = `
 .ap-bl{border:1px solid var(--a-line);border-radius:10px;padding:8px 10px;font-size:13px;background:var(--a-panel)}
 .ap-src-ic{display:inline-flex;align-items:center;gap:6px}
 .ap-sys{padding:20px 28px;overflow-y:auto}
+.aris .ap-model-select{height:32px;min-width:200px;max-width:260px;padding:0 8px;font-size:13px}
+.ap-embed{padding:4px 16px 16px}
 `

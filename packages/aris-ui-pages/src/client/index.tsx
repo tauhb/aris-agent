@@ -6,7 +6,16 @@
 import { announceRoute, mountKitCss, onArisNavigate } from '@aris/ui-kit/react'
 import type { ComponentType, ReactNode } from 'react'
 import { EN, NS, VI } from './locale.js'
-import type { PageNav, PageProps, SystemSection, SystemSettings, Translate } from './page.js'
+import type {
+  ConfigFormLike,
+  ModelGroup,
+  ModelSettings,
+  PageNav,
+  PageProps,
+  SystemSection,
+  SystemSettings,
+  Translate,
+} from './page.js'
 import {
   ROUTES,
   createNavStore,
@@ -53,10 +62,28 @@ interface ClientContext {
   }
   layout: { selectPanel(id: string | null): void }
   workspaces: { create(input: { path: string }): Promise<{ workspaceId: string }> }
+  configForms: { get(namespace: string): ConfigFormLike }
+  remote: {
+    session: {
+      modelCatalog(): Promise<
+        | { ok: true; value: { groups: readonly ModelGroup[] } }
+        | { ok: false; error: { code: string; message: string } }
+      >
+    }
+  }
   get(name: string): unknown
 }
 
-export const inject = ['slots', 'locale', 'layout', 'workspaces', 'uiWorkspace']
+export const inject = [
+  'slots',
+  'locale',
+  'layout',
+  'workspaces',
+  'uiWorkspace',
+  'configForms',
+  'remote',
+  'remote.session',
+]
 
 /** Trang đã dựng; trang chưa có ở đây thì chưa đăng ký. */
 const PAGES: Partial<Record<RouteId, ComponentType<PageProps>>> = {
@@ -185,6 +212,20 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.subscribe(syncSections), 'aris-ui-pages: settings labels')
   syncSections()
 
+  // Model: danh mục dsh đang phục vụ và cấu hình model theo việc (trang 6.2).
+  const models: ModelSettings = {
+    async catalog() {
+      const res = await ctx.remote.session.modelCatalog()
+      if (!res.ok) throw new Error(`${res.error.code}: ${res.error.message}`)
+      return res.value.groups.map((g) => ({
+        id: g.id,
+        name: g.name,
+        models: g.models.map((m) => ({ id: m.id, name: m.name })),
+      }))
+    },
+    form: (namespace) => ctx.configForms.get(namespace),
+  }
+
   for (const [id, Page] of Object.entries(PAGES) as [RouteId, ComponentType<PageProps>][]) {
     if (ROUTES[id].kind !== 'page') continue
     function Host({
@@ -210,7 +251,13 @@ export function apply(ctx: ClientContext): void {
           : undefined
       return (
         <div className="aris ap-root">
-          <Page t={t} nav={nav} params={params} system={system} />
+          <Page
+            t={t}
+            nav={nav}
+            params={params}
+            system={system}
+            models={id === 'settings' ? models : undefined}
+          />
         </div>
       )
     }

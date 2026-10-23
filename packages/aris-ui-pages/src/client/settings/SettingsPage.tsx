@@ -11,7 +11,7 @@ import { Commander } from './Commander.js'
 import { Dashboard } from './Dashboard.js'
 import { Guard } from './Guard.js'
 import { Integrations } from './Integrations.js'
-import { Provider } from './Provider.js'
+import { DSH_MODELS_SECTION, Provider } from './Provider.js'
 import { Plugin } from './Plugin.js'
 import { Screen } from './Screen.js'
 import { Stats } from './Stats.js'
@@ -50,8 +50,6 @@ export function SettingsPage(props: PageProps) {
   const sys = sysId !== undefined ? system?.sections.find((s) => s.id === sysId) : undefined
   const active = sys ? requested : requested in SECTIONS ? requested : 'dashboard'
   const Section = SECTIONS[active]
-  // Provider có cột danh sách provider riêng thay cho cột điều hướng (theo canvas 6.2).
-  if (active === 'provider' && Section) return <Section {...props} />
   return (
     <SettingsShell
       caption={t('set.caption')}
@@ -59,7 +57,10 @@ export function SettingsPage(props: PageProps) {
       active={active}
       sections={[
         ...ORDER.map((id) => ({ id, label: t(`sec.${id}`) })),
-        ...(system?.sections ?? []).map((s) => ({ id: SYS + s.id, label: s.label, group: t('set.system') })),
+        // Mục "Model" của dsh đã nằm trong trang Provider và model (6.2).
+        ...(system?.sections ?? [])
+          .filter((s) => s.id !== DSH_MODELS_SECTION)
+          .map((s) => ({ id: SYS + s.id, label: s.label, group: t('set.system') })),
       ]}
       onSelect={(id) => nav.go('settings', { section: id })}
     >
