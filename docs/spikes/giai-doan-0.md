@@ -93,6 +93,10 @@ Còn tạm / chưa làm:
 
 **Kết luận: chốt "A+" — thay từng row giao diện của dsh bằng gói aris**, ưu tiên theo mức khác biệt với canvas: thanh bên (xong bản đầu) → theme → khung chat và dòng việc → danh sách phiên theo bot.
 
-## Cần anh
+## Chạy thật với model (23/10)
 
-- Khoá API DeepSeek (đặt `DEEPSEEK_API_KEY` khi chạy, hoặc nhập ở trang Models của Web UI) để chạy trọn một câu hỏi và kiểm tra tool `aris_hello` được model gọi thật.
+Khoá DeepSeek được chủ dự án nhập qua Web UI, lưu trong `.dsh-home/` (đã gitignore). Câu "Chào aris, anh là Tầu" trên profile `aris`: model (DeepSeek-V4.1-Flash) gọi tool `aris_hello {"name": "Tầu"}`, nhận "Xin chào Tầu, aris đây!" rồi trả lời; 1 lượt, 2 bước, trúng cache 49%. Plugin mẫu chạy đủ vòng: đoạn prompt → model chọn tool → tool chạy.
+
+Ghi chú:
+- Profile `aris-headless` tắt kho khoá của dsh (việc chạy một lần dùng khoá lúc khởi chạy), nên `pnpm aris:ask` vẫn cần `DEEPSEEK_API_KEY` trong môi trường.
+- System prompt đang nhận cả danh sách skill từ thư mục skill chung của máy; giai đoạn 1 cần giới hạn thư mục skill cho aris.
