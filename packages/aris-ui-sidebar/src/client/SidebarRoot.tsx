@@ -408,9 +408,6 @@ export function SidebarRoot(props: SidebarProps) {
           </div>
         )}
         <div className="seat">{renderSlot('sidebar.footer.action', { wide })}</div>
-        {/* Vỏ cài đặt của dsh: không còn nút mở (xem settings.launcher ở index.tsx), chỉ còn
-            báo mất kết nối, hộp thoại cài đặt (phím tắt) và các bước làm quen. */}
-        <div className="seat">{renderSlot('sidebar.settings', { wide })}</div>
       </div>
     </nav>
   )

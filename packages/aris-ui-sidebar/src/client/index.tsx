@@ -3,7 +3,7 @@
  * Đăng ký đúng slot `sidebar` cùng 7 chỗ cắm con và slot `shell.leading` như gói
  * gốc, để mọi plugin khác của dsh vẫn cắm vào được; phần trình bày theo canvas.
  */
-import { mountKitCss, registerPersonal } from '@aris/ui-kit/react'
+import { arisNavigate, mountKitCss, registerPersonal } from '@aris/ui-kit/react'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
 import { EN, NS, VI } from './locale.js'
@@ -25,8 +25,9 @@ interface ClientContext {
   locale: {
     register(ns: string, locale: string, dict: Record<string, string>): () => void
     subscribe(fn: () => void): () => void
+    bind(ns: string): (key: string) => string
   }
-  shortcuts: { catalog: unknown }
+  shortcuts: { catalog: unknown; register(command: Record<string, unknown>): () => void }
 }
 
 export const inject = ['slots', 'layout', 'uiWorkspace', 'locale', 'shortcuts']
@@ -113,7 +114,6 @@ export function apply(ctx: ClientContext): void {
           'sidebar.toggle.badge': single,
           'sidebar.panellist': list,
           'sidebar.workspaces': single,
-          'sidebar.settings': single,
           'sidebar.footer.action': list,
         },
         inject: injectProps,
@@ -121,10 +121,31 @@ export function apply(ctx: ClientContext): void {
       SidebarRoot,
     ),
   )
-  // Một chỗ cài đặt duy nhất là bánh răng (trang Cài đặt aris, đã gồm các mục của dsh):
-  // chiếm nút mở cài đặt của dsh (menu "…": Cài đặt, Góp ý, Đăng nhập) để nó không hiện.
-  ctx.slots.inject('settings.launcher', () =>
-    ctx.slots.register({ name: 'settings.launcher', id: 'aris-no-launcher', priority: 10 }, () => null),
+  // Một chỗ cài đặt duy nhất là bánh răng (trang Cài đặt aris, đã gồm các mục của dsh). Thanh bên
+  // không khai báo `sidebar.settings` nên vỏ cài đặt của dsh không gắn vào: vỏ đó khai báo lại
+  // `settings.section` mà trang Cài đặt aris đã giữ, lần nào cũng bị từ chối. Phím tắt mở cài đặt
+  // của vỏ đó (⌘,) aris tự đăng ký, mở trang Cài đặt aris.
+  const t = ctx.locale.bind(NS)
+  ctx.effect(
+    () =>
+      ctx.shortcuts.register({
+        id: 'settings.open',
+        label: () => t('settings'),
+        aliases: ['settings', 'preferences', 'cài đặt'],
+        defaults: {
+          'desktop:macos': { code: 'Comma', modifiers: ['primary'] },
+          'desktop:windows': { code: 'Comma', modifiers: ['primary'] },
+          'desktop:linux': { code: 'Comma', modifiers: ['primary'] },
+          'web:macos': { code: 'Comma', modifiers: ['primary', 'alt'] },
+          'web:windows': { code: 'Comma', modifiers: ['primary', 'alt'] },
+        },
+        regions: ['page', 'editable', 'terminal'],
+        resolve: ({ modal }: { modal: string | null }) =>
+          modal !== null
+            ? { status: 'blocked', reason: 'modal' }
+            : { status: 'handled', run: () => arisNavigate('settings') },
+      }),
+    'aris-ui-sidebar: settings shortcut',
   )
   ctx.slots.inject('shell.leading', () =>
     ctx.slots.register({ name: 'shell.leading', locale: NS, inject: injectProps }, LeadingControls),
