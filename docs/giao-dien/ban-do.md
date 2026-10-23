@@ -115,7 +115,7 @@ Dsh để cài đặt trong **một hộp thoại** (Chung, Models, Built-in plu
 | `DEMO_TEAM`, `COMMANDER` (đội 6 bot, trạng thái, dòng phụ), `DEMO_ACTIVITY` (việc gần đây ở cột phải) | `packages/aris-ui-kit/src/demo.ts` | GĐ2 (dịch vụ đội bot) |
 | `DEMO_PENDING_APPROVALS` (3 việc chờ duyệt) | cùng tệp | GĐ3 (hộp duyệt) |
 | `DEMO_PROJECT_ROOM` (thành viên, luật, việc của phiên dự án) và trưởng nhóm trong `DEMO_TEAM` | cùng tệp | GĐ2 (Team của dsh, `aris-departments`) |
-| `DEMO_COST` (dòng chủ nhân "0,42 / 5 USD hôm nay") | `packages/aris-ui-kit/src/demo.ts` | GĐ1 (theo dõi chi phí) |
+| ~~`DEMO_COST`~~ (dòng chủ nhân "… USD hôm nay") | đã gỡ ở GĐ1 bước 6: số thật từ sổ chi phí `@aris/providers`; trần ngân sách ở GĐ7 | GĐ1 |
 | Bot trên đầu khung luôn là Aris | `packages/aris-ui-chat-header/src/client/Header.tsx` | GĐ2 |
 | Bot của nhánh "dòng việc": thành viên đội khi mẫu bot trùng mã, không thì linh vật chưa dùng | `packages/aris-ui-chat/src/client/branch.ts` | GĐ2 |
 | Dữ liệu các trang và hộp thoại G5: `DEMO_*` của Cài đặt (6.x, Commander), Trí nhớ (Ký ức, skill, hộp duyệt, việc đang chạy), Đội bot (bản đồ, hồ sơ bot/chủ nhân, tạo bot, agent ngoài, tạo dự án, tìm phiên), Tự động (routine, kanban), Second Brain (cây ghi chú, ghi chú, đồ thị quanh ghi chú, hộp thư vào, hỏi bộ não, `demoGraph()`) | `packages/aris-ui-pages/src/client/{settings,mind,team,auto,brain}/demo.ts` — mỗi hằng ghi giai đoạn gỡ | GĐ tương ứng ở cột "Dữ liệu" phía trên |

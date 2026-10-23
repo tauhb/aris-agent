@@ -42,8 +42,55 @@ Lưu ý: route DeepSeek chính thức của dsh gọi endpoint tương thích An
 
 Trang aris chỉ chờ `slots` và `locale` khi kích hoạt, các dịch vụ khác lấy lúc dùng. Lý do: trang Cài đặt của aris và plugin "Chung" của dsh cùng muốn khai báo chỗ cắm `settings.section`, ai sau bị từ chối; dsh phải chờ kết nối nên aris kích hoạt trước.
 
-## Để sau trong giai đoạn 1
+## Bước 6: dự phòng, nhiều khoá, giá (giai đoạn 1)
 
-- **Thứ tự dự phòng giữa các nhà cung cấp** khi một bên lỗi hoặc hết hạn mức. dsh chỉ thử lại trong cùng nhà cung cấp (`dsh-llm-retry`), nên aris cần lớp chuyển nhà cung cấp riêng.
-- **Xoay vòng nhiều khoá** của cùng một nhà cung cấp.
-- **Giá từng model** và chi phí theo ngày (gắn với dòng "0,42 / 5 USD" ở chân thanh bên).
+Plugin máy chủ `@aris/providers` thêm ba phần. Dữ liệu ở storage domain `aris_providers` (bảng `chain`, `pools`, `ledger`, `switches`). Khoá vẫn nằm trong kho khoá của dsh.
+
+### Thứ tự dự phòng
+
+- Chuỗi `[{ provider, model }, …]` chỉnh ở trang 6.2 (thêm, bớt, đổi thứ tự). Chuỗi rỗng thì không dự phòng.
+- Móc vào hai waterfall của vòng agent, đăng ký `prepend` để đứng ngoài bộ chọn model của dsh (bộ này ghi đè provider/model ở mỗi lần gọi):
+  - `agent/request-error`: mỗi lần gọi model lỗi.
+  - `agent/request`: mỗi lần gọi, kể cả lần thử lại, trả cấu hình gọi đã đổi provider/model.
+- Phân loại lỗi (theo `failure.code` và `status`):
+
+| Lỗi | Việc |
+|---|---|
+| `AUTH`, `QUOTA`, `ACCOUNT_QUOTA` (401, 402, 403) | Đổi khoá nếu provider còn khoá khác; hết khoá thì chuyển ngay sang mắt xích kế tiếp |
+| `RATE_LIMIT` (429) | Đổi khoá nếu còn; hết khoá thì để `dsh-llm-retry` thử lại (tối đa 5 lần, chờ dần tới 10 giây), vẫn hỏng mới chuyển |
+| `SERVER`, `TIMEOUT`, `TRANSPORT`, `EMPTY_RESPONSE` | Để `dsh-llm-retry` thử lại trước, vẫn hỏng mới chuyển |
+| 404 (model không có), 413 (model không nhận nổi yêu cầu cỡ này, ví dụ Groq miễn phí giới hạn 8.000 token mỗi phút) | Chuyển ngay |
+| `CONTEXT_WINDOW_EXCEEDED` (tràn ngữ cảnh; pi-ai cũng gắn nhãn này cho lỗi 413 "quá giới hạn token mỗi phút" của Groq) | Để dsh nén ngữ cảnh trước; không cứu được thì chuyển (model sau có thể có cửa sổ lớn hơn) |
+| Còn lại (yêu cầu sai, ảnh quá lớn…) | Không đụng: để dsh xử lý (bỏ bớt ảnh…) |
+
+- Mắt xích kế tiếp: đứng sau model đang lỗi trong chuỗi; model đang lỗi không nằm trong chuỗi thì bắt đầu từ đầu chuỗi. Bỏ qua mắt xích đã lỗi trong lượt này và mắt xích có cửa sổ ngữ cảnh nhỏ hơn số token lần gọi gần nhất của phiên. Hết chuỗi thì lỗi đi tiếp như cũ (lượt kết thúc báo lỗi).
+- Chuyển chỉ có hiệu lực **trong lượt đó**. Lượt sau bộ chọn model của dsh đưa về model đã chọn (dsh tự chèn dòng báo đổi model). Phiên không có model chọn thì aris tự trả về model cũ.
+- Mỗi lần chuyển: ghi bản ghi `plugin:aris/provider-switch` vào log phiên (từ đâu, sang đâu, mã lỗi), và chèn một dòng thông báo vào phiên ("Đã chuyển sang … vì …"). Dòng này model cũng đọc, để nó biết mình đang chạy model khác.
+
+### Nhiều khoá cho một provider
+
+- Mỗi provider một "vòng khoá": khoá thứ nhất là khoá provider đang đọc (tên trong hồ sơ, ví dụ `OPENROUTER_API_KEY`). Khoá thêm lưu ở `<TÊN>_ARIS_2`, `<TÊN>_ARIS_3`… trong kho khoá của dsh. Khoá thứ nhất được chép sang `<TÊN>_ARIS_1` khi thêm khoá thứ hai.
+- Đổi khoá = ghi giá trị của khoá kế tiếp vào tên provider đang đọc. Adapter của dsh đọc khoá ở mỗi lần gọi nên lần thử lại dùng khoá mới ngay.
+- Một lần gọi lỗi chỉ đổi qua mỗi khoá một lần. Trang 6.2 hiện số khoá, khoá đang dùng, lần chạm giới hạn gần nhất. Trang không bao giờ đọc ngược giá trị khoá; mỗi khoá hiện bằng "mã nhận diện" 4 ký tự băm từ khoá (không lộ ký tự nào của khoá).
+
+### Giá và chi phí
+
+- Giá lấy từ bảng giá có sẵn của pi-ai (thư viện dsh-llm-pi-ai dùng): USD cho mỗi 1 triệu token vào, ra, đọc từ bộ nhớ đệm, ghi bộ nhớ đệm. Route DeepSeek chính thức (`deepseek-official`) tra theo bảng `deepseek` của pi-ai. Model không có trong bảng thì giá để trống.
+- Sổ chi phí: mỗi `assistant/message` có `usage` được tính tiền theo provider/model của chính tin đó, cộng dồn theo ngày (giờ máy), theo provider và model.
+- Trang 6.2: cột "Giá" trong bảng model (vào / ra mỗi 1 triệu token), "Chi phí hôm nay · 7 ngày" ở đầu cột phải. Chân thanh bên: "{số} USD hôm nay" thay số mẫu (trần ngân sách là giai đoạn 7).
+
+### Đường máy chủ
+
+`/api/aris/providers/state` (GET): chuỗi dự phòng, vòng khoá của từng provider (không có giá trị khoá), chi phí hôm nay và 7 ngày. `POST` với `op`:
+
+| `op` | Việc |
+|---|---|
+| `chain` `{ chain }` | Ghi chuỗi dự phòng |
+| `key-add` `{ provider, ref, value }` | Thêm khoá vào vòng khoá |
+| `key-remove` `{ provider, slot }` | Bỏ một khoá thêm |
+| `prices` `{ items: [{ provider, model }] }` | Giá của các model đang hiện |
+
+## Để sau
+
+- Giá cho provider tự thêm (nhập tay).
+- Trần ngân sách theo ngày và theo bot (giai đoạn 7, trang 6.4).

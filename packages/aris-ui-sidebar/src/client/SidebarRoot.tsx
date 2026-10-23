@@ -25,13 +25,13 @@ import {
 } from '@aris/ui-kit/react'
 import {
   COMMANDER,
-  DEMO_COST,
   DEMO_PENDING_APPROVALS,
   DEMO_TEAM,
   isProjectWorkspace,
   type TeamMember,
 } from '@aris/ui-kit'
 import { useEffect, useState, type ReactElement } from 'react'
+import { useTodayCost } from './cost.js'
 import { latestProjectSession } from './projects.js'
 import type { Translate } from './locale.js'
 import type { PanelEntry, SidebarProps, WorkspaceRow } from './types.js'
@@ -178,7 +178,11 @@ export function SidebarRoot(props: SidebarProps) {
   const waiting = t('approvals.waiting', { count: DEMO_PENDING_APPROVALS })
   const toggleLabel = t(wide ? 'toggle.collapse' : 'toggle.open')
   const money = (n: number) =>
-    n.toLocaleString(t('number.locale'), { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })
+    n.toLocaleString(t('number.locale'), {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: n < 0.01 && n > 0 ? 4 : 2,
+    })
+  const spent = useTodayCost()
 
   return (
     <nav
@@ -326,9 +330,9 @@ export function SidebarRoot(props: SidebarProps) {
             </span>
             <span className="ownerText">
               <span className="ownerName">{t('owner.name')}</span>
-              <span className="ownerCost a-num">
-                {t('owner.cost', { spent: money(DEMO_COST.spent), budget: money(DEMO_COST.budget) })}
-              </span>
+              {spent !== undefined && (
+                <span className="ownerCost a-num">{t('owner.cost', { spent: money(spent) })}</span>
+              )}
             </span>
             <IconButton label={t('settings')} size="sm" onClick={() => arisNavigate('settings')}>
               <GearIcon size={17} />

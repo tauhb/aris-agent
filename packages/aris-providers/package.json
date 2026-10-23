@@ -2,7 +2,7 @@
   "name": "@aris/providers",
   "version": "0.0.0",
   "private": true,
-  "description": "Phần riêng của aris cho nhà cung cấp model: gọi thử một model để kiểm tra kết nối (trang 6.2)",
+  "description": "Phần riêng của aris cho nhà cung cấp model: gọi thử model, thứ tự dự phòng, vòng khoá, giá và sổ chi phí (trang 6.2)",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -18,12 +18,24 @@
   "license": "MIT",
   "peerDependencies": {
     "@deepseek-ai/cordis": "~4.0.5",
+    "@deepseek-ai/dsh-agent": "0.2.1-rc.2",
     "@deepseek-ai/dsh-client-connection": "0.2.1-rc.2",
-    "@deepseek-ai/dsh-llm": "0.2.1-rc.2"
+    "@deepseek-ai/dsh-credentials": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-session": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-storage-domain": "0.2.1-rc.2"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.5",
+    "@deepseek-ai/dsh-agent": "0.2.1-rc.2",
     "@deepseek-ai/dsh-client-connection": "0.2.1-rc.2",
-    "@deepseek-ai/dsh-llm": "0.2.1-rc.2"
+    "@deepseek-ai/dsh-credentials": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-session": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-storage-domain": "0.2.1-rc.2"
+  },
+  "dependencies": {
+    "@earendil-works/pi-ai": "1.4.0",
+    "zod": "4.4.3"
   }
 }

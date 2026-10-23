@@ -2,12 +2,12 @@
  * 6.2 · Provider và model (đặc tả: docs/specs/aris-providers.md), bố cục theo canvas:
  * - Cột trái: danh bạ nhà cung cấp của dsh (đã kết nối / có sẵn), ô tìm, thêm provider tuỳ chỉnh.
  * - Giữa: provider đang chọn: khoá (chỉ ghi), Base URL, gọi thử model, bảng model.
- * - Cột phải: model theo việc, thứ tự dự phòng.
- * Nằm trong khung Cài đặt như các mục khác. Mọi thứ đọc và ghi thẳng vào dịch vụ của dsh
- * (cấu hình, kho khoá, danh mục model).
+ * - Cột phải: chi phí, model theo việc, thứ tự dự phòng.
+ * Nằm trong khung Cài đặt như các mục khác. Route, khoá, danh mục model đọc và ghi thẳng vào dịch
+ * vụ của dsh; vòng khoá, thứ tự dự phòng, giá và chi phí qua `/api/aris/providers/state`.
  */
 import { Button, Card, NavItem, PageShell, Pill, SearchIcon, Tag, TextInput } from '@aris/ui-kit/react'
-import { Fragment, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import type {
   ConfigFormLike,
   CredentialState,
@@ -34,6 +34,15 @@ import {
   splitDirectory,
   type ProviderRow,
 } from './provider-data.js'
+import {
+  fetchPrices,
+  usd,
+  useProvidersState,
+  type Cost,
+  type Link,
+  type Pool,
+  type Price,
+} from './providers-api.js'
 
 /** Mã mục "Model" của dsh trong `settings.section`: trang này thay nó, nên nó không hiện trong Cài đặt. */
 export const DSH_MODELS_SECTION = 'models'
@@ -184,11 +193,16 @@ function Connection({
   result,
   onChanged,
   onProbe,
+  pool,
+  act,
 }: {
   t: T
   row: ProviderRow
   models: ModelSettings
   served: ModelGroup | undefined
+  /** Vòng khoá của provider (khi có từ hai khoá). */
+  pool: Pool | undefined
+  act: (body: Record<string, unknown>) => Promise<boolean>
   /** Kết quả gọi thử gần nhất của provider này. */
   result: { ok: boolean; ms: number; model?: string | undefined; error?: string | undefined } | null
   onChanged: () => void
@@ -304,6 +318,9 @@ function Connection({
           </span>
         </label>
       )}
+      {entry.id !== ACCOUNT_ROUTE && row.keyRef && (canWrite || pool) && (
+        <KeyRing t={t} provider={entry.id} keyRef={row.keyRef} pool={pool} act={act} />
+      )}
       {entry.ns && (
         <label className="a-field">
           <span className="l">{t('pv.baseUrl')}</span>
@@ -383,6 +400,106 @@ function Connection({
   )
 }
 
+/** Vòng khoá: thêm khoá phụ, xem khoá nào đang dùng, khoá nào vừa chạm giới hạn. */
+function KeyRing({
+  t,
+  provider,
+  keyRef,
+  pool,
+  act,
+}: {
+  t: T
+  provider: string
+  keyRef: string
+  pool: Pool | undefined
+  act: (body: Record<string, unknown>) => Promise<boolean>
+}) {
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState('')
+  const [busy, setBusy] = useState(false)
+  useEffect(() => {
+    setOpen(false)
+    setValue('')
+  }, [provider])
+
+  async function add() {
+    if (!value.trim()) return
+    setBusy(true)
+    const ok = await act({ op: 'key-add', provider, ref: keyRef, value })
+    setBusy(false)
+    if (ok) {
+      setValue('')
+      setOpen(false)
+    }
+  }
+
+  const time = (ms: number) => new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span className="a-muted">{pool ? t('pv.ring', { n: pool.keys.length }) : t('pv.ringOne')}</span>
+        {!open && (
+          <Button size="sm" style={{ marginLeft: 'auto' }} onClick={() => setOpen(true)}>
+            {t('pv.addKey')}
+          </Button>
+        )}
+      </div>
+      {pool?.keys.map((k) => (
+        <div key={k.slot} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="a-mono">{t('pv.keyN', { n: k.slot, fp: k.fp })}</span>
+          {k.slot === pool.active ? (
+            <Pill tone="ok">{t('pv.keyActive')}</Pill>
+          ) : k.failedAt ? (
+            <span className="a-muted">
+              {t('pv.keyFailed', { at: time(k.failedAt), code: k.error ?? '' })}
+            </span>
+          ) : null}
+          {k.slot !== pool.active && (
+            <Button
+              size="sm"
+              variant="ghost"
+              style={{ marginLeft: 'auto' }}
+              aria-label={t('pv.removeKey', { n: k.slot })}
+              onClick={() => void act({ op: 'key-remove', provider, slot: k.slot })}
+            >
+              ×
+            </Button>
+          )}
+        </div>
+      ))}
+      {open && (
+        <span style={{ display: 'flex', gap: 6 }}>
+          <TextInput
+            mono
+            type="password"
+            autoComplete="off"
+            autoFocus
+            value={value}
+            disabled={busy}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && void add()}
+            placeholder={t('pv.keyEmpty')}
+            aria-label={t('pv.addKey')}
+          />
+          <Button variant="primary" disabled={busy || !value.trim()} onClick={() => void add()}>
+            {t('pv.keyAddBtn')}
+          </Button>
+          <Button variant="ghost" onClick={() => (setOpen(false), setValue(''))}>
+            {t('pv.cancel')}
+          </Button>
+        </span>
+      )}
+    </div>
+  )
+}
+
+/** "0,30 / 1,20": USD cho 1 triệu token vào / ra. */
+function priceText(t: T, p: Price | null | undefined): string {
+  if (!p) return '—'
+  const loc = t('pv.locale')
+  return `${usd(p.input, loc)} / ${usd(p.output, loc)}`
+}
+
 /** Bảng model của provider: đang phục vụ, tự khai, vừa dò được. */
 function ModelTable({
   t,
@@ -405,6 +522,20 @@ function ModelTable({
   }, [entry.id])
   const lines = modelLines(served, profileModels(row.profile), found)
   const editable = entry.ns === PI_NS && row.configured
+  const [prices, setPrices] = useState<Map<string, Price | null>>(new Map())
+  const ids = lines.map((l) => l.id).join('\n')
+  useEffect(() => {
+    let live = true
+    const items = ids ? ids.split('\n').map((model) => ({ provider: entry.id, model })) : []
+    if (items.length)
+      fetchPrices(items).then(
+        (m) => live && setPrices(m),
+        () => live && setPrices(new Map()),
+      )
+    return () => {
+      live = false
+    }
+  }, [entry.id, ids])
   const raw = Array.isArray(row.profile.models) ? (row.profile.models as unknown[]) : []
 
   async function refresh() {
@@ -481,8 +612,8 @@ function ModelTable({
                 <Tag>{t('pv.cap.ctx', { k: Math.round(m.contextWindow / 1000) })}</Tag>
               )}
             </span>
-            <span className="a-muted" style={{ fontSize: 12 }}>
-              {t('pv.noPrice')}
+            <span className="a-muted a-num" style={{ fontSize: 12 }} title={t('pv.priceUnit')}>
+              {priceText(t, prices.get(pairKey(entry.id, m.id)))}
             </span>
           </label>
         )
@@ -757,7 +888,152 @@ function Tasks({
   )
 }
 
+/** Chi phí hôm nay và 7 ngày, theo bảng giá pi-ai. */
+function CostBox({ t, cost }: { t: T; cost: Cost | undefined }) {
+  const loc = t('pv.locale')
+  return (
+    <Box>
+      <b>{t('pv.cost')}</b>
+      <div style={{ display: 'flex', gap: 18, marginTop: 6, fontSize: 13 }}>
+        <span>
+          <span className="a-num" style={{ fontSize: 20, fontWeight: 600 }}>
+            {cost ? usd(cost.today, loc) : '—'}
+          </span>{' '}
+          <span className="a-muted">{t('pv.costToday')}</span>
+        </span>
+        <span>
+          <span className="a-num" style={{ fontSize: 20, fontWeight: 600 }}>
+            {cost ? usd(cost.week, loc) : '—'}
+          </span>{' '}
+          <span className="a-muted">{t('pv.costWeek')}</span>
+        </span>
+      </div>
+      {cost?.byModel.slice(0, 4).map((m) => (
+        <div key={pairKey(m.provider, m.model)} className="a-muted" style={{ fontSize: 12, marginTop: 4 }}>
+          <span className="a-mono">{m.model}</span> · {t('pv.costCalls', { n: m.calls })} ·{' '}
+          {m.priced ? `${usd(m.usd, loc)} USD` : t('pv.costUnpriced')}
+        </div>
+      ))}
+      <div className="a-muted" style={{ fontSize: 12, marginTop: 6 }}>
+        {t('pv.costHint')}
+      </div>
+    </Box>
+  )
+}
+
+/** Thứ tự dự phòng: lỗi hoặc hết hạn mức thì chuyển sang mắt xích kế tiếp. */
+function Fallback({
+  t,
+  chain,
+  groups,
+  rows,
+  busy,
+  error,
+  onSave,
+}: {
+  t: T
+  chain: readonly Link[] | undefined
+  groups: readonly ModelGroup[]
+  rows: readonly ProviderRow[]
+  busy: boolean
+  error: string | null
+  onSave: (chain: Link[]) => void
+}) {
+  const [adding, setAdding] = useState('')
+  const links = chain ?? []
+  const name = (id: string) => rows.find((r) => r.entry.id === id)?.entry.name ?? id
+  const has = new Set(links.map((l) => pairKey(l.provider, l.model)))
+  const move = (i: number, d: -1 | 1) => {
+    const next = [...links]
+    ;[next[i], next[i + d]] = [next[i + d]!, next[i]!]
+    onSave(next)
+  }
+  return (
+    <Box>
+      <b>{t('pv.fallback')}</b>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
+        {links.length === 0 && (
+          <div className="a-muted" style={{ fontSize: 12.5 }}>
+            {t('pv.fallbackEmpty')}
+          </div>
+        )}
+        {links.map((l, i) => (
+          <div key={pairKey(l.provider, l.model)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Tag>{`${i + 1} · ${name(l.provider)}`}</Tag>
+            <span
+              className="a-mono"
+              style={{ fontSize: 12, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
+            >
+              {l.model}
+            </span>
+            <span style={{ marginLeft: 'auto', display: 'flex', gap: 2 }}>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={busy || i === 0}
+                aria-label={t('pv.up')}
+                onClick={() => move(i, -1)}
+              >
+                ↑
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={busy || i === links.length - 1}
+                aria-label={t('pv.down')}
+                onClick={() => move(i, 1)}
+              >
+                ↓
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={busy}
+                aria-label={t('pv.remove')}
+                onClick={() => onSave(links.filter((_, j) => j !== i))}
+              >
+                ×
+              </Button>
+            </span>
+          </div>
+        ))}
+      </div>
+      <select
+        className="ap-sel"
+        style={{ marginTop: 8, width: '100%' }}
+        aria-label={t('pv.fallbackAdd')}
+        value={adding}
+        disabled={busy}
+        onChange={(e) => {
+          const v = e.target.value
+          setAdding('')
+          if (!v) return
+          const [provider, model] = v.split('\u0000') as [string, string]
+          onSave([...links, { provider, model }])
+        }}
+      >
+        <option value="">{t('pv.fallbackAdd')}</option>
+        {groups.map((g) => (
+          <optgroup key={g.id} label={g.name}>
+            {g.models
+              .filter((m) => isChatModel(m.id) && !has.has(pairKey(g.id, m.id)))
+              .map((m) => (
+                <option key={m.id} value={pairKey(g.id, m.id)}>
+                  {m.name || m.id}
+                </option>
+              ))}
+          </optgroup>
+        ))}
+      </select>
+      <div className="a-muted" style={{ fontSize: 12, marginTop: 6 }}>
+        {error ? <span style={{ color: 'var(--a-danger)' }}>{error}</span> : t('pv.fallbackHint')}
+      </div>
+    </Box>
+  )
+}
+
 export function Provider({ t, models }: PageProps) {
+  const ps = useProvidersState()
   const [entries, setEntries] = useState<readonly ProviderEntry[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [groups, setGroups] = useState<readonly ModelGroup[]>([])
@@ -839,11 +1115,6 @@ export function Provider({ t, models }: PageProps) {
     : undefined
   const probed = probe && row && probe.id === row.entry.id ? probe : null
 
-  // Thứ tự dự phòng (chưa bật): provider đã kết nối và có khoá, provider mặc định đứng đầu.
-  const chain = rows
-    .filter((r) => r.configured && r.status === 'ok')
-    .toSorted((a, b) => Number(b.entry.id === defaultProvider) - Number(a.entry.id === defaultProvider))
-
   if (!models)
     return (
       <PageShell title={t('sec.provider')}>
@@ -915,27 +1186,25 @@ export function Provider({ t, models }: PageProps) {
                   result={probed}
                   onChanged={reload}
                   onProbe={(r) => setProbe({ id: row.entry.id, ...r })}
+                  pool={ps.data?.pools.find((p) => p.provider === row.entry.id)}
+                  act={ps.act}
                 />
                 <ModelTable t={t} row={row} models={models} served={served} />
               </>
             ) : null}
           </Col>
           <Col basis={360}>
+            <CostBox t={t} cost={ps.data?.cost} />
             <Tasks t={t} models={models} groups={groups} error={catalogError} />
-            <Box>
-              <b>{t('pv.fallback')}</b>
-              <div className="ap-chain">
-                {chain.map((r, i) => (
-                  <Fragment key={r.entry.id}>
-                    {i > 0 && '→'}
-                    <Tag>{`${i + 1} · ${r.entry.name}`}</Tag>
-                  </Fragment>
-                ))}
-              </div>
-              <div className="a-muted" style={{ fontSize: 12, marginTop: 6 }}>
-                {t('pv.fallbackHint')}
-              </div>
-            </Box>
+            <Fallback
+              t={t}
+              chain={ps.data?.chain}
+              groups={groups}
+              rows={rows}
+              busy={ps.busy}
+              error={ps.error}
+              onSave={(chain) => void ps.act({ op: 'chain', chain })}
+            />
           </Col>
         </div>
       </PageShell>
