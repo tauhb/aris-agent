@@ -85,7 +85,10 @@ describe('tính cách', () => {
     expect(text).toContain('@minh · Minh · Nghiên cứu (Tăng trưởng)')
     expect(text).toContain('@an · An · Thư ký (Vận hành, trưởng nhóm)')
     expect(text).not.toContain('@tho ·')
-    expect(renderPersona(s.get(COMMANDER_ID)!, s.list(), s.departments())).toContain('chỉ huy đội bot')
+    const commander = renderPersona(s.get(COMMANDER_ID)!, s.list(), s.departments())
+    expect(commander).toContain('chỉ huy đội bot')
+    // Phòng ban kèm việc phòng lo và trưởng nhóm, để xếp việc lớn đúng phòng.
+    expect(commander).toMatch(/- Vận hành: .+ \(trưởng nhóm @an\)/)
   })
 })
 

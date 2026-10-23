@@ -66,6 +66,17 @@ export function renderPersona(
       lines.push(`- @${b.handle} · ${b.name} · ${b.role || 'thành viên'}${d ? ` (${d.name}${lead})` : ''}`)
     }
   }
+  // Phòng ban và việc phòng lo, để người chỉ huy xếp việc lớn đúng phòng.
+  const used = departments.filter((d) => team.some((b) => b.department === d.id))
+  if (used.length) {
+    lines.push('', 'Phòng ban:')
+    for (const d of used) {
+      const lead = team.find((b) => b.id === d.lead)
+      lines.push(
+        `- ${d.name}${d.about ? `: ${d.about}` : ''}${lead ? ` (trưởng nhóm @${lead.handle})` : ' (chưa có trưởng nhóm)'}`,
+      )
+    }
+  }
   lines.push('</aris-bot>')
   return lines.join('\n')
 }

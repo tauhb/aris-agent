@@ -41,6 +41,21 @@ Khi một thành viên đội kết thúc lượt bình thường (`turn/end` ho
 - Bot thường không tự lập đội: `spawn_teammate` bị chặn ở phiên của bot thường (móc `tools/pre-execute`). Bot vẫn nhắn đồng đội được (`send_message`). Trưởng nhóm phòng ban lập Team riêng trong phiên việc lớn (bước 3d).
 - Hướng dẫn giao việc (khi nào tự làm, khi nào giao, giao song song hay nối tiếp) là ngữ cảnh động `aris:commander`, chỉ nạp ở phiên của Commander.
 
+## Xếp mức việc: nhỏ, vừa, lớn
+
+Hướng dẫn `aris:commander` bắt Commander xếp việc theo thước đo đếm được, không theo cảm giác:
+
+| | Việc nhỏ | Việc vừa | Việc lớn |
+|---|---|---|---|
+| Số phần độc lập | 1 | 1 (hoặc vài phần rời, mỗi phần một chuyên môn) | từ 2 trở lên |
+| Kỹ năng | Commander tự làm được | đúng chuyên môn một bot | nhiều vai trong cùng một phòng |
+| Độ dài | vài bước | một lượt làm việc dài | nhiều lượt, cần tổng hợp |
+| Cách làm | tự làm | `giao_viec` (nối tiếp thì `tao_the`) | `giao_phong` |
+
+Luật: lời người dùng là trên hết; đứng giữa hai mức thì chọn mức nhỏ hơn; việc lớn mà không phòng nào đủ chuyên môn thì chia thẻ, giao từng bot; không xếp được thì hỏi lại một câu; khi giao thì nói một câu đã xếp mức nào và vì sao. Để xếp đúng phòng, `<aris-bot>` liệt kê phòng ban kèm việc phòng lo và trưởng nhóm.
+
+Chạy thử thật (24/10): dịch một câu → nhỏ, tự làm; một bài Facebook → vừa, Thơ; chiến dịch ra mắt (nghiên cứu, 5 bài, kịch bản bán) → lớn, phòng Tăng trưởng; tìm hiểu đối thủ rồi viết bài so sánh → vừa, 2 thẻ nối tiếp Minh → Thơ.
+
 ## Model của bot
 
 Phiên của bot được giao việc (gắn qua đội) chạy bằng model riêng của bot, nếu có (`@aris/providers` đổi cấu hình gọi ở `agent/request`, trước thứ tự dự phòng). Phiên anh chat thẳng với bot đã chọn model lúc mở nên không bị đè.
