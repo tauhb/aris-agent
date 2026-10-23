@@ -1,6 +1,6 @@
 # aris-agent — Kế hoạch triển khai
 
-> 23/10/2026. Kế hoạch này nối ba tài liệu: kiến trúc ([phan-tich-kien-truc.md](phan-tich-kien-truc.md)), đặc tả tính năng ([tinh-nang-aris.md](tinh-nang-aris.md)) và thiết kế giao diện (canvas 31 màn, bản sao mã nguồn trong [`design/canvas/`](../design/canvas/)). Nó **thay mục 13 "Lộ trình"** của tài liệu tính năng: thứ tự được sắp lại để anh **dùng được aris qua Telegram ngay từ tuần thứ 3**, rồi mỗi giai đoạn thêm một năng lực lớn. Bốn cách dùng aris (chạy ngầm, giao diện, điều phối, làm agent thành viên) theo mục 15 của tài liệu tính năng được rải vào các giai đoạn, mã M1–M10.
+> 23/10/2026. Kế hoạch này nối ba tài liệu: kiến trúc ([phan-tich-kien-truc.md](phan-tich-kien-truc.md)), đặc tả tính năng ([tinh-nang-aris.md](tinh-nang-aris.md)) và thiết kế giao diện (canvas 36 màn, bản sao mã nguồn trong [`design/canvas/`](../design/canvas/)). Nó **thay mục 13 "Lộ trình"** của tài liệu tính năng: thứ tự được sắp lại để **giao diện nền đúng canvas có trước** (giai đoạn G, chốt 23/10), rồi anh **dùng được aris qua Telegram từ tuần thứ 5**, mỗi giai đoạn sau thêm một năng lực lớn. Bốn cách dùng aris (chạy ngầm, giao diện, điều phối, làm agent thành viên) theo mục 15 của tài liệu tính năng được rải vào các giai đoạn, mã M1–M10.
 
 ## Nguyên tắc làm
 
@@ -9,7 +9,7 @@
 3. **Không sửa DeepSeek Harness (dsh)**: mọi thứ là plugin trong profile `aris`. Ghim chính xác phiên bản dsh; nâng cấp có kiểm thử hợp đồng.
 4. **Mỗi giai đoạn = một nhánh + một PR**, có danh sách nghiệm thu; anh duyệt bằng cách dùng thử.
 5. **Đặc tả trước khi viết mã**: mỗi package có `docs/specs/<tên>.md` viết bằng lời của mình (đúng quy trình tham khảo Hermes).
-6. **Giao diện bám canvas**: mã giao diện dùng chung một bộ thành phần (`aris-ui-kit`): màu, chữ, 5 trạng thái, 30 linh vật. Mảnh giao diện nào của dsh khác canvas thì thay hẳn row đó bằng gói aris giữ nguyên hợp đồng slot (`@aris/web-bundle`); không fork cả dsh.
+6. **Giao diện nền trước, dữ liệu sau** (chốt 23/10): giao diện làm theo hệ thống, không theo từng màn — theme aris ghi đè toàn bộ token của dsh → bộ thành phần dùng chung (`aris-ui-kit`) → khung ứng dụng → vỏ của mọi trang → đối chiếu từng màn với canvas (giai đoạn G). Mảnh nào của dsh có bố cục khác canvas thì tắt row đó và chèn gói aris giữ nguyên hợp đồng slot (`@aris/web-bundle`); không fork cả dsh. Từ giai đoạn 1, dòng "Giao diện" của mỗi giai đoạn nghĩa là **nối dữ liệu thật vào trang đã dựng ở G**, không vẽ lại.
 7. **Một lõi, nhiều mặt**: toàn bộ năng lực nằm trong `aris-bundle`; Web UI, Telegram, `aris ask`, ACP, API, A2A, MCP chỉ là các mặt mở ra ngoài. Daemon là chủ duy nhất của trạng thái.
 
 ## Tổng quan
@@ -17,6 +17,7 @@
 | Giai đoạn | Thời lượng | Kết quả anh dùng được | Màn hình |
 |---|---|---|---|
 | **0 · Nền móng** | 1 tuần | `pnpm aris` mở được Web UI, chat với DeepSeek | — |
+| **G · Giao diện nền** | 2 tuần | Toàn app mang dáng aris; đi khắp mọi trang trong điều hướng, màn nào cũng đạt canvas (dữ liệu mẫu được đánh dấu) | vỏ của cả 36 màn |
 | **1 · Một bot dùng hằng ngày** | 2 tuần | Nhắn Aris qua Telegram, Aris nhớ anh, đổi được model; chạy ngầm 24/7 và `aris ask` trong script | 1.1 (chưa có đội), 1.6, 3.1, 6.2, 6.3 (Telegram), 6.7 |
 | **2 · Đội bot và Commander** | 3 tuần | 5 bot có linh vật, Aris giao việc cho đội **kể cả bot ngoài** (Claude Code, Codex, Hermes…), thấy dòng việc rẽ nhánh và bản đồ 3D | 1.1–1.5, 2.1–2.5, 2.1b |
 | **3 · Tự tiến hoá** | 3 tuần | Bot tự học ký ức, tự đề xuất skill có kiểm thử, anh duyệt qua Telegram | 2.3, 3.2–3.5, 7.1, 7.3 |
@@ -26,7 +27,7 @@
 | **7 · Cứng cáp và lên server** | 2 tuần | Chạy 24/7 trên server, an toàn mạng, ngân sách, Lark + Zalo, đo đối đầu với Hermes | 6.1, 6.4, 6.5 |
 | **8 · Mở rộng** | theo nhu cầu | Màn hình của bot, trình duyệt tự động, chat web trên điện thoại, Buzz như kênh nhắn tin… | 6.6, 7.4 |
 
-Tổng: khoảng **18 tuần** cho giai đoạn 0–7.
+Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai đoạn G).
 
 ---
 
@@ -69,7 +70,28 @@ Tổng: khoảng **18 tuần** cho giai đoạn 0–7.
 
 ---
 
-## Giai đoạn 1 · Một bot dùng hằng ngày (tuần 2–3)
+## Giai đoạn G · Giao diện nền (tuần 2–3)
+
+> **G1 xong 23/10**: [giao-dien/ban-do.md](giao-dien/ban-do.md) (36 màn → cách làm), [giao-dien/kiem-ke-dsh.md](giao-dien/kiem-ke-dsh.md) (tự sinh). Phát hiện thêm: mọi chữ của dsh là tiếng Anh (~2.400 chuỗi) → Việt hoá gộp vào G2; cài đặt của dsh là hộp thoại, canvas là trang 6.x → trang Cài đặt aris riêng.
+
+> Thêm ngày 23/10 theo yêu cầu của chủ dự án: làm thanh bên rồi đầu khung theo từng góp ý là cách làm vụn vặt, app sẽ thành chắp vá giữa dáng aris và dáng dsh. Giai đoạn này dựng giao diện theo hệ thống để mọi màn đạt canvas trước khi nối dữ liệu.
+
+**Mục tiêu**: đi khắp app, màn nào cũng giống canvas ở cả sáng và tối; những chỗ chưa có dữ liệu thật dùng dữ liệu mẫu được đánh dấu rõ.
+
+| Bước | Việc | Kết quả nghiệm thu |
+|---|---|---|
+| **G1 · Bản đồ giao diện** | Kiểm kê mọi mảnh giao diện web của dsh (row, chỗ cắm, token theme); đối chiếu 36 màn canvas, mỗi vùng chọn một cách làm: chỉ theme / tắt row và thay / cắm thêm vào chỗ cắm / trang mới / ngoài web | [giao-dien/ban-do.md](giao-dien/ban-do.md): bảng "màn nào làm bằng cách nào, ở gói nào, giai đoạn nào nối dữ liệu" + ảnh chụp hiện trạng |
+| **G2 · Theme aris + tiếng Việt** | `@aris/ui-theme`: `ctx.theme.overrideTokens` ghi đè 403 token `--dsw-*` (màu, nền, viền, chữ, bo góc, bóng) và phông Lexend / Be Vietnam Pro / JetBrains Mono cho cả sáng và tối. `@aris/ui-locale-vi`: thêm ngôn ngữ `vi` và dịch ~2.400 chuỗi của dsh, có script trích chuỗi và báo thiếu khi nâng dsh | Mọi chỗ chưa thay (khung chat, ô nhập, cài đặt, hộp thoại, menu) mang dáng aris và nói tiếng Việt; không còn màu xanh DeepSeek |
+| **G3 · Bộ thành phần** | `@aris/ui-kit` thêm thành phần React: nút (b1/b2/icon), viên trạng thái, chip, thẻ, dòng cài đặt, nút chọn đoạn, ô nhập, hộp thoại, menu, tab, linh vật, glyph trạng thái, khung trang Cài đặt (thanh điều hướng 6.x); trang thử thành phần | Mỗi thành phần có trang thử sáng/tối; thanh bên và đầu khung chuyển sang dùng bộ này |
+| **G4 · Khung ứng dụng** | Thay các mảnh có bố cục khác canvas: ô nhập 1.2 (lệnh, @bot, đính kèm, model), cách vẽ hội thoại 1.1 (dòng việc rẽ nhánh, thẻ duyệt), cột phải (sơ đồ đội 3D) | 1.1 và 1.2 đạt canvas |
+| **G5 · Vỏ mọi trang** | Dựng các trang trong điều hướng và Cài đặt bằng bộ thành phần, dữ liệu mẫu đánh dấu rõ (`DEMO_*`) | Đi được tới mọi màn trong 36 màn từ app thật |
+| **G6 · Đối chiếu canvas** | Script chụp app thật và đặt cạnh canvas từng màn, sáng/tối, ghi chỗ lệch | Bảng đối chiếu: mọi màn "đạt" hoặc có lý do ghi rõ |
+
+**Rủi ro**: dữ liệu mẫu bị hiểu nhầm là tính năng đã chạy ⇒ mọi dữ liệu mẫu nằm trong hằng `DEMO_*`, liệt kê trong bản đồ giao diện và gỡ dần khi nối dữ liệu thật. dsh đổi tên token/slot khi nâng cấp ⇒ ghim phiên bản, bảng kiểm kê ghi rõ phiên bản đã đối chiếu.
+
+---
+
+## Giai đoạn 1 · Một bot dùng hằng ngày (tuần 4–5)
 
 **Mục tiêu**: Aris sống trên Telegram của anh, nhớ anh, đổi được model.
 
@@ -99,7 +121,7 @@ Tổng: khoảng **18 tuần** cho giai đoạn 0–7.
 
 ---
 
-## Giai đoạn 2 · Đội bot và Commander (tuần 4–6)
+## Giai đoạn 2 · Đội bot và Commander (tuần 6–8)
 
 **Mục tiêu**: 5 bot chuyên môn, Aris điều phối, anh thấy cả đội làm việc.
 
@@ -130,7 +152,7 @@ Tổng: khoảng **18 tuần** cho giai đoạn 0–7.
 
 ---
 
-## Giai đoạn 3 · Tự tiến hoá (tuần 7–9)
+## Giai đoạn 3 · Tự tiến hoá (tuần 9–11)
 
 **Mục tiêu**: bot giỏi dần theo thời gian mà vẫn an toàn.
 
@@ -157,7 +179,7 @@ Tổng: khoảng **18 tuần** cho giai đoạn 0–7.
 
 ---
 
-## Giai đoạn 4 · Tự động (tuần 10–11)
+## Giai đoạn 4 · Tự động (tuần 12–13)
 
 **Việc cần làm**
 
@@ -173,7 +195,7 @@ Tổng: khoảng **18 tuần** cho giai đoạn 0–7.
 
 ---
 
-## Giai đoạn 5 · Second Brain và đồ thị (tuần 12–14)
+## Giai đoạn 5 · Second Brain và đồ thị (tuần 14–16)
 
 **Việc cần làm**
 
@@ -189,7 +211,7 @@ Tổng: khoảng **18 tuần** cho giai đoạn 0–7.
 
 ---
 
-## Giai đoạn 6 · Mở cửa: aris trong nền tảng khác (tuần 15–16)
+## Giai đoạn 6 · Mở cửa: aris trong nền tảng khác (tuần 17–18)
 
 **Mục tiêu**: aris làm được mọi điều Hermes làm khi được nhúng vào hệ thống khác, cùng một lõi và một bộ dữ liệu.
 
@@ -217,7 +239,7 @@ Tổng: khoảng **18 tuần** cho giai đoạn 0–7.
 
 ---
 
-## Giai đoạn 7 · Cứng cáp và lên server (tuần 17–18)
+## Giai đoạn 7 · Cứng cáp và lên server (tuần 19–20)
 
 **Việc cần làm**
 1. **Lên server**: container, `systemd`, egress allowlist (chỉ cho các API cần thiết), proxy có nhật ký cho tool mạng.
