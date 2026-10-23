@@ -29,3 +29,21 @@ export function onArisNavigate(
   target.addEventListener(NAV_EVENT, listener)
   return () => target.removeEventListener(NAV_EVENT, listener)
 }
+
+/** Sự kiện báo trang aris vừa mở (để thanh bên tô bot đang xem, như canvas). */
+export const ROUTE_EVENT = 'aris:route'
+
+export function announceRoute(
+  to: string,
+  params?: Record<string, string>,
+  target: EventTarget = document,
+): void {
+  target.dispatchEvent(new CustomEvent<NavRequest>(ROUTE_EVENT, { detail: { to, params } }))
+}
+
+/** Nghe trang aris vừa mở; trả về hàm gỡ. */
+export function onArisRoute(handler: (req: NavRequest) => void, target: EventTarget = document): () => void {
+  const listener = (e: Event) => handler((e as CustomEvent<NavRequest>).detail)
+  target.addEventListener(ROUTE_EVENT, listener)
+  return () => target.removeEventListener(ROUTE_EVENT, listener)
+}

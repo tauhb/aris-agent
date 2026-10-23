@@ -12,6 +12,7 @@ import { Dashboard } from './Dashboard.js'
 import { Guard } from './Guard.js'
 import { Integrations } from './Integrations.js'
 import { Provider } from './Provider.js'
+import { Plugin } from './Plugin.js'
 import { Screen } from './Screen.js'
 import { Stats } from './Stats.js'
 
@@ -24,6 +25,7 @@ export const SECTIONS: Record<string, ComponentType<PageProps>> = {
   stats: Stats,
   commander: Commander,
   screen: Screen,
+  plugin: Plugin,
 }
 
 const ORDER = [
@@ -50,7 +52,7 @@ export function SettingsPage(props: PageProps) {
       navLabel={t('set.nav')}
       active={active}
       sections={ORDER.map((id) => ({ id, label: t(`sec.${id}`) }))}
-      onSelect={(id) => (id === 'plugin' ? nav.openPanel('plugins') : nav.go('settings', { section: id }))}
+      onSelect={(id) => nav.go('settings', { section: id })}
       footer={<NavItem label={t('set.general')} className="a-muted" onClick={nav.openDshSettings} />}
     >
       <Section {...props} />

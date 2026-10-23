@@ -119,7 +119,7 @@ export const CSS = `
 .ap-dfoot{display:flex;justify-content:flex-end;gap:8px;padding-top:14px;border-top:1px solid var(--a-line)}
 .ap-ck{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-top:1px solid var(--a-line);font-size:14px}
 .ap-key{font-size:11.5px;border:1px solid var(--a-line);border-radius:5px;padding:0 5px;color:var(--a-muted)}
-.ap-search-overlay{align-items:flex-start;padding-top:120px}
+.aris .a-overlay.ap-search-overlay{align-items:flex-start;padding-top:120px}
 .ap-search-box{width:min(640px,100%);background:var(--a-panel);border-radius:16px;box-shadow:var(--a-shadow);overflow:hidden;color:var(--a-ink)}
 .ap-search-box .top{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--a-line);color:var(--a-muted)}
 .ap-search-box .top input{flex:1;border:0;background:transparent;color:var(--a-ink);font:inherit;font-size:15px;outline:none}
@@ -185,4 +185,8 @@ export const CSS = `
 .ap-src{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;padding:10px 0;border-top:1px solid var(--a-line)}
 .aris .ap-picker{display:inline-flex;align-items:center;gap:6px;font:inherit;color:inherit;border-radius:8px;padding:2px 6px;margin-left:-6px}
 .aris .ap-picker:hover{background:var(--a-hover)}
+.aris .ap-tn-inbox{background:var(--a-warnSoft)}
+.ap-bls{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.ap-bl{border:1px solid var(--a-line);border-radius:10px;padding:8px 10px;font-size:13px;background:var(--a-panel)}
+.ap-src-ic{display:inline-flex;align-items:center;gap:6px}
 `

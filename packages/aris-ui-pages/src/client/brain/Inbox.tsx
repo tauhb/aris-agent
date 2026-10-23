@@ -3,7 +3,31 @@ import { Button, IconButton, PageShell } from '@aris/ui-kit/react'
 import type { PageProps } from '../page.js'
 import { DEMO_INBOX, DEMO_TREE } from './demo.js'
 
-const SOURCE_ICON = { voice: '🎙', link: '🔗', image: '🖼', note: '✎' } as const
+/** Biểu tượng nguồn của mục (ghi âm, link, ảnh, ghi chú), nét theo canvas. */
+const SOURCE_PATH = {
+  voice: 'M9 2h6v12H9zM5 10a7 7 0 0 0 14 0M12 17v4',
+  link: 'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1',
+  image: 'M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9h.01',
+  note: 'M5 4h10l4 4v12H5zM14 4v5h5M8 13h8M8 17h5',
+} as const
+
+function SourceIcon({ kind }: { kind: keyof typeof SOURCE_PATH }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d={SOURCE_PATH[kind]} />
+    </svg>
+  )
+}
 
 export function Inbox({ t, nav }: PageProps) {
   return (
@@ -27,8 +51,8 @@ export function Inbox({ t, nav }: PageProps) {
       <div className="ap-inbox-grid">
         {DEMO_INBOX.map((it) => (
           <section className="a-card ap-pad ap-inc" key={it.title}>
-            <span className="a-muted" style={{ fontSize: 12.5 }}>
-              <span aria-hidden="true">{SOURCE_ICON[it.source]} </span>
+            <span className="a-muted ap-src-ic" style={{ fontSize: 12.5 }}>
+              <SourceIcon kind={it.source} />
               {it.from}
             </span>
             <b>{it.title}</b>

@@ -54,6 +54,8 @@ export interface BotRowProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   statusLabel: string
   /** Commander: thẻ nổi, linh vật lớn hơn, không hiện glyph trạng thái. */
   lead?: boolean | undefined
+  /** Bot đang được xem ở vùng chính (hồ sơ, ký ức…). */
+  current?: boolean | undefined
   /** Nhãn nhỏ cạnh tên (ví dụ "trưởng nhóm"). */
   badge?: ReactNode | undefined
   collapsed?: boolean | undefined
@@ -61,7 +63,7 @@ export interface BotRowProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
 
 /** Một bot trong đội hình: linh vật, tên, việc đang làm, glyph trạng thái. */
 export const BotRow = forwardRef<HTMLButtonElement, BotRowProps>(function BotRow(
-  { mascot, name, note, status, statusLabel, lead, badge, collapsed, className, ...rest },
+  { mascot, name, note, status, statusLabel, lead, current, badge, collapsed, className, ...rest },
   ref,
 ) {
   return (
@@ -70,6 +72,7 @@ export const BotRow = forwardRef<HTMLButtonElement, BotRowProps>(function BotRow
       type="button"
       className={cx('a-bot', lead && 'lead', collapsed && 'icon', className)}
       aria-label={collapsed ? `${name} · ${note}` : undefined}
+      aria-current={current ? 'page' : undefined}
       {...rest}
     >
       <Mascot id={mascot} size={lead ? 34 : 28} />

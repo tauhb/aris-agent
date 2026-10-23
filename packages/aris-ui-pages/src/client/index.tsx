@@ -3,7 +3,7 @@
  * dsh (trang có mục thanh bên thì đăng ký thêm `sidebar.panellist`), hộp thoại cắm
  * vào lớp phủ `shell.overlay`. Gói nào cũng mở được trang qua `arisNavigate`.
  */
-import { mountKitCss, onArisNavigate } from '@aris/ui-kit/react'
+import { announceRoute, mountKitCss, onArisNavigate } from '@aris/ui-kit/react'
 import type { ComponentType } from 'react'
 import { EN, NS, VI } from './locale.js'
 import type { PageNav, PageProps, Translate } from './page.js'
@@ -105,7 +105,10 @@ export function apply(ctx: ClientContext): void {
     go(to, params) {
       if (!PAGES[to] && !DIALOGS[to]) return
       const panel = navigate(store, to, params)
-      if (panel) ctx.layout.selectPanel(panel)
+      if (panel) {
+        ctx.layout.selectPanel(panel)
+        announceRoute(to, { ...params })
+      }
     },
     openPanel: (id) => ctx.layout.selectPanel(id),
     openDshSettings: () =>

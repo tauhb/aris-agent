@@ -239,3 +239,51 @@ export const DEMO_COMMANDER = {
     { bot: 'tin', text: 'Báo cáo chi tiêu', note: '12 lần · 83% đạt · hay bị anh sửa định dạng' },
   ],
 } as const
+
+/** 6.7 · Plugin đã cài (mẫu). Danh sách thật và bật/tắt vẫn ở trang Plugins của dsh (nút "Mở chợ"). */
+export const DEMO_PLUGINS: {
+  name: string
+  source: string
+  about: string
+  on: boolean
+  required?: boolean
+}[] = [
+  {
+    name: 'Lõi aris',
+    source: 'aris',
+    about: 'Đội bot, Commander, trí nhớ, tự học',
+    on: true,
+    required: true,
+  },
+  {
+    name: 'Giao diện aris',
+    source: 'aris',
+    about: 'Thanh bên, khung chat, các trang của aris',
+    on: true,
+    required: true,
+  },
+  {
+    name: 'Chuyển giọng nói thành chữ',
+    source: 'DeepSeek Harness',
+    about: 'Ghi âm Telegram và nút micro trong khung chat',
+    on: true,
+  },
+  {
+    name: 'Tìm trong phiên',
+    source: 'DeepSeek Harness',
+    about: 'Chỉ mục toàn văn cho mọi phiên (⌘K)',
+    on: true,
+  },
+  {
+    name: 'Trình duyệt tự động',
+    source: 'DeepSeek Harness',
+    about: 'Bot mở web, bấm, điền biểu mẫu trong sandbox',
+    on: false,
+  },
+  {
+    name: 'Kết nối GitHub (MCP)',
+    source: 'tự thêm',
+    about: 'Đọc issue, PR; chỉ Tín và Dev được dùng',
+    on: true,
+  },
+]

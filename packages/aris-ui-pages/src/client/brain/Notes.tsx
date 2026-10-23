@@ -103,9 +103,9 @@ export function Notes({ t, nav }: PageProps) {
             <div className="a-muted" style={{ fontSize: 12.5, fontWeight: 600 }}>
               {t('br.backlinks', { n: N.backlinks.length })}
             </div>
-            <div className="ap-tags">
+            <div className="ap-bls">
               {N.backlinks.map((b) => (
-                <span className="ap-tag" key={b}>
+                <span className="ap-bl" key={b}>
                   {b}
                 </span>
               ))}
@@ -151,7 +151,9 @@ export function Notes({ t, nav }: PageProps) {
             <div className="ap-sugg" key={s.text}>
               {s.text}
               <div style={{ display: 'flex', gap: 6 }}>
-                <Button size="sm">{t('br.link')}</Button>
+                <Button size="sm" variant="primary">
+                  {t('br.link')}
+                </Button>
                 <Button size="sm" variant="ghost">
                   {t('br.skip')}
                 </Button>

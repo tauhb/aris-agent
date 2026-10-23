@@ -5,3 +5,5 @@ coverage/
 .dsh-home/
 *.tsbuildinfo
 .DS_Store
+out/
+design/canvas/.runtime/

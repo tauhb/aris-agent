@@ -20,15 +20,17 @@ import {
   SectionHeader,
   WaitingIcon,
   arisNavigate,
+  onArisRoute,
+  type NavRequest,
 } from '@aris/ui-kit/react'
 import { COMMANDER, DEMO_COST, DEMO_PENDING_APPROVALS, DEMO_TEAM, type TeamMember } from '@aris/ui-kit'
-import type { ReactElement } from 'react'
+import { useEffect, useState, type ReactElement } from 'react'
 import { latestProjectSession } from './projects.js'
 import type { Translate } from './locale.js'
 import type { PanelEntry, SidebarProps, WorkspaceRow } from './types.js'
 
-/** Trang do dsh đăng ký nhưng aris đặt chỗ khác: Plugin nằm ở chân thanh bên (thuộc Cài đặt). */
-const FOOT_PANELS = new Set(['plugins'])
+/** Trang do dsh đăng ký nhưng aris không đặt trên thanh bên: Plugin mở từ Cài đặt (6.7). */
+const SETTINGS_PANELS = new Set(['plugins'])
 /** Trang của dsh mà aris thay bằng trang riêng: lịch dsh mở từ nút "Lịch đang chạy" trong trang Routine. */
 const HIDDEN_PANELS = new Set(['schedules'])
 /** Trang của dsh mà aris đặt tên khác ("Automation tasks" thành Routine). */
@@ -38,6 +40,12 @@ const PANEL_LABELS = {
   'aris-routine': 'panel.schedules',
   'aris-kanban': 'panel.kanban',
 } as const
+
+/** Trang con sáng mục cha trên thanh bên (Tạo routine thuộc Routine). */
+const PARENT_PANEL: Record<string, string> = { 'aris-routine-new': 'aris-routine' }
+
+/** Trang aris xem một bot cụ thể, và tham số chứa mã bot (mặc định Aris). */
+const BOT_PAGES: Record<string, string> = { 'aris-bot': 'id', 'aris-memory': 'bot', 'aris-owner': 'bot' }
 
 /** Trong thanh thu gọn, nhãn chuyển thành tooltip. */
 function Tip({ label, wide, children }: { label: string; wide: boolean; children: ReactElement }) {
@@ -49,7 +57,10 @@ function Tip({ label, wide, children }: { label: string; wide: boolean; children
 }
 
 function PanelNav({ panel, wide, props }: { panel: PanelEntry; wide: boolean; props: SidebarProps }) {
-  const active = props.usePanelInfo((info) => info.activePanelId === panel.id)
+  const active = props.usePanelInfo((info) => {
+    const id = info.activePanelId
+    return (id !== null && PARENT_PANEL[id] !== undefined ? PARENT_PANEL[id] : id) === panel.id
+  })
   const label =
     panel.id in PANEL_LABELS ? props.t(PANEL_LABELS[panel.id as keyof typeof PANEL_LABELS]) : panel.label
   return (
@@ -69,6 +80,7 @@ function Bot({
   member,
   lead,
   groupLead,
+  current,
   wide,
   t,
   onOpen,
@@ -77,6 +89,8 @@ function Bot({
   lead?: boolean
   /** Trưởng nhóm của phòng ban. */
   groupLead?: boolean
+  /** Bot đang được xem ở vùng chính. */
+  current?: boolean
   wide: boolean
   t: Translate
   onOpen: () => void
@@ -94,6 +108,7 @@ function Bot({
         statusLabel={t(`status.${member.status}`)}
         lead={lead}
         badge={groupLead ? t('team.groupLead') : undefined}
+        current={current}
         collapsed={!wide}
         onClick={onOpen}
       />
@@ -134,8 +149,7 @@ export function SidebarRoot(props: SidebarProps) {
   const { collapsed, width, startSession, toggleSidebar, selectPanel, renderSlot, t } = props
   const wide = !collapsed
   const panels = props.usePanels((p) => p)
-  const navPanels = panels.filter((p) => !FOOT_PANELS.has(p.id) && !HIDDEN_PANELS.has(p.id))
-  const footPanels = panels.filter((p) => FOOT_PANELS.has(p.id))
+  const navPanels = panels.filter((p) => !SETTINGS_PANELS.has(p.id) && !HIDDEN_PANELS.has(p.id))
   const projects = props.useWorkspaces((w) => w.items)
   const sessionsById = props.useSessions((list) => list.byId)
   // Bấm dự án: mở phiên gần nhất của dự án; dự án chưa có phiên thì dsh tạo phiên mới.
@@ -147,6 +161,12 @@ export function SidebarRoot(props: SidebarProps) {
   const newShortcut = props.useShortcuts((rows) => rows.find((r) => r.id === 'session.new'))
   const toggleShortcut = props.useShortcuts((rows) => rows.find((r) => r.id === 'sidebar.left.toggle'))
   const openChat = () => selectPanel(null)
+  // Bot đang được xem (hồ sơ, ký ức, hồ sơ chủ nhân) sáng trên Đội hình, như canvas.
+  const [route, setRoute] = useState<NavRequest | null>(null)
+  useEffect(() => onArisRoute(setRoute), [])
+  const activePanel = props.usePanelInfo((info) => info.activePanelId)
+  const botKey = activePanel ? BOT_PAGES[activePanel] : undefined
+  const viewedBot = botKey ? (route?.params?.[botKey] ?? 'aris') : undefined
   const waiting = t('approvals.waiting', { count: DEMO_PENDING_APPROVALS })
   const toggleLabel = t(wide ? 'toggle.collapse' : 'toggle.open')
   const money = (n: number) =>
@@ -215,7 +235,14 @@ export function SidebarRoot(props: SidebarProps) {
               }
             />
           )}
-          <Bot member={COMMANDER} lead wide={wide} t={t} onOpen={openChat} />
+          <Bot
+            member={COMMANDER}
+            lead
+            current={viewedBot === COMMANDER.id}
+            wide={wide}
+            t={t}
+            onOpen={openChat}
+          />
           {DEMO_TEAM.map((group) => (
             <div key={group.id} style={{ display: 'contents' }}>
               {wide && (
@@ -235,6 +262,7 @@ export function SidebarRoot(props: SidebarProps) {
                   key={m.id}
                   member={m}
                   groupLead={m.id === group.lead}
+                  current={viewedBot === m.id}
                   wide={wide}
                   t={t}
                   onOpen={openChat}
@@ -297,13 +325,12 @@ export function SidebarRoot(props: SidebarProps) {
             <IconButton label={t('settings')} size="sm" onClick={() => arisNavigate('settings')}>
               <GearIcon size={17} />
             </IconButton>
+            {/* Menu "Thêm" của dsh (Cài đặt chung, Góp ý, Đăng nhập) thu thành nút nhỏ cạnh bánh răng. */}
+            <span className="seat mini">{renderSlot('sidebar.settings', { wide: false })}</span>
           </div>
         )}
-        {footPanels.map((panel) => (
-          <PanelNav key={panel.id} panel={panel} wide={wide} props={props} />
-        ))}
         <div className="seat">{renderSlot('sidebar.footer.action', { wide })}</div>
-        <div className="seat">{renderSlot('sidebar.settings', { wide })}</div>
+        {!wide && <div className="seat">{renderSlot('sidebar.settings', { wide })}</div>}
       </div>
     </nav>
   )

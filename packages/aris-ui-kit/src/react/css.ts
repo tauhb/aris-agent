@@ -157,7 +157,7 @@ ${scope(`
 .a-nav.warn .g{color:inherit}
 .a-nav.icon{width:40px;height:40px;padding:0;justify-content:center}
 .a-bot{display:flex;align-items:center;gap:10px;border-radius:10px;padding:5px 8px;width:100%}
-.a-bot:hover{background:var(--a-hover)}
+.a-bot:hover,.a-bot[aria-current=page]{background:var(--a-hover)}
 .a-bot.lead{border-radius:12px;padding:8px;background:var(--a-panel2)}
 .a-bot.icon{width:40px;height:40px;padding:0;justify-content:center}
 .a-bot .txt{flex:1;min-width:0;display:flex;flex-direction:column}
