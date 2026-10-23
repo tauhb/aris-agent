@@ -31,7 +31,7 @@ Trạng thái: ✅ đã làm · ◐ làm một phần · ○ chưa. "Dữ liệu
 
 | Màn | Vùng của dsh hiện có | Cách | Gói aris | Trạng thái | Dữ liệu |
 |---|---|---|---|---|---|
-| Thanh bên dùng chung | `ui-sidebar` | R | `@aris/ui-sidebar` | ✅ dùng bộ thành phần; Đội hình (mẫu), Dự án (thật), mục trang aris (Bản đồ, Second Brain, Routine, Kanban), Plugin ở chân; nút tìm, bánh răng, "+" mở trang/hộp thoại aris | Dự án: thật · Đội hình: GĐ2 · việc chờ duyệt: GĐ3 |
+| Thanh bên dùng chung | `ui-sidebar` | R | `@aris/ui-sidebar` | ✅ dùng bộ thành phần; Đội hình (mẫu), Dự án (thật), mục trang aris (Bản đồ, Second Brain, Routine, Kanban); nút tìm, bánh răng, "+" mở trang/hộp thoại aris; menu "Thêm" của dsh thu thành nút cạnh bánh răng; tên nhóm mở trang Phòng ban; bot đang xem sáng trên Đội hình | Dự án: thật · Đội hình: GĐ2 · việc chờ duyệt: GĐ3 |
 | 1.1 Chat | đầu khung `conversation.session.header.*`; hội thoại `ui-chat`, công cụ `ui-tool`; thẻ duyệt `ui-approval`; cột phải `ui-sidebar-right` | C đầu khung · C "dòng việc": mỗi lần gọi công cụ `subagent` vẽ thành nhánh màu bot (`tool.call.toolview`, khoá `subagent`) · T bong bóng tin nhắn nền mực, thẻ duyệt nền cam (CSS bám lớp dsh, có kiểm thử canh lớp) · C cột phải "Đội bot lúc này" chiếm trang bắt đầu (`sidebar.right.tab.guide`): sơ đồ đội 3D xoay được (`TeamOrbit`), việc gần đây, giữ lối mở Tệp/Terminal | `@aris/ui-chat-header` ✅, `@aris/ui-chat` ✅, `@aris/ui-team-pane` ✅, `@aris/ui-theme` ✅ | ◐ G4 xong phần khung; còn: đường đời tin nhắn (chấm xanh + vạch dọc), thẻ duyệt nằm trong nhánh của bot, ghim trí nhớ, đầu khung "nhớ thêm được … điều" | GĐ1 (ghim trí nhớ), GĐ2 (bot thật cho nhánh và đội hình), GĐ3 (duyệt trong nhánh) |
 | 1.2 Khung chat | ô nhập của `ui-conversation`, `ui-input-trigger`, `ui-model-selection`, `ui-attachment`, `ui-goal` | T + C: nút "/" và "@" (`conversation.input.left`, chèn ký tự qua `input.paste` để mở đúng menu của dsh), nhãn model có ô chữ đầu nhà cung cấp, tên kỹ thuật khi rê chuột (`conversation.input.model.label`, tắt row "1017"); đính kèm giữ nút "+" của dsh; nhắn thêm khi bot đang làm giữ Xếp hàng/Chèn vào việc của dsh | `@aris/ui-chat` ✅ | ◐ còn: "@" liệt kê bot của đội, nút ghi âm (dsh chưa bật nhập giọng nói) | GĐ2 (@bot) |
 | 1.3 Bản đồ đội | — | P (trang `main`, mục thanh bên): sân khấu `TeamOrbit` cỡ lớn, cột phải bot đang chọn, dòng thời gian hôm nay | `@aris/ui-pages` ✅ | ✅ G5 vỏ | GĐ2 |
@@ -86,7 +86,7 @@ Dsh để cài đặt trong **một hộp thoại** (Chung, Models, Built-in plu
 | 6.4 Ngân sách, duyệt, mạng | `ui-permission` (quyền mặc định) | P | `@aris/ui-pages` ✅ | ✅ G5 vỏ | GĐ3 / GĐ7 |
 | 6.5 Thống kê & nhật ký | `ui-trajectory` (tab Trajectory trong phiên) | P + giữ T cho tab Trajectory | `@aris/ui-pages` ✅ | ✅ G5 vỏ | GĐ7 |
 | 6.6 Màn hình của bot | `ui-sidebar-browser` (chỉ bản desktop) | P | `@aris/ui-pages` ✅ | ✅ G5 vỏ | GĐ8 |
-| 6.7 Plugin | `ui-plugin-manager` (trang Plugins, chợ plugin) | T trước; G6 đối chiếu, lệch nhiều thì R | — | ◐ đã xuống chân thanh bên | có sẵn |
+| 6.7 Plugin | `ui-plugin-manager` (trang Plugins, chợ plugin) | R ở G6 (trang dsh lệch nhiều): mục Plugin trong trang Cài đặt theo canvas; "Mở chợ" và "Xem" cập nhật mở trang Plugins của dsh | `@aris/ui-pages` ✅ | ✅ G6 vỏ | danh sách thật: GĐ7 |
 
 ### Nhóm 7 · Di động
 
@@ -126,4 +126,4 @@ Dsh để cài đặt trong **một hộp thoại** (Chung, Models, Built-in plu
 2. ✅ **G3** bộ thành phần; chuyển thanh bên và đầu khung sang dùng bộ này (23/10).
 3. ✅ **G4** khung: ô nhập 1.2, nút hội thoại 1.1 (dòng việc, thẻ duyệt), cột phải "Đội bot", màn trống, tiêu đề tab (23/10).
 4. ✅ **G5** vỏ mọi trang P và hộp thoại trong gói `@aris/ui-pages` (23/10): Cài đặt 6.1–6.7 + Commander, Ký ức, Thư viện/Chi tiết skill, Hộp duyệt, Việc đang chạy, Bản đồ đội, Hồ sơ bot/chủ nhân, Tạo bot/dự án, Nhân bản, Tìm phiên, Routine, Tạo routine, Kanban, Second Brain (4 khung). Bổ sung sau quyết định 11–12: 1.4 Dự án (đầu khung, cột phải), Kanban theo dự án, trang Phòng ban. Còn lại: nhóm 7 di động.
-5. **G6** script chụp app thật cạnh canvas cho cả 36 màn, sáng/tối; bảng "đạt / lệch" làm cổng nghiệm thu.
+5. ✅ **G6** script chụp app thật cạnh canvas cho cả 36 màn, sáng/tối (`scripts/ui/doi-chieu.mjs`); bảng "đạt / lệch": [doi-chieu.md](doi-chieu.md) (23/10).

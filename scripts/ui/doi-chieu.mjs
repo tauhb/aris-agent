@@ -94,9 +94,11 @@ async function shootApp(page, screen, theme, file) {
       `(() => { const b = document.querySelector('.aris-sb .projects .a-nav'); b?.click(); return !!b })()`,
     )
     await sleep(2000)
-    await page.eval(
-      `(() => { const b = [...document.querySelectorAll('button[aria-label]')].find((x) => /thanh bên phải/i.test(x.getAttribute('aria-label')) && !/^Thu gọn/i.test(x.getAttribute('aria-label'))); b?.click(); return true })()`,
-    )
+    // Màn hẹp (điện thoại) giữ cột phải đóng.
+    if (w >= 768)
+      await page.eval(
+        `(() => { const b = [...document.querySelectorAll('button[aria-label]')].find((x) => /thanh bên phải/i.test(x.getAttribute('aria-label')) && !/^Thu gọn/i.test(x.getAttribute('aria-label'))); b?.click(); return true })()`,
+      )
   } else if (step.go) {
     const [to, params] = step.go
     await page.eval(
@@ -107,21 +109,27 @@ async function shootApp(page, screen, theme, file) {
   await page.shot(file)
 }
 
-function report(rows, themes) {
+/** Trang xem mọi màn đã chụp (kể cả từ lần chạy trước), canvas trái, app phải. */
+function report() {
+  const has = (name) => existsSync(join(OUT, name))
   const cell = (src, label) =>
     src
       ? `<figure><figcaption>${label}</figcaption><img src="${src}" loading="lazy"></figure>`
       : `<figure class="none"><figcaption>${label}</figcaption><div>Chưa có trong app</div></figure>`
-  const body = rows
-    .map(
-      (r) => `<section id="m${r.id}"><h2>${r.id} · ${r.title}${r.why ? ` <small>(${r.why})</small>` : ''}</h2>
-${themes.map((t) => `<div class="pair">${cell(`${r.id}-${t}-canvas.png`, `Canvas · ${t}`)}${cell(r.app ? `${r.id}-${t}-app.png` : null, `App · ${t}`)}</div>`).join('\n')}</section>`,
-    )
-    .join('\n')
+  const body = SCREENS.map((r) => {
+    const pairs = ['dark', 'light']
+      .filter((t) => has(`${r.id}-${t}-canvas.png`))
+      .map(
+        (t) =>
+          `<div class="pair">${cell(`${r.id}-${t}-canvas.png`, `Canvas · ${t}`)}${cell(has(`${r.id}-${t}-app.png`) ? `${r.id}-${t}-app.png` : null, `App · ${t}`)}</div>`,
+      )
+    if (pairs.length === 0) return ''
+    return `<section id="m${r.id}"><h2>${r.id} · ${r.title}${r.why ? ` <small>(${r.why})</small>` : ''}</h2>\n${pairs.join('\n')}</section>`
+  }).join('\n')
   return `<!doctype html><meta charset="utf-8"><title>Đối chiếu canvas</title>
 <style>body{font-family:system-ui,sans-serif;margin:24px;background:#111;color:#eee}h2{font-size:16px;margin:28px 0 8px}
-.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}figure{margin:0}figcaption{font-size:12px;color:#aaa;margin-bottom:4px}
-img{width:100%;border:1px solid #333}.none div{aspect-ratio:16/10;border:1px dashed #555;display:grid;place-items:center;color:#888}</style>
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;align-items:start}figure{margin:0}figcaption{font-size:12px;color:#aaa;margin-bottom:4px}
+img{max-width:100%;border:1px solid #333}.none div{aspect-ratio:16/10;border:1px dashed #555;display:grid;place-items:center;color:#888}</style>
 <h1>Đối chiếu canvas ↔ app</h1>${body}`
 }
 
@@ -130,7 +138,7 @@ async function shootPair(page, id, theme) {
   const html = join(OUT, `pair-${id}-${theme}.html`)
   writeFileSync(
     html,
-    `<!doctype html><meta charset="utf-8"><style>body{margin:0;background:#111;display:grid;grid-template-columns:1fr 1fr;gap:8px}img{max-width:100%;max-height:520px;display:block;justify-self:center}</style><img src="${id}-${theme}-canvas.png"><img src="${existsSync(join(OUT, `${id}-${theme}-app.png`)) ? `${id}-${theme}-app.png` : ''}">`,
+    `<!doctype html><meta charset="utf-8"><style>body{margin:0;background:#111;display:flex;justify-content:space-around;gap:8px;height:520px}img{max-width:49%;max-height:520px;object-fit:contain}</style><img src="${id}-${theme}-canvas.png"><img src="${existsSync(join(OUT, `${id}-${theme}-app.png`)) ? `${id}-${theme}-app.png` : ''}">`,
   )
   await page.viewport(1600, 520)
   await page.goto(pathToFileURL(html).href)
@@ -168,13 +176,7 @@ async function main() {
         await shootPair(page, s.id, t)
         process.stdout.write('\n')
       }
-    writeFileSync(
-      join(OUT, 'index.html'),
-      report(
-        SCREENS.filter((s) => screens.includes(s)),
-        themes,
-      ),
-    )
+    writeFileSync(join(OUT, 'index.html'), report())
     console.log(`Xong: ${join(OUT, 'index.html')}`)
   } finally {
     await browser.close()

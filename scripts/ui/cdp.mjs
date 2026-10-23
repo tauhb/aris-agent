@@ -85,6 +85,7 @@ export async function newPage(cdp) {
   await send('Runtime.enable')
   return {
     async viewport(width, height) {
+      await send('Emulation.clearDeviceMetricsOverride')
       await send('Emulation.setDeviceMetricsOverride', {
         width,
         height,
