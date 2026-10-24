@@ -10,7 +10,13 @@ const gq: Link = { provider: 'groq', model: 'openai/gpt-oss-120b' }
 
 function router(
   chain: Link[],
-  opts: { fits?: (l: Link) => boolean; pools?: KeyPools; botModel?: (s: string) => Link | undefined } = {},
+  opts: {
+    fits?: (l: Link) => boolean
+    pools?: KeyPools
+    botModel?: (s: string) => Link | undefined
+    goalModel?: (s: string) => Link | undefined
+    botFallback?: (s: string) => Link | undefined
+  } = {},
 ) {
   const saved = new Map<string, { from: Link; to: Link; turn: number }>()
   const switched = vi.fn()
@@ -22,6 +28,8 @@ function router(
     remember: async (s, rec) => void (rec ? saved.set(s, rec) : saved.delete(s)),
     recall: (s) => saved.get(s),
     ...(opts.botModel ? { botModel: opts.botModel } : {}),
+    ...(opts.goalModel ? { goalModel: opts.goalModel } : {}),
+    ...(opts.botFallback ? { botFallback: opts.botFallback } : {}),
   })
   return { r, switched, saved }
 }
@@ -141,5 +149,33 @@ describe('dự phòng', () => {
     await r.error('child', 1, 1, or.provider, or.model, quota, pass)
     expect(switched).toHaveBeenCalledWith('child', or, gq, quota)
     expect(await r.request('child', 1, 1, cfg(ds))).toEqual(gq)
+  })
+})
+
+describe('model theo việc của bot', () => {
+  it('đang chạy /goal: dùng model /goal của bot, thắng model riêng', async () => {
+    const { r } = router([ds, or], { botModel: () => or, goalModel: (s) => (s === 'goal' ? gq : undefined) })
+    expect((await r.request('goal', 1, 1, cfg(ds))).model).toBe(gq.model)
+    expect((await r.request('chat', 1, 1, cfg(ds))).model).toBe(or.model)
+  })
+
+  it('/goal xong: phiên còn giữ model /goal thì trả về model trước đó', async () => {
+    let active = true
+    const { r } = router([ds, or], { goalModel: () => (active ? gq : undefined) })
+    expect((await r.request('s', 1, 1, cfg(ds))).model).toBe(gq.model)
+    expect((await r.request('s', 1, 2, cfg(gq))).model).toBe(gq.model)
+    active = false
+    expect((await r.request('s', 2, 1, cfg(gq))).model).toBe(ds.model)
+    expect((await r.request('s', 3, 1, cfg(ds))).model).toBe(ds.model)
+  })
+
+  it('model lỗi: thử dự phòng riêng của bot trước chuỗi chung', async () => {
+    const { r } = router([ds, or], { botFallback: () => gq })
+    await r.request('s', 1, 1, cfg(ds))
+    expect(await r.error('s', 1, 1, ds.provider, ds.model, quota, pass)).toEqual({ kind: 'retry' })
+    expect((await r.request('s', 1, 1, cfg(ds))).model).toBe(gq.model)
+    // Dự phòng riêng cũng lỗi: sang chuỗi chung.
+    expect(await r.error('s', 1, 1, gq.provider, gq.model, quota, pass)).toEqual({ kind: 'retry' })
+    expect((await r.request('s', 1, 1, cfg(ds))).model).toBe(or.model)
   })
 })

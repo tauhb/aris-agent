@@ -145,6 +145,8 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 ## Giai đoạn 2 · Đội bot và Commander (tuần 6–8)
 
+> **Hồ sơ bot đợt 3/4 xong 24/10 — Model theo việc** ([đặc tả](specs/aris-bots.md#hồ-sơ-bot--model-theo-việc-đợt-3)): mỗi bot đặt được model khi chạy `/goal` và model dự phòng riêng (thử trước chuỗi chung); vòng học nền (giai đoạn 3) hiện mờ. Sửa kèm: ô chọn đè nhãn khi cửa sổ hẹp. Chạy thử thật: `/goal` của Minh dùng DeepSeek-V4-Pro, xong thì về Flash.
+
 > **Hồ sơ bot đợt 2/4 xong 24/10 — Quyền & kênh, cột phải** ([đặc tả](specs/aris-bots.md#hồ-sơ-bot--quyền--kênh-cột-phải-đợt-2)): quyền riêng của bot (ghi file: không / trong thư mục làm việc / mọi nơi; hành động nguy hiểm: hỏi / tự từ chối; cho Aris giao việc) có hiệu lực thật; cột phải có trạng thái, số việc và tỉ lệ hoàn thành 7 ngày, chi phí 7 ngày theo bot (sổ chi phí nay ghi theo bot), ký ức lõi, việc hay giao, ký ức mới học. Lark (giai đoạn 7), skill tự cải tiến (giai đoạn 3) hiện mờ.
 
 > **Bộ chọn dùng chung 24/10**: mọi ô chọn (`<select>` mặc định của trình duyệt, 22 chỗ) thay bằng `Select` của `@aris/ui-kit/react`: chọn bot có linh vật, tên, mô tả ngắn, chia nhóm theo phòng ban hoặc trong/ngoài dự án; phòng ban có chữ cái đầu và số bot; model chia theo nhà cung cấp, có ô tìm. Danh sách vẽ ở `document.body` nên không bị hộp thoại cắt, hết chỗ thì mở lên trên. Lựa chọn dựng sẵn ở `aris-ui-pages/src/client/options.tsx`. Kanban: "Thêm thẻ" thành "Thêm việc", "Thẻ mới" thành "Việc mới". Sửa kèm: danh mục model chưa từng được gửi lên giao diện nên ô chọn model của bot và phòng ban chỉ có "mặc định".

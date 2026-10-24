@@ -10,7 +10,7 @@ import { BotError, HANDLE_RE, type BotInput } from './store.js'
 
 /** Phần được sao chép khi nhân bản hoặc xuất. */
 export interface CopyParts {
-  /** Model riêng, phòng ban. Cấu hình bot ngoài luôn đi kèm vì đó là loại bot. */
+  /** Model riêng, model theo việc, phòng ban, bộ công cụ, quyền. Cấu hình bot ngoài luôn đi kèm vì đó là loại bot. */
   config: boolean
   /** Tính cách (SOUL). */
   soul: boolean
@@ -38,6 +38,11 @@ export const botFile = z.object({
     soul: z.string().max(2000).optional(),
     mascot: z.string().max(40).default('tron'),
     model: modelRef.optional(),
+    /** Model theo việc, bộ công cụ, quyền riêng (phần "Cấu hình"). */
+    models: z.object({ goal: modelRef, fallback: modelRef }).partial().optional(),
+    tools: z.record(z.string(), z.boolean()).optional(),
+    perms: z.record(z.string(), z.string()).optional(),
+    assignable: z.boolean().optional(),
     /** Tên phòng ban (mã phòng khác nhau giữa các máy). */
     department: z.string().max(60).optional(),
     external: z.unknown().optional(),
@@ -69,6 +74,17 @@ export function externalInput(e: ExternalConfig): Record<string, unknown> {
   return e.agent === 'acp' ? { ...rest, command: [e.command, ...(args ?? [])].join(' ') } : rest
 }
 
+/** Phần cấu hình ngoài model và phòng ban: model theo việc, bộ công cụ, quyền, nhận giao việc. */
+// Kiểu rời (`object`): bản ghi và tệp xuất có kiểu trường hơi khác nhau; giá trị đã qua kiểm ở kho.
+function extras(src: Pick<BotRecord, 'models' | 'tools' | 'perms' | 'assignable'>): object {
+  return {
+    ...(src.models && Object.keys(src.models).length ? { models: src.models } : {}),
+    ...(src.tools && Object.keys(src.tools).length ? { tools: src.tools } : {}),
+    ...(src.perms && Object.keys(src.perms).length ? { perms: src.perms } : {}),
+    ...(src.assignable === false ? { assignable: false } : {}),
+  }
+}
+
 /** Hồ sơ cho bot mới khi nhân bản: tên mới, tên gọi mới, phần được chọn. */
 export function cloneInput(
   src: BotRecord,
@@ -85,6 +101,7 @@ export function cloneInput(
     ...(parts.soul ? { soul: src.soul } : {}),
     ...(parts.config && src.model ? { model: src.model } : {}),
     ...(parts.config && src.department ? { department: src.department } : {}),
+    ...(parts.config ? extras(src) : {}),
     ...(src.external ? { external: externalInput(src.external) } : {}),
   }
 }
@@ -108,6 +125,7 @@ export function exportBot(
       ...(parts.soul ? { soul: src.soul } : {}),
       ...(parts.config && src.model ? { model: src.model } : {}),
       ...(parts.config && o.departmentName ? { department: o.departmentName } : {}),
+      ...(parts.config ? extras(src) : {}),
       ...(src.external ? { external: externalInput(src.external) } : {}),
     },
     ...(parts.memory && o.memory?.length ? { memory: o.memory } : {}),
@@ -138,6 +156,7 @@ export function importInput(
     ...(b.soul !== undefined ? { soul: b.soul } : {}),
     ...(b.model ? { model: b.model } : {}),
     ...(department ? { department } : {}),
+    ...extras(b as Parameters<typeof extras>[0]),
     ...(b.external !== undefined ? { external: b.external } : {}),
   }
 }

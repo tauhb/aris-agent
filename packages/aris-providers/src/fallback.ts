@@ -74,6 +74,10 @@ export interface RouterDeps {
   recall(sessionId: string): { from: Link; to: Link; turn: number } | undefined
   /** Model riêng của bot cho phiên được giao việc (thành viên đội); không có thì theo phiên. */
   botModel?(sessionId: string): Link | undefined
+  /** Model của bot khi phiên đang chạy /goal (thắng model riêng). */
+  goalModel?(sessionId: string): Link | undefined
+  /** Dự phòng riêng của bot: thử trước chuỗi dự phòng chung. */
+  botFallback?(sessionId: string): Link | undefined
   logger?: { info(fmt: string, ...a: unknown[]): void }
 }
 
@@ -81,6 +85,8 @@ type Config = { provider: string; model: string; reasoningEffort?: unknown } & R
 
 export class Router {
   private turns = new Map<string, TurnState>()
+  /** Phiên đang hoặc vừa chạy /goal: model trước đó và model /goal (dsh giữ model vừa dùng cho phiên). */
+  private goals = new Map<string, { origin: Link; goal: Link }>()
 
   constructor(private d: RouterDeps) {}
 
@@ -100,7 +106,19 @@ export class Router {
   /** `agent/request`: cấu hình lần gọi sắp tới. */
   async request(sessionId: string, turn: number, step: number, resolved: Config): Promise<Config> {
     const s = this.state(sessionId, turn, step)
-    const own = this.d.botModel?.(sessionId)
+    const goal = this.d.goalModel?.(sessionId)
+    const was = this.goals.get(sessionId)
+    if (goal) {
+      if (!sameLink(resolved, goal)) {
+        this.goals.set(sessionId, { origin: { provider: resolved.provider, model: resolved.model }, goal })
+        resolved = withLink(resolved, goal)
+      }
+    } else if (was) {
+      // /goal đã xong: phiên còn giữ model /goal thì trả về model trước đó.
+      this.goals.delete(sessionId)
+      if (sameLink(resolved, was.goal)) resolved = withLink(resolved, was.origin)
+    }
+    const own = goal ? undefined : this.d.botModel?.(sessionId)
     if (own && !sameLink(resolved, own)) resolved = withLink(resolved, own)
     s.origin ??= { provider: resolved.provider, model: resolved.model }
     if (s.override) return withLink(resolved, s.override)
@@ -146,7 +164,12 @@ export class Router {
     }
 
     s.failed.add(linkKey(current))
-    const to = await nextLink(this.d.chain(), current, s.failed, (l) => this.d.fits(sessionId, l))
+    const own = this.d.botFallback?.(sessionId)
+    const ownOk =
+      own && !sameLink(own, current) && !s.failed.has(linkKey(own)) && (await this.d.fits(sessionId, own))
+    const to = ownOk
+      ? own
+      : await nextLink(this.d.chain(), current, s.failed, (l) => this.d.fits(sessionId, l))
     if (!to) return kind === 'key' || kind === 'missing' ? next() : undefined
     s.override = to
     const from = s.origin ?? current

@@ -16,7 +16,7 @@ import {
   type BotData,
   type TeamView,
 } from '@aris/ui-kit/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { PageProps } from '../page.js'
 import { departmentOptions, modelOptions } from '../options.js'
 import { Box } from '../ui.js'
@@ -208,34 +208,94 @@ function ProfileForm({
 }
 
 /** Model riêng của bot: áp khi mở phiên chat với bot; bỏ trống là theo model mặc định. */
+/** Tab Model (bản vẽ 2.2): model theo từng việc của bot. */
 function ModelCard({ t, bot, team, nav }: { t: T; bot: BotData; team: TeamView; nav: PageProps['nav'] }) {
-  const current = bot.model ? pairKey(bot.model.provider, bot.model.model) : ''
   const [error, setError] = useState<string | null>(null)
-  async function change(v: string) {
-    setError(null)
+  const key = (m?: { provider: string; model: string }) => (m ? pairKey(m.provider, m.model) : '')
+  const ref = (v: string) => {
     const [provider, model] = v.split('\u0000') as [string, string]
+    return v ? { provider, model } : null
+  }
+  async function save(patch: Record<string, unknown>) {
+    setError(null)
     try {
-      await teamAction({ op: 'update', id: bot.id, patch: { model: v ? { provider, model } : null } })
+      await teamAction({ op: 'update', id: bot.id, patch })
     } catch (e) {
       setError((e as Error).message)
     }
   }
+  const pick = (
+    label: string,
+    value: string,
+    def: string,
+    onChange: (v: string) => void,
+    current?: { provider: string; model: string },
+  ) => (
+    <Select
+      label={label}
+      value={value}
+      onChange={onChange}
+      options={modelOptions(team.catalog, { name: def }, current)}
+      searchPlaceholder={t('sel.search')}
+      emptyLabel={t('sel.empty')}
+    />
+  )
+  const row = (label: string, hint: string | null, control: ReactNode) => (
+    <div className="ap-taskrow">
+      <span className="lbl">
+        {label}
+        {hint && <span className="a-muted">{hint}</span>}
+      </span>
+      <span className="ctl">{control}</span>
+    </div>
+  )
   return (
     <Card title={t('bot.modelTitle', { name: bot.name })}>
-      <CardRow label={t('bot.modelChat')}>
-        <Select
-          label={t('bot.modelChat')}
-          value={current}
-          onChange={(v) => void change(v)}
-          options={modelOptions(team.catalog, { name: t('bot.modelDefault') }, bot.model)}
-          searchPlaceholder={t('sel.search')}
-          emptyLabel={t('sel.empty')}
-          style={{ maxWidth: 360 }}
-        />
-      </CardRow>
-      <div className="a-row a-muted" style={{ fontSize: 12.5 }}>
-        {error ? <span style={{ color: 'var(--a-danger)' }}>{error}</span> : t('bot.modelHint')}
-      </div>
+      {row(
+        t('bot.m.chat'),
+        t('bot.m.chatHint'),
+        pick(
+          t('bot.m.chat'),
+          key(bot.model),
+          t('bot.modelDefault'),
+          (v) => void save({ model: ref(v) }),
+          bot.model,
+        ),
+      )}
+      {row(
+        t('bot.m.goal'),
+        t('bot.m.goalHint'),
+        pick(
+          t('bot.m.goal'),
+          key(bot.models?.goal),
+          t('bot.m.goalDefault'),
+          (v) => void save({ models: { goal: ref(v) } }),
+          bot.models?.goal,
+        ),
+      )}
+      <Later t={t} stage={3} row>
+        {row(
+          t('bot.m.learn'),
+          t('bot.m.learnHint'),
+          <span className="a-muted">{t('bot.m.learnDefault')}</span>,
+        )}
+      </Later>
+      {row(
+        t('bot.m.fallback'),
+        t('bot.m.fallbackHint'),
+        pick(
+          t('bot.m.fallback'),
+          key(bot.models?.fallback),
+          t('bot.m.fallbackDefault'),
+          (v) => void save({ models: { fallback: ref(v) } }),
+          bot.models?.fallback,
+        ),
+      )}
+      {error && (
+        <div className="a-row" style={{ fontSize: 12.5, color: 'var(--a-danger)' }}>
+          {error}
+        </div>
+      )}
       <div className="a-row" style={{ justifyContent: 'flex-end' }}>
         <a className="ap-link" onClick={() => nav.go('settings', { section: 'provider' })}>
           {t('bot.manageProviders')}

@@ -45,6 +45,17 @@ describe('nhân bản, xuất, nhập bot', () => {
       model: { provider: 'deepseek', model: 'chat' },
       department: d.id,
     })
+    await store.update(src.id, {
+      models: { goal: { provider: 'deepseek', model: 'pro' } },
+      perms: { write: 'workspace' },
+      tools: { shell: false },
+    })
+    const full = await call({ op: 'clone', id: src.id, name: 'Kiệt 3', parts: { config: true, soul: true } })
+    expect(store.get(String(full.body.created))).toMatchObject({
+      models: { goal: { provider: 'deepseek', model: 'pro' } },
+      perms: { write: 'workspace' },
+      tools: { shell: false },
+    })
     notes.set(src.id, [{ text: 'Dùng pnpm', kind: 'lesson', tier: 'core' }])
     const r = await call({
       op: 'clone',

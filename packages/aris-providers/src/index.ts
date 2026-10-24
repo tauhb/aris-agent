@@ -108,6 +108,7 @@ export async function apply(ctx: Context): Promise<void> {
           store: {
             tagOf(id: string): { bot: string; via: string } | undefined
             botOf(id: string): { id: string; kind: string; department?: string }
+            get(id: string): { models?: { goal?: Link; fallback?: Link } } | undefined
             effectiveModel(id: string): Link | undefined
             policyOf(id: string):
               | {
@@ -201,6 +202,24 @@ export async function apply(ctx: Context): Promise<void> {
       if (!tag || tag.via === 'open') return undefined
       return bots!.store.effectiveModel(tag.bot)
     },
+    // Model theo việc của bot (bản vẽ 2.2, tab Model): phiên đang chạy /goal dùng model /goal của bot.
+    goalModel(sessionId) {
+      const bots = arisBots()
+      const goal = bots?.store.get(bots.store.botOf(sessionId).id)?.models?.goal
+      const agent = agents.get(sessionId)
+      if (!goal || !agent) return undefined
+      const svc = ctx.get('goals') as { get(agent: unknown): { phase: string } | undefined } | undefined
+      try {
+        return svc?.get(agent)?.phase === 'active' ? goal : undefined
+      } catch {
+        return undefined
+      }
+    },
+    // Dự phòng riêng của bot thử trước chuỗi dự phòng chung.
+    botFallback(sessionId) {
+      const bots = arisBots()
+      return bots?.store.get(bots.store.botOf(sessionId).id)?.models?.fallback
+    },
     logger,
   })
 
@@ -208,6 +227,7 @@ export async function apply(ctx: Context): Promise<void> {
   ctx.on(
     'agent/request',
     async ({ agent, turn, step }, next) => {
+      agents.set((agent as unknown as AgentLike).session.id, agent as unknown as AgentLike)
       const resolved = await next()
       return (await router.request(agent.session.id, turn, step, resolved as never)) as typeof resolved
     },

@@ -24,6 +24,8 @@ export interface BotData {
   tools?: { web?: boolean; files?: boolean; shell?: boolean }
   /** Quyền riêng: ghi tệp, thao tác cần duyệt. */
   perms?: { write?: 'none' | 'workspace' | 'anywhere'; danger?: 'ask' | 'deny' }
+  /** Model theo việc: khi chạy /goal, dự phòng riêng khi lỗi. */
+  models?: { goal?: { provider: string; model: string }; fallback?: { provider: string; model: string } }
   /** Commander được giao việc (bot thường); không có là có. */
   assignable?: boolean
   createdAt: string

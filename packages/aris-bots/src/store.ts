@@ -31,11 +31,28 @@ export interface BotInput {
   /** Quyền riêng: chỉ trường gửi lên mới đổi. */
   perms?: { write?: unknown; danger?: unknown }
   assignable?: boolean
+  /** Model theo việc; `null` là bỏ (về mặc định). */
+  models?: { goal?: ModelRef | null; fallback?: ModelRef | null }
 }
+
+type ModelRef = { provider: string; model: string }
 
 /** Nhóm công cụ bật/tắt được trên hồ sơ bot. */
 export const TOOL_KEYS = ['web', 'files', 'shell'] as const
 export type ToolKey = (typeof TOOL_KEYS)[number]
+
+const isRef = (v: unknown): v is ModelRef =>
+  !!v && typeof (v as ModelRef).provider === 'string' && typeof (v as ModelRef).model === 'string'
+
+function cleanModels(v: BotInput['models'], prev: BotRecord['models'] = {}): BotRecord['models'] {
+  const out = { ...prev }
+  for (const k of ['goal', 'fallback'] as const) {
+    const x = v?.[k]
+    if (x === null) delete out[k]
+    else if (isRef(x)) out[k] = { provider: x.provider, model: x.model }
+  }
+  return out
+}
 
 function cleanPerms(v: unknown, prev: BotRecord['perms'] = {}): BotRecord['perms'] {
   const p = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>
@@ -201,6 +218,7 @@ export class BotStore {
       ...(input.external ? { external: this.external(input.external) } : {}),
       ...(input.tools ? { tools: cleanTools(input.tools) } : {}),
       ...(input.perms ? { perms: cleanPerms(input.perms) } : {}),
+      ...(input.models ? { models: cleanModels(input.models) } : {}),
       ...(input.assignable === false ? { assignable: false } : {}),
       createdAt: this.now().toISOString(),
     }
@@ -228,6 +246,7 @@ export class BotStore {
     else if (patch.department) rec.department = patch.department
     if (patch.tools) rec.tools = cleanTools(patch.tools, prev.tools)
     if (patch.perms) rec.perms = cleanPerms(patch.perms, prev.perms)
+    if (patch.models) rec.models = cleanModels(patch.models, prev.models)
     if (typeof patch.assignable === 'boolean') rec.assignable = patch.assignable
     if (patch.external === null) delete rec.external
     else if (patch.external !== undefined) rec.external = this.external(patch.external, prev.external)

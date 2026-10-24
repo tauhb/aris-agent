@@ -116,6 +116,19 @@ Chạy thử thật (24/10): thêm cho Khoa kết nối "Tự thêm" tới máy 
 
 Chạy thử thật (24/10): đặt Khoa "chỉ trong thư mục làm việc", nhờ Khoa dùng `write` ghi `/tmp/…` → bị chặn đúng lời "chỉ cho ghi trong thư mục làm việc /Users/…/aris/workspace", Khoa dừng không lách; cột phải của Khoa: 2 việc 7 ngày, hoàn thành 100%, hai tên việc gần nhất.
 
+## Hồ sơ bot · Model theo việc (đợt 3)
+
+Tab Model theo bản vẽ 2.2, trường `models` của bot:
+
+- **Chat và làm việc**: model riêng của bot (`model`) như cũ; áp cho phiên chat mới với bot và việc Aris giao cho bot, không đặt thì theo model mặc định của phòng.
+- **Suy luận sâu (khi /goal)** (`models.goal`): khi phiên của bot có mục tiêu `/goal` ở trạng thái `active` (dịch vụ `goals` của dsh), router của `@aris/providers` đổi lần gọi sang model này (thắng model riêng). dsh ghi model vừa dùng thành model của phiên, nên router nhớ model trước `/goal` và trả về khi mục tiêu không còn chạy (nhớ trong bộ nhớ: khởi động lại giữa chừng thì phiên giữ model `/goal`, chọn lại ở ô model).
+- **Vòng học nền**: giai đoạn 3, hiện mờ "theo cài đặt chung".
+- **Dự phòng khi lỗi** (`models.fallback`): model lỗi (hết tiền, sập…) thì thử model này trước, rồi tới chuỗi dự phòng chung.
+- Nhân bản / xuất với "Cấu hình và model" mang theo model theo việc, bộ công cụ, quyền riêng.
+- Ô chọn trong dòng thẻ (`.a-row`) và dòng model (`.ap-taskrow`) xuống dòng khi hẹp, không còn đè nhãn.
+
+Chạy thử thật (24/10): đặt model `/goal` của Minh là DeepSeek-V4-Pro, chạy `/goal` ngắn trong phiên mới của Minh → sổ chi phí ghi các lần gọi DeepSeek-V4-Pro, Flash không tăng; tin thường sau đó dùng lại DeepSeek-V4.1-Flash, ô model của phiên về Flash. Lần thử đầu lộ hai lỗi đã sửa: tên dịch vụ là `goals` (không phải `goal`), và phiên bị giữ model `/goal` sau khi mục tiêu xong.
+
 ## Nhân bản, xuất, nhập (bản vẽ 2.4)
 
 Hộp "Nhân bản / xuất" trên hồ sơ bot (`portable.ts`). Luôn chép vai trò, mô tả, linh vật; bot ngoài luôn giữ cấu hình bot ngoài (đó là loại bot). Chọn thêm:

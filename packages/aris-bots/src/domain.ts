@@ -37,6 +37,11 @@ export const botRecord = z.object({
     .object({ write: z.enum(['none', 'workspace', 'anywhere']), danger: z.enum(['ask', 'deny']) })
     .partial()
     .optional(),
+  /**
+   * Model theo việc (bản vẽ 2.2, tab Model): `goal` khi phiên đang chạy /goal, `fallback` thử trước
+   * chuỗi dự phòng chung khi model lỗi. Không có là theo model chat / chuỗi chung.
+   */
+  models: z.object({ goal: modelRef, fallback: modelRef }).partial().optional(),
   /** Commander được giao việc cho bot (bot thường); bot ngoài dùng `external.assignable`. Mặc định có. */
   assignable: z.boolean().optional(),
   createdAt: z.string(),
