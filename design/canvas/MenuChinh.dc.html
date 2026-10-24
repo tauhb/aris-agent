@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Menu chính</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--warn:#B45309;--warnSoft:#FCEFDF}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--warn:#F5A35C;--warnSoft:#3A2614}
+button{font-family:inherit;cursor:pointer;color:inherit}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.opt{display:flex;gap:16px;align-items:flex-start}
+.ttl{font-family:'Lexend',sans-serif;font-size:20px;font-weight:600}
+.rec{font-size:12px;font-weight:600;color:var(--ok);border:1px solid var(--ok);border-radius:999px;padding:1px 9px;margin-left:8px;vertical-align:3px}
+.note{font-size:13px;color:var(--muted);line-height:1.5}
+.note b{color:var(--ink)}
+.sb{box-sizing:border-box;width:260px;height:760px;background:var(--panel);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;padding:12px 10px;gap:2px;overflow:hidden;flex:none}
+.hd{display:flex;align-items:center;gap:8px;padding:2px 4px 10px}
+.logo{font-family:'Lexend',sans-serif;font-size:18px}
+.new-btn{border-radius:12px;padding:9px 12px;background:var(--ink);color:var(--panel);font-weight:600;margin-bottom:8px}
+.it{display:flex;align-items:center;gap:10px;border-radius:10px;color:var(--ink);font-size:14px}
+.it .lb{flex:1}
+.new{font-size:10.5px;font-weight:600;color:var(--accent);background:var(--accentSoft);border-radius:6px;padding:0 6px}
+.bd{font-size:11px;font-weight:700;color:#fff;background:var(--warn);border-radius:999px;min-width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px}
+.div{font-size:11.5px;font-weight:600;color:var(--muted);padding:10px 10px 2px}
+.sec{display:flex;justify-content:space-between;font-family:'Lexend',sans-serif;font-size:13px;font-weight:600;padding:12px 10px 2px}
+.sec .m{color:var(--muted)}
+.grp{font-size:11.5px;font-weight:500;color:var(--muted);padding:6px 10px 1px}
+.bot{display:flex;align-items:center;gap:10px;border-radius:10px;padding:5px 8px}
+.bot.lead{background:var(--panel2);border-radius:12px;padding:8px}
+.bot .tx{flex:1;display:flex;flex-direction:column;font-size:12px;color:var(--muted)}
+.bot .tx b{font-size:14px;color:var(--ink)}
+.st{width:12px;height:12px;border-radius:50%;border:1.6px dashed var(--muted)}
+.ft{margin-top:auto;border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.wait{display:flex;align-items:center;gap:8px;border-radius:10px;padding:7px 10px;background:var(--warnSoft);color:var(--warn);font-weight:600;font-size:13.5px}
+.me{display:flex;align-items:center;gap:8px;padding:4px 4px 0 6px}
+.av{width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--panel);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.me .tx{flex:1;display:flex;flex-direction:column;font-size:11.5px;color:var(--muted)}
+.me .tx b{font-size:13px;color:var(--ink)}
+.gear{color:var(--muted)}
+.pg{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.pgh{display:flex;align-items:baseline;gap:10px}
+.pgh b{font-family:'Lexend',sans-serif;font-size:16px}
+.pgh .m{font-size:12.5px;color:var(--muted)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.tab{padding:7px 10px;font-size:13px;white-space:nowrap;color:var(--muted);border-bottom:2px solid transparent}
+.tab.on{color:var(--ink);font-weight:600;border-color:var(--ink)}
+.tab i{font-style:normal;font-size:11px;font-weight:700;color:#fff;background:var(--warn);border-radius:999px;padding:0 6px;margin-left:4px}
+.ph{font-size:12.5px;color:var(--muted);background:var(--panel2);border-radius:10px;padding:16px;text-align:center}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.c{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;font-size:12px;color:var(--muted)}
+.c b{font-family:'Lexend',sans-serif;font-size:18px;color:var(--ink)}
+ul{margin:0;padding-left:18px}
+li{margin:3px 0}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="width:1440px;height:1000px;box-sizing:border-box;background:var(--bg);color:var(--ink);font-family:'Be Vietnam Pro',system-ui,sans-serif;font-size:14px;line-height:1.45;padding:28px 32px;display:flex;flex-direction:column;gap:18px">
+  <div style="display:flex;align-items:flex-end;gap:16px">
+    <div>
+      <div style="font-family:'Lexend',sans-serif;font-size:26px;font-weight:600;letter-spacing:-.02em">Menu chính · đưa Tổng quan, Hộp duyệt, Ký ức, Thư viện skill ra thanh bên</div>
+      <div class="note">Hiện các màn này chỉ vào được gián tiếp (hồ sơ bot, thanh "việc đợi duyệt"). Bảng điều khiển (6.1) đã rời Cài đặt, đổi tên thành <b>Tổng quan</b> và lên đầu menu ở cả hai phương án.</div>
+    </div>
+    <button type="button" onClick="{{toggleTheme}}" style="margin-left:auto;height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:13px">{{themeLabel}}</button>
+  </div>
+  <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:28px;min-height:0">
+    <div class="col">
+      <div class="ttl">A · Thêm thẳng ba mục, nhóm "Tự học"</div>
+      <div class="opt">
+        <nav class="sb"><div class="hd"><svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8C76 8 92 24 92 50C92 76 76 92 50 92C24 92 8 76 8 50C8 24 24 8 50 8Z" fill="var(--ink)"/><path d="M52 36L48 50M65 34L61 48" stroke="var(--panel)" stroke-width="9" stroke-linecap="round"/></svg><b class="logo">aris</b></div><div class="new-btn">＋ Việc mới</div><div class="it" style="background:var(--hover);font-weight:600;padding:7px 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="9" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.6"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.6"/><rect x="3.5" y="15.5" width="7" height="5" rx="1.6"/></svg><span class="lb">Tổng quan</span><span class="new">mới</span></div><div class="it" style="background:transparent;font-weight:500;padding:7px 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="3.2"/><circle cx="5" cy="6" r="2.2"/><circle cx="19" cy="6" r="2.2"/><circle cx="12" cy="21" r="1.6"/><path d="M6.7 7.5l3 3M17.3 7.5l-3 3M12 16.2v3.2"/></svg><span class="lb">Bản đồ đội</span></div><div class="it" style="background:transparent;font-weight:500;padding:7px 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5c-1.8-1.4-4.6-1.6-7-.6v15c2.4-1 5.2-.8 7 .6 1.8-1.4 4.6-1.6 7-.6v-15c-2.4-1-5.2-.8-7 .6z"/><path d="M12 4.5v15"/></svg><span class="lb">Second Brain</span></div><div class="it" style="background:transparent;font-weight:500;padding:7px 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span class="lb">Routine</span></div><div class="it" style="background:transparent;font-weight:500;padding:7px 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="5" height="16" rx="1.5"/><rect x="10.5" y="4" width="5" height="11" rx="1.5"/><rect x="17.5" y="4" width="3" height="7" rx="1.2"/></svg><span class="lb">Kanban</span></div><div class="div">Tự học</div><div class="it" style="background:transparent;font-weight:500;padding:7px 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13.5 6.5 5h11l2.5 8.5v5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5z"/><path d="M4 13.5h4.5l1.5 2.5h4l1.5-2.5H20"/></svg><span class="lb">Hộp duyệt</span><span class="new">mới</span><span class="bd">3</span></div><div class="it" style="background:transparent;font-weight:500;padding:7px 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4.5a3.5 3.5 0 0 0-3.4 4.3A3.5 3.5 0 0 0 6 15.5a3.5 3.5 0 0 0 6 2.6V6.9A3.4 3.4 0 0 0 9 4.5z"/><path d="M15 4.5a3.5 3.5 0 0 1 3.4 4.3 3.5 3.5 0 0 1-.4 6.7 3.5 3.5 0 0 1-6 2.6"/></svg><span class="lb">Ký ức</span><span class="new">mới</span></div><div class="it" style="background:transparent;font-weight:500;padding:7px 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3.5 5 13.5h6l-1 7 8-10h-6z"/></svg><span class="lb">Thư viện skill</span><span class="new">mới</span></div><div class="sec">Đội hình<span class="m">＋</span></div><div class="bot lead"><svg width="34" height="34" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="tx"><b>Aris</b><span>Chỉ huy</span></span></div><div class="grp">Tăng trưởng</div><div class="bot"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg><span class="tx"><b>Minh</b><span>Nghiên cứu</span></span><span class="st"></span></div><div class="bot"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="tx"><b>Thơ</b><span>Nội dung</span></span><span class="st"></span></div><div class="grp">Vận hành</div><div class="bot"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path></svg><span class="tx"><b>An</b><span>Thư ký</span></span><span class="st"></span></div><div class="bot"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M47 41L43 53M59 39L55 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="tx"><b>Ngân</b><span>Tài chính</span></span><span class="st"></span></div><div class="ft"><div class="wait"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 2a6 6 0 0 1 0 12z" fill="currentColor"/></svg>3 việc đợi duyệt</div><div class="me"><span class="av">T</span><span class="tx"><b>Tầu</b><span>0,63 USD hôm nay</span></span><span class="gear">⚙</span></div></div></nav>
+        <div class="col" style="flex:1">
+          <div class="pg">
+  <div class="pgh"><b>Tổng quan</b><span class="m">Màn 6.1 · nối dữ liệu thật khi đưa ra</span></div>
+  <div class="cards"><div class="c"><span>Đang chạy</span><b>2</b></div><div class="c"><span>Chờ duyệt</span><b>3</b></div><div class="c"><span>Tiền hôm nay</span><b>0,63</b></div><div class="c"><span>Skill mới</span><b>1</b></div></div>
+  <div class="ph">Ô nào cũng bấm được: mở Việc đang chạy, Hộp duyệt, Thống kê, Thư viện skill.</div>
+</div>
+          <div class="note"><b>Được:</b><ul><li>Bấm một lần là tới đúng màn, không qua tab.</li><li>Hộp duyệt có số đỏ ngay trên menu.</li></ul><b>Mất:</b><ul><li>Menu dài thêm 4 dòng; Đội hình bị đẩy xuống, màn nhỏ phải cuộn mới thấy bot thứ 3 trở đi.</li><li>Hộp duyệt trùng với thanh "3 việc đợi duyệt" ở chân.</li></ul></div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="ttl">B · Gom thành một mục "Tự học" có tab<span class="rec">em đề xuất</span></div>
+      <div class="opt">
+        <nav class="sb"><div class="hd"><svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8C76 8 92 24 92 50C92 76 76 92 50 92C24 92 8 76 8 50C8 24 24 8 50 8Z" fill="var(--ink)"/><path d="M52 36L48 50M65 34L61 48" stroke="var(--panel)" stroke-width="9" stroke-linecap="round"/></svg><b class="logo">aris</b></div><div class="new-btn">＋ Việc mới</div><div class="it" style="background:transparent;font-weight:500;padding:7px 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="9" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.6"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.6"/><rect x="3.5" y="15.5" width="7" height="5" rx="1.6"/></svg><span class="lb">Tổng quan</span><span class="new">mới</span></div><div class="it" style="background:transparent;font-weight:500;padding:7px 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="3.2"/><circle cx="5" cy="6" r="2.2"/><circle cx="19" cy="6" r="2.2"/><circle cx="12" cy="21" r="1.6"/><path d="M6.7 7.5l3 3M17.3 7.5l-3 3M12 16.2v3.2"/></svg><span class="lb">Bản đồ đội</span></div><div class="it" style="background:transparent;font-weight:500;padding:7px 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5c-1.8-1.4-4.6-1.6-7-.6v15c2.4-1 5.2-.8 7 .6 1.8-1.4 4.6-1.6 7-.6v-15c-2.4-1-5.2-.8-7 .6z"/><path d="M12 4.5v15"/></svg><span class="lb">Second Brain</span></div><div class="it" style="background:transparent;font-weight:500;padding:7px 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span class="lb">Routine</span></div><div class="it" style="background:transparent;font-weight:500;padding:7px 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="5" height="16" rx="1.5"/><rect x="10.5" y="4" width="5" height="11" rx="1.5"/><rect x="17.5" y="4" width="3" height="7" rx="1.2"/></svg><span class="lb">Kanban</span></div><div class="it" style="background:var(--hover);font-weight:600;padding:7px 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l1.9 4.6 4.6 1.9-4.6 1.9L12 16.5l-1.9-4.6L5.5 10l4.6-1.9z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg><span class="lb">Tự học</span><span class="new">mới</span><span class="bd">3</span></div><div class="sec">Đội hình<span class="m">＋</span></div><div class="bot lead"><svg width="34" height="34" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="tx"><b>Aris</b><span>Chỉ huy</span></span></div><div class="grp">Tăng trưởng</div><div class="bot"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg><span class="tx"><b>Minh</b><span>Nghiên cứu</span></span><span class="st"></span></div><div class="bot"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="tx"><b>Thơ</b><span>Nội dung</span></span><span class="st"></span></div><div class="grp">Vận hành</div><div class="bot"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path></svg><span class="tx"><b>An</b><span>Thư ký</span></span><span class="st"></span></div><div class="bot"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M47 41L43 53M59 39L55 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="tx"><b>Ngân</b><span>Tài chính</span></span><span class="st"></span></div><div class="ft"><div class="wait"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 2a6 6 0 0 1 0 12z" fill="currentColor"/></svg>3 việc đợi duyệt</div><div class="me"><span class="av">T</span><span class="tx"><b>Tầu</b><span>0,63 USD hôm nay</span></span><span class="gear">⚙</span></div></div></nav>
+        <div class="col" style="flex:1">
+          <div class="pg">
+  <div class="pgh"><b>Tự học</b><span class="m">Bot học gì, cần anh duyệt gì</span></div>
+  <div class="tabs"><span class="tab on">Hộp duyệt <i>3</i></span><span class="tab">Ký ức</span><span class="tab">Thư viện skill</span><span class="tab">Hồ sơ anh</span></div>
+  <div class="ph">Nội dung tab là màn 3.4 / 3.1 / 3.2 / 2.3 hiện có, giữ nguyên.</div>
+</div>
+          <div class="note"><b>Được:</b><ul><li>Menu chỉ thêm 2 dòng (Tổng quan, Tự học); Đội hình vẫn ở tầm mắt.</li><li>Giống cách Second Brain gom 4 khung: những gì bot học được và chờ duyệt nằm một chỗ, kể cả hồ sơ bot hiểu gì về anh.</li><li>Số đỏ trên "Tự học" = số việc chờ duyệt; bấm thanh "việc đợi duyệt" ở chân mở thẳng tab Hộp duyệt.</li></ul><b>Mất:</b><ul><li>Vào Ký ức hay Thư viện skill phải bấm thêm một tab.</li></ul></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="note">Chung cho cả hai: thu gọn thanh bên thì chỉ còn biểu tượng (có số đỏ). Lối vào cũ vẫn giữ: tab Ký ức, Skill &amp; tool trong hồ sơ bot; Cài đặt chỉ còn cấu hình.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'light';
+    return { themeClass: 't-' + theme, themeLabel: theme === 'dark' ? 'Xem nền sáng' : 'Xem nền tối', toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>
