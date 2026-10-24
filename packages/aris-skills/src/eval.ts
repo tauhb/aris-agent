@@ -72,7 +72,9 @@ export function readOnlyBash(command: string): boolean {
     .replace(/\d>&\d/g, '')
   if (!cmd || />|\btee\b|\$\(|`|\bfind\b.*\s-(delete|execdir|ok|okdir|fprint\w*)\b|\bsed\b.*\s-i\b/.test(cmd))
     return false
+  // Trong ngoặc là chữ thường (lệnh con `$(` và dấu huyền đã bị chặn ở trên): bỏ trước khi cắt lệnh.
   return cmd
+    .replace(/"[^"]*"|'[^']*'/g, 'Q')
     .split(/&&|\|\||;|\|/)
     .map((p) => p.trim().replace(/^cd\s+\S+\s*$/, 'pwd'))
     .every((p) => !p || readSegment(p))

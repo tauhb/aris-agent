@@ -13,6 +13,9 @@ export const routineRecord = z.object({
   deliver: z.enum(['telegram', 'none']),
   /** `read`: chỉ đọc, việc khác hỏi qua Telegram; `bot`: theo quyền thường của bot. */
   perms: z.enum(['read', 'bot']),
+  /** `agent`: bot làm (mặc định); `script`: chỉ chạy lệnh shell, không dùng AI (đợt 2). */
+  mode: z.enum(['agent', 'script']).optional(),
+  command: z.string().optional(),
   capUsd: z.number(),
   catchupHours: z.number(),
   enabled: z.boolean(),

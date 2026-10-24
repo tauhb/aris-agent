@@ -12,6 +12,7 @@ describe('hộp cát chỉ đọc', () => {
       'wc -l *.js',
       `d=/tmp/x; find "$d" -type f -name '*.ts' | wc -l; find "$d" -type f -name '*.ts' -exec cat {} + | wc -l`,
       "find src -name '*.ts' | xargs wc -l",
+      'git -C /repo log --since="7 days ago" --pretty=format:"%h|%ad|%s" --date=short | head -60',
     ])
       expect(readOnlyBash(ok), ok).toBe(true)
     for (const bad of [
@@ -27,6 +28,7 @@ describe('hộp cát chỉ đọc', () => {
       'find . -delete',
       'find . | xargs rm',
       'X=$(rm -rf a)',
+      'echo "a" ; rm -rf "b|c"',
     ])
       expect(readOnlyBash(bad), bad).toBe(false)
   })

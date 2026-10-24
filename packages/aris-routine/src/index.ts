@@ -7,11 +7,13 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-client-connection'
 import type {} from '@deepseek-ai/dsh-storage-domain'
-import type {} from '@deepseek-ai/dsh-tools'
+import { defineTool } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-user-approval'
 import { READ_ONLY_TOOLS, readOnlyBash } from '@aris/skills'
 import { randomUUID } from 'node:crypto'
 import { CronError, DEFAULT_TZ, humanCron, nextRun, parseCron } from './cron.js'
+import { draftPrompt, parseDraft, preview, wallClock, type BotBrief } from './draft.js'
+import { runScript, scriptOutcome } from './script.js'
 import { routineDomain, type RoutineRecord, type RunRecord, type StateRecord, type Table } from './domain.js'
 import {
   CATCHUP_HOURS,
@@ -30,13 +32,19 @@ import {
 
 export * from './cron.js'
 export * from './rules.js'
+export * from './draft.js'
+export * from './script.js'
 export type { RoutineRecord, RunRecord } from './domain.js'
 
 export const name = 'aris-routine'
-export const inject = ['storageDomain']
+export const inject = ['storageDomain', 'tools']
 
 /** Câu `sendHome` của kênh trả khi đã gửi; câu khác là lý do không gửi được. */
 const SENT = 'Đã gửi.'
+
+/** Lý do từ chối lệnh bash không chắc chỉ đọc trong routine chỉ đọc (model đọc). */
+export const BASH_DENY =
+  'Routine chỉ đọc: lệnh này không chắc là chỉ đọc nên bị từ chối. Viết lại thành các lệnh đọc đơn giản, mỗi lệnh một lần gọi hay nối bằng | và ; (ls, cat, wc, grep, find, git log, git show --stat, head, tail), không dùng vòng lặp, if, $(…), cd kèm lệnh ghi hay chuyển hướng vào tệp; hoặc dùng công cụ read, grep, glob. Routine này không được ghi hay sửa gì.'
 
 /** Công cụ đọc web: routine như "tin đối thủ" cần, vẫn là chỉ đọc. */
 const WEB_READ = new Set(['web_search', 'web_fetch'])
@@ -56,10 +64,15 @@ interface SessionPort {
 }
 interface BotsPort {
   open(botId: string): Promise<string>
-  store: { get(id: string): { id: string; name: string } | undefined }
+  botOf(sessionId: string | undefined): { id: string; kind: 'commander' | 'member' }
+  store: {
+    get(id: string): { id: string; name: string; external?: unknown } | undefined
+    list(): { id: string; name: string; handle: string; role?: string; external?: unknown }[]
+  }
 }
 interface ChannelsPort {
   sendHome(bot: string, markdown: string): Promise<string>
+  status(): { bot: string; running: boolean }[]
   approveHome(
     bot: string,
     req: { toolName: string; reason?: string; displayReason?: Record<string, string>; signal?: AbortSignal },
@@ -103,6 +116,13 @@ export async function apply(ctx: Context): Promise<void> {
   const paused = () => state.get('main')?.paused ?? false
 
   const sessions = () => ctx.get('sessionController') as SessionPort | undefined
+  /** Bot đang nối Telegram riêng. */
+  const telegramBots = () => (channels()?.status() ?? []).filter((s) => s.running).map((s) => s.bot)
+  /** Gửi qua Telegram của bot; bot chưa có Telegram riêng thì qua Telegram của Aris. */
+  const via = (bot: string) => (telegramBots().includes(bot) ? bot : 'aris')
+  /** Dòng đầu tin routine; gửi qua Aris thì ghi tên bot làm việc. */
+  const heading = (r: Pick<RoutineRecord, 'title' | 'bot'>) =>
+    `**ROUTINE · ${r.title}**${via(r.bot) !== r.bot ? ` · ${bots()?.store.get(r.bot)?.name ?? r.bot}` : ''}`
   const bots = () => ctx.get('arisBots') as BotsPort | undefined
   const channels = () => ctx.get('arisChannels') as ChannelsPort | undefined
 
@@ -117,7 +137,10 @@ export async function apply(ctx: Context): Promise<void> {
       .map(([, r]) => r)
       .filter((r) => r.routine === routine)
       .sort((a, b) => b.at.localeCompare(a.at))
-  const running = (routine: string) => [...live.values()].some((l) => l.routine === routine)
+  /** Routine chế độ script đang chạy (không có phiên). */
+  const scripting = new Set<string>()
+  const running = (routine: string) =>
+    scripting.has(routine) || [...live.values()].some((l) => l.routine === routine)
 
   const prune = async (routine: string) => {
     for (const r of runsOf(routine).slice(RUNS_KEPT)) await runs.delete(r.id)
@@ -165,6 +188,9 @@ export async function apply(ctx: Context): Promise<void> {
       if (READ_ONLY_TOOLS.has(exec.name) || WEB_READ.has(exec.name)) return decision
       const command = (exec.arguments as { command?: unknown } | undefined)?.command
       if (exec.name === 'bash' && typeof command === 'string' && readOnlyBash(command)) return decision
+      // Lệnh bash không chắc chỉ đọc: từ chối kèm hướng dẫn để bot viết lại ngay, không bắt routine
+      // chờ người dùng duyệt một lệnh đọc. Hành động thật (ghi tệp, gửi tin, MCP…) vẫn hỏi.
+      if (exec.name === 'bash') return { kind: 'deny', reason: BASH_DENY }
       return {
         kind: 'ask',
         reason: `Routine chỉ đọc: ${exec.name} cần người dùng duyệt.`,
@@ -184,7 +210,7 @@ export async function apply(ctx: Context): Promise<void> {
       if (!l) return next()
       const ch = channels()
       if (!ch) return 'unavailable' as never
-      return (await ch.approveHome(l.bot, req as never)) as never
+      return (await ch.approveHome(via(l.bot), req as never)) as never
     },
     true,
   )
@@ -202,13 +228,34 @@ export async function apply(ctx: Context): Promise<void> {
       alerted = true
       await channels()
         ?.sendHome(
-          r.bot,
-          `⚠️ Routine «${r.title}» lỗi ${failStreak} lần liên tiếp: ${done.error ?? status}. Mở trang Routine để xem lần chạy hoặc nhờ bot sửa.`,
+          via(r.bot),
+          `⚠️ Routine «${r.title}»${via(r.bot) !== r.bot ? ` (${bots()?.store.get(r.bot)?.name ?? r.bot})` : ''} lỗi ${failStreak} lần liên tiếp: ${done.error ?? status}. Mở trang Routine để xem lần chạy hoặc nhờ bot sửa.`,
         )
         .catch((e: unknown) => logger.warn('gửi cảnh báo routine: %s', String(e)))
     }
     await routines.put(r.id, { ...r, failStreak, alerted, updatedAt: iso() })
     return done
+  }
+
+  /** Chế độ chỉ chạy script: không AI; gửi về chỉ khi lệnh in ra gì đó. */
+  async function runScriptRoutine(r: RoutineRecord, run: RunRecord): Promise<RunRecord> {
+    scripting.add(r.id)
+    const started: RunRecord = { ...run, startedAt: iso() }
+    await runs.put(started.id, started)
+    try {
+      const out = scriptOutcome(await runScript(r.command ?? ''))
+      if (out.ok && out.output && r.deliver === 'telegram')
+        await channels()
+          ?.sendHome(via(r.bot), `${heading(r)}\n\n\`\`\`\n${out.output}\n\`\`\``)
+          .then((res) => res === SENT || logger.warn('gửi kết quả routine %s: %s', r.id, res))
+          .catch((e: unknown) => logger.warn('gửi kết quả routine: %s', String(e)))
+      return await finish(started, out.ok ? 'done' : 'failed', {
+        ...(out.output ? { answer: out.output } : {}),
+        ...(out.error ? { error: out.error } : {}),
+      })
+    } finally {
+      scripting.delete(r.id)
+    }
   }
 
   async function runRoutine(r: RoutineRecord, trigger: Trigger, at: string): Promise<RunRecord> {
@@ -223,6 +270,7 @@ export async function apply(ctx: Context): Promise<void> {
       status: 'running',
       usd: 0,
     }
+    if (r.mode === 'script') return runScriptRoutine(r, run)
     if (!sc || !b) return finish(run, 'failed', { error: 'Chưa có bộ điều khiển phiên hay dịch vụ đội bot.' })
     hookCost()
     let sessionId: string
@@ -288,7 +336,7 @@ export async function apply(ctx: Context): Promise<void> {
               : undefined
       if (status === 'done' && r.deliver === 'telegram' && answer)
         await channels()
-          ?.sendHome(r.bot, `**ROUTINE · ${r.title}**\n\n${answer}`)
+          ?.sendHome(via(r.bot), `${heading(r)}\n\n${answer}`)
           .then((res) => res === SENT || logger.warn('gửi kết quả routine %s: %s', r.id, res))
           .catch((e: unknown) => logger.warn('gửi kết quả routine: %s', String(e)))
       return await finish(started, status, { answer, usd: l.usd, ...(error ? { error } : {}) })
@@ -350,6 +398,215 @@ export async function apply(ctx: Context): Promise<void> {
     }
   }, 'aris-routine: bộ hẹn giờ')
 
+  // --- Diễn giải lời, công cụ của Commander ---------------------------------------------
+  /** Bot trong đội chạy được routine (bỏ bot ngoài). */
+  const briefs = (): BotBrief[] =>
+    (bots()?.store.list() ?? [])
+      .filter((b) => !b.external)
+      .map((b) => ({ id: b.id, name: b.name, handle: b.handle, role: b.role }))
+  const safePreview = (cron: string, tz: string) => {
+    try {
+      return preview(cron, tz, now())
+    } catch {
+      return undefined
+    }
+  }
+
+  let catalog: { at: number; model?: { provider: string; model: string } } | undefined
+  async function flash() {
+    if (!catalog || Date.now() - catalog.at > 600_000) {
+      const c = (await (ctx.get('sessionController') as { modelCatalog?(): Promise<unknown> } | undefined)
+        ?.modelCatalog?.()
+        .catch(() => undefined)) as
+        | {
+            default?: { provider?: string; model?: string }
+            groups: { id: string; models: { id: string; name?: string }[] }[]
+          }
+        | undefined
+      let model: { provider: string; model: string } | undefined
+      if (c) {
+        const home = c.groups.find((g) => g.id === c.default?.provider)
+        for (const g of [...(home ? [home] : []), ...c.groups]) {
+          const m = g.models.find((x) => /flash/i.test(`${x.id} ${x.name ?? ''}`) && !x.id.endsWith(':batch'))
+          if (m) {
+            model = { provider: g.id, model: m.id }
+            break
+          }
+        }
+        if (!model && c.default?.provider && c.default.model)
+          model = { provider: c.default.provider, model: c.default.model }
+      }
+      catalog = { at: Date.now(), ...(model ? { model } : {}) }
+    }
+    return catalog.model
+  }
+  /** Một lần gọi model rẻ, ghi sổ chi phí phạm vi `routine`. */
+  async function ask(text: string, maxTokens: number): Promise<string | undefined> {
+    const m = await flash()
+    const llm = ctx.get('llm') as
+      | {
+          stream(o: Record<string, unknown>): AsyncIterable<{ type: string; text?: string; usage?: unknown }>
+        }
+      | undefined
+    if (!m || !llm) return undefined
+    let raw = ''
+    let usage: unknown
+    for await (const c of llm.stream({
+      provider: m.provider,
+      model: m.model,
+      messages: [{ role: 'user', content: [{ type: 'text', text }] }],
+      maxTokens,
+    })) {
+      if (c.type === 'text-delta' && c.text) raw += c.text
+      else if (c.type === 'usage') usage = c.usage
+    }
+    if (usage)
+      await (
+        ctx.get('arisSpend') as
+          { charge?(p: string, m: string, u: unknown, s: readonly string[]): Promise<number> } | undefined
+      )
+        ?.charge?.(m.provider, m.model, usage, ['routine'])
+        .catch(() => undefined)
+    return raw
+  }
+
+  /** Tóm tắt routine cho câu trả lời của công cụ và thẻ duyệt. */
+  const summary = (r: Pick<RoutineRecord, 'title' | 'bot' | 'cron' | 'tz' | 'deliver' | 'perms'>) => {
+    const p = safePreview(r.cron, r.tz)
+    return `«${r.title}» · ${bots()?.store.get(r.bot)?.name ?? r.bot} · ${p?.when ?? r.cron} · ${r.deliver === 'telegram' ? 'gửi về Telegram' : 'không gửi'} · ${r.perms === 'read' ? 'chỉ đọc' : 'theo quyền của bot'}${p?.next.length ? `\n3 lần tới: ${p.next.map((x) => wallClock(new Date(x), r.tz)).join('; ')}` : ''}`
+  }
+
+  // Bật ngay khi tạo: hỏi duyệt người dùng với tóm tắt routine.
+  ctx.on(
+    'tools/pre-execute',
+    async (exec, next) => {
+      const decision = await next()
+      if (decision.kind !== 'allow') return decision
+      const a = exec.arguments as Record<string, unknown> | undefined
+      if (a?.bat !== true) return decision
+      if (exec.name === 'bat_routine') {
+        const r = routines.get(String(a.ma ?? ''))
+        if (!r) return decision
+        const text = summary(r)
+        return {
+          kind: 'ask',
+          reason: `Bật routine ${text}`,
+          displayReason: { en: `Turn on routine ${text}`, vi: `Bật routine ${text}` },
+        }
+      }
+      if (exec.name !== 'tao_routine') return decision
+      const text = summary({
+        title: String(a.ten ?? ''),
+        bot: String(a.bot ?? ''),
+        cron: String(a.lich_cron ?? ''),
+        tz: DEFAULT_TZ,
+        deliver: a.gui_ve === 'none' ? 'none' : 'telegram',
+        perms: a.quyen === 'bot' ? 'bot' : 'read',
+      })
+      return {
+        kind: 'ask',
+        reason: `Tạo và bật routine ${text}`,
+        displayReason: { en: `Create and turn on routine ${text}`, vi: `Tạo và bật routine ${text}` },
+      }
+    },
+    true,
+  )
+
+  ctx.tools.register(
+    defineTool({
+      name: 'tao_routine',
+      description:
+        'Chỉ Commander: tạo routine (việc tự chạy theo lịch ở phiên mới của một bot, kết quả gửi về Telegram). Mặc định lưu ở trạng thái tắt để người dùng xem lại và bật ở trang Routine; chỉ đặt bat=true khi người dùng nói rõ muốn bật ngay (sẽ hỏi duyệt).',
+      parameters: {
+        ten: { type: 'string', required: true, description: 'Tên ngắn của routine.' },
+        bot: { type: 'string', required: true, description: 'Mã hay tên gọi của bot làm việc này.' },
+        lich_cron: {
+          type: 'string',
+          required: true,
+          description:
+            'Cron 5 trường "phút giờ ngày tháng thứ" theo giờ Việt Nam (thứ: 0 = Chủ nhật … 6 = Thứ 7).',
+        },
+        viec: {
+          type: 'string',
+          required: true,
+          description: 'Lời dặn cho bot mỗi lần chạy: làm gì, lọc gì, định dạng gì; không nhắc lịch.',
+        },
+        gui_ve: {
+          type: 'string',
+          enum: ['telegram', 'none'],
+          description: 'Nơi gửi kết quả; mặc định telegram.',
+        },
+        quyen: {
+          type: 'string',
+          enum: ['read', 'bot'],
+          description: 'read (mặc định): chỉ đọc, việc khác hỏi người dùng; bot: theo quyền thường của bot.',
+        },
+        chay_bu_gio: { type: 'number', description: 'Trễ tối đa (giờ) vẫn chạy bù khi máy tắt; mặc định 3.' },
+        bat: { type: 'boolean', description: 'Bật ngay (hỏi duyệt người dùng). Mặc định false.' },
+      },
+      output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+      async execute(args, exec) {
+        const b = bots()
+        if (b?.botOf(exec.agent?.session.id).kind !== 'commander')
+          return 'Chỉ Commander tạo được routine. Nhờ người dùng nói với Commander.'
+        const team = briefs()
+        const who = args.bot.trim().replace(/^@/, '')
+        const bot = team.find(
+          (x) => x.id === who || x.handle === who || x.name.toLowerCase() === who.toLowerCase(),
+        )
+        if (!bot) return `Không có bot "${args.bot}" trong đội (bot ngoài chưa chạy được routine).`
+        try {
+          const rec = clean({
+            bot: bot.id,
+            title: args.ten,
+            task: args.viec,
+            cron: args.lich_cron,
+            ...(args.gui_ve ? { deliver: args.gui_ve } : {}),
+            ...(args.quyen ? { perms: args.quyen } : {}),
+            ...(args.chay_bu_gio !== undefined ? { catchupHours: args.chay_bu_gio } : {}),
+            mode: 'agent',
+            enabled: args.bat === true,
+          })
+          await routines.put(rec.id, rec)
+          return `Đã lưu routine ${summary(rec)}\nMã: ${rec.id}\n${rec.enabled ? 'Đang bật.' : 'Đang tắt: người dùng xem lại và bật ở trang Routine, hoặc bảo bạn bật (dùng bat_routine với mã này, đừng tạo lại).'}`
+        } catch (e) {
+          if (e instanceof RoutineError) return `Chưa lưu được: ${e.message}`
+          throw e
+        }
+      },
+    }),
+  )
+
+  ctx.tools.register(
+    defineTool({
+      name: 'bat_routine',
+      description:
+        'Chỉ Commander: bật hay tắt một routine đã có theo mã (mã có trong câu trả lời của tao_routine). Bật thì hỏi duyệt người dùng.',
+      parameters: {
+        ma: { type: 'string', required: true, description: 'Mã routine, dạng r-…' },
+        bat: { type: 'boolean', required: true, description: 'true: bật; false: tắt.' },
+      },
+      output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+      async execute(args, exec) {
+        if (bots()?.botOf(exec.agent?.session.id).kind !== 'commander')
+          return 'Chỉ Commander bật tắt được routine.'
+        const r = routines.get(args.ma.trim())
+        if (!r) return `Không có routine mã ${args.ma}.`
+        const nextAt = args.bat ? next(r) : undefined
+        const rest: RoutineRecord = { ...r }
+        delete rest.nextAt
+        const rec: RoutineRecord = {
+          ...rest,
+          enabled: args.bat,
+          updatedAt: iso(),
+          ...(nextAt ? { nextAt } : {}),
+        }
+        await routines.put(rec.id, rec)
+        return `${args.bat ? 'Đã bật' : 'Đã tắt'} routine ${summary(rec)}`
+      },
+    }),
+  )
+
   // --- API -------------------------------------------------------------------------------
   const view = (r: RoutineRecord) => {
     const last = runsOf(r.id)[0]
@@ -362,11 +619,16 @@ export async function apply(ctx: Context): Promise<void> {
       return typeof v === 'string' ? v.trim().slice(0, max) : undefined
     }
     const bot = str('bot', 60) ?? prev?.bot
-    if (!bot || !bots()?.store.get(bot)) throw new RoutineError('Không có bot này.')
+    const known = bot ? bots()?.store.get(bot) : undefined
+    if (!bot || !known) throw new RoutineError('Không có bot này.')
+    if (known.external) throw new RoutineError('Bot ngoài chưa chạy được routine; chọn bot trong đội.')
     const title = str('title', 120) ?? prev?.title
     if (!title) throw new RoutineError('Thiếu tên routine.')
-    const task = str('task', 4000) ?? prev?.task
-    if (!task) throw new RoutineError('Thiếu việc cần làm.')
+    const mode = input.mode === 'script' || input.mode === 'agent' ? input.mode : (prev?.mode ?? 'agent')
+    const command = mode === 'script' ? (str('command', 2000) ?? prev?.command) : undefined
+    if (mode === 'script' && !command) throw new RoutineError('Thiếu lệnh cho chế độ chỉ chạy script.')
+    const task = str('task', 4000) ?? prev?.task ?? ''
+    if (mode === 'agent' && !task) throw new RoutineError('Thiếu việc cần làm.')
     const cron = str('cron', 120) ?? prev?.cron
     if (!cron) throw new RoutineError('Thiếu lịch.')
     const tz = str('tz', 60) ?? prev?.tz ?? DEFAULT_TZ
@@ -400,6 +662,8 @@ export async function apply(ctx: Context): Promise<void> {
       tz,
       deliver: pick('deliver', ['telegram', 'none'] as const, prev?.deliver ?? 'telegram'),
       perms: pick('perms', ['read', 'bot'] as const, prev?.perms ?? 'read'),
+      mode,
+      ...(command ? { command } : {}),
       capUsd: num('capUsd', 0.01, 5, prev?.capUsd ?? ROUTINE_USD),
       catchupHours: num('catchupHours', 0, 48, prev?.catchupHours ?? CATCHUP_HOURS),
       enabled,
@@ -449,6 +713,7 @@ export async function apply(ctx: Context): Promise<void> {
         paused: paused(),
         next: upcoming ? { routine: upcoming.id, bot: upcoming.bot, at: upcoming.nextAt } : null,
         alerts: alerts(),
+        telegram: telegramBots(),
       })
     }
     const b = (await request.json().catch(() => ({}))) as Record<string, unknown> & {
@@ -457,9 +722,23 @@ export async function apply(ctx: Context): Promise<void> {
     }
     try {
       const r = b.id ? routines.get(b.id) : undefined
-      if (b.op !== 'create' && b.op !== 'pause-all' && !r)
+      if (!['create', 'pause-all', 'draft', 'preview'].includes(b.op ?? '') && !r)
         return json({ error: 'Không có routine này.' }, 404)
       switch (b.op) {
+        case 'draft': {
+          const text = typeof b.text === 'string' ? b.text.trim().slice(0, 2000) : ''
+          if (!text) return json({ error: 'Thiếu câu mô tả.' }, 400)
+          const team = briefs()
+          const raw = await ask(draftPrompt(text, now(), team), 3000)
+          const d = raw ? parseDraft(raw, team) : undefined
+          if (!d) return json({ error: 'Chưa diễn giải được, thử nói lại rõ hơn.' }, 502)
+          return json({ draft: d, preview: safePreview(d.cron, d.tz), telegram: telegramBots() })
+        }
+        case 'preview': {
+          const cron = typeof b.cron === 'string' ? b.cron : ''
+          const p = safePreview(cron, typeof b.tz === 'string' ? b.tz : DEFAULT_TZ)
+          return p ? json({ preview: p }) : json({ error: 'Lịch chưa đọc được.' }, 400)
+        }
         case 'create': {
           const rec = clean(b)
           await routines.put(rec.id, rec)
