@@ -15,6 +15,7 @@ import {
   Menu,
   MenuItem,
   Pill,
+  Select,
   Switch,
   Tag,
   TextInput,
@@ -28,6 +29,7 @@ import {
 } from '@aris/ui-kit/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { PageProps } from '../page.js'
+import { Initial, botOption, departmentOptions, modelOptions } from '../options.js'
 import { Col } from '../ui.js'
 import { DEFAULT_POLICY, budgetText, parseBudget, samePolicy } from './department-model.js'
 
@@ -165,19 +167,16 @@ function Members({
                   {t('dep.makeLead')}
                 </Button>
               )}
-              <select
-                className="ap-sel"
-                aria-label={t('dep.moveTo', { name: m.name })}
+              <Select
+                variant="compact"
+                label={t('dep.moveTo', { name: m.name })}
                 value={dep.id}
-                onChange={(e) => void run({ op: 'move', id: m.id, department: e.target.value || null })}
-              >
-                {team.departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-                <option value="">{t('dep.unassigned')}</option>
-              </select>
+                onChange={(v) => void run({ op: 'move', id: m.id, department: v || null })}
+                options={[
+                  ...departmentOptions(team, undefined, (n) => t('bot.depCount', { n })),
+                  { id: '', name: t('dep.unassigned'), icon: <Initial text="–" /> },
+                ]}
+              />
               <Button size="sm" variant="ghost" onClick={() => nav.go('bot', { id: m.id })}>
                 {t('dep.profile')}
               </Button>
@@ -209,7 +208,6 @@ function Policy({
   setBudget: (s: string) => void
 }) {
   const current = draft.model ? pairKey(draft.model.provider, draft.model.model) : ''
-  const known = team.catalog.some((g) => g.models.some((m) => pairKey(g.id, m.id) === current))
   const spent = team.spend[dep.id] ?? 0
   const limit = parseBudget(budget)
   const pct = limit ? Math.min(100, (spent / limit) * 100) : 0
@@ -243,33 +241,21 @@ function Policy({
             </div>
           ))}
         </span>
-        <select
-          className="ap-sel"
-          aria-label={t('dep.model')}
+        <Select
+          label={t('dep.model')}
           value={current}
-          onChange={(e) => {
-            const v = e.target.value
+          onChange={(v) => {
             const [provider, model] = v.split('\u0000') as [string, string]
             const next = { ...draft }
             if (v) next.model = { provider, model }
             else delete next.model
             setDraft(next)
           }}
-        >
-          <option value="">{t('dep.modelDefault')}</option>
-          {current && !known && (
-            <option value={current}>{`${draft.model!.provider} · ${draft.model!.model}`}</option>
-          )}
-          {team.catalog.map((g) => (
-            <optgroup key={g.id} label={g.name}>
-              {g.models.map((m) => (
-                <option key={m.id} value={pairKey(g.id, m.id)}>
-                  {m.name}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+          options={modelOptions(team.catalog, { name: t('dep.modelDefault') }, draft.model)}
+          searchPlaceholder={t('sel.search')}
+          emptyLabel={t('sel.empty')}
+          style={{ maxWidth: 320 }}
+        />
       </CardRow>
       <CardRow>
         <span className="grow" style={{ minWidth: 200 }}>
@@ -452,33 +438,36 @@ function CreateDialog({
           {t('dep.pickHint')}
         </span>
       </div>
-      <label className="a-field">
+      <div className="a-field">
         <span className="l">{t('dep.leadPick')}</span>
-        <select
-          className="ap-sel"
+        <Select
+          label={t('dep.leadPick')}
           value={lead}
-          onChange={(e) => setLead(e.target.value)}
+          onChange={setLead}
           disabled={!picked.length}
-        >
-          {!picked.length && <option value="">{t('dep.leadNone')}</option>}
-          {picked.map((id) => (
-            <option key={id} value={id}>
-              {bots.find((b) => b.id === id)?.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="a-field">
+          placeholder={t('dep.leadNone')}
+          options={picked.flatMap((id) => {
+            const b = bots.find((x) => x.id === id)
+            return b ? [botOption(b)] : []
+          })}
+        />
+      </div>
+      <div className="a-field">
         <span className="l">{t('dep.startPolicy')}</span>
-        <select className="ap-sel" value={copy} onChange={(e) => setCopy(e.target.value)}>
-          <option value="">{t('dep.startDefault')}</option>
-          {team.departments.map((d) => (
-            <option key={d.id} value={d.id}>
-              {t('dep.copyFrom', { name: d.name })}
-            </option>
-          ))}
-        </select>
-      </label>
+        <Select
+          label={t('dep.startPolicy')}
+          value={copy}
+          onChange={setCopy}
+          options={[
+            { id: '', name: t('dep.startDefault'), icon: <Initial text="–" /> },
+            ...team.departments.map((d) => ({
+              id: d.id,
+              name: t('dep.copyFrom', { name: d.name }),
+              icon: <Initial text={d.name} />,
+            })),
+          ]}
+        />
+      </div>
       {error && <span style={{ color: 'var(--a-danger)', fontSize: 12.5 }}>{error}</span>}
     </Dialog>
   )

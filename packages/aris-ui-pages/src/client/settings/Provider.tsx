@@ -6,7 +6,17 @@
  * Nằm trong khung Cài đặt như các mục khác. Route, khoá, danh mục model đọc và ghi thẳng vào dịch
  * vụ của dsh; vòng khoá, thứ tự dự phòng, giá và chi phí qua `/api/aris/providers/state`.
  */
-import { Button, Card, NavItem, PageShell, Pill, SearchIcon, Tag, TextInput } from '@aris/ui-kit/react'
+import {
+  Button,
+  Card,
+  NavItem,
+  PageShell,
+  Pill,
+  SearchIcon,
+  Select,
+  Tag,
+  TextInput,
+} from '@aris/ui-kit/react'
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import type {
   ConfigFormLike,
@@ -17,6 +27,7 @@ import type {
   PageProps,
   ProviderEntry,
 } from '../page.js'
+import { modelOptions } from '../options.js'
 import { Box, Col, Dot } from '../ui.js'
 import {
   ACCOUNT_ROUTE,
@@ -354,18 +365,13 @@ function Connection({
           {t('pv.probeWith')}
         </span>
         {chatModels.length > 0 ? (
-          <select
-            className="ap-sel a-mono"
+          <Select
+            variant="compact"
+            label={t('pv.probeWith')}
             value={probeModel}
-            aria-label={t('pv.probeWith')}
-            onChange={(e) => setProbeModel(e.target.value)}
-          >
-            {chatModels.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.id}
-              </option>
-            ))}
-          </select>
+            onChange={setProbeModel}
+            options={chatModels.map((m) => ({ id: m.id, name: m.id }))}
+          />
         ) : (
           <span className="a-muted" style={{ fontSize: 12.5 }}>
             {t('pv.noModel')}
@@ -736,18 +742,12 @@ function NewProvider({
         </label>
         <label className="a-field" style={{ flex: '1 1 160px' }}>
           <span className="l">{t('pv.newApi')}</span>
-          <select
-            className="a-inp"
+          <Select
+            label={t('pv.newApi')}
             value={api}
-            onChange={(e) => setApi(e.target.value)}
-            aria-label={t('pv.newApi')}
-          >
-            {PROTOCOLS.map((p) => (
-              <option key={p} value={p}>
-                {t(`pv.api.${p}`)}
-              </option>
-            ))}
-          </select>
+            onChange={setApi}
+            options={PROTOCOLS.map((p) => ({ id: p, name: t(`pv.api.${p}`) }))}
+          />
         </label>
       </span>
       <label className="a-field">
@@ -825,7 +825,6 @@ function Tasks({
   const provider = str(value.provider) ?? ''
   const model = str(value.model) ?? ''
   const current = provider && model ? pairKey(provider, model) : ''
-  const known = groups.some((g) => g.models.some((m) => pairKey(g.id, m.id) === current))
 
   async function change(next: string) {
     setBusy(true)
@@ -854,26 +853,20 @@ function Tasks({
               <span className="a-muted">{t('pv.notServed')}</span>
             ) : (
               <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                <select
-                  className="ap-sel"
-                  aria-label={t('pv.task.chat')}
+                <Select
+                  label={t('pv.task.chat')}
                   value={current}
                   disabled={busy || snap?.status !== 'ready' || !snap.writable}
-                  onChange={(e) => void change(e.target.value)}
-                >
-                  {current && !known && <option value={current}>{`${provider} · ${model}`}</option>}
-                  {groups.map((g) => (
-                    <optgroup key={g.id} label={g.name}>
-                      {g.models
-                        .filter((m) => isChatModel(m.id))
-                        .map((m) => (
-                          <option key={m.id} value={pairKey(g.id, m.id)}>
-                            {m.name || m.id}
-                          </option>
-                        ))}
-                    </optgroup>
-                  ))}
-                </select>
+                  onChange={(v) => void change(v)}
+                  options={modelOptions(
+                    groups,
+                    undefined,
+                    current ? { provider, model } : undefined,
+                    (_p, m) => isChatModel(m),
+                  )}
+                  searchPlaceholder={t('sel.search')}
+                  emptyLabel={t('sel.empty')}
+                />
                 {failed && (
                   <span style={{ color: 'var(--a-danger)', fontSize: 12 }}>{t('pv.saveFailed')}</span>
                 )}
@@ -998,33 +991,27 @@ function Fallback({
           </div>
         ))}
       </div>
-      <select
-        className="ap-sel"
-        style={{ marginTop: 8, width: '100%' }}
-        aria-label={t('pv.fallbackAdd')}
+      <Select
+        label={t('pv.fallbackAdd')}
         value={adding}
         disabled={busy}
-        onChange={(e) => {
-          const v = e.target.value
+        placeholder={t('pv.fallbackAdd')}
+        style={{ marginTop: 8 }}
+        onChange={(v) => {
           setAdding('')
           if (!v) return
           const [provider, model] = v.split('\u0000') as [string, string]
           onSave([...links, { provider, model }])
         }}
-      >
-        <option value="">{t('pv.fallbackAdd')}</option>
-        {groups.map((g) => (
-          <optgroup key={g.id} label={g.name}>
-            {g.models
-              .filter((m) => isChatModel(m.id) && !has.has(pairKey(g.id, m.id)))
-              .map((m) => (
-                <option key={m.id} value={pairKey(g.id, m.id)}>
-                  {m.name || m.id}
-                </option>
-              ))}
-          </optgroup>
-        ))}
-      </select>
+        options={modelOptions(
+          groups,
+          undefined,
+          undefined,
+          (p, m) => isChatModel(m) && !has.has(pairKey(p, m)),
+        )}
+        searchPlaceholder={t('sel.search')}
+        emptyLabel={t('sel.empty')}
+      />
       <div className="a-muted" style={{ fontSize: 12, marginTop: 6 }}>
         {error ? <span style={{ color: 'var(--a-danger)' }}>{error}</span> : t('pv.fallbackHint')}
       </div>

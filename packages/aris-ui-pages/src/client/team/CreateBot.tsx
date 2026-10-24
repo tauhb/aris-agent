@@ -7,6 +7,7 @@ import {
   Mascot,
   PlusIcon,
   Segmented,
+  Select,
   TextInput,
   teamAction,
   useTeam,
@@ -15,6 +16,7 @@ import { useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Disclosure } from '../ui.js'
 import { botOptions } from '../mind/names.js'
+import { departmentOptions, modelOptions } from '../options.js'
 import { DEMO_CREATE_BOT as C } from './demo.js'
 import { ExternalBot } from './ExternalBot.js'
 
@@ -247,32 +249,26 @@ function ArisBot({ t, nav }: PageProps) {
             style={{ height: 'auto', padding: '8px 10px', resize: 'vertical', flex: 1 }}
           />
         </label>
-        <label className="ap-frow">
+        <div className="ap-frow">
           <span>{t('cb.department')}</span>
-          <select className="ap-sel" value={department} onChange={(e) => setDepartment(e.target.value)}>
-            <option value="">{t('cb.noDepartment')}</option>
-            {team.departments.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="ap-frow">
+          <Select
+            label={t('cb.department')}
+            value={department}
+            onChange={setDepartment}
+            options={departmentOptions(team, { name: t('cb.noDepartment') }, (n) => t('bot.depCount', { n }))}
+          />
+        </div>
+        <div className="ap-frow">
           <span>{t('cb.model')}</span>
-          <select className="ap-sel" value={model} onChange={(e) => setModel(e.target.value)}>
-            <option value="">{t('cb.modelDefault')}</option>
-            {team.catalog.map((g) => (
-              <optgroup key={g.id} label={g.name}>
-                {g.models.map((m) => (
-                  <option key={m.id} value={`${g.id}\u0000${m.id}`}>
-                    {m.name || m.id}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-        </label>
+          <Select
+            label={t('cb.model')}
+            value={model}
+            onChange={setModel}
+            options={modelOptions(team.catalog, { name: t('cb.modelDefault') })}
+            searchPlaceholder={t('sel.search')}
+            emptyLabel={t('sel.empty')}
+          />
+        </div>
         <div className="ap-frow">
           <span>{t('cb.perms')}</span>
           <span className="a-muted">{t('cb.permsLater')}</span>

@@ -2,7 +2,7 @@
  * Thẻ "Chợ plugin" (bản vẽ 6.7b): tìm, sắp xếp, lọc danh mục trên mọi nguồn chợ; quản lý nguồn;
  * thẻ gói với Cài / Đã cài / Chưa hợp phiên bản.
  */
-import { Button, Card, CardRow, SearchIcon, TextInput } from '@aris/ui-kit/react'
+import { Button, Card, CardRow, SearchIcon, Select, TextInput } from '@aris/ui-kit/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { MarketEntry, MarketIndexSummary, PageProps, PluginSource } from '../../page.js'
 import type { InstallItem } from './InstallDialog.js'
@@ -271,22 +271,22 @@ export function MarketTab({
             <SearchIcon size={15} />
           </span>
         </span>
-        <label
+        <span
           className="a-muted"
           style={{ fontSize: 12.5, display: 'inline-flex', gap: 6, alignItems: 'center' }}
         >
           {t('pl.mk.sort')}
-          <select
-            className="ap-sel"
+          <Select
+            variant="compact"
+            label={t('pl.mk.sort')}
             value={sort}
-            onChange={(e) => setSort(e.target.value as Sort)}
-            style={{ height: 32, fontSize: 13 }}
-          >
-            <option value="relevance">{t('pl.mk.sort.relevance')}</option>
-            <option value="published">{t('pl.mk.sort.published')}</option>
-            <option value="name">{t('pl.mk.sort.name')}</option>
-          </select>
-        </label>
+            onChange={(v) => setSort(v as Sort)}
+            options={(['relevance', 'published', 'name'] as const).map((v) => ({
+              id: v,
+              name: t(`pl.mk.sort.${v}`),
+            }))}
+          />
+        </span>
         <Button size="sm" aria-expanded={showSources} onClick={() => setShowSources((v) => !v)}>
           {t('pl.mk.sourcesCount', { n: indexes?.length ?? 0 })}
         </Button>

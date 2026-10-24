@@ -145,6 +145,8 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 ## Giai đoạn 2 · Đội bot và Commander (tuần 6–8)
 
+> **Bộ chọn dùng chung 24/10**: mọi ô chọn (`<select>` mặc định của trình duyệt, 22 chỗ) thay bằng `Select` của `@aris/ui-kit/react`: chọn bot có linh vật, tên, mô tả ngắn, chia nhóm theo phòng ban hoặc trong/ngoài dự án; phòng ban có chữ cái đầu và số bot; model chia theo nhà cung cấp, có ô tìm. Danh sách vẽ ở `document.body` nên không bị hộp thoại cắt, hết chỗ thì mở lên trên. Lựa chọn dựng sẵn ở `aris-ui-pages/src/client/options.tsx`. Kanban: "Thêm thẻ" thành "Thêm việc", "Thẻ mới" thành "Việc mới". Sửa kèm: danh mục model chưa từng được gửi lên giao diện nên ô chọn model của bot và phòng ban chỉ có "mặc định".
+
 > **Hồ sơ bot đợt 1/4 xong 24/10 — Skill & tool, kết nối nền tảng (MCP) theo bot** ([đặc tả](specs/aris-bots.md#hồ-sơ-bot--skill--tool-bản-vẽ-22-22c), bản vẽ 2.2, 2.2c): mỗi bot có máy chủ MCP riêng (mẫu GitHub, Lark, Notion hoặc tự thêm), gắn vào đúng phiên của bot nên bot khác không thấy; hỏi trước khi ghi; bộ công cụ bật/tắt theo bot. Phần thuộc giai đoạn sau hiện mờ, ghi rõ giai đoạn. Chạy thử thật với máy chủ thử trên máy: Khoa dùng được, Minh không thấy, Aris giao việc cho Khoa cũng dùng được. Còn 3 đợt: Quyền & kênh và cột phải; Model theo việc; Tính cách.
 
 > **Nhân bản và xuất bot xong 24/10** ([đặc tả](specs/aris-bots.md#nhân-bản-xuất-nhập-bản-vẽ-24), bản vẽ 2.4): hộp "Nhân bản / xuất" nối dữ liệu thật; chọn cấu hình và model, tính cách, ký ức riêng của bot; kênh nhắn tin, khoá API, lịch sử chat không bao giờ chép; skill để giai đoạn 3. Xuất ra tệp `.aris-bot.json`, nhập lại bằng "Nhập từ tệp…" ở hộp Tạo bot. Chạy thử thật: nhân bản Minh kèm ký ức, xuất rồi nhập lại, tên gọi và phòng ban đúng.

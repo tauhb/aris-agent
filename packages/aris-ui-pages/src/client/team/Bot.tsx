@@ -5,6 +5,7 @@
 import { getMascot } from '@aris/ui-kit'
 import {
   Button,
+  Select,
   Card,
   CardRow,
   Mascot,
@@ -17,6 +18,7 @@ import {
 } from '@aris/ui-kit/react'
 import { useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
+import { departmentOptions, modelOptions } from '../options.js'
 import { Box } from '../ui.js'
 import { DEMO_PROFILE as P } from './demo.js'
 import { useChannels } from '../settings/channels-api.js'
@@ -133,21 +135,17 @@ function ProfileForm({
           <TextInput value={form.role} onChange={(e) => set({ role: e.target.value })} />
         </label>
         {bot.kind !== 'commander' && (
-          <label className="a-field">
+          <div className="a-field">
             <span className="l">{t('bot.department')}</span>
-            <select
-              className="ap-sel"
+            <Select
+              label={t('bot.department')}
               value={form.department ?? ''}
-              onChange={(e) => set({ department: e.target.value })}
-            >
-              <option value="">{t('bot.noDepartment')}</option>
-              {team.departments.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(v) => set({ department: v })}
+              options={departmentOptions(team, { name: t('bot.noDepartment') }, (n) =>
+                t('bot.depCount', { n }),
+              )}
+            />
+          </div>
         )}
       </div>
       <label className="a-field">
@@ -209,7 +207,6 @@ function ProfileForm({
 function ModelCard({ t, bot, team, nav }: { t: T; bot: BotData; team: TeamView; nav: PageProps['nav'] }) {
   const current = bot.model ? pairKey(bot.model.provider, bot.model.model) : ''
   const [error, setError] = useState<string | null>(null)
-  const known = team.catalog.some((g) => g.models.some((m) => pairKey(g.id, m.id) === current))
   async function change(v: string) {
     setError(null)
     const [provider, model] = v.split('\u0000') as [string, string]
@@ -222,21 +219,15 @@ function ModelCard({ t, bot, team, nav }: { t: T; bot: BotData; team: TeamView; 
   return (
     <Card title={t('bot.modelTitle', { name: bot.name })}>
       <CardRow label={t('bot.modelChat')}>
-        <select className="ap-sel" value={current} onChange={(e) => void change(e.target.value)}>
-          <option value="">{t('bot.modelDefault')}</option>
-          {current && !known && (
-            <option value={current}>{`${bot.model!.provider} · ${bot.model!.model}`}</option>
-          )}
-          {team.catalog.map((g) => (
-            <optgroup key={g.id} label={g.name}>
-              {g.models.map((m) => (
-                <option key={m.id} value={pairKey(g.id, m.id)}>
-                  {m.name || m.id}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+        <Select
+          label={t('bot.modelChat')}
+          value={current}
+          onChange={(v) => void change(v)}
+          options={modelOptions(team.catalog, { name: t('bot.modelDefault') }, bot.model)}
+          searchPlaceholder={t('sel.search')}
+          emptyLabel={t('sel.empty')}
+          style={{ maxWidth: 360 }}
+        />
       </CardRow>
       <div className="a-row a-muted" style={{ fontSize: 12.5 }}>
         {error ? <span style={{ color: 'var(--a-danger)' }}>{error}</span> : t('bot.modelHint')}

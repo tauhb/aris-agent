@@ -13,6 +13,7 @@ import {
   MenuItem,
   PageShell,
   Segmented,
+  Select,
   TextInput,
   boardAction,
   branchColor,
@@ -26,6 +27,7 @@ import {
   type TeamView,
 } from '@aris/ui-kit/react'
 import { useCallback, useRef, useState } from 'react'
+import { botOptions } from '../options.js'
 import type { PageProps } from '../page.js'
 
 type T = PageProps['t']
@@ -89,9 +91,18 @@ function BoardPicker({
 }
 
 /** Bot trong dự án đứng trước, rồi các bot khác của đội. */
-function botChoices(team: TeamView, members: readonly string[]) {
-  const bots = team.bots.filter((b) => b.kind === 'member')
-  return [...bots.filter((b) => members.includes(b.id)), ...bots.filter((b) => !members.includes(b.id))]
+/** "Để Aris chọn", rồi bot trong dự án, rồi bot ngoài dự án. */
+function botChoices(t: T, team: TeamView, members: readonly string[]) {
+  const by = (inside: boolean) =>
+    botOptions(team, {
+      filter: (b) => members.includes(b.id) === inside,
+      group: () => t(inside ? 'kb.inside' : 'kb.outsideGroup'),
+    })
+  return [
+    { id: '', name: t('kb.arisPicks'), note: t('kb.arisPicksNote'), mascot: team.commander.mascot ?? 'aris' },
+    ...by(true),
+    ...by(false),
+  ]
 }
 
 function Card({
@@ -190,20 +201,15 @@ function Card({
         </span>
       )}
       <div className="ap-kc-acts">
-        <select
-          className="ap-sel"
+        <Select
+          label={t('kb.assignTo', { title: c.title })}
           value={pick}
-          aria-label={t('kb.assignTo', { title: c.title })}
-          onChange={(e) => setPick(e.target.value)}
-        >
-          <option value="">{t('kb.arisPicks')}</option>
-          {botChoices(team, members).map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.name}
-              {members.includes(b.id) ? '' : ` · ${t('kb.outside')}`}
-            </option>
-          ))}
-        </select>
+          options={botChoices(t, team, members)}
+          onChange={setPick}
+          searchPlaceholder={t('sel.search')}
+          emptyLabel={t('sel.empty')}
+          style={{ flex: 1, minWidth: 160 }}
+        />
         <Button
           size="sm"
           variant="primary"
@@ -293,18 +299,17 @@ function NewCard({
           style={{ height: 'auto', padding: '10px 12px', resize: 'vertical' }}
         />
       </label>
-      <label className="a-field">
+      <div className="a-field">
         <span className="l">{t('kb.cardBot')}</span>
-        <select className="ap-sel" value={bot} onChange={(e) => setBot(e.target.value)}>
-          <option value="">{t('kb.arisPicks')}</option>
-          {botChoices(team, members).map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.name}
-              {members.includes(b.id) ? '' : ` · ${t('kb.outside')}`}
-            </option>
-          ))}
-        </select>
-      </label>
+        <Select
+          label={t('kb.cardBot')}
+          value={bot}
+          options={botChoices(t, team, members)}
+          onChange={setBot}
+          searchPlaceholder={t('sel.search')}
+          emptyLabel={t('sel.empty')}
+        />
+      </div>
       {error && <span style={{ color: 'var(--a-danger)', fontSize: 12.5 }}>{error}</span>}
     </Dialog>
   )

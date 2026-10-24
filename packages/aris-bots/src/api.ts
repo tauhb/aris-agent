@@ -64,6 +64,8 @@ async function snapshot(d: ApiDeps) {
     owner: d.store.owner(),
     departments: d.store.departments(),
     spend: d.spend?.() ?? {},
+    // Model đang phục vụ, để chọn model riêng của bot và model mặc định của phòng.
+    catalog: (await d.catalog?.().catch(() => undefined)) ?? [],
     mcp: d.mcp?.list().map(viewOf) ?? [],
     templates: templates.map((t) => ({
       id: t.id,

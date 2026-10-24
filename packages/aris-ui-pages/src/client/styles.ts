@@ -34,6 +34,7 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-split>.a-page{flex:1}
 .ap-search{display:flex;align-items:center;gap:6px;border:1px solid var(--a-line);border-radius:9px;padding:5px 8px;margin:0 4px 4px;background:var(--a-panel);color:var(--a-muted)}
 .ap-search input{flex:1;min-width:0;border:0;background:transparent;color:var(--a-ink);font:inherit;font-size:13px;outline:none}
+.ap-initial{width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:var(--a-panel2);color:var(--a-ink);font-weight:700;font-size:12.5px;flex:none}
 .ap-logo{width:28px;height:28px;border-radius:8px;flex:none}
 .ap-mrow{display:grid;grid-template-columns:28px minmax(0,1.3fr) minmax(0,1.6fr) 90px;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--a-line);font-size:13px}
 .ap-tags{display:flex;flex-wrap:wrap;gap:4px}
@@ -128,6 +129,7 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-disc>button[aria-expanded=true] .chev{transform:rotate(90deg)}
 .ap-disc>.body{padding-bottom:6px}
 .ap-frow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--a-line);font-size:13.5px}
+.ap-frow>span:first-child{white-space:nowrap}
 .ap-dfoot{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding-top:14px;border-top:1px solid var(--a-line)}
 .ap-later{position:relative}.ap-later-body{opacity:.5;pointer-events:none}
 .ap-phase{position:absolute;top:-9px;right:12px;height:18px;line-height:16px;box-sizing:border-box;font-size:11px;font-weight:600;border-radius:6px;padding:0 7px;background:var(--a-panel);color:var(--a-muted);border:1px solid var(--a-line);white-space:nowrap}

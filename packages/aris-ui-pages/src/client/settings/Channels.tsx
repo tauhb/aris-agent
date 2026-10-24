@@ -10,12 +10,14 @@ import {
   PageShell,
   Pill,
   Segmented,
+  Select,
   Switch,
   TextInput,
   useTeamData,
 } from '@aris/ui-kit/react'
 import { useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
+import { botOption } from '../options.js'
 import { Bot, Box, Col } from '../ui.js'
 import { useChannels, type ChannelGroup, type PairCode } from './channels-api.js'
 
@@ -268,16 +270,19 @@ export function Channels({ t }: PageProps) {
             )}
             {adding && (
               <div style={{ padding: '4px 16px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label className="a-field">
+                <div className="a-field">
                   <span className="l">{t('ch.forBot')}</span>
-                  <select className="a-inp" value={chosen} onChange={(e) => setTarget(e.target.value)}>
-                    {free.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name} · {b.id === 'aris' ? t('ch.mainEntry') : b.role}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                  <Select
+                    label={t('ch.forBot')}
+                    value={chosen}
+                    onChange={setTarget}
+                    searchPlaceholder={t('sel.search')}
+                    emptyLabel={t('sel.empty')}
+                    options={free.map((b) =>
+                      botOption(b, b.id === 'aris' ? { note: t('ch.mainEntry') } : {}),
+                    )}
+                  />
+                </div>
                 <div className="a-muted" style={{ fontSize: 12.5 }}>
                   {t(chosen === 'aris' ? 'ch.tokenHint' : 'ch.tokenHintBot', {
                     name: botOf(chosen)?.name ?? '',

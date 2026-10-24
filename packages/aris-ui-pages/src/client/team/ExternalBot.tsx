@@ -12,6 +12,7 @@ import {
   DEFAULT_PERMISSION,
   EXTERNAL_PACKAGES,
   EXTERNAL_PERMISSIONS,
+  Select,
   TextInput,
   fetchExternalStatus,
   teamAction,
@@ -22,6 +23,7 @@ import {
 } from '@aris/ui-kit/react'
 import { useState } from 'react'
 import type { PageProps, PluginSource } from '../page.js'
+import { departmentOptions, plainOptions } from '../options.js'
 import { Disclosure } from '../ui.js'
 import { handleOf } from './CreateBot.js'
 import { MascotPicker } from './MascotPicker.js'
@@ -188,17 +190,19 @@ export function ExternalBot({ t, nav, plugins }: PageProps) {
           <span className="l">{t('cb.name')}</span>
           <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder={agentName} />
         </label>
-        <label className="a-field" style={{ flex: 1 }}>
+        <div className="a-field" style={{ flex: 1 }}>
           <span className="l">{t('ext.department')}</span>
-          <select className="a-inp" value={department} onChange={(e) => setDepartment(e.target.value)}>
-            <option value="">{t('ext.noDepartment')}</option>
-            {(data?.departments ?? []).map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-        </label>
+          <Select
+            label={t('ext.department')}
+            value={department}
+            onChange={setDepartment}
+            options={departmentOptions(
+              { bots: data?.bots ?? [], departments: data?.departments ?? [] },
+              { name: t('ext.noDepartment') },
+              (n) => t('bot.depCount', { n }),
+            )}
+          />
+        </div>
       </div>
       <label className="a-field">
         <span className="l">
@@ -301,37 +305,27 @@ export function ExternalBot({ t, nav, plugins }: PageProps) {
           />
         </label>
         {agent === 'claude-code' && cli && (
-          <label className="ap-frow">
+          <div className="ap-frow">
             <span>{t('ext.budget')}</span>
-            <select
-              className="a-inp"
-              style={{ width: 140 }}
-              value={budget}
-              onChange={(e) => setBudget(Number(e.target.value))}
-            >
-              {[1, 3, 5, 10, 20].map((n) => (
-                <option key={n} value={n}>
-                  {t('ext.usd', { n })}
-                </option>
-              ))}
-            </select>
-          </label>
+            <Select
+              label={t('ext.budget')}
+              style={{ width: 160 }}
+              value={String(budget)}
+              onChange={(v) => setBudget(Number(v))}
+              options={plainOptions([1, 3, 5, 10, 20], (n) => t('ext.usd', { n }))}
+            />
+          </div>
         )}
-        <label className="ap-frow">
+        <div className="ap-frow">
           <span>{t('ext.timeout')}</span>
-          <select
-            className="a-inp"
-            style={{ width: 140 }}
-            value={timeoutMin}
-            onChange={(e) => setTimeoutMin(Number(e.target.value))}
-          >
-            {[15, 30, 45, 90, 120].map((n) => (
-              <option key={n} value={n}>
-                {t('ext.minutes', { n })}
-              </option>
-            ))}
-          </select>
-        </label>
+          <Select
+            label={t('ext.timeout')}
+            style={{ width: 160 }}
+            value={String(timeoutMin)}
+            onChange={(v) => setTimeoutMin(Number(v))}
+            options={plainOptions([15, 30, 45, 90, 120], (n) => t('ext.minutes', { n }))}
+          />
+        </div>
         <label className="ap-frow">
           <span>
             {t('ext.worktree')}{' '}
@@ -464,38 +458,32 @@ export function ExternalSettings({
         </CardRow>
       )}
       <CardRow label={t('ext.whenAsks', { name: bot.name })}>
-        <select
-          className="a-inp"
-          style={{ width: 260 }}
+        <Select
+          label={t('ext.whenAsks', { name: bot.name })}
+          style={{ width: 300 }}
           value={form.permission}
-          onChange={(e) => setForm({ ...form, permission: e.target.value })}
-        >
-          {EXTERNAL_PERMISSIONS[ext.agent]
+          onChange={(v) => setForm({ ...form, permission: v })}
+          options={EXTERNAL_PERMISSIONS[ext.agent]
             .filter((p) => cliHere || !CLI_ONLY_PERMISSIONS.has(p))
-            .map((p) => (
-              <option key={p} value={p}>
-                {t(`ext.perm.${p}`)}
-                {DANGEROUS_PERMISSIONS.has(p) ? ` · ${t('ext.dangerous')}` : ''}
-              </option>
-            ))}
-        </select>
+            .map((p) => ({
+              id: p,
+              name: t(`ext.perm.${p}`),
+              note: DANGEROUS_PERMISSIONS.has(p) ? t('ext.dangerous') : undefined,
+            }))}
+        />
       </CardRow>
       {ext.agent === 'claude-code' && cliHere && (
         <CardRow label={t('ext.budget')}>
-          <select
-            className="a-inp"
-            style={{ width: 140 }}
-            value={form.budgetUsd ?? 3}
-            onChange={(e) => setForm({ ...form, budgetUsd: Number(e.target.value) })}
-          >
-            {[...new Set([1, 3, 5, 10, 20, form.budgetUsd ?? 3])]
-              .sort((a, b) => a - b)
-              .map((n) => (
-                <option key={n} value={n}>
-                  {t('ext.usd', { n })}
-                </option>
-              ))}
-          </select>
+          <Select
+            label={t('ext.budget')}
+            style={{ width: 160 }}
+            value={String(form.budgetUsd ?? 3)}
+            onChange={(v) => setForm({ ...form, budgetUsd: Number(v) })}
+            options={plainOptions(
+              [...new Set([1, 3, 5, 10, 20, form.budgetUsd ?? 3])].sort((a, b) => a - b),
+              (n) => t('ext.usd', { n }),
+            )}
+          />
         </CardRow>
       )}
       <CardRow label={t('ext.model')}>
@@ -507,20 +495,16 @@ export function ExternalSettings({
         />
       </CardRow>
       <CardRow label={t('ext.timeout')}>
-        <select
-          className="a-inp"
-          style={{ width: 140 }}
-          value={form.timeoutMin}
-          onChange={(e) => setForm({ ...form, timeoutMin: Number(e.target.value) })}
-        >
-          {[...new Set([15, 30, 45, 90, 120, form.timeoutMin])]
-            .sort((a, b) => a - b)
-            .map((n) => (
-              <option key={n} value={n}>
-                {t('ext.minutes', { n })}
-              </option>
-            ))}
-        </select>
+        <Select
+          label={t('ext.timeout')}
+          style={{ width: 160 }}
+          value={String(form.timeoutMin)}
+          onChange={(v) => setForm({ ...form, timeoutMin: Number(v) })}
+          options={plainOptions(
+            [...new Set([15, 30, 45, 90, 120, form.timeoutMin])].sort((a, b) => a - b),
+            (n) => t('ext.minutes', { n }),
+          )}
+        />
       </CardRow>
       <CardRow label={t('ext.worktree')}>
         <input

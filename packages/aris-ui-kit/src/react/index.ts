@@ -29,7 +29,14 @@ export { splitMascot, orbitLayout } from './orbit.js'
 export * from './nav.js'
 export { KnowledgeGraph, ZOOM_MAX, ZOOM_MIN, clampZoom, type KnowledgeGraphProps } from './KnowledgeGraph.js'
 export * from './graph.js'
-export { BotPicker, filterBotOptions, type BotOption } from './BotPicker.js'
+export {
+  BotPicker,
+  Select,
+  filterBotOptions,
+  type BotOption,
+  type SelectOption,
+  type SelectProps,
+} from './BotPicker.js'
 export {
   currentTeam,
   latestCommanderSession,
