@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Ai đang nói</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12.5px;background:var(--panel2);border-radius:6px;padding:1px 5px}
+.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:13px}
+.seg{border:0;border-radius:7px;padding:4px 10px;font-size:12.5px}
+.pill{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px 0 2px;border-radius:999px;border:1px solid;font-size:13px;font-weight:600;line-height:1;vertical-align:-4px;color:var(--ink);white-space:nowrap}
+.pill:hover{filter:brightness(.97)}
+.pill svg{flex:none}
+.p-aris{background:color-mix(in srgb,#1084FE 13%,transparent);border-color:color-mix(in srgb,#1084FE 38%,transparent)}
+.p-kiet{background:color-mix(in srgb,#64748B 15%,transparent);border-color:color-mix(in srgb,#64748B 42%,transparent)}
+.p-minh{background:color-mix(in srgb,#00B5A5 14%,transparent);border-color:color-mix(in srgb,#00B5A5 42%,transparent)}
+.p-tho{background:color-mix(in srgb,#F0388E 12%,transparent);border-color:color-mix(in srgb,#F0388E 38%,transparent)}
+.p-inv{background:color-mix(in srgb,var(--panel) 16%,transparent);border-color:color-mix(in srgb,var(--panel) 35%,transparent);color:inherit}
+.p-gone{background:transparent;border-color:var(--line);border-style:dashed;color:var(--muted);padding:0 8px;font-weight:500}
+.head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.role{font-size:11.5px;font-weight:600;border-radius:6px;padding:1px 7px}
+.msg{display:flex;flex-direction:column;gap:8px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.br{border-left:3px solid #64748B;padding:2px 0 2px 14px;display:flex;flex-direction:column;gap:6px}
+.step{display:flex;align-items:center;gap:8px;font-size:13px}
+.lbl{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.row{display:flex;align-items:center;gap:10px;font-size:13px}
+.row>.k{width:118px;flex:none;color:var(--muted)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.pulse{animation:pulse 1.6s ease-in-out infinite}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.6; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="none" bot="{{sideBot}}" hint-size="260px,900px"></dc-import>
+
+  <main style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--line); flex-wrap: wrap">
+      <b>{{title}}</b><span class="m" style="font-size: 13px">{{sub}}</span>
+      <span role="radiogroup" aria-label="Cảnh minh hoạ" style="margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 9px; padding: 2px">
+        <button type="button" role="radio" aria-checked="{{st.aris}}" onClick="{{go.aris}}" class="seg" style="{{ss.aris}}">Phiên với Aris</button>
+        <button type="button" role="radio" aria-checked="{{st.bot}}" onClick="{{go.bot}}" class="seg" style="{{ss.bot}}">Phiên riêng của Minh</button>
+      </span>
+      <button type="button" onClick="{{toggleTheme}}" class="b2">{{themeLabel}}</button>
+    </div>
+
+    <sc-if value="{{is.aris}}" hint-placeholder-val="{{ true }}">
+    <div style="flex: 1; padding: 20px 20px 8px; display: flex; flex-direction: column; gap: 22px; max-width: 780px; width: 100%; box-sizing: border-box; margin: 0 auto">
+      <div style="align-self: flex-end; max-width: 80%; background: var(--ink); color: var(--panel); padding: 10px 14px; border-radius: 18px 18px 6px 18px">
+        <button type="button" class="pill p-inv" title="Mở hồ sơ Kiệt"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><g fill="#64748B"><circle cx="50" cy="50" r="32"></circle><rect x="40" y="6" width="20" height="22" rx="6"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(90 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(180 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(270 50 50)"></rect></g><circle cx="43" cy="51" r="7" fill="#fff"></circle><circle cx="59" cy="48" r="5" fill="#fff"></circle></svg>Kiệt</button> đọc README.md của repo rồi tóm tắt 3 gạch giúp mình.
+      </div>
+
+      <div class="msg">
+        <div class="head">
+          <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>
+          <b>Aris</b><span class="role" style="background: var(--accentSoft); color: var(--accent)">Điều phối</span><span class="m" style="font-size: 12.5px">10:36</span>
+        </div>
+        <div>Đã giao cho <button type="button" class="pill p-kiet" title="Mở hồ sơ Kiệt"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><g fill="#64748B"><circle cx="50" cy="50" r="32"></circle><rect x="40" y="6" width="20" height="22" rx="6"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(90 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(180 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(270 50 50)"></rect></g><circle cx="43" cy="51" r="7" fill="#fff"></circle><circle cx="59" cy="48" r="5" fill="#fff"></circle></svg>Kiệt</button> — việc nhỏ, một phần, đúng chuyên môn đọc tệp trong repo nên không chia phòng. Song song, <button type="button" class="pill p-minh" title="Mở hồ sơ Minh"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg>Minh</button> soát lại mục Tài liệu xem còn link hỏng không.</div>
+
+        <div class="br">
+          <div class="head" style="gap: 6px">
+            <svg width="20" height="20" viewBox="0 0 100 100" aria-hidden="true"><g fill="#64748B"><circle cx="50" cy="50" r="32"></circle><rect x="40" y="6" width="20" height="22" rx="6"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(90 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(180 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(270 50 50)"></rect></g><circle cx="43" cy="51" r="7" fill="#fff"></circle><circle cx="59" cy="48" r="5" fill="#fff"></circle></svg>
+            <b style="font-size: 13.5px">Kiệt</b><span class="role" style="background: var(--panel2); color: var(--muted)">bot ngoài · Claude Code</span><span class="m" style="font-size: 13px">đọc README, tóm tắt 3 gạch</span>
+          </div>
+          <div class="step"><svg width="16" height="16" viewBox="0 0 16 16" aria-label="Xong" style="color: var(--ok)"><circle cx="8" cy="8" r="7" fill="currentColor"></circle><path d="M5 8.2l2 2 4-4.2" stroke="var(--panel)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>Xong sau 23 giây · 2 bước · 0,04 / 3,00 USD · đã nộp kết quả</div>
+        </div>
+        <div class="br" style="border-left-color: #00B5A5">
+          <div class="head" style="gap: 6px">
+            <svg width="20" height="20" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg>
+            <b style="font-size: 13.5px">Minh</b><span class="role" style="background: var(--panel2); color: var(--muted)">Nghiên cứu</span><span class="m" style="font-size: 13px">soát link mục Tài liệu</span>
+          </div>
+          <div class="step m"><span class="pulse" style="width: 8px; height: 8px; border-radius: 50%; background: #00B5A5; margin: 0 4px"></span>Đang làm · 40 giây</div>
+        </div>
+      </div>
+
+      <div class="card" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 6px">
+        <div class="head">
+          <svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true"><g fill="#64748B"><circle cx="50" cy="50" r="32"></circle><rect x="40" y="6" width="20" height="22" rx="6"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(90 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(180 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(270 50 50)"></rect></g><circle cx="43" cy="51" r="7" fill="#fff"></circle><circle cx="59" cy="48" r="5" fill="#fff"></circle></svg>
+          <b>Kiệt</b><span class="role" style="background: var(--panel2); color: var(--muted)">bot ngoài · Claude Code</span><span class="m" style="font-size: 12.5px">nộp kết quả · 10:37</span>
+        </div>
+        <div style="font-size: 13.5px">Đã đọc <span class="mono">README.md</span> (31 dòng), không sửa tệp nào. Repo xây aris trên DeepSeek Harness; lệnh vận hành qua pnpm; kèm bộ tài liệu kiến trúc, kế hoạch, thiết kế.</div>
+      </div>
+
+      <div class="msg">
+        <div class="head">
+          <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>
+          <b>Aris</b><span class="role" style="background: var(--accentSoft); color: var(--accent)">Điều phối</span><span class="m" style="font-size: 12.5px">10:37</span>
+        </div>
+        <div><button type="button" class="pill p-kiet" title="Mở hồ sơ Kiệt"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><g fill="#64748B"><circle cx="50" cy="50" r="32"></circle><rect x="40" y="6" width="20" height="22" rx="6"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(90 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(180 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(270 50 50)"></rect></g><circle cx="43" cy="51" r="7" fill="#fff"></circle><circle cx="59" cy="48" r="5" fill="#fff"></circle></svg>Kiệt</button> đã đọc xong. Repo <span class="mono">aris-agent</span>, 3 gạch đầu dòng:</div>
+        <ul style="margin: 0; padding-left: 20px">
+          <li>Xây aris, agent cá nhân chạy trên DeepSeek Harness, chỉ tham khảo thiết kế Hermes.</li>
+          <li>Lệnh vận hành qua pnpm: Web UI, hỏi nhanh, ACP cho IDE, bộ kiểm tra tổng.</li>
+          <li>Kèm tài liệu kiến trúc, kế hoạch triển khai, thiết kế giao diện.</li>
+        </ul>
+        <div class="m" style="font-size: 13px">Chờ <button type="button" class="pill p-minh" title="Mở hồ sơ Minh"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg>Minh</button> soát link xong mình báo tiếp.</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{is.bot}}" hint-placeholder-val="{{ false }}">
+    <div style="flex: 1; padding: 20px 20px 8px; display: flex; flex-direction: column; gap: 22px; max-width: 780px; width: 100%; box-sizing: border-box; margin: 0 auto">
+      <div style="align-self: flex-end; max-width: 80%; background: var(--ink); color: var(--panel); padding: 10px 14px; border-radius: 18px 18px 6px 18px">Tìm 3 kênh YouTube cùng mảng để tham khảo, rồi chuyển cho <button type="button" class="pill p-inv" title="Mở hồ sơ Thơ"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 86C30 72 10 58 10 38C10 24 21 14 34 14C42 14 47 18 50 23C53 18 58 14 66 14C79 14 90 24 90 38C90 58 70 72 50 86Z" fill="#F0388E"></path><path d="M44 36L41 48M58 34L55 46" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Thơ</button> viết tiêu đề.</div>
+
+      <div class="msg">
+        <div class="head">
+          <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg>
+          <b>Minh</b><span class="role" style="background: color-mix(in srgb, #00B5A5 14%, transparent); color: var(--ink)">Nghiên cứu</span><span class="m" style="font-size: 12.5px">14:02</span>
+        </div>
+        <div>Mình tìm được 3 kênh cùng mảng, nhịp đăng 2–3 video mỗi tuần. Đã gửi danh sách cho <button type="button" class="pill p-tho" title="Mở hồ sơ Thơ"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 86C30 72 10 58 10 38C10 24 21 14 34 14C42 14 47 18 50 23C53 18 58 14 66 14C79 14 90 24 90 38C90 58 70 72 50 86Z" fill="#F0388E"></path><path d="M44 36L41 48M58 34L55 46" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Thơ</button>; cần duyệt chi phí thì mình hỏi <button type="button" class="pill p-aris" title="Mở phiên Aris"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Aris</button>.</div>
+      </div>
+
+      <div class="msg">
+        <div class="head">
+          <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg>
+          <b>Minh</b><span class="role" style="background: color-mix(in srgb, #00B5A5 14%, transparent); color: var(--ink)">Nghiên cứu</span><span class="m" style="font-size: 12.5px">14:05</span>
+        </div>
+        <div>Thơ đã nhận. Mình lưu 3 kênh vào ghi chú của dự án để lần sau dùng lại.</div>
+      </div>
+    </div>
+    </sc-if>
+  </main>
+
+  <aside aria-label="Mẫu nhận diện người nói" style="flex: 1 1 320px; max-width: 360px; min-width: 280px; border-left: 1px solid var(--line); background: var(--panel); padding: 18px; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div class="lbl">Đầu tin</div>
+      <div class="head"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><b style="font-size: 13.5px">Aris</b><span class="role" style="background: var(--accentSoft); color: var(--accent)">Điều phối</span><span class="m" style="font-size: 12px">10:36</span></div>
+      <div class="head"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg><b style="font-size: 13.5px">Minh</b><span class="role" style="background: color-mix(in srgb, #00B5A5 14%, transparent); color: var(--ink)">Nghiên cứu</span><span class="m" style="font-size: 12px">14:02</span></div>
+      <div class="head"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><g fill="#64748B"><circle cx="50" cy="50" r="32"></circle><rect x="40" y="6" width="20" height="22" rx="6"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(90 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(180 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(270 50 50)"></rect></g><circle cx="43" cy="51" r="7" fill="#fff"></circle><circle cx="59" cy="48" r="5" fill="#fff"></circle></svg><b style="font-size: 13.5px">Kiệt</b><span class="role" style="background: var(--panel2); color: var(--muted)">bot ngoài · Claude Code</span><span class="m" style="font-size: 12px">10:37</span></div>
+      <div class="row"><span class="k">Tin của bạn</span><span style="background: var(--ink); color: var(--panel); padding: 4px 12px; border-radius: 14px 14px 4px 14px; font-size: 13px">bong bóng bên phải</span></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px">
+      <div class="lbl">Viên nhắc tên</div>
+      <div class="row"><span class="k">Bot trong đội</span><button type="button" class="pill p-minh"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg>Minh</button><button type="button" class="pill p-tho"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 86C30 72 10 58 10 38C10 24 21 14 34 14C42 14 47 18 50 23C53 18 58 14 66 14C79 14 90 24 90 38C90 58 70 72 50 86Z" fill="#F0388E"></path><path d="M44 36L41 48M58 34L55 46" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Thơ</button></div>
+      <div class="row"><span class="k">Aris</span><button type="button" class="pill p-aris"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Aris</button></div>
+      <div class="row"><span class="k">Bot ngoài</span><button type="button" class="pill p-kiet"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><g fill="#64748B"><circle cx="50" cy="50" r="32"></circle><rect x="40" y="6" width="20" height="22" rx="6"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(90 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(180 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(270 50 50)"></rect></g><circle cx="43" cy="51" r="7" fill="#fff"></circle><circle cx="59" cy="48" r="5" fill="#fff"></circle></svg>Kiệt</button></div>
+      <div class="row"><span class="k">Trong tin của bạn</span><span style="background: var(--ink); color: var(--panel); padding: 5px 10px; border-radius: 14px"><button type="button" class="pill p-inv"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><g fill="#64748B"><circle cx="50" cy="50" r="32"></circle><rect x="40" y="6" width="20" height="22" rx="6"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(90 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(180 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(270 50 50)"></rect></g><circle cx="43" cy="51" r="7" fill="#fff"></circle><circle cx="59" cy="48" r="5" fill="#fff"></circle></svg>Kiệt</button></span></div>
+      <div class="row"><span class="k">Bot đã xoá</span><span class="pill p-gone">@vy</span></div>
+      <div class="m" style="font-size: 12.5px">Bấm viên mở hồ sơ bot. Màu viên theo màu linh vật, chữ luôn màu chữ chính.</div>
+    </div>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"view":{"editor":"enum","options":["aris","bot"],"default":"aris"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const cur = s.cur || this.props.view || 'aris';
+    const is = {}, st = {}, ss = {}, go = {};
+    ['aris', 'bot'].forEach((k) => {
+      is[k] = k === cur;
+      st[k] = k === cur ? 'true' : 'false';
+      ss[k] = k === cur ? 'background: var(--hover); color: var(--ink); font-weight: 600' : 'background: transparent; color: var(--muted)';
+      go[k] = () => this.setState({ cur: k });
+    });
+    return {
+      themeClass: 't-' + theme,
+      themeLabel: theme === 'dark' ? 'Sáng' : 'Tối',
+      title: cur === 'bot' ? 'Minh' : 'Tóm tắt README',
+      sub: cur === 'bot' ? '· phiên riêng · Nghiên cứu' : '· repo aris-agent',
+      sideBot: cur === 'bot' ? 'none' : 'aris',
+      is, st, ss, go,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' })
+    };
+  }
+}
+</script>
+</body>
+</html>
