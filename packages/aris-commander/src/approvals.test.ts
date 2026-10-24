@@ -45,3 +45,26 @@ describe('duyệt tập trung', () => {
     expect(toolAlias('khac')).toBe('khac')
   })
 })
+
+describe('đã xử lý hôm nay', () => {
+  it('đếm yêu cầu người dùng trả lời trong ngày, không đếm hết hạn', () => {
+    let now = new Date('2026-10-24T09:00:00')
+    const c = new ApprovalCenter(() => now)
+    const item = (id: string) => ({
+      id,
+      source: 'member' as const,
+      run: 'member:p',
+      bot: 'b',
+      name: 'Khoa',
+      kind: 'run' as const,
+      at: now.toISOString(),
+    })
+    for (const id of ['a', 'b', 'c']) c.open(item(id))
+    c.close('a', true, 'user')
+    c.close('b', false, 'telegram')
+    c.close('c', false, 'timeout')
+    expect(c.doneToday()).toBe(2)
+    now = new Date('2026-10-25T09:00:00')
+    expect(c.doneToday()).toBe(0)
+  })
+})

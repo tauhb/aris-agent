@@ -221,6 +221,10 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 **Mục tiêu**: bot giỏi dần theo thời gian mà vẫn an toàn.
 
+> **Chia 5 đợt (duyệt 24/10)**: (1) vòng học nền và Hộp duyệt chung, (2) hồ sơ chủ nhân có độ tin cậy, (3) skill tự tạo và tự vá, (4) kiểm thử bằng chạy lại phiên cũ, dọn kho skill, Commander tự học, (5) `/goal` có giám khảo, `/loop`, `/heartbeat`, màn Việc đang chạy. Mức mặc định: model Flash cho vòng học, ~20 nghìn token mỗi lần, 0,30 USD mỗi ngày cho cả đội, ký ức bot tự suy ra và skill luôn chờ duyệt, hạn duyệt 7 ngày.
+
+> **Đợt 1 xong 24/10 — Vòng học nền và Hộp duyệt chung** ([đặc tả](specs/aris-reflect.md)): gói mới `@aris/reflect` theo dõi từng lượt; bị sửa sai, dặn nhớ, khen, việc dài, lỗi rồi tìm ra cách (cộng lưới an toàn 12 lượt) thì chạy nền một lần gọi model Flash đọc lại và đề xuất tối đa 3 ký ức. Mọi ký ức bot tự suy ra (vòng học, tool `memory` không phải lời người dùng, lúc nén) đều chờ duyệt, quá 7 ngày tự bỏ; nguồn ngoài chỉ vào lưu trữ. Hộp duyệt (3.4) gom yêu cầu quyền và đề xuất ký ức thật, sửa được câu và tầng trước khi lưu; thẻ "GHI NHỚ" trên Telegram có Lưu / Sửa / Bỏ. Tiền vòng học ghi vào sổ chi phí (phạm vi `reflect`). Chạy thử thật: bị sửa sai một lần ⇒ 2 đề xuất bài học có lý do và bằng chứng, 0,0023 USD. Gợi ý luật, skill trong Hộp duyệt để đợt sau.
+
 **Việc cần làm**
 
 | Package | Nội dung |

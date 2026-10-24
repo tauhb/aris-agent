@@ -2,9 +2,12 @@
  * Đường `/api/aris/memory` cho trang Ký ức (3.1). dsh đã kiểm Host/Origin, cookie và
  * quyền chủ nhân trước khi gọi tới đây.
  *   GET  ?bot=aris                       → lõi, lưu trữ, chờ duyệt, dung lượng hai cuốn
+ *   GET  ?pending=all                    → đề xuất chờ duyệt của mọi bot (Hộp duyệt, màn 3.4)
  *   POST { op, id, text? }               → update | demote | promote | forget | approve | discard
+ *   POST { op: 'review', id, decision, text?, tier? } → trả lời một đề xuất (save | discard)
  */
-import { MemoryError, type MemoryItem, type MemoryStore } from './store.js'
+import type { Proposals } from './proposals.js'
+import { MemoryError, TIERS, type MemoryItem, type MemoryStore, type Tier } from './store.js'
 import type { ReflectStatus } from './watch.js'
 
 export interface MemorySnapshot {
@@ -40,19 +43,41 @@ export async function handleApi(
   store: MemoryStore,
   request: Request,
   lastReflect: () => ReflectStatus | undefined = () => undefined,
+  proposals?: Proposals,
 ): Promise<Response> {
   const url = new URL(request.url)
+  const isRead = request.method === 'GET' || request.method === 'HEAD'
+  if (isRead && url.searchParams.get('pending') === 'all')
+    return json({ pending: proposals?.list() ?? [], doneToday: store.reviewedToday() })
   const bot = url.searchParams.get('bot') ?? 'aris'
   if (!BOT_RE.test(bot)) return json({ error: 'bot không hợp lệ' }, 400)
-  if (request.method === 'GET' || request.method === 'HEAD') return json(snapshot(store, bot, lastReflect()))
+  if (isRead) return json(snapshot(store, bot, lastReflect()))
 
-  let body: { op?: unknown; id?: unknown; text?: unknown }
+  let body: { op?: unknown; id?: unknown; text?: unknown; decision?: unknown; tier?: unknown }
   try {
     body = (await request.json()) as typeof body
   } catch {
     return json({ error: 'JSON không hợp lệ' }, 400)
   }
   const id = typeof body.id === 'string' ? body.id : ''
+  // Trả lời đề xuất từ Hộp duyệt: không cần biết bot, đề xuất nào cũng được.
+  if (body.op === 'review') {
+    if (!proposals) return json({ error: 'chưa có hộp đề xuất' }, 400)
+    const decision =
+      body.decision === 'save' ? 'saved' : body.decision === 'discard' ? 'discarded' : undefined
+    if (!decision) return json({ error: 'decision phải là save hoặc discard' }, 400)
+    const tier = TIERS.includes(body.tier as Tier) ? (body.tier as Tier) : undefined
+    try {
+      const item = await proposals.review(id, decision, 'user', {
+        text: typeof body.text === 'string' ? body.text : undefined,
+        tier,
+      })
+      return json({ ok: true, item, pending: proposals.list(), doneToday: store.reviewedToday() })
+    } catch (err) {
+      if (err instanceof MemoryError) return json({ error: err.message, code: err.code }, 409)
+      throw err
+    }
+  }
   const item = store.get(id)
   if (!item || item.bot !== bot) return json({ error: 'không thấy ký ức' }, 404)
   try {
@@ -67,10 +92,14 @@ export async function handleApi(
         await store.promote(id)
         break
       case 'approve':
-        await store.approve(id)
+        if (proposals && item.status === 'pending') await proposals.review(id, 'saved', 'user')
+        else await store.approve(id)
+        break
+      case 'discard':
+        if (proposals && item.status === 'pending') await proposals.review(id, 'discarded', 'user')
+        else await store.forget(id)
         break
       case 'forget':
-      case 'discard':
         await store.forget(id)
         break
       default:

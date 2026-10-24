@@ -197,6 +197,8 @@ export function isSilent(text: string): boolean {
 
 /** Một bot của đội để đổi `@tên_gọi` khi gửi ra Telegram. */
 export interface TeamName {
+  /** Mã nội bộ của bot (thẻ đề xuất ký ức tìm bot theo mã). */
+  id?: string | undefined
   handle: string
   name: string
   /** Màu linh vật (`#rrggbb`). */

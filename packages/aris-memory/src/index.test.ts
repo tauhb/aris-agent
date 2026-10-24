@@ -36,12 +36,12 @@ function fakeContext() {
       }),
     },
   }
-  return { ctx: ctx as unknown as Context, contexts, sections, tools }
+  return { ctx: ctx as unknown as Context, contexts, sections, tools, map }
 }
 
 describe('aris-memory', () => {
   it('lưu bằng tool thì ký ức có ngay trong ngữ cảnh động và có bản ghi trong log phiên', async () => {
-    const { ctx, contexts, tools, sections } = fakeContext()
+    const { ctx, contexts, tools, sections, map } = fakeContext()
     await apply(ctx)
     expect(sections.map((s) => s.name)).toEqual(['aris:memory-guide'])
     expect(contexts[0]).toMatchObject({ name: 'aris:memory', order: CONTEXT_ORDER })
@@ -72,8 +72,16 @@ describe('aris-memory', () => {
     })
 
     expect(await memory.execute({ action: 'search', query: 'hop marketing' }, {})).toContain('chiều thứ 5')
-    expect(await memory.execute({ action: 'save', text: 'x', tier: 'core', origin: 'external' }, {})).toMatch(
-      /^Không làm được/,
-    )
+    // Điều bot suy ra hay lấy từ nguồn ngoài chỉ thành đề xuất chờ duyệt; nguồn ngoài không lên lõi.
+    expect(
+      await memory.execute(
+        { action: 'save', text: 'Giá vàng hôm nay tăng', tier: 'core', origin: 'external' },
+        {},
+      ),
+    ).toMatch(/^Đã gửi đề xuất ký ức/)
+    const pending = [...map.values()].filter((m) => m.status === 'pending')
+    expect(pending).toHaveLength(1)
+    expect(pending[0]).toMatchObject({ tier: 'archive', trust: 'external', proposal: { via: 'tool' } })
+    expect(contexts[0]!.text()).not.toContain('Giá vàng')
   })
 })

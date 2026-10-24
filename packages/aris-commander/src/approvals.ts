@@ -35,6 +35,10 @@ export type ApprovalEvent =
 export class ApprovalCenter {
   private readonly items = new Map<string, CentralApproval>()
   private readonly listeners = new Set<(e: ApprovalEvent) => void>()
+  /** Số yêu cầu người dùng đã trả lời (web, Telegram) trong ngày (giờ máy). */
+  private answered = { day: '', n: 0 }
+
+  constructor(private readonly now: () => Date = () => new Date()) {}
 
   open(item: CentralApproval) {
     this.items.set(item.id, item)
@@ -45,7 +49,16 @@ export class ApprovalCenter {
     const item = this.items.get(id)
     if (!item) return
     this.items.delete(id)
+    if (by === 'user' || by === 'telegram') {
+      const day = this.now().toDateString()
+      this.answered = { day, n: (this.answered.day === day ? this.answered.n : 0) + 1 }
+    }
     this.emit({ type: 'closed', item, allow, by })
+  }
+
+  /** Số yêu cầu người dùng đã trả lời hôm nay (Hộp duyệt: "Đã xử lý hôm nay"). */
+  doneToday(): number {
+    return this.answered.day === this.now().toDateString() ? this.answered.n : 0
   }
 
   /** Yêu cầu đang chờ, cũ trước; lọc theo phiên giao việc nếu cần. */

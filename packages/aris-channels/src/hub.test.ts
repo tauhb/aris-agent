@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { ChannelHub, type ApprovalsPort, type LiveAgent, type SessionPort } from './hub.js'
+import {
+  ChannelHub,
+  type ApprovalsPort,
+  type ProposalsPort,
+  type LiveAgent,
+  type SessionPort,
+} from './hub.js'
 import { memStore } from './store.test.js'
 import type { Fetch } from './telegram/api.js'
 import type { TgMessage, TgUpdate } from './telegram/types.js'
@@ -393,6 +399,77 @@ describe('trung tâm kênh', () => {
     emit({ type: 'closed', item, allow: true, by: 'user' })
     await settle()
     expect(String(s.tg.sent('editMessageText').at(-1)!.text)).toContain('Đã cho phép trên web')
+  })
+
+  it('đề xuất ký ức: thẻ GHI NHỚ, Lưu / Sửa / Bỏ, lõi đầy thì lưu vào lưu trữ, xong ở web thì sửa thẻ', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    type Ev = Parameters<Parameters<ProposalsPort['on']>[0]>[0]
+    let emit: (e: Ev) => void = () => undefined
+    const answers: unknown[][] = []
+    let full = true
+    s.hub.watchProposals({
+      on: (fn) => ((emit = fn), () => undefined),
+      answer: async (id, decision, by, patch) => {
+        answers.push([id, decision, by, patch])
+        if (full && !patch) {
+          full = false
+          throw new Error('Cuốn owner đã đầy trần lõi')
+        }
+        return {}
+      },
+    })
+    const tap = async (data: string) => {
+      s.tg.push({
+        callback_query: { id: `c-${data}`, from: { id: OWNER, is_bot: false, first_name: 'O' }, data },
+      })
+      await settle()
+    }
+    const buttons = () =>
+      (s.tg.sent().at(-1)!.reply_markup as { inline_keyboard: { text: string; callback_data: string }[][] })
+        .inline_keyboard[0]!
+    const item = { id: 'm-1', bot: 'b-1', text: 'Người dùng không họp trước 9 giờ', why: 'Từ chối họp 8 giờ' }
+    emit({ type: 'opened', item })
+    await settle()
+    const card = s.tg.sent().at(-1)!
+    expect(String(card.text)).toContain('GHI NHỚ')
+    expect(String(card.text)).toContain('Người dùng không họp trước 9 giờ')
+    expect(buttons().map((b) => b.text)).toEqual(['Lưu', 'Sửa', 'Bỏ'])
+    // Lưu khi lõi đầy: thẻ báo lỗi, nút đổi thành "Lưu vào lưu trữ".
+    await tap(buttons()[0]!.callback_data)
+    const edited = s.tg.sent('editMessageText').at(-1)!
+    expect(String(edited.text)).toContain('đầy')
+    const again = (edited.reply_markup as { inline_keyboard: { callback_data: string }[][] })
+      .inline_keyboard[0]![0]!
+    await tap(again.callback_data)
+    expect(answers.at(-1)).toEqual(['m-1', 'saved', 'telegram', { tier: 'archive' }])
+    emit({ type: 'closed', item, decision: 'saved', by: 'telegram' })
+    await settle()
+    expect(String(s.tg.sent('editMessageText').at(-1)!.text)).toContain('Đã lưu')
+    // Sửa: tin kế tiếp của người dùng là câu mới.
+    const item2 = { id: 'm-2', bot: 'b-1', text: 'Người dùng thích cà phê' }
+    emit({ type: 'opened', item: item2 })
+    await settle()
+    await tap(buttons()[1]!.callback_data)
+    expect(String(s.tg.sent().at(-1)!.text)).toContain('Gõ câu mới')
+    s.tg.push({
+      message: {
+        message_id: 77,
+        chat: { id: OWNER, type: 'private' },
+        from: { id: OWNER, is_bot: false, first_name: 'O' },
+        date: 0,
+        text: 'Người dùng thích cà phê đen',
+      },
+    })
+    await settle()
+    expect(answers.at(-1)).toEqual(['m-2', 'saved', 'telegram', { text: 'Người dùng thích cà phê đen' }])
+    // Trả lời trên web: thẻ được sửa.
+    const item3 = { id: 'm-3', bot: 'b-1', text: 'x' }
+    emit({ type: 'opened', item: item3 })
+    await settle()
+    emit({ type: 'closed', item: item3, decision: 'discarded', by: 'user' })
+    await settle()
+    expect(String(s.tg.sent('editMessageText').at(-1)!.text)).toContain('Đã bỏ trên web')
   })
 
   it('khởi động lại giữa lúc gửi: gửi lại phần dở kèm ghi chú có thể trùng', async () => {

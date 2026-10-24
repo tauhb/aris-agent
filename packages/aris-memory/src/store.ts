@@ -45,7 +45,30 @@ export interface MemoryItem {
   updatedAt: string
   uses: number
   lastUsedAt?: string | undefined
+  /** Ký ức bot tự suy ra (chờ duyệt): bot nào đề xuất, vì sao, bằng chứng, đến từ đâu. */
+  proposal?: Proposal | undefined
+  /** Người dùng (hay hết hạn) đã trả lời đề xuất. */
+  review?: Review | undefined
 }
+
+/** Ký ức chờ duyệt đến từ tool `memory`, vòng học nền hay lúc nén hội thoại. */
+export const VIAS = ['tool', 'reflect', 'compaction'] as const
+export interface Proposal {
+  /** Bot đề xuất (cuốn `owner` lưu dưới Commander nhưng có thể do bot khác đề xuất). */
+  by?: string | undefined
+  why?: string | undefined
+  quote?: string | undefined
+  via: (typeof VIAS)[number]
+}
+
+export interface Review {
+  at: string
+  by: 'user' | 'telegram' | 'timeout'
+  decision: 'saved' | 'discarded'
+}
+
+/** Đề xuất chưa trả lời quá ngần này ngày thì tự bỏ. */
+export const PROPOSAL_DAYS = 7
 
 /** Bảng khoá–giá trị tối thiểu mà kho cần (khớp `KvTable` của dsh). */
 export interface MemoryTable {
@@ -90,6 +113,7 @@ export interface SaveInput {
   trust: Trust
   status?: Status | undefined
   sessionId?: string | undefined
+  proposal?: Proposal | undefined
 }
 
 export interface Usage {
@@ -179,9 +203,59 @@ export class MemoryStore {
       createdAt: at,
       updatedAt: at,
       uses: 0,
+      ...(input.proposal ? { proposal: input.proposal } : {}),
     }
     await this.table.put(item.id, item)
     return item
+  }
+
+  /** Đề xuất chờ duyệt của mọi bot, cũ trước. */
+  pending(): MemoryItem[] {
+    return [...this.table.entries()]
+      .map(([, i]) => i)
+      .filter((i) => i.status === 'pending')
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+  }
+
+  /**
+   * Trả lời một đề xuất: lưu (có thể kèm câu sửa, đổi tầng) hay bỏ. Lõi đầy thì báo lỗi `full`
+   * và không đổi gì, để người dùng chọn lưu vào lưu trữ.
+   */
+  async review(
+    id: string,
+    decision: Review['decision'],
+    by: Review['by'],
+    patch: { text?: string | undefined; tier?: Tier | undefined } = {},
+  ): Promise<MemoryItem> {
+    const item = this.get(id)
+    if (!item || item.status !== 'pending')
+      throw new MemoryError('not-found', 'Đề xuất này đã được trả lời hoặc không còn.')
+    const review: Review = { at: this.now().toISOString(), by, decision }
+    if (decision === 'discarded') return this.change(id, () => ({ status: 'deleted', review }))
+    const text = patch.text?.trim() || item.text
+    const tier = patch.tier ?? item.tier
+    if (tier === 'core' && item.trust === 'external')
+      throw new MemoryError('untrusted-core', 'Nội dung từ nguồn ngoài không lên lõi được.')
+    if (tier === 'core') this.assertFits(item.bot, item.book, text, id)
+    return this.change(id, () => ({ status: 'active', text, tier, review }))
+  }
+
+  /** Bỏ các đề xuất quá hạn; trả các đề xuất vừa bỏ. */
+  async expire(days = PROPOSAL_DAYS): Promise<MemoryItem[]> {
+    const cutoff = this.now().getTime() - days * 86_400_000
+    const out: MemoryItem[] = []
+    for (const item of this.pending())
+      if (Date.parse(item.createdAt) < cutoff) out.push(await this.review(item.id, 'discarded', 'timeout'))
+    return out
+  }
+
+  /** Số đề xuất người dùng đã trả lời hôm nay (giờ máy). */
+  reviewedToday(): number {
+    const day = this.now().toDateString()
+    let n = 0
+    for (const [, i] of this.table.entries())
+      if (i.review && i.review.by !== 'timeout' && new Date(i.review.at).toDateString() === day) n++
+    return n
   }
 
   private async change(id: string, patch: (item: MemoryItem) => Partial<MemoryItem>): Promise<MemoryItem> {

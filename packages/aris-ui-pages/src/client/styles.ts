@@ -139,6 +139,9 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .aris .ap-li{display:flex;gap:10px;align-items:flex-start;width:100%;border-top:1px solid var(--a-line);padding:12px 14px;text-align:left}
 .aris .ap-li:hover{background:var(--a-hover)}
 .aris .ap-li[aria-current]{background:var(--a-accentSoft)}
+.ap-due{font-size:12px;color:var(--a-muted);font-weight:600;white-space:nowrap}
+.ap-due.warn{color:var(--a-warn)}
+.ap-li-sub{display:block;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ap-detail{flex:999 1 520px;min-width:0;padding:22px 28px;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
 .ap-kv{display:grid;grid-template-columns:120px minmax(0,1fr);gap:8px;padding:8px 0;border-top:1px solid var(--a-line);font-size:13.5px}
 .ap-kv:first-child{border-top:0}

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { Proposals } from './proposals.js'
 import {
   CAPS,
   MemoryError,
@@ -117,5 +118,89 @@ describe('MemoryStore', () => {
     })
     const out = renderCore(s.list('aris'))
     expect(out).toMatch(/Ghi chú của bot[\s\S]*Google Drive[\s\S]*Hồ sơ người dùng[\s\S]*bảng so sánh/)
+  })
+})
+
+describe('đề xuất chờ duyệt', () => {
+  const setup = (now = new Date('2026-10-24T10:00:00Z')) => {
+    const map = new Map<string, MemoryItem>()
+    let clock = now
+    const store = new MemoryStore(
+      {
+        get: (k) => map.get(k),
+        entries: () => map.entries(),
+        put: async (k, v) => void map.set(k, v),
+      },
+      () => clock,
+    )
+    return { store, proposals: new Proposals(store), tick: (d: Date) => (clock = d) }
+  }
+  const base = {
+    bot: 'aris',
+    book: 'owner' as const,
+    kind: 'preference' as const,
+    tier: 'core' as const,
+    trust: 'agent-inferred' as const,
+  }
+
+  it('đề xuất chờ duyệt, bỏ trùng, báo mở và đóng', async () => {
+    const { store, proposals } = setup()
+    const events: string[] = []
+    proposals.on((e) =>
+      events.push(`${e.type}:${e.item.bot}${e.type === 'closed' ? `:${e.decision}:${e.by}` : ''}`),
+    )
+    const p = await proposals.propose({
+      ...base,
+      text: 'Người dùng không nhận họp trước 9 giờ sáng',
+      proposal: { by: 'mai', why: 'Người dùng từ chối họp 8 giờ', via: 'reflect' },
+    })
+    expect(p?.status).toBe('pending')
+    expect(
+      await proposals.propose({
+        ...base,
+        text: 'Người dùng không nhận họp trước 9 giờ',
+        proposal: { via: 'reflect' },
+      }),
+    ).toBeUndefined()
+    expect(proposals.list()).toMatchObject([
+      { bot: 'mai', why: 'Người dùng từ chối họp 8 giờ', via: 'reflect' },
+    ])
+    const saved = await proposals.review(p!.id, 'saved', 'telegram', {
+      text: 'Người dùng không họp trước 9 giờ',
+    })
+    expect(saved).toMatchObject({
+      status: 'active',
+      text: 'Người dùng không họp trước 9 giờ',
+      review: { by: 'telegram' },
+    })
+    expect(events).toEqual(['opened:mai', 'closed:mai:saved:telegram'])
+    expect(store.reviewedToday()).toBe(1)
+    await expect(proposals.review(p!.id, 'discarded', 'user')).rejects.toThrow('đã được trả lời')
+  })
+
+  it('lõi đầy thì không lưu được ở lõi, lưu được vào lưu trữ; nguồn ngoài không lên lõi', async () => {
+    const { proposals } = setup()
+    const big = await proposals.propose({ ...base, text: 'x '.repeat(700), proposal: { via: 'tool' } })
+    await expect(proposals.review(big!.id, 'saved', 'user')).rejects.toThrow()
+    expect((await proposals.review(big!.id, 'saved', 'user', { tier: 'archive' })).tier).toBe('archive')
+    const ext = await proposals.propose({
+      ...base,
+      trust: 'external',
+      tier: 'archive',
+      text: 'Giá vàng tăng',
+      proposal: { via: 'tool' },
+    })
+    await expect(proposals.review(ext!.id, 'saved', 'user', { tier: 'core' })).rejects.toThrow('nguồn ngoài')
+  })
+
+  it('quá 7 ngày thì tự bỏ', async () => {
+    const { store, proposals, tick } = setup()
+    await proposals.propose({ ...base, text: 'Người dùng thích cà phê đen', proposal: { via: 'reflect' } })
+    tick(new Date('2026-10-30T10:00:00Z'))
+    expect(await proposals.expire()).toBe(0)
+    tick(new Date('2026-11-01T10:00:01Z'))
+    expect(await proposals.expire()).toBe(1)
+    expect(store.pending()).toHaveLength(0)
+    expect(store.reviewedToday()).toBe(0)
   })
 })

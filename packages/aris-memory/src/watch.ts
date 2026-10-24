@@ -3,7 +3,7 @@
  * - Tự nhắc lưu: cuối mỗi lượt, lượt có dấu hiệu cần nhớ mà bot chưa ghi thì cài lời nhắc
  *   (`agent.inject`) cho lượt kế tiếp.
  * - Lưu trước khi nén: giữ bản chép gần đây của từng phiên; khi dsh ghi `compaction/summary`,
- *   lấy đúng đoạn vừa bị nén, nhờ model rút ký ức và cất vào lưu trữ.
+ *   lấy đúng đoạn vừa bị nén, nhờ model rút ký ức thành đề xuất chờ duyệt (tầng lưu trữ).
  */
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
@@ -14,6 +14,7 @@ import type {} from '@deepseek-ai/dsh-tools'
 import { NUDGE_TEXT, emptyTurn, nudgeReason, type TurnSignals } from './nudge.js'
 import { dedupe, parseCandidates, reflectPrompt, transcriptText, type TranscriptLine } from './reflect.js'
 import { bookOwner, itemsFor } from './books.js'
+import type { Proposals } from './proposals.js'
 import type { MemoryStore } from './store.js'
 
 /** Nguồn của lời nhắc trong lịch sử: hiện thành dòng "notice" chứ không thành lời chủ nhân. */
@@ -74,6 +75,7 @@ export interface ReflectStatus {
 export function watchConversation(
   ctx: Context,
   store: MemoryStore,
+  proposals: Proposals,
   botOf: (sessionId: string) => string,
 ): { lastReflect: () => ReflectStatus | undefined } {
   let last: ReflectStatus | undefined
@@ -164,8 +166,9 @@ export function watchConversation(
         if (chunk.type === 'text-delta') raw += chunk.text
       const proposed = parseCandidates(raw)
       status.proposed = proposed.length
+      // Bot tự suy ra nên thành đề xuất chờ người dùng duyệt (Hộp duyệt, Telegram).
       for (const c of dedupe(proposed, existing)) {
-        const m = await store.save({
+        const m = await proposals.propose({
           bot: bookOwner(bot, c.book),
           text: c.text,
           book: c.book,
@@ -173,7 +176,9 @@ export function watchConversation(
           tier: 'archive',
           trust: 'agent-inferred',
           sessionId: session.id,
+          proposal: { by: bot, via: 'compaction' },
         })
+        if (!m) continue
         record.saved.push(m.id)
         status.saved.push(m.id)
       }

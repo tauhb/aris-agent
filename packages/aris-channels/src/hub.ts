@@ -94,6 +94,32 @@ export interface ApprovalsPort {
   answer(id: string, allow: boolean, by: 'telegram'): boolean
 }
 
+/** Một đề xuất ký ức chờ duyệt (`@aris/memory`, `arisMemory.proposals`). */
+export interface ProposalItem {
+  id: string
+  /** Bot đề xuất (mã nội bộ). */
+  bot: string
+  text: string
+  why?: string | undefined
+}
+
+/** Hàng đề xuất ký ức: nghe mở / đóng, trả lời (lưu, kèm câu sửa hay tầng lưu trữ; bỏ). */
+export interface ProposalsPort {
+  on(
+    fn: (
+      e:
+        | { type: 'opened'; item: ProposalItem }
+        | { type: 'closed'; item: ProposalItem; decision: 'saved' | 'discarded'; by: string },
+    ) => void,
+  ): () => void
+  answer(
+    id: string,
+    decision: 'saved' | 'discarded',
+    by: 'telegram',
+    patch?: { text?: string; tier?: 'core' | 'archive' },
+  ): Promise<unknown>
+}
+
 export interface HubDeps {
   store: ChannelStore
   credentials: CredentialPort
@@ -138,6 +164,12 @@ export class ChannelHub {
   private readonly lanes = new Map<string, Promise<void>>()
   /** Thẻ duyệt tập trung đã gửi: mã yêu cầu → tin Telegram (để sửa khi yêu cầu xong). */
   private readonly cards = new Map<string, { bot: string; chatId: number; messageId: number; html: string }>()
+  private proposalsPort: ProposalsPort | undefined
+  /** Thẻ "GHI NHỚ" đang mở theo mã đề xuất. */
+  private readonly memoryCards = new Map<
+    string,
+    { bot: string; chatId: number; messageId: number; html: string }
+  >()
   private approvalsPort: ApprovalsPort | undefined
   /** Model đang dùng theo phiên (từ `request/context`). */
   readonly models = new Map<string, string>()
@@ -1000,6 +1032,34 @@ export class ChannelHub {
         }
         return done()
       }
+      case 'mm': {
+        // Thẻ đề xuất ký ức: s = lưu, a = lưu vào lưu trữ (lõi đầy), e = sửa rồi lưu, d = bỏ.
+        const port = this.proposalsPort
+        const card = this.memoryCards.get(a ?? '')
+        if (!port || !card) {
+          await edit(`${msg?.text ? escapeHtml(msg.text) + '\n\n' : ''}${T.centralGone}`)
+          return done(T.centralGone)
+        }
+        if (b === 'e') {
+          await done()
+          const rt = this.runtimes.get(card.bot)
+          if (!rt) return
+          await rt.api.sendMessage(card.chatId, T.memoryTypeNew)
+          const text = await this.waitText(
+            threadKey(rt.rec.tgId, card.chatId),
+            AbortSignal.timeout(30 * 60_000),
+          )
+          if (!text) return
+          return void (await this.answerMemory(port, a!, 'saved', { text }))
+        }
+        await done()
+        return void (await this.answerMemory(
+          port,
+          a!,
+          b === 'd' ? 'discarded' : 'saved',
+          b === 'a' ? { tier: 'archive' } : undefined,
+        ))
+      }
       case 'ap': {
         const w = this.approvals.get(a ?? '')
         if (!w) return done('Yêu cầu này đã hết hạn.')
@@ -1153,6 +1213,95 @@ export class ChannelHub {
       off()
       this.approvalsPort = undefined
     }
+  }
+
+  /**
+   * Đề xuất ký ức (giai đoạn 3): mỗi đề xuất một thẻ "GHI NHỚ" tới chat chính qua bot Aris (bản vẽ
+   * 7.3); trả lời ở web hay hết hạn thì sửa thẻ, bỏ nút. Trả hàm gỡ.
+   */
+  watchProposals(port: ProposalsPort): () => void {
+    this.proposalsPort = port
+    const off = port.on((e) => {
+      if (e.type === 'opened')
+        void this.sendMemoryCard(e.item).catch((err: unknown) =>
+          this.d.logger.warn('aris-channels: thẻ ghi nhớ: %s', String(err)),
+        )
+      else void this.closeMemoryCard(e.item, e.decision, e.by)
+    })
+    return () => {
+      off()
+      this.proposalsPort = undefined
+    }
+  }
+
+  private async sendMemoryCard(item: ProposalItem) {
+    const bot = this.store.bot('aris') ? 'aris' : [...this.runtimes.keys()][0]
+    const rt = bot ? this.runtimes.get(bot) : undefined
+    const chatId = (bot ? this.store.bot(bot)?.home?.chatId : undefined) ?? this.store.owners()[0]?.userId
+    if (!rt || !bot || chatId === undefined) return
+    const who = this.d.team?.().find((m) => m.id === item.bot)
+    const html = T.memoryCard(
+      `${colorDot(who?.color)} <b>${escapeHtml(who?.name ?? item.bot)}</b>`,
+      item.text,
+      item.why,
+    )
+    const msg = await rt.api.sendMessage(chatId, html, { html: true, buttons: this.memoryButtons(item.id) })
+    this.memoryCards.set(item.id, { bot, chatId, messageId: msg.message_id, html })
+  }
+
+  private memoryButtons(id: string, full = false): InlineButton[][] {
+    return [
+      full
+        ? [
+            { text: 'Lưu vào lưu trữ', callback_data: `mm:${id}:a` },
+            { text: 'Bỏ', callback_data: `mm:${id}:d` },
+          ]
+        : [
+            { text: 'Lưu', callback_data: `mm:${id}:s` },
+            { text: 'Sửa', callback_data: `mm:${id}:e` },
+            { text: 'Bỏ', callback_data: `mm:${id}:d` },
+          ],
+    ]
+  }
+
+  /** Trả lời đề xuất từ Telegram; lõi đầy thì đổi nút thành "Lưu vào lưu trữ". */
+  private async answerMemory(
+    port: ProposalsPort,
+    id: string,
+    decision: 'saved' | 'discarded',
+    patch?: { text?: string; tier?: 'core' | 'archive' },
+  ) {
+    try {
+      await port.answer(id, decision, 'telegram', patch)
+    } catch (e) {
+      const card = this.memoryCards.get(id)
+      const rt = card ? this.runtimes.get(card.bot) : undefined
+      if (!card || !rt) return
+      const message = e instanceof Error ? e.message : String(e)
+      const full = /trần|đầy/i.test(message)
+      await rt.api
+        .editMessageText(card.chatId, card.messageId, `${card.html}\n\n⚠️ ${escapeHtml(message)}`, {
+          html: true,
+          buttons: full ? this.memoryButtons(id, true) : undefined,
+        })
+        .catch(() => undefined)
+      if (!full) this.memoryCards.delete(id)
+    }
+  }
+
+  private async closeMemoryCard(item: ProposalItem, decision: 'saved' | 'discarded', by: string) {
+    const card = this.memoryCards.get(item.id)
+    if (!card) return
+    this.memoryCards.delete(item.id)
+    await this.runtimes
+      .get(card.bot)
+      ?.api.editMessageText(
+        card.chatId,
+        card.messageId,
+        `${card.html}\n\n${T.memoryDone(decision, by, item.text)}`,
+        { html: true },
+      )
+      .catch(() => undefined)
   }
 
   private async sendCard(item: ApprovalItem) {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Context } from '@deepseek-ai/cordis'
 import { Session, SessionId, pluginRecordOf } from '@deepseek-ai/dsh-session'
+import { Proposals } from './proposals.js'
 import { MemoryStore, type MemoryItem, type MemoryTable } from './store.js'
 import { NUDGE_RECORD, REFLECT_RECORD, watchConversation } from './watch.js'
 
@@ -26,7 +27,7 @@ function setup(reply = '[]') {
     put: async (k, v) => void map.set(k, v),
   }
   const store = new MemoryStore(table)
-  const watch = watchConversation(ctx as unknown as Context, store, () => 'aris')
+  const watch = watchConversation(ctx as unknown as Context, store, new Proposals(store), () => 'aris')
   const call = (name: string, ...args: unknown[]) =>
     (handlers.get(name) as (...a: unknown[]) => unknown)(...args)
   return { call, store, llmCalls, watch }
@@ -103,7 +104,12 @@ describe('lưu trước khi nén', () => {
     expect(prompt).not.toContain('chuyện khác')
     const saved = store.list('aris')
     expect(saved).toHaveLength(1)
-    expect(saved[0]).toMatchObject({ tier: 'archive', trust: 'agent-inferred', status: 'active' })
+    expect(saved[0]).toMatchObject({
+      tier: 'archive',
+      trust: 'agent-inferred',
+      status: 'pending',
+      proposal: { via: 'compaction' },
+    })
     const records = session
       .ownEvents()
       .map(pluginRecordOf)

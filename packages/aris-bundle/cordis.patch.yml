@@ -11,6 +11,8 @@
       name: '@aris/memory'
     - id: aris-providers
       name: '@aris/providers'
+    - id: aris-reflect
+      name: '@aris/reflect'
     - id: aris-recall
       name: '@aris/recall'
     - id: aris-home

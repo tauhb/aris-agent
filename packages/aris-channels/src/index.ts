@@ -27,6 +27,7 @@ import {
   ChannelHub,
   type ApprovalsPort,
   type AttachmentPort,
+  type ProposalsPort,
   type LiveAgent,
   type SessionPort,
 } from './hub.js'
@@ -128,9 +129,9 @@ export async function apply(ctx: Context): Promise<void> {
       (
         (
           ctx.get('arisBots') as
-            { store: { list(): { handle: string; name: string; mascot: string }[] } } | undefined
+            { store: { list(): { id: string; handle: string; name: string; mascot: string }[] } } | undefined
         )?.store.list() ?? []
-      ).map((b) => ({ handle: b.handle, name: b.name, color: getMascot(b.mascot)?.color })),
+      ).map((b) => ({ id: b.id, handle: b.handle, name: b.name, color: getMascot(b.mascot)?.color })),
     credentials: {
       resolve: async (ref) => (await ctx.credentials.resolve(credentialRef(ref)))?.value,
       set: (ref, value) => ctx.credentials.set(credentialRef(ref), value),
@@ -165,6 +166,20 @@ export async function apply(ctx: Context): Promise<void> {
       off?.()
     }
   }, 'aris-channels: thẻ duyệt tập trung')
+  // Đề xuất ký ức (vòng học nền, @aris/memory): thẻ "GHI NHỚ" có nút Lưu / Sửa / Bỏ.
+  ctx.effect(() => {
+    let off: (() => void) | undefined
+    const hook = () => {
+      const port = (ctx.get('arisMemory') as { proposals?: ProposalsPort } | undefined)?.proposals
+      if (port && !off) off = hub.watchProposals(port)
+    }
+    hook()
+    const timer = setInterval(hook, 5000)
+    return () => {
+      clearInterval(timer)
+      off?.()
+    }
+  }, 'aris-channels: thẻ đề xuất ký ức')
   ctx.on('session/event', (session, event) => hub.onSessionEvent(session.id, event as never))
   ctx.on('agent/assistant-stream', ({ agent, frame }) => hub.onStream(agent.session.id, frame as never))
   // Phiên của kênh: duyệt và câu hỏi đi qua Telegram trước; phiên khác để người trả lời sau lo.

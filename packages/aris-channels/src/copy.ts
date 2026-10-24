@@ -103,6 +103,18 @@ export const T = {
         ? '⏹ Việc đã dừng, yêu cầu đã huỷ.'
         : `${allow ? '✅ Đã cho phép' : '⛔ Đã từ chối'}${by === 'user' ? ' trên web' : ''}.`,
   centralGone: 'Yêu cầu này đã xong.',
+  /** Thẻ đề xuất ký ức (bản vẽ 7.3). */
+  memoryCard: (who: string, text: string, why?: string) =>
+    [`🧠 <b>GHI NHỚ</b> · ${who}`, `“${h(text)}” — lưu lại nhé?`, ...(why ? [`<i>${h(why)}</i>`] : [])].join(
+      '\n',
+    ),
+  memoryDone: (decision: 'saved' | 'discarded', by: string, text: string) =>
+    by === 'timeout'
+      ? '⌛ Quá 7 ngày chưa trả lời, đã bỏ.'
+      : decision === 'saved'
+        ? `✅ Đã lưu${by === 'user' ? ' trên web' : ''}: “${h(text)}”`
+        : `🗑 Đã bỏ${by === 'user' ? ' trên web' : ''}.`,
+  memoryTypeNew: 'Gõ câu mới cho ký ức này: tin nhắn kế tiếp trong chat này sẽ được lưu thay.',
   stepAction: {
     run: 'Chạy lệnh',
     edit: 'Sửa tệp',

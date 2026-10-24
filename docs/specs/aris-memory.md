@@ -46,6 +46,8 @@ Một tool `memory` (ít schema hơn bốn tool rời) với `action`:
 
 Ghi xong trả về id và dung lượng còn lại. Mỗi lần ghi để lại bản ghi `plugin:aris/memory-op` trong log phiên.
 
+Từ giai đoạn 3 (đợt 1): chỉ `origin=user` (người dùng nói ra) được lưu ngay. `inferred` và `external` thành **đề xuất chờ duyệt** (Hộp duyệt, thẻ Telegram), `external` luôn ở lưu trữ; quá 7 ngày không trả lời thì tự bỏ. Xem [aris-reflect.md](aris-reflect.md).
+
 ## Trang 3.1
 
 Host mở đường `/api/aris/memory` qua `ctx.connection.fetch` của dsh: dsh tự kiểm Host/Origin, cookie đăng nhập, và chỉ cho chủ nhân vào.
@@ -71,7 +73,7 @@ Plugin giữ bản chép gần đây của mỗi phiên (lời chủ nhân và c
 1. Lấy đúng các dòng có `seq` nằm trong `shadowedSeqs`.
 2. Đoạn từ 120 ký tự trở lên thì gọi model (cùng model vừa viết bản tóm tắt), kèm danh sách ký ức hiện có, để rút ra điều đáng nhớ lâu dài dưới dạng JSON.
 3. Bỏ những mục gần trùng với ký ức đã có (Jaccard theo từ ≥ 0,6).
-4. Cất phần còn lại vào **lưu trữ** với nhãn `agent-inferred`.
+4. Phần còn lại thành **đề xuất chờ duyệt** ở tầng lưu trữ, nhãn `agent-inferred` (từ giai đoạn 3; trước đó lưu thẳng).
 
 Bước này chạy nền nên không giữ khoá nén. Kết quả ghi vào bản ghi `plugin:aris/memory-reflect`, và lần gần nhất hiện ở trường `reflect` của `GET /api/aris/memory`.
 
@@ -79,6 +81,6 @@ Lưu ý: dsh giữ nguyên câu trả lời mới nhất, nên đoạn bị nén
 
 ## Để sau
 
-- Vòng học nền sinh ký ức chờ duyệt (GĐ3).
+- ~~Vòng học nền sinh ký ức chờ duyệt (GĐ3)~~: xong ở đợt 1 giai đoạn 3 ([aris-reflect.md](aris-reflect.md)).
 - Gộp hằng đêm.
 - Ký ức riêng theo bot thật (GĐ2).

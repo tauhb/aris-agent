@@ -137,6 +137,15 @@ export async function apply(ctx: Context): Promise<void> {
       costListeners.add(fn)
       return () => void costListeners.delete(fn)
     },
+    /**
+     * Ghi một lần gọi model ngoài phiên (vòng học nền) vào sổ chi phí, cộng vào các phạm vi
+     * (`reflect`, `bot:<mã>`); trả số tiền theo bảng giá (0 khi chưa có giá).
+     */
+    async charge(provider: string, model: string, usage: Usage, scope: readonly string[]): Promise<number> {
+      await ledger.record(provider, model, usage, Date.now(), scope)
+      const price = prices.of(provider, model)
+      return price ? costOf(price, usage) : 0
+    },
   })
   const pools = new KeyPools(t('pools'), {
     resolve: async (ref) => (await ctx.credentials.resolve(credentialRef(ref)))?.value,

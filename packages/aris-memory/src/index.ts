@@ -16,6 +16,7 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import { DEFAULT_BOT, bookOwner, itemsFor } from './books.js'
 import { memoryDomain } from './domain.js'
 import { handleApi } from './api.js'
+import { Proposals } from './proposals.js'
 import { watchConversation } from './watch.js'
 import {
   MemoryError,
@@ -30,6 +31,7 @@ import {
 export * from './store.js'
 export { handleApi } from './api.js'
 export { DEFAULT_BOT, bookOwner, itemsFor } from './books.js'
+export { Proposals, viewOf, type ProposalEvent, type ProposalView } from './proposals.js'
 
 export const name = 'aris-memory'
 export const inject = ['systemPrompt', 'tools', 'storageDomain', 'llm']
@@ -60,12 +62,27 @@ export const GUIDE = `Bạn có trí nhớ bền giữa các phiên qua tool \`m
 - Lưu khi người dùng nói "nhớ là…", sửa lại cách bạn làm, cho biết sở thích, thói quen, quy ước, người, dự án; hoặc khi bạn rút ra bài học sẽ dùng lại.
 - book=owner cho điều về người dùng; book=notes cho môi trường, quy ước, bài học của bạn.
 - tier=core cho điều cần nhớ mọi lúc, viết thành một câu ngắn; tier=archive cho chi tiết, sự kiện, dự án; tìm lại bằng action=search khi cần.
-- origin=user khi người dùng nói ra; origin=inferred khi bạn tự suy ra; origin=external khi lấy từ web, tệp, email (chỉ được vào archive).
+- origin=user khi người dùng nói ra; origin=inferred khi bạn tự suy ra; origin=external khi lấy từ web, tệp, email (chỉ được vào archive). Chỉ origin=user có hiệu lực ngay; inferred và external thành đề xuất chờ người dùng duyệt.
 - Không lưu bí mật (mật khẩu, khoá, token) và không lưu tiến độ tạm thời của việc đang làm.
 - Lõi có trần ký tự: khi đầy, gộp hoặc rút gọn bằng action=update, hoặc chuyển mục ít dùng xuống archive. Sửa ký ức sai bằng action=update với mã trong ngoặc vuông; xoá bằng action=forget.
-Sau khi lưu, báo ngắn cho người dùng là đã nhớ.`
+Sau khi lưu (origin=user), báo ngắn cho người dùng là đã nhớ; với đề xuất chờ duyệt, báo là bạn đề xuất ghi nhớ.`
 
 const TRUST = { user: 'user-stated', inferred: 'agent-inferred', external: 'external' } as const
+
+/** Đề xuất ký ức từ plugin khác (vòng học nền). */
+export interface ProposeInput {
+  /** Bot đề xuất. */
+  bot: string
+  text: string
+  book: Book
+  kind: Kind
+  tier: Tier
+  origin: keyof typeof TRUST
+  why?: string | undefined
+  quote?: string | undefined
+  sessionId?: string | undefined
+  via: 'reflect' | 'compaction' | 'tool'
+}
 
 function describe(item: MemoryItem): string {
   return `[${item.id}] (${item.book}/${item.tier}/${item.kind}) ${item.text}`
@@ -76,13 +93,49 @@ export async function apply(ctx: Context): Promise<void> {
   const domain = await ctx.storageDomain.open(memoryDomain)
   ctx.effect(() => () => void domain.close(), 'aris-memory: domain')
   const store = new MemoryStore(domain.table('items'))
-  // Nhân bản, xuất / nhập bot (@aris/bots): chép ký ức riêng của bot.
+  const proposals = new Proposals(store)
   ctx.provide('arisMemory', {
+    // Nhân bản, xuất / nhập bot (@aris/bots): chép ký ức riêng của bot.
     notesOf: (bot: string) => store.notesOf(bot),
     statsOf: (bot: string) => store.statsOf(bot),
     importNotes: (bot: string, items: readonly { text: string; kind: string; tier: string }[]) =>
       store.importNotes(bot, items),
+    /** Ký ức bot thấy (cả đề xuất đang chờ): vòng học nền đọc để khỏi đề xuất trùng. */
+    textsFor: (bot: string) => itemsFor(store, bot).map((m) => m.text),
+    /** Ký ức chờ duyệt: vòng học nền (@aris/reflect) đề xuất, Telegram (@aris/channels) nghe và trả lời. */
+    proposals: {
+      propose: (p: ProposeInput) =>
+        proposals.propose({
+          bot: bookOwner(p.bot, p.book),
+          text: p.text,
+          book: p.book,
+          kind: p.kind,
+          tier: p.origin === 'external' ? 'archive' : p.tier,
+          trust: TRUST[p.origin],
+          sessionId: p.sessionId,
+          proposal: { by: p.bot, why: p.why, quote: p.quote, via: p.via },
+        }),
+      list: () => proposals.list(),
+      on: (fn: Parameters<Proposals['on']>[0]) => proposals.on(fn),
+      answer: (
+        id: string,
+        decision: 'saved' | 'discarded',
+        by: 'user' | 'telegram',
+        patch?: { text?: string; tier?: Tier },
+      ) => proposals.review(id, decision, by, patch),
+    },
   })
+  // Đề xuất quá hạn tự bỏ: quét lúc khởi động và mỗi giờ.
+  const sweep = () =>
+    void proposals
+      .expire()
+      .then((n) => n && logger.info('bỏ %d đề xuất ký ức quá hạn', n))
+      .catch((e: unknown) => logger.warn('bỏ đề xuất quá hạn: %s', String(e)))
+  ctx.effect(() => {
+    sweep()
+    const timer = setInterval(sweep, 3_600_000)
+    return () => clearInterval(timer)
+  }, 'aris-memory: đề xuất quá hạn')
   await store
     .dropHardcodedAddress()
     .then((n) => n && logger.info('đổi chữ "chủ nhân" trong %d ký ức', n))
@@ -165,15 +218,25 @@ export async function apply(ctx: Context): Promise<void> {
           switch (args.action) {
             case 'save': {
               const book = (args.book ?? 'owner') as Book
-              const m = await store.save({
+              const origin = (args.origin ?? 'inferred') as keyof typeof TRUST
+              const input = {
                 bot: bookOwner(bot, book),
                 text: args.text ?? '',
                 book,
-                tier: (args.tier ?? 'core') as Tier,
+                tier: (origin === 'external' ? 'archive' : (args.tier ?? 'core')) as Tier,
                 kind: (args.kind ?? 'fact') as Kind,
-                trust: TRUST[(args.origin ?? 'inferred') as keyof typeof TRUST],
+                trust: TRUST[origin],
                 sessionId: session?.id,
-              })
+              }
+              // Chỉ điều người dùng nói ra được lưu ngay; điều bot suy ra hay lấy từ nguồn ngoài chờ duyệt.
+              if (origin !== 'user') {
+                if (!input.text.trim()) return 'Không làm được: Nội dung ký ức rỗng.'
+                const p = await proposals.propose({ ...input, proposal: { by: bot, via: 'tool' } })
+                if (!p) return 'Đã có ký ức (hoặc đề xuất) gần giống; không ghi thêm.'
+                record('save', p)
+                return `Đã gửi đề xuất ký ức [${p.id}] cho người dùng duyệt (Hộp duyệt, Telegram); chưa có hiệu lực. Nói ngắn với người dùng là bạn đề xuất ghi nhớ điều này, không nói là đã nhớ.`
+              }
+              const m = await store.save(input)
               record('save', m)
               const u = store.usage(m.bot, m.book)
               return `Đã lưu ${describe(m)}.${m.tier === 'core' ? ` Cuốn ${m.book}: ${u.used}/${u.cap} ký tự.` : ''}`
@@ -211,7 +274,7 @@ export async function apply(ctx: Context): Promise<void> {
   )
 
   // Tự nhắc lưu và lưu trước khi nén.
-  const watch = watchConversation(ctx, store, (sessionId) => botOf(sessionId))
+  const watch = watchConversation(ctx, store, proposals, (sessionId) => botOf(sessionId))
 
   // Trang Ký ức của web gọi qua đường /api của dsh (dsh kiểm cookie và chỉ cho người dùng).
   ctx.inject(['connection'], (ctx) => {
@@ -220,7 +283,7 @@ export async function apply(ctx: Context): Promise<void> {
         path: '/api/aris/memory',
         methods: ['GET', 'POST'],
         requestBody: 'buffered',
-        fetch: (request) => handleApi(store, request, watch.lastReflect),
+        fetch: (request) => handleApi(store, request, watch.lastReflect, proposals),
       })
       return () => void dispose()
     }, 'aris-memory: /api/aris/memory')

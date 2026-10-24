@@ -40,17 +40,20 @@ export function Later({
   t,
   stage,
   row,
+  label,
   children,
 }: {
   t: T
   stage: number
   row?: boolean
+  /** Nhãn thay cho "Giai đoạn N" (ví dụ phần của đợt sau trong cùng giai đoạn). */
+  label?: string
   children: ReactNode
 }) {
   return (
     <div className={row ? 'ap-later row' : 'ap-later'} aria-disabled="true">
       <div className="ap-later-body">{children}</div>
-      <span className="ap-phase">{t('later.stage', { n: stage })}</span>
+      <span className="ap-phase">{label ?? t('later.stage', { n: stage })}</span>
     </div>
   )
 }

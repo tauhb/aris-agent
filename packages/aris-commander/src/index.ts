@@ -1724,7 +1724,10 @@ export async function apply(ctx: Context): Promise<void> {
           // ?approvals=all: mọi yêu cầu đang chờ (thanh bên, Hộp duyệt).
           const approvalsOf = q.get('approvals')
           if (approvalsOf)
-            return json({ approvals: center.list(approvalsOf === 'all' ? undefined : approvalsOf) })
+            return json({
+              approvals: center.list(approvalsOf === 'all' ? undefined : approvalsOf),
+              doneToday: center.doneToday(),
+            })
           // ?externals=1: plugin đã cài chưa, đã đăng nhập chưa, bot ngoài nào sẵn sàng.
           if (q.get('externals')) return json(await externalStatus())
           const roomSession = q.get('room')
