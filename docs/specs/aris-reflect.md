@@ -62,8 +62,36 @@ Mỗi đề xuất ký ức gửi một thẻ tới chat chính qua bot Aris: "G
 - `POST /api/aris/memory` thêm `op: 'review'` với `decision` (`save` / `discard`), `text?`, `tier?`.
 - `GET /api/aris/commander?approvals=all` trả thêm `doneToday`.
 
+## Hồ sơ chủ nhân (đợt 2, màn 2.3)
+
+Mỗi bot giữ một hồ sơ riêng về người dùng: các **nhận định** suy ra từ cách người dùng làm việc và phản hồi, khác với ký ức (điều được nói ra hay ghi lại, qua Hộp duyệt).
+
+| Trường | Ý nghĩa |
+|---|---|
+| `area` | `communication` (cách giao tiếp) hoặc `work` (công việc và mục tiêu) |
+| `text` | Một câu, gọi là "người dùng" |
+| `confidence` | 0–1; do aris tính, không do model đặt |
+| `evidence` | Các lần thấy (phiên, lúc, trích ngắn), giữ 10 lần gần nhất; `hits` là tổng số lần |
+| `confirmed` | Người dùng bấm Đúng hoặc sửa: độ tin cậy 1 |
+| `question` | Khi có bằng chứng ngược: câu hỏi và các lựa chọn (mỗi lựa chọn là một nhận định đầy đủ) |
+| `status` | `active` hoặc `rejected` (người dùng bấm Sai; giữ lại để vòng học khỏi đưa lại) |
+
+**Chỉ vòng học cập nhật.** Bot không có công cụ ghi nhận định. Mỗi lần học, ngoài ký ức, model trả thêm tối đa 3 quan sát `insights`: câu nhận định, mảng, trích dẫn, và nếu trùng ý thì mã nhận định có sẵn (`supports`) hay ngược ý (`contradicts`, kèm câu hỏi và lựa chọn).
+
+**Tính độ tin cậy:**
+- Nhận định mới: 0,4.
+- Mỗi lần thấy thêm: `c + (1 − c) × 0,35` (0,4 → 0,61 → 0,75 → 0,84 → …): thấy 4 lần thì vượt 0,8.
+- Quan sát ngược: `c × 0,5`; có câu hỏi thì hiện ô "chưa chắc" để người dùng chọn.
+- Quan sát gần trùng (Jaccard ≥ 0,6) với nhận định có sẵn được tính là thấy thêm; trùng nhận định bị bác thì bỏ.
+
+**Vào prompt:** nhận định từ 0,8 trở lên (hoặc đã xác nhận) của bot nạp thành khối `<aris-owner-insights>` ở ngữ cảnh động, sau ký ức lõi; tối đa 1.500 ký tự, cao trước. Nhận định không qua Hộp duyệt: cửa chặn là độ tin cậy, và người dùng xem, sửa, bác được trên màn 2.3.
+
+**Màn 2.3:** chọn bot; ô "chưa chắc" với các lựa chọn; hai bảng Cách giao tiếp, Công việc và mục tiêu (thanh độ tin cậy, số lần làm bằng chứng mở đúng phiên gần nhất, Đúng / Sửa, Sai với nhận định yếu); "Sao chép sang bot khác" chép các nhận định đang có (gộp với nhận định trùng ý ở bot đích).
+
+**API:** `GET /api/aris/insights?bot=<mã>`; `POST` với `op` = `confirm`, `edit` (`text`), `reject`, `answer` (`option`), `copy` (`to`).
+
 ## Để sau
 
-- Hồ sơ chủ nhân có độ tin cậy (đợt 2), đề xuất skill (đợt 3) dùng chung vòng học này.
+- Đề xuất skill (đợt 3) dùng chung vòng học này.
 - Gợi ý luật từ lịch sử duyệt, "luôn cho phép loại này".
 - `/refine` chạy vòng học thủ công.

@@ -5,6 +5,8 @@
  *   an toàn) thì chạy nền một lần gọi model rẻ đọc lại các lượt chưa học, đề xuất tối đa 3 ký ức.
  * - Đề xuất vào hàng chờ duyệt của `@aris/memory` (Hộp duyệt, Telegram); không ký ức nào tự có hiệu lực.
  * - Trần: đầu vào ≤ 50.000 ký tự mỗi lần, 0,30 USD mỗi ngày cho cả đội (sổ chi phí của `@aris/providers`).
+ * - Hồ sơ chủ nhân theo bot (đợt 2): mỗi lần học còn ghi quan sát về người dùng thành nhận định có độ
+ *   tin cậy và bằng chứng; nhận định từ 0,8 trở lên nạp vào prompt của bot (`<aris-owner-insights>`).
  * @module @aris/reflect
  */
 import type { Context } from '@deepseek-ai/cordis'
@@ -14,17 +16,23 @@ import type {} from '@deepseek-ai/dsh-client-connection'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import { appendPluginRecord, type Session } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-storage-domain'
+import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-tools'
 import { reflectDomain, type RunRecord, type Table } from './domain.js'
+import { InsightError, InsightStore, renderInsights, type Insight, type InsightTable } from './insights.js'
 import { MAX_CHARS, parseReflection, reflectPrompt, transcriptOf, type MemoryProposal } from './prompt.js'
 import { decide, emptyTurn, type Reason, type TurnLog } from './signals.js'
 
 export * from './signals.js'
 export * from './prompt.js'
+export * from './insights.js'
 export type { RunRecord } from './domain.js'
 
 export const name = 'aris-reflect'
-export const inject = ['storageDomain', 'llm', 'sessionController']
+export const inject = ['storageDomain', 'llm', 'sessionController', 'systemPrompt']
+
+/** Khối nhận định về người dùng: sau ký ức lõi (300) của @aris/memory. */
+export const INSIGHTS_ORDER = 310
 
 /** Trần tiền vòng học mỗi ngày cho cả đội (USD). */
 export const DAILY_USD = 0.3
@@ -118,10 +126,24 @@ export async function apply(ctx: Context): Promise<void> {
   const domain = await ctx.storageDomain.open(reflectDomain)
   ctx.effect(() => () => void domain.close(), 'aris-reflect: domain')
   const runs = domain.table('runs') as unknown as Table<RunRecord>
+  const insights = new InsightStore(domain.table('insights') as unknown as InsightTable)
 
   const bots = () => ctx.get('arisBots') as BotsPort | undefined
   const memory = () => ctx.get('arisMemory') as MemoryPort | undefined
   const spend = () => ctx.get('arisSpend') as SpendPort | undefined
+  const botIdOf = (sessionId: string | undefined) => bots()?.botOf(sessionId).id ?? 'aris'
+
+  // Nhận định đủ tin của bot nạp vào mọi lượt (đọc lại mỗi lần dựng prompt).
+  ctx.effect(
+    () =>
+      ctx.systemPrompt.context({
+        name: 'aris:owner-insights',
+        order: INSIGHTS_ORDER,
+        text: (c) => renderInsights(insights.list(botIdOf(c?.agent?.session.id))),
+        interpolate: false,
+      }),
+    'aris-reflect: owner insights',
+  )
 
   // --- Theo dõi lượt -------------------------------------------------------------
   const states = new Map<string, SessionState>()
@@ -250,7 +272,13 @@ export async function apply(ctx: Context): Promise<void> {
             content: [
               {
                 type: 'text',
-                text: reflectPrompt({ bot: bot.name, transcript, existing: mem.textsFor(bot.id), reasons }),
+                text: reflectPrompt({
+                  bot: bot.name,
+                  transcript,
+                  existing: mem.textsFor(bot.id),
+                  reasons,
+                  insights: insights.list(bot.id).map((i) => ({ id: i.id, area: i.area, text: i.text })),
+                }),
               },
             ],
           },
@@ -261,12 +289,15 @@ export async function apply(ctx: Context): Promise<void> {
         else if (chunk.type === 'usage') usage = chunk.usage
       }
       if (usage) run.usd = await spend()?.charge(m.provider, m.model, usage, ['reflect', `bot:${bot.id}`])
-      const { memories } = parseReflection(raw)
-      run.proposed = memories.length
-      for (const p of memories) {
+      const result = parseReflection(raw)
+      run.proposed = result.memories.length
+      for (const p of result.memories) {
         const item = await mem.proposals.propose({ ...p, bot: bot.id, sessionId: session.id, via: 'reflect' })
         if (item) run.saved.push(item.id)
       }
+      let noted = 0
+      for (const o of result.insights) if (await insights.observe(bot.id, o, session.id)) noted++
+      run.insights = noted
     } catch (e) {
       run.error = String(e).split('\n')[0]
     }
@@ -315,5 +346,73 @@ export async function apply(ctx: Context): Promise<void> {
       })
       return () => void dispose()
     }, 'aris-reflect: /api/aris/reflect')
+    ctx.effect(() => {
+      const dispose = ctx.connection.fetch.register({
+        path: '/api/aris/insights',
+        methods: ['GET', 'POST'],
+        requestBody: 'buffered',
+        fetch: (request) => insightsApi(insights, request),
+      })
+      return () => void dispose()
+    }, 'aris-reflect: /api/aris/insights')
   })
+}
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { 'content-type': 'application/json; charset=utf-8' },
+  })
+const BOT_RE = /^[a-z0-9-]{1,40}$/
+
+/**
+ * Đường `/api/aris/insights` cho màn 2.3 (dsh đã kiểm cookie và quyền chủ nhân).
+ *   GET  ?bot=<mã>                                   → nhận định đang có của bot
+ *   POST { op: confirm | edit | reject | answer | copy, id?, text?, option?, bot?, to? }
+ */
+export async function insightsApi(store: InsightStore, request: Request): Promise<Response> {
+  const url = new URL(request.url)
+  const view = (bot: string) => ({ bot, insights: store.list(bot), threshold: 0.8 })
+  if (request.method !== 'POST') {
+    const bot = url.searchParams.get('bot') ?? 'aris'
+    return BOT_RE.test(bot) ? json(view(bot)) : json({ error: 'bot không hợp lệ' }, 400)
+  }
+  const body = (await request.json().catch(() => ({}))) as {
+    op?: unknown
+    id?: unknown
+    text?: unknown
+    option?: unknown
+    bot?: unknown
+    to?: unknown
+  }
+  const id = typeof body.id === 'string' ? body.id : ''
+  try {
+    let item: Insight | undefined
+    switch (body.op) {
+      case 'confirm':
+        item = await store.confirm(id)
+        break
+      case 'edit':
+        item = await store.edit(id, typeof body.text === 'string' ? body.text : '')
+        break
+      case 'reject':
+        item = await store.reject(id)
+        break
+      case 'answer':
+        item = await store.answer(id, typeof body.option === 'number' ? body.option : -1)
+        break
+      case 'copy': {
+        const from = typeof body.bot === 'string' ? body.bot : ''
+        const to = typeof body.to === 'string' ? body.to : ''
+        if (!BOT_RE.test(from) || !BOT_RE.test(to)) return json({ error: 'bot không hợp lệ' }, 400)
+        return json({ ok: true, copied: await store.copy(from, to), ...view(from) })
+      }
+      default:
+        return json({ error: 'op không hợp lệ' }, 400)
+    }
+    return json({ ok: true, ...view(item.bot) })
+  } catch (e) {
+    if (e instanceof InsightError) return json({ error: e.message }, 409)
+    throw e
+  }
 }

@@ -46,8 +46,8 @@ describe('lời nhắc vòng học', () => {
     })
     expect(memories[1]).toMatchObject({ tier: 'archive', origin: 'external', kind: 'lesson' })
     expect(memories.map((m) => m.text)).not.toContain('Chủ nhân thích cà phê')
-    expect(parseReflection('không có gì')).toEqual({ memories: [] })
-    expect(parseReflection('{"memories": 1}')).toEqual({ memories: [] })
+    expect(parseReflection('không có gì')).toEqual({ memories: [], insights: [] })
+    expect(parseReflection('{"memories": 1}')).toEqual({ memories: [], insights: [] })
   })
 
   it('chọn model Flash của nhà cung cấp mặc định, không có thì model mặc định', () => {

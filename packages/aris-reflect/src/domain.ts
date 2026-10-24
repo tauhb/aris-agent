@@ -1,6 +1,7 @@
 /** Storage domain `aris_reflect`: các lần chạy vòng học nền (để xem lại, tính trần, hiện trên giao diện). */
 import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 import { z } from 'zod'
+import { AREAS, type Insight } from './insights.js'
 
 export const runRecord = z.object({
   id: z.string(),
@@ -15,17 +16,46 @@ export const runRecord = z.object({
   /** Số đề xuất model trả về và mã các đề xuất đã gửi duyệt (sau khi bỏ trùng). */
   proposed: z.number().int(),
   saved: z.array(z.string()),
+  /** Số nhận định về người dùng đã ghi vào hồ sơ của bot (đợt 2). */
+  insights: z.number().int().optional(),
   /** Không chạy: hết trần ngày, chưa có model. */
   skipped: z.enum(['budget', 'no-model']).optional(),
   error: z.string().optional(),
 })
 export type RunRecord = z.infer<typeof runRecord>
 
+const evidence = z.object({ sessionId: z.string().optional(), at: z.string(), quote: z.string().optional() })
+
+/** Nhận định về người dùng của một bot (hồ sơ chủ nhân, màn 2.3). */
+export const insightRecord: z.ZodType<Insight> = z.object({
+  id: z.string(),
+  bot: z.string(),
+  area: z.enum(AREAS),
+  text: z.string(),
+  confidence: z.number(),
+  evidence: z.array(evidence),
+  hits: z.number().int(),
+  confirmed: z.boolean().optional(),
+  question: z
+    .object({
+      text: z.string(),
+      options: z.array(z.object({ label: z.string(), text: z.string() })),
+      at: z.string(),
+    })
+    .optional(),
+  status: z.enum(['active', 'rejected']),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
 export const reflectDomain = defineDomain({
   name: 'aris_reflect',
   version: 1,
   layout: 'per-record',
-  tables: { runs: domainTable<string, RunRecord>(runRecord) },
+  tables: {
+    runs: domainTable<string, RunRecord>(runRecord),
+    insights: domainTable<string, Insight>(insightRecord),
+  },
 })
 
 export interface Table<V> {

@@ -143,25 +143,6 @@ export const DEMO_PROFILE = {
   learned: ['Skill nghien-cuu-doi-thu lên v3 · 21/10', 'Ghi nhớ: anh thích bảng so sánh có cột “nguồn”'],
 }
 
-/** 2.3 · Bot hiểu gì về chủ nhân. GĐ3. */
-export const DEMO_OWNER = {
-  bots: ['aris', 'mai', 'lam', 'tin'],
-  insights: 18,
-  unsure:
-    'anh muốn báo cáo nghiên cứu dài 1 trang hay đầy đủ chi tiết? Hai lần gần đây anh phản hồi ngược nhau.',
-  unsureOptions: ['1 trang', 'Đầy đủ', 'Tuỳ việc'],
-  communication: [
-    { text: 'Trả lời tiếng Việt có dấu, ngắn, ưu tiên bảng', pct: 94, evidence: 12 },
-    { text: 'Không thích mở đầu bằng lời khen hay rào đón', pct: 81, evidence: 5 },
-    { text: 'Bảng so sánh phải có cột “nguồn”', pct: 88, evidence: 4 },
-  ],
-  goals: [
-    { text: 'Đang tập trung kênh YouTube và khoá học AI trong quý 4', pct: 76, evidence: 7 },
-    { text: 'Theo dõi 3 đối thủ: [ĐỐI THỦ A], [ĐỐI THỦ B], [ĐỐI THỦ C]', pct: 70, evidence: 3 },
-    { text: 'Có thể thích nhận báo cáo vào sáng thứ 2', pct: 42, evidence: 1 },
-  ],
-}
-
 /** 2.1 · Mẫu bot và linh vật gợi ý. */
 export const DEMO_CREATE_BOT = {
   templates: ['Thư ký', 'Nghiên cứu', 'Tài chính', 'Viết nội dung', 'Lập trình', 'Trống'],

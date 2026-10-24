@@ -169,6 +169,8 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-lb{font-size:12px;font-weight:600;color:var(--a-muted)}
 .ap-soul{border:1px solid var(--a-line);border-radius:12px;background:var(--a-panel);color:var(--a-ink);padding:14px 16px;font-size:13px;line-height:1.7;resize:vertical;width:100%}
 .ap-cl{display:grid;grid-template-columns:minmax(0,1fr) 120px 110px 150px;gap:14px;align-items:center;padding:12px 14px;border-top:1px solid var(--a-line);font-size:13.5px}
+.ap-cl.ap-cl-edit{grid-template-columns:minmax(0,1fr) auto}
+.ap-conf{display:flex;align-items:center;gap:8px;font-size:12px}
 .ap-mascot-row{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;overflow:hidden}
 .aris .ap-mascot-row>button[role=radio],.aris .ap-mascot-grid>button{width:44px;height:44px;flex:none;border-radius:12px;border:1px solid var(--a-line);background:var(--a-panel);display:inline-flex;align-items:center;justify-content:center}
 .aris .ap-mascot-row>button[aria-checked=true],.aris .ap-mascot-grid>button[aria-checked=true]{border:2px solid var(--a-accent);background:var(--a-accentSoft)}

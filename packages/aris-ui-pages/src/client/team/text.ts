@@ -189,8 +189,6 @@ export const TEAM_TEXT = text(
     'own.addrSelfHint': 'e.g. em, tôi, mình',
     'own.addrSave': 'Save',
     'own.addrSaved': 'Saved — applies from the next reply',
-    'own.sample':
-      'Below is sample data: what each bot learns about you comes with the learning loop (phase 3).',
     'own.subtitle': 'Each bot keeps its own profile · {n} insights · updated by the learning loop',
     'own.copy': 'Copy to another bot',
     'own.unsure': '{name} is unsure about 1 thing:',
@@ -202,6 +200,13 @@ export const TEAM_TEXT = text(
     'own.right': 'Right',
     'own.fix': 'Fix',
     'own.wrong': 'Wrong',
+    'own.save': 'Save',
+    'own.remove': 'Remove this insight',
+    'own.confirmed': 'Confirmed',
+    'own.noneArea': 'Nothing here yet.',
+    'own.copied': 'Copied {n} insights to {name}.',
+    'own.empty':
+      '{name} has no insights about you yet. The learning loop adds them as {name} works with you.',
     'own.note':
       'Insights at 80% or above go into {name}’s prompt. Click the evidence to open the exact conversation that produced it.',
     'cb.title': 'New bot',
@@ -770,7 +775,6 @@ export const TEAM_TEXT = text(
     'own.addrSelfHint': 'ví dụ: em, tôi, mình',
     'own.addrSave': 'Lưu',
     'own.addrSaved': 'Đã lưu — có hiệu lực từ câu trả lời kế tiếp',
-    'own.sample': 'Phần dưới là dữ liệu mẫu: điều mỗi bot học được về {you} có ở vòng học (giai đoạn 3).',
     'own.subtitle': 'Mỗi bot có hồ sơ riêng · {n} nhận định · cập nhật bởi vòng học',
     'own.copy': 'Sao chép sang bot khác',
     'own.unsure': '{name} chưa chắc 1 điều:',
@@ -782,6 +786,12 @@ export const TEAM_TEXT = text(
     'own.right': 'Đúng',
     'own.fix': 'Sửa',
     'own.wrong': 'Sai',
+    'own.save': 'Lưu',
+    'own.remove': 'Bỏ nhận định này',
+    'own.confirmed': 'Đã xác nhận',
+    'own.noneArea': 'Chưa có gì.',
+    'own.copied': 'Đã chép {n} nhận định sang {name}.',
+    'own.empty': '{name} chưa có nhận định nào về {you}. Vòng học nền ghi dần khi {name} làm việc với {you}.',
     'own.note':
       'Nhận định từ 80% trở lên được nạp vào prompt của {name}. Bấm “bằng chứng” để mở đúng đoạn hội thoại sinh ra nhận định.',
     'cb.title': 'Tạo bot mới',
