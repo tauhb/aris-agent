@@ -25,7 +25,8 @@ import { botStats, LiveTracker } from './live.js'
 import { checkConnection, connectionOf, McpStore, needsAsk, pluginConfig, type McpRecord } from './mcp.js'
 import { renderPersona } from './persona.js'
 import { botDenyReason, botToolOf, denyReason, insideDir, needOf, writeTarget } from './policy.js'
-import { BotStore } from './store.js'
+import { SoulHistory, type SoulRecord } from './soul.js'
+import { BotError, BotStore, COMMANDER_ID } from './store.js'
 import { loadTemplates } from './templates.js'
 
 export { renderPersona } from './persona.js'
@@ -43,6 +44,7 @@ export type { BotRecord, DepartmentRecord } from './domain.js'
 export * from './external.js'
 export * from './portable.js'
 export * from './mcp.js'
+export * from './soul.js'
 
 export const name = 'aris-bots'
 export const inject = ['storageDomain', 'systemPrompt', 'sessionController', 'workspaceRegistry', 'tools']
@@ -75,6 +77,7 @@ export async function apply(ctx: Context): Promise<void> {
   ) as unknown as Tables
   const store = new BotStore(tables)
   const mcp = new McpStore(domain.table('mcp') as unknown as Table<McpRecord>)
+  const souls = new SoulHistory(domain.table('souls') as unknown as Table<SoulRecord>)
   await store.ensureCommander()
   await store.ensurePolicies(await loadTemplates())
 
@@ -334,6 +337,41 @@ export async function apply(ctx: Context): Promise<void> {
     return sessionId
   }
 
+  // "Nhờ Aris viết lại" tính cách: model của Commander, không có thì model vừa dùng gần nhất.
+  let lastModel: { provider: string; model: string } | undefined
+  ctx.on('session/event', (_session, event) => {
+    if (event.type !== 'assistant/message') return
+    const src = (event.data as unknown as { source?: { provider?: string; model?: string } }).source
+    if (src?.provider && src.model) lastModel = { provider: src.provider, model: src.model }
+  })
+  async function rewrite(prompt: string, signal?: AbortSignal): Promise<string> {
+    // Model của Commander; không đặt thì model mặc định của dsh; cuối cùng là model vừa dùng gần nhất.
+    const fallback = await ctx.sessionController
+      .modelCatalog()
+      .then((c) =>
+        c.default?.provider && c.default.model
+          ? { provider: c.default.provider, model: c.default.model }
+          : undefined,
+      )
+      .catch(() => undefined)
+    const model = store.effectiveModel(COMMANDER_ID) ?? fallback ?? lastModel
+    if (!model)
+      throw new BotError('Chưa có model nào để viết: chọn model mặc định ở Cài đặt › Provider rồi thử lại.')
+    const llm = ctx.get('llm') as
+      { stream(o: Record<string, unknown>): AsyncIterable<{ type: string; text?: string }> } | undefined
+    if (!llm) throw new BotError('Chưa gọi được model.')
+    let out = ''
+    for await (const chunk of llm.stream({
+      provider: model.provider,
+      model: model.model,
+      messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
+      maxTokens: 4000,
+      ...(signal ? { signal } : {}),
+    }))
+      if (chunk.type === 'text-delta' && chunk.text) out += chunk.text
+    return out
+  }
+
   async function catalog() {
     const c = await ctx.sessionController.modelCatalog()
     return c.groups.map((g) => ({
@@ -375,6 +413,8 @@ export async function apply(ctx: Context): Promise<void> {
               },
               mcp,
               checkMcp,
+              souls,
+              rewrite,
               spend: () =>
                 (ctx.get('arisSpend') as { today(): Record<string, number> } | undefined)?.today() ?? {},
             },

@@ -44,6 +44,17 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-taskrow .lbl{flex:1 1 220px;min-width:0;display:flex;flex-direction:column;gap:1px}.ap-taskrow .lbl .a-muted{font-size:12.5px}
 .ap-taskrow .ctl{flex:1 1 260px;min-width:0;max-width:380px;display:flex}
 .ap-later.row .ap-taskrow{border-top:0}
+.ap-soul{flex:none;min-height:150px;resize:vertical}
+.ap-sec{font-weight:600;padding-top:10px;margin-top:4px;border-top:1px solid var(--a-line)}
+.ap-soul.view{margin:0;white-space:pre-wrap;word-break:break-word;min-height:120px;max-height:340px;overflow:auto}
+.ap-soulhist{display:grid;grid-template-columns:minmax(180px,230px) minmax(0,1fr);gap:12px}
+.ap-soulhist .list{display:flex;flex-direction:column;gap:4px;max-height:340px;overflow:auto}
+.aris .ap-soulhist .list button{display:flex;flex-direction:column;gap:1px;text-align:left;border:1px solid transparent;border-radius:10px;padding:8px 10px;font-size:13px}
+.aris .ap-soulhist .list button:hover{background:var(--a-hover)}
+.aris .ap-soulhist .list button[aria-selected=true]{border-color:var(--a-accent);background:var(--a-accentSoft)}
+.ap-soulhist .list .a-muted{font-size:12px}
+.ap-soulcmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+@media (max-width:640px){.ap-soulhist{grid-template-columns:1fr}}
 .ap-initial{width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:var(--a-panel2);color:var(--a-ink);font-weight:700;font-size:12.5px;flex:none}
 .ap-logo{width:28px;height:28px;border-radius:8px;flex:none}
 .ap-mrow{display:grid;grid-template-columns:28px minmax(0,1.3fr) minmax(0,1.6fr) 90px;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--a-line);font-size:13px}

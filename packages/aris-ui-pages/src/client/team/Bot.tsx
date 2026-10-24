@@ -19,7 +19,6 @@ import {
 import { useEffect, useState, type ReactNode } from 'react'
 import type { PageProps } from '../page.js'
 import { departmentOptions, modelOptions } from '../options.js'
-import { Box } from '../ui.js'
 import { useChannels } from '../settings/channels-api.js'
 
 /** Kênh riêng của bot (bản vẽ 2.2): tài khoản Telegram gắn trên trang 6.3. */
@@ -53,6 +52,7 @@ function BotChannels({ t, botId, onConnect }: { t: PageProps['t']; botId: string
   )
 }
 import { BotAside, PermsCard } from './BotPerms.js'
+import { SoulCard } from './BotSoul.js'
 import { Later, SkillsTab } from './BotTools.js'
 import { ExternalSettings } from './ExternalBot.js'
 import { MascotPicker } from './MascotPicker.js'
@@ -82,7 +82,7 @@ function ProfileForm({
     setMsg(null)
   }, [bot])
   const set = (patch: Partial<BotData>) => (setForm({ ...form, ...patch }), setMsg(null))
-  const dirty = (['name', 'handle', 'role', 'description', 'soul', 'mascot', 'department'] as const).some(
+  const dirty = (['name', 'handle', 'role', 'description', 'mascot', 'department'] as const).some(
     (k) => (form[k] ?? '') !== (bot[k] ?? ''),
   )
 
@@ -97,7 +97,6 @@ function ProfileForm({
           handle: form.handle,
           role: form.role,
           description: form.description,
-          soul: form.soul,
           mascot: form.mascot,
           department: form.department || null,
         },
@@ -124,6 +123,7 @@ function ProfileForm({
 
   return (
     <>
+      <div className="ap-sec">{t('bot.profileTitle')}</div>
       <div className="ap-grid-2" style={{ gap: 12 }}>
         <label className="a-field">
           <span className="l">{t('bot.name')}</span>
@@ -163,16 +163,6 @@ function ProfileForm({
         />
         <span className="h">{t('bot.aboutHint')}</span>
       </label>
-      <label className="a-field">
-        <span className="l">{t('bot.soulTitle')}</span>
-        <textarea
-          className="ap-soul a-mono"
-          rows={5}
-          value={form.soul}
-          onChange={(e) => set({ soul: e.target.value })}
-          aria-label={t('bot.soulTitle')}
-        />
-      </label>
       <div>
         <div className="ap-lb" style={{ paddingBottom: 6, color: 'var(--a-ink)' }}>
           {t('bot.mascot')}
@@ -195,19 +185,10 @@ function ProfileForm({
           {t('bot.save')}
         </Button>
       </div>
-      <Box style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 14px' }}>
-        <span className="a-muted" style={{ fontSize: 18, lineHeight: 1 }}>
-          ⓘ
-        </span>
-        <span className="a-muted" style={{ fontSize: 13 }}>
-          {t('bot.soulNote', { name: bot.name })}
-        </span>
-      </Box>
     </>
   )
 }
 
-/** Model riêng của bot: áp khi mở phiên chat với bot; bỏ trống là theo model mặc định. */
 /** Tab Model (bản vẽ 2.2): model theo từng việc của bot. */
 function ModelCard({ t, bot, team, nav }: { t: T; bot: BotData; team: TeamView; nav: PageProps['nav'] }) {
   const [error, setError] = useState<string | null>(null)
@@ -386,7 +367,12 @@ export function BotProfile({ t, nav, params, plugins }: PageProps) {
           className="a-page-body"
           style={{ maxWidth: 860, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}
         >
-          {tab === 'soul' && <ProfileForm t={t} bot={bot} team={team} onDeleted={() => nav.go('map')} />}
+          {tab === 'soul' && (
+            <>
+              <SoulCard t={t} bot={bot} />
+              <ProfileForm t={t} bot={bot} team={team} onDeleted={() => nav.go('map')} />
+            </>
+          )}
           {tab === 'external' && bot.external && (
             <ExternalSettings t={t} bot={{ ...bot, external: bot.external }} plugins={plugins} />
           )}

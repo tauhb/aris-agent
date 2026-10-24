@@ -26,6 +26,8 @@ export interface BotData {
   perms?: { write?: 'none' | 'workspace' | 'anywhere'; danger?: 'ask' | 'deny' }
   /** Model theo việc: khi chạy /goal, dự phòng riêng khi lỗi. */
   models?: { goal?: { provider: string; model: string }; fallback?: { provider: string; model: string } }
+  /** Phiên bản tính cách hiện tại và lần sửa cuối. */
+  soulMeta?: { version: number; at: string }
   /** Commander được giao việc (bot thường); không có là có. */
   assignable?: boolean
   createdAt: string

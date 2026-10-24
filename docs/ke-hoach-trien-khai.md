@@ -145,6 +145,8 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 ## Giai đoạn 2 · Đội bot và Commander (tuần 6–8)
 
+> **Hồ sơ bot đợt 4/4 xong 24/10 — Tính cách; màn Hồ sơ bot (2.2, 2.2c) làm đủ** ([đặc tả](specs/aris-bots.md#hồ-sơ-bot--tính-cách-đợt-4)): tính cách theo phiên bản (xem, khôi phục), "Nhờ Aris viết lại" có gợi ý nhanh và so sánh bên cạnh bản hiện tại. Cả 4 đợt: Skill & tool (kết nối MCP, bộ công cụ), Quyền & kênh, cột phải số liệu thật, Model theo việc, Tính cách. Phần thuộc giai đoạn sau hiện mờ, ghi rõ giai đoạn.
+
 > **Hồ sơ bot đợt 3/4 xong 24/10 — Model theo việc** ([đặc tả](specs/aris-bots.md#hồ-sơ-bot--model-theo-việc-đợt-3)): mỗi bot đặt được model khi chạy `/goal` và model dự phòng riêng (thử trước chuỗi chung); vòng học nền (giai đoạn 3) hiện mờ. Sửa kèm: ô chọn đè nhãn khi cửa sổ hẹp. Chạy thử thật: `/goal` của Minh dùng DeepSeek-V4-Pro, xong thì về Flash.
 
 > **Hồ sơ bot đợt 2/4 xong 24/10 — Quyền & kênh, cột phải** ([đặc tả](specs/aris-bots.md#hồ-sơ-bot--quyền--kênh-cột-phải-đợt-2)): quyền riêng của bot (ghi file: không / trong thư mục làm việc / mọi nơi; hành động nguy hiểm: hỏi / tự từ chối; cho Aris giao việc) có hiệu lực thật; cột phải có trạng thái, số việc và tỉ lệ hoàn thành 7 ngày, chi phí 7 ngày theo bot (sổ chi phí nay ghi theo bot), ký ức lõi, việc hay giao, ký ức mới học. Lark (giai đoạn 7), skill tự cải tiến (giai đoạn 3) hiện mờ.

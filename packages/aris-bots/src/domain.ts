@@ -6,6 +6,7 @@ import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 import { z } from 'zod'
 import { externalRecord } from './external.js'
 import { mcpRecord, type McpRecord } from './mcp.js'
+import { soulRecord, type SoulRecord } from './soul.js'
 
 export const modelRef = z.object({ provider: z.string(), model: z.string() })
 
@@ -119,6 +120,7 @@ export const botsDomain = defineDomain({
     activity: domainTable<string, ActivityRecord>(activityRecord),
     owner: domainTable<string, OwnerRecord>(ownerRecord),
     mcp: domainTable<string, McpRecord>(mcpRecord),
+    souls: domainTable<string, SoulRecord>(soulRecord),
   },
 })
 

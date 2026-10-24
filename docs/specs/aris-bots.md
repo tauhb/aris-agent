@@ -129,6 +129,16 @@ Tab Model theo bản vẽ 2.2, trường `models` của bot:
 
 Chạy thử thật (24/10): đặt model `/goal` của Minh là DeepSeek-V4-Pro, chạy `/goal` ngắn trong phiên mới của Minh → sổ chi phí ghi các lần gọi DeepSeek-V4-Pro, Flash không tăng; tin thường sau đó dùng lại DeepSeek-V4.1-Flash, ô model của phiên về Flash. Lần thử đầu lộ hai lỗi đã sửa: tên dịch vụ là `goals` (không phải `goal`), và phiên bị giữ model `/goal` sau khi mục tiêu xong.
 
+## Hồ sơ bot · Tính cách (đợt 4)
+
+Tab Tính cách theo bản vẽ 2.2: thẻ "Tính cách (SOUL)" có dòng "đứng đầu prompt · sửa lần cuối · phiên bản N", ô sửa, nút Lịch sử phiên bản, Nhờ Aris viết lại, Lưu, ghi chú hiệu lực ở phiên mới. Các trường hồ sơ (tên, tên gọi, vai, phòng, việc của bot, linh vật, xoá bot) nằm dưới, mục "Hồ sơ bot", nút Lưu riêng.
+
+- **Lịch sử** (`soul.ts`, bảng `souls` của domain `aris_bots`, khoá `<bot>-v<n>`): mỗi lần SOUL đổi (op `update` có `soul`) ghi một phiên bản kèm ai đổi (`user`, `aris` khi lưu bản Aris viết, `restore` khi khôi phục từ phiên bản cũ, `create` cho bản lúc tạo bot). Bot chưa có lịch sử thì lần đổi đầu ghi bản cũ thành phiên bản 1. Snapshot gửi `soulMeta` (phiên bản, lần sửa cuối) của mỗi bot. Xoá bot thì xoá lịch sử.
+- **Khôi phục** (op `soul-restore`): đặt lại SOUL bằng phiên bản cũ, ghi thành phiên bản mới.
+- **Nhờ Aris viết lại** (op `soul-rewrite` `{ id, wish, draft }`): gọi `llm.stream` với model của Commander (không đặt thì model mặc định của dsh, cuối cùng là model vừa dùng), lời nhắc có vai trò, việc của bot, bản đang sửa, mong muốn (có gợi ý nhanh: ngắn gọn, thân thiện, nghiêm túc, luôn ghi nguồn); không viết cứng cách xưng hô. Câu trả lời được làm sạch (bỏ khối mã, lời dẫn, đầu dòng). Bản đề xuất hiện cạnh bản hiện tại; "Dùng bản này" chỉ điền vào ô sửa, bấm Lưu mới lưu (ghi là Aris viết).
+
+Chạy thử thật (24/10): nhờ Aris viết lại tính cách Minh "ngắn gọn hơn" → bản 7 câu đúng vai nghiên cứu; Dùng bản này → Lưu → phiên bản 2 "Aris viết"; Lịch sử → khôi phục phiên bản 1 → Minh về bản gốc, thành phiên bản 3. Lần thử đầu lộ lỗi đã sửa: sau khi khởi động lại chưa có tin nhắn nào thì không biết dùng model nào (nay lấy model mặc định của dsh).
+
 ## Nhân bản, xuất, nhập (bản vẽ 2.4)
 
 Hộp "Nhân bản / xuất" trên hồ sơ bot (`portable.ts`). Luôn chép vai trò, mô tả, linh vật; bot ngoài luôn giữ cấu hình bot ngoài (đó là loại bot). Chọn thêm:

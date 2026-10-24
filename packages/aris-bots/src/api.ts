@@ -19,6 +19,7 @@ import {
   type CopyParts,
   type PortableMemory,
 } from './portable.js'
+import { rewritePrompt, cleanRewrite, type SoulHistory } from './soul.js'
 import { BotError, type BotInput, type BotStore, type Template } from './store.js'
 
 /** Ký ức riêng của bot (dịch vụ `arisMemory`), để nhân bản, xuất, nhập. */
@@ -42,6 +43,10 @@ export interface ApiDeps {
   memory?: () => MemoryPort | undefined
   /** Số liệu cột phải hồ sơ bot (`?profile=<mã bot>`). */
   profile?: (bot: string) => unknown
+  /** Lịch sử tính cách (SOUL) theo phiên bản. */
+  souls?: SoulHistory
+  /** Gọi model viết lại tính cách (model của Commander, không thì model vừa dùng gần nhất). */
+  rewrite?: (prompt: string, signal?: AbortSignal) => Promise<string>
   /** Kết nối nền tảng (MCP) theo bot. */
   mcp?: McpStore
   /** Kết nối thử một máy chủ MCP. */
@@ -62,7 +67,8 @@ const json = (body: unknown, status = 200) =>
 async function snapshot(d: ApiDeps) {
   const templates = await d.templates()
   return {
-    bots: d.store.list(),
+    // Phiên bản và lần sửa cuối của tính cách (dòng phụ trên thẻ SOUL).
+    bots: d.store.list().map((b) => (d.souls ? { ...b, soulMeta: d.souls.meta(b) } : b)),
     owner: d.store.owner(),
     departments: d.store.departments(),
     spend: d.spend?.() ?? {},
@@ -100,12 +106,47 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
       case 'create':
         await d.store.create(body.bot as BotInput)
         break
-      case 'update':
-        await d.store.update(String(body.id), body.patch as Partial<BotInput>)
+      case 'update': {
+        const id = String(body.id)
+        const prev = d.store.get(id)?.soul ?? ''
+        const rec = await d.store.update(id, body.patch as Partial<BotInput>)
+        if (d.souls && (body.patch as Partial<BotInput> | undefined)?.soul !== undefined)
+          await d.souls.record(rec, prev, rec.soul, body.soulBy === 'aris' ? 'aris' : 'user')
         break
+      }
+      case 'soul-history': {
+        const bot = d.store.get(String(body.id))
+        if (!bot) return json({ error: 'Không có bot này.' }, 400)
+        const versions = d.souls?.list(bot.id) ?? []
+        // Chưa có lịch sử: bản hiện tại là phiên bản 1.
+        return json({
+          versions: versions.length
+            ? versions
+            : [{ bot: bot.id, version: 1, soul: bot.soul, at: bot.createdAt, by: 'create' }],
+        })
+      }
+      case 'soul-restore': {
+        const bot = d.store.get(String(body.id))
+        const v = bot && d.souls?.get(bot.id, Number(body.version))
+        if (!bot || !v) return json({ error: 'Không có phiên bản này.' }, 400)
+        const rec = await d.store.update(bot.id, { soul: v.soul })
+        await d.souls!.record(rec, bot.soul, rec.soul, 'restore', v.version)
+        break
+      }
+      case 'soul-rewrite': {
+        const bot = d.store.get(String(body.id))
+        if (!bot) return json({ error: 'Không có bot này.' }, 400)
+        if (!d.rewrite) return json({ error: 'Chưa gọi được model để viết lại.' }, 400)
+        const draft = typeof body.draft === 'string' ? body.draft : bot.soul
+        const raw = await d.rewrite(rewritePrompt(bot, draft, String(body.wish ?? '')), request.signal)
+        const soul = cleanRewrite(raw)
+        if (!soul) return json({ error: 'Aris chưa viết được bản mới, thử lại.' }, 502)
+        return json({ soul })
+      }
       case 'delete':
         await d.store.remove(String(body.id))
         await d.mcp?.removeBot(String(body.id))
+        await d.souls?.removeBot(String(body.id))
         break
       case 'owner':
         await d.store.setOwner(
