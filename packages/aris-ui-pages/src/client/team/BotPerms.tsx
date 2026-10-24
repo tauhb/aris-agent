@@ -230,7 +230,7 @@ export function BotAside({ t, bot, nav }: { t: T; bot: BotData; nav: PageProps['
     <aside className="ap-aside ap-aside-a" aria-label={t('bot.summary')}>
       <div className="ap-hero" style={{ ['--bot' as string]: color }}>
         <div className="who">
-          <Mascot id={bot.mascot} size={40} />
+          <Mascot id={bot.mascot} size={40} motion={status} seed={bot.id} />
           <span className="txt">
             <b>{bot.name}</b>
             <span className="a-muted">

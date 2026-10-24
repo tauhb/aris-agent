@@ -440,6 +440,10 @@ Trang "Revamp nhẹ · đề xuất" trên canvas (bảng R1 ngôn ngữ thiết
 
 **Thư viện linh vật (trang “Thành phần”):** 30 dáng = 6 đang dùng + 24 dáng mới — 10 dáng còn lại của bảng mẫu A/B (tròn, trứng, viên thuốc ngang, tam giác, mây, lục giác, hình thang, hạt đậu, cỏ bốn lá, bông hoa) và 14 dáng mới cùng phong cách (bát giác, viên thuốc đứng, mái vòm, khiên, chuông, trăng khuyết, sao năm cánh, quả lê, viên ngọc, chữ thập, bánh răng, bong bóng thoại, chiếc lá, vương miện), mỗi dáng có vai gợi ý.
 
+**Thêm 20 dáng (24/10), lên 50 dáng:** mã C1–C20, vẽ theo đồ vật gợi vai (tia chớp, trang giấy, cốc cà phê, ngọn lửa, bánh quy, quả táo, mũi tên lên, ổ khoá, bóng đèn, đá cuội, cái phễu, mặt trời, mảnh ghép, cuốn sách, ngôi nhà, cái ô, bóng bay, ngọn núi, máy ảnh, tên lửa), vẫn một khối màu và hai mắt trắng.
+
+**Linh vật chuyển động theo trạng thái (24/10, bản vẽ “Linh vật chuyển động”):** rảnh thì thở nhẹ, lắc lư, thỉnh thoảng chớp mắt; đang làm thì nhún đều; chờ duyệt thì vài giây nhảy lên một cái; xong thì nảy vui một lần rồi về rảnh; vấp thì lắc đầu, mắt cụp. Chuyển động áp lên cả khối hình và mắt được nhận ra từ phần tô trắng, nên thay bộ linh vật khác (cùng luật “mắt màu trắng”) vẫn chạy, không phải sửa mã. Mỗi bot lệch nhịp theo tên để cả đội không nhún cùng lúc; mỗi dáng có thể có tốc độ và biên độ riêng (`motion` trong bộ linh vật). Chạy ở thanh bên Đội hình, đầu lượt chat, cột phải hồ sơ bot, bản đồ đội và ô xem trước khi tạo bot; danh sách chọn, menu và ô nhỏ đứng yên; máy bật “giảm chuyển động” thì tất cả đứng yên.
+
 ## 12. Cách tham khảo Hermes (thay quy trình clean-room nghiêm ngặt)
 
 Theo chỉ đạo ngày 23/10/2026, dự án **được đọc mã nguồn Hermes** (giấy phép MIT) để học thiết kế. Ràng buộc gốc vẫn giữ nguyên:

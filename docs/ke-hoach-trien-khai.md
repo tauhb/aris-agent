@@ -44,7 +44,7 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
    aris-agent/
      profiles/aris/            package.json (dsh.profile), cordis.patch.yml mẫu
      packages/aris-bundle/     package.json (dsh.bundle) + patch
-     packages/aris-ui-kit/     màu, chữ, trạng thái, 30 linh vật (SVG + Path2D), thanh bên
+     packages/aris-ui-kit/     màu, chữ, trạng thái, 50 linh vật (SVG + Path2D, chuyển động theo trạng thái), thanh bên
      packages/aris-hello/      plugin mẫu
      docs/specs/               đặc tả từng package
      design/canvas/            bản sao thiết kế

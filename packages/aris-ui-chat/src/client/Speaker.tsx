@@ -77,7 +77,9 @@ export function Head({
       className={big ? 'aris-head big' : 'aris-head'}
       style={{ '--who': colorOf(bot.mascot) } as CSSProperties}
     >
-      {!bare && <Mascot id={bot.mascot} size={big ? 32 : 24} />}
+      {!bare && (
+        <Mascot id={bot.mascot} size={big ? 32 : 24} motion={big ? 'idle' : undefined} seed={bot.id} />
+      )}
       <b className="nm">{bot.name}</b>
       {roleOf(bot, t) && <span className={lead ? 'role lead' : 'role'}>{roleOf(bot, t)}</span>}
       <span className="time">{[note, time].filter(Boolean).join(' · ')}</span>
@@ -286,7 +288,7 @@ export function HandoffTurn({
       </div>
       <div className="turn" style={{ '--who': colorOf(bot.mascot) } as CSSProperties}>
         <div className="gut">
-          <Mascot id={bot.mascot} size={32} />
+          <Mascot id={bot.mascot} size={32} motion="idle" seed={bot.id} />
           <span className="rail" />
         </div>
         <div className="col">

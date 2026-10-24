@@ -2,8 +2,8 @@
  * Thành phần cơ bản: nút, nút icon, trạng thái bot, pill, tem, thẻ, linh vật.
  * Không chứa chữ cố định; nhãn do nơi dùng truyền vào (đã dịch).
  */
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
-import { getMascot } from '../mascots.js'
+import { forwardRef, useMemo, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from 'react'
+import { getMascot, markEyes, motionVars } from '../mascots.js'
 import { STATUSES, type BotStatus } from '../status.js'
 
 const cx = (...names: (string | false | undefined)[]) => names.filter(Boolean).join(' ')
@@ -161,26 +161,48 @@ export function CardRow({ label, children }: { label?: ReactNode; children?: Rea
   )
 }
 
-/** Linh vật của bot (khối màu, hai mắt). */
+/**
+ * Linh vật của bot (khối màu, hai mắt). Có `motion` thì chuyển động theo trạng thái (bản vẽ "Linh vật
+ * chuyển động"): rảnh thở nhẹ, đang làm nhún, chờ duyệt nhảy gọi, xong nảy một lần, vấp lắc đầu.
+ * Danh sách chọn, menu, ô nhỏ để đứng yên (không truyền `motion`).
+ */
 export function Mascot({
   id,
   size = 28,
   label,
+  motion,
+  seed,
 }: {
   id: string
   size?: number | undefined
   label?: string | undefined
+  motion?: BotStatus | undefined
+  /** Hạt giống lệch nhịp, mặc định là `id`; nhiều bot cùng dáng thì truyền mã bot. */
+  seed?: string | undefined
 }) {
   const a11y = label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true as const }
-  return (
+  const m = getMascot(id)
+  const body = useMemo(() => (motion && m ? markEyes(m.body) : (m?.body ?? '')), [m, motion])
+  const svg = (
     <svg
       width={size}
       height={size}
       viewBox="0 0 100 100"
       style={{ flex: 'none' }}
       {...a11y}
-      dangerouslySetInnerHTML={{ __html: getMascot(id)?.body ?? '' }}
+      dangerouslySetInnerHTML={{ __html: body }}
     />
+  )
+  if (!motion) return svg
+  const style = {
+    ...motionVars(seed ?? id),
+    ...(m?.motion?.speed ? { '--mv-speed': m.motion.speed } : {}),
+    ...(m?.motion?.amp ? { '--mv-amp': m.motion.amp } : {}),
+  } as CSSProperties
+  return (
+    <span className="a-mv" data-motion={motion} style={style}>
+      {svg}
+    </span>
   )
 }
 

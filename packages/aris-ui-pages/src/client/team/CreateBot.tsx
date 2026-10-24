@@ -130,7 +130,7 @@ function ArisBot({ t, nav }: PageProps) {
           }}
         >
           <div className="ap-tile" style={{ width: 128, height: 128, borderRadius: 32 }}>
-            <Mascot id={mascot} size={96} label={getMascot(mascot)?.shape} />
+            <Mascot id={mascot} size={96} label={getMascot(mascot)?.shape} motion="idle" />
           </div>
           <div className="ap-lb" style={{ alignSelf: 'flex-start', color: 'var(--a-ink)' }}>
             {t('cb.mascot')}{' '}

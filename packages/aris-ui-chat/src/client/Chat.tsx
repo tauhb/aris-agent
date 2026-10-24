@@ -40,7 +40,7 @@ export function HeroMark({
   const bot = useSessionBot(useMounted((id) => id))
   return (
     <span className={className} style={{ display: 'inline-flex' }}>
-      <Mascot id={bot?.mascot ?? 'aris'} size={size} label={bot?.name ?? t('hero.mark')} />
+      <Mascot id={bot?.mascot ?? 'aris'} size={size} label={bot?.name ?? t('hero.mark')} motion="idle" />
     </span>
   )
 }

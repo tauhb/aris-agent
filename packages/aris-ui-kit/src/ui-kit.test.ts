@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { MASCOTS, STATUSES, THEMES, getMascot, mascotSvg, statusSvg, themeCss } from './index.js'
+import {
+  MASCOTS,
+  STATUSES,
+  THEMES,
+  getMascot,
+  markEyes,
+  mascotSvg,
+  motionVars,
+  statusSvg,
+  themeCss,
+} from './index.js'
 
 describe('tokens', () => {
   it('sáng và tối có cùng bộ token', () => {
@@ -23,8 +33,8 @@ describe('trạng thái', () => {
 })
 
 describe('linh vật', () => {
-  it('có 30 dáng, 6 dáng đang dùng, mã không trùng', () => {
-    expect(MASCOTS).toHaveLength(30)
+  it('có 50 dáng, 6 dáng đang dùng, mã không trùng', () => {
+    expect(MASCOTS).toHaveLength(50)
     expect(MASCOTS.filter((m) => m.inUse).map((m) => m.id)).toEqual([
       'aris',
       'lam',
@@ -33,7 +43,7 @@ describe('linh vật', () => {
       'dev',
       'ha',
     ])
-    expect(new Set(MASCOTS.map((m) => m.id)).size).toBe(30)
+    expect(new Set(MASCOTS.map((m) => m.id)).size).toBe(50)
   })
   it('mỗi dáng có màu khối và nét trắng cho mắt', () => {
     for (const m of MASCOTS) {
@@ -45,5 +55,26 @@ describe('linh vật', () => {
     expect(getMascot('aris')?.shape).toBe('Sao bốn cánh')
     expect(mascotSvg('ha', 24, 'Hạ')).toContain('aria-label="Hạ"')
     expect(() => mascotSvg('khong-co')).toThrow()
+  })
+  it('dáng nào cũng đánh dấu được hai mắt để chớp', () => {
+    for (const m of MASCOTS) {
+      const marked = markEyes(m.body)
+      expect(marked.match(/class="eye"/g)?.length ?? 0, m.id).toBeGreaterThanOrEqual(1)
+      expect(marked.replace(/<[^>]*class="eye"[^>]*>/g, ''), m.id).not.toMatch(/(fill|stroke)="#fff"/i)
+    }
+  })
+  it('đánh dấu cả nhóm tô trắng, không đánh dấu lại phần đã có', () => {
+    expect(markEyes('<g fill="#fff"><circle cx="1" cy="1" r="1"/></g>')).toBe(
+      '<g class="eye" fill="#fff"><circle cx="1" cy="1" r="1"/></g>',
+    )
+    const once = markEyes('<circle cx="1" cy="1" r="1" fill="#fff"/>')
+    expect(markEyes(once)).toBe(once)
+  })
+  it('nhịp lệch theo hạt giống, ổn định giữa các lần', () => {
+    expect(motionVars('aris')).toEqual(motionVars('aris'))
+    const v = motionVars('mai')
+    expect(Number.parseFloat(v['--d'])).toBeLessThanOrEqual(0)
+    expect(Number.parseFloat(v['--d'])).toBeGreaterThan(-2.4)
+    expect([1, -1]).toContain(v['--dir'])
   })
 })

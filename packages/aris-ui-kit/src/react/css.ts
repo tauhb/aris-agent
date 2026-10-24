@@ -202,6 +202,27 @@ ${scope(`
 .a-sec{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 10px 4px;font-family:${FONTS.heading};font-size:13px;font-weight:600}
 .a-grp{font-size:11.5px;font-weight:500;color:var(--a-muted);padding:8px 10px 2px}
 
+.a-mv{display:inline-flex;flex:none;--speed:var(--mv-speed,1);--amp:var(--mv-amp,1);--d:0s;--dir:1}
+.a-mv>svg{display:block;overflow:visible;transform-origin:50% 88%}
+.a-mv .eye{transform-box:fill-box;transform-origin:50% 50%}
+.a-mv[data-motion=idle]>svg{animation:a-mv-breathe calc(3.8s / var(--speed)) ease-in-out var(--d) infinite}
+.a-mv[data-motion=idle] .eye{animation:a-mv-blink 5.2s linear calc(var(--d) * 2) infinite}
+.a-mv[data-motion=working]>svg{animation:a-mv-bob calc(.72s / var(--speed)) ease-in-out var(--d) infinite}
+.a-mv[data-motion=working] .eye{animation:a-mv-blink 3.4s linear var(--d) infinite}
+.a-mv[data-motion=waiting]>svg{animation:a-mv-hop calc(2.4s / var(--speed)) ease-out var(--d) infinite}
+.a-mv[data-motion=done]>svg{animation:a-mv-cheer 3s ease-out 1,a-mv-breathe calc(3.8s / var(--speed)) ease-in-out 3s infinite}
+.a-mv[data-motion=done] .eye{animation:a-mv-blink 5.2s linear 3s infinite}
+.a-mv[data-motion=failed]>svg{animation:a-mv-shake 3.2s ease-in-out var(--d) infinite}
+.a-mv[data-motion=failed] .eye{animation:a-mv-droop 3.2s ease-in-out var(--d) infinite}
+@keyframes a-mv-breathe{0%,50%,100%{transform:translateY(0) rotate(0) scale(1)}25%{transform:translateY(calc(-1px * var(--amp))) rotate(calc(2.5deg * var(--dir) * var(--amp))) scale(1.02,1.03)}75%{transform:translateY(calc(-1px * var(--amp))) rotate(calc(-2.5deg * var(--dir) * var(--amp))) scale(1.02,1.03)}}
+@keyframes a-mv-blink{0%,94%,100%{transform:scaleY(1)}96.5%{transform:scaleY(.12)}}
+@keyframes a-mv-bob{0%,100%{transform:translateY(0) rotate(calc(-1deg * var(--dir)))}50%{transform:translateY(calc(-4px * var(--amp))) rotate(calc(1deg * var(--dir)))}}
+@keyframes a-mv-hop{0%,62%,100%{transform:translateY(0) rotate(0) scale(1)}68%{transform:translateY(0) scale(1.05,.92)}76%{transform:translateY(calc(-8px * var(--amp))) rotate(calc(-7deg * var(--dir))) scale(.97,1.04)}86%{transform:translateY(0) rotate(calc(-5deg * var(--dir))) scale(1.04,.95)}93%{transform:translateY(0) rotate(0) scale(1)}}
+@keyframes a-mv-cheer{0%,46%,100%{transform:translateY(0) scale(1)}8%{transform:translateY(0) scale(1.06,.9)}18%{transform:translateY(calc(-10px * var(--amp))) scale(.95,1.06) rotate(calc(6deg * var(--dir)))}30%{transform:translateY(0) scale(1.05,.94)}38%{transform:translateY(calc(-4px * var(--amp))) scale(1)}}
+@keyframes a-mv-shake{0%,20%,40%,100%{transform:translateX(0) rotate(0)}4%{transform:translateX(-3px) rotate(-3deg)}8%{transform:translateX(3px) rotate(3deg)}12%{transform:translateX(-2px) rotate(-2deg)}16%{transform:translateX(2px) rotate(1deg)}}
+@keyframes a-mv-droop{0%,8%,60%,100%{transform:scaleY(1)}18%,48%{transform:scaleY(.45) translateY(10%)}}
+@media (prefers-reduced-motion:reduce){.a-mv>svg,.a-mv .eye{animation:none!important}}
+
 .a-branch{flex:1 1 240px;min-width:0;border-left:3px solid var(--a-branch,var(--a-accent));padding:2px 0 2px 14px;display:flex;flex-direction:column;gap:8px}
 .a-branch-head{display:flex;align-items:center;gap:8px;min-width:0}
 .a-branch-head .nm{font-weight:700;font-size:13.5px;white-space:nowrap}

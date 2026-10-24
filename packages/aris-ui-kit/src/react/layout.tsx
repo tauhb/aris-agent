@@ -75,7 +75,7 @@ export const BotRow = forwardRef<HTMLButtonElement, BotRowProps>(function BotRow
       aria-current={current ? 'page' : undefined}
       {...rest}
     >
-      <Mascot id={mascot} size={lead ? 34 : 28} />
+      <Mascot id={mascot} size={lead ? 34 : 28} motion={status} seed={name} />
       {!collapsed && (
         <>
           <span className="txt">

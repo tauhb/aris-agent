@@ -4,13 +4,14 @@
  * vòng elip nghiêng quanh Commander, và tìm bot dưới con trỏ.
  */
 
+import { WHITE } from '../mascots.js'
+
 /** Linh vật tách đôi: SVG chỉ còn khối màu (bỏ phần trắng là mắt) và tâm từng mắt. */
 export interface MascotParts {
   shapeSvg: string
   eyes: [number, number][]
 }
 
-const WHITE = /(fill|stroke)="#(?:fff|ffffff)"/i
 const num = (attrs: string, name: string) =>
   Number(attrs.match(new RegExp(`\\b${name}="([-\\d.]+)"`))?.[1] ?? NaN)
 
