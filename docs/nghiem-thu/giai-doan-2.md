@@ -35,7 +35,7 @@ Ngày 24/10/2026, nhánh `claude/fervent-bose-b47879`. Tiêu chí lấy từ [k�
 ## Còn lại
 
 - Tiêu chí 1: người dùng xác nhận thẻ "CẦN DUYỆT · An" trên Telegram đã tự cập nhật thành "đã duyệt trên web".
-- ~~Bot ngoài nhận việc có đường dẫn repo khác thư mục của phiên giao việc: chưa tạo worktree cho repo đó~~ → đã làm (24/10): Commander nêu `thu_muc`, hoặc aris lấy repo nhắc trong việc khi phiên giao không ở trong repo; worktree tạo từ repo đó.
+- ~~Bot ngoài nhận việc có đường dẫn repo khác thư mục của phiên giao việc: chưa tạo worktree cho repo đó~~ → đã làm (24/10): Commander nêu `thu_muc`, hoặc aris lấy repo nhắc trong việc khi phiên giao không ở trong repo; worktree tạo từ repo đó. Thử thật 24/10 19:19 từ phiên chat thường: Aris giao Kiệt với `thu_muc` là repo `demo-login`, worktree mới ở `~/.aris/worktrees/demo-login/` (nhánh `aris/kiet-them-test-…`), 2 lần xin quyền (sửa tệp, chạy lệnh) duyệt trên Telegram, Kiệt thêm 1 test, test đạt, repo gốc không đổi, 0,14 USD.
 - Tiêu chí 5 ở quy mô 5 báo cáo (tuỳ chọn, tốn thêm chi phí model).
 - ~~Trang Commander 2.5 nối dữ liệu thật cho danh sách bot và giới hạn~~ → đã làm (24/10): bot nhận việc, duyệt mỗi lần, trợ lý ẩn danh, bot chạy cùng lúc, việc lớn cùng lúc, trần tiền mỗi việc đều lưu và áp thật.
 - Bảng điều khiển (6.1) đã rời Cài đặt, sẽ ra menu chính; hiện vẫn là dữ liệu mẫu.
