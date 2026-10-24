@@ -4,43 +4,40 @@
  * Cột: Chờ chia việc, Sẵn sàng, Đang làm, Chờ duyệt, Xong. Chia việc tự động (Aris chia thẻ chờ ở
  * lượt sau) hoặc thủ công (người dùng bấm "Giao ngay").
  */
+import { getMascot } from '@aris/ui-kit'
 import {
   Button,
-  ChevronDownIcon,
   Dialog,
   Mascot,
-  Menu,
-  MenuItem,
   PageShell,
   Segmented,
   Select,
   TextInput,
   boardAction,
-  branchColor,
   projectAction,
   useBoard,
-  useDismiss,
   useProjects,
   useTeam,
   type BoardCard,
   type ProjectEntry,
   type TeamView,
 } from '@aris/ui-kit/react'
-import { useCallback, useRef, useState } from 'react'
-import { botOptions } from '../options.js'
+import { useState } from 'react'
+import { Initial, botOptions } from '../options.js'
 import type { PageProps } from '../page.js'
 
 type T = PageProps['t']
 
 /** Cột theo bản vẽ; khoá chữ giữ tên cũ (`triage`, `review`). */
-const COLUMNS: { id: BoardCard['column']; label: string }[] = [
-  { id: 'unassigned', label: 'kb.col.triage' },
-  { id: 'ready', label: 'kb.col.ready' },
-  { id: 'doing', label: 'kb.col.doing' },
-  { id: 'waiting', label: 'kb.col.review' },
-  { id: 'done', label: 'kb.col.done' },
+const COLUMNS: { id: BoardCard['column']; label: string; tone: string }[] = [
+  { id: 'unassigned', label: 'kb.col.triage', tone: 'var(--a-muted)' },
+  { id: 'ready', label: 'kb.col.ready', tone: '#2F7BE5' },
+  { id: 'doing', label: 'kb.col.doing', tone: '#E8833A' },
+  { id: 'waiting', label: 'kb.col.review', tone: '#C9A227' },
+  { id: 'done', label: 'kb.col.done', tone: 'var(--a-ok)' },
 ]
 
+/** Chọn bảng của dự án: chữ cái đầu, tên, số phiên (bộ chọn dùng chung). */
 function BoardPicker({
   t,
   projects,
@@ -52,45 +49,24 @@ function BoardPicker({
   current: ProjectEntry
   onPick: (id: string) => void
 }) {
-  const [open, setOpen] = useState(false)
-  const root = useRef<HTMLSpanElement>(null)
-  const close = useCallback(() => setOpen(false), [])
-  useDismiss(root, open, close)
   return (
-    <span className="a-pop" ref={root}>
-      <button
-        type="button"
-        className="ap-picker"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label={t('kb.pick')}
-        onClick={() => setOpen(!open)}
-      >
-        {current.project?.name ?? current.title}
-        <ChevronDownIcon />
-      </button>
-      {open && (
-        <Menu label={t('kb.pick')} role="listbox" width={280}>
-          {projects.map((p) => (
-            <MenuItem
-              key={p.workspace}
-              role="option"
-              selected={p.workspace === current.workspace}
-              onSelect={() => {
-                setOpen(false)
-                onPick(p.workspace)
-              }}
-            >
-              {p.project?.name ?? p.title}
-            </MenuItem>
-          ))}
-        </Menu>
-      )}
-    </span>
+    <Select
+      variant="compact"
+      align="start"
+      className="ap-title-sel"
+      label={t('kb.pick')}
+      value={current.workspace}
+      onChange={onPick}
+      options={projects.map((p) => ({
+        id: p.workspace,
+        name: p.project?.name ?? p.title,
+        note: t('kb.sessions', { n: p.sessions }),
+        icon: <Initial text={p.project?.name ?? p.title} />,
+      }))}
+    />
   )
 }
 
-/** Bot trong dự án đứng trước, rồi các bot khác của đội. */
 /** "Để Aris chọn", rồi bot trong dự án, rồi bot ngoài dự án. */
 function botChoices(t: T, team: TeamView, members: readonly string[]) {
   const by = (inside: boolean) =>
@@ -135,65 +111,77 @@ function Card({
       setBusy(false)
     }
   }
-  const foot =
+  const status =
     c.kind === 'job'
-      ? [
-          c.failed ? t('kb.foot.failed') : t(`kb.foot.${c.column}`),
-          c.progress && c.progress.total > 0 ? t('kb.progress', c.progress) : '',
-        ]
-          .filter(Boolean)
-          .join(' · ')
+      ? c.failed
+        ? t('kb.foot.failed')
+        : t(`kb.foot.${c.column}`)
       : c.kind === 'draft'
         ? t('kb.foot.draft')
         : c.column === 'unassigned'
-          ? c.waitingFor.length
-            ? t('kb.foot.blocked', {
-                n: c.waitingFor.length,
-                titles: c.waitingFor.map((w) => w.title).join(', '),
-              })
-            : t('kb.foot.unassigned')
+          ? t('kb.foot.unassigned')
           : t(`kb.foot.${c.column}`)
+  const color = bot ? (getMascot(bot.mascot)?.color ?? 'var(--a-accent)') : 'var(--a-line)'
+  const type =
+    c.kind === 'job' ? (
+      <span className="ap-ktype job">{t('kb.type.job', { department: c.department ?? '' })}</span>
+    ) : c.kind === 'draft' ? (
+      <span className="ap-ktype draft">{t('kb.type.draft')}</span>
+    ) : (
+      <span className="ap-ktype team">{t('kb.type.team')}</span>
+    )
+  const pct = c.progress && c.progress.total > 0 ? (c.progress.done / c.progress.total) * 100 : null
   const body = (
     <>
-      <span>
-        <span className="a-muted a-mono" style={{ fontSize: 11 }}>
-          {c.kind === 'job' ? t('kb.jobTag', { department: c.department ?? '' }) : c.id}
-        </span>{' '}
-        {c.title}
-      </span>
-      {c.kind === 'job' && c.progress && c.progress.total > 0 && (
-        <span className="ap-track" style={{ height: 4 }}>
-          <span
-            style={{
-              width: `${(c.progress.done / c.progress.total) * 100}%`,
-              background: c.bot ? branchColor(c.bot) : 'var(--a-accent)',
-            }}
-          />
-        </span>
+      <div className="top">
+        {type}
+        {c.column === 'done' && (
+          <span className="ap-kdone" aria-label={t('kb.foot.done')}>
+            ✓
+          </span>
+        )}
+        {c.kind === 'task' && <span className="ap-kid">{c.id}</span>}
+      </div>
+      <div className="tt">{c.title}</div>
+      {pct !== null && (
+        <div className="ap-kprog">
+          <span className="ap-bar">
+            <i style={{ width: `${pct}%`, background: c.failed ? 'var(--a-danger)' : color }} />
+          </span>
+          <span className="a-muted">{t('kb.progress', c.progress!)}</span>
+        </div>
+      )}
+      {c.waitingFor.length > 0 && c.column === 'unassigned' && (
+        <div className="ap-kwait">
+          {t('kb.waitFor', { titles: c.waitingFor.map((w) => w.title).join(', ') })}
+        </div>
       )}
       <div className="ft">
         {bot && <Mascot id={bot.mascot} size={18} />}
-        {bot && <b style={{ color: 'var(--a-ink)', fontWeight: 600 }}>{bot.name}</b>}
-        <span style={c.failed ? { color: 'var(--a-danger)' } : undefined}>{foot}</span>
+        {bot && <b>{bot.name}</b>}
+        <span className={c.failed ? 'st bad' : 'st'}>{status}</span>
+        {c.session && (
+          <button
+            type="button"
+            className="ap-kopen"
+            title={t('kb.openBot')}
+            onClick={() => nav.openSession(c.session!)}
+          >
+            {t('kb.openSession')}
+          </button>
+        )}
       </div>
     </>
   )
+  const cls = `ap-kc kind-${c.kind}${c.column === 'done' ? ' is-done' : ''}`
   if (c.kind !== 'draft')
-    return c.session ? (
-      <button
-        type="button"
-        className={c.column === 'done' ? 'ap-kc ap-kc-btn a-muted' : 'ap-kc ap-kc-btn'}
-        style={c.column === 'doing' && c.bot ? { borderColor: branchColor(c.bot) } : undefined}
-        title={t('kb.openBot')}
-        onClick={() => nav.openSession(c.session!)}
-      >
+    return (
+      <div className={cls} style={{ ['--bot' as string]: color }}>
         {body}
-      </button>
-    ) : (
-      <div className="ap-kc">{body}</div>
+      </div>
     )
   return (
-    <div className="ap-kc" style={{ borderStyle: 'dashed' }}>
+    <div className={cls} style={{ ['--bot' as string]: color }}>
       {body}
       {c.description && (
         <span className="a-muted" style={{ fontSize: 12 }}>
@@ -352,7 +340,11 @@ export function Kanban({ t, nav, params }: PageProps) {
           onPick={(id) => nav.go('kanban', { project: id })}
         />
       }
-      subtitle={t('kb.meta', { n: cards.length, project: current.project?.name ?? current.title })}
+      subtitle={t('kb.meta', {
+        n: cards.length,
+        doing: cards.filter((c) => c.column === 'doing').length,
+        done: cards.filter((c) => c.column === 'done').length,
+      })}
       actions={
         <>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
@@ -385,16 +377,19 @@ export function Kanban({ t, nav, params }: PageProps) {
             return (
               <section className="ap-kcol" key={col.id} aria-label={t(col.label)}>
                 <div className="ch">
-                  <span>{t(col.label)}</span>
-                  <span>{list.length}</span>
+                  <span className="ap-kdot" style={{ background: col.tone }} />
+                  <span className="nm">{t(col.label)}</span>
+                  <span className="n">{list.length}</span>
                 </div>
                 {list.map((c) => (
                   <Card key={c.id} t={t} c={c} team={team} members={members} nav={nav} onError={setError} />
                 ))}
-                {col.id === 'unassigned' && cards.length === 0 && (
+                {col.id === 'unassigned' && cards.length === 0 ? (
                   <span className="a-muted" style={{ fontSize: 12.5 }}>
                     {t('kb.empty')}
                   </span>
+                ) : (
+                  list.length === 0 && <span className="ap-kempty">{t('kb.colEmpty')}</span>
                 )}
               </section>
             )
