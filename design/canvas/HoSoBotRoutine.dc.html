@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Hồ sơ bot Lâm · Routine</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FCEBE9}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:36px;padding:0 14px;border:0;border-radius:10px;background:var(--ink);color:var(--panel);font-size:13px;font-weight:600}
+.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.m{color:var(--muted)}
+.lb{font-size:12px;font-weight:600;color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.tab{border:0;background:transparent;padding:10px 2px;margin-right:18px;font-size:13.5px;color:var(--muted);border-bottom:2px solid transparent}
+.tag{font-size:11.5px;border-radius:6px;padding:1px 7px;background:var(--panel2);color:var(--muted)}
+.pill{font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 9px;white-space:nowrap}
+.tr{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.3fr) minmax(0,1.2fr) 130px 64px;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);font-size:13.5px;min-width:680px}
+.rr{display:grid;grid-template-columns:96px minmax(0,1fr) 120px 70px 92px;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--line);font-size:13px;min-width:560px}
+.sw{width:36px;height:20px;border-radius:99px;position:relative;display:inline-block}
+.sw span{position:absolute;top:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+a{color:var(--accent)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="none" bot="lam" hint-size="260px,900px"></dc-import>
+
+  <main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 18px 24px 0">
+      <svg width="56" height="56" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg>
+      <div style="display: flex; flex-direction: column">
+        <span style="font-size: 20px; font-weight: 700">Lâm</span>
+        <span class="m" style="font-size: 13px">Nghiên cứu · đọc nguồn, so sánh, tổng hợp có trích dẫn</span>
+      </div>
+      <div style="margin-left: auto; display: flex; gap: 8px; align-items: center">
+        <a href="Main.dc.html" class="b1" style="display: inline-flex; align-items: center; text-decoration: none">Mở chat</a>
+        <a href="NhanBan.dc.html" class="b2" style="display: inline-flex; align-items: center; text-decoration: none; height: 36px">Nhân bản / xuất</a>
+        <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+      </div>
+    </div>
+
+    <div role="tablist" aria-label="Hồ sơ bot" style="display: flex; flex-wrap: wrap; padding: 8px 24px 0; border-bottom: 1px solid var(--line)">
+      <a href="HoSoBot.dc.html" class="tab" style="text-decoration: none">Tính cách</a>
+      <a href="HoSoBot.dc.html" class="tab" style="text-decoration: none">Model</a>
+      <a href="HoSoBot.dc.html" class="tab" style="text-decoration: none">Skill &amp; tool</a>
+      <a href="HoSoBot.dc.html" class="tab" style="text-decoration: none">Quyền &amp; kênh</a>
+      <button type="button" role="tab" class="tab" aria-selected="true" style="color: var(--ink); border-bottom-color: var(--ink); font-weight: 600">Routine · {{count}}</button>
+      <a href="KyUc.dc.html" class="tab" style="text-decoration: none">Ký ức</a>
+      <a href="HoSoChuNhan.dc.html" class="tab" style="text-decoration: none">Hiểu về người dùng</a>
+    </div>
+
+    <div style="flex: 1; padding: 20px 24px; max-width: 900px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+        <div style="display: flex; flex-direction: column">
+          <b>Routine của Lâm</b>
+          <span class="m" style="font-size: 12.5px">{{summary}}</span>
+        </div>
+        <span style="flex: 1"></span>
+        <a href="Routine.dc.html" style="font-size: 13px">Mọi routine của đội ›</a>
+        <a href="TaoRoutine.dc.html" class="b1" style="display: inline-flex; align-items: center; text-decoration: none">+ Routine cho Lâm</a>
+      </div>
+
+      <sc-if value="{{has}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-direction: column; gap: 14px">
+          <div style="border: 1px solid var(--danger); background: var(--dangerSoft); border-radius: 12px; padding: 12px 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap">
+            <span style="flex: 1; min-width: 240px"><b>“Tin đối thủ trong tuần” lỗi 2 lần liên tiếp</b> — trang nguồn chặn truy cập tự động.</span>
+            <button type="button" class="b2">Xem lần chạy</button><button type="button" class="b2">Để Lâm sửa</button>
+          </div>
+
+          <div class="card" style="overflow-x: auto">
+            <div class="tr" style="border-top: 0; font-size: 12px; font-weight: 600; color: var(--muted)"><span>Routine</span><span>Lịch</span><span>Gửi về</span><span>Lần chạy gần nhất</span><span>Bật</span></div>
+            <div class="tr">
+              <span><a href="#" style="color: var(--ink); text-decoration: none"><b>Tin đối thủ trong tuần</b></a><div class="m" style="font-size: 12px">Tóm tắt tin mới của 3 đối thủ, có nguồn · chỉ đọc</div></span>
+              <span>Thứ 6, 16:00<div class="m" style="font-size: 12px">lần kế 31/10 16:00</div></span>
+              <span>Telegram · chat riêng với Lâm</span>
+              <span><span class="pill" style="background: var(--dangerSoft); color: var(--danger)">lỗi 2 lần</span> <span class="m" style="font-size: 12px">24/10</span></span>
+              <span class="sw" style="background: var(--accent)"><span style="left: 18px"></span></span>
+            </div>
+            <div class="tr">
+              <span><a href="#" style="color: var(--ink); text-decoration: none"><b>Báo cáo ngành tháng</b></a><div class="m" style="font-size: 12px">Tổng hợp 5 số liệu ngành mới nhất · chỉ đọc</div></span>
+              <span>Ngày 1 hằng tháng, 09:00<div class="m" style="font-size: 12px">lần kế 01/11 09:00</div></span>
+              <span>Telegram · chat riêng với Lâm</span>
+              <span><span class="pill" style="background: var(--okSoft); color: var(--ok)">xong</span> <span class="m" style="font-size: 12px">01/10</span></span>
+              <span class="sw" style="background: var(--accent)"><span style="left: 18px"></span></span>
+            </div>
+            <div class="tr">
+              <span class="m"><b>Kiểm tra trang nguồn còn mở</b><div style="font-size: 12px">chỉ chạy lệnh, không dùng AI · <span class="mono">curl -sI …</span></div></span>
+              <span class="m">Mỗi ngày, 06:00<div style="font-size: 12px">đang tắt</div></span>
+              <span class="m">Telegram khi lệnh in ra gì đó</span>
+              <span class="m">—</span>
+              <span class="sw" style="background: var(--panel2); border: 1px solid var(--line); box-sizing: border-box"><span style="left: 2px; top: 1px; background: var(--muted)"></span></span>
+            </div>
+          </div>
+
+          <div class="card" style="overflow-x: auto">
+            <div style="padding: 12px 14px; display: flex; justify-content: space-between"><b>Lần chạy gần đây</b><span class="m" style="font-size: 12.5px">7 ngày · 0,04 USD</span></div>
+            <div class="rr"><span class="m">24/10 16:00</span><span>Tin đối thủ trong tuần</span><span><span class="pill" style="background: var(--dangerSoft); color: var(--danger)">lỗi</span> <span class="m" style="font-size: 12px">trang chặn</span></span><span class="m mono" style="font-size: 12px">0,01 $</span><a href="#" style="font-size: 12.5px">Mở phiên ›</a></div>
+            <div class="rr"><span class="m">17/10 16:00</span><span>Tin đối thủ trong tuần</span><span><span class="pill" style="background: var(--dangerSoft); color: var(--danger)">lỗi</span> <span class="m" style="font-size: 12px">quá 15 phút</span></span><span class="m mono" style="font-size: 12px">0,02 $</span><a href="#" style="font-size: 12.5px">Mở phiên ›</a></div>
+            <div class="rr"><span class="m">15/10 10:12</span><span>Tin đối thủ trong tuần <span class="tag">chạy tay</span></span><span><span class="pill" style="background: var(--okSoft); color: var(--ok)">xong</span></span><span class="m mono" style="font-size: 12px">0,01 $</span><a href="#" style="font-size: 12.5px">Mở phiên ›</a></div>
+            <div class="rr"><span class="m">10/10 16:00</span><span>Tin đối thủ trong tuần</span><span><span class="pill" style="background: var(--warnSoft); color: var(--warn)">lỡ</span> <span class="m" style="font-size: 12px">máy tắt</span></span><span class="m mono" style="font-size: 12px">—</span><span></span></div>
+          </div>
+
+          <div class="card" style="padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start">
+            <span class="m" style="font-size: 18px; line-height: 1">ⓘ</span>
+            <span class="m" style="font-size: 13px">Mỗi lần chạy là một phiên mới của Lâm, dùng model của Lâm. Quyền mặc định chỉ đọc; việc khác hỏi qua Telegram. Bot chưa có Telegram riêng thì kết quả gửi qua chat của Aris.</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+        <div class="card" style="padding: 28px 24px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px">
+          <b>Lâm chưa có routine nào</b>
+          <span class="m" style="font-size: 13px">Routine là việc Lâm tự làm theo lịch, ví dụ “sáng thứ 6 tóm tắt tin đối thủ trong tuần”, kết quả gửi về Telegram.</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px">
+            <span class="tag">Thứ 6, 16:00 · tin đối thủ</span><span class="tag">Ngày 1 hằng tháng · báo cáo ngành</span><span class="tag">Mỗi sáng · đọc 5 nguồn mới</span>
+          </div>
+          <a href="TaoRoutine.dc.html" class="b1" style="display: inline-flex; align-items: center; text-decoration: none; margin-top: 4px">+ Routine cho Lâm</a>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+
+  <aside aria-label="Tóm tắt bot" style="flex: 1 1 300px; max-width: 330px; min-width: 268px; border-left: 1px solid var(--line); background: var(--panel); padding: 18px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--ok)"></span><b>Đang làm</b><span class="m" style="font-size: 13px">nghiên cứu 3 đối thủ</span></div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+      <div class="card" style="padding: 10px 12px"><div class="lb">Được giao 7 ngày</div><div style="font-size: 18px; font-weight: 700">23 việc</div></div>
+      <div class="card" style="padding: 10px 12px"><div class="lb">Hoàn thành</div><div style="font-size: 18px; font-weight: 700">91%</div></div>
+      <div class="card" style="padding: 10px 12px"><div class="lb">Chi phí 7 ngày</div><div style="font-size: 18px; font-weight: 700">1,84 USD</div></div>
+      <div class="card" style="padding: 10px 12px"><div class="lb">Routine</div><div style="font-size: 18px; font-weight: 700">{{asideCount}}</div></div>
+    </div>
+    <div>
+      <div class="lb" style="padding-bottom: 6px">Commander hay giao cho Lâm</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px"><span class="tag">nghiên cứu thị trường</span><span class="tag">tóm tắt tài liệu</span><span class="tag">so sánh sản phẩm</span></div>
+    </div>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"state":{"editor":"enum","options":["co-routine","chua-co"],"default":"co-routine"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const has = (this.props.state || 'co-routine') === 'co-routine';
+    return {
+      themeClass: 't-' + theme,
+      has: has,
+      empty: !has,
+      count: has ? '3' : '0',
+      asideCount: has ? '2 bật · 1 tắt' : 'chưa có',
+      summary: has ? '3 routine · 2 đang bật · lần kế: Thứ 6 31/10 16:00' : 'Chưa có lịch nào',
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' })
+    };
+  }
+}
+</script>
+</body>
+</html>
