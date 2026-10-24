@@ -112,6 +112,7 @@ Chạy thử thật (24/10): nhân bản Minh thành "Minh Thử" (@minh-thu) k�
 | `move` `{ id, department }` | Chuyển bot sang phòng khác (`null`: chưa xếp phòng) |
 | `apply-template` `{ template }` | Áp đội mẫu |
 | `open` `{ id }` | Tạo phiên chat thẳng với bot, trả `sessionId` |
+| `commander-latest` `{ candidates }` | Bấm Aris trên thanh bên: trả `sessionId` là ứng viên đầu tiên (phiên chat riêng, mới nhất trước) chưa gắn bot nào, không có thì `null` (thanh bên mở phiên mới) |
 | `clone` `{ id, name, parts }` | Nhân bản; `parts` = `{ config, soul, memory }`; trả thêm `created`, `memory` (số mục ký ức đã chép) |
 | `export` `{ id, parts }` | Trả `file` (tệp `aris-bot`) |
 | `import` `{ file }` | Tạo bot từ tệp; trả `created`, `memory` |

@@ -135,6 +135,11 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
         const reuse = body.fresh === true ? undefined : d.store.latestOpen(id)
         return json({ sessionId: reuse ?? (await d.open(id)), reused: !!reuse })
       }
+      case 'commander-latest': {
+        // Bấm Aris trên thanh bên: phiên gần nhất chưa gắn bot nào trong các ứng viên (mới nhất trước).
+        const list = Array.isArray(body.candidates) ? body.candidates.map(String) : []
+        return json({ sessionId: list.find((c) => !d.store.tagOf(c)) ?? null })
+      }
       case 'clone': {
         // Nhân bản (2.4): bot mới cùng vai trò, tên mới; kênh nhắn tin và lịch sử chat không chép.
         const src = d.store.get(String(body.id))

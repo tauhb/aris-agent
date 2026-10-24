@@ -32,6 +32,7 @@ export * from './graph.js'
 export { BotPicker, filterBotOptions, type BotOption } from './BotPicker.js'
 export {
   currentTeam,
+  latestCommanderSession,
   openBotSession,
   personalize,
   registerPersonal,

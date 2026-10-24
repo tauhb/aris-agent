@@ -30,7 +30,9 @@ export interface WorkspaceRow {
 
 /** Phần tóm tắt phiên của dsh mà thanh bên cần để chọn phiên gần nhất của dự án. */
 export interface SessionListSnapshot {
-  readonly byId: Readonly<Record<string, { readonly blank: boolean; readonly updatedAt: number }>>
+  readonly byId: Readonly<
+    Record<string, { readonly blank: boolean; readonly updatedAt: number; readonly origin?: string }>
+  >
 }
 
 export interface WorkspaceSnapshot {

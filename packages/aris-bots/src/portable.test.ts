@@ -90,4 +90,13 @@ describe('nhân bản, xuất, nhập bot', () => {
     expect(() => parseBotFile({ format: 'khac' })).toThrow('aris-bot')
     expect((await call({ op: 'import', file: { x: 1 } })).status).toBe(400)
   })
+
+  it('phiên gần nhất của Aris: ứng viên đầu tiên chưa gắn bot', async () => {
+    const { store, call } = await setup()
+    const b = await store.create({ handle: 'tho', name: 'Thơ' })
+    await store.tag('s-tho', b.id, 'open')
+    const r = await call({ op: 'commander-latest', candidates: ['s-tho', 's-aris', 's-old'] })
+    expect(r.body.sessionId).toBe('s-aris')
+    expect((await call({ op: 'commander-latest', candidates: ['s-tho'] })).body.sessionId).toBeNull()
+  })
 })

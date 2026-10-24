@@ -23,6 +23,7 @@ import {
   WaitingIcon,
   arisNavigate,
   onArisRoute,
+  latestCommanderSession,
   openBotSession,
   teamAction,
   usePendingApprovals,
@@ -33,7 +34,7 @@ import {
 import { isProjectWorkspace, type TeamMember } from '@aris/ui-kit'
 import { useEffect, useState, type ReactElement } from 'react'
 import { useTodayCost } from './cost.js'
-import { latestProjectSession } from './projects.js'
+import { latestProjectSession, recentSessions } from './projects.js'
 import type { Translate } from './locale.js'
 import type { PanelEntry, SidebarProps, WorkspaceRow } from './types.js'
 
@@ -231,6 +232,15 @@ export function SidebarRoot(props: SidebarProps) {
   const newShortcut = props.useShortcuts((rows) => rows.find((r) => r.id === 'session.new'))
   const toggleShortcut = props.useShortcuts((rows) => rows.find((r) => r.id === 'sidebar.left.toggle'))
   const openChat = () => selectPanel(null)
+  const homes = props.useWorkspaces((w) => w.items).filter((w) => !isProjectWorkspace(w))
+  // Bấm Aris: mở lại phiên gần nhất của Aris (phiên chat riêng chưa gắn bot nào); chưa có thì phiên mới.
+  const chatWithAris = () =>
+    void latestCommanderSession(
+      recentSessions(
+        homes.flatMap((w) => w.sessionIds),
+        sessionsById,
+      ),
+    ).then((id) => (id ? props.openSession(id) : props.startSession(homes[0]?.workspaceId)), openChat)
   const team = useTeam(t('team.noDepartment'))
   // Bấm bot: mở lại phiên chat gần nhất với bot đó (chưa có thì tạo).
   // Bot ngoài không có phiên chat riêng: mở hồ sơ.
@@ -327,7 +337,7 @@ export function SidebarRoot(props: SidebarProps) {
             current={viewedBot === team.commander.id}
             wide={wide}
             t={t}
-            onOpen={openChat}
+            onOpen={chatWithAris}
           />
           {wide && team.ready && team.members.length === 0 && (
             <PickTemplate t={t} templates={team.templates} />

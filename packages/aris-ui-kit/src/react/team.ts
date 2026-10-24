@@ -215,6 +215,13 @@ export async function openBotSession(id: string, fresh = false): Promise<string>
   return (await teamAction<{ sessionId: string }>({ op: 'open', id, fresh })).sessionId
 }
 
+/** Phiên gần nhất của Aris trong các ứng viên (mới nhất trước); không có thì undefined. */
+export async function latestCommanderSession(candidates: readonly string[]): Promise<string | undefined> {
+  if (candidates.length === 0) return undefined
+  const r = await teamAction<{ sessionId: string | null }>({ op: 'commander-latest', candidates })
+  return r.sessionId ?? undefined
+}
+
 function subscribe(fn: () => void) {
   listenOthers()
   listeners.add(fn)
