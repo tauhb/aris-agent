@@ -399,7 +399,7 @@ export function BotProfile({ t, nav, params, plugins }: PageProps) {
           )}
         </div>
       </main>
-      <BotAside t={t} bot={bot} />
+      <BotAside t={t} bot={bot} nav={nav} />
     </div>
   )
 }

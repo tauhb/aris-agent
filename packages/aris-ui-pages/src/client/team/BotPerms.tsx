@@ -104,7 +104,21 @@ interface Profile {
     recent: { task: string; at: number; result: 'done' | 'failed' | 'open' }[]
   }
   costWeek: number | null
-  memory: { core: { used: number; cap: number }; recent: { text: string; at: string }[] } | null
+  memory: {
+    core: { used: number; cap: number }
+    recent: {
+      id: string
+      text: string
+      at: string
+      kind: string
+      tier: 'core' | 'archive'
+      trust: string
+      sessionId?: string
+      sessionTitle?: string
+      project?: string
+      channel?: 'telegram'
+    }[]
+  } | null
 }
 
 function useProfile(bot: string): Profile | null {
@@ -157,6 +171,18 @@ const hhmm = (ms: number) => {
   const d = new Date(ms)
   return `${two(d.getHours())}:${two(d.getMinutes())}`
 }
+/** Màu pill theo loại ký ức. */
+const KIND_COLOR: Record<string, string> = {
+  project: '#7C5CE6',
+  preference: '#E0569A',
+  lesson: '#E8833A',
+  convention: '#2F7BE5',
+  person: '#2E9E5B',
+  event: '#C9A227',
+  environment: '#4A8C9C',
+  fact: '#7A8290',
+}
+
 const STATUS_TONE: Record<BotStatus, string> = {
   working: 'var(--a-ok)',
   waiting: 'var(--a-warn)',
@@ -166,7 +192,7 @@ const STATUS_TONE: Record<BotStatus, string> = {
 }
 
 /** Cột phải "Tóm tắt bot" (bản vẽ 2.2d, phương án A): thẻ đầu theo màu linh vật, ô chỉ số 7 ngày, việc gần đây, học gần đây. */
-export function BotAside({ t, bot }: { t: T; bot: BotData }) {
+export function BotAside({ t, bot, nav }: { t: T; bot: BotData; nav: PageProps['nav'] }) {
   const team = useTeam()
   const p = useProfile(bot.id)
   const member = bot.kind === 'commander' ? team.commander : team.members.find((m) => m.id === bot.id)
@@ -280,11 +306,38 @@ export function BotAside({ t, bot }: { t: T; bot: BotData }) {
       <div>
         <div className="ap-asec">{t('bot.aside.learned')}</div>
         {p?.memory?.recent.length ? (
-          <div className="ap-tl" style={{ ['--bot' as string]: color }}>
+          <div className="ap-tl">
             {p.memory.recent.map((m) => (
-              <div key={m.at + m.text}>
-                <span className="ap-clamp">{m.text}</span>
-                <span className="a-muted when">{t('aside.memoryAt', { when: day(Date.parse(m.at)) })}</span>
+              <div key={m.id} className="ap-learn" style={{ ['--k' as string]: KIND_COLOR[m.kind] ?? color }}>
+                <span className="top">
+                  <span className="ap-kind">{t(`mem.kind.${m.kind}`)}</span>
+                  {m.tier === 'core' && <span className="ap-core">{t('aside.core')}</span>}
+                  <span className="a-muted when">{day(Date.parse(m.at))}</span>
+                </span>
+                <button
+                  type="button"
+                  className="txt ap-clamp"
+                  title={t('aside.openMemory')}
+                  onClick={() => nav.go('memory', { bot: bot.id, focus: m.id, tier: m.tier })}
+                >
+                  {m.text}
+                </button>
+                <span className="src">
+                  {m.channel === 'telegram' ? (
+                    <span className="ap-src">Telegram</span>
+                  ) : m.sessionId ? (
+                    <button
+                      type="button"
+                      className="ap-src link"
+                      title={t('aside.openSession')}
+                      onClick={() => nav.openSession(m.sessionId!)}
+                    >
+                      «{m.sessionTitle ?? t('aside.untitled')}»
+                    </button>
+                  ) : null}
+                  {m.project && <span className="ap-proj">{m.project}</span>}
+                  <span className="a-muted">{t(`mem.trust.${m.trust}`, { name: bot.name })}</span>
+                </span>
               </div>
             ))}
           </div>

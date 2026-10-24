@@ -187,6 +187,13 @@ export class ChannelHub {
   }
 
   /** Tóm tắt cho `aris status`. */
+  /** Phiên là (hoặc từng là) phiên của một cuộc trò chuyện Telegram. */
+  isChannelSession(sessionId: string): boolean {
+    if (this.store.threadOfSession(sessionId)) return true
+    for (const [, t] of this.store.threads()) if (t.history.includes(sessionId)) return true
+    return false
+  }
+
   status() {
     return this.store.bots().map((b) => ({
       bot: b.bot,

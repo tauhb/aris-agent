@@ -73,7 +73,21 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-tl{position:relative;padding-left:16px;display:flex;flex-direction:column;gap:10px}
 .ap-tl::before{content:"";position:absolute;left:4px;top:4px;bottom:4px;width:2px;background:var(--a-line);border-radius:2px}
 .ap-tl>div{position:relative;font-size:13px;line-height:1.45;display:flex;flex-direction:column}
-.ap-tl>div::before{content:"";position:absolute;left:-15px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--bot);box-shadow:0 0 0 3px var(--a-panel)}
+.ap-tl>div::before{content:"";position:absolute;left:-15px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--k,var(--a-accent));box-shadow:0 0 0 3px var(--a-panel)}
+.ap-learn{gap:4px}
+.ap-learn .top{display:flex;align-items:center;gap:6px}
+.ap-learn .top .when{margin-left:auto}
+.ap-kind{display:inline-block;font-size:11.5px;font-weight:700;line-height:18px;border-radius:999px;padding:0 8px;color:var(--k);background:color-mix(in srgb,var(--k) 14%,transparent);border:1px solid color-mix(in srgb,var(--k) 30%,transparent)}
+.ap-kind::first-letter{text-transform:uppercase}
+.ap-core{font-size:11px;font-weight:600;line-height:16px;border-radius:5px;padding:0 6px;border:1px solid var(--a-line);color:var(--a-muted)}
+.aris .ap-learn .txt{text-align:left;font-size:13px;line-height:1.45;padding:0;color:var(--a-ink)}
+.aris .ap-learn .txt:hover{text-decoration:underline;text-decoration-color:var(--a-line)}
+.ap-learn .src{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:11.5px}
+.ap-src{color:var(--a-muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aris .ap-src.link{color:var(--a-accent);font-size:11.5px;padding:0}
+.aris .ap-src.link:hover{text-decoration:underline}
+.ap-proj{font-size:11px;font-weight:600;line-height:16px;border-radius:999px;padding:0 7px;background:var(--a-panel2);color:var(--a-ink);white-space:nowrap}
+.ap-focus{outline:2px solid var(--a-accent);outline-offset:-2px;border-radius:10px;background:var(--a-accentSoft)}
 .ap-initial{width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:var(--a-panel2);color:var(--a-ink);font-weight:700;font-size:12.5px;flex:none}
 .ap-logo{width:28px;height:28px;border-radius:8px;flex:none}
 .ap-mrow{display:grid;grid-template-columns:28px minmax(0,1.3fr) minmax(0,1.6fr) 90px;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--a-line);font-size:13px}

@@ -372,6 +372,99 @@ export async function apply(ctx: Context): Promise<void> {
     return out
   }
 
+  // Danh sách phiên (thư mục làm việc, phiên cha) đọc lại tối đa mỗi phút: dùng cho "nơi học".
+  let sessionList:
+    { at: number; items: { sessionId: string; cwd?: string; parentSessionId?: string }[] } | undefined
+  async function listSessions() {
+    if (sessionList && Date.now() - sessionList.at < 60_000) return sessionList.items
+    const ac = new AbortController()
+    const v = (await ctx.sessionController.list({}, ac.signal).catch(() => undefined)) as
+      { items: { sessionId: string; cwd?: string; parentSessionId?: string }[] } | undefined
+    sessionList = { at: Date.now(), items: v?.items ?? [] }
+    return sessionList.items
+  }
+
+  /**
+   * Nơi học của ký ức: tên phiên (bỏ tiền tố "[Phòng nhóm · …]" của phiên con; trống thì lấy tên
+   * phiên cha), dự án (theo thư mục làm việc của phiên hoặc phiên cha), Telegram.
+   */
+  async function sessionSources(ids: readonly string[]) {
+    const out = new Map<
+      string,
+      { sessionTitle?: string; project?: string; workspace?: string; channel?: 'telegram' }
+    >()
+    if (!ids.length) return out
+    const items = await listSessions()
+    const byId = new Map(items.map((x) => [String(x.sessionId), x]))
+    const parentOf = (id: string) => byId.get(id)?.parentSessionId
+    const want = [...new Set(ids.flatMap((id) => [id, parentOf(id)].filter((x): x is string => !!x)))]
+    const titles = new Map<string, string>()
+    const query = ctx.get('sessionQuery') as
+      | {
+          readTitleSnapshots(
+            ids: unknown[],
+          ): Promise<{ sessionId: string; status: string; value?: { title?: { title?: string } } }[]>
+        }
+      | undefined
+    await query
+      ?.readTitleSnapshots(want.map((id) => SessionId(id)))
+      .then((rs) => {
+        for (const r of rs)
+          if (r.status === 'fulfilled' && r.value?.title?.title) titles.set(r.sessionId, r.value.title.title)
+      })
+      .catch(() => undefined)
+    const clean = (t: string | undefined) => t?.replace(/^\[[^\]]*(\]|$)\s*/, '').trim() || undefined
+    const reg = ctx.workspaceRegistry as unknown as {
+      list(): { id: string; title: string; path: string; sessionIds: readonly string[] }[]
+    }
+    const home = (await ensureHome(ctx.workspaceRegistry as never).catch(() => undefined))?.workspaceId
+    const projects = reg.list().filter((w) => w.id !== home)
+    const under = (dir: string | undefined) =>
+      dir
+        ? projects.find((w) => dir === w.path || dir.startsWith(`${w.path.replace(/\/+$/, '')}/`))
+        : undefined
+    const channels = ctx.get('arisChannels') as { isChannelSession?(id: string): boolean } | undefined
+    for (const id of ids) {
+      const parent = parentOf(id)
+      const ws =
+        projects.find((w) => w.sessionIds.includes(id) || (parent && w.sessionIds.includes(parent))) ??
+        under(byId.get(id)?.cwd) ??
+        under(parent ? byId.get(parent)?.cwd : undefined)
+      const title = clean(titles.get(id)) ?? (parent ? clean(titles.get(parent)) : undefined)
+      out.set(id, {
+        ...(title ? { sessionTitle: title } : {}),
+        ...(ws ? { project: ws.title, workspace: ws.id } : {}),
+        ...(channels?.isChannelSession?.(id) || (parent && channels?.isChannelSession?.(parent))
+          ? { channel: 'telegram' as const }
+          : {}),
+      })
+    }
+    return out
+  }
+
+  // Cột phải hồ sơ bot: số liệu 7 ngày, chi phí, ký ức lõi, ký ức mới học kèm nơi học (tên phiên,
+  // dự án, Telegram).
+  async function profile(bot: string) {
+    type Recent = { sessionId?: string } & Record<string, unknown>
+    const mem = ctx.get('arisMemory') as
+      { statsOf(bot: string): { core: { used: number; cap: number }; recent: Recent[] } } | undefined
+    const spend = ctx.get('arisSpend') as { botWeek?(bot: string): number } | undefined
+    const memory = mem?.statsOf(bot) ?? null
+    if (memory?.recent.length) {
+      const sources = await sessionSources(memory.recent.flatMap((r) => (r.sessionId ? [r.sessionId] : [])))
+      memory.recent = memory.recent.map((r) => (r.sessionId ? { ...r, ...sources.get(r.sessionId) } : r))
+    }
+    return {
+      live: live.of(bot),
+      week: botStats(
+        [...activity.entries()].map(([, r]) => r),
+        bot,
+      ),
+      costWeek: spend?.botWeek?.(bot) ?? null,
+      memory,
+    }
+  }
+
   async function catalog() {
     const c = await ctx.sessionController.modelCatalog()
     return c.groups.map((g) => ({
@@ -396,21 +489,7 @@ export async function apply(ctx: Context): Promise<void> {
               catalog,
               live: () => live.snapshot(store.list().map((b) => b.id)),
               memory: () => ctx.get('arisMemory') as MemoryPort | undefined,
-              profile: (bot) => {
-                const mem = ctx.get('arisMemory') as
-                  | { statsOf(bot: string): { core: { used: number; cap: number }; recent: unknown[] } }
-                  | undefined
-                const spend = ctx.get('arisSpend') as { botWeek?(bot: string): number } | undefined
-                return {
-                  live: live.of(bot),
-                  week: botStats(
-                    [...activity.entries()].map(([, r]) => r),
-                    bot,
-                  ),
-                  costWeek: spend?.botWeek?.(bot) ?? null,
-                  memory: mem?.statsOf(bot) ?? null,
-                }
-              },
+              profile: (bot) => profile(bot),
               mcp,
               checkMcp,
               souls,

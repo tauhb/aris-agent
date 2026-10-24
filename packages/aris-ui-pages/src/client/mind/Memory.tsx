@@ -3,7 +3,7 @@
  * lưu trữ, chờ duyệt). Dữ liệu thật từ `@aris/memory` qua `/api/aris/memory`.
  */
 import { Button, Card, CloseIcon, IconButton, BotPicker, PageShell, Tabs, Tag } from '@aris/ui-kit/react'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { PageProps } from '../page.js'
 import { Box } from '../ui.js'
 import { useMemory, type MemoryItem, type MemoryOp } from './memory-api.js'
@@ -23,14 +23,17 @@ function Item({
   text,
   source,
   children,
+  id,
 }: {
   tag: string
   text: ReactNode
   source: ReactNode
   children?: ReactNode
+  /** Mã ký ức: trang mở với `focus` bằng mã này thì cuộn tới và làm nổi bật. */
+  id?: string | undefined
 }) {
   return (
-    <div className="ap-it">
+    <div className="ap-it" data-mem-id={id}>
       <Tag>{tag}</Tag>
       <span style={{ flex: 1, minWidth: 0 }}>
         {text}
@@ -129,7 +132,7 @@ function Editable({
       </Item>
     )
   return (
-    <Item tag={t(`mem.kind.${m.kind}`)} text={m.text} source={source}>
+    <Item id={m.id} tag={t(`mem.kind.${m.kind}`)} text={m.text} source={source}>
       <IconButton label={t('mem.edit')} onClick={() => setDraft(m.text)}>
         ✎
       </IconButton>
@@ -143,9 +146,22 @@ function Editable({
 
 export function Memory({ t, params }: PageProps) {
   const [bot, setBot] = useState<string>(params.bot && params.bot in botNames() ? params.bot : 'aris')
-  const [tab, setTab] = useState<'core' | 'archive' | 'pending'>('core')
+  const [tab, setTab] = useState<'core' | 'archive' | 'pending'>(
+    params.tier === 'archive' ? 'archive' : 'core',
+  )
   const [query, setQuery] = useState('')
   const { data, error, loading, act } = useMemory(bot)
+  // Mở từ "Học gần đây" (hồ sơ bot): cuộn tới ký ức `focus` và làm nổi bật một lúc.
+  const focus = params.focus
+  useEffect(() => {
+    if (!focus || !data) return
+    const el = document.querySelector<HTMLElement>(`[data-mem-id="${CSS.escape(focus)}"]`)
+    if (!el) return
+    el.scrollIntoView({ block: 'center' })
+    el.classList.add('ap-focus')
+    const timer = setTimeout(() => el.classList.remove('ap-focus'), 2400)
+    return () => clearTimeout(timer)
+  }, [focus, data, tab])
   const name = botName(bot)
   const archive = useMemo(() => {
     const q = fold(query.trim())

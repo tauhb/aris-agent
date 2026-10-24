@@ -213,6 +213,10 @@ export class ChannelStore implements AccessState {
     return next
   }
   /** Cuộc trò chuyện đang dùng phiên này (để biết phiên nào gắn với Telegram). */
+  threads(): IterableIterator<[string, ThreadRecord]> {
+    return this.t.threads.entries()
+  }
+
   threadOfSession(sessionId: string): ThreadRecord | undefined {
     for (const [, t] of this.t.threads.entries()) if (t.sessionId === sessionId) return t
     return undefined
