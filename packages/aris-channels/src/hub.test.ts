@@ -236,6 +236,21 @@ describe('trung tâm kênh', () => {
     expect(s.tg.sent('deleteMessage')).toHaveLength(1)
   })
 
+  it('aris tắt giữa lượt: không báo lỗi, giữ tin trong hàng đợi để làm lại', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    s.tg.push(dm(OWNER, 'Viết bài dài'))
+    await settle()
+    const msg = s.sessions.agents.get('s1')!.inbox[0] as { id: string }
+    const before = s.tg.sent().length
+    s.hub.onSessionEvent('s1', { type: 'turn/start' })
+    s.hub.onSessionEvent('s1', { type: 'user/message', data: { id: msg.id } })
+    s.hub.onSessionEvent('s1', { type: 'turn/end', data: { reason: { kind: 'interrupted' } } })
+    await settle()
+    expect(s.tg.sent()).toHaveLength(before)
+    expect(s.store.inbox()).toHaveLength(1)
+  })
+
   it('người lạ: im lặng, báo chủ nhân có nút; chủ nhân bấm thì thành người được phép', async () => {
     const s = await setup()
     await pairOwner(s)

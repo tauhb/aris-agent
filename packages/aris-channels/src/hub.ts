@@ -647,6 +647,8 @@ export class ChannelHub {
     const first = r.ours[0]!
     this.stopTyping(r.sessionId)
     await this.clearPreview(r.sessionId, last.bot)
+    // aris tắt giữa lượt: không báo lỗi, giữ tin trong hàng đợi vào để làm lại khi chạy lên (`recover`).
+    if (r.reason.kind === 'interrupted') return
     const rt = this.runtimes.get(last.bot)
     for (const p of r.ours) await this.store.doneInbox(p.inboxId)
     const ok = r.reason.kind === 'completed'
