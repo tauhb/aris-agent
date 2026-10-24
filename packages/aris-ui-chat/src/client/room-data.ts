@@ -25,6 +25,51 @@ export interface RoundData {
   status: 'running' | 'done' | 'stopped'
   speaking?: string
   entries: RoomEntry[]
+  /** Mỗi tin đã là một dòng riêng trong khung chat. */
+  posted?: boolean
+}
+
+/** Bản ghi một tin của phòng nhóm trong phiên (`@aris/commander`). */
+export const ROOM_RECORD = 'plugin:aris/room-say'
+
+interface EventLike {
+  type: string
+  seq: number
+  data: unknown
+}
+
+/**
+ * Định nghĩa sự kiện cho khung chat: mỗi bản ghi `plugin:aris/room-say` thành một dòng riêng ở mức
+ * lượt (`groupTree: 'turn'`), nên dsh không gập tin của bot vào phần "quá trình" của Aris.
+ */
+export const roomSayDefinition = {
+  kind: 'aris-room-say',
+  target: 'chat',
+  match: (event: EventLike) => (event.type === ROOM_RECORD ? { id: String(event.seq), role: 'start' } : null),
+  start: (_context: unknown, match: { event: EventLike }) => ({
+    seq: match.event.seq,
+    data: match.event.data,
+  }),
+  update: (context: { state: unknown }) => context.state,
+  buildViewNode: (context: {
+    key: string
+    id: string
+    state?: { seq: number; data: unknown }
+    start?: { location?: unknown }
+  }) =>
+    context.state === undefined
+      ? null
+      : {
+          key: context.key,
+          kind: 'aris-room-say',
+          id: context.id,
+          target: 'chat',
+          anchorSeq: context.state.seq,
+          location: context.start?.location ?? { kind: 'unresolved' },
+          visibility: 'visible',
+          groupTree: 'turn',
+          data: context.state.data,
+        },
 }
 
 const endpoint = (query: string) => new URL(`api/aris/commander?${query}`, document.baseURI)

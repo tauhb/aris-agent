@@ -23,6 +23,7 @@ import {
   commanderDomain,
   type DispatchRecord,
   type JobRecord,
+  type RoomEntry,
   type RoundRecord,
   type Table,
 } from './domain.js'
@@ -57,9 +58,13 @@ export const inject = ['tools', 'systemPrompt', 'storageDomain']
 
 export const DISPATCH_RECORD = 'plugin:aris/dispatch'
 
+export const ROOM_RECORD = 'plugin:aris/room-say'
+
 declare module '@deepseek-ai/dsh-session' {
   interface PluginRecordMap {
     'plugin:aris/dispatch': Omit<DispatchEntry, 'sessionId'>
+    /** Một tin trong phòng nhóm: khung chat vẽ thành tin riêng của bot, không gập theo lượt của Aris. */
+    'plugin:aris/room-say': RoomEntry & { callId: string; round: number; maxRounds: number }
   }
 }
 
@@ -695,6 +700,18 @@ export async function apply(ctx: Context): Promise<void> {
               waitTurn,
               busy: (id) => b.live.of(id).status === 'working',
               save: (r) => rounds.put(r.callId, { ...r, entries: [...r.entries] }),
+              post(entry, r) {
+                try {
+                  appendPluginRecord(exec.agent!.session, ROOM_RECORD, {
+                    ...entry,
+                    callId: r.callId,
+                    round: r.round,
+                    maxRounds: r.maxRounds,
+                  })
+                } catch (e) {
+                  logger.warn('ghi tin phòng nhóm: %s', String(e))
+                }
+              },
             },
             room,
             {

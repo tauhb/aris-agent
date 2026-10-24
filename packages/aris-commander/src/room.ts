@@ -142,6 +142,8 @@ export interface RoundDeps<A> {
   /** Bot đang làm việc khác (không mời được lúc này). */
   busy(botId: string): boolean
   save(record: RoundRecord): Promise<void>
+  /** Ghi một tin của vòng thành dòng riêng trong phiên chính (mỗi bot một tin). */
+  post?(entry: RoomEntry, record: RoundRecord): void
   now?: () => Date
 }
 
@@ -188,6 +190,7 @@ export async function runRound<A>(
     maxMessages: rules.maxMessages,
     status: 'running',
     entries: [],
+    ...(d.post ? { posted: true } : {}),
     createdAt: now().toISOString(),
   }
   const add = async (
@@ -196,7 +199,7 @@ export async function runRound<A>(
     text: string,
     reason?: RoomEntry['reason'],
   ) => {
-    record.entries.push({
+    const entry: RoomEntry = {
       bot: bot.id,
       handle: bot.handle,
       name: bot.name,
@@ -205,7 +208,9 @@ export async function runRound<A>(
       kind,
       ...(reason ? { reason } : {}),
       text,
-    })
+    }
+    record.entries.push(entry)
+    d.post?.(entry, record)
     state.spoke.set(bot.handle, kind)
     record.used = state.used
     await d.save(record)

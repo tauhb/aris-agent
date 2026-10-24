@@ -77,7 +77,8 @@ export function RoomRound(props: SubagentCall & { callId: string; t: Translate }
   return (
     <div className="aris aris-room">
       <div className="aris-room-note">{t('room.round', { n: round.round, max: round.maxRounds })}</div>
-      {round.entries.map((e, i) =>
+      {/* Vòng mới: mỗi tin đã là một dòng riêng trong khung chat (RoomSay); ở đây chỉ còn vòng và ai đang nói. */}
+      {(round.posted ? [] : round.entries).map((e, i) =>
         e.kind === 'say' ? (
           <Said key={i} e={e} />
         ) : (
@@ -93,6 +94,21 @@ export function RoomRound(props: SubagentCall & { callId: string; t: Translate }
         </div>
       )}
       {round.status === 'stopped' && <div className="aris-room-note">{t('room.closed')}</div>}
+    </div>
+  )
+}
+
+/** Một tin trong phòng nhóm (`conversation.chat.node`, kiểu `aris-room-say`): tin riêng của một bot. */
+export function RoomSay({ node, t }: { node: { data: RoomEntry & { round: number } }; t: Translate }) {
+  useTeamData()
+  const e = node.data
+  return (
+    <div className="aris aris-room aris-room-say">
+      {e.kind === 'say' ? (
+        <Said e={e} />
+      ) : (
+        <div className="aris-room-note">{t(noteKey(e), { name: e.name, text: e.text })}</div>
+      )}
     </div>
   )
 }

@@ -25,6 +25,7 @@ function fakeRoom(replies: Record<string, (brief: string) => Spoken>, opts: { bu
   const members: { id: string; name: string; status: string }[] = []
   const briefs: Record<string, string[]> = {}
   const saved: RoundRecord[] = []
+  const posted: string[] = []
   let pending: { sid: string; brief: string } | undefined
   const deps: RoundDeps<typeof agent> = {
     agent,
@@ -53,8 +54,11 @@ function fakeRoom(replies: Record<string, (brief: string) => Spoken>, opts: { bu
     async save(r) {
       saved.push(structuredClone(r))
     },
+    post(entry) {
+      posted.push(`${entry.handle}:${entry.kind}`)
+    },
   }
-  return { deps, briefs, saved }
+  return { deps, briefs, saved, posted }
 }
 
 const say = (text: string) => (): Spoken => ({ kind: 'completed', text })
@@ -115,7 +119,7 @@ describe('lệnh trong phòng', () => {
 
 describe('một vòng', () => {
   it('bot nói lần lượt, người sau đọc được người trước; bỏ lượt không tính tin', async () => {
-    const { deps, briefs, saved } = fakeRoom({
+    const { deps, briefs, saved, posted } = fakeRoom({
       lam: say('Video hướng dẫn giữ chân tốt nhất. Đề xuất 2 video/tuần.'),
       tin: say('50 triệu: 30 sản xuất, 15 quảng cáo, 5 dự phòng. @lam 2 video/tuần có vượt không?'),
       dev: say('BỎ LƯỢT'),
@@ -132,6 +136,9 @@ describe('một vòng', () => {
     expect(state.used).toBe(2)
     expect(state.round).toBe(1)
     expect(Object.fromEntries(state.spoke)).toEqual({ lam: 'say', tin: 'say', dev: 'pass' })
+    // Mỗi tin thành một dòng riêng trong phiên, theo đúng thứ tự nói.
+    expect(posted).toEqual(['lam:say', 'tin:say', 'dev:pass'])
+    expect(r.posted).toBe(true)
     expect(briefs.lam![0]).toContain('Người dùng: @all Đề xuất 3 mục tiêu quý 4')
     expect(briefs.lam![0]).toContain('Aris (điều phối): Đề xuất 3 mục tiêu quý 4.')
     expect(briefs.tin![0]).toContain('Lâm (Nghiên cứu): Video hướng dẫn')

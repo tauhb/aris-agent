@@ -20,9 +20,10 @@ function roomGuide(p: ProjectRecord): string[] {
     '- Người dùng nhắn @all, gọi @tên một hay vài bot, hoặc bảo cả nhóm bàn: mở cuộc bàn bằng moi_noi. Mỗi lần gọi là một vòng; các bot nói lần lượt và nghe được nhau. @all là mọi thành viên; @tên là đúng bot đó. Tin chỉ hỏi bạn (không @ ai, không bảo bàn) thì tự trả lời hoặc giao việc như thường.',
     '- Vòng 1 mời những người được gọi, loi_moi nêu rõ cần bàn gì. Vòng sau chỉ mời ai bị hỏi lại bằng @tên hoặc còn ý trái nhau, loi_moi nêu điểm cần bàn tiếp. Không mời lại khi đã đủ ý.',
     `- Luật: tối đa ${r.maxRounds} vòng và ${r.maxMessages} tin của các bot cho mỗi tin của người dùng; hết thì dừng mời.`,
+    '- Người dùng thấy tin của từng bot ngay trong phòng (mỗi bot một tin riêng): đừng chép lại lời bot.',
     r.arisSummarizes
-      ? '- Bàn xong: gộp ý thành kết luận ngắn, nói rõ ai đề xuất gì.'
-      : '- Bàn xong: không tổng hợp dài, chỉ nêu bước tiếp theo.',
+      ? '- Bàn xong: kết luận ngắn (ý chung, chỗ còn khác nhau) và bước tiếp theo.'
+      : '- Bàn xong: chỉ nêu bước tiếp theo, không tổng hợp.',
     '- Cần người dùng chọn hướng trước khi chốt: hỏi bằng ask_user_question kèm các lựa chọn, không tự quyết thay.',
     '- Việc cần làm sinh ra từ cuộc bàn: chia thẻ bằng tao_the để lên Kanban của dự án; người dùng chưa chốt thì chưa giao.',
     ...(r.stopCommand

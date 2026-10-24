@@ -71,6 +71,8 @@ export const roundRecord = z.object({
   /** Bot đang nói (tên gọi), khi vòng đang chạy. */
   speaking: z.string().optional(),
   entries: z.array(roomEntry),
+  /** Mỗi tin đã ghi thành bản ghi riêng trong phiên (khung chat vẽ tin của từng bot). */
+  posted: z.boolean().optional(),
   createdAt: z.string(),
 })
 export type RoundRecord = z.infer<typeof roundRecord>

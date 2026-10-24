@@ -78,6 +78,7 @@ describe('ngữ cảnh dự án', () => {
     expect(main).toContain('moi_noi')
     expect(main).toContain('tối đa 3 vòng và 10 tin')
     expect(main).toContain('dừng @tên')
+    expect(main).toContain('đừng chép lại lời bot')
   })
   it('bot thành viên chỉ nhận mục tiêu và đồng đội', () => {
     const t = renderProject(p, BOTS[1]!, BOTS)

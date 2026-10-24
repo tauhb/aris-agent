@@ -5,7 +5,8 @@
 import { mountKitCss, registerPersonal } from '@aris/ui-kit/react'
 import { DispatchBranches, HeroMark, ModelLabel, SubagentBranch, TriggerButtons } from './Chat.js'
 import { EN, NS, VI } from './locale.js'
-import { RoomDock, RoomRound } from './Room.js'
+import { RoomDock, RoomRound, RoomSay } from './Room.js'
+import { roomSayDefinition } from './room-data.js'
 import { CSS } from './styles.js'
 
 interface SessionInput {
@@ -22,13 +23,14 @@ interface ClientContext {
     register(options: Record<string, unknown>, component: unknown): () => void
   }
   locale: { register(ns: string, locale: string, dict: Record<string, string>): () => void }
+  uiConversation: { events: { register(definition: unknown): () => void } }
   sessions: {
     list: unknown
     scope(sessionId: string): { get(name: string): unknown } | undefined
   }
 }
 
-export const inject = ['slots', 'locale', 'sessions', 'uiWorkspace']
+export const inject = ['slots', 'locale', 'sessions', 'uiWorkspace', 'uiConversation']
 
 function injectStyle(): () => void {
   const style = document.createElement('style')
@@ -116,6 +118,12 @@ export function apply(ctx: ClientContext): void {
   // Phòng nhóm của dự án (`moi_noi` của @aris/commander): tin của các bot trong một vòng.
   ctx.slots.inject('tool.call.toolview', () =>
     ctx.slots.register({ name: 'tool.call.toolview', key: 'moi_noi', priority: -1, locale: NS }, RoomRound),
+  )
+
+  // Mỗi tin trong phòng là một dòng riêng của bot (không gập vào lượt của Aris).
+  ctx.uiConversation.events.register(roomSayDefinition)
+  ctx.slots.inject('conversation.chat.node', () =>
+    ctx.slots.register({ name: 'conversation.chat.node', key: 'aris-room-say', locale: NS }, RoomSay),
   )
 
   // Thanh phòng trên ô nhập ở phiên chính của dự án: vòng, số tin, Dừng phòng.
