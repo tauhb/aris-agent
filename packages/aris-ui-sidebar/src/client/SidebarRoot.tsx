@@ -25,11 +25,12 @@ import {
   onArisRoute,
   openBotSession,
   teamAction,
+  usePendingApprovals,
   useTeam,
   type NavRequest,
   type TemplateData,
 } from '@aris/ui-kit/react'
-import { DEMO_PENDING_APPROVALS, isProjectWorkspace, type TeamMember } from '@aris/ui-kit'
+import { isProjectWorkspace, type TeamMember } from '@aris/ui-kit'
 import { useEffect, useState, type ReactElement } from 'react'
 import { useTodayCost } from './cost.js'
 import { latestProjectSession } from './projects.js'
@@ -246,7 +247,9 @@ export function SidebarRoot(props: SidebarProps) {
   const activePanel = props.usePanelInfo((info) => info.activePanelId)
   const botKey = activePanel ? BOT_PAGES[activePanel] : undefined
   const viewedBot = botKey ? (route?.params?.[botKey] ?? 'aris') : undefined
-  const waiting = t('approvals.waiting', { count: DEMO_PENDING_APPROVALS })
+  // Yêu cầu quyền của bot đang chờ (duyệt tập trung): bấm thì mở phiên có thanh duyệt của yêu cầu đầu.
+  const [pending] = usePendingApprovals('all')
+  const waiting = t('approvals.waiting', { count: pending.length })
   const toggleLabel = t(wide ? 'toggle.collapse' : 'toggle.open')
   const money = (n: number) =>
     n.toLocaleString(t('number.locale'), {
@@ -390,14 +393,18 @@ export function SidebarRoot(props: SidebarProps) {
       </div>
 
       <div className="foot">
-        {DEMO_PENDING_APPROVALS > 0 && (
+        {pending.length > 0 && (
           <Tip label={waiting} wide={wide}>
             <NavItem
               label={waiting}
               variant="warn"
               icon={<WaitingIcon />}
               collapsed={!wide}
-              onClick={() => arisNavigate('approvals')}
+              onClick={() =>
+                pending[0]?.parentSession
+                  ? props.openSession(pending[0].parentSession)
+                  : arisNavigate('approvals')
+              }
             />
           </Tip>
         )}

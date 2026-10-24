@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { ChannelHub, type LiveAgent, type SessionPort } from './hub.js'
+import { ChannelHub, type ApprovalsPort, type LiveAgent, type SessionPort } from './hub.js'
 import { memStore } from './store.test.js'
 import type { Fetch } from './telegram/api.js'
 import type { TgMessage, TgUpdate } from './telegram/types.js'
@@ -358,6 +358,41 @@ describe('trung tâm kênh', () => {
     expect(await pending).toBe('allowed-once')
     // Phiên không gắn kênh: để người trả lời khác lo.
     expect(await s.hub.approve('khác', { toolName: 'x' })).toBeUndefined()
+  })
+
+  it('duyệt tập trung: thẻ của bot tới chat chính, bấm trả lời về hộp chung, xong thì sửa thẻ', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    type Ev = Parameters<Parameters<ApprovalsPort['on']>[0]>[0]
+    let emit: (e: Ev) => void = () => undefined
+    const answers: [string, boolean, string][] = []
+    s.hub.watchApprovals({
+      on: (fn) => ((emit = fn), () => undefined),
+      answer: (id, allow, by) => (answers.push([id, allow, by]), true),
+    })
+    const item = {
+      id: 'r1',
+      source: 'member' as const,
+      bot: 'b-1',
+      name: 'Minh',
+      kind: 'run',
+      target: 'ls ~/Desktop',
+    }
+    emit({ type: 'opened', item })
+    await settle()
+    const card = s.tg.sent().at(-1)!
+    expect(card.chat_id).toBe(OWNER)
+    expect(String(card.text)).toContain('CẦN DUYỆT')
+    expect(String(card.text)).toContain('Chạy lệnh')
+    expect(String(card.text)).toContain('<code>ls ~/Desktop</code>')
+    const data = (card.reply_markup as { inline_keyboard: { callback_data: string }[][] })
+      .inline_keyboard[0]![0]!.callback_data
+    s.tg.push({ callback_query: { id: 'c9', from: { id: OWNER, is_bot: false, first_name: 'O' }, data } })
+    await settle()
+    expect(answers).toEqual([['r1', true, 'telegram']])
+    emit({ type: 'closed', item, allow: true, by: 'user' })
+    await settle()
+    expect(String(s.tg.sent('editMessageText').at(-1)!.text)).toContain('Đã cho phép trên web')
   })
 
   it('khởi động lại giữa lúc gửi: gửi lại phần dở kèm ghi chú có thể trùng', async () => {

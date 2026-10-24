@@ -112,7 +112,7 @@ export const externalRunRecord = z.object({
     .array(
       externalStep
         .omit({ status: true })
-        .extend({ allow: z.boolean(), by: z.enum(['user', 'timeout', 'ended']) }),
+        .extend({ allow: z.boolean(), by: z.enum(['user', 'telegram', 'timeout', 'ended']) }),
     )
     .optional(),
   costUsd: z.number().optional(),

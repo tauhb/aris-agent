@@ -49,6 +49,7 @@ import {
   type PluginModule,
 } from './external.js'
 import { ApprovalHub } from './approval.js'
+import { ApprovalCenter, callInput, toolAlias, type ApprovalEvent } from './approvals.js'
 import { childEnv, runClaude, stepOf, type DriverHooks } from './claude-driver.js'
 import { runCodex } from './codex-driver.js'
 import { cliVersion, findBinary } from './cli.js'
@@ -319,6 +320,14 @@ export async function apply(ctx: Context): Promise<void> {
         runExternal(b.store.get(bot.id)!, a, title, parent, signal),
       record(entry) {
         b.live.assigned(entry.bot, entry.title, entry.member)
+        const bot = b.store.get(entry.bot)
+        members.set(entry.member, {
+          bot: entry.bot,
+          name: bot?.name ?? entry.handle,
+          handle: entry.handle,
+          parent: entry.sessionId,
+        })
+        askMember(entry.member)
         const rest: Omit<DispatchEntry, 'sessionId'> & { sessionId?: string } = { ...entry }
         delete rest.sessionId
         try {
@@ -1068,11 +1077,55 @@ export async function apply(ctx: Context): Promise<void> {
     return { cwd: plan.dir, worktree: { ...plan, repo: root } }
   }
 
-  // Hỏi người dùng khi bot ngoài xin quyền: yêu cầu đang chờ nằm trên bản ghi lần chạy (thẻ duyệt).
+  // Duyệt tập trung: yêu cầu quyền của bot ngoài (ApprovalHub) và bot trong đội (phiên con) về một
+  // danh sách; web và Telegram cùng đọc. Bot ngoài còn ghi yêu cầu lên bản ghi lần chạy (thẻ trên nhánh).
+  const center = new ApprovalCenter()
+  ctx.provide('arisApprovals', {
+    list: (parentSession?: string) => center.list(parentSession),
+    answer: (id: string, allow: boolean, by: 'user' | 'telegram' = 'user') => hub.answer(id, allow, by),
+    on: (fn: (e: ApprovalEvent) => void) => center.on(fn),
+  })
+  /** Phiên con của bot trong đội đang làm việc được giao: bot nào, phiên giao việc nào. */
+  const members = new Map<string, { bot: string; name: string; handle: string; parent: string }>()
+  /** Tham số các lần gọi công cụ gần đây của phiên con, để thẻ duyệt hiện đúng lệnh. */
+  const calls = new Map<string, { name: string; args: unknown }>()
   const hub = new ApprovalHub({
     opened(req) {
+      if (req.run.startsWith('member:')) {
+        const m = members.get(req.run.slice(7))
+        const input = req.input as { call?: { name: string; args: unknown }; reason?: string }
+        const step = input.call ? stepOf(toolAlias(input.call.name), callInput(input.call.args)) : undefined
+        center.open({
+          id: req.id,
+          source: 'member',
+          run: req.run,
+          bot: m?.bot ?? req.run.slice(7),
+          name: m?.name ?? '?',
+          handle: m?.handle,
+          parentSession: m?.parent,
+          kind: step?.kind ?? 'other',
+          target: step?.target,
+          tool: step?.tool ?? input.call?.name ?? req.tool,
+          reason: input.reason,
+          at: req.at,
+        })
+        return
+      }
       const r = externals.get(req.run)
       if (!r) return
+      const step = stepOf(req.tool, req.input, r.cwd)
+      center.open({
+        id: req.id,
+        source: 'external',
+        run: req.run,
+        bot: r.bot,
+        name: r.name,
+        parentSession: r.parentSession,
+        kind: step.kind,
+        target: step.target,
+        tool: step.tool ?? req.tool,
+        at: req.at,
+      })
       void updateRun(req.run, (cur) => ({
         ...cur,
         pending: [
@@ -1083,6 +1136,8 @@ export async function apply(ctx: Context): Promise<void> {
       bots().live.externalWaiting(r.bot, true, r.id)
     },
     closed(req, allow, by) {
+      center.close(req.id, allow, by)
+      if (req.run.startsWith('member:')) return
       const r = externals.get(req.run)
       if (!r) return
       void updateRun(req.run, (cur) => ({
@@ -1096,6 +1151,45 @@ export async function apply(ctx: Context): Promise<void> {
       bots().live.externalWaiting(r.bot, false, r.id)
     },
   })
+  // Bot trong đội (phiên con của Team): dsh ghim "từ chối hết" lúc tạo; aris đổi sang "hỏi" khi giao
+  // việc và trả lời các yêu cầu đó bằng hộp duyệt chung.
+  const askMember = (memberSession: string) => {
+    const agent = (ctx.get('agents') as { get(id: string): unknown } | undefined)?.get(memberSession)
+    const approval = ctx.get('approval') as
+      { setPolicy(agent: unknown, policy: 'ask' | 'never'): void } | undefined
+    if (!agent || !approval) return
+    try {
+      approval.setPolicy(agent, 'ask')
+    } catch (e) {
+      logger.warn('đổi chính sách duyệt của %s: %s', memberSession, String(e))
+    }
+  }
+  ctx.on('session/event', (session, event) => {
+    if ((event.type as string) !== 'tool/call' || !members.has(session.id)) return
+    const d = event.data as unknown as { callId?: string; name?: string; arguments?: unknown }
+    if (!d.callId || !d.name) return
+    calls.set(d.callId, { name: d.name, args: d.arguments })
+    if (calls.size > 200) calls.delete(calls.keys().next().value!)
+  })
+  ctx.on(
+    'approval/request',
+    async (req, next) => {
+      const sid = req.agent.session.id
+      if (!members.has(sid)) return next()
+      const call = req.callId ? calls.get(req.callId) : undefined
+      const run = `member:${sid}`
+      const onAbort = () => hub.endRun(run)
+      req.signal?.addEventListener('abort', onAbort, { once: true })
+      try {
+        const allow = await hub.request(run, req.toolName, { call, reason: req.reason })
+        if (req.signal?.aborted) return 'cancelled'
+        return allow ? 'allowed-once' : 'rejected'
+      } finally {
+        req.signal?.removeEventListener('abort', onAbort)
+      }
+    },
+    true,
+  )
   ctx.effect(() => {
     hub.start().catch((e: unknown) => logger.warn('mở socket duyệt quyền: %s', String(e)))
     return () => hub.stop()
@@ -1495,16 +1589,10 @@ export async function apply(ctx: Context): Promise<void> {
             return json({ run: r ? runView(r) : null })
           }
           // ?approvals=<phiên>: yêu cầu quyền của bot ngoài đang chờ, cho thanh duyệt trên ô nhập.
+          // ?approvals=all: mọi yêu cầu đang chờ (thanh bên, Hộp duyệt).
           const approvalsOf = q.get('approvals')
           if (approvalsOf)
-            return json({
-              approvals: [...externals.entries()]
-                .map(([, r]) => r)
-                .filter((r) => r.parentSession === approvalsOf && r.status === 'running')
-                .flatMap((r) =>
-                  (r.pending ?? []).map((p) => ({ ...p, run: r.id, name: r.name, bot: r.bot })),
-                ),
-            })
+            return json({ approvals: center.list(approvalsOf === 'all' ? undefined : approvalsOf) })
           // ?externals=1: plugin đã cài chưa, đã đăng nhập chưa, bot ngoài nào sẵn sàng.
           if (q.get('externals')) return json(await externalStatus())
           const roomSession = q.get('room')

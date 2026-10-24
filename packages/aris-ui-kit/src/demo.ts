@@ -65,9 +65,6 @@ export const DEMO_TEAM: TeamGroup[] = [
   },
 ]
 
-/** Số việc đang chờ anh duyệt (mẫu; giai đoạn 3 lấy từ hộp duyệt). */
-export const DEMO_PENDING_APPROVALS = 3
-
 /** Việc gần đây của đội cho cột phải "Đội bot lúc này" (mẫu; giai đoạn 2 lấy từ dịch vụ đội bot). */
 export const DEMO_ACTIVITY: readonly { id: string; status: BotStatus; text: string; when: string }[] = [
   { id: 'lam', status: 'working', text: 'đọc nguồn thứ 12', when: 'vừa xong' },

@@ -9,7 +9,15 @@ import type { BotRecord, InboxRecord, OutboxRecord } from './domain.js'
 import { sttNotReady, textToVoice, transcribe, type SpeechToText } from './media.js'
 import { ChannelStore, keyNum, threadKey } from './store.js'
 import { TelegramApi, TelegramError, type Fetch } from './telegram/api.js'
-import { escapeHtml, isSilent, nameTeam, preview, toTelegramHtml, type TeamName } from './telegram/format.js'
+import {
+  colorDot,
+  escapeHtml,
+  isSilent,
+  nameTeam,
+  preview,
+  toTelegramHtml,
+  type TeamName,
+} from './telegram/format.js'
 import type {
   InlineButton,
   TgCallbackQuery,
@@ -61,6 +69,31 @@ export interface CredentialPort {
   unset(ref: string): Promise<void>
 }
 
+/** Một yêu cầu quyền của bot trong hộp duyệt chung (`@aris/commander`, `arisApprovals`). */
+export interface ApprovalItem {
+  id: string
+  source: 'external' | 'member'
+  bot: string
+  name: string
+  handle?: string | undefined
+  kind: string
+  target?: string | undefined
+  tool?: string | undefined
+  reason?: string | undefined
+}
+
+/** Hộp duyệt chung: nghe yêu cầu mới / đã xong, trả lời một yêu cầu. */
+export interface ApprovalsPort {
+  on(
+    fn: (
+      e:
+        | { type: 'opened'; item: ApprovalItem }
+        | { type: 'closed'; item: ApprovalItem; allow: boolean; by: string },
+    ) => void,
+  ): () => void
+  answer(id: string, allow: boolean, by: 'telegram'): boolean
+}
+
 export interface HubDeps {
   store: ChannelStore
   credentials: CredentialPort
@@ -103,6 +136,9 @@ export class ChannelHub {
   readonly tracker = new TurnTracker()
   private readonly runtimes = new Map<string, BotRuntime>()
   private readonly lanes = new Map<string, Promise<void>>()
+  /** Thẻ duyệt tập trung đã gửi: mã yêu cầu → tin Telegram (để sửa khi yêu cầu xong). */
+  private readonly cards = new Map<string, { bot: string; chatId: number; messageId: number; html: string }>()
+  private approvalsPort: ApprovalsPort | undefined
   /** Model đang dùng theo phiên (từ `request/context`). */
   readonly models = new Map<string, string>()
   private readonly previews = new Map<
@@ -949,6 +985,14 @@ export class ChannelHub {
     const num = (s: string | undefined) => (s?.startsWith('n') ? -Number(s.slice(1)) : Number(s))
 
     switch (kind) {
+      case 'ax': {
+        // Thẻ duyệt tập trung: trả lời về hộp chung; thẻ được sửa khi hộp báo yêu cầu đã xong.
+        if (!this.approvalsPort?.answer(a ?? '', b === 'y', 'telegram')) {
+          await edit(`${msg?.text ? escapeHtml(msg.text) + '\n\n' : ''}${T.centralGone}`)
+          return done(T.centralGone)
+        }
+        return done()
+      }
       case 'ap': {
         const w = this.approvals.get(a ?? '')
         if (!w) return done('Yêu cầu này đã hết hạn.')
@@ -1082,6 +1126,60 @@ export class ChannelHub {
     const rank = { owner: 2, member: 1, guest: 0 } as const
     const trust = ours.reduce<Trust>((t, p) => (rank[p.trust] < rank[t] ? p.trust : t), 'owner')
     return { last, trust }
+  }
+
+  /**
+   * Duyệt tập trung (bản vẽ 7.1): yêu cầu quyền của bot (bot ngoài, bot trong đội) thành thẻ có nút
+   * gửi tới chat chính của chủ nhân qua bot Aris; yêu cầu xong ở đâu (web, Telegram, hết hạn) thì sửa
+   * thẻ, bỏ nút. Trả hàm gỡ.
+   */
+  watchApprovals(port: ApprovalsPort): () => void {
+    this.approvalsPort = port
+    const off = port.on((e) => {
+      if (e.type === 'opened')
+        void this.sendCard(e.item).catch((err: unknown) =>
+          this.d.logger.warn('aris-channels: thẻ duyệt: %s', String(err)),
+        )
+      else void this.closeCard(e.item.id, e.allow, e.by)
+    })
+    return () => {
+      off()
+      this.approvalsPort = undefined
+    }
+  }
+
+  private async sendCard(item: ApprovalItem) {
+    const bot = this.store.bot('aris') ? 'aris' : [...this.runtimes.keys()][0]
+    const rt = bot ? this.runtimes.get(bot) : undefined
+    const chatId = (bot ? this.store.bot(bot)?.home?.chatId : undefined) ?? this.store.owners()[0]?.userId
+    if (!rt || !bot || chatId === undefined) return
+    const team = this.d.team?.() ?? []
+    const color = team.find((m) => m.handle === item.handle)?.color
+    const who = `${colorDot(color)} <b>${escapeHtml(item.name)}</b>`
+    const action = T.stepAction[item.kind] ?? T.stepOther(item.tool ?? item.kind)
+    const html = T.centralCard(who, action, item.target, item.reason, item.source === 'external')
+    const msg = await rt.api.sendMessage(chatId, html, {
+      html: true,
+      buttons: [
+        [
+          { text: 'Cho phép', callback_data: `ax:${item.id}:y` },
+          { text: 'Từ chối', callback_data: `ax:${item.id}:n` },
+        ],
+      ],
+    })
+    this.cards.set(item.id, { bot, chatId, messageId: msg.message_id, html })
+  }
+
+  private async closeCard(id: string, allow: boolean, by: string) {
+    const card = this.cards.get(id)
+    if (!card) return
+    this.cards.delete(id)
+    await this.runtimes
+      .get(card.bot)
+      ?.api.editMessageText(card.chatId, card.messageId, `${card.html}\n\n${T.centralDone(allow, by)}`, {
+        html: true,
+      })
+      .catch(() => undefined)
   }
 
   /** `approval/request`: trả undefined khi phiên không thuộc kênh (để người trả lời khác lo). */

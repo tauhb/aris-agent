@@ -23,7 +23,13 @@ import type {} from '@deepseek-ai/dsh-user-questions'
 import type {} from '@deepseek-ai/dsh-workspace'
 import { handleApi } from './api.js'
 import { channelsDomain } from './domain.js'
-import { ChannelHub, type AttachmentPort, type LiveAgent, type SessionPort } from './hub.js'
+import {
+  ChannelHub,
+  type ApprovalsPort,
+  type AttachmentPort,
+  type LiveAgent,
+  type SessionPort,
+} from './hub.js'
 import type { SpeechToText } from './media.js'
 import { ChannelStore, type Tables } from './store.js'
 
@@ -145,6 +151,20 @@ export async function apply(ctx: Context): Promise<void> {
 
   // Cho lệnh `aris send` (qua @aris/daemon) và các plugin khác gửi Telegram.
   ctx.provide('arisChannels', hub)
+  // Duyệt tập trung: hộp duyệt chung của @aris/commander có thể nạp sau, nên dò tới khi có.
+  ctx.effect(() => {
+    let off: (() => void) | undefined
+    const hook = () => {
+      const port = ctx.get('arisApprovals') as ApprovalsPort | undefined
+      if (port && !off) off = hub.watchApprovals(port)
+    }
+    hook()
+    const timer = setInterval(hook, 5000)
+    return () => {
+      clearInterval(timer)
+      off?.()
+    }
+  }, 'aris-channels: thẻ duyệt tập trung')
   ctx.on('session/event', (session, event) => hub.onSessionEvent(session.id, event as never))
   ctx.on('agent/assistant-stream', ({ agent, frame }) => hub.onStream(agent.session.id, frame as never))
   // Phiên của kênh: duyệt và câu hỏi đi qua Telegram trước; phiên khác để người trả lời sau lo.

@@ -8,6 +8,7 @@ import { existsSync, mkdirSync, rmSync } from 'node:fs'
 import { createServer, type Server, type Socket } from 'node:net'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
+import type { AnsweredBy } from './approvals.js'
 
 /** Không trả lời sau ngần này thì từ chối (kế hoạch: hết hạn ⇒ từ chối). */
 export const APPROVAL_TIMEOUT_MS = 15 * 60_000
@@ -24,7 +25,7 @@ export interface ApprovalPort {
   /** Có yêu cầu mới cho một lần chạy (ghi lên bản ghi để giao diện vẽ thẻ duyệt). */
   opened(req: ApprovalRequest): void
   /** Yêu cầu đã xong (người dùng trả lời, hết hạn, lần chạy kết thúc). */
-  closed(req: ApprovalRequest, allow: boolean, by: 'user' | 'timeout' | 'ended'): void
+  closed(req: ApprovalRequest, allow: boolean, by: AnsweredBy): void
 }
 
 interface Pending {
@@ -71,11 +72,11 @@ export class ApprovalHub {
     return [...this.pending.values()].filter((p) => p.req.run === run).map((p) => p.req)
   }
 
-  /** Người dùng trả lời; trả false khi yêu cầu không còn chờ. */
-  answer(id: string, allow: boolean): boolean {
+  /** Người dùng trả lời (trên web hay Telegram); trả false khi yêu cầu không còn chờ. */
+  answer(id: string, allow: boolean, by: 'user' | 'telegram' = 'user'): boolean {
     const p = this.pending.get(id)
     if (!p) return false
-    this.settle(p, allow, 'user')
+    this.settle(p, allow, by)
     return true
   }
 
@@ -98,7 +99,7 @@ export class ApprovalHub {
     })
   }
 
-  private settle(p: Pending, allow: boolean, by: 'user' | 'timeout' | 'ended') {
+  private settle(p: Pending, allow: boolean, by: AnsweredBy) {
     if (!this.pending.delete(p.req.id)) return
     clearTimeout(p.timer)
     p.answer(allow)

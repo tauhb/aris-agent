@@ -132,9 +132,18 @@ export async function answerApproval(id: string, allow: boolean): Promise<boolea
 }
 
 /** Một yêu cầu quyền đang chờ (thanh duyệt trên ô nhập của phiên giao việc). */
-export type PendingApproval = ExternalStep & { run: string; name: string; bot: string }
+export type PendingApproval = ExternalStep & {
+  run: string
+  name: string
+  bot: string
+  /** Bot ngoài (lần chạy CLI) hay bot trong đội (phiên con). */
+  source?: 'external' | 'member'
+  /** Phiên giao việc có thanh duyệt hiện yêu cầu này. */
+  parentSession?: string
+  reason?: string
+}
 
-/** Yêu cầu quyền của bot ngoài đang chờ trong một phiên, đọc lại mỗi 3 giây. */
+/** Yêu cầu quyền của bot đang chờ trong một phiên (`all`: mọi phiên), đọc lại mỗi 3 giây. */
 export function usePendingApprovals(sessionId: string | undefined): [PendingApproval[], () => void] {
   const [list, setList] = useState<PendingApproval[]>([])
   const [tick, setTick] = useState(0)

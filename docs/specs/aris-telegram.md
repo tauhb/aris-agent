@@ -109,6 +109,10 @@ Thêm bot Telegram (dán token), trạng thái và cảnh báo privacy mode; sin
 - Nhóm có nhiều bot của aris: bot nào được `@` thì bot đó trả lời (cửa vào đã lo).
 - Chuyển giao (`plugin:aris/handoff` trong lượt): tracker giữ câu trả lời của bot đích là một đoạn riêng có người nói. Khi giao: đoạn của bot của phiên gửi như thường; đoạn chuyển giao mở đầu bằng `@tên_gọi · chức danh` (thành tên thành viên). Chat riêng: kèm nút link "Nhắn tiếp với …" tới tài khoản của bot đích nếu có. Nhóm: gửi bằng tài khoản của bot đích nếu có, hộp thư ra ghi bot dự phòng để gửi thay khi tài khoản đó không gửi được vào nhóm (403/400).
 
+## Thẻ duyệt tập trung
+
+Kênh nghe hộp duyệt chung của `@aris/commander` (`arisApprovals`): yêu cầu quyền mới của bot ngoài hay bot trong đội thành thẻ theo bản vẽ 7.1, gửi tới chat chính (`home`) của bot Aris, không có thì tới chủ nhân: "🔐 CẦN DUYỆT · [chấm màu] Tên", việc xin làm, lệnh hoặc tệp, lý do, "Tự từ chối sau 15 phút", nút Cho phép / Từ chối (`ax:<mã>:y|n`, chỉ chủ nhân bấm). Yêu cầu xong ở đâu thì thẻ được sửa: "Đã cho phép trên web", "Đã từ chối", "Hết 15 phút, đã từ chối", "Việc đã dừng".
+
 ## Để sau
 
 Webhook thay long-polling (khi chạy trên server), tệp lớn hơn 20 MB (Bot API cục bộ), chủ đề riêng trong chat 1-1 (Bot API 9.4), Lark và Zalo.

@@ -87,6 +87,34 @@ export const T = {
   approval: (tool: string, reason?: string) =>
     `🔐 <b>Cần duyệt</b>: <code>${h(tool)}</code>${reason ? `\n${h(reason)}` : ''}`,
   approvalDone: (ok: boolean) => (ok ? '✅ Đã cho phép một lần.' : '⛔ Đã từ chối.'),
+  /** Thẻ duyệt tập trung (bản vẽ 7.1): bot nào xin, xin làm gì, chi tiết, hạn. */
+  centralCard: (who: string, action: string, target?: string, reason?: string, external?: boolean) =>
+    [
+      `🔐 <b>CẦN DUYỆT</b> · ${who}${external ? ' <i>(bot ngoài)</i>' : ''}`,
+      `<b>${h(action)}</b>`,
+      ...(target ? [`<code>${h(target)}</code>`] : []),
+      ...(reason ? [h(reason)] : []),
+      '<i>Tự từ chối sau 15 phút</i>',
+    ].join('\n'),
+  centralDone: (allow: boolean, by: string) =>
+    by === 'timeout'
+      ? '⌛ Hết 15 phút, đã từ chối.'
+      : by === 'ended'
+        ? '⏹ Việc đã dừng, yêu cầu đã huỷ.'
+        : `${allow ? '✅ Đã cho phép' : '⛔ Đã từ chối'}${by === 'user' ? ' trên web' : ''}.`,
+  centralGone: 'Yêu cầu này đã xong.',
+  stepAction: {
+    run: 'Chạy lệnh',
+    edit: 'Sửa tệp',
+    write: 'Ghi tệp',
+    read: 'Đọc tệp',
+    search: 'Tìm trong tệp',
+    find: 'Tìm tệp',
+    web: 'Mở trang web',
+    webSearch: 'Tìm trên web',
+    permission: 'Xin thêm quyền',
+  } as Record<string, string>,
+  stepOther: (tool: string) => `Dùng công cụ ${tool}`,
   approvalExpired: '⌛ Hết giờ chờ duyệt, hành động bị chặn.',
   approvalNotOwner: (tool: string) =>
     `Việc này (<code>${h(tool)}</code>) cần người dùng chính duyệt; người khác gọi thì bot không làm.`,

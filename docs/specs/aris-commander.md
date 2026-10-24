@@ -123,7 +123,18 @@ Bản vẽ 1.8. Khác `giao_viec`: Commander không nhận kết quả về đ�
 - Khung chat: dòng "→ Chuyển cho [tên thành viên] · lý do" dưới vạch của Aris, rồi lượt riêng của bot đích (linh vật cột trái, tên và vạch màu linh vật, "nhận chuyển giao từ Aris", câu trả lời, nút "Nhắn tiếp với …" mở phiên riêng của bot). Tin kế tiếp của người dùng vẫn về Aris.
 - Telegram: câu trả lời gửi như lời của bot đích, mở đầu bằng tên thành viên và chức danh. Bot đích có tài khoản Telegram riêng thì trong chat riêng kèm nút mở chat với bot đó; trong nhóm thì chính tài khoản của bot đích trả lời vào tin của người dùng (gửi không được thì bot đang chat gửi thay). Xem [aris-telegram.md](aris-telegram.md#kênh-riêng-của-từng-bot-và-chuyển-giao).
 
+## Duyệt tập trung (bước 6)
+
+Bản vẽ 2.1c (thanh duyệt), 7.1 (thẻ duyệt Telegram), thanh bên ("n việc đợi … gật đầu").
+
+- Hộp duyệt chung (`approvals.ts`, `ApprovalCenter`) giữ mọi yêu cầu quyền đang chờ của bot: bot ngoài (qua `ApprovalHub`, như bước 4) và bot trong đội. Mỗi yêu cầu: bot, tên, phiên giao việc, loại bước (chạy lệnh, sửa tệp…), đối tượng (lệnh, tệp), lý do. Dịch vụ `arisApprovals` (`list`, `answer`, `on`) cho gói khác.
+- Bot trong đội: dsh ghim chính sách duyệt "từ chối hết" (`never`) cho phiên con lúc tạo. Khi Commander (hoặc trưởng nhóm) giao việc, aris đổi phiên con sang `ask` (`approval.setPolicy`) và trả lời `approval/request` của phiên đó bằng hộp chung (mã lần chạy `member:<phiên>`); lệnh cụ thể lấy từ `tool/call` của phiên con theo mã lần gọi. Phiên của Aris (web, Telegram) giữ cách duyệt cũ.
+- Web: thanh duyệt trên ô nhập của phiên giao việc hiện yêu cầu của cả bot ngoài lẫn bot trong đội; thanh bên hiện số yêu cầu đang chờ, bấm thì mở phiên có yêu cầu đầu.
+- Telegram: mỗi yêu cầu thành thẻ gửi tới chat chính của chủ nhân qua bot Aris (xem [aris-telegram.md](aris-telegram.md)).
+- Trả lời ở đâu trước thì ăn; hết 15 phút thì từ chối; lần chạy kết thúc hay yêu cầu bị huỷ thì đóng. Người trả lời ghi `user` (web), `telegram`, `timeout`, `ended`.
+- Đường máy chủ: `GET ?approvals=<phiên>` (yêu cầu của phiên giao việc), `GET ?approvals=all`, `POST {op: 'external-approve', id, allow}` (dùng cho mọi yêu cầu).
+
 ## Để sau
 
-- Duyệt ngay trên nhánh cho bot trong đội: giai đoạn 3 (Hộp duyệt). Bot ngoài đã có (bước 4).
+- Trang Hộp duyệt (3.4): giai đoạn 3. Thanh duyệt, thanh bên và Telegram đã có (bước 6).
 - Trần ngân sách mỗi việc: giai đoạn 7.

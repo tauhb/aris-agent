@@ -177,7 +177,7 @@ export function ExternalBranch({ t, item }: { t: Translate; item: DispatchItem }
 }
 
 /**
- * Thanh duyệt trên ô nhập (`conversation.input.dock`): yêu cầu quyền của bot ngoài trong phiên này.
+ * Thanh duyệt trên ô nhập (`conversation.input.dock`): yêu cầu quyền của bot ngoài và bot trong đội được giao việc từ phiên này.
  * Luôn hiện, vì nhánh giao việc nằm trong phần quá trình mà dsh gập khi lượt của Aris xong.
  */
 export function ApprovalDock({ sessionId, t }: { sessionId: string; t: Translate }) {
