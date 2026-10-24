@@ -24,6 +24,7 @@
     "@aris/home": "workspace:*",
     "@aris/memory": "workspace:*",
     "@aris/reflect": "workspace:*",
+    "@aris/skills": "workspace:*",
     "@aris/projects": "workspace:*",
     "@aris/providers": "workspace:*",
     "@aris/recall": "workspace:*"

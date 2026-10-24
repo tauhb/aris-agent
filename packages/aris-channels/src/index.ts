@@ -28,6 +28,7 @@ import {
   type ApprovalsPort,
   type AttachmentPort,
   type ProposalsPort,
+  type SkillsPort,
   type LiveAgent,
   type SessionPort,
 } from './hub.js'
@@ -180,6 +181,20 @@ export async function apply(ctx: Context): Promise<void> {
       off?.()
     }
   }, 'aris-channels: thẻ đề xuất ký ức')
+  // Đề xuất skill (@aris/skills): thẻ "ĐỀ XUẤT SKILL" có nút Bật / Không.
+  ctx.effect(() => {
+    let off: (() => void) | undefined
+    const hook = () => {
+      const port = ctx.get('arisSkills') as SkillsPort | undefined
+      if (port && !off) off = hub.watchSkills(port)
+    }
+    hook()
+    const timer = setInterval(hook, 5000)
+    return () => {
+      clearInterval(timer)
+      off?.()
+    }
+  }, 'aris-channels: thẻ đề xuất skill')
   ctx.on('session/event', (session, event) => hub.onSessionEvent(session.id, event as never))
   ctx.on('agent/assistant-stream', ({ agent, frame }) => hub.onStream(agent.session.id, frame as never))
   // Phiên của kênh: duyệt và câu hỏi đi qua Telegram trước; phiên khác để người trả lời sau lo.

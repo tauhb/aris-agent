@@ -64,7 +64,13 @@ export function reflectPrompt(o: {
   reasons: readonly Reason[]
   /** Hồ sơ người dùng hiện có của bot (mã, mảng, câu). */
   insights?: readonly { id: string; area: string; text: string }[]
+  /**
+   * Skill (đợt 3): có được đề xuất skill lần này không (việc nhiều bước, lỗi rồi tìm ra cách, hay
+   * vừa dùng skill), skill đang dùng của bot (thân của skill vừa dùng trong đoạn học).
+   */
+  skills?: { allowed: boolean; active: readonly { name: string; description: string; body?: string }[] }
 }): string {
+  const sk = o.skills?.allowed ? o.skills : undefined
   return `Bạn là bộ phận tự học của ${o.bot}, một bot trong đội trợ lý AI cá nhân. Đọc lại đoạn làm việc dưới đây (${o.reasons.map((r) => REASON_TEXT[r]).join('; ')}).
 
 PHẦN 1 · memories: chọn tối đa 3 điều đáng nhớ LÂU DÀI để lần sau làm tốt hơn (người dùng sẽ duyệt từng điều):
@@ -79,9 +85,15 @@ origin: "user" khi người dùng nói ra điều đó; "inferred" khi bạn suy
 
 PHẦN 2 · insights: tối đa 3 quan sát về NGƯỜI DÙNG rút từ cách họ làm việc và phản hồi trong đoạn này (không phải điều họ nói thẳng "nhớ là…"). area "communication": cách họ muốn được trả lời (độ dài, giọng, định dạng, điều không thích); area "work": công việc, mục tiêu, dự án, nhịp làm việc của họ. Nếu cùng ý một nhận định có sẵn thì ghi mã vào "supports" (giữ nguyên câu); nếu ngược ý thì ghi mã vào "contradicts", kèm "question" (hỏi người dùng muốn thế nào) và 2–3 "options" ({"label": "nhãn ngắn trên nút", "text": "nhận định đầy đủ nếu chọn"}). Chỉ ghi điều thấy rõ trong đoạn này, không đoán.
 
-Trả về DUY NHẤT một đối tượng JSON:
+${
+  sk
+    ? `PHẦN 3 · skill: nếu đoạn này là một việc nhiều bước sẽ còn làm lại (báo cáo định kỳ, quy trình, cách xử lý một loại lỗi), viết TỐI ĐA MỘT skill: cách làm dùng lại được cho lần sau, dạng Markdown với các mục "## Khi nào dùng", "## Các bước" (đánh số, mỗi bước một việc cụ thể), "## Lỗi thường gặp". Nếu người dùng vừa sửa kết quả của một việc đã dùng skill có sẵn, viết BẢN VÁ: giữ đúng tên skill đó, thân là toàn bộ skill sau khi sửa. Skill là chỉ dẫn chung, không phải nhật ký: không ghi ngày, không kể "bot đã làm…", gọi là "người dùng". Việc một lần hay chuyện trò thì để "skill": null. Tên skill: chữ thường không dấu, nối bằng "-".
+
+`
+    : ''
+}Trả về DUY NHẤT một đối tượng JSON:
 {"memories": [{"text": "một câu ngắn", "book": "owner" | "notes", "kind": một trong ${KINDS.join(', ')}, "tier": "core" (cần nhớ mọi lúc) | "archive" (tìm khi cần), "origin": "user" | "inferred" | "external", "why": "vì sao đáng nhớ, một câu", "quote": "trích ngắn lời người dùng hoặc sự việc làm bằng chứng"}],
- "insights": [{"text": "một câu về người dùng", "area": "communication" | "work", "quote": "trích ngắn làm bằng chứng", "supports": "mã nếu cùng ý", "contradicts": "mã nếu ngược ý", "question": "...", "options": [{"label": "...", "text": "..."}]}]}
+ "insights": [{"text": "một câu về người dùng", "area": "communication" | "work", "quote": "trích ngắn làm bằng chứng", "supports": "mã nếu cùng ý", "contradicts": "mã nếu ngược ý", "question": "...", "options": [{"label": "...", "text": "..."}]}]${sk ? ',\n "skill": {"name": "ten-skill", "description": "dùng khi nào, một câu", "whenToUse": "dấu hiệu nên dùng", "body": "Markdown", "why": "vì sao cần skill hay bản vá này", "quote": "trích ngắn làm bằng chứng"} | null' : ''}}
 Phần nào không có gì thì để mảng rỗng.
 
 Ký ức hiện có của ${o.bot} (cả đề xuất đang chờ duyệt):
@@ -89,15 +101,41 @@ ${o.existing.length ? o.existing.map((t) => `- ${t}`).join('\n') : '(trống)'}
 
 Nhận định hiện có của ${o.bot} về người dùng:
 ${o.insights?.length ? o.insights.map((i) => `- [${i.id}] (${i.area}) ${i.text}`).join('\n') : '(trống)'}
-
+${
+  sk
+    ? `
+Skill đang dùng của ${o.bot}:
+${sk.active.length ? sk.active.map((s) => `- ${s.name}: ${s.description}${s.body ? `\n<skill name="${s.name}">\n${s.body}\n</skill>` : ''}`).join('\n') : '(chưa có)'}
+`
+    : ''
+}
 Đoạn làm việc:
 ${o.transcript}`
+}
+
+/** Skill mới hay bản vá vòng học đề xuất (đợt 3). */
+export interface SkillProposal {
+  name: string
+  description: string
+  whenToUse?: string | undefined
+  body: string
+  why?: string | undefined
+  quote?: string | undefined
 }
 
 export interface Reflection {
   memories: MemoryProposal[]
   insights: Observation[]
+  skill?: SkillProposal | undefined
 }
+
+/** Tên skill hợp lệ từ chữ bất kỳ ("Báo cáo tuần" → "bao-cao-tuan"). */
+export const slug = (s: string) =>
+  fold(s)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60)
+    .replace(/-+$/, '')
 
 const str = (v: unknown, n: number) => (typeof v === 'string' && v.trim() ? clip(v.trim(), n) : undefined)
 /** Câu viết cứng cách xưng hô bị bỏ: ký ức và nhận định phải nói "người dùng". */
@@ -116,10 +154,26 @@ export function parseReflection(raw: string, limit = 3): Reflection {
     return empty
   }
   if (!data || typeof data !== 'object') return empty
-  const { memories, insights } = data as { memories?: unknown; insights?: unknown }
+  const { memories, insights, skill } = data as { memories?: unknown; insights?: unknown; skill?: unknown }
+  const s = skill && typeof skill === 'object' ? (skill as Record<string, unknown>) : undefined
+  const name = s && typeof s.name === 'string' ? slug(s.name) : ''
+  const body = s && typeof s.body === 'string' ? s.body.trim() : ''
+  const description = str(s?.description, 300)
   return {
     memories: Array.isArray(memories) ? memoriesOf(memories, limit) : [],
     insights: Array.isArray(insights) ? insightsOf(insights, limit) : [],
+    ...(name && body && description
+      ? {
+          skill: {
+            name,
+            description,
+            whenToUse: str(s!.whenToUse, 300),
+            body,
+            why: str(s!.why, 300),
+            quote: str(s!.quote, 300),
+          },
+        }
+      : {}),
   }
 }
 

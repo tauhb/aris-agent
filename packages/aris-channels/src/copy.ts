@@ -114,6 +114,22 @@ export const T = {
       : decision === 'saved'
         ? `✅ Đã lưu${by === 'user' ? ' trên web' : ''}: “${h(text)}”`
         : `🗑 Đã bỏ${by === 'user' ? ' trên web' : ''}.`,
+  /** Thẻ đề xuất skill (bản vẽ 7.3). */
+  skillCard: (who: string, name: string, version: number, patch: boolean, why?: string) =>
+    [
+      `🧩 <b>ĐỀ XUẤT SKILL</b> · ${who}`,
+      `${patch ? 'Bản vá' : 'Skill mới'}: bật <code>${h(name)}</code> v${version}?`,
+      ...(why ? [`<i>${h(why)}</i>`] : []),
+      '<i>Xem thay đổi ở Hộp duyệt trên web.</i>',
+    ].join('\n'),
+  skillDone: (decision: 'approved' | 'rejected', by: string, version: number) =>
+    by === 'timeout'
+      ? '⌛ Quá 7 ngày chưa trả lời, đã bỏ.'
+      : by === 'replaced'
+        ? '↻ Đã có bản đề xuất mới thay bản này.'
+        : decision === 'approved'
+          ? `✅ Đã bật v${version}${by === 'user' ? ' trên web' : ''}.`
+          : `🗑 Không bật${by === 'user' ? ' (trả lời trên web)' : ''}.`,
   memoryTypeNew: 'Gõ câu mới cho ký ức này: tin nhắn kế tiếp trong chat này sẽ được lưu thay.',
   stepAction: {
     run: 'Chạy lệnh',

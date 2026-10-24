@@ -73,6 +73,20 @@ interface MemoryPort {
     ): Promise<{ id: string } | undefined>
   }
 }
+interface SkillsPort {
+  activeFor(bot: string): { name: string; description: string; body: string }[]
+  propose(input: {
+    bot: string
+    name: string
+    description: string
+    whenToUse?: string | undefined
+    body: string
+    by: 'reflect'
+    why?: string | undefined
+    quote?: string | undefined
+    sessionId?: string | undefined
+  }): Promise<{ id: string; version: number } | undefined>
+}
 interface SpendPort {
   today(): Record<string, number>
   charge(provider: string, model: string, usage: Usage, scope: readonly string[]): Promise<number>
@@ -94,6 +108,16 @@ export function pickModel(c: Catalog): { provider: string; model: string } | und
   return c.default?.provider && c.default.model
     ? { provider: c.default.provider, model: c.default.model }
     : undefined
+}
+
+/** Tên skill trong tham số của công cụ `skill` của dsh. */
+const skillNameOf = (brief: string) => {
+  try {
+    const v = JSON.parse(brief) as { name?: unknown }
+    return typeof v.name === 'string' ? v.name : undefined
+  } catch {
+    return brief.match(/"name"\s*:\s*"([^"]+)"/)?.[1]
+  }
 }
 
 const textOf = (blocks: readonly ContentBlock[]) =>
@@ -259,6 +283,21 @@ export async function apply(ctx: Context): Promise<void> {
     }
     const m = await model()
     if (!m) return void (await save({ ...run, skipped: 'no-model' }))
+    // Skill (đợt 3): chỉ xét khi đoạn học là việc nhiều bước, lỗi rồi tìm ra cách, hoặc vừa dùng skill.
+    const skills = ctx.get('arisSkills') as SkillsPort | undefined
+    const used = new Set(
+      turns.flatMap((t) => t.tools.filter((c) => c.name === 'skill').map((c) => skillNameOf(c.brief) ?? '')),
+    )
+    const toolCount = turns.reduce((n, t) => n + t.tools.length, 0)
+    const skillAllowed =
+      !!skills && (reasons.some((r) => r === 'long' || r === 'recovered') || used.size > 0 || toolCount >= 5)
+    const activeSkills = skillAllowed
+      ? (skills?.activeFor(bot.id) ?? []).map((s) => ({
+          name: s.name,
+          description: s.description,
+          ...(used.has(s.name) ? { body: s.body } : {}),
+        }))
+      : []
     run.model = `${m.provider}/${m.model}`
     try {
       let raw = ''
@@ -278,6 +317,7 @@ export async function apply(ctx: Context): Promise<void> {
                   existing: mem.textsFor(bot.id),
                   reasons,
                   insights: insights.list(bot.id).map((i) => ({ id: i.id, area: i.area, text: i.text })),
+                  skills: { allowed: skillAllowed, active: activeSkills },
                 }),
               },
             ],
@@ -298,6 +338,20 @@ export async function apply(ctx: Context): Promise<void> {
       let noted = 0
       for (const o of result.insights) if (await insights.observe(bot.id, o, session.id)) noted++
       run.insights = noted
+      if (result.skill && skillAllowed && skills) {
+        try {
+          const v = await skills.propose({
+            ...result.skill,
+            bot: bot.id,
+            by: 'reflect',
+            sessionId: session.id,
+          })
+          run.skill = v ? `${result.skill.name} v${v.version}` : `${result.skill.name} (không đổi)`
+        } catch (e) {
+          // Bộ kiểm "bài học, không phải nhật ký" bỏ đề xuất: ghi lý do để xem lại.
+          run.skill = `${result.skill.name}: ${String(e instanceof Error ? e.message : e).slice(0, 200)}`
+        }
+      }
     } catch (e) {
       run.error = String(e).split('\n')[0]
     }

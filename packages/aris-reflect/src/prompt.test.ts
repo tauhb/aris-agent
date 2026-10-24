@@ -73,3 +73,38 @@ describe('lời nhắc vòng học', () => {
     })
   })
 })
+
+describe('đề xuất skill', () => {
+  it('chỉ thêm phần skill khi được phép, kèm thân skill vừa dùng', () => {
+    const base = { bot: 'Tín', transcript: 'x', existing: [], reasons: ['long' as const] }
+    expect(reflectPrompt(base)).not.toContain('PHẦN 3')
+    const p = reflectPrompt({
+      ...base,
+      skills: {
+        allowed: true,
+        active: [{ name: 'bao-cao-tuan', description: 'Báo cáo tuần', body: '## Các bước\n1. Lấy số' }],
+      },
+    })
+    expect(p).toContain('PHẦN 3')
+    expect(p).toContain('<skill name="bao-cao-tuan">')
+    expect(p).toContain('"skill": {"name"')
+  })
+
+  it('đọc skill: chuẩn hoá tên, thiếu thân hay mô tả thì bỏ', () => {
+    const one = parseReflection(
+      JSON.stringify({
+        memories: [],
+        insights: [],
+        skill: {
+          name: 'Báo cáo tuần!',
+          description: 'Báo cáo doanh thu tuần',
+          body: '## Các bước\n1. Lấy số',
+          why: 'việc lặp lại',
+        },
+      }),
+    )
+    expect(one.skill).toMatchObject({ name: 'bao-cao-tuan', why: 'việc lặp lại' })
+    expect(parseReflection(JSON.stringify({ skill: { name: 'a', body: '' } })).skill).toBeUndefined()
+    expect(parseReflection(JSON.stringify({ skill: null })).skill).toBeUndefined()
+  })
+})

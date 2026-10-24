@@ -41,8 +41,26 @@ interface MemoryItem {
   expiresAt: string
 }
 
-type Kind = 'action' | 'memory'
-type Row = { type: 'action'; a: ActionItem } | { type: 'memory'; m: MemoryItem }
+/** Bản skill chờ duyệt (`@aris/skills`, `?pending=all`), kèm so sánh với bản đang dùng. */
+interface SkillItem {
+  id: string
+  skill: string
+  bot: string
+  name: string
+  version: number
+  /** Bản đang dùng (0: skill mới). */
+  base: number
+  stat: { add: number; del: number }
+  why?: string
+  quote?: string
+  sessionId?: string
+  warnings: string[]
+  at: string
+}
+
+type Kind = 'action' | 'memory' | 'skill'
+type Row =
+  { type: 'action'; a: ActionItem } | { type: 'memory'; m: MemoryItem } | { type: 'skill'; s: SkillItem }
 
 /** Yêu cầu quyền tự từ chối sau 15 phút (như thẻ Telegram). */
 const ACTION_MINUTES = 15
@@ -64,26 +82,35 @@ const post = async (path: string, body: unknown) => {
 function useInbox() {
   const [actions, setActions] = useState<ActionItem[] | null>(null)
   const [memories, setMemories] = useState<MemoryItem[] | null>(null)
-  const [done, setDone] = useState({ actions: 0, memories: 0 })
+  const [skills, setSkills] = useState<SkillItem[] | null>(null)
+  const [done, setDone] = useState({ actions: 0, memories: 0, skills: 0 })
   const load = useCallback(async () => {
-    const [a, m] = await Promise.all([
+    const [a, m, s] = await Promise.all([
       fetch(url('api/aris/commander?approvals=all'), { credentials: 'same-origin' })
         .then((r) => (r.ok ? (r.json() as Promise<{ approvals: ActionItem[]; doneToday?: number }>) : null))
         .catch(() => null),
       fetch(url('api/aris/memory?pending=all'), { credentials: 'same-origin' })
         .then((r) => (r.ok ? (r.json() as Promise<{ pending: MemoryItem[]; doneToday: number }>) : null))
         .catch(() => null),
+      fetch(url('api/aris/skills?pending=all'), { credentials: 'same-origin' })
+        .then((r) => (r.ok ? (r.json() as Promise<{ pending: SkillItem[]; doneToday: number }>) : null))
+        .catch(() => null),
     ])
     if (a) setActions(a.approvals)
     if (m) setMemories(m.pending)
-    setDone((d) => ({ actions: a?.doneToday ?? d.actions, memories: m?.doneToday ?? d.memories }))
+    if (s) setSkills(s.pending)
+    setDone((d) => ({
+      actions: a?.doneToday ?? d.actions,
+      memories: m?.doneToday ?? d.memories,
+      skills: s?.doneToday ?? d.skills,
+    }))
   }, [])
   useEffect(() => {
     void load()
     const timer = setInterval(() => void load(), 4000)
     return () => clearInterval(timer)
   }, [load])
-  return { actions, memories, done: done.actions + done.memories, reload: load }
+  return { actions, memories, skills, done: done.actions + done.memories + done.skills, reload: load }
 }
 
 const hhmm = (iso: string) => {
@@ -94,26 +121,46 @@ const minutesLeft = (a: ActionItem) =>
   Math.max(0, Math.ceil((Date.parse(a.at) + ACTION_MINUTES * 60_000 - Date.now()) / 60_000))
 const daysLeft = (m: MemoryItem) =>
   Math.max(0, Math.ceil((Date.parse(m.expiresAt) - Date.now()) / 86_400_000))
+/** Đề xuất skill tự bỏ sau 7 ngày (như ký ức). */
+const skillDaysLeft = (s: SkillItem) =>
+  Math.max(0, Math.ceil((Date.parse(s.at) + 7 * 86_400_000 - Date.now()) / 86_400_000))
 const actionLabel = (t: T, a: ActionItem) =>
   KINDS.includes(a.kind) ? t(`ap.do.${a.kind}`) : t('ap.do.other', { tool: a.tool ?? a.kind })
 
 export function Approvals({ t, nav }: PageProps) {
   const team = useTeamData()
-  const { actions, memories, done, reload } = useInbox()
+  const { actions, memories, skills, done, reload } = useInbox()
   const [filter, setFilter] = useState<'all' | Kind>('all')
   const [selected, setSelected] = useState<string | null>(null)
   const botOf = (id: string): BotData | undefined => team?.bots.find((b) => b.id === id)
   const rows: Row[] = [
     ...(actions ?? []).map((a) => ({ type: 'action' as const, a })),
     ...(memories ?? []).map((m) => ({ type: 'memory' as const, m })),
+    ...(skills ?? []).map((s) => ({ type: 'skill' as const, s })),
   ]
-  const idOf = (r: Row) => (r.type === 'action' ? r.a.id : r.m.id)
+  const idOf = (r: Row) => (r.type === 'action' ? r.a.id : r.type === 'memory' ? r.m.id : r.s.id)
+  const botIdOf = (r: Row) => (r.type === 'action' ? r.a.bot : r.type === 'memory' ? r.m.bot : r.s.bot)
+  const titleOf = (r: Row) =>
+    r.type === 'action'
+      ? actionLabel(t, r.a)
+      : r.type === 'memory'
+        ? t('ap.memTitle')
+        : t('ap.skillTitle', { name: r.s.name, v: r.s.version })
+  const subOf = (r: Row) =>
+    r.type === 'action'
+      ? (r.a.target ?? r.a.tool ?? '')
+      : r.type === 'memory'
+        ? `“${r.m.text}”`
+        : r.s.base
+          ? t('ap.skillPatch', { add: r.s.stat.add, del: r.s.stat.del })
+          : t('ap.skillNew')
   const shown = rows.filter((r) => filter === 'all' || r.type === filter)
   const current = shown.find((r) => idOf(r) === selected) ?? shown[0]
   const chips: ['all' | Kind, string][] = [
     ['all', t('ap.all')],
     ['action', t('ap.action', { n: actions?.length ?? 0 })],
     ['memory', t('ap.memory', { n: memories?.length ?? 0 })],
+    ['skill', t('ap.skill', { n: skills?.length ?? 0 })],
   ]
   return (
     <div className="ap-split">
@@ -139,19 +186,16 @@ export function Approvals({ t, nav }: PageProps) {
               {label}
             </button>
           ))}
-          <button type="button" className="ap-chip" disabled title={t('ap.skillLater')}>
-            {t('ap.skill', { n: 0 })}
-          </button>
         </div>
         {shown.length === 0 && (
           <div className="a-muted" style={{ padding: '6px 14px 14px', fontSize: 13 }}>
-            {actions && memories ? t('ap.empty') : t('ap.loading')}
+            {actions && memories && skills ? t('ap.empty') : t('ap.loading')}
           </div>
         )}
         {shown.map((r) => {
           const id = idOf(r)
-          const bot = botOf(r.type === 'action' ? r.a.bot : r.m.bot)
-          const name = r.type === 'action' ? r.a.name : (bot?.name ?? r.m.bot)
+          const bot = botOf(botIdOf(r))
+          const name = r.type === 'action' ? r.a.name : (bot?.name ?? botIdOf(r))
           return (
             <button
               key={id}
@@ -163,15 +207,15 @@ export function Approvals({ t, nav }: PageProps) {
               <Mascot id={bot?.mascot ?? 'aris'} size={28} />
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                  <b>{r.type === 'action' ? actionLabel(t, r.a) : t('ap.memTitle')}</b>
+                  <b className="ap-li-title">{titleOf(r)}</b>
                   <span className={r.type === 'action' ? 'ap-due warn' : 'ap-due'}>
                     {r.type === 'action'
                       ? t('ap.minutesLeft', { n: minutesLeft(r.a) })
-                      : t('ap.daysLeft', { n: daysLeft(r.m) })}
+                      : t('ap.daysLeft', { n: r.type === 'memory' ? daysLeft(r.m) : skillDaysLeft(r.s) })}
                   </span>
                 </span>
                 <span className="a-muted ap-li-sub">
-                  {name} · {r.type === 'action' ? (r.a.target ?? r.a.tool ?? '') : `“${r.m.text}”`}
+                  {name} · {subOf(r)}
                 </span>
               </span>
             </button>
@@ -204,6 +248,16 @@ export function Approvals({ t, nav }: PageProps) {
             t={t}
             a={current.a}
             bot={botOf(current.a.bot)}
+            nav={nav}
+            onDone={reload}
+          />
+        )}
+        {current?.type === 'skill' && (
+          <SkillDetail
+            key={current.s.id}
+            t={t}
+            s={current.s}
+            bot={botOf(current.s.bot)}
             nav={nav}
             onDone={reload}
           />
@@ -450,6 +504,94 @@ function MemoryDetail({
       )}
       <p className="a-muted" style={{ margin: 0, fontSize: 12.5 }}>
         {t('ap.memTimeout', { n: daysLeft(m) })}
+      </p>
+    </>
+  )
+}
+
+function SkillDetail({
+  t,
+  s,
+  bot,
+  nav,
+  onDone,
+}: {
+  t: T
+  s: SkillItem
+  bot: BotData | undefined
+  nav: PageProps['nav']
+  onDone: () => Promise<void>
+}) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const name = bot?.name ?? s.bot
+  async function answer(op: 'approve' | 'reject') {
+    setBusy(true)
+    setError(null)
+    try {
+      await post('api/aris/skills', { op, id: s.id })
+      await onDone()
+    } catch (e) {
+      setError((e as Error).message)
+      setBusy(false)
+    }
+  }
+  return (
+    <>
+      <Head
+        mascot={bot?.mascot ?? 'aris'}
+        title={t(s.base ? 'ap.skillWantsPatch' : 'ap.skillWantsNew', { name, skill: s.name })}
+        context={`${t('ap.via.reflect')} · ${hhmm(s.at)} ${new Date(s.at).toLocaleDateString('vi-VN')}`}
+      />
+      <div className="a-card" style={{ padding: '4px 16px 8px', maxWidth: 720 }}>
+        <div className="ap-kv">
+          <span className="a-muted">{t('ap.skillName')}</span>
+          <span className="a-mono">
+            {s.name} · {s.base ? `v${s.base} → v${s.version}` : `v${s.version}`}
+          </span>
+        </div>
+        <div className="ap-kv">
+          <span className="a-muted">{t('ap.skillChange')}</span>
+          <span>{t('ap.skillStat', { add: s.stat.add, del: s.stat.del })}</span>
+        </div>
+        {s.why && (
+          <div className="ap-kv">
+            <span className="a-muted">{t('ap.why')}</span>
+            <span>{s.why}</span>
+          </div>
+        )}
+        {s.quote && (
+          <div className="ap-kv">
+            <span className="a-muted">{t('ap.quote')}</span>
+            <span style={{ fontStyle: 'italic' }}>“{s.quote}”</span>
+          </div>
+        )}
+        {s.warnings.length > 0 && (
+          <div className="ap-kv">
+            <span className="a-muted">{t('ap.skillLint')}</span>
+            <span style={{ color: 'var(--a-warn)' }}>{s.warnings.join(' ')}</span>
+          </div>
+        )}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        <Button variant="primary" size="lg" disabled={busy} onClick={() => void answer('approve')}>
+          {t('skd.approve', { v: `v${s.version}` })}
+        </Button>
+        <Button size="lg" onClick={() => nav.go('skill', { id: s.skill })}>
+          {t('ap.openSkill')}
+        </Button>
+        <Button
+          size="lg"
+          disabled={busy}
+          style={{ color: 'var(--a-danger)' }}
+          onClick={() => void answer('reject')}
+        >
+          {t('ap.reject')}
+        </Button>
+      </div>
+      {error && <div style={{ color: 'var(--a-danger)', fontSize: 13 }}>{error}</div>}
+      <p className="a-muted" style={{ margin: 0, fontSize: 12.5 }}>
+        {t('ap.memTimeout', { n: skillDaysLeft(s) })}
       </p>
     </>
   )

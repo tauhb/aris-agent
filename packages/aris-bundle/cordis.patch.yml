@@ -13,6 +13,8 @@
       name: '@aris/providers'
     - id: aris-reflect
       name: '@aris/reflect'
+    - id: aris-skills
+      name: '@aris/skills'
     - id: aris-recall
       name: '@aris/recall'
     - id: aris-home

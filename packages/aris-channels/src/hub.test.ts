@@ -3,6 +3,7 @@ import {
   ChannelHub,
   type ApprovalsPort,
   type ProposalsPort,
+  type SkillsPort,
   type LiveAgent,
   type SessionPort,
 } from './hub.js'
@@ -490,6 +491,47 @@ describe('trung tâm kênh', () => {
     })
     await settle()
     expect(answers).toEqual([['m-old', 'saved', 'telegram', undefined]])
+  })
+
+  it('đề xuất skill: thẻ ĐỀ XUẤT SKILL, mã ngắn vừa callback_data, bật trên Telegram, xong ở web thì sửa thẻ', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    type Ev = Parameters<Parameters<SkillsPort['on']>[0]>[0]
+    let emit: (e: Ev) => void = () => undefined
+    const answers: unknown[][] = []
+    const v = {
+      id: 'b-fe2ae2--bao-cao-doanh-thu-tuan-theo-kenh-ban-hang-va-so-sanh--v3',
+      bot: 'b-fe2ae2',
+      name: 'bao-cao-doanh-thu-tuan-theo-kenh-ban-hang-va-so-sanh',
+      version: 3,
+      why: 'Người dùng thêm cột so sánh',
+    }
+    s.hub.watchSkills({
+      on: (fn) => ((emit = fn), () => undefined),
+      answer: async (id, approve, by) => void answers.push([id, approve, by]),
+      pending: () => [v.id],
+    })
+    emit({ type: 'opened', version: v, patch: true })
+    await settle()
+    const card = s.tg.sent().at(-1)!
+    expect(String(card.text)).toContain('ĐỀ XUẤT SKILL')
+    expect(String(card.text)).toContain('Bản vá')
+    const buttons = (card.reply_markup as { inline_keyboard: { text: string; callback_data: string }[][] })
+      .inline_keyboard[0]!
+    expect(buttons.map((b) => b.text)).toEqual(['Bật v3', 'Không'])
+    expect(Buffer.byteLength(buttons[0]!.callback_data)).toBeLessThanOrEqual(64)
+    s.tg.push({
+      callback_query: {
+        id: 'c-sx',
+        from: { id: OWNER, is_bot: false, first_name: 'O' },
+        data: buttons[0]!.callback_data,
+      },
+    })
+    await settle()
+    expect(answers).toEqual([[v.id, true, 'telegram']])
+    emit({ type: 'closed', version: v, decision: 'approved', by: 'telegram' })
+    await settle()
+    expect(String(s.tg.sent('editMessageText').at(-1)!.text)).toContain('Đã bật v3')
   })
 
   it('khởi động lại giữa lúc gửi: gửi lại phần dở kèm ghi chú có thể trùng', async () => {

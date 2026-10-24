@@ -18,6 +18,8 @@ export const runRecord = z.object({
   saved: z.array(z.string()),
   /** Số nhận định về người dùng đã ghi vào hồ sơ của bot (đợt 2). */
   insights: z.number().int().optional(),
+  /** Skill hay bản vá đã gửi duyệt (`tên vN`), hoặc lý do bộ kiểm bỏ (đợt 3). */
+  skill: z.string().optional(),
   /** Không chạy: hết trần ngày, chưa có model. */
   skipped: z.enum(['budget', 'no-model']).optional(),
   error: z.string().optional(),

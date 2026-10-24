@@ -120,6 +120,35 @@ export interface ProposalsPort {
   ): Promise<unknown>
 }
 
+/** Một bản skill chờ duyệt (`@aris/skills`, `arisSkills`). */
+export interface SkillItem {
+  id: string
+  bot: string
+  name: string
+  version: number
+  why?: string | undefined
+}
+
+/** Hàng đề xuất skill: nghe mở / đóng, trả lời (bật / không), mã các bản đang chờ. */
+export interface SkillsPort {
+  on(
+    fn: (
+      e:
+        | { type: 'opened'; version: SkillItem; patch: boolean }
+        | { type: 'closed'; version: SkillItem; decision: 'approved' | 'rejected'; by: string },
+    ) => void,
+  ): () => void
+  answer(id: string, approve: boolean, by: 'telegram'): Promise<unknown>
+  pending(): string[]
+}
+
+/** Mã ngắn của một bản skill cho `callback_data` (Telegram giới hạn 64 byte). */
+export function shortKey(id: string): string {
+  let h = 2166136261
+  for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619)
+  return (h >>> 0).toString(36)
+}
+
 export interface HubDeps {
   store: ChannelStore
   credentials: CredentialPort
@@ -165,6 +194,12 @@ export class ChannelHub {
   /** Thẻ duyệt tập trung đã gửi: mã yêu cầu → tin Telegram (để sửa khi yêu cầu xong). */
   private readonly cards = new Map<string, { bot: string; chatId: number; messageId: number; html: string }>()
   private proposalsPort: ProposalsPort | undefined
+  private skillsPort: SkillsPort | undefined
+  /** Thẻ "ĐỀ XUẤT SKILL" đang mở theo mã bản. */
+  private readonly skillCards = new Map<
+    string,
+    { bot: string; chatId: number; messageId: number; html: string }
+  >()
   /** Thẻ "GHI NHỚ" đang mở theo mã đề xuất. */
   private readonly memoryCards = new Map<
     string,
@@ -1032,6 +1067,31 @@ export class ChannelHub {
         }
         return done()
       }
+      case 'sx': {
+        // Thẻ đề xuất skill: y = bật, n = không. Mã ngắn tìm lại trong các bản đang chờ.
+        const port = this.skillsPort
+        const id = port?.pending().find((v) => shortKey(v) === a)
+        if (!port || !id) {
+          await edit(`${msg?.text ? escapeHtml(msg.text) + '\n\n' : ''}${T.centralGone}`)
+          return done(T.centralGone)
+        }
+        if (!this.skillCards.has(id) && msg)
+          this.skillCards.set(id, {
+            bot: rt.rec.bot,
+            chatId: msg.chat.id,
+            messageId: msg.message_id,
+            html: escapeHtml(msg.text ?? ''),
+          })
+        await done()
+        try {
+          await port.answer(id, b === 'y', 'telegram')
+        } catch (e) {
+          await edit(
+            `${msg?.text ? escapeHtml(msg.text) + '\n\n' : ''}⚠️ ${escapeHtml(e instanceof Error ? e.message : String(e))}`,
+          )
+        }
+        return
+      }
       case 'mm': {
         // Thẻ đề xuất ký ức: s = lưu, a = lưu vào lưu trữ (lõi đầy), e = sửa rồi lưu, d = bỏ.
         const port = this.proposalsPort
@@ -1254,6 +1314,65 @@ export class ChannelHub {
     )
     const msg = await rt.api.sendMessage(chatId, html, { html: true, buttons: this.memoryButtons(item.id) })
     this.memoryCards.set(item.id, { bot, chatId, messageId: msg.message_id, html })
+  }
+
+  /** Đề xuất skill (giai đoạn 3, đợt 3): thẻ "ĐỀ XUẤT SKILL" có nút Bật / Không (bản vẽ 7.3). Trả hàm gỡ. */
+  watchSkills(port: SkillsPort): () => void {
+    this.skillsPort = port
+    const off = port.on((e) => {
+      if (e.type === 'opened')
+        void this.sendSkillCard(e.version, e.patch).catch((err: unknown) =>
+          this.d.logger.warn('aris-channels: thẻ đề xuất skill: %s', String(err)),
+        )
+      else void this.closeSkillCard(e.version, e.decision, e.by)
+    })
+    return () => {
+      off()
+      this.skillsPort = undefined
+    }
+  }
+
+  private async sendSkillCard(v: SkillItem, patch: boolean) {
+    const bot = this.store.bot('aris') ? 'aris' : [...this.runtimes.keys()][0]
+    const rt = bot ? this.runtimes.get(bot) : undefined
+    const chatId = (bot ? this.store.bot(bot)?.home?.chatId : undefined) ?? this.store.owners()[0]?.userId
+    if (!rt || !bot || chatId === undefined) return
+    const who = this.d.team?.().find((m) => m.id === v.bot)
+    const html = T.skillCard(
+      `${colorDot(who?.color)} <b>${escapeHtml(who?.name ?? v.bot)}</b>`,
+      v.name,
+      v.version,
+      patch,
+      v.why,
+    )
+    const key = shortKey(v.id)
+    const msg = await rt.api.sendMessage(chatId, html, {
+      html: true,
+      buttons: [
+        [
+          { text: `Bật v${v.version}`, callback_data: `sx:${key}:y` },
+          { text: 'Không', callback_data: `sx:${key}:n` },
+        ],
+      ],
+    })
+    this.skillCards.set(v.id, { bot, chatId, messageId: msg.message_id, html })
+  }
+
+  private async closeSkillCard(v: SkillItem, decision: 'approved' | 'rejected', by: string) {
+    const card = this.skillCards.get(v.id)
+    if (!card) return
+    this.skillCards.delete(v.id)
+    await this.runtimes
+      .get(card.bot)
+      ?.api.editMessageText(
+        card.chatId,
+        card.messageId,
+        `${card.html}\n\n${T.skillDone(decision, by, v.version)}`,
+        {
+          html: true,
+        },
+      )
+      .catch(() => undefined)
   }
 
   private memoryButtons(id: string, full = false): InlineButton[][] {
