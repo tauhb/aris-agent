@@ -10,6 +10,8 @@ describe('hộp cát chỉ đọc', () => {
       'ls -la src | head -20',
       'cat login.js',
       'wc -l *.js',
+      `d=/tmp/x; find "$d" -type f -name '*.ts' | wc -l; find "$d" -type f -name '*.ts' -exec cat {} + | wc -l`,
+      "find src -name '*.ts' | xargs wc -l",
     ])
       expect(readOnlyBash(ok), ok).toBe(true)
     for (const bad of [
@@ -21,6 +23,10 @@ describe('hộp cát chỉ đọc', () => {
       'cat a | tee b',
       'ls $(pwd)',
       'curl http://x',
+      "find . -name '*.ts' -exec rm {} +",
+      'find . -delete',
+      'find . | xargs rm',
+      'X=$(rm -rf a)',
     ])
       expect(readOnlyBash(bad), bad).toBe(false)
   })

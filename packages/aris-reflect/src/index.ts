@@ -260,6 +260,9 @@ export async function apply(ctx: Context): Promise<void> {
   let budgetNoted = ''
   async function reflect(session: Session, turns: TurnLog[], reasons: Reason[]) {
     if ((ctx.get('arisSkills') as SkillsPort | undefined)?.isEval?.(session.id)) return
+    // Routine chạy không người trông: không có gì người dùng dạy để học.
+    if ((ctx.get('arisRoutine') as { isRoutine?(id: string): boolean } | undefined)?.isRoutine?.(session.id))
+      return
     if (await isHelper(session.id)) return
     const bot = bots()?.botOf(session.id) ?? { id: 'aris', name: 'Aris', kind: 'commander' }
     const mem = memory()

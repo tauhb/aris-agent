@@ -17,6 +17,8 @@
       name: '@aris/skills'
     - id: aris-autonomy
       name: '@aris/autonomy'
+    - id: aris-routine
+      name: '@aris/routine'
     - id: aris-recall
       name: '@aris/recall'
     - id: aris-home

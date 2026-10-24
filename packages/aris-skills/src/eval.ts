@@ -70,11 +70,26 @@ export function readOnlyBash(command: string): boolean {
     .trim()
     .replace(/\d?>>?\s*\/dev\/null/g, '')
     .replace(/\d>&\d/g, '')
-  if (!cmd || />|\btee\b|\$\(|`|\bfind\b.*\s-(delete|exec)\b|\bsed\b.*\s-i\b/.test(cmd)) return false
+  if (!cmd || />|\btee\b|\$\(|`|\bfind\b.*\s-(delete|execdir|ok|okdir|fprint\w*)\b|\bsed\b.*\s-i\b/.test(cmd))
+    return false
   return cmd
     .split(/&&|\|\||;|\|/)
     .map((p) => p.trim().replace(/^cd\s+\S+\s*$/, 'pwd'))
-    .every((p) => !p || READ_COMMANDS.test(p))
+    .every((p) => !p || readSegment(p))
+}
+
+/** Lệnh `find -exec` và `xargs` được chạy tiếp: chỉ khi chính lệnh đó là lệnh đọc. */
+const READ_TAIL = /^(cat|wc|head|tail|grep|rg|ls|stat|file|du|sort|uniq)\b/
+
+function readSegment(p: string): boolean {
+  // Gán biến không có lệnh con (`$(` và dấu huyền đã bị chặn ở trên): `d=/duong/dan`.
+  if (/^[A-Za-z_][A-Za-z0-9_]*=(\S*|"[^"]*"|'[^']*')$/.test(p)) return true
+  const xargs = /^xargs\s+(?:-\S+\s+)*(.+)$/.exec(p)
+  if (xargs) return READ_TAIL.test(xargs[1]!)
+  if (!READ_COMMANDS.test(p)) return false
+  // `find … -exec <lệnh> {} +|;`: lệnh chạy tiếp phải là lệnh đọc.
+  const exec = /\s-exec\s+(.+?)\s+\{\}/.exec(p)
+  return !exec || READ_TAIL.test(exec[1]!)
 }
 
 /** Lý do từ chối trong phiên kiểm thử (model đọc). */

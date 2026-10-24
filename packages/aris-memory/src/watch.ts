@@ -115,6 +115,13 @@ export function watchConversation(
     // Phiên kiểm thử skill (@aris/skills): không nhắc, để câu trả lời cuối đúng là kết quả việc.
     if ((ctx.get('arisSkills') as { isEval?(id: string): boolean } | undefined)?.isEval?.(agent.session.id))
       return
+    // Phiên routine: câu trả lời cuối là kết quả gửi về Telegram, không chen lời nhắc.
+    if (
+      (ctx.get('arisRoutine') as { isRoutine?(id: string): boolean } | undefined)?.isRoutine?.(
+        agent.session.id,
+      )
+    )
+      return
     const reason = nudgeReason(s, lastNudge.get(agent))
     if (!reason) return
     lastNudge.set(agent, turn)

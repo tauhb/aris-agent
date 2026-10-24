@@ -28,6 +28,7 @@
     "@aris/skills": "workspace:*",
     "@aris/projects": "workspace:*",
     "@aris/providers": "workspace:*",
-    "@aris/recall": "workspace:*"
+    "@aris/recall": "workspace:*",
+    "@aris/routine": "workspace:*"
   }
 }

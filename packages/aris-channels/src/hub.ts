@@ -1488,6 +1488,41 @@ export class ChannelHub {
       })
       return 'rejected'
     }
+    return this.approvalCard(rt, chatId, threadId, req)
+  }
+
+  /**
+   * Hỏi duyệt ở nơi nhận của bot (`/sethome`, không có thì chat với người dùng): cho phiên chạy
+   * không người trông (routine). Bot chưa nối Telegram hay chưa có nơi nhận thì `unavailable`.
+   */
+  async approveHome(
+    bot: string,
+    req: {
+      toolName: string
+      reason?: string | undefined
+      displayReason?: Record<string, string> | undefined
+      signal?: AbortSignal | undefined
+    },
+  ): Promise<'allowed-once' | 'rejected' | 'cancelled' | 'unavailable'> {
+    const rt = this.runtimes.get(bot)
+    const home =
+      this.store.bot(bot)?.home ??
+      (this.store.owners()[0] ? { chatId: this.store.owners()[0]!.userId } : undefined)
+    if (!rt || !home) return 'unavailable'
+    return this.approvalCard(rt, home.chatId, home.threadId, req)
+  }
+
+  private async approvalCard(
+    rt: NonNullable<ReturnType<typeof this.runtimes.get>>,
+    chatId: number,
+    threadId: number | undefined,
+    req: {
+      toolName: string
+      reason?: string | undefined
+      displayReason?: Record<string, string> | undefined
+      signal?: AbortSignal | undefined
+    },
+  ): Promise<'allowed-once' | 'rejected' | 'cancelled' | 'unavailable'> {
     const id = randomId()
     const reason = req.displayReason?.vi ?? req.reason ?? req.displayReason?.en
     const card = await rt.api.sendMessage(chatId, T.approval(req.toolName, reason), {
