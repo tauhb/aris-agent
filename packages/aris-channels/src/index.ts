@@ -6,6 +6,7 @@
  * @module @aris/channels
  */
 import { ensureHome } from '@aris/home'
+import { getMascot } from '@aris/ui-kit'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-api-session-controller'
@@ -113,6 +114,14 @@ export async function apply(ctx: Context): Promise<void> {
   const attachments = ctx.get('attachments') as AttachmentPort | undefined
   const hub = new ChannelHub({
     store,
+    // Đội của aris (gói @aris/bots, nếu có): tên và màu linh vật để gửi tên thành viên ra Telegram.
+    team: () =>
+      (
+        (
+          ctx.get('arisBots') as
+            { store: { list(): { handle: string; name: string; mascot: string }[] } } | undefined
+        )?.store.list() ?? []
+      ).map((b) => ({ handle: b.handle, name: b.name, color: getMascot(b.mascot)?.color })),
     credentials: {
       resolve: async (ref) => (await ctx.credentials.resolve(credentialRef(ref)))?.value,
       set: (ref, value) => ctx.credentials.set(credentialRef(ref), value),

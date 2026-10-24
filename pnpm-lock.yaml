@@ -129,6 +129,9 @@ importers:
       '@aris/home':
         specifier: workspace:*
         version: link:../aris-home
+      '@aris/ui-kit':
+        specifier: workspace:*
+        version: link:../aris-ui-kit
       zod:
         specifier: 4.4.3
         version: 4.4.3

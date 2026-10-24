@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { blocks, inline, isSilent, preview, table, toTelegramHtml } from './format.js'
+import { blocks, inline, isSilent, nameTeam, preview, table, toTelegramHtml } from './format.js'
 
 describe('định dạng Telegram', () => {
   it('định dạng trong dòng, thoát ký tự HTML', () => {
@@ -56,5 +56,28 @@ describe('định dạng Telegram', () => {
     expect(isSilent(' [SILENT] ')).toBe(true)
     expect(isSilent('NO_REPLY')).toBe(true)
     expect(isSilent('Dùng [SILENT] khi không có gì')).toBe(false)
+  })
+})
+
+describe('tên thành viên đội', () => {
+  const team = [
+    { handle: 'tho', name: 'Thơ', color: '#FF309C' },
+    { handle: 'minh', name: 'Minh', color: '#00B5A5' },
+    { handle: 'aris', name: 'Aris', color: '#1084FE' },
+    { handle: 'kiet', name: 'Kiệt', color: '#64748B' },
+    { handle: 'phat', name: 'Phát', color: '#FF4D5A' },
+  ]
+  it('đổi @tên_gọi thành chấm màu và tên in đậm', () => {
+    expect(nameTeam('em cho @tho soạn, @minh lấy mồi', team)).toBe(
+      'em cho 🩷 **Thơ** soạn, 🩵 **Minh** lấy mồi',
+    )
+    expect(nameTeam('@aris, @phat và @kiet.', team)).toBe('🔵 **Aris**, 🔴 **Phát** và 🩶 **Kiệt**.')
+  })
+  it('giữ nguyên @ của người lạ, email, và trong mã', () => {
+    const md = 'Hỏi @someone_bot, gửi a@tho.vn, chạy `git log @tho` và\n```\n@minh\n```'
+    expect(nameTeam(md, team)).toBe(md)
+  })
+  it('đi qua định dạng HTML thành chữ đậm', () => {
+    expect(toTelegramHtml(nameTeam('Giao cho @tho.', team))[0]).toBe('Giao cho 🩷 <b>Thơ</b>.')
   })
 })

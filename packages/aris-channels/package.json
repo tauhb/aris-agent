@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@aris/home": "workspace:*",
+    "@aris/ui-kit": "workspace:*",
     "zod": "4.4.3"
   },
   "devDependencies": {

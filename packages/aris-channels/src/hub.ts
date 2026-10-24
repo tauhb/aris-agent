@@ -9,7 +9,7 @@ import type { BotRecord, InboxRecord, OutboxRecord } from './domain.js'
 import { sttNotReady, textToVoice, transcribe, type SpeechToText } from './media.js'
 import { ChannelStore, keyNum, threadKey } from './store.js'
 import { TelegramApi, TelegramError, type Fetch } from './telegram/api.js'
-import { escapeHtml, isSilent, preview, toTelegramHtml } from './telegram/format.js'
+import { escapeHtml, isSilent, nameTeam, preview, toTelegramHtml, type TeamName } from './telegram/format.js'
 import type {
   InlineButton,
   TgCallbackQuery,
@@ -69,6 +69,8 @@ export interface HubDeps {
   logger: { info(msg: string, ...a: unknown[]): void; warn(msg: string, ...a: unknown[]): void }
   fetchImpl?: Fetch | undefined
   now?: () => number
+  /** Bot trong đội: `@tên_gọi` trong tin gửi ra đổi thành chấm màu + tên. */
+  team?: () => readonly TeamName[]
 }
 
 interface BotRuntime {
@@ -615,7 +617,7 @@ export class ChannelHub {
     p.timer = setTimeout(() => {
       p.timer = undefined
       p.last = this.now()
-      const body = `${preview(p.text)} ▌`
+      const body = `${preview(this.named(p.text).replace(/\*\*/g, ''))} ▌`
       const send = p.messageId
         ? rt.api.editMessageText(p.chatId, p.messageId, body)
         : rt.api
@@ -627,6 +629,15 @@ export class ChannelHub {
             .then((msg) => void (p.messageId = msg.message_id))
       p.sending = send.catch(() => undefined)
     }, wait)
+  }
+
+  /** `@tên_gọi` của bot trong đội thành chấm màu + tên in đậm. */
+  private named(md: string): string {
+    try {
+      return nameTeam(md, this.d.team?.() ?? [])
+    } catch {
+      return md
+    }
   }
 
   private async clearPreview(sessionId: string, bot: string) {
@@ -667,7 +678,7 @@ export class ChannelHub {
       chatId: last.chatId,
       ...(last.threadId ? { threadId: last.threadId } : {}),
       ...(last.group ? { replyTo: first.tgMessageId } : {}),
-      chunks: toTelegramHtml(text),
+      chunks: toTelegramHtml(this.named(text)),
       sent: 0,
       state: 'pending',
       attempts: 0,
@@ -1193,7 +1204,7 @@ export class ChannelHub {
       bot,
       chatId: home.chatId,
       ...(home.threadId ? { threadId: home.threadId } : {}),
-      chunks: toTelegramHtml(markdown),
+      chunks: toTelegramHtml(this.named(markdown)),
       sent: 0,
       state: 'pending',
       attempts: 0,

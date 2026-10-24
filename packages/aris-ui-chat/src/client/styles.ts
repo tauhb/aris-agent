@@ -5,6 +5,10 @@
 export const CSS = `
 .aris-who{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px 0 2px;margin:0 1px;border-radius:999px;border:1px solid color-mix(in srgb,var(--who) 40%,transparent);background:color-mix(in srgb,var(--who) 14%,transparent);font:inherit;font-size:.93em;font-weight:600;line-height:1;vertical-align:-3px;color:inherit;cursor:pointer;white-space:nowrap}
 .aris-who svg{flex:none}
+/* Dòng bot trong menu @ của dsh (mã dòng theo tên nguồn "aris-bots"): biểu tượng là cả tên thành viên. */
+.aris-who.aris-who-menu{cursor:inherit;margin:0}
+[id^="dsh-slash-option-aris-bots-"] [class*="itemIcon"]{width:auto;height:auto;flex:none}
+[id^="dsh-slash-option-aris-bots-"] [class*="itemName"]{display:none}
 .aris-who:hover{background:color-mix(in srgb,var(--who) 24%,transparent)}
 .aris-who:focus-visible{outline:2px solid currentColor;outline-offset:1px}
 .aris-who.inv{background:color-mix(in srgb,currentColor 14%,transparent);border-color:color-mix(in srgb,currentColor 32%,transparent)}

@@ -194,3 +194,58 @@ const SILENCE = new Set(['[silent]', 'silent', 'no_reply', 'no reply'])
 export function isSilent(text: string): boolean {
   return SILENCE.has(text.trim().toLowerCase().replace(/\s+/g, ' '))
 }
+
+/** Một bot của đội để đổi `@tên_gọi` khi gửi ra Telegram. */
+export interface TeamName {
+  handle: string
+  name: string
+  /** Màu linh vật (`#rrggbb`). */
+  color?: string | undefined
+}
+
+/** Chấm màu emoji gần nhất với màu linh vật (Telegram không có màu chữ tuỳ ý). */
+export function colorDot(hex: string | undefined): string {
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex ?? '')
+  if (!m) return '🩶'
+  const [r, g, b] = [m[1], m[2], m[3]].map((x) => parseInt(x!, 16) / 255) as [number, number, number]
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const l = (max + min) / 2
+  const sat = max === min ? 0 : (max - min) / (1 - Math.abs(2 * l - 1))
+  if (sat < 0.25) return l > 0.8 ? '⚪' : l < 0.2 ? '⚫' : '🩶'
+  const d = max - min
+  let h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4
+  h = (h * 60 + 360) % 360
+  if (h < 15 || h >= 345) return '🔴'
+  if (h < 45) return '🟠'
+  if (h < 70) return '🟡'
+  if (h < 165) return '🟢'
+  if (h < 200) return '🩵'
+  if (h < 255) return '🔵'
+  if (h < 300) return '🟣'
+  return '🩷'
+}
+
+/**
+ * `@tên_gọi` của bot trong đội thành chấm màu + tên in đậm (Markdown), trừ trong mã. Không đổi thì
+ * Telegram biến `@chữ` thành link tới tài khoản Telegram trùng tên, có khi là người lạ.
+ */
+export function nameTeam(md: string, team: readonly TeamName[]): string {
+  if (!team.length || !md.includes('@')) return md
+  const byHandle = new Map(team.map((t) => [t.handle.toLowerCase(), t]))
+  // Tách khối mã và mã trong dòng ra, chỉ đổi phần chữ thường.
+  return md
+    .split(/(```[\s\S]*?```|`[^`\n]*`)/g)
+    .map((part, i) =>
+      i % 2 === 1
+        ? part
+        : part.replace(
+            /(^|[^\p{L}\p{N}_.@/])@([a-z0-9][a-z0-9-]*)(?![\p{L}\p{N}_-])/giu,
+            (all, pre: string, h: string) => {
+              const t = byHandle.get(h.toLowerCase())
+              return t ? `${pre}${colorDot(t.color)} **${t.name}**` : all
+            },
+          ),
+    )
+    .join('')
+}

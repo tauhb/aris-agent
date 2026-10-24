@@ -11,6 +11,7 @@ import { ApprovalDock } from './External.js'
 import { roomLeadDefinition, roomSayDefinition } from './room-data.js'
 import { watchMentions, type MentionBot } from './mentions-dom.js'
 import { BotReport, TurnHead, UserMention } from './Speaker.js'
+import { botTriggerSource } from './bot-source.js'
 import { botReportDefinition, findMention, turnHeadDefinition } from './who-data.js'
 import { CSS } from './styles.js'
 
@@ -38,7 +39,15 @@ interface ClientContext {
   }
 }
 
-export const inject = ['slots', 'locale', 'sessions', 'uiWorkspace', 'uiConversation']
+export const inject = [
+  'slots',
+  'locale',
+  'sessions',
+  'uiWorkspace',
+  'uiConversation',
+  'sidebarRight',
+  'inputTriggers',
+]
 
 function injectStyle(): () => void {
   const style = document.createElement('style')
@@ -57,7 +66,15 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => registerPersonal(ctx.locale, NS, 'vi', VI), 'aris-ui-chat: vi')
 
   ctx.slots.inject('conversation.hero.brand.mark', () =>
-    ctx.slots.register({ name: 'conversation.hero.brand.mark', locale: NS }, HeroMark),
+    ctx.slots.register(
+      {
+        name: 'conversation.hero.brand.mark',
+        locale: NS,
+        // Phiên đang hiện ở vùng chính, để lấy linh vật của bot phiên đó.
+        inject: () => ({ hooks: { mounted: (ctx.get('sidebarRight') as { mounted: unknown }).mounted } }),
+      },
+      HeroMark,
+    ),
   )
 
   // Ô nhập của phiên: chèn "/" hoặc "@" tại con trỏ để mở đúng menu lệnh / gọi của dsh.
@@ -201,6 +218,18 @@ export function apply(ctx: ClientContext): void {
   ctx.slots.inject('conversation.user.text.node', () =>
     ctx.slots.register({ name: 'conversation.user.text.node', key: 'aris-bot', locale: NS }, UserMention),
   )
+  // Menu `@` của ô nhập: nhóm "Đội bot" đứng đầu (linh vật, tên, chức danh); chọn thì chèn `@tên_gọi `.
+  ctx.effect(() => {
+    const dict = () => (document.documentElement.lang.startsWith('vi') ? VI : EN)
+    const triggers = ctx.get('inputTriggers') as { registerSource(src: unknown): () => void }
+    return triggers.registerSource(
+      botTriggerSource({
+        section: () => dict()['who.section'],
+        external: (agent) =>
+          dict()['who.external'].replace('{agent}', dict()[`ext.agent.${agent}` as keyof typeof EN] ?? agent),
+      }),
+    )
+  }, 'aris-ui-chat: @ bots')
   // …và trong câu trả lời của bot (Markdown của dsh không có chỗ cắm cho chữ thường).
   ctx.effect(
     () =>

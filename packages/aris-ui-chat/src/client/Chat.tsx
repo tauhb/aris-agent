@@ -3,7 +3,15 @@
  * ô nhập (màn 1.2), nhãn model có dấu nhà cung cấp (màn "Ngôn ngữ thiết kế mới"
  * mục 5), và nhánh "dòng việc" cho mỗi lần Aris giao việc cho bot con (màn R3).
  */
-import { BranchStep, Button, IconButton, Mascot, TaskBranch, useTeamData } from '@aris/ui-kit/react'
+import {
+  BranchStep,
+  Button,
+  IconButton,
+  Mascot,
+  TaskBranch,
+  useSessionBot,
+  useTeamData,
+} from '@aris/ui-kit/react'
 import {
   branchBot,
   branchSteps,
@@ -17,10 +25,22 @@ import type { ChatKey, Translate } from './locale.js'
 import { ExternalBranch } from './External.js'
 
 /** Dấu Aris thay con cá DeepSeek ở màn trống (`conversation.hero.brand.mark`). */
-export function HeroMark({ size, className, t }: { size: number; className?: string; t: Translate }) {
+/** Linh vật trước câu chào ở phiên trống: của bot phiên đang mở (phiên chưa gắn bot là Aris). */
+export function HeroMark({
+  size,
+  className,
+  useMounted,
+  t,
+}: {
+  size: number
+  className?: string
+  useMounted: (pick: (id: string | undefined) => string | undefined) => string | undefined
+  t: Translate
+}) {
+  const bot = useSessionBot(useMounted((id) => id))
   return (
     <span className={className} style={{ display: 'inline-flex' }}>
-      <Mascot id="aris" size={size} label={t('hero.mark')} />
+      <Mascot id={bot?.mascot ?? 'aris'} size={size} label={bot?.name ?? t('hero.mark')} />
     </span>
   )
 }
