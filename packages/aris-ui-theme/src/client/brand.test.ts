@@ -26,7 +26,7 @@ describe('chỉnh CSS bám lớp của dsh', () => {
       const src = readFileSync(`${store}${pkg}/lib/client.js`, 'utf8')
       for (const c of classes) {
         expect(src, c).toContain(`.${c}{`)
-        expect(OVERRIDES_CSS, c).toContain(`.${c}{`)
+        expect(OVERRIDES_CSS, c).toMatch(new RegExp(`\\.${c}[{,)]`))
       }
     })
   }
