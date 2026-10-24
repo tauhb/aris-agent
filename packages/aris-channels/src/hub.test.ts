@@ -472,6 +472,26 @@ describe('trung tâm kênh', () => {
     expect(String(s.tg.sent('editMessageText').at(-1)!.text)).toContain('Đã bỏ trên web')
   })
 
+  it('thẻ ghi nhớ gửi trước khi khởi động lại vẫn bấm được', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    const answers: unknown[][] = []
+    s.hub.watchProposals({
+      on: () => () => undefined,
+      answer: async (id, decision, by, patch) => void answers.push([id, decision, by, patch]),
+    })
+    s.tg.push({
+      callback_query: {
+        id: 'c-old',
+        from: { id: OWNER, is_bot: false, first_name: 'O' },
+        data: 'mm:m-old:s',
+        message: { message_id: 5, chat: { id: OWNER, type: 'private' }, date: 0, text: 'GHI NHỚ · Aris' },
+      },
+    })
+    await settle()
+    expect(answers).toEqual([['m-old', 'saved', 'telegram', undefined]])
+  })
+
   it('khởi động lại giữa lúc gửi: gửi lại phần dở kèm ghi chú có thể trùng', async () => {
     const s = await setup()
     await s.store.putOutbox({

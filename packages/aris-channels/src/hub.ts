@@ -1035,11 +1035,18 @@ export class ChannelHub {
       case 'mm': {
         // Thẻ đề xuất ký ức: s = lưu, a = lưu vào lưu trữ (lõi đầy), e = sửa rồi lưu, d = bỏ.
         const port = this.proposalsPort
-        const card = this.memoryCards.get(a ?? '')
-        if (!port || !card) {
-          await edit(`${msg?.text ? escapeHtml(msg.text) + '\n\n' : ''}${T.centralGone}`)
-          return done(T.centralGone)
+        // Thẻ gửi trước khi aris khởi động lại không còn trong bộ nhớ: dựng lại từ chính tin được bấm.
+        let card = this.memoryCards.get(a ?? '')
+        if (!card && msg) {
+          card = {
+            bot: rt.rec.bot,
+            chatId: msg.chat.id,
+            messageId: msg.message_id,
+            html: escapeHtml(msg.text ?? ''),
+          }
+          this.memoryCards.set(a!, card)
         }
+        if (!port || !card) return done(T.centralGone)
         if (b === 'e') {
           await done()
           const rt = this.runtimes.get(card.bot)
@@ -1278,6 +1285,7 @@ export class ChannelHub {
       const rt = card ? this.runtimes.get(card.bot) : undefined
       if (!card || !rt) return
       const message = e instanceof Error ? e.message : String(e)
+      // Đề xuất đã được trả lời nơi khác hay đã hết hạn: báo trên thẻ, bỏ nút.
       const full = /trần|đầy/i.test(message)
       await rt.api
         .editMessageText(card.chatId, card.messageId, `${card.html}\n\n⚠️ ${escapeHtml(message)}`, {
