@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Chuyển giao</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.m{color:var(--muted)}
+.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:13px}
+.seg{border:0;border-radius:7px;padding:4px 10px;font-size:12.5px}
+.pill{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px 0 2px;margin:0 1px;border-radius:999px;border:1px solid color-mix(in srgb,var(--c) 40%,transparent);background:color-mix(in srgb,var(--c) 14%,transparent);font-size:13px;font-weight:600;line-height:1;vertical-align:-4px;white-space:nowrap}
+.pill.inv{background:color-mix(in srgb,currentColor 14%,transparent);border-color:color-mix(in srgb,currentColor 32%,transparent)}
+.ub{align-self:flex-end;max-width:80%;background:var(--ink);color:var(--panel);padding:10px 14px;border-radius:18px 18px 6px 18px;line-height:1.7}
+.turn{display:grid;grid-template-columns:36px minmax(0,1fr);column-gap:12px}
+.gut{display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:1px}
+.rail{flex:1;width:3px;border-radius:2px;background:color-mix(in srgb,var(--c) 55%,transparent)}
+.col{min-width:0;display:flex;flex-direction:column;gap:8px}
+.head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:32px}
+.nm{font-size:15.5px;font-weight:700}
+.t-light .nm{color:var(--tl)}
+.t-dark .nm{color:var(--td)}
+.role{font-size:11.5px;font-weight:600;border-radius:6px;padding:1px 7px}
+.tm{font-size:12.5px;color:var(--muted)}
+.proc{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--muted);padding-bottom:8px;border-bottom:1px solid var(--line)}
+.txt p{margin:0 0 10px}
+.txt p:last-child{margin:0}
+.hand{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:9px 12px}
+.hand .why{color:var(--muted);font-size:13px}
+.acts{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;flex-wrap:wrap}
+.cont{height:30px;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 10%,transparent);border-radius:999px;padding:0 12px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;color:var(--ink)}
+.composer{border:1px solid var(--line);background:var(--panel);border-radius:18px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.phone{width:360px;flex:none;border-radius:28px;background:#0E1621;color:#E9EEF3;font-size:14px;line-height:1.5;overflow:hidden;border:1px solid #1F2A36;display:flex;flex-direction:column}
+.phone .bar{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#17212B;border-bottom:1px solid #0B121A}
+.phone .ava{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none;background:#22303E}
+.phone .sub{font-size:12px;color:#7D8B99}
+.phone .chat{padding:14px 10px;display:flex;flex-direction:column;gap:8px;flex:1}
+.tin{max-width:86%;background:#182533;border-radius:14px 14px 14px 4px;padding:8px 11px;align-self:flex-start}
+.tout{max-width:80%;background:#2B5278;border-radius:14px 14px 4px 14px;padding:8px 11px;align-self:flex-end}
+.tin p{margin:0 0 6px}.tin p:last-child{margin:0}
+.tin .who{font-size:13px;font-weight:700;margin-bottom:2px}
+.tmeta{font-size:11px;color:#7D8B99;text-align:right;margin-top:2px}
+.tbtn{align-self:flex-start;width:86%;box-sizing:border-box;border:0;background:#22303E;color:#E9EEF3;border-radius:10px;padding:8px;font-size:13px;margin-top:-4px}
+.tsmall{font-size:13px;color:#AAB7C4}
+.tlink{color:#6AB3F3}
+.lbl{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14.5px; line-height: 1.65; min-height: 1000px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="none" bot="aris" hint-size="260px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--line); flex-wrap: wrap">
+      <b>Bài Facebook khoá học AI</b><span class="m" style="font-size: 13px">· chat với Aris</span>
+      <span role="radiogroup" aria-label="Cảnh minh hoạ" style="margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 9px; padding: 2px">
+        <button type="button" role="radio" aria-checked="{{st.web}}" onClick="{{go.web}}" class="seg" style="{{ss.web}}">Trên web</button>
+        <button type="button" role="radio" aria-checked="{{st.tg}}" onClick="{{go.tg}}" class="seg" style="{{ss.tg}}">Trên Telegram</button>
+      </span>
+      <button type="button" onClick="{{toggleTheme}}" class="b2">{{themeLabel}}</button>
+    </div>
+
+    <sc-if value="{{is.web}}" hint-placeholder-val="{{ true }}">
+    <div style="flex: 1; padding: 22px 20px 10px; display: flex; flex-direction: column; gap: 26px; max-width: 800px; width: 100%; box-sizing: border-box; margin: 0 auto">
+      <div class="ub">Viết giúp bài Facebook 400 chữ về khoá học AI cho chủ shop nhỏ.</div>
+
+      <div class="turn" style="--c: #1084FE; --tl: #1D6FE0; --td: #5AA5FF">
+        <div class="gut"><svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="rail"></span></div>
+        <div class="col">
+          <div class="head"><b class="nm">Aris</b><span class="role" style="background: var(--accentSoft); color: var(--accent)">Điều phối</span><span class="tm">10:41</span></div>
+          <div class="hand">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h12M13 6l6 6-6 6"></path></svg>
+            <span>Chuyển cho <button type="button" class="pill" style="--c: #FF309C"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Thơ</button></span>
+            <span class="why">· viết nội dung là việc của Thơ, Thơ trả lời anh trực tiếp</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="turn" style="--c: #FF309C; --tl: #B8156F; --td: #FF72BA">
+        <div class="gut"><svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="rail"></span></div>
+        <div class="col">
+          <div class="head"><b class="nm">Thơ</b><span class="role" style="background: color-mix(in srgb, #FF309C 15%, transparent)">Nội dung</span><span class="tm">nhận chuyển giao từ Aris · 10:42</span></div>
+          <div class="proc">Xong sau 12s<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></div>
+          <div class="txt"><p><b>AI trả lại cho chủ shop 6 giờ mỗi tuần. Bạn sẽ làm gì với 6 giờ đó?</b></p>
+<p>Mỗi tối bạn ngồi trả lời tin nhắn khách, chép đơn vào sổ, viết lại mô tả sản phẩm. Ba việc đó AI làm được trong vài phút, nếu bạn biết giao đúng cách.</p>
+<p>Khoá học 4 buổi tối thứ Ba, mỗi buổi một việc cụ thể của shop bạn: trả lời khách, chốt đơn, viết bài, đọc số liệu bán hàng.</p>
+<p class="m">… (còn 3 đoạn)</p></div>
+          <div class="acts"><span>Đã dùng 9,8K tok · 10:42</span><button type="button" class="cont" style="margin-left: auto">Nhắn tiếp với <svg width="16" height="16" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg> Thơ ›</button></div>
+        </div>
+      </div>
+    </div>
+    <div style="padding: 8px 20px 20px; max-width: 800px; width: 100%; box-sizing: border-box; margin: 0 auto">
+      <div class="composer">
+        <span class="m">Giao việc cho đội, hỏi Aris… <span style="font-size: 12.5px">(tin kế tiếp về lại Aris)</span></span>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 13px" class="m"><span>/</span><span>@</span><span style="margin-left: auto">DeepSeek-V4.1-Flash</span></div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{is.tg}}" hint-placeholder-val="{{ false }}">
+    <div style="flex: 1; padding: 22px 20px 24px; display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; align-items: flex-start">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="lbl">Chat riêng với bot Aris</div>
+        <div class="phone" aria-label="Telegram: chat riêng với bot Aris">
+          <div class="bar"><span class="ava"><svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg></span><div><b>Aris</b><div class="sub">bot</div></div></div>
+          <div class="chat">
+            <div class="tout">Viết giúp bài Facebook 400 chữ về khoá học AI cho chủ shop nhỏ.<div class="tmeta">10:41 ✓✓</div></div>
+            <div class="tin tsmall">↪ Chuyển cho 🩷 <b>Thơ</b> · viết nội dung là việc của Thơ<div class="tmeta">10:41</div></div>
+            <div class="tin"><div class="who" style="color: #FF72BA">🩷 Thơ · Nội dung</div><p><b>AI trả lại cho chủ shop 6 giờ mỗi tuần. Bạn sẽ làm gì với 6 giờ đó?</b></p>
+<p>Mỗi tối bạn ngồi trả lời tin nhắn khách, chép đơn vào sổ, viết lại mô tả sản phẩm. Ba việc đó AI làm được trong vài phút, nếu bạn biết giao đúng cách.</p>
+<p>Khoá học 4 buổi tối thứ Ba, mỗi buổi một việc cụ thể của shop bạn: trả lời khách, chốt đơn, viết bài, đọc số liệu bán hàng.</p>
+<p class="tsmall">… (còn 3 đoạn)</p><div class="tmeta">10:42</div></div>
+            <button type="button" class="tbtn">Nhắn tiếp với Thơ</button>
+            <div class="tsmall" style="text-align: center; padding-top: 4px">Bấm nút: mở chat riêng với bot của Thơ (nếu Thơ có kênh riêng), không thì vào phiên riêng của Thơ trên app</div>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="lbl">Nhóm có cả bot Aris và bot riêng của Thơ</div>
+        <div class="phone" aria-label="Telegram: nhóm Marketing">
+          <div class="bar"><span class="ava" style="background: #2F6EA5; color: #fff; font-weight: 700">M</span><div><b>Marketing</b><div class="sub">4 thành viên</div></div></div>
+          <div class="chat">
+            <div class="tout"><span class="tlink">@aris_bot</span> viết giúp bài Facebook 400 chữ về khoá học AI.<div class="tmeta">10:41 ✓✓</div></div>
+            <div class="tin tsmall"><div class="who" style="color: #6AB3F3">Aris</div>↪ Chuyển cho 🩷 <b>Thơ</b><div class="tmeta">10:41</div></div>
+            <div class="tin"><div class="who" style="color: #FF72BA">Thơ</div><p class="tsmall">↩ trả lời tin của anh</p><p><b>AI trả lại cho chủ shop 6 giờ mỗi tuần. Bạn sẽ làm gì với 6 giờ đó?</b></p>
+<p>Mỗi tối bạn ngồi trả lời tin nhắn khách, chép đơn vào sổ, viết lại mô tả sản phẩm. Ba việc đó AI làm được trong vài phút, nếu bạn biết giao đúng cách.</p>
+<p>Khoá học 4 buổi tối thứ Ba, mỗi buổi một việc cụ thể của shop bạn: trả lời khách, chốt đơn, viết bài, đọc số liệu bán hàng.</p>
+<p class="tsmall">… (còn 3 đoạn)</p><div class="tmeta">10:42</div></div>
+            <div class="tsmall" style="text-align: center; padding-top: 4px">Tài khoản riêng của Thơ tự trả lời trong nhóm</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"view":{"editor":"enum","options":["web","tg"],"default":"web"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const cur = s.cur || this.props.view || 'web';
+    const is = {}, st = {}, ss = {}, go = {};
+    ['web', 'tg'].forEach((k) => {
+      is[k] = k === cur;
+      st[k] = k === cur ? 'true' : 'false';
+      ss[k] = k === cur ? 'background: var(--hover); color: var(--ink); font-weight: 600' : 'background: transparent; color: var(--muted)';
+      go[k] = () => this.setState({ cur: k });
+    });
+    return {
+      themeClass: 't-' + theme,
+      themeLabel: theme === 'dark' ? 'Sáng' : 'Tối',
+      is, st, ss, go,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' })
+    };
+  }
+}
+</script>
+</body>
+</html>
