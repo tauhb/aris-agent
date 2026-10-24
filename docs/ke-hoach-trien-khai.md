@@ -264,7 +264,7 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 | `aris-kanban` | Bảng việc bền dùng chung cho đội: thẻ, phụ thuộc, người nhận là bot; Commander tự chia việc (tự động/thủ công); Driver mặc định tắt |
 | Webhook | Sự kiện ngoài (vd. GitHub) tạo phiên qua `ctx.webhookRuntime` |
 
-**Giao diện**: 4.1 Routine, 4.2 Tạo routine, 4.3 Kanban, 7.2 Thẻ báo cáo routine.
+**Giao diện**: 4.1 Routine, 4.2 Tạo routine, 4.3 Kanban, 7.2 Thẻ báo cáo routine. Thêm tab **Routine · N** trong hồ sơ bot (bản vẽ 2.2 có nhãn tab nhưng chưa vẽ nội dung; vẽ 2.2e trước: bảng routine của bot như 4.1, lọc theo bot, nút "+ Routine cho <bot>", cảnh báo routine lỗi) — ghi nhận 24/10.
 
 **Nghiệm thu**: 8h sáng thứ 2–6 Mai tự gửi tóm tắt email và lịch về Telegram; một dự án được chia thành thẻ, các bot làm lần lượt theo phụ thuộc.
 
