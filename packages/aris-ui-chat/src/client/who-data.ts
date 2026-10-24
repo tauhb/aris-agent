@@ -205,3 +205,96 @@ export function inlineParts(text: string): InlinePart[] {
   if (last < text.length) out.push({ kind: 'text', text: text.slice(last) })
   return out
 }
+
+/** Bản ghi chuyển giao (`@aris/commander`): câu trả lời của bot đích gửi thẳng cho người dùng. */
+export const HANDOFF_RECORD = 'plugin:aris/handoff'
+
+export interface HandoffData {
+  bot: string
+  handle: string
+  name: string
+  role?: string
+  reason: string
+  title: string
+  text: string
+  member?: string
+  at: string
+}
+
+/** Mỗi bản ghi chuyển giao thành một dòng ở mức lượt (không gập vào phần quá trình của Aris). */
+export const handoffDefinition = {
+  kind: 'aris-handoff',
+  target: 'chat',
+  match: (event: EventLike) =>
+    event.type === HANDOFF_RECORD ? { id: String(event.seq), role: 'start' } : null,
+  start: (_context: unknown, match: { event: EventLike }) => ({
+    seq: match.event.seq,
+    data: match.event.data,
+  }),
+  update: (context: { state: unknown }) => context.state,
+  buildViewNode: (context: {
+    key: string
+    id: string
+    state?: { seq: number; data: unknown }
+    start?: { location?: unknown }
+  }) =>
+    context.state === undefined
+      ? null
+      : {
+          key: context.key,
+          kind: 'aris-handoff',
+          id: context.id,
+          target: 'chat',
+          anchorSeq: context.state.seq,
+          location: context.start?.location ?? { kind: 'unresolved' },
+          visibility: 'visible',
+          groupTree: 'turn',
+          data: context.state.data,
+        },
+}
+
+/** Một khối Markdown đơn giản: đoạn, tiêu đề, danh sách (đủ cho câu trả lời của bot). */
+export type MdBlock =
+  | { kind: 'p'; text: string }
+  | { kind: 'h'; text: string }
+  | { kind: 'ul'; items: string[] }
+  | { kind: 'ol'; items: string[] }
+  | { kind: 'code'; text: string }
+
+/** Tách Markdown thành khối; chữ trong khối giữ nguyên để vẽ chữ đậm, mã, tên thành viên. */
+export function mdBlocks(md: string): MdBlock[] {
+  const out: MdBlock[] = []
+  const lines = md.replace(/\r\n/g, '\n').split('\n')
+  let para: string[] = []
+  const flush = () => {
+    if (para.length) out.push({ kind: 'p', text: para.join('\n') })
+    para = []
+  }
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!
+    if (/^\s*```/.test(line)) {
+      flush()
+      const code: string[] = []
+      for (i++; i < lines.length && !/^\s*```/.test(lines[i]!); i++) code.push(lines[i]!)
+      out.push({ kind: 'code', text: code.join('\n') })
+      continue
+    }
+    const h = /^\s*#{1,6}\s+(.*)$/.exec(line)
+    const ul = /^\s*[-*•]\s+(.*)$/.exec(line)
+    const ol = /^\s*\d+[.)]\s+(.*)$/.exec(line)
+    if (h) {
+      flush()
+      out.push({ kind: 'h', text: h[1]! })
+    } else if (ul || ol) {
+      flush()
+      const kind = ul ? 'ul' : 'ol'
+      const item = (ul ?? ol)![1]!
+      const last = out.at(-1)
+      if (last && (last.kind === 'ul' || last.kind === 'ol') && last.kind === kind) last.items.push(item)
+      else out.push({ kind, items: [item] })
+    } else if (!line.trim()) flush()
+    else para.push(line)
+  }
+  flush()
+  return out
+}

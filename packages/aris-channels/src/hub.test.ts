@@ -35,13 +35,22 @@ class FakeTelegram {
     const ok = (result: unknown) => new Response(JSON.stringify({ ok: true, result }))
     switch (method) {
       case 'getMe':
-        return ok({
-          id: BOT_ID,
-          is_bot: true,
-          first_name: 'Aris',
-          username: 'aris_chunhan_bot',
-          can_read_all_group_messages: true,
-        })
+        // Token bắt đầu bằng 456 là bot riêng của Thơ, còn lại là bot của Aris.
+        return url.includes('/bot456:')
+          ? ok({
+              id: 901,
+              is_bot: true,
+              first_name: 'Thơ',
+              username: 'tho_noidung_bot',
+              can_read_all_group_messages: true,
+            })
+          : ok({
+              id: BOT_ID,
+              is_bot: true,
+              first_name: 'Aris',
+              username: 'aris_chunhan_bot',
+              can_read_all_group_messages: true,
+            })
       case 'getUpdates': {
         if (!this.queue.length)
           await new Promise<void>((r) => {
@@ -234,6 +243,33 @@ describe('trung tâm kênh', () => {
     const sent = s.tg.calls.slice(preview - 1).filter((c) => c.method === 'sendMessage')
     expect(String(sent[0]!.body.text)).toContain('▌')
     expect(s.tg.sent('deleteMessage')).toHaveLength(1)
+  })
+
+  it('chuyển giao: lời bot đích mở đầu bằng tên; bot đích có kênh riêng thì kèm nút mở chat', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    s.tg.push(dm(OWNER, 'Viết bài Facebook'))
+    await settle()
+    const inbox = s.sessions.agents.get('s1')!.inbox as { id: string }[]
+    const turn = async (from: { bot: string; handle: string; name: string; role?: string }) => {
+      s.hub.onSessionEvent('s1', { type: 'turn/start' })
+      s.hub.onSessionEvent('s1', { type: 'user/message', data: { id: inbox.at(-1)!.id } })
+      s.hub.onSessionEvent('s1', { type: 'plugin:aris/handoff', data: { ...from, text: '**Bài** viết' } })
+      s.hub.onSessionEvent('s1', { type: 'turn/end', data: { reason: { kind: 'completed' } } })
+      await settle()
+      return s.tg.sent().at(-1)!
+    }
+    const plain = await turn({ bot: 'b-1', handle: 'tho', name: 'Thơ', role: 'Nội dung' })
+    expect(plain.text).toBe('@tho · Nội dung\n\n<b>Bài</b> viết')
+    expect(plain.reply_markup).toBeUndefined()
+    // Thơ có tài khoản Telegram riêng: thêm nút mở chat với bot của Thơ.
+    s.tg.push(dm(OWNER, 'Viết tiếp'))
+    await settle()
+    await s.hub.connect('b-1', '456:TOKEN')
+    const own = await turn({ bot: 'b-1', handle: 'tho', name: 'Thơ' })
+    expect(own.reply_markup).toEqual({
+      inline_keyboard: [[{ text: 'Nhắn tiếp với Thơ', url: 'https://t.me/tho_noidung_bot' }]],
+    })
   })
 
   it('aris tắt giữa lượt: không báo lỗi, giữ tin trong hàng đợi để làm lại', async () => {

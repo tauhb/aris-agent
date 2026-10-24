@@ -15,6 +15,8 @@ export interface Assignment {
   title?: string | undefined
   /** Giao một thẻ có sẵn: `task-n` (thẻ của đội), `c-n` (thẻ người dùng tạo trên Kanban). */
   card?: string | undefined
+  /** Chuyển giao: câu trả lời cuối của bot gửi thẳng cho người dùng, Commander không viết lại. */
+  handoff?: boolean | undefined
 }
 
 export interface BotInfo {
@@ -137,7 +139,9 @@ export function briefFor(bot: BotInfo, a: Assignment): string {
     a.task.trim(),
     '',
     `Vì sao là bạn: ${a.reason.trim()}`,
-    'Làm xong thì trả lời bằng kết quả đầy đủ (Commander đọc câu trả lời cuối của bạn). Cần thêm thông tin thì hỏi Commander hoặc đồng đội bằng send_message.',
+    a.handoff
+      ? 'Đây là chuyển giao: câu trả lời cuối của bạn được gửi thẳng cho người dùng, Commander không viết lại. Viết như đang trả lời người dùng: đủ ý, đúng giọng của bạn, không nhắc tới Commander hay việc được giao.'
+      : 'Làm xong thì trả lời bằng kết quả đầy đủ (Commander đọc câu trả lời cuối của bạn). Cần thêm thông tin thì hỏi Commander hoặc đồng đội bằng send_message.',
   ].join('\n')
 }
 

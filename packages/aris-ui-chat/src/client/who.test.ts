@@ -4,6 +4,7 @@ import {
   botSource,
   findMention,
   inlineParts,
+  mdBlocks,
   reportParts,
   splitMentions,
   turnHeadDefinition,
@@ -96,5 +97,17 @@ describe('đầu tin của lượt', () => {
       anchorSeq: 14.5,
       data: { time: 15 },
     })
+  })
+})
+
+describe('khối Markdown', () => {
+  it('đoạn, tiêu đề, danh sách, mã', () => {
+    expect(mdBlocks('# Bài\n\nMở bài\ndòng 2\n\n- ý 1\n- ý 2\n1. a\n```\nx\n```')).toEqual([
+      { kind: 'h', text: 'Bài' },
+      { kind: 'p', text: 'Mở bài\ndòng 2' },
+      { kind: 'ul', items: ['ý 1', 'ý 2'] },
+      { kind: 'ol', items: ['a'] },
+      { kind: 'code', text: 'x' },
+    ])
   })
 })

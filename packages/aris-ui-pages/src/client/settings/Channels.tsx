@@ -3,7 +3,17 @@
  * bot Telegram, nhóm, mã ghép đôi, người đã ghép đôi, cách xử lý khi nhắn thêm lúc bot đang
  * làm. Dữ liệu thật qua `/api/aris/channels`. Lark và Zalo làm sau.
  */
-import { Button, Card, CardRow, PageShell, Pill, Segmented, Switch, TextInput } from '@aris/ui-kit/react'
+import {
+  Button,
+  Card,
+  CardRow,
+  PageShell,
+  Pill,
+  Segmented,
+  Switch,
+  TextInput,
+  useTeamData,
+} from '@aris/ui-kit/react'
 import { useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Bot, Box, Col } from '../ui.js'
@@ -149,13 +159,20 @@ function GroupRow({
 
 export function Channels({ t }: PageProps) {
   const { data, error, busy, act } = useChannels()
+  const team = useTeamData()
   const [token, setToken] = useState('')
   const [adding, setAdding] = useState(false)
-  const aris = data?.bots.find((b) => b.bot === 'aris')
+  const [target, setTarget] = useState('aris')
+  const connected = data?.bots ?? []
+  const aris = connected.find((b) => b.bot === 'aris')
   const allowedGroups = data?.groups.filter((g) => g.allowed) ?? []
+  const botOf = (id: string) => team?.bots.find((b) => b.id === id)
+  // Mỗi bot của aris (trừ bot ngoài) có tối đa một tài khoản Telegram.
+  const free = (team?.bots ?? []).filter((b) => !b.external && !connected.some((c) => c.bot === b.id))
+  const chosen = free.some((b) => b.id === target) ? target : (free[0]?.id ?? '')
 
   async function connect() {
-    if (await act({ op: 'connect', bot: 'aris', token })) {
+    if (await act({ op: 'connect', bot: chosen, token })) {
       setToken('')
       setAdding(false)
     }
@@ -170,9 +187,9 @@ export function Channels({ t }: PageProps) {
             title={
               <>
                 Telegram{' '}
-                {aris ? (
-                  <Pill tone={aris.error ? 'danger' : 'ok'}>
-                    {aris.error ? t('ch.error') : t('ch.connected')}
+                {connected.length ? (
+                  <Pill tone={connected.some((c) => c.error) ? 'danger' : 'ok'}>
+                    {t('ch.connectedCount', { n: connected.length })}
                   </Pill>
                 ) : (
                   <span className="a-muted" style={{ fontWeight: 400, fontSize: 12.5 }}>
@@ -182,39 +199,55 @@ export function Channels({ t }: PageProps) {
               </>
             }
             actions={
-              !aris && !adding ? (
+              free.length && !adding ? (
                 <Button size="sm" variant="primary" onClick={() => setAdding(true)}>
                   {t('ch.addTelegram')}
                 </Button>
               ) : undefined
             }
           >
+            {connected.map((c) => {
+              const bot = botOf(c.bot)
+              return (
+                <div key={c.bot}>
+                  <CardRow>
+                    <Bot id={bot?.mascot ?? 'aris'} />
+                    <span className="grow">
+                      {bot?.name ?? c.bot} · <span className="a-mono">@{c.username}</span>
+                    </span>
+                    {c.error ? (
+                      <Pill tone="danger">{t('ch.error')}</Pill>
+                    ) : (
+                      <span className="a-muted">{t(c.bot === 'aris' ? 'ch.mainEntry' : 'ch.ownChat')}</span>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() => void act({ op: 'disconnect', bot: c.bot })}
+                    >
+                      {t('ch.disconnect')}
+                    </Button>
+                  </CardRow>
+                  {c.error && (
+                    <CardRow>
+                      <span style={{ color: 'var(--a-danger)', fontSize: 12.5 }}>{c.error}</span>
+                    </CardRow>
+                  )}
+                  {!c.canReadAll && allowedGroups.length > 0 && (
+                    <CardRow>
+                      <span style={{ color: 'var(--a-warn)', fontSize: 12.5 }}>{t('ch.privacyWarn')}</span>
+                    </CardRow>
+                  )}
+                </div>
+              )
+            })}
             {aris && (
               <>
-                <CardRow>
-                  <Bot id="aris" />
-                  <span className="grow">
-                    Aris · <span className="a-mono">@{aris.username}</span>
-                  </span>
-                  <span className="a-muted">{t('ch.mainEntry')}</span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={busy}
-                    onClick={() => void act({ op: 'disconnect', bot: 'aris' })}
-                  >
-                    {t('ch.disconnect')}
-                  </Button>
-                </CardRow>
-                {aris.error && (
+                {!aris.canReadAll && !allowedGroups.length && (
                   <CardRow>
-                    <span style={{ color: 'var(--a-danger)', fontSize: 12.5 }}>{aris.error}</span>
-                  </CardRow>
-                )}
-                {!aris.canReadAll && (
-                  <CardRow>
-                    <span style={{ color: 'var(--a-warn)', fontSize: 12.5 }}>
-                      {t(allowedGroups.length ? 'ch.privacyWarn' : 'ch.privacyInfo')}
+                    <span className="a-muted" style={{ fontSize: 12.5 }}>
+                      {t('ch.privacyInfo')}
                     </span>
                   </CardRow>
                 )}
@@ -233,10 +266,22 @@ export function Channels({ t }: PageProps) {
                 </CardRow>
               </>
             )}
-            {!aris && adding && (
+            {adding && (
               <div style={{ padding: '4px 16px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label className="a-field">
+                  <span className="l">{t('ch.forBot')}</span>
+                  <select className="a-inp" value={chosen} onChange={(e) => setTarget(e.target.value)}>
+                    {free.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name} · {b.id === 'aris' ? t('ch.mainEntry') : b.role}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <div className="a-muted" style={{ fontSize: 12.5 }}>
-                  {t('ch.tokenHint')}
+                  {t(chosen === 'aris' ? 'ch.tokenHint' : 'ch.tokenHintBot', {
+                    name: botOf(chosen)?.name ?? '',
+                  })}
                 </div>
                 <span style={{ display: 'flex', gap: 6 }}>
                   <TextInput
@@ -249,7 +294,11 @@ export function Channels({ t }: PageProps) {
                     onKeyDown={(e) => e.key === 'Enter' && void connect()}
                     aria-label={t('ch.token')}
                   />
-                  <Button variant="primary" disabled={busy || !token.trim()} onClick={() => void connect()}>
+                  <Button
+                    variant="primary"
+                    disabled={busy || !token.trim() || !chosen}
+                    onClick={() => void connect()}
+                  >
                     {t('ch.connect')}
                   </Button>
                   <Button variant="ghost" onClick={() => setAdding(false)}>
@@ -258,7 +307,7 @@ export function Channels({ t }: PageProps) {
                 </span>
               </div>
             )}
-            {!aris && !adding && (
+            {!connected.length && !adding && (
               <CardRow>
                 <span className="a-muted" style={{ fontSize: 12.5 }}>
                   {t('ch.telegramEmpty')}

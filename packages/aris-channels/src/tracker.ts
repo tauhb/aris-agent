@@ -18,10 +18,27 @@ export interface Pending {
   trust: 'owner' | 'member' | 'guest'
 }
 
+/** Bot đích của một lần chuyển giao (bản ghi `plugin:aris/handoff`). */
+export interface HandoffFrom {
+  bot: string
+  handle: string
+  name: string
+  role?: string | undefined
+}
+
+/** Một đoạn trả lời của lượt: của bot của phiên, hoặc của bot đích khi chuyển giao. */
+export interface TurnPart {
+  text: string
+  from?: HandoffFrom | undefined
+}
+
 export interface TurnResult {
   sessionId: string
   ours: Pending[]
+  /** Chữ của bot của phiên (không gồm phần chuyển giao). */
   text: string
+  /** Mọi đoạn theo thứ tự, kể cả câu trả lời của bot đích khi chuyển giao. */
+  parts: TurnPart[]
   reason: { kind: string; error?: { message?: string } | undefined }
 }
 
@@ -36,6 +53,7 @@ interface TurnState {
   ours: Pending[]
   /** Chữ của mọi tin trả lời trong lượt, theo thứ tự (viết, gọi công cụ, viết tiếp…). */
   texts: string[]
+  parts: TurnPart[]
 }
 
 /** Sự kiện phiên ở dạng tối thiểu tracker cần. */
@@ -69,7 +87,7 @@ export class TurnTracker {
   onEvent(sessionId: string, event: TrackedEvent): TurnResult | undefined {
     switch (event.type) {
       case 'turn/start':
-        this.turns.set(sessionId, { ours: [], texts: [] })
+        this.turns.set(sessionId, { ours: [], texts: [], parts: [] })
         this.drafts.delete(sessionId)
         return undefined
       case 'user/message': {
@@ -77,7 +95,7 @@ export class TurnTracker {
         const p = id === undefined ? undefined : this.pending.get(id)
         if (!p) return undefined
         this.pending.delete(p.messageId)
-        const turn = this.turns.get(sessionId) ?? { ours: [], texts: [] }
+        const turn = this.turns.get(sessionId) ?? { ours: [], texts: [], parts: [] }
         turn.ours.push(p)
         this.turns.set(sessionId, turn)
         return undefined
@@ -87,9 +105,23 @@ export class TurnTracker {
           ?.content
         const text = content ? textOf(content) : ''
         const turn = this.turns.get(sessionId)
-        if (turn && text) turn.texts.push(text)
+        if (turn && text) {
+          turn.texts.push(text)
+          turn.parts.push({ text })
+        }
         // Bước đã chốt: chữ đang viết của bước đó đã nằm trong `texts`.
         this.drafts.delete(sessionId)
+        return undefined
+      }
+      case 'plugin:aris/handoff': {
+        // Chuyển giao: câu trả lời của bot đích là một đoạn riêng, gửi như lời của bot đó.
+        const h = event.data as (HandoffFrom & { text?: string }) | undefined
+        const turn = this.turns.get(sessionId)
+        if (turn && h?.text?.trim())
+          turn.parts.push({
+            text: h.text.trim(),
+            from: { bot: h.bot, handle: h.handle, name: h.name, ...(h.role ? { role: h.role } : {}) },
+          })
         return undefined
       }
       case 'turn/end': {
@@ -100,7 +132,7 @@ export class TurnTracker {
         const reason = (event.data as { reason?: TurnResult['reason'] } | undefined)?.reason ?? {
           kind: 'completed',
         }
-        return { sessionId, ours: turn.ours, text: turn.texts.join('\n\n'), reason }
+        return { sessionId, ours: turn.ours, text: turn.texts.join('\n\n'), parts: turn.parts, reason }
       }
       default:
         return undefined

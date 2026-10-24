@@ -1,6 +1,7 @@
 /**
  * Commander của aris (đặc tả: docs/specs/aris-commander.md):
  * - Công cụ `giao_viec`, chỉ Commander dùng: giao việc cho bot qua Team của dsh, mỗi việc một thẻ.
+ * - Công cụ `chuyen_giao`, chỉ Commander dùng: bot làm và câu trả lời của bot gửi thẳng cho người dùng.
  * - Nhật ký định tuyến: bản ghi `plugin:aris/dispatch` trong log phiên, và kho `aris_commander`
  *   cho trang 2.5 (`/api/aris/commander`).
  * - Luật đội: bot thường không tự lập đội (chặn `spawn_teammate` ở phiên của bot thường).
@@ -58,6 +59,7 @@ import {
   planCards,
   summarize,
   type Assignment,
+  type DispatchDeps,
   type DispatchEntry,
   type DispatchResult,
   type DraftCards,
@@ -90,6 +92,10 @@ export const DISPATCH_RECORD = 'plugin:aris/dispatch'
 
 export const ROOM_RECORD = 'plugin:aris/room-say'
 export const LEAD_RECORD = 'plugin:aris/room-lead'
+/** Chuyển giao: câu trả lời của bot đích, vẽ thành lượt của bot đó và gửi thẳng cho người dùng. */
+export const HANDOFF_RECORD = 'plugin:aris/handoff'
+/** Thời gian tối đa đợi bot đích trả lời một lần chuyển giao. */
+export const HANDOFF_TIMEOUT_MS = 15 * 60_000
 
 declare module '@deepseek-ai/dsh-llm' {
   interface MessageSourceMap {
@@ -108,6 +114,18 @@ declare module '@deepseek-ai/dsh-session' {
     'plugin:aris/room-say': RoomEntry & { callId: string; round: number; maxRounds: number }
     /** Đầu tin "Aris · Điều phối" đặt ngay trước câu trả lời của Aris sau một vòng bàn. */
     'plugin:aris/room-lead': { before: number; at: string }
+    /** Câu trả lời của bot đích khi Commander chuyển giao. */
+    'plugin:aris/handoff': {
+      bot: string
+      handle: string
+      name: string
+      role?: string
+      reason: string
+      title: string
+      text: string
+      member?: string
+      at: string
+    }
   }
 }
 
@@ -137,6 +155,7 @@ Cách giao:
 - Việc vừa: chọn bot theo mô tả việc của bot, ghi lý do. Nhiều phần độc lập thì giao song song trong một lần gọi; phần sau cần kết quả phần trước thì giao phần trước, đợi, rồi giao tiếp kèm kết quả đó.
 - Việc nhiều bước có thứ tự: chia thành thẻ bằng tao_the (thẻ nào chờ thẻ nào), rồi giao từng thẻ sẵn sàng bằng giao_viec với tham số the.
 - Sau khi giao_viec: dùng wait_agent đợi kết quả, rồi tổng hợp trả lời người dùng. Nói rõ ai đã làm phần nào.
+- Chuyển giao (chuyen_giao) thay cho giao_viec khi việc vừa thuộc hẳn chuyên môn một bot và người dùng chỉ cần đúng kết quả của bot đó, không cần bạn tổng hợp hay làm tiếp (ví dụ: viết một bài cho bot nội dung, trả lời một câu hỏi chuyên môn). Câu trả lời của bot hiện thẳng cho người dùng như lời của bot; sau đó bạn kết thúc lượt, không viết thêm. Cần gom nhiều bot, sửa lại, hay dùng kết quả cho bước sau thì dùng giao_viec.
 - Bot đã làm việc trong cuộc này thì giao tiếp cho chính bot đó (nó nhớ việc trước).
 - Việc lặt vặt không cần chuyên môn (đọc một tệp lớn, tra cứu nhỏ): dùng subagent (trợ lý ẩn danh) thay vì giao bot.
 - Việc lớn: giao_phong; trưởng nhóm tự chia cho thành viên phòng, báo cáo của phòng về đây thành tin nhắn sau, không cần đợi.
@@ -286,6 +305,35 @@ export async function apply(ctx: Context): Promise<void> {
     true,
   )
 
+  /** Deps của `dispatch` cho một lần gọi công cụ (giao việc, chuyển giao). */
+  const dispatchDeps = (agent: AgentLike, exec: { agent?: unknown }): DispatchDeps<AgentLike> => {
+    const b = bots()
+    return {
+      team: team(),
+      botOf: (id) => b.botOf(id),
+      byHandle: (h) => b.store.byHandle(h),
+      busyBots: () => b.live.busyBots('aris'),
+      cards: (ctx.get('arisProjects') as { cards?: DraftCards } | undefined)?.cards,
+      lead: isCommander(agent.session.id) ? undefined : leadScope(agent.session.id),
+      external: (bot, a, title, parent, signal) =>
+        runExternal(b.store.get(bot.id)!, a, title, parent, signal),
+      record(entry) {
+        b.live.assigned(entry.bot, entry.title, entry.member)
+        const rest: Omit<DispatchEntry, 'sessionId'> & { sessionId?: string } = { ...entry }
+        delete rest.sessionId
+        try {
+          appendPluginRecord((exec.agent as AgentLike).session as never, DISPATCH_RECORD, rest)
+        } catch (e) {
+          logger.warn('ghi bản ghi giao việc: %s', String(e))
+        }
+        const at = new Date().toISOString()
+        void log
+          .put(`${Date.now()}-${entry.handle}`, { ...entry, at })
+          .catch((e: unknown) => logger.warn('nhật ký giao việc: %s', String(e)))
+      },
+    }
+  }
+
   ctx.tools.register(
     defineTool({
       name: 'giao_viec',
@@ -332,32 +380,8 @@ export async function apply(ctx: Context): Promise<void> {
           card: v.the,
         }))
         try {
-          const b = bots()
           const results = await dispatch(
-            {
-              team: team(),
-              botOf: (id) => b.botOf(id),
-              byHandle: (h) => b.store.byHandle(h),
-              busyBots: () => b.live.busyBots('aris'),
-              cards: (ctx.get('arisProjects') as { cards?: DraftCards } | undefined)?.cards,
-              lead: isCommander(agent.session.id) ? undefined : leadScope(agent.session.id),
-              external: (bot, a, title, parent, signal) =>
-                runExternal(b.store.get(bot.id)!, a, title, parent, signal),
-              record(entry) {
-                b.live.assigned(entry.bot, entry.title, entry.member)
-                const rest: Omit<DispatchEntry, 'sessionId'> & { sessionId?: string } = { ...entry }
-                delete rest.sessionId
-                try {
-                  appendPluginRecord(exec.agent!.session, DISPATCH_RECORD, rest)
-                } catch (e) {
-                  logger.warn('ghi bản ghi giao việc: %s', String(e))
-                }
-                const at = new Date().toISOString()
-                void log
-                  .put(`${Date.now()}-${entry.handle}`, { ...entry, at })
-                  .catch((e: unknown) => logger.warn('nhật ký giao việc: %s', String(e)))
-              },
-            },
+            dispatchDeps(agent, exec),
             agent,
             assignments,
             exec.signal ?? new AbortController().signal,
@@ -475,6 +499,99 @@ export async function apply(ctx: Context): Promise<void> {
       }),
     )
   }
+
+  // Bot đích của chuyển giao xong việc thì dsh báo "việc con vừa cập nhật" về phiên của Aris và đánh
+  // thức thêm một lượt. Câu trả lời đã gửi thẳng cho người dùng nên gỡ thông báo đó khỏi hộp thư.
+  const handedOff = new Set<string>()
+  ctx.on('agent/inbox/inserted', ({ agent, message }) => {
+    const src = message.source as { kind?: string; senderSessionId?: string }
+    if (src.kind !== 'subagent-settled' || !src.senderSessionId || !handedOff.has(src.senderSessionId)) return
+    handedOff.delete(src.senderSessionId)
+    agent.inbox.remove(message.id)
+  })
+
+  ctx.tools.register(
+    defineTool({
+      name: 'chuyen_giao',
+      description:
+        'Chỉ Commander: chuyển giao hẳn một việc cho một bot trong đội. Bot làm và câu trả lời cuối của bot gửi thẳng cho người dùng; bạn không tổng hợp, không viết lại. Dùng khi việc thuộc hẳn chuyên môn một bot và người dùng chỉ cần kết quả của bot đó (ví dụ viết bài cho bot nội dung). Cần gom kết quả nhiều bot hoặc làm tiếp thì dùng giao_viec.',
+      parameters: {
+        bot: { type: 'string', required: true, description: 'Tên gọi của bot, ví dụ tho.' },
+        tieu_de: { type: 'string', description: 'Tên ngắn của việc.' },
+        noi_dung: {
+          type: 'string',
+          required: true,
+          description: 'Việc cần làm, đủ ngữ cảnh để bot tự làm (bot không thấy cuộc trò chuyện).',
+        },
+        ly_do: {
+          type: 'string',
+          required: true,
+          description: 'Vì sao chuyển cho bot này (hiện cho người dùng).',
+        },
+      },
+      output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+      async execute(args, exec) {
+        const agent = exec.agent as unknown as AgentLike | undefined
+        if (!agent) return 'Không có phiên để chuyển giao.'
+        if (!isCommander(agent.session.id)) return 'Chỉ Commander được chuyển giao.'
+        const handle = String(args.bot ?? '')
+          .trim()
+          .replace(/^@/, '')
+          .toLowerCase()
+        const bot = bots().store.byHandle(handle)
+        if (bot?.external) return `@${handle} là bot ngoài: dùng giao_viec rồi tự báo kết quả cho người dùng.`
+        const signal = exec.signal ?? new AbortController().signal
+        const since = Date.now()
+        try {
+          const [r] = await dispatch(
+            dispatchDeps(agent, exec),
+            agent,
+            [
+              {
+                bot: handle,
+                title: args.tieu_de as string | undefined,
+                task: String(args.noi_dung ?? ''),
+                reason: String(args.ly_do ?? ''),
+                handoff: true,
+              },
+            ],
+            signal,
+          )
+          if (!r?.ok || !r.sessionId || !bot) return `Không chuyển giao được: ${r?.error ?? 'không rõ lý do'}`
+          handedOff.add(r.sessionId)
+          const spoken = await waitTurn(
+            r.sessionId,
+            since,
+            AbortSignal.any([signal, AbortSignal.timeout(HANDOFF_TIMEOUT_MS)]),
+          ).catch((): Spoken => ({ kind: signal.aborted ? 'interrupted' : 'timeout', text: '' }))
+          if (spoken.kind !== 'completed' || !spoken.text.trim()) handedOff.delete(r.sessionId)
+          if (spoken.kind !== 'completed' || !spoken.text.trim())
+            return `@${handle} chưa trả lời được (${spoken.kind === 'timeout' ? 'quá lâu' : spoken.kind === 'error' ? 'gặp lỗi' : 'bị dừng'}). Tự trả lời người dùng, hoặc giao_viec cho bot khác.`
+          const title = String(args.tieu_de ?? args.noi_dung ?? '')
+            .trim()
+            .split('\n')[0]!
+            .slice(0, 80)
+          appendPluginRecord(agent.session as never, HANDOFF_RECORD, {
+            bot: bot.id,
+            handle,
+            name: bot.name,
+            ...(bot.role ? { role: bot.role } : {}),
+            reason: String(args.ly_do ?? '').trim(),
+            title,
+            text: spoken.text.trim(),
+            member: r.sessionId,
+            at: new Date().toISOString(),
+          })
+          // Câu trả lời của bot đích là câu trả lời cuối: kết thúc lượt ngay, Aris không viết thêm.
+          ;(exec as { concludeTurn?: () => void }).concludeTurn?.()
+          return `Đã chuyển giao: câu trả lời của @${handle} đã hiện cho người dùng như lời của ${bot.name}. Kết thúc lượt, không viết thêm, không nhắc lại nội dung.`
+        } catch (e) {
+          if (e instanceof DispatchError) return `Không chuyển giao được: ${e.message}`
+          throw e
+        }
+      },
+    }),
+  )
 
   ctx.tools.register(
     defineTool({

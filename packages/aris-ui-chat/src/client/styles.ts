@@ -3,15 +3,15 @@
  * Thành phần lấy từ bộ thành phần (`KIT_CSS` của `@aris/ui-kit/react`).
  */
 export const CSS = `
-.aris-who{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px 0 2px;margin:0 1px;border-radius:999px;border:1px solid color-mix(in srgb,var(--who) 40%,transparent);background:color-mix(in srgb,var(--who) 14%,transparent);font:inherit;font-size:.93em;font-weight:600;line-height:1;vertical-align:-3px;color:inherit;cursor:pointer;white-space:nowrap}
+.aris-who,.aris .aris-who{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px 0 2px;margin:0 1px;border-radius:999px;border:1px solid color-mix(in srgb,var(--who) 40%,transparent);background:color-mix(in srgb,var(--who) 14%,transparent);font:inherit;font-size:.93em;font-weight:600;line-height:1;vertical-align:-3px;color:inherit;cursor:pointer;white-space:nowrap}
 .aris-who svg{flex:none}
 /* Dòng bot trong menu @ của dsh (mã dòng theo tên nguồn "aris-bots"): biểu tượng là cả tên thành viên. */
 .aris-who.aris-who-menu{cursor:inherit;margin:0}
 [id^="dsh-slash-option-aris-bots-"] [class*="itemIcon"]{width:auto;height:auto;flex:none}
 [id^="dsh-slash-option-aris-bots-"] [class*="itemName"]{display:none}
-.aris-who:hover{background:color-mix(in srgb,var(--who) 24%,transparent)}
-.aris-who:focus-visible{outline:2px solid currentColor;outline-offset:1px}
-.aris-who.inv{background:color-mix(in srgb,currentColor 14%,transparent);border-color:color-mix(in srgb,currentColor 32%,transparent)}
+.aris-who:hover,.aris .aris-who:hover{background:color-mix(in srgb,var(--who) 24%,transparent)}
+.aris-who:focus-visible,.aris .aris-who:focus-visible{outline:2px solid currentColor;outline-offset:1px}
+.aris-who.inv,.aris .aris-who.inv{background:color-mix(in srgb,currentColor 14%,transparent);border-color:color-mix(in srgb,currentColor 32%,transparent)}
 .aris-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
 .aris-head .nm{font-size:14.5px;font-weight:650;color:var(--a-ink)}
 .aris-head .role{font-size:11.5px;font-weight:600;border-radius:6px;padding:1px 7px;color:var(--a-ink);background:color-mix(in srgb,var(--who,#64748B) 14%,transparent)}
@@ -28,6 +28,23 @@ export const CSS = `
 [data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-process"],[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="assistant-step"],[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="tool-call"],[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-tail"],[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-error"],[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-max-tokens"],[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="model-retry"],[data-slot="conversation.chat.flow"]>[data-chat-group-key]{position:relative;padding-left:44px}
 [data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-process"]::before,[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="assistant-step"]::before,[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="tool-call"]::before,[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-tail"]::before,[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-error"]::before,[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-max-tokens"]::before,[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="model-retry"]::before,[data-slot="conversation.chat.flow"]>[data-chat-group-key]::before{content:"";position:absolute;left:14.5px;top:-16px;bottom:0;width:3px;background:var(--aris-rail)}
 [data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-tail"]::before{border-radius:0 0 2px 2px}
+.aris-handoff{display:flex;flex-direction:column;gap:18px;padding-top:14px}
+.aris-handoff .hand{position:relative;margin-left:44px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;color:var(--a-ink);border:1px solid var(--a-line);background:var(--a-panel);border-radius:12px;padding:9px 12px}
+.aris-handoff .hand::before{content:"";position:absolute;left:-29.5px;top:-28px;bottom:-4px;width:3px;background:var(--aris-rail)}
+.aris-handoff .hand .why{color:var(--a-muted);font-size:13px}
+.aris-handoff .turn{display:grid;grid-template-columns:32px minmax(0,1fr);column-gap:12px}
+.aris-handoff .gut{display:flex;flex-direction:column;align-items:center;gap:8px}
+.aris-handoff .gut .rail{flex:1;width:3px;border-radius:2px;background:color-mix(in srgb,var(--who) 55%,Canvas)}
+.aris-handoff .col{min-width:0;display:flex;flex-direction:column;gap:8px}
+.aris-handoff .acts{display:flex;justify-content:flex-end}
+.aris-handoff .cont{height:30px;border:1px solid color-mix(in srgb,var(--who) 45%,transparent);background:color-mix(in srgb,var(--who) 10%,transparent);border-radius:999px;padding:0 12px;font:inherit;font-size:13px;font-weight:600;color:var(--a-ink);cursor:pointer}
+.aris-bot-text{line-height:1.65;color:var(--a-ink);overflow-wrap:anywhere}
+.aris-bot-text p{margin:0 0 10px}
+.aris-bot-text p:last-child{margin-bottom:0}
+.aris-bot-text ul,.aris-bot-text ol{margin:0 0 10px;padding-left:22px}
+.aris-bot-text pre{margin:0 0 10px;padding:10px 12px;border-radius:10px;background:var(--a-hover);overflow:auto;font-size:12.5px}
+.aris-bot-text code{font-family:var(--a-mono,ui-monospace,monospace);font-size:12.5px;background:var(--a-hover);border-radius:5px;padding:1px 5px}
+.aris-bot-text pre code{background:none;padding:0}
 .aris-report{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid var(--a-line);border-radius:14px;background:var(--a-panel)}
 .aris-report .st{font-size:12.5px;color:var(--a-muted)}
 .aris-report .x{white-space:pre-wrap;line-height:1.6;overflow-wrap:anywhere;color:var(--a-ink);font-size:14px}
@@ -35,6 +52,8 @@ export const CSS = `
 .aris-report .x.clamp{display:-webkit-box;-webkit-line-clamp:8;-webkit-box-orient:vertical;overflow:hidden}
 .aris-report .more{align-self:flex-start;border:0;background:transparent;color:var(--a-accent);font:inherit;font-size:12.5px;padding:0;cursor:pointer}
 [data-chat-flow-kind="aris-bot-report"]+[data-chat-flow-kind="turn-trigger"]{display:none}
+/* Lượt rỗng (không bước nào, ví dụ dsh đánh thức rồi tin bị gỡ sau chuyển giao): ẩn cả khối quá trình lẫn hàng cuối. */
+[data-chat-flow-kind="turn-process"]:has(+ [data-chat-flow-kind="turn-tail"]),[data-chat-flow-kind="turn-process"]+[data-chat-flow-kind="turn-tail"]{display:none}
 .aris-triggers{display:inline-flex;align-items:center;gap:2px}
 .aris-triggers .a-ib{font-size:15px;font-weight:500}
 .aris-model{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}

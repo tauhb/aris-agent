@@ -3,11 +3,18 @@
  * thành viên (linh vật, tên, nền theo màu linh vật; bấm mở hồ sơ), thẻ kết quả bot gửi về phiên.
  */
 import { getMascot } from '@aris/ui-kit'
-import { Mascot, arisNavigate, useSessionBot, useTeamData, type BotData } from '@aris/ui-kit/react'
+import {
+  Mascot,
+  arisNavigate,
+  openBotSession,
+  useSessionBot,
+  useTeamData,
+  type BotData,
+} from '@aris/ui-kit/react'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import type { Translate } from './locale.js'
 import { clock } from './room-data.js'
-import { botSource, inlineParts, reportParts, splitMentions } from './who-data.js'
+import { botSource, inlineParts, mdBlocks, reportParts, splitMentions, type HandoffData } from './who-data.js'
 
 const colorOf = (mascot: string) => getMascot(mascot)?.color ?? '#64748B'
 
@@ -52,6 +59,7 @@ export function Head({
   time,
   note,
   big,
+  bare,
   t,
 }: {
   bot: BotData
@@ -59,6 +67,8 @@ export function Head({
   note?: string
   /** Đầu lượt (phương án B): linh vật 32px đứng ở cột trái, tên mang màu linh vật. */
   big?: boolean
+  /** Linh vật đã vẽ ở cột trái (lượt chuyển giao): đầu tin chỉ còn tên. */
+  bare?: boolean
   t: Translate
 }) {
   const lead = bot.kind === 'commander'
@@ -67,7 +77,7 @@ export function Head({
       className={big ? 'aris-head big' : 'aris-head'}
       style={{ '--who': colorOf(bot.mascot) } as CSSProperties}
     >
-      <Mascot id={bot.mascot} size={big ? 32 : 24} />
+      {!bare && <Mascot id={bot.mascot} size={big ? 32 : 24} />}
       <b className="nm">{bot.name}</b>
       {roleOf(bot, t) && <span className={lead ? 'role lead' : 'role'}>{roleOf(bot, t)}</span>}
       <span className="time">{[note, time].filter(Boolean).join(' · ')}</span>
@@ -165,4 +175,134 @@ export function UserMention({ node, t }: { node: { data: { handle: string } }; t
   const data = useTeamData()
   const bot = data?.bots.find((b) => b.handle.toLowerCase() === node.data.handle)
   return bot ? <Who bot={bot} inverse t={t} /> : <>@{node.data.handle}</>
+}
+
+/** Chữ trong một khối: đậm, mã, tên thành viên. */
+function Inline({ text, t }: { text: string; t: Translate }) {
+  return (
+    <>
+      {inlineParts(text).map((p, i) =>
+        p.kind === 'bold' ? (
+          <b key={i}>
+            <WithMentions text={p.text} t={t} />
+          </b>
+        ) : p.kind === 'code' ? (
+          <code key={i}>{p.text}</code>
+        ) : (
+          <WithMentions key={i} text={p.text} t={t} />
+        ),
+      )}
+    </>
+  )
+}
+
+/** Câu trả lời Markdown của bot (đoạn, tiêu đề, danh sách, mã). */
+export function BotText({ text, t }: { text: string; t: Translate }) {
+  return (
+    <div className="aris-bot-text">
+      {mdBlocks(text).map((b, i) =>
+        b.kind === 'h' ? (
+          <p key={i}>
+            <b>
+              <Inline text={b.text} t={t} />
+            </b>
+          </p>
+        ) : b.kind === 'p' ? (
+          <p key={i}>
+            <Inline text={b.text} t={t} />
+          </p>
+        ) : b.kind === 'code' ? (
+          <pre key={i}>
+            <code>{b.text}</code>
+          </pre>
+        ) : b.kind === 'ul' ? (
+          <ul key={i}>
+            {b.items.map((x, j) => (
+              <li key={j}>
+                <Inline text={x} t={t} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <ol key={i}>
+            {b.items.map((x, j) => (
+              <li key={j}>
+                <Inline text={x} t={t} />
+              </li>
+            ))}
+          </ol>
+        ),
+      )}
+    </div>
+  )
+}
+
+/**
+ * Chuyển giao (`conversation.chat.node`, kiểu `aris-handoff`, bản vẽ 1.8): dòng "Chuyển cho …" dưới
+ * vạch của Aris, rồi lượt của bot đích (linh vật cột trái, vạch màu của bot), nút nhắn tiếp với bot.
+ */
+export function HandoffTurn({
+  node,
+  openSession,
+  t,
+}: {
+  node: { data: HandoffData }
+  openSession: (sessionId: string) => void
+  t: Translate
+}) {
+  const data = useTeamData()
+  const h = node.data
+  const bot: BotData = data?.bots.find((b) => b.id === h.bot) ?? {
+    id: h.bot,
+    kind: 'member',
+    handle: h.handle,
+    name: h.name,
+    role: h.role ?? '',
+    description: '',
+    soul: '',
+    mascot: 'dev',
+    createdAt: '',
+  }
+  return (
+    <div className="aris aris-handoff">
+      <div className="hand">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M5 12h12M13 6l6 6-6 6" />
+        </svg>
+        <span>
+          {t('handoff.to')} <Who bot={bot} t={t} />
+        </span>
+        {h.reason && <span className="why">· {h.reason}</span>}
+      </div>
+      <div className="turn" style={{ '--who': colorOf(bot.mascot) } as CSSProperties}>
+        <div className="gut">
+          <Mascot id={bot.mascot} size={32} />
+          <span className="rail" />
+        </div>
+        <div className="col">
+          <Head bot={bot} time={clock(h.at)} note={t('handoff.from')} big bare t={t} />
+          <BotText text={h.text} t={t} />
+          <div className="acts">
+            <button
+              type="button"
+              className="cont"
+              onClick={() => void openBotSession(bot.id).then(openSession, () => undefined)}
+            >
+              {t('handoff.continue', { name: bot.name })} ›
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }

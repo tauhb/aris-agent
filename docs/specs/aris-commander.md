@@ -113,8 +113,17 @@ Bản vẽ 2.1b (Thêm bot ngoài) và 2.1c (nhánh giao việc), vẽ lại the
 - **Giao diện**: hộp Thêm bot ngoài, tab "Bot ngoài" trong hồ sơ bot (đường chạy, mức quyền theo đường chạy, model, thời gian, trần tiền, worktree), nhánh trong chat: đã nhận (kèm worktree), từng bước (6 bước cuối và "+N bước trước"), thẻ hỏi quyền, chi phí, nút Dừng, xong với kết quả, vấp với lý do, đã dừng. Thanh duyệt trên ô nhập (`conversation.input.dock`) hiện yêu cầu đang chờ dù lượt của Aris đã gập.
 - **Chạy ngầm**: bộ cài plugin của dsh gọi `pnpm`; `scripts/dsh.mjs` thêm các chỗ pnpm hay nằm vào PATH của tiến trình dsh (launchd chạy với PATH tối thiểu).
 
+## Chuyển giao: `chuyen_giao` (chỉ Commander, bước 5)
+
+Bản vẽ 1.8. Khác `giao_viec`: Commander không nhận kết quả về để tổng hợp; câu trả lời cuối của bot đích là câu trả lời cho người dùng.
+
+- Tham số: `bot` (tên gọi), `tieu_de`, `noi_dung` (đủ ngữ cảnh), `ly_do` (hiện cho người dùng). Chỉ Commander; bot ngoài thì từ chối (dùng `giao_viec`).
+- Chạy: gửi việc như `giao_viec` (`dispatch` với `handoff: true`, lời giao dặn bot viết như đang trả lời người dùng), rồi đợi lượt của bot kết thúc (`waitTurn`, tối đa 15 phút). Bot trả lời xong thì ghi bản ghi `plugin:aris/handoff` (bot, tên, chức danh, lý do, câu trả lời) vào phiên của Aris và kết thúc lượt của Aris ngay (`exec.concludeTurn()`), nên Aris không viết thêm. Bot không trả lời được thì báo Aris để Aris tự trả lời.
+- Thông báo "việc con vừa cập nhật" (`subagent-settled`) của bot đích gửi về phiên Aris bị gỡ khỏi hộp thư (`agent/inbox/inserted`), vì câu trả lời đã tới người dùng. Lượt rỗng do dsh đã đặt đánh thức được ẩn trên khung chat.
+- Khung chat: dòng "→ Chuyển cho [tên thành viên] · lý do" dưới vạch của Aris, rồi lượt riêng của bot đích (linh vật cột trái, tên và vạch màu linh vật, "nhận chuyển giao từ Aris", câu trả lời, nút "Nhắn tiếp với …" mở phiên riêng của bot). Tin kế tiếp của người dùng vẫn về Aris.
+- Telegram: câu trả lời gửi như lời của bot đích, mở đầu bằng tên thành viên và chức danh. Bot đích có tài khoản Telegram riêng thì trong chat riêng kèm nút mở chat với bot đó; trong nhóm thì chính tài khoản của bot đích trả lời vào tin của người dùng (gửi không được thì bot đang chat gửi thay). Xem [aris-telegram.md](aris-telegram.md#kênh-riêng-của-từng-bot-và-chuyển-giao).
+
 ## Để sau
 
-- `chuyen_giao` (bot nhận việc trả lời thẳng chủ nhân): bước 5, cùng kênh riêng của bot.
 - Duyệt ngay trên nhánh cho bot trong đội: giai đoạn 3 (Hộp duyệt). Bot ngoài đã có (bước 4).
 - Trần ngân sách mỗi việc: giai đoạn 7.

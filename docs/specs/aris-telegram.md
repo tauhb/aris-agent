@@ -20,7 +20,7 @@ Các phần cốt lõi của dsh được dùng lại, không viết lại: tạ
 
 ## Tài khoản bot
 
-- Mỗi tài khoản bot Telegram thuộc **đúng một** bot của aris. Giai đoạn 1 chỉ có Aris.
+- Mỗi tài khoản bot Telegram thuộc **đúng một** bot của aris (trừ bot ngoài). Aris là cửa vào chính; các bot khác có kênh riêng (giai đoạn 2, bước 5).
 - Anh dán token trên trang 6.3. Máy chủ gọi `getMe` để kiểm tra; token đã gắn với bot aris khác thì từ chối. Token lưu trong kho khoá của dsh (`TELEGRAM_<BOT>_BOT_TOKEN`), không bao giờ trả về giao diện.
 - `getMe` còn cho biết bot có đọc được mọi tin trong nhóm không (privacy mode). Nhóm được phép mà privacy mode đang bật thì trang 6.3 cảnh báo và hướng dẫn tắt (hoặc đặt bot làm quản trị), vì khi bật, Telegram **không giao tin @tên bot thường** trong nhóm, chỉ giao lệnh `/lệnh@tên_bot` và tin trả lời vào tin của bot.
 
@@ -101,6 +101,13 @@ Tool `channel_send` cho bot gửi tin tới **nơi nhận** (`/sethome`) của c
 ## Trang 6.3 Kênh và ghép đôi
 
 Thêm bot Telegram (dán token), trạng thái và cảnh báo privacy mode; sinh mã ghép đôi (chủ nhân / người được phép) và đồng hồ hết hạn; danh sách đã ghép đôi (thu hồi); danh sách nhóm (cho phép, ai được gọi, chế độ khách, lời nhắc riêng); cách xử lý khi đang bận.
+
+## Kênh riêng của từng bot và chuyển giao
+
+- Trang 6.3: thêm bot Telegram thì chọn bot của aris (bot chưa có kênh, không phải bot ngoài), dán token. Danh sách hiện mọi tài khoản đã gắn: Aris "cửa vào chính", bot khác "chat riêng". Hồ sơ bot (2.2) hiện kênh riêng của bot.
+- Nhắn riêng tài khoản của một bot là nói chuyện với bot đó: phiên mới tạo qua `arisBots.open` (phiên trong chat riêng gắn với bot, model riêng của bot), nên bot dùng tính cách, ký ức và quyền của nó. Người đã ghép đôi dùng chung cho mọi tài khoản: không ghép đôi lại, chỉ cần bấm Start với bot mới một lần.
+- Nhóm có nhiều bot của aris: bot nào được `@` thì bot đó trả lời (cửa vào đã lo).
+- Chuyển giao (`plugin:aris/handoff` trong lượt): tracker giữ câu trả lời của bot đích là một đoạn riêng có người nói. Khi giao: đoạn của bot của phiên gửi như thường; đoạn chuyển giao mở đầu bằng `@tên_gọi · chức danh` (thành tên thành viên). Chat riêng: kèm nút link "Nhắn tiếp với …" tới tài khoản của bot đích nếu có. Nhóm: gửi bằng tài khoản của bot đích nếu có, hộp thư ra ghi bot dự phòng để gửi thay khi tài khoản đó không gửi được vào nhóm (403/400).
 
 ## Để sau
 

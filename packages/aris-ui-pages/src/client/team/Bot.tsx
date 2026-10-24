@@ -20,6 +20,34 @@ import { useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Box } from '../ui.js'
 import { DEMO_PROFILE as P } from './demo.js'
+import { useChannels } from '../settings/channels-api.js'
+
+/** Kênh riêng của bot (bản vẽ 2.2): tài khoản Telegram gắn trên trang 6.3. */
+function BotChannels({ t, botId, onConnect }: { t: PageProps['t']; botId: string; onConnect: () => void }) {
+  const { data } = useChannels()
+  const tg = data?.bots.find((b) => b.bot === botId)
+  return (
+    <Card title={t('bot.channels')}>
+      <CardRow label="Telegram">
+        {tg ? (
+          <span style={{ fontSize: 12.5 }}>
+            <span className="a-mono">@{tg.username}</span> ·{' '}
+            <span style={{ fontWeight: 600, color: tg.error ? 'var(--a-danger)' : 'var(--a-ok)' }}>
+              {tg.error ? t('bot.channelError') : t('bot.connected')}
+            </span>
+          </span>
+        ) : (
+          <Button size="sm" onClick={onConnect}>
+            {t('bot.connect')}
+          </Button>
+        )}
+      </CardRow>
+      <CardRow label="Lark">
+        <span className="a-muted">{t('bot.later')}</span>
+      </CardRow>
+    </Card>
+  )
+}
 import { ExternalSettings } from './ExternalBot.js'
 import { MascotPicker } from './MascotPicker.js'
 
@@ -354,21 +382,13 @@ export function BotProfile({ t, nav, params, plugins }: PageProps) {
                   </CardRow>
                 ))}
               </Card>
-              <Card title={t('bot.channels')}>
-                {P.channels.map((c) => (
-                  <CardRow key={c.text} label={c.text}>
-                    {c.connected ? (
-                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--a-ok)' }}>
-                        {t('bot.connected')}
-                      </span>
-                    ) : (
-                      <Button size="sm" onClick={() => nav.go('settings', { section: 'channels' })}>
-                        {t('bot.connect')}
-                      </Button>
-                    )}
-                  </CardRow>
-                ))}
-              </Card>
+              {!bot.external && (
+                <BotChannels
+                  t={t}
+                  botId={bot.id}
+                  onConnect={() => nav.go('settings', { section: 'channels' })}
+                />
+              )}
             </>
           )}
         </div>

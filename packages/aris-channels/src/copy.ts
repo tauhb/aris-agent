@@ -97,6 +97,7 @@ export const T = {
   restarted: '♻️ aris vừa khởi động lại giữa chừng, đang làm tiếp tin này.',
   recovered: '♻️ Câu trả lời khôi phục sau khi khởi động lại, có thể trùng.',
   stoppedTurn: 'Đã dừng việc này.',
+  continueWith: (name: string) => `Nhắn tiếp với ${name}`,
   failedTurn: (e: string) => `Bot gặp lỗi: ${h(e)}`,
   voiceFail: (e: string) => `Chưa nghe được ghi âm: ${h(e)}`,
   voiceNotReady:

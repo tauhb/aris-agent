@@ -56,6 +56,8 @@ export interface ArisBots {
     kind: 'commander' | 'member'
   }
   tag(sessionId: string, bot: string, via: 'open' | 'team' | 'dispatch'): Promise<void>
+  /** Phiên mới trong chat riêng gắn với bot (model riêng của bot), như bấm bot trên thanh bên. */
+  open(botId: string): Promise<string>
   store: BotStore
   live: LiveTracker
 }
@@ -97,6 +99,7 @@ export async function apply(ctx: Context): Promise<void> {
   const service: ArisBots = {
     botOf: (id) => store.botOf(id),
     tag: (id, bot, via) => store.tag(id, bot, via),
+    open: (id) => open(id),
     store,
     live,
   }

@@ -10,9 +10,9 @@ import { RoomDock, RoomLead, RoomRound, RoomSay } from './Room.js'
 import { ApprovalDock } from './External.js'
 import { roomLeadDefinition, roomSayDefinition } from './room-data.js'
 import { watchMentions, type MentionBot } from './mentions-dom.js'
-import { BotReport, TurnHead, UserMention } from './Speaker.js'
+import { BotReport, HandoffTurn, TurnHead, UserMention } from './Speaker.js'
 import { botTriggerSource } from './bot-source.js'
-import { botReportDefinition, findMention, turnHeadDefinition } from './who-data.js'
+import { botReportDefinition, findMention, handoffDefinition, turnHeadDefinition } from './who-data.js'
 import { CSS } from './styles.js'
 
 interface SessionInput {
@@ -173,6 +173,20 @@ export function apply(ctx: ClientContext): void {
   ctx.uiConversation.events.register(botReportDefinition)
   ctx.slots.inject('conversation.chat.node', () =>
     ctx.slots.register({ name: 'conversation.chat.node', key: 'aris-bot-report', locale: NS }, BotReport),
+  )
+
+  // Chuyển giao (bản vẽ 1.8): câu trả lời của bot đích thành lượt riêng của bot đó.
+  ctx.uiConversation.events.register(handoffDefinition)
+  ctx.slots.inject('conversation.chat.node', () =>
+    ctx.slots.register(
+      {
+        name: 'conversation.chat.node',
+        key: 'aris-handoff',
+        locale: NS,
+        inject: () => ({ openSession: (sessionId: string) => workspace.openSession(sessionId) }),
+      },
+      HandoffTurn,
+    ),
   )
 
   // `@tên` của bot trong đội: tên thành viên trong tin của người dùng (quy tắc chữ của dsh)…

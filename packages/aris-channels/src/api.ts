@@ -39,7 +39,13 @@ export function snapshot(store: ChannelStore, hub: ChannelHub) {
 
 const BOT_RE = /^[a-z0-9-]{1,40}$/
 
-export async function handleApi(store: ChannelStore, hub: ChannelHub, request: Request): Promise<Response> {
+export async function handleApi(
+  store: ChannelStore,
+  hub: ChannelHub,
+  request: Request,
+  /** Bot của aris nhận được kênh riêng (có trong đội, không phải bot ngoài); không có là nhận mọi mã. */
+  canHaveChannel?: (bot: string) => boolean,
+): Promise<Response> {
   if (request.method === 'GET' || request.method === 'HEAD') return json(snapshot(store, hub))
   let body: Record<string, unknown>
   try {
@@ -54,6 +60,8 @@ export async function handleApi(store: ChannelStore, hub: ChannelHub, request: R
         const token = typeof body.token === 'string' ? body.token.trim() : ''
         if (!/^\d+:[\w-]{20,}$/.test(token))
           return json({ error: 'token không đúng dạng của BotFather' }, 400)
+        if (canHaveChannel && !canHaveChannel(bot))
+          return json({ error: 'bot này không có trong đội, hoặc là bot ngoài (không có kênh riêng)' }, 400)
         await hub.connect(bot, token)
         break
       }

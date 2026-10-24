@@ -17,7 +17,7 @@ import type {
   TgMessage,
   TgUpdate,
 } from './telegram/types.js'
-import { TurnTracker, type Pending, type TurnResult } from './tracker.js'
+import { TurnTracker, type Pending, type TurnPart, type TurnResult } from './tracker.js'
 
 /** Agent sống của dsh, dạng tối thiểu kênh dùng. */
 export interface LiveAgent {
@@ -38,7 +38,8 @@ export interface ModelGroupLite {
 /** Phần phiên của dsh mà kênh cần (bọc `ctx.sessionController`, `ctx.sessionQuery`). */
 export interface SessionPort {
   /** Phiên mới trong workspace chat riêng (`@aris/home`). */
-  create(): Promise<string>
+  /** Phiên mới cho tài khoản bot `bot` (mã bot của aris): phiên gắn với bot đó. */
+  create(bot: string): Promise<string>
   agent(sessionId: string): Promise<LiveAgent>
   catalog(): Promise<readonly ModelGroupLite[]>
   select(sessionId: string, provider: string, model: string): Promise<void>
@@ -450,7 +451,7 @@ export class ChannelHub {
         this.d.logger.warn('aris-channels: mở lại phiên %s: %s, mở phiên mới', t.sessionId, String(e))
       }
     }
-    const sessionId = await this.d.sessions.create()
+    const sessionId = await this.d.sessions.create(bot)
     await this.store.bindThread({ key, bot, chatId, ...(topic ? { threadId: topic } : {}), sessionId })
     return this.d.sessions.agent(sessionId)
   }
@@ -665,37 +666,76 @@ export class ChannelHub {
     const ok = r.reason.kind === 'completed'
     for (const p of r.ours)
       void rt?.api.setReaction(p.chatId, p.tgMessageId, ok ? '👍' : '😢').catch(() => undefined)
-    let text = r.text
-    if (!text) {
-      if (r.reason.kind === 'aborted') text = T.stoppedTurn
-      else if (!ok) text = T.failedTurn(r.reason.error?.message ?? r.reason.kind)
+    // Các đoạn theo người nói: chữ của bot của phiên gộp lại; câu trả lời chuyển giao là đoạn riêng.
+    const segments: TurnPart[] = []
+    for (const p of r.parts) {
+      const prev = segments.at(-1)
+      if (!p.from && prev && !prev.from) prev.text += `\n\n${p.text}`
+      else segments.push({ ...p })
+    }
+    if (!segments.length) {
+      if (r.reason.kind === 'aborted') segments.push({ text: T.stoppedTurn })
+      else if (!ok) segments.push({ text: T.failedTurn(r.reason.error?.message ?? r.reason.kind) })
       else return
     }
-    if (last.group && isSilent(text)) return
+    for (const seg of segments) {
+      if (!seg.from) {
+        if (last.group && isSilent(seg.text)) continue
+        await this.send(last, first, seg.text, last.bot)
+        const bot = this.store.bot(last.bot)
+        if (bot?.voice && !last.group && last.trust === 'owner' && rt)
+          void textToVoice(seg.text)
+            .then((ogg) => rt.api.sendVoice(last.chatId, ogg, { threadId: last.threadId }))
+            .catch((e: unknown) => this.d.logger.warn('aris-channels: giọng nói: %s', String(e)))
+        continue
+      }
+      // Chuyển giao: lời của bot đích, mở đầu bằng tên thành viên. Bot đích có tài khoản Telegram riêng
+      // thì trong nhóm chính tài khoản đó trả lời (gửi không được thì bot này gửi thay); trong chat
+      // riêng thì kèm nút mở chat với bot đích.
+      const own = this.runtimes.has(seg.from.bot) ? this.store.bot(seg.from.bot) : undefined
+      const md = `@${seg.from.handle}${seg.from.role ? ` · ${seg.from.role}` : ''}\n\n${seg.text}`
+      if (last.group && own) await this.send(last, first, md, seg.from.bot, undefined, last.bot)
+      else
+        await this.send(
+          last,
+          first,
+          md,
+          last.bot,
+          own ? [[{ text: T.continueWith(seg.from.name), url: `https://t.me/${own.username}` }]] : undefined,
+        )
+    }
+  }
+
+  /** Một câu trả lời vào hộp thư ra rồi gửi (Markdown → HTML, `@tên_gọi` thành tên thành viên). */
+  private async send(
+    last: Pending,
+    first: Pending,
+    md: string,
+    bot: string,
+    buttons?: InlineButton[][],
+    fallbackBot?: string,
+  ) {
     const rec: OutboxRecord = {
       id: `${keyNum(last.chatId)}-${this.now()}-${randomId()}`,
-      bot: last.bot,
+      bot,
       chatId: last.chatId,
       ...(last.threadId ? { threadId: last.threadId } : {}),
       ...(last.group ? { replyTo: first.tgMessageId } : {}),
-      chunks: toTelegramHtml(this.named(text)),
+      chunks: toTelegramHtml(this.named(md)),
       sent: 0,
       state: 'pending',
       attempts: 0,
       createdAt: this.now(),
+      ...(buttons ? { buttons } : {}),
+      ...(fallbackBot ? { fallbackBot } : {}),
     }
     // Ghi hộp thư ra trước khi gửi: tắt máy lúc này thì lần sau gửi lại.
     await this.store.putOutbox(rec)
     await this.flush(rec)
-    const bot = this.store.bot(last.bot)
-    if (bot?.voice && !last.group && last.trust === 'owner' && rt)
-      void textToVoice(text)
-        .then((ogg) => rt.api.sendVoice(last.chatId, ogg, { threadId: last.threadId }))
-        .catch((e: unknown) => this.d.logger.warn('aris-channels: giọng nói: %s', String(e)))
   }
 
   /** Gửi các phần còn lại của một câu trả lời; lỗi HTML thì gửi chữ thường. */
-  async flush(rec: OutboxRecord, recovered = false) {
+  async flush(rec: OutboxRecord, recovered = false): Promise<void> {
     const rt = this.runtimes.get(rec.bot)
     if (!rt) return
     let cur = rec
@@ -704,7 +744,11 @@ export class ChannelHub {
         cur = { ...cur, state: 'sending' }
         await this.store.putOutbox(cur)
         const html = recovered && i === cur.sent ? `${T.recovered}\n\n${cur.chunks[i]!}` : cur.chunks[i]!
-        const opts = { threadId: cur.threadId, replyTo: i === 0 ? cur.replyTo : undefined }
+        const opts = {
+          threadId: cur.threadId,
+          replyTo: i === 0 ? cur.replyTo : undefined,
+          buttons: i === cur.chunks.length - 1 ? (cur.buttons as InlineButton[][] | undefined) : undefined,
+        }
         await rt.api.sendMessage(cur.chatId, html, { ...opts, html: true }).catch(async (e: unknown) => {
           if (e instanceof TelegramError && e.code === 400 && /parse|entit/i.test(e.description))
             return rt.api.sendMessage(
@@ -723,6 +767,14 @@ export class ChannelHub {
       }
       await this.store.doneOutbox(cur.id)
     } catch (e) {
+      // Bot này không gửi được vào chat (chưa ở trong nhóm, bị chặn): bot dự phòng gửi phần còn lại.
+      if (cur.fallbackBot && e instanceof TelegramError && (e.code === 403 || e.code === 400)) {
+        await this.store.doneOutbox(cur.id)
+        const moved: OutboxRecord = { ...cur, id: `${cur.id}-fb`, bot: cur.fallbackBot, state: 'pending' }
+        delete moved.fallbackBot
+        await this.store.putOutbox(moved)
+        return this.flush(moved)
+      }
       const next = { ...cur, state: 'pending' as const, attempts: cur.attempts + 1 }
       if (next.attempts >= 3) {
         this.d.logger.warn('aris-channels: bỏ câu trả lời sau 3 lần gửi lỗi: %s', String(e))

@@ -76,3 +76,21 @@ describe('theo dõi lượt', () => {
     expect(t.onStream('s', chunk('c', 'Còn câu'))).toBe('Bước 2 xong.\n\nCòn câu')
   })
 })
+
+describe('chuyển giao', () => {
+  it('câu trả lời của bot đích là đoạn riêng, ghi người nói', () => {
+    const t = new TurnTracker()
+    t.expect(p('m1'))
+    t.onEvent('s', { type: 'turn/start' })
+    t.onEvent('s', { type: 'user/message', data: { id: 'm1' } })
+    t.onEvent('s', {
+      type: 'plugin:aris/handoff',
+      data: { bot: 'b-1', handle: 'tho', name: 'Thơ', role: 'Nội dung', text: 'Bài viết…' },
+    })
+    const r = t.onEvent('s', { type: 'turn/end', data: { reason: { kind: 'completed' } } })
+    expect(r?.text).toBe('')
+    expect(r?.parts).toEqual([
+      { text: 'Bài viết…', from: { bot: 'b-1', handle: 'tho', name: 'Thơ', role: 'Nội dung' } },
+    ])
+  })
+})

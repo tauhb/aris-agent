@@ -363,6 +363,11 @@ export const SETTINGS_TEXT = text(
     'ch.restart': 'Stop and restart',
     'ch.error': 'error',
     'ch.mainEntry': 'main entry',
+    'ch.ownChat': 'own chat',
+    'ch.connectedCount': '{n} connected',
+    'ch.forBot': 'For bot',
+    'ch.tokenHintBot':
+      'Create a new bot with @BotFather for {name}, paste its token here. You are already paired: just press Start in that bot once.',
     'ch.disconnect': 'Disconnect',
     'ch.privacyWarn':
       'The bot cannot see @mentions in groups: in BotFather turn Group Privacy off, then remove the bot from the group and add it back (or make it a group admin).',
@@ -886,6 +891,11 @@ export const SETTINGS_TEXT = text(
     'ch.restart': 'Dừng và làm mới',
     'ch.error': 'lỗi',
     'ch.mainEntry': 'cửa vào chính',
+    'ch.ownChat': 'chat riêng',
+    'ch.connectedCount': '{n} đã kết nối',
+    'ch.forBot': 'Cho bot',
+    'ch.tokenHintBot':
+      'Tạo một bot mới với @BotFather cho {name}, dán token vào đây. Không cần ghép đôi lại: {you} chỉ cần bấm Start với bot đó một lần.',
     'ch.disconnect': 'Gỡ',
     'ch.privacyWarn':
       'Bot chưa thấy tin @ trong nhóm: vào BotFather tắt Group Privacy, rồi xoá bot khỏi nhóm và thêm lại (hoặc đặt bot làm quản trị nhóm).',

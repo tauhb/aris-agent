@@ -68,7 +68,10 @@ export async function apply(ctx: Context): Promise<void> {
 
   const controller = ctx.sessionController
   const sessions: SessionPort = {
-    async create() {
+    async create(bot) {
+      // Tài khoản Telegram của một bot khác Aris: phiên riêng của bot đó (tính cách, ký ức, model).
+      const bots = ctx.get('arisBots') as { open(id: string): Promise<string> } | undefined
+      if (bot !== 'aris' && bots) return bots.open(bot)
       const home = await ensureHome(ctx.workspaceRegistry as never)
       const created = await controller.create({ workspaceId: home.workspaceId as never })
       return created.sessionId
@@ -178,7 +181,14 @@ export async function apply(ctx: Context): Promise<void> {
         path: '/api/aris/channels',
         methods: ['GET', 'POST'],
         requestBody: 'buffered',
-        fetch: (request) => handleApi(store, hub, request),
+        fetch: (request) =>
+          handleApi(store, hub, request, (bot) => {
+            const b = (
+              ctx.get('arisBots') as
+                { store: { get(id: string): { external?: unknown } | undefined } } | undefined
+            )?.store.get(bot)
+            return b ? !b.external : bot === 'aris'
+          }),
       })
       return () => void dispose()
     }, 'aris-channels: /api/aris/channels')

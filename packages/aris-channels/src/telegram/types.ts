@@ -91,7 +91,4 @@ export interface TgBotInfo extends TgUser {
   can_read_all_group_messages?: boolean
 }
 
-export interface InlineButton {
-  text: string
-  callback_data: string
-}
+export type InlineButton = { text: string; callback_data: string } | { text: string; url: string }

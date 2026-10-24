@@ -87,6 +87,16 @@ export const outboxRecord = z.object({
   state: z.enum(['pending', 'sending']),
   attempts: z.number().int(),
   createdAt: z.number(),
+  /** Nút gắn vào phần cuối (ví dụ link "Nhắn tiếp với …"). */
+  buttons: z
+    .array(
+      z.array(
+        z.object({ text: z.string(), url: z.string().optional(), callback_data: z.string().optional() }),
+      ),
+    )
+    .optional(),
+  /** Bot gửi thay khi bot này không gửi được vào chat (chưa ở trong nhóm, bị chặn). */
+  fallbackBot: z.string().optional(),
 })
 export type OutboxRecord = z.infer<typeof outboxRecord>
 
