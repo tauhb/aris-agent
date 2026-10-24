@@ -77,7 +77,17 @@ export const roundRecord = z.object({
 })
 export type RoundRecord = z.infer<typeof roundRecord>
 
-/** Một lần chạy của bot ngoài (bước 4): trọn gói, chỉ có kết quả cuối. */
+/** Một bước của bot ngoài (`claude-driver.ts`). */
+export const externalStep = z.object({
+  id: z.string(),
+  kind: z.string(),
+  target: z.string().optional(),
+  tool: z.string().optional(),
+  status: z.enum(['running', 'done', 'failed']),
+  at: z.string(),
+})
+
+/** Một lần chạy của bot ngoài (bước 4): CLI trên máy (có từng bước) hoặc plugin dsh (chỉ kết quả cuối). */
 export const externalRunRecord = z.object({
   id: z.string(),
   bot: z.string(),
@@ -89,7 +99,28 @@ export const externalRunRecord = z.object({
   /** Phiên giao việc (nhận kết quả thành thông báo). */
   parentSession: z.string(),
   cwd: z.string().optional(),
-  worktree: z.object({ branch: z.string(), dir: z.string() }).optional(),
+  /** Worktree riêng: nhánh, thư mục, repo gốc. */
+  worktree: z.object({ branch: z.string(), dir: z.string(), repo: z.string().optional() }).optional(),
+  /** Chạy bằng CLI trên máy (bộ chuyển tự viết) hay plugin dsh. */
+  runtime: z.enum(['cli', 'plugin']).optional(),
+  /** Từng bước (CLI): làm gì, với cái gì, xong chưa; giữ 60 bước cuối. */
+  steps: z.array(externalStep).optional(),
+  /** Yêu cầu quyền đang chờ người dùng (thẻ duyệt trên nhánh). */
+  pending: z.array(externalStep.omit({ status: true })).optional(),
+  /** Yêu cầu quyền đã trả lời (20 cái cuối). */
+  answered: z
+    .array(
+      externalStep
+        .omit({ status: true })
+        .extend({ allow: z.boolean(), by: z.enum(['user', 'timeout', 'ended']) }),
+    )
+    .optional(),
+  costUsd: z.number().optional(),
+  budgetUsd: z.number().optional(),
+  /** Phiên của agent ngoài (làm tiếp lần sau). */
+  sessionRef: z.string().optional(),
+  /** Làm tiếp từ lần chạy trước của cùng bot trong cùng cuộc. */
+  resumedFrom: z.string().optional(),
   status: z.enum(['running', 'done', 'failed', 'stopped']),
   /** Vì sao dừng: người dùng bấm Dừng, quá giờ, aris khởi động lại. */
   stoppedBy: z.enum(['user', 'timeout', 'restart']).optional(),

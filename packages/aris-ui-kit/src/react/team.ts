@@ -33,6 +33,7 @@ export interface ExternalData {
   timeoutMin: number
   worktree: boolean
   assignable: boolean
+  budgetUsd?: number
   command?: string
   args?: string[]
 }

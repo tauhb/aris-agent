@@ -7,6 +7,7 @@ import {
   Button,
   Card,
   CardRow,
+  CLI_ONLY_PERMISSIONS,
   DANGEROUS_PERMISSIONS,
   DEFAULT_PERMISSION,
   EXTERNAL_PACKAGES,
@@ -68,6 +69,13 @@ export function ExternalBot({ t, nav, plugins }: PageProps) {
   const [error, setError] = useState<string | null>(null)
 
   const st = status?.agents[agent]
+  const cli = st?.cli ?? null
+  const cmd = agent === 'codex' ? 'codex' : 'claude'
+  // Mức "hỏi bạn" chỉ có khi aris tự chạy CLI trên máy; plugin dsh thì bỏ.
+  const perms = EXTERNAL_PERMISSIONS[agent].filter((p) => cli || !CLI_ONLY_PERMISSIONS.has(p))
+  const defaultPerm = perms.includes(DEFAULT_PERMISSION[agent]) ? DEFAULT_PERMISSION[agent] : perms[0]!
+  const chosen = perms.includes(perm[agent]) ? perm[agent] : defaultPerm
+  const [budget, setBudget] = useState(3)
   const agentName = t(`ext.name.${agent}`)
   const shown = name.trim() || agentName
   const loginColor = st?.login === 'yes' ? 'var(--a-ok)' : 'var(--a-warn)'
@@ -75,7 +83,7 @@ export function ExternalBot({ t, nav, plugins }: PageProps) {
   async function add() {
     setError(null)
     try {
-      if (!st?.installed) {
+      if (!cli && !st?.installed) {
         setBusy('install')
         const err = await installPlugin(plugins, EXTERNAL_PACKAGES[agent])
         if (err === 'no-target') throw new Error(t('ext.noTarget', { agent: agentName }))
@@ -95,7 +103,8 @@ export function ExternalBot({ t, nav, plugins }: PageProps) {
           department: department || null,
           external: {
             agent,
-            permission: perm[agent],
+            permission: chosen,
+            ...(agent === 'claude-code' ? { budgetUsd: budget } : {}),
             model: model.trim() || null,
             timeoutMin,
             worktree,
@@ -141,7 +150,14 @@ export function ExternalBot({ t, nav, plugins }: PageProps) {
                 <b>{t(`ext.name.${a}`)}</b>
               </span>
               <span className="a-muted" style={{ fontSize: 12 }}>
-                {a === 'acp' ? t('ext.acpHint') : t('ext.official')}
+                {a === 'acp'
+                  ? t('ext.acpHint')
+                  : status?.agents[a]?.cli
+                    ? t('ext.cliCard', {
+                        cmd: a === 'codex' ? 'codex' : 'claude',
+                        version: status.agents[a].cli?.version ?? '',
+                      })
+                    : t('ext.official')}
               </span>
             </button>
           ))}
@@ -153,11 +169,13 @@ export function ExternalBot({ t, nav, plugins }: PageProps) {
               {t(`ext.login.${st?.login ?? 'unknown'}`, { agent: agentName })}
             </span>
             <span className="a-muted">
-              {st?.installed
-                ? t('ext.installed')
-                : agent === 'acp'
-                  ? t('ext.willInstallAcp')
-                  : t('ext.willInstall', { agent: agentName, size: SIZE[agent] })}
+              {cli
+                ? t('ext.cliUse', { cmd, version: cli.version ?? '' })
+                : st?.installed
+                  ? t('ext.installed')
+                  : agent === 'acp'
+                    ? t('ext.willInstallAcp')
+                    : t('ext.willInstall', { agent: agentName, size: SIZE[agent] })}
             </span>
           </div>
         )}
@@ -199,14 +217,32 @@ export function ExternalBot({ t, nav, plugins }: PageProps) {
       </div>
 
       <div className="ap-ext-limits">
-        <b>{t('ext.limits.title')}</b>
-        <ul>
-          {(['once', 'final', 'alone', 'account'] as const).map((k) => (
-            <li key={k}>
-              <b>{t(`ext.limits.${k}`, { agent: agentName })}</b> {t(`ext.limits.${k}.d`)}
-            </li>
-          ))}
-        </ul>
+        {cli ? (
+          <>
+            <b>{t('ext.limitsCli.title')}</b>
+            <ul>
+              {(['steps', 'ask', 'memory', 'account'] as const).map((k) => (
+                <li key={k}>
+                  <b>{t(`ext.limitsCli.${k}`, { agent: agentName })}</b>{' '}
+                  {agent !== 'claude-code' && (k === 'steps' || k === 'account')
+                    ? t(`ext.limitsCli.${k}.dNoCost`, { agent: agentName })
+                    : t(`ext.limitsCli.${k}.d`, { name: shown })}
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <>
+            <b>{t('ext.limits.title')}</b>
+            <ul>
+              {(['once', 'final', 'alone', 'account'] as const).map((k) => (
+                <li key={k}>
+                  <b>{t(`ext.limits.${k}`, { agent: agentName })}</b> {t(`ext.limits.${k}.d`)}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
 
       <div>
@@ -214,9 +250,9 @@ export function ExternalBot({ t, nav, plugins }: PageProps) {
           {t('ext.whenAsks', { name: shown })}
         </div>
         <div role="radiogroup" aria-label={t('ext.whenAsks', { name: shown })} className="ap-ext-perms">
-          {EXTERNAL_PERMISSIONS[agent].map((p) => {
+          {perms.map((p) => {
             const danger = DANGEROUS_PERMISSIONS.has(p)
-            const on = perm[agent] === p
+            const on = chosen === p
             return (
               <button
                 key={p}
@@ -235,7 +271,7 @@ export function ExternalBot({ t, nav, plugins }: PageProps) {
                     {t(`ext.perm.${p}`)}
                     {danger ? (
                       <span className="tag danger">{t('ext.dangerous')}</span>
-                    ) : DEFAULT_PERMISSION[agent] === p ? (
+                    ) : defaultPerm === p ? (
                       <span className="tag ok">{t('ext.recommended')}</span>
                     ) : null}
                   </span>
@@ -264,6 +300,23 @@ export function ExternalBot({ t, nav, plugins }: PageProps) {
             style={{ width: 300 }}
           />
         </label>
+        {agent === 'claude-code' && cli && (
+          <label className="ap-frow">
+            <span>{t('ext.budget')}</span>
+            <select
+              className="a-inp"
+              style={{ width: 140 }}
+              value={budget}
+              onChange={(e) => setBudget(Number(e.target.value))}
+            >
+              {[1, 3, 5, 10, 20].map((n) => (
+                <option key={n} value={n}>
+                  {t('ext.usd', { n })}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="ap-frow">
           <span>{t('ext.timeout')}</span>
           <select
@@ -319,7 +372,11 @@ export function ExternalBot({ t, nav, plugins }: PageProps) {
       {error && <div style={{ color: 'var(--a-danger)', fontSize: 13 }}>{error}</div>}
       <div className="ap-dfoot">
         <span className="a-muted" style={{ fontSize: 12.5, marginRight: 'auto' }}>
-          {st?.installed ? t('ext.footReady') : t('ext.footInstall', { size: SIZE[agent] })}
+          {cli
+            ? t('ext.footCli', { cmd })
+            : st?.installed
+              ? t('ext.footReady')
+              : t('ext.footInstall', { size: SIZE[agent] })}
         </span>
         <Button size="lg" onClick={nav.close}>
           {t('cb.cancel')}
@@ -354,6 +411,7 @@ export function ExternalSettings({
   const [msg, setMsg] = useState<string | null>(null)
   const agentName = t(`ext.name.${ext.agent}`)
   const state = status?.bots[bot.id]
+  const cliHere = status?.agents[ext.agent]?.cli ?? null
   const dirty = JSON.stringify(form) !== JSON.stringify(ext)
   const run = async (fn: () => Promise<void>) => {
     setBusy(true)
@@ -371,28 +429,40 @@ export function ExternalSettings({
       <CardRow label={t('ext.agent')}>
         <span>{t(`ext.role.${ext.agent}`)}</span>
       </CardRow>
-      <CardRow label={t('ext.plugin')}>
-        <span style={{ color: state === 'ready' ? 'var(--a-ok)' : 'var(--a-warn)' }}>
-          {t(`ext.state.${state ?? 'missing'}`, { agent: agentName })}
-        </span>
-        {state === 'missing' && (
-          <Button
-            size="sm"
-            variant="primary"
-            disabled={busy}
-            onClick={() =>
-              void run(async () => {
-                const err = await installPlugin(plugins, EXTERNAL_PACKAGES[ext.agent])
-                if (err === 'no-target') throw new Error(t('ext.noTarget', { agent: agentName }))
-                if (err) throw new Error(t('ext.installFailed', { error: err }))
-                reload()
+      <CardRow label={t('ext.runtime')}>
+        <span>
+          {cliHere
+            ? t('ext.runtime.cli', {
+                cmd: ext.agent === 'codex' ? 'codex' : 'claude',
+                version: cliHere.version ?? '',
               })
-            }
-          >
-            {busy ? t('ext.installing') : t('ext.install')}
-          </Button>
-        )}
+            : t('ext.runtime.plugin')}
+        </span>
       </CardRow>
+      {!cliHere && (
+        <CardRow label={t('ext.plugin')}>
+          <span style={{ color: state === 'ready' ? 'var(--a-ok)' : 'var(--a-warn)' }}>
+            {t(`ext.state.${state ?? 'missing'}`, { agent: agentName })}
+          </span>
+          {state === 'missing' && (
+            <Button
+              size="sm"
+              variant="primary"
+              disabled={busy}
+              onClick={() =>
+                void run(async () => {
+                  const err = await installPlugin(plugins, EXTERNAL_PACKAGES[ext.agent])
+                  if (err === 'no-target') throw new Error(t('ext.noTarget', { agent: agentName }))
+                  if (err) throw new Error(t('ext.installFailed', { error: err }))
+                  reload()
+                })
+              }
+            >
+              {busy ? t('ext.installing') : t('ext.install')}
+            </Button>
+          )}
+        </CardRow>
+      )}
       <CardRow label={t('ext.whenAsks', { name: bot.name })}>
         <select
           className="a-inp"
@@ -400,14 +470,34 @@ export function ExternalSettings({
           value={form.permission}
           onChange={(e) => setForm({ ...form, permission: e.target.value })}
         >
-          {EXTERNAL_PERMISSIONS[ext.agent].map((p) => (
-            <option key={p} value={p}>
-              {t(`ext.perm.${p}`)}
-              {DANGEROUS_PERMISSIONS.has(p) ? ` · ${t('ext.dangerous')}` : ''}
-            </option>
-          ))}
+          {EXTERNAL_PERMISSIONS[ext.agent]
+            .filter((p) => cliHere || !CLI_ONLY_PERMISSIONS.has(p))
+            .map((p) => (
+              <option key={p} value={p}>
+                {t(`ext.perm.${p}`)}
+                {DANGEROUS_PERMISSIONS.has(p) ? ` · ${t('ext.dangerous')}` : ''}
+              </option>
+            ))}
         </select>
       </CardRow>
+      {ext.agent === 'claude-code' && cliHere && (
+        <CardRow label={t('ext.budget')}>
+          <select
+            className="a-inp"
+            style={{ width: 140 }}
+            value={form.budgetUsd ?? 3}
+            onChange={(e) => setForm({ ...form, budgetUsd: Number(e.target.value) })}
+          >
+            {[...new Set([1, 3, 5, 10, 20, form.budgetUsd ?? 3])]
+              .sort((a, b) => a - b)
+              .map((n) => (
+                <option key={n} value={n}>
+                  {t('ext.usd', { n })}
+                </option>
+              ))}
+          </select>
+        </CardRow>
+      )}
       <CardRow label={t('ext.model')}>
         <TextInput
           value={form.model ?? ''}

@@ -116,6 +116,8 @@ export interface DispatchResult {
   /** Bot ngoài: tên agent và mã lần chạy (không có phiên riêng). */
   external?: string | undefined
   runId?: string | undefined
+  /** Bot ngoài làm trong worktree riêng (thư mục, nhánh). */
+  worktree?: { dir: string; branch: string } | undefined
 }
 
 /** Tối đa bot mỗi lần giao, và bot chạy cùng lúc. */
@@ -270,7 +272,7 @@ export function summarize(results: readonly DispatchResult[]): string {
     !r.ok
       ? `- @${r.handle}: không giao được — ${r.error}`
       : r.external
-        ? `- @${r.handle} (${r.name}): đã nhận việc (bot ngoài ${r.external}), việc ngoài ${r.runId}`
+        ? `- @${r.handle} (${r.name}): đã nhận việc (bot ngoài ${r.external})${r.worktree ? `, làm trong worktree ${r.worktree.dir} (nhánh ${r.worktree.branch})` : ''}, việc ngoài ${r.runId}`
         : `- @${r.handle} (${r.name}): ${r.reused ? 'đã nhắn tiếp' : 'đã nhận việc'}${r.taskId ? `, thẻ ${r.taskId}` : ''}, phiên ${r.sessionId}`,
   )
   const team = results.some((r) => r.ok && !r.external)
@@ -284,7 +286,12 @@ export function summarize(results: readonly DispatchResult[]): string {
       : []),
     ...(outside
       ? [
-          'Bot ngoài làm trọn gói rồi nộp kết quả cuối thành thông báo về đây khi xong (không dùng wait_agent cho bot ngoài). Báo người dùng đã giao, đợi thông báo rồi tổng hợp.',
+          'Bot ngoài nộp kết quả thành tin nhắn về đây khi xong (không dùng wait_agent cho bot ngoài). Báo người dùng đã giao, đợi kết quả rồi tổng hợp.',
+          ...(results.some((r) => r.ok && r.worktree)
+            ? [
+                'Bot ngoài làm trong worktree riêng là đúng ý: thay đổi nằm ở đó để người dùng xem rồi gộp; đừng bảo bot ghi ra thư mục gốc.',
+              ]
+            : []),
         ]
       : []),
     ...(team || outside ? [] : ['Chưa giao được việc nào.']),

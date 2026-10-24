@@ -6,6 +6,7 @@ import { mountKitCss, registerPersonal } from '@aris/ui-kit/react'
 import { DispatchBranches, HeroMark, ModelLabel, SubagentBranch, TriggerButtons } from './Chat.js'
 import { EN, NS, VI } from './locale.js'
 import { RoomDock, RoomLead, RoomRound, RoomSay } from './Room.js'
+import { ApprovalDock } from './External.js'
 import { roomLeadDefinition, roomSayDefinition } from './room-data.js'
 import { CSS } from './styles.js'
 
@@ -149,6 +150,20 @@ export function apply(ctx: ClientContext): void {
         }),
       },
       RoomDock,
+    ),
+  )
+
+  // Bot ngoài xin quyền: thanh duyệt trên ô nhập của phiên giao việc (luôn hiện).
+  ctx.slots.inject('conversation.input.dock', () =>
+    ctx.slots.register(
+      {
+        name: 'conversation.input.dock',
+        id: 'aris-approvals',
+        order: 15,
+        locale: NS,
+        inject: (sessionId: string) => ({ sessionId }),
+      },
+      ApprovalDock,
     ),
   )
 }

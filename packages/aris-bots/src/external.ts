@@ -24,15 +24,21 @@ export const EXTERNAL_PACKAGES: Record<ExternalAgent, string> = {
 
 /** Mức quyền mỗi plugin nhận (`permissionMode` của Claude Code, Codex; `permission` của ACP). */
 export const EXTERNAL_PERMISSIONS: Record<ExternalAgent, readonly string[]> = {
-  'claude-code': ['dontAsk', 'acceptEdits', 'auto', 'plan', 'bypassPermissions'],
-  codex: ['never', 'approve-for-me', 'dangerously-bypass-approvals-and-sandbox'],
+  'claude-code': ['manual', 'acceptEdits', 'dontAsk', 'auto', 'plan', 'bypassPermissions'],
+  codex: ['ask', 'approve-for-me', 'never', 'dangerously-bypass-approvals-and-sandbox'],
   acp: ['reject', 'allow'],
 }
 
+/**
+ * Mức "hỏi người dùng" chỉ có khi aris tự chạy CLI trên máy; plugin dsh chạy không người trông nên
+ * lùi về mức không hỏi gần nhất.
+ */
+export const PLUGIN_PERMISSION: Record<string, string> = { manual: 'dontAsk', ask: 'never' }
+
 /** Mức mặc định trong hộp Thêm bot ngoài (bản vẽ: "khuyên dùng"). */
 export const DEFAULT_PERMISSION: Record<ExternalAgent, string> = {
-  'claude-code': 'acceptEdits',
-  codex: 'never',
+  'claude-code': 'manual',
+  codex: 'ask',
   acp: 'reject',
 }
 
@@ -54,6 +60,8 @@ export const externalRecord = z.object({
   worktree: z.boolean(),
   /** Commander được giao việc cho bot này. */
   assignable: z.boolean(),
+  /** Trần tiền mỗi việc (USD), chỉ Claude Code chạy bằng CLI trên máy báo được tiền. */
+  budgetUsd: z.number().optional(),
   /** Lệnh khởi chạy agent ACP (chỉ `acp`). */
   command: z.string().optional(),
   args: z.array(z.string()).optional(),
@@ -85,6 +93,11 @@ export function cleanExternal(input: unknown, prev?: ExternalConfig): ExternalCo
     worktree: typeof v.worktree === 'boolean' ? v.worktree : (prev?.worktree ?? true),
     assignable: typeof v.assignable === 'boolean' ? v.assignable : (prev?.assignable ?? true),
   }
+  if (agent === 'claude-code') {
+    const budget =
+      typeof v.budgetUsd === 'number' ? v.budgetUsd : ((sameAgent ? prev?.budgetUsd : undefined) ?? 3)
+    out.budgetUsd = Math.min(100, Math.max(0.5, Math.round(budget * 100) / 100))
+  }
   const model = v.model === null ? '' : v.model !== undefined ? str(v.model, 80) : (prev?.model ?? '')
   if (model) out.model = model
   if (agent === 'acp') {
@@ -103,7 +116,8 @@ export function cleanExternal(input: unknown, prev?: ExternalConfig): ExternalCo
 export function providerConfig(providerName: string, c: ExternalConfig): Record<string, unknown> {
   if (c.agent === 'acp')
     return { providerName, command: c.command, args: c.args ?? [], permission: c.permission }
-  return { providerName, permissionMode: c.permission, ...(c.model ? { model: c.model } : {}) }
+  const permissionMode = PLUGIN_PERMISSION[c.permission] ?? c.permission
+  return { providerName, permissionMode, ...(c.model ? { model: c.model } : {}) }
 }
 
 /** Tên nhà cung cấp của bot ngoài trên `ctx.subagents`. */

@@ -9,6 +9,10 @@
  * @module @aris/commander
  */
 import { randomUUID } from 'node:crypto'
+import { appendFileSync, mkdirSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import type { ArisBots } from '@aris/bots'
 import { foldTeam } from '@aris/projects'
 import type { Context } from '@deepseek-ai/cordis'
@@ -33,6 +37,7 @@ import {
   addWorktree,
   externalBrief,
   ExternalHost,
+  inWorktree,
   gitRoot,
   label,
   loginState,
@@ -41,6 +46,10 @@ import {
   worktreePlan,
   type PluginModule,
 } from './external.js'
+import { ApprovalHub } from './approval.js'
+import { childEnv, runClaude, stepOf, type DriverHooks } from './claude-driver.js'
+import { runCodex } from './codex-driver.js'
+import { cliVersion, findBinary } from './cli.js'
 import { EXTERNAL_AGENTS, EXTERNAL_PACKAGES, providerOf, type BotRecord } from '@aris/bots'
 import {
   dispatch,
@@ -67,6 +76,10 @@ import {
 export * from './dispatch.js'
 export * from './jobs.js'
 export * from './external.js'
+export * from './approval.js'
+export * from './claude-driver.js'
+export * from './codex-driver.js'
+export * from './cli.js'
 export * from './room.js'
 
 export const name = 'aris-commander'
@@ -146,6 +159,12 @@ interface ProjectsPort {
   ofSession(
     sessionId: string,
   ): { project: { name: string; members: string[]; mainSession?: string; rules: RoomRules } } | undefined
+}
+
+/** CLI trên máy aris tự chạy được cho từng loại agent (bộ chuyển tự viết). */
+const CLI_NAMES: Partial<Record<(typeof EXTERNAL_AGENTS)[number], string>> = {
+  'claude-code': 'claude',
+  codex: 'codex',
 }
 
 /** Phần dịch vụ bot con của dsh dùng cho bot ngoài. */
@@ -850,10 +869,268 @@ export async function apply(ctx: Context): Promise<void> {
   }, 'aris-commander: khép lần chạy dở')
 
   const activeRuns = new Map<string, { dispose(): Promise<void>; timer: ReturnType<typeof setTimeout> }>()
+  /**
+   * Mọi thay đổi trên bản ghi một lần chạy đi qua một hàng đợi (bước, chi phí, yêu cầu duyệt, dừng,
+   * kết thúc): hai nơi cùng đọc bản cũ rồi ghi đè sẽ làm mất thay đổi của nhau.
+   */
+  const chains = new Map<string, Promise<void>>()
+  const updateRun = (runId: string, fn: (r: ExternalRunRecord) => ExternalRunRecord): Promise<void> => {
+    const next = (chains.get(runId) ?? Promise.resolve())
+      .then(async () => {
+        const cur = externals.get(runId)
+        if (cur) await externals.put(runId, fn(cur))
+      })
+      .catch((e: unknown) => logger.warn('ghi lần chạy %s: %s', runId, String(e)))
+    chains.set(runId, next)
+    return next
+  }
   const stopRun = async (runId: string, by: 'user' | 'timeout') => {
-    const r = externals.get(runId)
-    if (r?.status === 'running') await externals.put(runId, { ...r, stoppedBy: by })
+    await updateRun(runId, (r) => (r.status === 'running' ? { ...r, stoppedBy: by } : r))
     await activeRuns.get(runId)?.dispose()
+  }
+
+  /** Thư mục cho một việc của bot ngoài: thư mục của phiên giao, hoặc worktree mới khi bật. */
+  async function workdir(
+    bot: BotRecord,
+    title: string,
+    agent: AgentLike,
+  ): Promise<
+    { cwd?: string | undefined; worktree?: { branch: string; dir: string; repo: string } } | { error: string }
+  > {
+    const wd = (ctx.get('workingDirectory') as { get(session: unknown): string } | undefined)?.get(
+      (agent as unknown as { session: unknown }).session,
+    )
+    if (!bot.external?.worktree || !wd) return { cwd: wd }
+    const root = await gitRoot(wd)
+    if (!root) return { cwd: wd }
+    const plan = worktreePlan(root, bot.handle, title, randomUUID().replace(/-/g, '').slice(0, 8))
+    try {
+      await addWorktree(root, plan)
+    } catch (e) {
+      return { error: `Không tạo được worktree: ${String(e).split('\n')[0]}` }
+    }
+    return { cwd: plan.dir, worktree: { ...plan, repo: root } }
+  }
+
+  // Hỏi người dùng khi bot ngoài xin quyền: yêu cầu đang chờ nằm trên bản ghi lần chạy (thẻ duyệt).
+  const hub = new ApprovalHub({
+    opened(req) {
+      const r = externals.get(req.run)
+      if (!r) return
+      void updateRun(req.run, (cur) => ({
+        ...cur,
+        pending: [
+          ...(cur.pending ?? []),
+          { id: req.id, ...stepOf(req.tool, req.input, cur.cwd), at: req.at },
+        ],
+      }))
+      bots().live.externalWaiting(r.bot, true)
+    },
+    closed(req, allow, by) {
+      const r = externals.get(req.run)
+      if (!r) return
+      void updateRun(req.run, (cur) => ({
+        ...cur,
+        pending: (cur.pending ?? []).filter((p) => p.id !== req.id),
+        answered: [
+          ...(cur.answered ?? []),
+          { id: req.id, ...stepOf(req.tool, req.input, cur.cwd), allow, by, at: new Date().toISOString() },
+        ].slice(-20),
+      }))
+      bots().live.externalWaiting(r.bot, false)
+    },
+  })
+  ctx.effect(() => {
+    hub.start().catch((e: unknown) => logger.warn('mở socket duyệt quyền: %s', String(e)))
+    return () => hub.stop()
+  }, 'aris-commander: duyệt quyền bot ngoài')
+  const approveScript = fileURLToPath(new URL('../bin/approve-mcp.mjs', import.meta.url))
+
+  /** Nhật ký giao thức của một lần chạy (tên tin nhắn, giờ): ~/.aris/logs/external-<mã>.log. */
+  const traceDir = join(homedir(), '.aris', 'logs')
+  const traceRun = (runId: string, line: string) => {
+    try {
+      mkdirSync(traceDir, { recursive: true })
+      appendFileSync(join(traceDir, `external-${runId}.log`), `${new Date().toISOString()} ${line}\n`)
+    } catch {
+      // Nhật ký chỉ để chẩn đoán.
+    }
+  }
+
+  /** Báo kết quả lần chạy về phiên giao (Aris đọc rồi trả lời người dùng). */
+  const reportRun = (r: ExternalRunRecord) => {
+    const min = Math.max(1, Math.round((Date.parse(r.finishedAt ?? '') - Date.parse(r.startedAt)) / 60_000))
+    const cost = r.costUsd !== undefined ? `, ${r.costUsd.toFixed(2)} USD` : ''
+    const head =
+      r.status === 'done'
+        ? `${r.name} (bot ngoài ${label(r.agent as never)}) xong việc «${r.title}» sau ${min} phút${cost}.`
+        : r.status === 'stopped'
+          ? `${r.name} (bot ngoài) đã dừng việc «${r.title}»${r.stoppedBy === 'timeout' ? ` vì chạy quá ${r.timeoutMin} phút` : ''}${cost}.`
+          : `${r.name} (bot ngoài) vấp ở việc «${r.title}»: ${r.diagnostic ?? 'không rõ lý do'}${cost}.`
+    const where = r.worktree
+      ? `\nThay đổi nằm trong worktree ${r.worktree.dir} (nhánh ${r.worktree.branch}).`
+      : ''
+    const body = r.output ? `\n\nKết quả của ${r.name}:\n${r.output}` : ''
+    return prompt(r.parentSession, `[Bot ngoài · việc ${r.id}] ${head}${where}${body}`)
+  }
+
+  /** Chạy Claude Code hay Codex có sẵn trên máy: từng bước, hỏi quyền, trần tiền, làm tiếp phiên cũ. */
+  async function runCli(
+    bot: BotRecord,
+    a: Assignment,
+    title: string,
+    agent: AgentLike,
+    bin: string,
+  ): Promise<DispatchResult> {
+    const cfg = bot.external!
+    const fail = (error: string): DispatchResult => ({ handle: bot.handle, name: bot.name, ok: false, error })
+    // Đã giao cho bot này trong cuộc: làm tiếp phiên Claude Code cũ, cùng thư mục.
+    const prev = [...externals.entries()]
+      .map(([, r]) => r)
+      .filter(
+        (r) =>
+          r.bot === bot.id &&
+          r.parentSession === agent.session.id &&
+          r.sessionRef &&
+          r.runtime === 'cli' &&
+          r.agent === cfg.agent,
+      )
+      .sort((x, y) => y.startedAt.localeCompare(x.startedAt))[0]
+    if (prev?.status === 'running')
+      return fail(`${bot.name} đang làm việc «${prev.title}»; đợi xong rồi giao tiếp.`)
+    const place = prev ? { cwd: prev.cwd, worktree: prev.worktree } : await workdir(bot, title, agent)
+    if ('error' in place) return fail(place.error)
+    const runId = randomUUID()
+    const rec: ExternalRunRecord = {
+      id: runId,
+      bot: bot.id,
+      handle: bot.handle,
+      name: bot.name,
+      agent: cfg.agent,
+      runtime: 'cli',
+      title,
+      task: a.task.trim(),
+      parentSession: agent.session.id,
+      ...(place.cwd ? { cwd: place.cwd } : {}),
+      ...(place.worktree ? { worktree: place.worktree } : {}),
+      ...(prev ? { resumedFrom: prev.id } : {}),
+      ...(cfg.budgetUsd ? { budgetUsd: cfg.budgetUsd } : {}),
+      status: 'running',
+      timeoutMin: cfg.timeoutMin,
+      steps: [],
+      startedAt: new Date().toISOString(),
+    }
+    await externals.put(runId, rec)
+    const live = bots().live
+    live.assigned(bot.id, title)
+    live.externalStart(bot.id, runId, title)
+    void (domain.table('dispatch') as unknown as Table<DispatchRecord>)
+      .put(`${Date.now()}-${bot.handle}`, {
+        at: rec.startedAt,
+        sessionId: agent.session.id,
+        bot: bot.id,
+        handle: bot.handle,
+        title,
+        task: rec.task,
+        reason: a.reason.trim(),
+        member: runId,
+        reused: !!prev,
+      })
+      .catch((e: unknown) => logger.warn('nhật ký giao việc: %s', String(e)))
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => void stopRun(runId, 'timeout'), cfg.timeoutMin * 60_000)
+    activeRuns.set(runId, { dispose: async () => ctrl.abort(), timer })
+    // Ghi bản ghi theo hàng đợi để các bước không ghi đè nhau.
+    const patch = (fn: (r: ExternalRunRecord) => ExternalRunRecord) => void updateRun(runId, fn)
+    const mcpConfig = JSON.stringify({
+      mcpServers: {
+        aris: {
+          command: process.execPath,
+          args: [approveScript],
+          env: { ARIS_APPROVE_SOCK: hub.path, ARIS_APPROVE_RUN: runId },
+        },
+      },
+    })
+    const brief = prev
+      ? `Commander giao tiếp một việc trong cùng cuộc.\n\n${inWorktree(a.task.trim(), place.worktree)}\n\nVì sao là bạn: ${a.reason.trim()}\nXong thì trả lời bằng kết quả: đã làm gì, tệp nào đổi, kiểm tra ra sao, còn gì dở.`
+      : externalBrief({
+          name: bot.name,
+          task: inWorktree(a.task, place.worktree),
+          reason: a.reason,
+          cwd: place.cwd,
+          worktree: place.worktree,
+        })
+    const hooks: DriverHooks = {
+      step: (st) => patch((r) => ({ ...r, steps: [...(r.steps ?? []), st].slice(-60) })),
+      stepEnd: (id, status) =>
+        patch((r) => ({ ...r, steps: (r.steps ?? []).map((x) => (x.id === id ? { ...x, status } : x)) })),
+      cost: (usd) => patch((r) => ({ ...r, costUsd: usd })),
+      session: (ref) => patch((r) => ({ ...r, sessionRef: ref })),
+    }
+    const running =
+      cfg.agent === 'codex'
+        ? runCodex(
+            {
+              bin,
+              cwd: place.cwd,
+              env: childEnv(process.env),
+              signal: ctrl.signal,
+              prompt: brief,
+              permission: cfg.permission,
+              model: cfg.model,
+              resume: prev?.sessionRef,
+              ask: (tool, input) => hub.request(runId, tool, input),
+              warn: (msg) => logger.warn(msg),
+              trace: (line) => traceRun(runId, line),
+            },
+            hooks,
+          )
+        : runClaude(
+            {
+              bin,
+              cwd: place.cwd,
+              env: childEnv(process.env, { ARIS_APPROVE_SOCK: hub.path, ARIS_APPROVE_RUN: runId }),
+              signal: ctrl.signal,
+              prompt: brief,
+              permission: cfg.permission,
+              model: cfg.model,
+              budgetUsd: cfg.budgetUsd,
+              resume: prev?.sessionRef,
+              mcpConfig,
+            },
+            hooks,
+          )
+    void running.then(async (res) => {
+      clearTimeout(timer)
+      activeRuns.delete(runId)
+      hub.endRun(runId)
+      await updateRun(runId, (cur) => {
+        const next: ExternalRunRecord = {
+          ...cur,
+          status: res.status,
+          finishedAt: new Date().toISOString(),
+          ...(res.output ? { output: res.output.slice(0, 8000) } : {}),
+          ...(res.diagnostic ? { diagnostic: res.diagnostic } : {}),
+          ...(res.costUsd !== undefined ? { costUsd: res.costUsd } : {}),
+          ...(res.sessionRef ? { sessionRef: res.sessionRef } : {}),
+          pending: [],
+        }
+        if (res.status === 'stopped' && !next.stoppedBy) next.stoppedBy = 'user'
+        return next
+      })
+      chains.delete(runId)
+      const done = externals.get(runId) ?? rec
+      live.externalEnd(bot.id, runId, res.status === 'done')
+      await reportRun(done).catch((e: unknown) => logger.warn('báo kết quả bot ngoài: %s', String(e)))
+    })
+    return {
+      handle: bot.handle,
+      name: bot.name,
+      ok: true,
+      external: `${label(cfg.agent)}${prev ? ', làm tiếp phiên cũ' : ''}`,
+      runId,
+      ...(place.worktree ? { worktree: place.worktree } : {}),
+    }
   }
 
   async function runExternal(
@@ -865,6 +1142,10 @@ export async function apply(ctx: Context): Promise<void> {
   ): Promise<DispatchResult> {
     const cfg = bot.external!
     const fail = (error: string): DispatchResult => ({ handle: bot.handle, name: bot.name, ok: false, error })
+    // Có CLI trên máy thì aris tự chạy (từng bước, hỏi người dùng, trần tiền); không thì plugin dsh.
+    const cliName = CLI_NAMES[cfg.agent]
+    const cli = cliName ? findBinary(cliName) : undefined
+    if (cli) return runCli(bot, a, title, agent, cli)
     await syncExternal()
     const state = host.state(bot.id)
     if (state === 'missing')
@@ -872,25 +1153,9 @@ export async function apply(ctx: Context): Promise<void> {
     if (state === 'error') return fail(`Không gắn được plugin ${label(cfg.agent)}; xem nhật ký aris.`)
     const subagents = ctx.get('subagents') as SubagentsPort | undefined
     if (!subagents) return fail('Profile này chưa có dịch vụ bot con (subagents) của dsh.')
-    const wd = (ctx.get('workingDirectory') as { get(session: unknown): string } | undefined)?.get(
-      (agent as unknown as { session: unknown }).session,
-    )
-    let cwd = wd
-    let worktree: { branch: string; dir: string } | undefined
-    const tag = randomUUID().replace(/-/g, '').slice(0, 8)
-    if (cfg.worktree && wd) {
-      const root = await gitRoot(wd)
-      if (root) {
-        const plan = worktreePlan(root, bot.handle, title, tag)
-        try {
-          await addWorktree(root, plan)
-        } catch (e) {
-          return fail(`Không tạo được worktree: ${String(e).split('\n')[0]}`)
-        }
-        worktree = plan
-        cwd = plan.dir
-      }
-    }
+    const place = await workdir(bot, title, agent)
+    if ('error' in place) return fail(place.error)
+    const { cwd, worktree } = place
     const act = await subagents.startActivation({
       provider: providerOf(bot.id),
       label: `${bot.name}: ${title}`,
@@ -898,7 +1163,13 @@ export async function apply(ctx: Context): Promise<void> {
         prompt: [
           {
             type: 'text',
-            text: externalBrief({ name: bot.name, task: a.task, reason: a.reason, cwd, worktree }),
+            text: externalBrief({
+              name: bot.name,
+              task: inWorktree(a.task, worktree),
+              reason: a.reason,
+              cwd,
+              worktree,
+            }),
           },
         ],
         parent: agent,
@@ -971,19 +1242,42 @@ export async function apply(ctx: Context): Promise<void> {
     return { handle: bot.handle, name: bot.name, ok: true, external: label(cfg.agent), runId }
   }
 
+  /** Phiên bản CLI đã dò, nhớ theo đường dẫn. */
+  const versions = new Map<string, Promise<string | undefined>>()
+  const cliOf = async (agent: (typeof EXTERNAL_AGENTS)[number]) => {
+    const name = CLI_NAMES[agent]
+    const path = name ? findBinary(name) : undefined
+    if (!path) return null
+    if (!versions.has(path)) versions.set(path, cliVersion(path))
+    return { path, version: (await versions.get(path)) ?? null }
+  }
+
   /** Tình trạng bot ngoài cho hộp Thêm bot ngoài và hồ sơ bot. */
   const externalStatus = async () => {
     await syncExternal()
     const store = (ctx.get('arisBots') as ArisBots | undefined)?.store
-    return {
-      agents: Object.fromEntries(
-        EXTERNAL_AGENTS.map((agent) => [
-          agent,
-          { installed: !!resolvePackage(EXTERNAL_PACKAGES[agent]), login: loginState(agent) },
-        ]),
+    const agents = Object.fromEntries(
+      await Promise.all(
+        EXTERNAL_AGENTS.map(async (agent) => {
+          const cli = await cliOf(agent)
+          return [
+            agent,
+            {
+              installed: !!resolvePackage(EXTERNAL_PACKAGES[agent]),
+              login: loginState(agent),
+              cli,
+              runtime: cli ? 'cli' : 'plugin',
+            },
+          ] as const
+        }),
       ),
+    ) as Record<string, { cli: unknown }>
+    return {
+      agents,
       bots: Object.fromEntries(
-        (store?.list() ?? []).flatMap((b) => (b.external ? [[b.id, host.state(b.id)]] : [])),
+        (store?.list() ?? []).flatMap((b) =>
+          b.external ? [[b.id, agents[b.external.agent]?.cli ? 'ready' : host.state(b.id)]] : [],
+        ),
       ),
     }
   }
@@ -1013,6 +1307,11 @@ export async function apply(ctx: Context): Promise<void> {
           const q = new URL(request.url).searchParams
           if (request.method === 'POST') {
             const body = (await request.json().catch(() => ({}))) as { op?: string; session?: string }
+            if (body.op === 'external-approve') {
+              const b = body as { id?: unknown; allow?: unknown }
+              const ok = typeof b.id === 'string' && hub.answer(b.id, b.allow === true)
+              return json({ ok }, ok ? 200 : 404)
+            }
             if (body.op === 'external-stop' && typeof (body as { run?: unknown }).run === 'string') {
               const run = (body as { run: string }).run
               await stopRun(run, 'user')
@@ -1035,6 +1334,17 @@ export async function apply(ctx: Context): Promise<void> {
             const r = externals.get(ext)
             return json({ run: r ? runView(r) : null })
           }
+          // ?approvals=<phiên>: yêu cầu quyền của bot ngoài đang chờ, cho thanh duyệt trên ô nhập.
+          const approvalsOf = q.get('approvals')
+          if (approvalsOf)
+            return json({
+              approvals: [...externals.entries()]
+                .map(([, r]) => r)
+                .filter((r) => r.parentSession === approvalsOf && r.status === 'running')
+                .flatMap((r) =>
+                  (r.pending ?? []).map((p) => ({ ...p, run: r.id, name: r.name, bot: r.bot })),
+                ),
+            })
           // ?externals=1: plugin đã cài chưa, đã đăng nhập chưa, bot ngoài nào sẵn sàng.
           if (q.get('externals')) return json(await externalStatus())
           const roomSession = q.get('room')

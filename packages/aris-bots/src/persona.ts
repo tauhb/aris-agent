@@ -85,7 +85,7 @@ export function renderPersona(
   }
   if (others.some((b) => b.external))
     lines.push(
-      'Bot ngoài làm một việc trọn gói rồi nộp kết quả cuối: không nhớ việc trước, không nhắn tiếp, không vào phòng nhóm. Giao cho bot ngoài thì nội dung việc phải tự đủ (thư mục, mục tiêu, cách kiểm tra).',
+      'Bot ngoài chạy bằng agent riêng trên máy (Claude Code, Codex…): không thấy cuộc trò chuyện, không vào phòng nhóm, nộp kết quả về đây khi xong. Giao cho bot ngoài thì nội dung việc phải tự đủ (thư mục, mục tiêu, cách kiểm tra); giao tiếp cho cùng bot trong cùng cuộc thì nó làm tiếp việc cũ.',
     )
   lines.push('</aris-bot>')
   return lines.join('\n')

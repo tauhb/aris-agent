@@ -186,10 +186,12 @@ export function TeamMap({ t, nav }: PageProps) {
             onClick={() =>
               bot.id === COMMANDER.id
                 ? nav.openPanel(null)
-                : void openBotSession(bot.id).then(
-                    (id) => nav.openSession(id),
-                    () => {},
-                  )
+                : team.bots.find((b) => b.id === bot.id)?.external
+                  ? nav.go('bot', { id: bot.id })
+                  : void openBotSession(bot.id).then(
+                      (id) => nav.openSession(id),
+                      () => {},
+                    )
             }
           >
             {t('map.openChat')}

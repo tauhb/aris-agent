@@ -2,18 +2,22 @@ import { describe, expect, it } from 'vitest'
 import { cleanExternal, providerConfig, providerOf } from './external.js'
 
 describe('cấu hình bot ngoài', () => {
-  it('mặc định theo bản vẽ: Claude Code cho sửa tệp, 45 phút, worktree, nhận giao việc', () => {
+  it('mặc định theo bản vẽ: hỏi người dùng, 45 phút, 3 USD (Claude Code), worktree, nhận giao việc', () => {
     expect(cleanExternal({ agent: 'claude-code' })).toEqual({
       agent: 'claude-code',
-      permission: 'acceptEdits',
+      permission: 'manual',
       timeoutMin: 45,
       worktree: true,
       assignable: true,
+      budgetUsd: 3,
     })
-    expect(cleanExternal({ agent: 'codex' }).permission).toBe('never')
+    expect(cleanExternal({ agent: 'codex' })).not.toHaveProperty('budgetUsd')
+    expect(cleanExternal({ agent: 'codex' }).permission).toBe('ask')
+    expect(cleanExternal({ agent: 'claude-code', budgetUsd: 0.1 }).budgetUsd).toBe(0.5)
   })
   it('mức quyền phải đúng loại agent; giới hạn thời gian trong khoảng', () => {
     expect(() => cleanExternal({ agent: 'codex', permission: 'acceptEdits' })).toThrow('Mức quyền')
+    expect(() => cleanExternal({ agent: 'acp', command: 'x', permission: 'ask' })).toThrow('Mức quyền')
     expect(() => cleanExternal({ agent: 'hermes' })).toThrow('Loại bot ngoài')
     expect(cleanExternal({ agent: 'codex', timeoutMin: 1000 }).timeoutMin).toBe(240)
     expect(cleanExternal({ agent: 'codex', timeoutMin: 1 }).timeoutMin).toBe(5)
@@ -26,7 +30,7 @@ describe('cấu hình bot ngoài', () => {
       worktree: false,
     })
     expect(cleanExternal({ model: null }, prev).model).toBeUndefined()
-    expect(cleanExternal({ agent: 'codex' }, prev).permission).toBe('never')
+    expect(cleanExternal({ agent: 'codex' }, prev).permission).toBe('ask')
   })
   it('ACP cần lệnh khởi chạy, tách lệnh và tham số', () => {
     expect(() => cleanExternal({ agent: 'acp' })).toThrow('lệnh khởi chạy')
@@ -39,11 +43,16 @@ describe('cấu hình bot ngoài', () => {
       permission: 'reject',
     })
   })
-  it('cấu hình plugin Claude Code, Codex: mức quyền và model', () => {
+  it('plugin dsh (dự phòng) không hỏi người dùng được: mức hỏi lùi về mức không hỏi', () => {
     expect(providerConfig('aris-b-2', cleanExternal({ agent: 'claude-code', model: 'sonnet' }))).toEqual({
       providerName: 'aris-b-2',
-      permissionMode: 'acceptEdits',
+      permissionMode: 'dontAsk',
       model: 'sonnet',
     })
+    expect(providerConfig('aris-b-3', cleanExternal({ agent: 'codex' })).permissionMode).toBe('never')
+    expect(
+      providerConfig('aris-b-4', cleanExternal({ agent: 'claude-code', permission: 'acceptEdits' }))
+        .permissionMode,
+    ).toBe('acceptEdits')
   })
 })

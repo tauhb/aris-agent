@@ -81,7 +81,7 @@ Chạy thử thật (24/10): Minh (Tăng trưởng, không chạy lệnh) gọi 
 
 ## Bot ngoài (bước 4)
 
-Hồ sơ bot có thể kèm `external`: loại agent (`claude-code`, `codex`, `acp`), mức quyền đúng theo plugin, model (bỏ trống là theo cài đặt của agent trên máy), `timeoutMin` (5–240, mặc định 45), `worktree`, `assignable`, lệnh khởi chạy (ACP). `cleanExternal` kiểm và điền mặc định; sửa một trường giữ các trường khác, đổi loại agent thì mức quyền về mặc định. Đội hình trong `<aris-bot>` ghi bot ngoài kèm loại agent và nhắc: bot ngoài làm việc trọn gói, không nhớ việc trước, không vào phòng nhóm. Chạy thật ở [aris-commander.md](aris-commander.md#bot-ngoài-bước-4).
+Hồ sơ bot có thể kèm `external`: loại agent (`claude-code`, `codex`, `acp`), mức quyền (`EXTERNAL_PERMISSIONS`; mặc định hỏi người dùng: Claude Code `manual`, Codex `ask`; đi đường plugin của dsh thì đổi theo `PLUGIN_PERMISSION`), model (bỏ trống là theo cài đặt của agent trên máy), `timeoutMin` (5–240, mặc định 45), `budgetUsd` (chỉ Claude Code, 0,5–100, mặc định 3), `worktree`, `assignable`, lệnh khởi chạy (ACP). `cleanExternal` kiểm và điền mặc định; sửa một trường giữ các trường khác, đổi loại agent thì mức quyền về mặc định. Đội hình trong `<aris-bot>` ghi bot ngoài kèm loại agent và nhắc: bot ngoài làm việc trọn gói, không vào phòng nhóm, giao lại trong cùng phiên thì làm tiếp việc trước. Bot ngoài không mở được phiên chat riêng (`open` từ chối); bấm vào bot ngoài ở thanh bên mở hồ sơ. Chạy thật ở [aris-commander.md](aris-commander.md#bot-ngoài-bước-4).
 
 ## Đường máy chủ
 

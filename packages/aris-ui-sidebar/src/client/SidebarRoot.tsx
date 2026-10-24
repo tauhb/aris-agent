@@ -232,11 +232,14 @@ export function SidebarRoot(props: SidebarProps) {
   const openChat = () => selectPanel(null)
   const team = useTeam(t('team.noDepartment'))
   // Bấm bot: mở lại phiên chat gần nhất với bot đó (chưa có thì tạo).
+  // Bot ngoài không có phiên chat riêng: mở hồ sơ.
   const chatWith = (id: string) => () =>
-    void openBotSession(id).then(
-      (sessionId) => props.openSession(sessionId),
-      () => {},
-    )
+    team.bots.find((b) => b.id === id)?.external
+      ? arisNavigate('bot', { id })
+      : void openBotSession(id).then(
+          (sessionId) => props.openSession(sessionId),
+          () => {},
+        )
   // Bot đang được xem (hồ sơ, ký ức, hồ sơ chủ nhân) sáng trên Đội hình, như canvas.
   const [route, setRoute] = useState<NavRequest | null>(null)
   useEffect(() => onArisRoute(setRoute), [])

@@ -8,6 +8,14 @@ export const CSS = `
 .aris-model{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
 .aris-model .logo{width:20px;height:20px;border-radius:6px;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex:none}
 .aris-taskline{padding:4px 0 6px;font-size:13.5px}
+.aris-ext-more{align-self:flex-start;border:0;background:transparent;color:var(--a-muted);font:inherit;font-size:12.5px;padding:0 0 0 24px;cursor:pointer}
+.aris-ext-dock{display:flex;flex-direction:column;gap:6px;padding:6px 10px}
+.aris-ext-dock .h{display:flex;align-items:center;gap:6px}
+.aris-ext-ask{background:var(--a-warnSoft);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin:2px 0}
+.aris-ext-ask .h{color:var(--a-warn);font-weight:600;font-size:13px}
+.aris-ext-ask .what{font-family:'JetBrains Mono',monospace;font-size:12.5px;background:var(--a-panel);border-radius:8px;padding:6px 10px;overflow-wrap:anywhere}
+.aris-ext-ask .row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.aris-ext-ask .note{font-size:12px;color:var(--a-muted)}
 .aris-ext-result{border:1px solid var(--a-line);border-radius:12px;background:var(--a-panel);padding:10px 12px;display:flex;flex-direction:column;gap:6px;margin-top:4px}
 .aris-ext-result .h{font-size:12px;font-weight:600;color:var(--a-muted)}
 .aris-ext-result .x{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55}

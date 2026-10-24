@@ -108,6 +108,8 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
       case 'open': {
         const id = String(body.id)
         if (!d.store.get(id)) return json({ error: 'Không có bot này.' }, 400)
+        if (d.store.get(id)?.external)
+          return json({ error: 'Bot ngoài không có phiên chat riêng; giao việc cho bot qua Aris.' }, 400)
         // Bấm bot trên thanh bên: mở lại phiên gần nhất; "Việc mới với …" thì tạo phiên mới.
         const reuse = body.fresh === true ? undefined : d.store.latestOpen(id)
         return json({ sessionId: reuse ?? (await d.open(id)), reused: !!reuse })

@@ -256,7 +256,14 @@ describe('giao cho bot ngoài', () => {
         ...deps,
         external: async (bot, a, title) => {
           ran.push(`${bot.handle}: ${title}`)
-          return { handle: bot.handle, name: bot.name, ok: true, external: 'Claude Code', runId: 'ext-1' }
+          return {
+            handle: bot.handle,
+            name: bot.name,
+            ok: true,
+            external: 'Claude Code',
+            runId: 'ext-1',
+            worktree: { dir: '/w/khoa-1', branch: 'aris/khoa-1' },
+          }
         },
       },
       cmd,
@@ -269,7 +276,10 @@ describe('giao cho bot ngoài', () => {
     expect(ran).toEqual(['khoa: Sửa lỗi đăng nhập'])
     expect(calls.some((c) => c.includes('khoa'))).toBe(false)
     const text = summarize(r)
-    expect(text).toContain('- @khoa (Khoa): đã nhận việc (bot ngoài Claude Code), việc ngoài ext-1')
+    expect(text).toContain(
+      '- @khoa (Khoa): đã nhận việc (bot ngoài Claude Code), làm trong worktree /w/khoa-1 (nhánh aris/khoa-1), việc ngoài ext-1',
+    )
+    expect(text).toContain('worktree riêng là đúng ý')
     expect(text).toContain('không dùng wait_agent cho bot ngoài')
     expect(text).toContain('Dùng wait_agent')
   })

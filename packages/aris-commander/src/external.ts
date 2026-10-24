@@ -1,5 +1,7 @@
 /**
- * Bot ngoài (bước 4; đặc tả: docs/specs/aris-commander.md, bản vẽ 2.1b, 2.1c):
+ * Bot ngoài (bước 4; đặc tả: docs/specs/aris-commander.md, bản vẽ 2.1b, 2.1c). Máy có CLI thì aris
+ * tự chạy (`claude-driver.ts`, `codex-driver.ts`); tệp này là đường dự phòng qua plugin của dsh và
+ * phần dùng chung (worktree, lời giao):
  * - Mỗi bot ngoài một nhà cung cấp riêng `aris-<mã bot>` trên `ctx.subagents`: aris nạp module
  *   plugin chính thức của dsh (cài từ hộp Thêm bot ngoài, nằm trong thư mục profile) và gắn với
  *   mức quyền, model của bot đó. Không bật lớp profile của plugin nên không lộ công cụ chung.
@@ -179,13 +181,21 @@ export async function addWorktree(repo: string, plan: { branch: string; dir: str
   await run('git', ['-C', repo, 'worktree', 'add', '-b', plan.branch, plan.dir, 'HEAD'], { timeout: 60_000 })
 }
 
+/**
+ * Việc chạy trong worktree: đường dẫn repo gốc trong nội dung việc đổi thành đường dẫn worktree (Aris
+ * hay ghi đường dẫn tuyệt đối của dự án; bot làm theo sẽ ghi ra ngoài worktree và bị sandbox chặn).
+ */
+export function inWorktree(task: string, wt?: { dir: string; repo?: string | undefined }): string {
+  return wt?.repo ? task.split(wt.repo).join(wt.dir) : task
+}
+
 /** Lời giao việc cho bot ngoài: tự đủ, vì bot ngoài không thấy cuộc trò chuyện. */
 export function externalBrief(o: {
   name: string
   task: string
   reason: string
   cwd?: string | undefined
-  worktree?: { branch: string } | undefined
+  worktree?: { branch: string; dir: string } | undefined
 }): string {
   return [
     `Bạn là ${o.name}, thành viên đội bot của aris, nhận một việc từ Commander.`,
@@ -194,7 +204,7 @@ export function externalBrief(o: {
     '',
     ...(o.worktree
       ? [
-          `Bạn đang ở một git worktree riêng (nhánh ${o.worktree.branch}). Thay đổi để nguyên trong worktree, người dùng tự xem rồi gộp.`,
+          `Thư mục làm việc của bạn: ${o.worktree.dir} (git worktree riêng, nhánh ${o.worktree.branch}). Đọc, ghi, chạy lệnh đều trong thư mục này; không ghi ra ngoài. Thay đổi để nguyên ở đây, người dùng tự xem rồi gộp.`,
         ]
       : o.cwd
         ? [`Thư mục làm việc: ${o.cwd}`]

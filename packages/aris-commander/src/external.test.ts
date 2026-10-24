@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { cleanExternal } from '@aris/bots'
-import { externalBrief, ExternalHost, worktreePlan, type PluginModule } from './external.js'
+import { externalBrief, ExternalHost, inWorktree, worktreePlan, type PluginModule } from './external.js'
 
 const mod: PluginModule = { apply: () => undefined }
 
@@ -23,9 +23,7 @@ describe('gắn bot ngoài', () => {
     const { h, mounted } = host()
     const khoa = { id: 'b-1', external: cleanExternal({ agent: 'claude-code' }) }
     await h.sync([khoa, { id: 'b-2' }])
-    expect(mounted.map((m) => m.config)).toEqual([
-      { providerName: 'aris-b-1', permissionMode: 'acceptEdits' },
-    ])
+    expect(mounted.map((m) => m.config)).toEqual([{ providerName: 'aris-b-1', permissionMode: 'dontAsk' }])
     expect(h.state('b-1')).toBe('ready')
     await h.sync([khoa])
     expect(mounted).toHaveLength(1)
@@ -35,7 +33,7 @@ describe('gắn bot ngoài', () => {
     await h.sync([{ id: 'b-1', external: cleanExternal({ agent: 'claude-code' }) }])
     await h.sync([{ id: 'b-1', external: cleanExternal({ agent: 'claude-code', permission: 'plan' }) }])
     expect(mounted.map((m) => [m.config.permissionMode, m.disposed])).toEqual([
-      ['acceptEdits', true],
+      ['dontAsk', true],
       ['plan', false],
     ])
     await h.sync([])
@@ -62,10 +60,22 @@ describe('việc của bot ngoài', () => {
       name: 'Khoa',
       task: 'Sửa lỗi văng đăng nhập',
       reason: 'giỏi sửa mã',
-      worktree: { branch: 'aris/khoa-x' },
+      worktree: { branch: 'aris/khoa-x', dir: '/u/.aris/worktrees/shop/khoa-x' },
     })
     expect(t).toContain('Sửa lỗi văng đăng nhập')
-    expect(t).toContain('nhánh aris/khoa-x')
+    expect(t).toContain(
+      'Thư mục làm việc của bạn: /u/.aris/worktrees/shop/khoa-x (git worktree riêng, nhánh aris/khoa-x)',
+    )
     expect(t).toContain('không hỏi lại được')
+  })
+})
+
+describe('đường dẫn trong worktree', () => {
+  it('đường dẫn repo gốc trong nội dung việc đổi thành worktree', () => {
+    const wt = { dir: '/u/.aris/worktrees/shop/k-1', repo: '/u/code/shop' }
+    expect(inWorktree('Sửa /u/code/shop/src/a.ts rồi chạy test trong /u/code/shop', wt)).toBe(
+      'Sửa /u/.aris/worktrees/shop/k-1/src/a.ts rồi chạy test trong /u/.aris/worktrees/shop/k-1',
+    )
+    expect(inWorktree('không đổi', undefined)).toBe('không đổi')
   })
 })
