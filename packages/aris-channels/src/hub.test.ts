@@ -16,6 +16,8 @@ class FakeTelegram {
   private wake?: () => void
   private nextId = 1
   private msgId = 100
+  /** Độ trễ của sendMessage (ms), để thử lúc tin còn đang gửi. */
+  slowSend = 0
 
   push(u: Omit<TgUpdate, 'update_id'>) {
     this.queue.push({ update_id: this.nextId++, ...u })
@@ -52,6 +54,7 @@ class FakeTelegram {
         return ok(out)
       }
       case 'sendMessage':
+        if (this.slowSend) await new Promise((r) => setTimeout(r, this.slowSend))
         return ok({ message_id: this.msgId++, chat: { id: body.chat_id }, date: 0, text: body.text })
       default:
         return ok(true)
@@ -203,6 +206,34 @@ describe('trung tâm kênh', () => {
     })
     expect(s.store.inbox()).toHaveLength(0)
     expect(s.store.outbox()).toHaveLength(0)
+  })
+
+  it('lượt xong khi tin xem trước còn đang gửi: vẫn xoá tin xem trước', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    s.tg.push(dm(OWNER, '2 + 2 bằng mấy?'))
+    await settle()
+    const msg = s.sessions.agents.get('s1')!.inbox[0] as { id: string }
+    s.hub.onSessionEvent('s1', { type: 'turn/start' })
+    s.hub.onSessionEvent('s1', { type: 'user/message', data: { id: msg.id } })
+    s.tg.slowSend = 60
+    s.hub.onStream('s1', { type: 'start', attemptId: 'a' })
+    s.hub.onStream('s1', {
+      type: 'chunk',
+      attemptId: 'a',
+      chunk: { type: 'text-delta', text: '4 ạ. Mẹo: để điện thoại xa' },
+    })
+    await new Promise((r) => setTimeout(r, 10))
+    const preview = s.tg.calls.length
+    s.hub.onSessionEvent('s1', {
+      type: 'assistant/message',
+      data: { message: { content: [{ type: 'text', text: '4 ạ. Mẹo: để điện thoại ở phòng khác.' }] } },
+    })
+    s.hub.onSessionEvent('s1', { type: 'turn/end', data: { reason: { kind: 'completed' } } })
+    await new Promise((r) => setTimeout(r, 250))
+    const sent = s.tg.calls.slice(preview - 1).filter((c) => c.method === 'sendMessage')
+    expect(String(sent[0]!.body.text)).toContain('▌')
+    expect(s.tg.sent('deleteMessage')).toHaveLength(1)
   })
 
   it('người lạ: im lặng, báo chủ nhân có nút; chủ nhân bấm thì thành người được phép', async () => {

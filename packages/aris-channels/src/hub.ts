@@ -107,6 +107,8 @@ export class ChannelHub {
     {
       chatId: number
       messageId?: number
+      /** Lần gửi/sửa tin xem trước đang chạy: xoá tin phải đợi lần gửi đầu có mã tin. */
+      sending?: Promise<unknown>
       last: number
       text: string
       timer?: ReturnType<typeof setTimeout> | undefined
@@ -623,7 +625,7 @@ export class ChannelHub {
               replyTo: target.group ? target.tgMessageId : undefined,
             })
             .then((msg) => void (p.messageId = msg.message_id))
-      void send.catch(() => undefined)
+      p.sending = send.catch(() => undefined)
     }, wait)
   }
 
@@ -632,6 +634,8 @@ export class ChannelHub {
     this.previews.delete(sessionId)
     if (!p) return
     if (p.timer) clearTimeout(p.timer)
+    // Tin xem trước có thể còn đang gửi lúc lượt xong: đợi có mã tin rồi mới xoá, không để sót.
+    await p.sending
     if (p.messageId)
       await this.api(bot)
         ?.deleteMessage(p.chatId, p.messageId)
