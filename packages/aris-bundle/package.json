@@ -17,6 +17,7 @@
     }
   },
   "dependencies": {
+    "@aris/autonomy": "workspace:*",
     "@aris/bots": "workspace:*",
     "@aris/channels": "workspace:*",
     "@aris/commander": "workspace:*",

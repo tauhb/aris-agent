@@ -15,6 +15,8 @@
       name: '@aris/reflect'
     - id: aris-skills
       name: '@aris/skills'
+    - id: aris-autonomy
+      name: '@aris/autonomy'
     - id: aris-recall
       name: '@aris/recall'
     - id: aris-home
@@ -32,3 +34,9 @@
   config:
     path: !!js dshHomePath('session-search.sqlite')
     openAt: first-search
+
+# /goal: trần số lượt mặc định của aris là 20 (dsh để 256). Giám khảo của aris-autonomy chấm
+# sau mỗi lượt và dừng sớm khi xong, bị chặn hay không tiến triển.
+- id: goal
+  config:
+    defaultMaxGoalRounds: 20

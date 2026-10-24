@@ -1781,8 +1781,10 @@ export async function apply(ctx: Context): Promise<void> {
               headers: { 'content-type': 'application/json; charset=utf-8' },
             })
           }
+          // `live`: lượt của bot nhận việc chưa kết thúc. Việc không có kết quả mà không còn chờ (giao
+          // trước khi có ghi kết quả, hay daemon khởi động lại giữa chừng) là không rõ kết quả.
           const recent = [...log.entries()]
-            .map(([, r]) => r)
+            .map(([k, r]) => ({ ...r, live: !r.outcome && awaiting.get(r.member) === k }))
             .sort((a, b) => b.at.localeCompare(a.at))
             .slice(0, 50)
           return new Response(JSON.stringify({ recent, settings: settings(), learned: learned() }), {
