@@ -145,6 +145,8 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 ## Giai đoạn 2 · Đội bot và Commander (tuần 6–8)
 
+> **Nghiệm thu 24/10** ([biên bản](nghiem-thu/giai-doan-2.md)): `pnpm check` đạt (335 test). Tiêu chí 1–4 đạt (thử lại 1 và 4 trong ngày: Aris giao Minh và An song song, duyệt lời mời họp; Thơ gọi `giao_viec` bị từ chối), 5 đạt về cơ chế (thử với 2 việc con), 6 đạt một phần (bot ngoài Claude Code chạy và duyệt trên web; chưa thử duyệt trên Telegram cho bot ngoài). Còn lại: thử tiêu chí 6 trên Telegram, trang Commander 2.5 nối dữ liệu thật, Bảng điều khiển ra menu chính.
+
 > **Hồ sơ bot đợt 4/4 xong 24/10 — Tính cách; màn Hồ sơ bot (2.2, 2.2c) làm đủ** ([đặc tả](specs/aris-bots.md#hồ-sơ-bot--tính-cách-đợt-4)): tính cách theo phiên bản (xem, khôi phục), "Nhờ Aris viết lại" có gợi ý nhanh và so sánh bên cạnh bản hiện tại. Cả 4 đợt: Skill & tool (kết nối MCP, bộ công cụ), Quyền & kênh, cột phải số liệu thật, Model theo việc, Tính cách. Phần thuộc giai đoạn sau hiện mờ, ghi rõ giai đoạn.
 
 > **Hồ sơ bot đợt 3/4 xong 24/10 — Model theo việc** ([đặc tả](specs/aris-bots.md#hồ-sơ-bot--model-theo-việc-đợt-3)): mỗi bot đặt được model khi chạy `/goal` và model dự phòng riêng (thử trước chuỗi chung); vòng học nền (giai đoạn 3) hiện mờ. Sửa kèm: ô chọn đè nhãn khi cửa sổ hẹp. Chạy thử thật: `/goal` của Minh dùng DeepSeek-V4-Pro, xong thì về Flash.
