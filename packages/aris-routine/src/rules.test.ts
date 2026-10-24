@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { decide, fixPrompt, routinePrompt, streakAfter } from './rules.js'
+import { decide, fixPrompt, routinePrompt, splitSuggestion, streakAfter } from './rules.js'
 
 describe('luật chạy routine', () => {
   const r = { enabled: true, nextAt: '2026-10-25T00:30:00.000Z', catchupHours: 3 }
@@ -27,5 +27,18 @@ describe('luật chạy routine', () => {
     expect(routinePrompt('Tin đối thủ', 'Tóm tắt tin', true)).toContain('chỉ đọc')
     expect(routinePrompt('Tin đối thủ', 'Tóm tắt tin', false)).not.toContain('chỉ đọc')
     expect(fixPrompt('Tin đối thủ', ['a', 'b'])).toContain('lỗi 2 lần')
+  })
+
+  it('tách dòng gợi ý cuối câu trả lời', () => {
+    expect(splitSuggestion('Chi 18 triệu.\n\nGỢI Ý: Đề xuất cắt quảng cáo')).toEqual({
+      body: 'Chi 18 triệu.',
+      suggestion: 'Đề xuất cắt quảng cáo',
+    })
+    expect(splitSuggestion('Chi 18 triệu.\n**Gợi ý:** So với tháng trước.')).toEqual({
+      body: 'Chi 18 triệu.',
+      suggestion: 'So với tháng trước',
+    })
+    expect(splitSuggestion('Không có gì mới.')).toEqual({ body: 'Không có gì mới.' })
+    expect(routinePrompt('x', 'y', true)).toContain('GỢI Ý:')
   })
 })

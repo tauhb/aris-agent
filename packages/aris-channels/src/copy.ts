@@ -26,6 +26,16 @@ export const ROLE_LABEL: Record<Trust, string> = {
 }
 
 export const T = {
+  routineAt: (d: Date) => {
+    const dow = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'][d.getDay()]
+    const two = (n: number) => String(n).padStart(2, '0')
+    return `${dow}, ${two(d.getDate())}/${two(d.getMonth() + 1)} · ${two(d.getHours())}:${two(d.getMinutes())}`
+  },
+  routineMore: 'Xem chi tiết',
+  routineAsk: (name: string) => `Hỏi ${name}`,
+  routineAsking: (name: string, title: string) =>
+    `Giờ nhắn ở đây là hỏi tiếp ${name} về «${title}». Gõ /new để về chat mới.`,
+  routineGone: 'Lần chạy này không còn để xem lại.',
   paired: (name: string, owner: boolean) =>
     owner
       ? `Chào ${h(name)}! Đã ghép đôi: tài khoản này là <b>người dùng chính</b> của bot. Từ giờ cứ nhắn ở đây như trên web.\n\nGõ /help để xem lệnh.`

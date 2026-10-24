@@ -129,6 +129,16 @@ export interface SkillItem {
   why?: string | undefined
 }
 
+/** Lần chạy routine (`@aris/routine`) cho thẻ báo cáo 7.2: lấy lại nội dung khi bấm nút. */
+export interface RoutinePort {
+  card(
+    sessionId: string,
+  ): { title: string; bot: string; name: string; answer: string; suggestion?: string | undefined } | undefined
+}
+
+/** Mã nút thẻ routine: mã phiên bỏ tiền tố `session-` cho vừa 64 byte của Telegram. */
+const routineKey = (sessionId: string) => sessionId.replace(/^session-/, '')
+
 /** Hàng đề xuất skill: nghe mở / đóng, trả lời (bật / không), mã các bản đang chờ. */
 export interface SkillsPort {
   on(
@@ -195,6 +205,7 @@ export class ChannelHub {
   private readonly cards = new Map<string, { bot: string; chatId: number; messageId: number; html: string }>()
   private proposalsPort: ProposalsPort | undefined
   private skillsPort: SkillsPort | undefined
+  private routinePort: RoutinePort | undefined
   /** Thẻ "ĐỀ XUẤT SKILL" đang mở theo mã bản. */
   private readonly skillCards = new Map<
     string,
@@ -420,7 +431,7 @@ export class ChannelHub {
     const u = inbox.update as TgUpdate
     let keep = false
     try {
-      if (u.callback_query) await this.onCallback(rt, u.callback_query)
+      if (u.callback_query) keep = (await this.onCallback(rt, u.callback_query, inbox)) === true
       else if (u.my_chat_member) await this.onMembership(rt, u.my_chat_member)
       else if (u.message) keep = await this.onMessage(rt, inbox, u.message, resumed)
     } finally {
@@ -1041,7 +1052,8 @@ export class ChannelHub {
   // Nút bấm
   // ======================================================================================
 
-  private async onCallback(rt: BotRuntime, q: TgCallbackQuery) {
+  /** Trả `true` khi nút đã đưa một tin vào agent (nút gợi ý của thẻ routine). */
+  private async onCallback(rt: BotRuntime, q: TgCallbackQuery, inbox: InboxRecord): Promise<unknown> {
     const api = rt.api
     const data = q.data ?? ''
     const msg = q.message
@@ -1059,6 +1071,49 @@ export class ChannelHub {
     const num = (s: string | undefined) => (s?.startsWith('n') ? -Number(s.slice(1)) : Number(s))
 
     switch (kind) {
+      case 'rt': {
+        // Thẻ báo cáo routine: v = xem nốt, h = hỏi bot về báo cáo này, s = làm việc gợi ý.
+        const sessionId = `session-${a ?? ''}`
+        const card = this.routinePort?.card(sessionId)
+        if (!card || !msg) return done(T.routineGone)
+        const topic = msg.is_topic_message ? msg.message_thread_id : undefined
+        if (b === 'v') {
+          await done()
+          for (const chunk of toTelegramHtml(this.named(card.answer)).slice(1))
+            await api.sendMessage(msg.chat.id, chunk, { html: true, ...(topic ? { threadId: topic } : {}) })
+          return
+        }
+        // Chat này chuyển sang phiên của lần chạy: hỏi tiếp đúng báo cáo đó.
+        await this.store.bindThread({
+          key: threadKey(rt.rec.tgId, msg.chat.id, topic),
+          bot: rt.rec.bot,
+          chatId: msg.chat.id,
+          ...(topic ? { threadId: topic } : {}),
+          sessionId,
+        })
+        if (b === 's' && card.suggestion) {
+          await done()
+          // Như người dùng tự gõ gợi ý: đi qua đúng đường nhận tin (quyền, hàng đợi, trả lời).
+          return this.onMessage(
+            rt,
+            inbox,
+            {
+              message_id: msg.message_id,
+              chat: msg.chat,
+              date: msg.date,
+              from: q.from,
+              text: card.suggestion,
+              ...(topic ? { message_thread_id: topic, is_topic_message: true } : {}),
+            },
+            false,
+          )
+        }
+        await api.sendMessage(msg.chat.id, escapeHtml(T.routineAsking(card.name, card.title)), {
+          html: true,
+          ...(topic ? { threadId: topic } : {}),
+        })
+        return done()
+      }
       case 'ax': {
         // Thẻ duyệt tập trung: trả lời về hộp chung; thẻ được sửa khi hộp báo yêu cầu đã xong.
         if (!this.approvalsPort?.answer(a ?? '', b === 'y', 'telegram')) {
@@ -1317,6 +1372,55 @@ export class ChannelHub {
   }
 
   /** Đề xuất skill (giai đoạn 3, đợt 3): thẻ "ĐỀ XUẤT SKILL" có nút Bật / Không (bản vẽ 7.3). Trả hàm gỡ. */
+  watchRoutine(port: RoutinePort): () => void {
+    this.routinePort = port
+    return () => {
+      this.routinePort = undefined
+    }
+  }
+
+  /**
+   * Thẻ báo cáo routine (7.2) ở nơi nhận của bot: tên, giờ chạy, nội dung (dài thì phần đầu và nút
+   * "Xem chi tiết"), nút "Hỏi <bot>" và nút gợi ý. Không có phiên (chế độ script) thì không có nút hỏi.
+   */
+  async sendRoutine(
+    bot: string,
+    r: {
+      title: string
+      /** Tên bot làm việc. */
+      worker: string
+      /** Gửi qua Telegram của bot khác (Aris): ghi tên bot làm việc ở dòng đầu. */
+      relay: boolean
+      at: Date
+      answer: string
+      sessionId?: string | undefined
+      suggestion?: string | undefined
+    },
+  ): Promise<string> {
+    const rt = this.runtimes.get(bot)
+    if (!rt) return 'Bot chưa kết nối Telegram.'
+    const home =
+      this.store.bot(bot)?.home ??
+      (this.store.owners()[0] ? { chatId: this.store.owners()[0]!.userId } : undefined)
+    if (!home) return 'Chưa có nơi nhận: người dùng chưa ghép đôi hoặc chưa /sethome.'
+    const chunks = toTelegramHtml(this.named(r.answer))
+    const head = `<b>ROUTINE · ${escapeHtml(r.title)}</b>${r.relay ? ` · ${escapeHtml(r.worker)}` : ''}\n<i>${escapeHtml(T.routineAt(r.at))}</i>\n\n`
+    const key = r.sessionId ? routineKey(r.sessionId) : undefined
+    const row: InlineButton[] = []
+    if (key && chunks.length > 1) row.push({ text: T.routineMore, callback_data: `rt:${key}:v` })
+    if (key) row.push({ text: T.routineAsk(r.worker), callback_data: `rt:${key}:h` })
+    const buttons: InlineButton[][] = [
+      ...(row.length ? [row] : []),
+      ...(key && r.suggestion ? [[{ text: r.suggestion.slice(0, 60), callback_data: `rt:${key}:s` }]] : []),
+    ]
+    await rt.api.sendMessage(home.chatId, head + (chunks[0] ?? ''), {
+      html: true,
+      ...(home.threadId ? { threadId: home.threadId } : {}),
+      ...(buttons.length ? { buttons } : {}),
+    })
+    return 'Đã gửi.'
+  }
+
   watchSkills(port: SkillsPort): () => void {
     this.skillsPort = port
     const off = port.on((e) => {

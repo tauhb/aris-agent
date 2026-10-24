@@ -54,6 +54,22 @@ Dữ liệu thật: tên và lời việc, lịch đọc được ("Thứ 2–6,
 - Mặc định lưu ở trạng thái **tắt** và trả lời lịch đọc được, 3 lần chạy tới; người dùng bật ở màn 4.1. `bat: true` thì công cụ thành **hỏi duyệt** (web hay Telegram, như mọi yêu cầu quyền) với tóm tắt routine; được cho phép mới lưu ở trạng thái bật.
 - `bat_routine` (chỉ Commander): bật hay tắt routine đã có theo mã (câu trả lời của `tao_routine` có mã); bật thì hỏi duyệt, tắt thì không.
 
+## Đợt 3 · Thẻ báo cáo 7.2 trên Telegram, tab Routine của hồ sơ bot (2.2e)
+
+### Thẻ báo cáo routine (7.2)
+
+- Kết quả lần chạy gửi thành một thẻ: dòng đầu "ROUTINE · <tên>" (gửi qua Aris thì thêm tên bot làm việc), ngày giờ chạy, rồi nội dung. Nội dung dài hơn một tin thì thẻ chỉ có phần đầu, nút **Xem chi tiết** gửi nốt phần còn lại.
+- Nút **Hỏi <bot>**: chat Telegram này chuyển sang phiên của lần chạy, tin sau đó là hỏi tiếp bot về đúng báo cáo này (gõ `/new` để về chat mới).
+- Nút **gợi ý**: lời dặn mỗi lần chạy cho phép bot kết thúc bằng một dòng `GỢI Ý: <việc tiếp theo>` khi có việc tiếp theo tự nhiên; aris bỏ dòng đó khỏi nội dung và làm thành nút. Bấm thì chat chuyển sang phiên của lần chạy và gửi gợi ý như người dùng tự gõ (đi qua đúng đường nhận tin, quyền như mọi tin).
+- Nút hoạt động cả sau khi aris khởi động lại: mã nút mang mã phiên, kênh hỏi `arisRoutine` lấy lại nội dung lần chạy.
+- Chế độ script: thẻ không có nút hỏi hay gợi ý (không có phiên).
+
+### Tab Routine của hồ sơ bot (2.2e)
+
+- Tab "Routine · N" giữa "Quyền & kênh" và "Ký ức". `GET /api/aris/routines?bot=<mã>`: routine của bot, 10 lần chạy gần nhất (7 ngày) với tiền, bot có Telegram riêng chưa.
+- Đầu tab: số routine, số đang bật, lần kế; "Mọi routine của đội" (4.1), "+ Routine cho <bot>" (4.2 đặt sẵn bot đó).
+- Thanh cảnh báo routine của bot lỗi liên tiếp (Xem lần chạy, Để <bot> sửa); bảng routine như 4.1 bỏ cột bot, lịch kèm lần kế; lần chạy gần đây (giờ, routine, kết quả kèm lý do, tiền, Mở phiên); ghi chú cách chạy. Chưa có routine thì lời giải thích và nút tạo.
+
 ## Để sau
 
-Thẻ báo cáo 7.2, tab Routine của hồ sơ bot (đợt 3); webhook, Driver Kanban (đợt 4); gắn skill cho routine, miễn dọn skill được routine dùng.
+Webhook, Driver Kanban (đợt 4); gắn skill cho routine, miễn dọn skill được routine dùng.

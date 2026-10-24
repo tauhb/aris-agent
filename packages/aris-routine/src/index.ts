@@ -25,6 +25,7 @@ import {
   decide,
   fixPrompt,
   routinePrompt,
+  splitSuggestion,
   streakAfter,
   type RunStatus,
   type Trigger,
@@ -52,6 +53,10 @@ const WEB_READ = new Set(['web_search', 'web_fetch'])
 /** Dịch vụ cho plugin khác: vòng học nền, lời nhắc ký ức bỏ qua phiên routine. */
 export interface ArisRoutine {
   isRoutine(sessionId: string): boolean
+  /** Lần chạy theo phiên, cho nút của thẻ báo cáo trên Telegram. */
+  card(
+    sessionId: string,
+  ): { title: string; bot: string; name: string; answer: string; suggestion?: string | undefined } | undefined
 }
 
 interface SessionPort {
@@ -72,6 +77,18 @@ interface BotsPort {
 }
 interface ChannelsPort {
   sendHome(bot: string, markdown: string): Promise<string>
+  sendRoutine?(
+    bot: string,
+    r: {
+      title: string
+      worker: string
+      relay: boolean
+      at: Date
+      answer: string
+      sessionId?: string | undefined
+      suggestion?: string | undefined
+    },
+  ): Promise<string>
   status(): { bot: string; running: boolean }[]
   approveHome(
     bot: string,
@@ -130,7 +147,20 @@ export async function apply(ctx: Context): Promise<void> {
   const live = new Map<string, Live>()
   /** Mọi phiên từng là phiên routine (vòng học nền chạy sau khi lượt xong vẫn phải nhận ra). */
   const known = new Set([...runs.entries()].flatMap(([, r]) => (r.sessionId ? [r.sessionId] : [])))
-  ctx.provide('arisRoutine', { isRoutine: (sid: string) => known.has(sid) } satisfies ArisRoutine)
+  ctx.provide('arisRoutine', {
+    isRoutine: (sid: string) => known.has(sid),
+    card: (sid: string) => {
+      const run = [...runs.entries()].map(([, x]) => x).find((x) => x.sessionId === sid)
+      if (!run?.answer) return undefined
+      return {
+        title: routines.get(run.routine)?.title ?? run.routine,
+        bot: run.bot,
+        name: bots()?.store.get(run.bot)?.name ?? run.bot,
+        answer: run.answer,
+        ...(run.suggestion ? { suggestion: run.suggestion } : {}),
+      }
+    },
+  } satisfies ArisRoutine)
 
   const runsOf = (routine: string) =>
     [...runs.entries()]
@@ -237,6 +267,27 @@ export async function apply(ctx: Context): Promise<void> {
     return done
   }
 
+  /** Gửi kết quả: thẻ báo cáo 7.2 khi kênh có, không thì tin thường. */
+  async function deliver(
+    r: RoutineRecord,
+    o: { at: Date; answer: string; sessionId?: string | undefined; suggestion?: string | undefined },
+  ) {
+    const ch = channels()
+    if (!ch) return
+    const to = via(r.bot)
+    const send = ch.sendRoutine
+      ? ch.sendRoutine(to, {
+          title: r.title,
+          worker: bots()?.store.get(r.bot)?.name ?? r.bot,
+          relay: to !== r.bot,
+          ...o,
+        })
+      : ch.sendHome(to, `${heading(r)}\n\n${o.answer}`)
+    await send
+      .then((res) => res === SENT || logger.warn('gửi kết quả routine %s: %s', r.id, res))
+      .catch((e: unknown) => logger.warn('gửi kết quả routine: %s', String(e)))
+  }
+
   /** Chế độ chỉ chạy script: không AI; gửi về chỉ khi lệnh in ra gì đó. */
   async function runScriptRoutine(r: RoutineRecord, run: RunRecord): Promise<RunRecord> {
     scripting.add(r.id)
@@ -245,10 +296,7 @@ export async function apply(ctx: Context): Promise<void> {
     try {
       const out = scriptOutcome(await runScript(r.command ?? ''))
       if (out.ok && out.output && r.deliver === 'telegram')
-        await channels()
-          ?.sendHome(via(r.bot), `${heading(r)}\n\n\`\`\`\n${out.output}\n\`\`\``)
-          .then((res) => res === SENT || logger.warn('gửi kết quả routine %s: %s', r.id, res))
-          .catch((e: unknown) => logger.warn('gửi kết quả routine: %s', String(e)))
+        await deliver(r, { at: new Date(run.at), answer: `\`\`\`\n${out.output}\n\`\`\`` })
       return await finish(started, out.ok ? 'done' : 'failed', {
         ...(out.output ? { answer: out.output } : {}),
         ...(out.error ? { error: out.error } : {}),
@@ -334,12 +382,15 @@ export async function apply(ctx: Context): Promise<void> {
             : status === 'failed'
               ? `lượt kết thúc: ${reason}`
               : undefined
-      if (status === 'done' && r.deliver === 'telegram' && answer)
-        await channels()
-          ?.sendHome(via(r.bot), `${heading(r)}\n\n${answer}`)
-          .then((res) => res === SENT || logger.warn('gửi kết quả routine %s: %s', r.id, res))
-          .catch((e: unknown) => logger.warn('gửi kết quả routine: %s', String(e)))
-      return await finish(started, status, { answer, usd: l.usd, ...(error ? { error } : {}) })
+      const { body, suggestion } = splitSuggestion(answer)
+      if (status === 'done' && r.deliver === 'telegram' && body)
+        await deliver(r, { at: new Date(run.at), answer: body, sessionId, suggestion })
+      return await finish(started, status, {
+        answer: body,
+        ...(suggestion ? { suggestion } : {}),
+        usd: l.usd,
+        ...(error ? { error } : {}),
+      })
     } catch (e) {
       return finish(started, 'failed', { usd: l.usd, error: String(e) })
     } finally {
@@ -702,6 +753,30 @@ export async function apply(ctx: Context): Promise<void> {
     if (request.method !== 'POST') {
       const one = q.get('runs')
       if (one) return json({ runs: runsOf(one) })
+      // ?bot=<mã>: tab Routine của hồ sơ bot (2.2e).
+      const bot = q.get('bot')
+      if (bot) {
+        const mine = [...routines.entries()]
+          .map(([, r]) => r)
+          .filter((r) => r.bot === bot)
+          .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+        const ids = new Set(mine.map((r) => r.id))
+        const since = Date.now() - 7 * 86_400_000
+        const recent = [...runs.entries()]
+          .map(([, x]) => x)
+          .filter((x) => ids.has(x.routine) && Date.parse(x.at) >= since)
+          .sort((a, b) => b.at.localeCompare(a.at))
+        return json({
+          routines: mine.map(view),
+          runs: recent
+            .slice(0, 10)
+            .map((x) => ({ ...x, title: routines.get(x.routine)?.title ?? x.routine })),
+          usd7: recent.reduce((n, x) => n + x.usd, 0),
+          alerts: alerts().filter((a) => a.bot === bot),
+          telegram: telegramBots().includes(bot),
+          paused: paused(),
+        })
+      }
       const list = [...routines.entries()]
         .map(([, r]) => view(r))
         .sort((a, b) => a.createdAt.localeCompare(b.createdAt))

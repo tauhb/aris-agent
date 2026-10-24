@@ -245,6 +245,8 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-search-box mark{background:var(--a-warnSoft);color:var(--a-ink);border-radius:3px;padding:0 1px}
 .ap-search-box .foot{display:flex;gap:14px;align-items:center;padding:9px 16px;border-top:1px solid var(--a-line);font-size:12px}
 .ap-rt{display:grid;grid-template-columns:34px minmax(0,2fr) minmax(0,1.2fr) 120px 140px 110px;gap:12px;align-items:center;padding:12px 16px;border-top:1px solid var(--a-line);font-size:13.5px;min-width:820px}
+.ap-brt{grid-template-columns:minmax(0,2fr) minmax(0,1.3fr) minmax(0,1.2fr) 150px 64px;min-width:680px}
+.ap-brr{grid-template-columns:96px minmax(0,1fr) minmax(0,1.2fr) 70px 92px;min-width:560px;padding:9px 14px;font-size:13px}
 .ap-alert{border:1px solid var(--a-danger);background:var(--a-dangerSoft);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .ap-bare{width:100%;resize:none;border:0;background:transparent;color:var(--a-ink);font:inherit;font-size:15px;outline:none}
 .ap-rkv{display:grid;grid-template-columns:160px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 16px;border-top:1px solid var(--a-line);font-size:13.5px}

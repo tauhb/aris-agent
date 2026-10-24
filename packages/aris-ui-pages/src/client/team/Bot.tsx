@@ -53,11 +53,12 @@ function BotChannels({ t, botId, onConnect }: { t: PageProps['t']; botId: string
 }
 import { BotAside, PermsCard } from './BotPerms.js'
 import { SoulField } from './BotSoul.js'
+import { BotRoutineTab, useBotRoutines } from './BotRoutine.js'
 import { Later, SkillsTab } from './BotTools.js'
 import { ExternalSettings } from './ExternalBot.js'
 import { MascotPicker } from './MascotPicker.js'
 
-type Tab = 'soul' | 'model' | 'skills' | 'perms' | 'external'
+type Tab = 'soul' | 'model' | 'skills' | 'perms' | 'routine' | 'external'
 type T = PageProps['t']
 
 const pairKey = (provider: string, model: string) => `${provider}\u0000${model}`
@@ -302,6 +303,8 @@ export function BotProfile({ t, nav, params, plugins }: PageProps) {
   const [tab, setTab] = useState<Tab>('soul')
   const team = useTeam()
   const bot = team.bots.find((b) => b.id === params.id) ?? team.bots.find((b) => b.kind === 'commander')
+  // Routine của bot (tab 2.2e và số trên nhãn tab); bot ngoài không chạy routine.
+  const routines = useBotRoutines(bot && !bot.external ? bot.id : undefined)
   if (!bot)
     return (
       <main className="a-page">
@@ -325,6 +328,7 @@ export function BotProfile({ t, nav, params, plugins }: PageProps) {
         ['model', t('bot.model')],
         ['skills', t('bot.skills')],
         ['perms', t('bot.perms')],
+        ['routine', t('bot.routine', { n: routines.data?.routines.length ?? '…' })],
       ]
   return (
     <div className="ap-split">
@@ -385,6 +389,15 @@ export function BotProfile({ t, nav, params, plugins }: PageProps) {
           )}
           {tab === 'model' && <ModelCard t={t} bot={bot} team={team} nav={nav} />}
           {tab === 'skills' && <SkillsTab t={t} nav={nav} bot={bot} />}
+          {tab === 'routine' && (
+            <BotRoutineTab
+              t={t}
+              nav={nav}
+              bot={{ id: bot.id, name }}
+              data={routines.data}
+              reload={routines.reload}
+            />
+          )}
           {tab === 'perms' && (
             <>
               <PermsCard t={t} bot={bot} />

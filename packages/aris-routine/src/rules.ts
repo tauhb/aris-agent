@@ -44,8 +44,23 @@ export function routinePrompt(title: string, task: string, readOnly: boolean): s
   return [
     `[Routine «${title}»] ${task}`,
     ``,
-    `Đây là lần chạy tự động theo lịch, không có người trông. Làm xong rồi trả lời kết quả gọn, đọc được ngay trên điện thoại (sẽ gửi về Telegram). Không hỏi lại người dùng; thiếu thông tin thì làm phần làm được và nói rõ phần thiếu.${readOnly ? ' Quyền của lần chạy này: chỉ đọc. Ưu tiên công cụ đọc (read, grep, glob, tìm và đọc web); cần bash thì dùng lệnh đọc đơn giản nối bằng | hay ; (ls, cat, wc, grep, find, git log…), không dùng $(…), if, vòng lặp hay ghi tệp: lệnh khác phải chờ người dùng duyệt trên Telegram và có thể bị từ chối.' : ''}`,
+    `Đây là lần chạy tự động theo lịch, không có người trông. Làm xong rồi trả lời kết quả gọn, đọc được ngay trên điện thoại (sẽ gửi về Telegram). Không hỏi lại người dùng; thiếu thông tin thì làm phần làm được và nói rõ phần thiếu. Nếu kết quả gợi ra một việc tiếp theo tự nhiên người dùng có thể nhờ bạn làm, kết thúc bằng đúng một dòng "GỢI Ý: <việc đó, dưới 40 ký tự>"; không có thì thôi.${readOnly ? ' Quyền của lần chạy này: chỉ đọc. Ưu tiên công cụ đọc (read, grep, glob, tìm và đọc web); cần bash thì dùng lệnh đọc đơn giản nối bằng | hay ; (ls, cat, wc, grep, find, git log…), không dùng $(…), if, vòng lặp hay ghi tệp: lệnh khác phải chờ người dùng duyệt trên Telegram và có thể bị từ chối.' : ''}`,
   ].join('\n')
+}
+
+/** Dòng gợi ý việc tiếp theo ở cuối câu trả lời (thành nút trên thẻ Telegram). */
+const SUGGEST_RE = /\n?[ \t*_]*G[ỢO]I [ÝY]\s*[:：][ \t*_]*(.+?)[ \t*_]*$/iu
+
+/** Tách dòng `GỢI Ý:` cuối câu trả lời: nội dung còn lại và gợi ý (tối đa 60 ký tự). */
+export function splitSuggestion(answer: string): { body: string; suggestion?: string } {
+  const text = answer.trimEnd()
+  const m = SUGGEST_RE.exec(text)
+  if (!m) return { body: text }
+  const suggestion = m[1]!
+    .trim()
+    .replace(/[.。]$/, '')
+    .slice(0, 60)
+  return { body: text.slice(0, m.index).trimEnd(), ...(suggestion ? { suggestion } : {}) }
 }
 
 /** Lời nhờ bot tìm nguyên nhân khi routine lỗi liên tiếp ("Để <bot> sửa" ở màn 4.1). */

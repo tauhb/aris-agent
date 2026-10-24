@@ -40,6 +40,8 @@ export const runRecord = z.object({
   trigger: z.enum(['schedule', 'catchup', 'manual']),
   status: z.enum(['running', 'done', 'failed', 'stopped', 'cap', 'missed']),
   answer: z.string().optional(),
+  /** Việc tiếp theo bot gợi ý (nút trên thẻ Telegram). */
+  suggestion: z.string().optional(),
   usd: z.number(),
   error: z.string().optional(),
 })

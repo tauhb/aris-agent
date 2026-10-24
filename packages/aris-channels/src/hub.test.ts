@@ -7,6 +7,7 @@ import {
   type LiveAgent,
   type SessionPort,
 } from './hub.js'
+import { threadKey } from './store.js'
 import { memStore } from './store.test.js'
 import type { Fetch } from './telegram/api.js'
 import type { TgMessage, TgUpdate } from './telegram/types.js'
@@ -532,6 +533,66 @@ describe('trung tâm kênh', () => {
     emit({ type: 'closed', version: v, decision: 'approved', by: 'telegram' })
     await settle()
     expect(String(s.tg.sent('editMessageText').at(-1)!.text)).toContain('Đã bật v3')
+  })
+
+  it('thẻ báo cáo routine: ghi bot làm việc khi gửi qua Aris; Hỏi bot chuyển chat sang phiên; gợi ý như tự gõ', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    await s.sessions.port.create()
+    s.sessions.agents.set('session-abc', s.sessions.agents.get('s1')!)
+    s.hub.watchRoutine({
+      card: (sid) =>
+        sid === 'session-abc'
+          ? {
+              title: 'Báo cáo chi tiêu tuần',
+              bot: 'tin',
+              name: 'Tín',
+              answer: 'Chi 18 triệu.',
+              suggestion: 'Đề xuất cắt quảng cáo',
+            }
+          : undefined,
+    })
+    expect(
+      await s.hub.sendRoutine('aris', {
+        title: 'Báo cáo chi tiêu tuần',
+        worker: 'Tín',
+        relay: true,
+        at: new Date(2026, 9, 26, 8, 0),
+        answer: 'Chi **18 triệu**.',
+        sessionId: 'session-abc',
+        suggestion: 'Đề xuất cắt quảng cáo',
+      }),
+    ).toBe('Đã gửi.')
+    const card = s.tg.sent().at(-1)!
+    expect(String(card.text)).toContain('<b>ROUTINE · Báo cáo chi tiêu tuần</b> · Tín')
+    expect(String(card.text)).toContain('Thứ 2, 26/10 · 08:00')
+    expect(String(card.text)).toContain('<b>18 triệu</b>')
+    const rows = (card.reply_markup as { inline_keyboard: { text: string; callback_data: string }[][] })
+      .inline_keyboard
+    expect(rows.map((r) => r.map((b) => b.text))).toEqual([['Hỏi Tín'], ['Đề xuất cắt quảng cáo']])
+    for (const b of rows.flat()) expect(Buffer.byteLength(b.callback_data)).toBeLessThanOrEqual(64)
+    const press = (id: string, data: string) =>
+      s.tg.push({
+        callback_query: {
+          id,
+          from: { id: OWNER, is_bot: false, first_name: 'O' },
+          message: { message_id: 77, chat: { id: OWNER, type: 'private' }, date: 0 },
+          data,
+        },
+      })
+    press('c-h', rows[0]![0]!.callback_data)
+    await settle()
+    expect(s.store.thread(threadKey(BOT_ID, OWNER))?.sessionId).toBe('session-abc')
+    expect(String(s.tg.sent().at(-1)!.text)).toContain('hỏi tiếp Tín về «Báo cáo chi tiêu tuần»')
+    press('c-s', rows[1]![0]!.callback_data)
+    await settle()
+    const inbox = s.sessions.agents.get('session-abc')!.inbox as { content: { text: string }[] }[]
+    expect(inbox.at(-1)!.content[0]!.text).toBe('Đề xuất cắt quảng cáo')
+    press('c-x', 'rt:khong-con:h')
+    await settle()
+    expect(s.tg.sent('answerCallbackQuery').at(-1)).toMatchObject({
+      text: 'Lần chạy này không còn để xem lại.',
+    })
   })
 
   it('khởi động lại giữa lúc gửi: gửi lại phần dở kèm ghi chú có thể trùng', async () => {

@@ -28,6 +28,7 @@ import {
   type ApprovalsPort,
   type AttachmentPort,
   type ProposalsPort,
+  type RoutinePort,
   type SkillsPort,
   type LiveAgent,
   type SessionPort,
@@ -195,6 +196,20 @@ export async function apply(ctx: Context): Promise<void> {
       off?.()
     }
   }, 'aris-channels: thẻ đề xuất skill')
+  // Thẻ báo cáo routine (@aris/routine): nút Xem chi tiết / Hỏi bot / gợi ý tìm lại lần chạy.
+  ctx.effect(() => {
+    let off: (() => void) | undefined
+    const hook = () => {
+      const port = ctx.get('arisRoutine') as RoutinePort | undefined
+      if (port?.card && !off) off = hub.watchRoutine(port)
+    }
+    hook()
+    const timer = setInterval(hook, 5000)
+    return () => {
+      clearInterval(timer)
+      off?.()
+    }
+  }, 'aris-channels: thẻ báo cáo routine')
   ctx.on('session/event', (session, event) => hub.onSessionEvent(session.id, event as never))
   ctx.on('agent/assistant-stream', ({ agent, frame }) => hub.onStream(agent.session.id, frame as never))
   // Phiên của kênh: duyệt và câu hỏi đi qua Telegram trước; phiên khác để người trả lời sau lo.

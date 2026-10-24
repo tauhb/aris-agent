@@ -69,7 +69,7 @@ const timeOf = (iso: string) => {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-export function RoutineNew({ t, nav }: PageProps) {
+export function RoutineNew({ t, nav, params }: PageProps) {
   const team = useTeamData()
   const [text, setText] = useState('')
   const [draft, setDraft] = useState<Draft | null>(null)
@@ -96,7 +96,8 @@ export function RoutineNew({ t, nav }: PageProps) {
           if (n !== seq.current) return
           setThinking(false)
           if (!ok) return setError(data.error ?? 'HTTP error')
-          setDraft(data.draft)
+          // Mở từ hồ sơ bot ("+ Routine cho …"): bot đó làm.
+          setDraft(params.bot ? { ...data.draft, bot: params.bot } : data.draft)
           setPreview(data.preview ?? null)
           setTelegram(data.telegram ?? [])
           setEditing(null)
