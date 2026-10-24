@@ -118,13 +118,14 @@ export class LiveTracker {
     this.since.set(bot, this.now())
   }
 
-  /** Bot ngoài đang đợi người dùng duyệt quyền (bật/tắt từng yêu cầu). */
-  externalWaiting(bot: string, on: boolean) {
+  /** Bot ngoài đang đợi người dùng duyệt quyền (bật/tắt từng yêu cầu); `runId` để ghi tên việc. */
+  externalWaiting(bot: string, on: boolean, runId?: string) {
     const n = (this.waiting.get(bot) ?? 0) + (on ? 1 : -1)
     if (n <= 0) this.waiting.delete(bot)
     else this.waiting.set(bot, n)
     this.since.set(bot, this.now())
-    if (on) this.log({ bot, kind: 'waiting' })
+    const task = runId ? this.tasks.get(runId) : undefined
+    if (on) this.log({ bot, kind: 'waiting', ...(task ? { task } : {}) })
   }
 
   waitStart(sessionId: string) {

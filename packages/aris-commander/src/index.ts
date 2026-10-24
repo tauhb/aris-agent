@@ -963,7 +963,7 @@ export async function apply(ctx: Context): Promise<void> {
           { id: req.id, ...stepOf(req.tool, req.input, cur.cwd), at: req.at },
         ],
       }))
-      bots().live.externalWaiting(r.bot, true)
+      bots().live.externalWaiting(r.bot, true, r.id)
     },
     closed(req, allow, by) {
       const r = externals.get(req.run)
@@ -976,7 +976,7 @@ export async function apply(ctx: Context): Promise<void> {
           { id: req.id, ...stepOf(req.tool, req.input, cur.cwd), allow, by, at: new Date().toISOString() },
         ].slice(-20),
       }))
-      bots().live.externalWaiting(r.bot, false)
+      bots().live.externalWaiting(r.bot, false, r.id)
     },
   })
   ctx.effect(() => {

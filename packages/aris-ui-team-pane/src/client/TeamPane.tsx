@@ -63,12 +63,47 @@ const GLYPH: Record<BoardCard['column'], BotStatus> = {
 /** Luật mặc định khi dự án chưa có hồ sơ (giống `@aris/projects`). */
 const DEFAULT_RULES = { maxRounds: 3, maxMessages: 10, stopCommand: true, arisSummarizes: true }
 
-const KIND_STATUS: Record<ActivityItem['kind'], BotStatus> = {
-  assigned: 'working',
-  started: 'working',
-  done: 'done',
-  failed: 'failed',
-  waiting: 'waiting',
+/**
+ * Biểu tượng của một mốc đã qua: tĩnh theo loại mốc, không theo trạng thái sống của bot (dòng "nhận
+ * việc" của việc đã xong không còn vòng xoay). Trạng thái sống nằm ở thanh bên.
+ */
+const KIND_GLYPH: Record<ActivityItem['kind'], { color: string; body: string }> = {
+  assigned: {
+    color: 'muted',
+    body: '<path d="M8 2.5v7M5 6.8 8 9.8l3-3M3 11.5v1.2c0 .5.4.8.8.8h8.4c.4 0 .8-.3.8-.8v-1.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+  },
+  started: {
+    color: 'accent',
+    body: '<circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6.6 5.4v5.2L10.6 8z" fill="currentColor"/>',
+  },
+  waiting: {
+    color: 'warn',
+    body: '<circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6.4 6.3a1.7 1.7 0 1 1 2.4 1.5c-.5.3-.8.6-.8 1.2M8 11.2v.1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+  },
+  done: {
+    color: 'ok',
+    body: '<circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M5 8.2l2 2 4-4.2" stroke="var(--a-panel)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  },
+  failed: {
+    color: 'danger',
+    body: '<circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M5.8 5.8l4.4 4.4M10.2 5.8l-4.4 4.4" stroke="var(--a-panel)" stroke-width="1.8" stroke-linecap="round"/>',
+  },
+}
+
+function ActivityGlyph({ kind, label }: { kind: ActivityItem['kind']; label: string }) {
+  const g = KIND_GLYPH[kind]
+  return (
+    <svg
+      className="a-glyph"
+      width={14}
+      height={14}
+      viewBox="0 0 16 16"
+      role="img"
+      aria-label={label}
+      style={{ color: `var(--a-${g.color})`, flex: 'none' }}
+      dangerouslySetInnerHTML={{ __html: g.body }}
+    />
+  )
 }
 
 const nameIn = (team: ReturnType<typeof useTeam>, id: string) =>
@@ -77,10 +112,9 @@ const nameIn = (team: ReturnType<typeof useTeam>, id: string) =>
 /** Một dòng việc gần đây: "Minh nhận việc: Tóm tắt 3 đối thủ · 14:02". */
 function Activity({ t, a, name }: { t: Translate; a: ActivityItem; name: string }) {
   const at = new Date(a.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  const status = KIND_STATUS[a.kind]
   return (
     <div className="act">
-      <StatusGlyph status={status} label={t(`status.${status}`)} />
+      <ActivityGlyph kind={a.kind} label={t(`act.${a.kind}`)} />
       <span className="txt">
         <b>{name}</b> {t(`act.${a.kind}`)}
         {a.task ? `: ${a.task}` : ''} · <span className="a-muted">{at}</span>
