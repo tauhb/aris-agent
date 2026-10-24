@@ -13,20 +13,20 @@
 <style>
 body{margin:0}
 h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
-.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--shadow:0 24px 60px rgba(20,23,28,.22),0 2px 6px rgba(20,23,28,.08);--scrim:rgba(20,23,28,.35)}
-.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--shadow:0 24px 60px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.3);--scrim:rgba(0,0,0,.55)}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FCEBE9;--shadow:0 24px 60px rgba(20,23,28,.22),0 2px 6px rgba(20,23,28,.08);--scrim:rgba(20,23,28,.35)}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18;--shadow:0 24px 60px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.3);--scrim:rgba(0,0,0,.55)}
 button{font-family:inherit;cursor:pointer;color:inherit}
-button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .b1{height:38px;padding:0 16px;border:0;border-radius:10px;background:var(--ink);color:var(--panel);font-size:13.5px;font-weight:600}
 .b2{height:38px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font-size:13.5px}
 .lb{font-size:12.5px;font-weight:600;color:var(--ink)}
 .m{color:var(--muted)}
 .mono{font-family:'JetBrains Mono',monospace}
 .inp{height:38px;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font:inherit;font-size:14px;padding:0 12px;width:100%}
-.chip{height:32px;border:1px solid var(--line);border-radius:999px;background:var(--panel);padding:0 12px;font-size:13px;display:inline-flex;align-items:center;gap:6px}
-.dot{width:6px;height:6px;border-radius:50%}
+.ag{flex:1 1 0;min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:10px 12px;text-align:left;display:flex;flex-direction:column;gap:3px}
 .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px}
-.seg{border:0;border-radius:7px;padding:4px 10px;font-size:12.5px}
+.pm{display:flex;align-items:flex-start;gap:10px;width:100%;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:8px 10px;text-align:left}
+.tag{font-size:11px;font-weight:600;border-radius:6px;padding:1px 6px}
 </style>
 </helmet>
 <div class="{{themeClass}}" style="width: 1440px; height: 900px; position: relative; background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; display: flex; overflow: hidden">
@@ -34,7 +34,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{
   <div style="flex: 1"></div>
 
   <div style="position: absolute; inset: 0; background: var(--scrim); display: flex; align-items: center; justify-content: center">
-    <div role="dialog" aria-modal="true" aria-labelledby="bn-title" style="width: 760px; max-height: 820px; overflow: auto; background: var(--panel); border-radius: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column">
+    <div role="dialog" aria-modal="true" aria-labelledby="bn-title" style="width: 800px; max-height: 860px; overflow: auto; background: var(--panel); border-radius: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column">
       <div style="display: flex; align-items: center; padding: 18px 22px 6px">
         <h2 id="bn-title" style="margin: 0; font-size: 19px">Tạo bot mới</h2>
         <span role="tablist" aria-label="Loại bot" style="display: inline-flex; border: 1px solid var(--line); border-radius: 10px; padding: 2px; margin-left: 12px">
@@ -44,49 +44,87 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{
         <button type="button" onClick="{{toggleTheme}}" class="b2" style="margin-left: auto; height: 32px; font-size: 12.5px">{{themeLabel}}</button>
         <button type="button" aria-label="Đóng" style="margin-left: 6px; width: 34px; height: 34px; border: 0; border-radius: 9px; background: transparent; font-size: 20px; color: var(--muted)">×</button>
       </div>
-      <p class="m" style="margin: 0; padding: 0 22px 14px; font-size: 13px">Đưa một agent khác vào đội. aris giao việc, theo dõi từng bước, anh vẫn là người duyệt.</p>
+      <p class="m" style="margin: 0; padding: 0 22px 14px; font-size: 13px">Đưa Claude Code, Codex hoặc một agent khác vào đội. Aris giao một việc trọn gói, bot ngoài làm một mình rồi nộp kết quả cuối.</p>
 
-      <div style="display: flex; gap: 24px; padding: 4px 22px 8px">
-        <div style="flex: none; width: 210px; display: flex; flex-direction: column; align-items: center; gap: 10px">
-          <div style="width: 128px; height: 128px; border-radius: 32px; background: var(--panel2); display: flex; align-items: center; justify-content: center"><svg width="100" height="100" viewBox="0 0 100 100" role="img" aria-label="Linh vật đang chọn: bánh răng xám xanh"><g fill="#64748B"><circle cx="50" cy="50" r="32"></circle><rect x="40" y="6" width="20" height="22" rx="6"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(45 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(90 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(135 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(180 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(225 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(270 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(315 50 50)"></rect></g><circle cx="43" cy="51" r="7" fill="#fff"></circle><circle cx="59" cy="48" r="5" fill="#fff"></circle></svg></div>
-          <a href="ThuVienLinhVat.dc.html" style="font-size: 12.5px; color: var(--accent); text-decoration: none">Đổi linh vật ›</a>
+      <div style="padding: 0 22px 12px">
+        <div class="lb" style="padding-bottom: 6px">Agent</div>
+        <div role="radiogroup" aria-label="Agent ngoài" style="display: flex; gap: 8px">
+          <button type="button" role="radio" aria-checked="{{ck.claude}}" onClick="{{pick.claude}}" class="ag" style="{{cs.claude}}">
+            <span style="display: flex; align-items: center; gap: 8px"><span style="width: 22px; height: 22px; border-radius: 7px; background: #D97757; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-family: 'Lexend', sans-serif; font-weight: 700; font-size: 12px">C</span><b>Claude Code</b></span>
+            <span class="m" style="font-size: 12px">Plugin chính thức của dsh</span>
+          </button>
+          <button type="button" role="radio" aria-checked="{{ck.codex}}" onClick="{{pick.codex}}" class="ag" style="{{cs.codex}}">
+            <span style="display: flex; align-items: center; gap: 8px"><span style="width: 22px; height: 22px; border-radius: 7px; background: #10A37F; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-family: 'Lexend', sans-serif; font-weight: 700; font-size: 12px">X</span><b>Codex</b></span>
+            <span class="m" style="font-size: 12px">Plugin chính thức của dsh</span>
+          </button>
+          <button type="button" role="radio" aria-checked="{{ck.acp}}" onClick="{{pick.acp}}" class="ag" style="{{cs.acp}}">
+            <span style="display: flex; align-items: center; gap: 8px"><span style="width: 22px; height: 22px; border-radius: 7px; background: var(--panel2); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px">…</span><b>Agent ACP khác</b></span>
+            <span class="m" style="font-size: 12px">Gemini CLI, OpenCode… nói ACP</span>
+          </button>
         </div>
-
-        <div style="flex: 1; display: flex; flex-direction: column; gap: 14px">
-          <div>
-            <div class="lb" style="padding-bottom: 6px">Agent <span class="m" style="font-weight: 400">· aris tự dò trên máy</span></div>
-            <div role="radiogroup" aria-label="Agent ngoài" style="display: flex; flex-wrap: wrap; gap: 6px">
-              <button type="button" role="radio" aria-checked="{{ck.claude}}" onClick="{{pick.claude}}" class="chip" style="{{cs.claude}}">Claude Code</button>
-              <button type="button" role="radio" aria-checked="{{ck.codex}}" onClick="{{pick.codex}}" class="chip" style="{{cs.codex}}">Codex</button>
-              <button type="button" role="radio" aria-checked="{{ck.hermes}}" onClick="{{pick.hermes}}" class="chip" style="{{cs.hermes}}">Hermes</button>
-              <button type="button" role="radio" aria-checked="{{ck.gemini}}" onClick="{{pick.gemini}}" class="chip" style="{{cs.gemini}}">Gemini CLI <span class="dot" style="background: var(--warn)" aria-label="cần đăng nhập"></span></button>
-              <button type="button" role="radio" aria-checked="{{ck.opencode}}" onClick="{{pick.opencode}}" class="chip" style="{{cs.opencode}}">OpenCode <span class="m" style="font-size: 12px">chưa cài</span></button>
-              <button type="button" role="radio" aria-checked="{{ck.custom}}" onClick="{{pick.custom}}" class="chip" style="{{cs.custom}}">Khác…</button>
-            </div>
-            <div class="m" style="font-size: 12px; padding-top: 6px">{{ag.note}}</div>
-          </div>
-          <label style="display: flex; flex-direction: column; gap: 6px"><span class="lb">Tên</span><input class="inp" value="Khoa"></label>
-          <label style="display: flex; flex-direction: column; gap: 6px"><span class="lb">Thư mục làm việc</span><input class="inp mono" style="font-size: 13px" value="~/Desktop/working-project"></label>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px 14px; padding-top: 8px; font-size: 12.5px">
+          <span style="display: inline-flex; align-items: center; gap: 6px; color: {{ag.loginColor}}"><span style="width: 7px; height: 7px; border-radius: 50%; background: currentColor"></span>{{ag.login}}</span>
+          <span class="m">{{ag.install}}</span>
         </div>
       </div>
 
-      <div style="margin: 6px 22px 0; border-top: 1px solid var(--line)">
+      <div style="display: flex; gap: 22px; padding: 4px 22px 10px">
+        <div style="flex: none; width: 150px; display: flex; flex-direction: column; align-items: center; gap: 8px">
+          <div style="width: 112px; height: 112px; border-radius: 28px; background: var(--panel2); display: flex; align-items: center; justify-content: center"><svg width="88" height="88" viewBox="0 0 100 100" role="img" aria-label="Linh vật đang chọn: bánh răng xám xanh"><g fill="#64748B"><circle cx="50" cy="50" r="32"></circle><rect x="40" y="6" width="20" height="22" rx="6"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(45 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(90 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(135 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(180 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(225 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(270 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(315 50 50)"></rect></g><circle cx="43" cy="51" r="7" fill="#fff"></circle><circle cx="59" cy="48" r="5" fill="#fff"></circle></svg></div>
+          <a href="ThuVienLinhVat.dc.html" style="font-size: 12.5px; color: var(--accent); text-decoration: none">Đổi linh vật ›</a>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; gap: 10px">
+            <label style="flex: 1; display: flex; flex-direction: column; gap: 6px"><span class="lb">Tên</span><input class="inp" value="{{ag.name}}"></label>
+            <label style="flex: 1; display: flex; flex-direction: column; gap: 6px"><span class="lb">Phòng ban</span><select class="inp"><option>Kỹ thuật</option><option>Chưa xếp phòng</option></select></label>
+          </div>
+          <label style="display: flex; flex-direction: column; gap: 6px"><span class="lb">Việc của bot <span class="m" style="font-weight: 400">· Aris đọc để biết khi nào giao</span></span><input class="inp" value="{{ag.job}}"></label>
+          <label style="display: flex; flex-direction: column; gap: 6px"><span class="lb">Thư mục làm việc</span><input class="inp mono" style="font-size: 13px" value="Theo thư mục của dự án được giao"></label>
+        </div>
+      </div>
+
+      <div style="margin: 0 22px 10px; border-radius: 12px; background: var(--panel2); padding: 12px 14px">
+        <div style="font-weight: 600; font-size: 13.5px; padding-bottom: 6px">Bot ngoài khác bot của aris</div>
+        <ul style="margin: 0; padding-left: 18px; font-size: 13px; display: flex; flex-direction: column; gap: 3px">
+          <li><b>Mỗi việc là một lần chạy mới:</b> không nhớ việc trước, không nhắn tiếp được giữa chừng.</li>
+          <li><b>Chỉ nộp kết quả cuối:</b> trên nhánh thấy đã nhận, đang làm bao lâu, xong hay vấp; không thấy từng bước bên trong.</li>
+          <li><b>Chạy không người trông:</b> không hỏi lại bạn được; xin quyền thì xử theo mức quyền chọn dưới đây.</li>
+          <li><b>Dùng tài khoản {{ag.account}} trên máy bạn:</b> chi phí tính vào gói của bạn, aris không đo được; aris chỉ giới hạn thời gian.</li>
+        </ul>
+      </div>
+
+      <div style="margin: 0 22px; border-top: 1px solid var(--line)">
+        <div style="padding: 12px 0 8px"><span class="lb">Khi {{ag.name}} cần quyền</span></div>
+        <div role="radiogroup" aria-label="Mức quyền của bot ngoài" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+          <sc-for list="{{perms}}" as="p" hint-placeholder-count="5">
+            <button type="button" role="radio" aria-checked="{{p.checked}}" onClick="{{p.pick}}" class="pm" style="{{p.style}}">
+              <span style="flex: none; width: 16px; height: 16px; border-radius: 50%; border: 2px solid {{p.ring}}; box-sizing: border-box; margin-top: 2px; display: inline-flex; align-items: center; justify-content: center"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{p.dot}}"></span></span>
+              <span style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 600; color: {{p.color}}">{{p.label}} <span class="tag" style="{{p.tagStyle}}">{{p.tag}}</span></span><span class="m" style="font-size: 12px">{{p.desc}}</span></span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="margin: 8px 22px 0; border-top: 1px solid var(--line)">
         <button type="button" onClick="{{toggleAdv}}" aria-expanded="{{advStr}}" style="width: 100%; display: flex; align-items: center; gap: 8px; border: 0; background: transparent; padding: 12px 0; font-size: 13.5px; font-weight: 600; text-align: left">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="{{chev}}"></path></svg>Nâng cao
-          <span class="m" style="font-weight: 400; font-size: 12.5px">quyền, giới hạn, lệnh khởi chạy</span>
+          <span class="m" style="font-weight: 400; font-size: 12.5px">model, thời gian, worktree{{ag.advExtra}}</span>
         </button>
         <sc-if value="{{adv}}" hint-placeholder-val="{{ false }}">
           <div style="padding-bottom: 6px">
-            <div class="row"><span>Khi Khoa xin quyền</span><span role="radiogroup" aria-label="Khi bot ngoài xin quyền" style="display: inline-flex; border: 1px solid var(--line); border-radius: 9px; padding: 2px"><button type="button" role="radio" aria-checked="{{pk.ask}}" onClick="{{perm.ask}}" class="seg" style="{{ps.ask}}">Hỏi anh</button><button type="button" role="radio" aria-checked="{{pk.reject}}" onClick="{{perm.reject}}" class="seg" style="{{ps.reject}}">Luôn từ chối</button><button type="button" role="radio" aria-checked="{{pk.allow}}" onClick="{{perm.allow}}" class="seg" style="{{ps.allow}}">Tự cho phép</button></span></div>
-            <div class="row"><span>Trần mỗi việc</span><span class="m">$3 · 45 phút</span></div>
-            <label class="row" style="cursor: pointer"><span>Mỗi việc chạy trong một git worktree riêng</span><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--accent)"></label>
+            <div class="row"><span>Model</span><input class="inp" style="width: 300px; height: 32px; font-size: 13px" placeholder="{{ag.modelPh}}"></div>
+            <div class="row"><span>Dừng việc nếu chạy quá</span><select class="inp" style="width: 140px; height: 32px; font-size: 13px"><option>30 phút</option><option selected>45 phút</option><option>90 phút</option></select></div>
+            <label class="row" style="cursor: pointer"><span>Mỗi việc chạy trong một git worktree riêng <span class="m" style="font-size: 12.5px">· thay đổi không đụng nhánh đang làm</span></span><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--accent)"></label>
             <label class="row" style="cursor: pointer"><span>Commander được giao việc cho bot này</span><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--accent)"></label>
-            <div class="row"><span>Lệnh khởi chạy</span><span class="mono m" style="font-size: 12.5px">{{ag.cmd}}</span></div>
+            <sc-if value="{{isAcp}}" hint-placeholder-val="{{ false }}">
+              <div class="row"><span>Lệnh khởi chạy</span><input class="inp mono" style="width: 300px; height: 32px; font-size: 12.5px" value="gemini --experimental-acp"></div>
+            </sc-if>
           </div>
         </sc-if>
       </div>
 
-      <div style="display: flex; justify-content: flex-end; gap: 8px; padding: 14px 22px 18px; border-top: 1px solid var(--line)">
+      <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 14px 22px 18px; border-top: 1px solid var(--line)">
+        <span class="m" style="font-size: 12.5px; margin-right: auto">{{ag.footer}}</span>
         <button type="button" class="b2">Huỷ</button>
         <button type="button" class="b1">Thêm vào đội</button>
       </div>
@@ -94,39 +132,81 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"agent":{"editor":"enum","options":["claude","codex","acp"],"default":"claude"},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     const s = this.state || {};
     const theme = s.theme || this.props.theme || 'light';
-    const sel = s.sel || 'claude';
-    const pm = s.pm || 'ask';
+    const sel = s.sel || this.props.agent || 'claude';
     const adv = !!s.adv;
     const A = {
-      claude: { cmd: 'claude-code-acp', note: 'Đã đăng nhập · dùng tài khoản Claude Code trên máy anh.' },
-      codex: { cmd: 'codex-acp', note: 'Đã đăng nhập · dùng tài khoản Codex trên máy anh.' },
-      hermes: { cmd: 'hermes acp', note: 'Đã đăng nhập · Hermes dùng ký ức và skill riêng của nó.' },
-      gemini: { cmd: 'gemini --experimental-acp', note: 'Chưa đăng nhập · chạy "gemini" một lần trong terminal.' },
-      opencode: { cmd: 'opencode acp', note: 'Chưa cài · npm i -g opencode-ai' },
-      custom: { cmd: '…', note: 'Nhập lệnh của bất kỳ agent nào nói ACP.' }
+      claude: {
+        name: 'Khoa', account: 'Claude Code', job: 'Sửa lỗi, viết và đọc mã trong repo; chạy test',
+        login: 'Đã đăng nhập Claude Code trên máy', loginColor: 'var(--ok)',
+        install: 'Cài plugin “Claude Code subagent” khi bấm Thêm vào đội · tải khoảng 92 MB',
+        modelPh: 'Theo cài đặt Claude Code trên máy', advExtra: '', footer: 'Sẽ cài plugin chính thức của dsh (khoảng 92 MB)',
+        perms: [
+          { k: 'dontAsk', label: 'Chỉ việc đã được phép', desc: 'Việc chưa được phép trong cài đặt Claude Code thì tự từ chối' },
+          { k: 'acceptEdits', label: 'Cho sửa tệp', desc: 'Sửa tệp trong thư mục làm việc; lệnh khác vẫn từ chối', tag: 'khuyên dùng' },
+          { k: 'auto', label: 'Claude tự xét', desc: 'Bộ phân loại của Claude Code tự cho hoặc không cho' },
+          { k: 'plan', label: 'Chỉ lên kế hoạch', desc: 'Không đụng tệp, nộp kế hoạch làm kết quả' },
+          { k: 'bypass', label: 'Toàn quyền', desc: 'Bỏ mọi kiểm tra quyền, kể cả lệnh nguy hiểm', danger: true }
+        ],
+        def: 'acceptEdits'
+      },
+      codex: {
+        name: 'Tín', account: 'Codex', job: 'Viết mã, tái cấu trúc, rà lỗi trong repo',
+        login: 'Đã đăng nhập Codex trên máy', loginColor: 'var(--ok)',
+        install: 'Cài plugin “Codex subagent” khi bấm Thêm vào đội · tải khoảng 114 MB',
+        modelPh: 'Theo cài đặt Codex trên máy', advExtra: '', footer: 'Sẽ cài plugin chính thức của dsh (khoảng 114 MB)',
+        perms: [
+          { k: 'never', label: 'Trong sandbox, không hỏi', desc: 'Chạy trong sandbox của Codex; lỗi quyền trả lại cho Codex tự xoay', tag: 'khuyên dùng' },
+          { k: 'approve', label: 'Codex tự duyệt', desc: 'Ghi được trong thư mục làm việc; xin quyền thì Codex tự xét' },
+          { k: 'danger', label: 'Toàn quyền, không sandbox', desc: 'Bỏ duyệt và sandbox, chạy được mọi lệnh', danger: true }
+        ],
+        def: 'never'
+      },
+      acp: {
+        name: 'Minh Gemini', account: 'của agent đó', job: 'Tra cứu và tóm tắt tài liệu dài',
+        login: 'aris không kiểm được đăng nhập của agent khác', loginColor: 'var(--warn)',
+        install: 'Cài plugin “ACP subagent” của dsh · nhập lệnh khởi chạy ở Nâng cao',
+        modelPh: 'Theo cài đặt của agent', advExtra: ', lệnh khởi chạy', footer: 'Sẽ cài plugin ACP của dsh',
+        perms: [
+          { k: 'reject', label: 'Luôn từ chối', desc: 'Mọi yêu cầu quyền của agent đều bị từ chối', tag: 'khuyên dùng' },
+          { k: 'allow', label: 'Tự cho phép', desc: 'Chọn “cho phép” cho mọi yêu cầu quyền', danger: true }
+        ],
+        def: 'reject'
+      }
     };
-    const on = 'border-color: var(--accent); color: var(--accent); background: var(--accentSoft); font-weight: 600';
+    const ag = A[sel];
+    const pm = (s.pm && s.pm[sel]) || ag.def;
+    const on = 'border-color: var(--accent); background: var(--accentSoft)';
     const ck = {}, cs = {}, pick = {};
     Object.keys(A).forEach((k) => {
       ck[k] = k === sel ? 'true' : 'false';
       cs[k] = k === sel ? on : '';
       pick[k] = () => this.setState({ sel: k });
     });
-    const pk = {}, ps = {}, perm = {};
-    ['ask', 'reject', 'allow'].forEach((k) => {
-      pk[k] = k === pm ? 'true' : 'false';
-      ps[k] = k === pm ? 'background: var(--hover); color: var(--ink); font-weight: 600' : 'background: transparent; color: var(--muted)';
-      perm[k] = () => this.setState({ pm: k });
+    const perms = ag.perms.map((p) => {
+      const chosen = p.k === pm;
+      const tone = p.danger ? 'var(--danger)' : 'var(--accent)';
+      return {
+        label: p.label, desc: p.desc,
+        tag: p.danger ? 'nguy hiểm' : (p.tag || ''),
+        tagStyle: p.danger ? 'background: var(--dangerSoft); color: var(--danger)' : (p.tag ? 'background: var(--okSoft); color: var(--ok)' : 'display: none'),
+        checked: chosen ? 'true' : 'false',
+        style: chosen ? (p.danger ? 'border-color: var(--danger); background: var(--dangerSoft)' : on) : '',
+        ring: chosen ? tone : 'var(--line)',
+        dot: chosen ? tone : 'transparent',
+        color: p.danger ? 'var(--danger)' : 'var(--ink)',
+        pick: () => this.setState({ pm: Object.assign({}, s.pm || {}, { [sel]: p.k }) })
+      };
     });
     return {
       themeClass: 't-' + theme,
       themeLabel: theme === 'dark' ? 'Sáng' : 'Tối',
-      ag: A[sel], ck, cs, pick, pk, ps, perm,
+      ag, ck, cs, pick, perms,
+      isAcp: sel === 'acp',
       adv, advStr: adv ? 'true' : 'false',
       chev: adv ? 'M6 9l6 6 6-6' : 'M9 6l6 6-6 6',
       toggleAdv: () => this.setState({ adv: !adv }),
