@@ -39,6 +39,7 @@ export {
   type Template,
 } from './store.js'
 export type { BotRecord, DepartmentRecord } from './domain.js'
+export * from './external.js'
 
 export const name = 'aris-bots'
 export const inject = ['storageDomain', 'systemPrompt', 'sessionController', 'workspaceRegistry', 'tools']

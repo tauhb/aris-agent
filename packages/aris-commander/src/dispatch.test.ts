@@ -14,6 +14,14 @@ const BOTS: BotInfo[] = [
   { id: 'aris', handle: 'aris', name: 'Aris', kind: 'commander' },
   { id: 'b-1', handle: 'minh', name: 'Minh', kind: 'member' },
   { id: 'b-2', handle: 'tho', name: 'Thơ', kind: 'member' },
+  {
+    id: 'b-3',
+    handle: 'khoa',
+    name: 'Khoa',
+    kind: 'member',
+    external: { agent: 'claude-code', assignable: true },
+  },
+  { id: 'b-4', handle: 'lan', name: 'Lan', kind: 'member', external: { agent: 'codex', assignable: false } },
 ]
 
 function setup(busy = 0) {
@@ -236,5 +244,51 @@ describe('trưởng nhóm giao trong phòng', () => {
     await expect(dispatch(deps, me, [{ bot: 'tho', task: 'x', reason: 'r' }], signal)).rejects.toThrow(
       'trưởng nhóm đang nhận việc lớn',
     )
+  })
+})
+
+describe('giao cho bot ngoài', () => {
+  it('bot ngoài chạy qua plugin, không qua Team; tóm tắt nói không dùng wait_agent', async () => {
+    const { deps, calls } = setup()
+    const ran: string[] = []
+    const r = await dispatch(
+      {
+        ...deps,
+        external: async (bot, a, title) => {
+          ran.push(`${bot.handle}: ${title}`)
+          return { handle: bot.handle, name: bot.name, ok: true, external: 'Claude Code', runId: 'ext-1' }
+        },
+      },
+      cmd,
+      [
+        { bot: 'khoa', task: 'Sửa lỗi đăng nhập\nchi tiết', reason: 'sửa mã' },
+        { bot: 'minh', task: 'Tìm nguyên nhân', reason: 'nghiên cứu' },
+      ],
+      signal,
+    )
+    expect(ran).toEqual(['khoa: Sửa lỗi đăng nhập'])
+    expect(calls.some((c) => c.includes('khoa'))).toBe(false)
+    const text = summarize(r)
+    expect(text).toContain('- @khoa (Khoa): đã nhận việc (bot ngoài Claude Code), việc ngoài ext-1')
+    expect(text).toContain('không dùng wait_agent cho bot ngoài')
+    expect(text).toContain('Dùng wait_agent')
+  })
+
+  it('bot ngoài tắt nhận giao việc, hoặc giao kèm thẻ, thì báo lỗi', async () => {
+    const { deps } = setup()
+    const external = async () => ({ handle: 'x', ok: true })
+    const r = await dispatch(
+      { ...deps, external },
+      cmd,
+      [
+        { bot: 'lan', task: 'Việc', reason: 'x' },
+        { bot: 'khoa', task: 'Việc', reason: 'x', card: 'c-1' },
+      ],
+      signal,
+    )
+    expect(r.map((x) => [x.handle, x.ok, x.error])).toEqual([
+      ['lan', false, '@lan là bot ngoài không nhận giao việc từ Commander.'],
+      ['khoa', false, 'Bot ngoài chưa nhận thẻ Kanban; giao không kèm the.'],
+    ])
   })
 })

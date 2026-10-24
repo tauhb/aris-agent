@@ -77,6 +77,33 @@ export const roundRecord = z.object({
 })
 export type RoundRecord = z.infer<typeof roundRecord>
 
+/** Một lần chạy của bot ngoài (bước 4): trọn gói, chỉ có kết quả cuối. */
+export const externalRunRecord = z.object({
+  id: z.string(),
+  bot: z.string(),
+  handle: z.string(),
+  name: z.string(),
+  agent: z.string(),
+  title: z.string(),
+  task: z.string(),
+  /** Phiên giao việc (nhận kết quả thành thông báo). */
+  parentSession: z.string(),
+  cwd: z.string().optional(),
+  worktree: z.object({ branch: z.string(), dir: z.string() }).optional(),
+  status: z.enum(['running', 'done', 'failed', 'stopped']),
+  /** Vì sao dừng: người dùng bấm Dừng, quá giờ, aris khởi động lại. */
+  stoppedBy: z.enum(['user', 'timeout', 'restart']).optional(),
+  timeoutMin: z.number().int(),
+  startedAt: z.string(),
+  finishedAt: z.string().optional(),
+  /** Câu trả lời cuối (cắt ngắn). */
+  output: z.string().optional(),
+  /** Lời báo lỗi an toàn của plugin (không có nội dung việc, đường dẫn hay khoá). */
+  diagnostic: z.string().optional(),
+  stopReason: z.string().optional(),
+})
+export type ExternalRunRecord = z.infer<typeof externalRunRecord>
+
 export const commanderDomain = defineDomain({
   name: 'aris_commander',
   version: 1,
@@ -85,6 +112,7 @@ export const commanderDomain = defineDomain({
     dispatch: domainTable<string, DispatchRecord>(dispatchRecord),
     jobs: domainTable<string, JobRecord>(jobRecord),
     rounds: domainTable<string, RoundRecord>(roundRecord),
+    externals: domainTable<string, ExternalRunRecord>(externalRunRecord),
   },
 })
 

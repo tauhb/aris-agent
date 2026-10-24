@@ -48,6 +48,8 @@ export {
   type BotLive,
   type TeamLive,
   type BotData,
+  type ExternalAgent,
+  type ExternalData,
   type CatalogGroup,
   type OwnerAddress,
   type RolePreset,
@@ -72,6 +74,7 @@ export {
   type ProjectEntry,
   type ProjectRules,
 } from './projects.js'
+export * from './external.js'
 export {
   fetchRoomStatus,
   roomRole,

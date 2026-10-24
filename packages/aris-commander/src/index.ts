@@ -22,6 +22,7 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import {
   commanderDomain,
   type DispatchRecord,
+  type ExternalRunRecord,
   type JobRecord,
   type RoomEntry,
   type RoundRecord,
@@ -29,12 +30,26 @@ import {
 } from './domain.js'
 import { findDepartment, jobBrief, jobContext, jobReport, textOf, type MemberLike } from './jobs.js'
 import {
+  addWorktree,
+  externalBrief,
+  ExternalHost,
+  gitRoot,
+  label,
+  loginState,
+  moduleLoader,
+  resolvePackage,
+  worktreePlan,
+  type PluginModule,
+} from './external.js'
+import { EXTERNAL_AGENTS, EXTERNAL_PACKAGES, providerOf, type BotRecord } from '@aris/bots'
+import {
   dispatch,
   DispatchError,
   planCards,
   summarize,
   type Assignment,
   type DispatchEntry,
+  type DispatchResult,
   type DraftCards,
   type TeamPort,
 } from './dispatch.js'
@@ -51,6 +66,7 @@ import {
 
 export * from './dispatch.js'
 export * from './jobs.js'
+export * from './external.js'
 export * from './room.js'
 
 export const name = 'aris-commander'
@@ -130,6 +146,25 @@ interface ProjectsPort {
   ofSession(
     sessionId: string,
   ): { project: { name: string; members: string[]; mainSession?: string; rules: RoomRules } } | undefined
+}
+
+/** Phần dịch vụ bot con của dsh dùng cho bot ngoài. */
+interface SubagentsPort {
+  startActivation(spec: {
+    provider: string
+    label: string
+    request: { prompt: { type: 'text'; text: string }[]; parent: unknown; cwd?: string }
+    signal: AbortSignal
+    delivery: 'parent' | 'caller'
+  }): Promise<{
+    childId: string
+    result: Promise<{
+      output?: readonly { type: string; text?: string }[]
+      stopReason?: string
+      diagnostic?: string
+    }>
+    dispose(): Promise<void>
+  }>
 }
 
 type RoomTeam = TeamPort<AgentLike> & { interrupt(agent: AgentLike, name: string): unknown }
@@ -274,6 +309,8 @@ export async function apply(ctx: Context): Promise<void> {
               busyBots: () => b.live.busyBots('aris'),
               cards: (ctx.get('arisProjects') as { cards?: DraftCards } | undefined)?.cards,
               lead: isCommander(agent.session.id) ? undefined : leadScope(agent.session.id),
+              external: (bot, a, title, parent, signal) =>
+                runExternal(b.store.get(bot.id)!, a, title, parent, signal),
               record(entry) {
                 b.live.assigned(entry.bot, entry.title, entry.member)
                 const rest: Omit<DispatchEntry, 'sessionId'> & { sessionId?: string } = { ...entry }
@@ -703,7 +740,10 @@ export async function apply(ctx: Context): Promise<void> {
         const b = bots()
         const members: RoomBot[] = project.members.flatMap((id) => {
           const x = b.store.get(id)
-          return x && x.kind === 'member' ? [{ id: x.id, handle: x.handle, name: x.name, role: x.role }] : []
+          // Bot ngoài làm việc trọn gói, không vào phòng nhóm.
+          return x && x.kind === 'member' && !x.external
+            ? [{ id: x.id, handle: x.handle, name: x.name, role: x.role }]
+            : []
         })
         if (!members.length) return 'Dự án chưa có bot thành viên; thêm bot vào dự án trước.'
         const room = roomOf(sid)
@@ -777,6 +817,181 @@ export async function apply(ctx: Context): Promise<void> {
     }
   }
 
+  // Bot ngoài (bước 4): mỗi bot một nhà cung cấp `aris-<mã bot>`, gắn từ module plugin đã cài.
+  const externals = domain.table('externals') as unknown as Table<ExternalRunRecord>
+  const host = new ExternalHost({
+    load: moduleLoader(),
+    mount: (mod: PluginModule, config) => {
+      const fiber = (ctx as unknown as { plugin(p: unknown, c: unknown): { dispose(): unknown } }).plugin(
+        mod,
+        config,
+      )
+      return () => void fiber.dispose()
+    },
+    warn: (msg) => logger.warn(msg),
+  })
+  const syncExternal = () => host.sync((ctx.get('arisBots') as ArisBots | undefined)?.store.list() ?? [])
+  ctx.effect(() => {
+    void syncExternal()
+    const timer = setInterval(() => void syncExternal(), 30_000)
+    return () => {
+      clearInterval(timer)
+      host.dispose()
+    }
+  }, 'aris-commander: bot ngoài')
+  // Lần chạy dở lúc aris tắt thì không chạy tiếp được: ghi là đã dừng.
+  ctx.effect(() => {
+    for (const [id, r] of externals.entries())
+      if (r.status === 'running')
+        void externals
+          .put(id, { ...r, status: 'stopped', stoppedBy: 'restart', finishedAt: new Date().toISOString() })
+          .catch((e: unknown) => logger.warn('khép lần chạy %s: %s', id, String(e)))
+    return () => {}
+  }, 'aris-commander: khép lần chạy dở')
+
+  const activeRuns = new Map<string, { dispose(): Promise<void>; timer: ReturnType<typeof setTimeout> }>()
+  const stopRun = async (runId: string, by: 'user' | 'timeout') => {
+    const r = externals.get(runId)
+    if (r?.status === 'running') await externals.put(runId, { ...r, stoppedBy: by })
+    await activeRuns.get(runId)?.dispose()
+  }
+
+  async function runExternal(
+    bot: BotRecord,
+    a: Assignment,
+    title: string,
+    agent: AgentLike,
+    signal: AbortSignal,
+  ): Promise<DispatchResult> {
+    const cfg = bot.external!
+    const fail = (error: string): DispatchResult => ({ handle: bot.handle, name: bot.name, ok: false, error })
+    await syncExternal()
+    const state = host.state(bot.id)
+    if (state === 'missing')
+      return fail(`Chưa cài plugin ${label(cfg.agent)} của dsh. Mở hồ sơ ${bot.name} để cài rồi giao lại.`)
+    if (state === 'error') return fail(`Không gắn được plugin ${label(cfg.agent)}; xem nhật ký aris.`)
+    const subagents = ctx.get('subagents') as SubagentsPort | undefined
+    if (!subagents) return fail('Profile này chưa có dịch vụ bot con (subagents) của dsh.')
+    const wd = (ctx.get('workingDirectory') as { get(session: unknown): string } | undefined)?.get(
+      (agent as unknown as { session: unknown }).session,
+    )
+    let cwd = wd
+    let worktree: { branch: string; dir: string } | undefined
+    const tag = randomUUID().replace(/-/g, '').slice(0, 8)
+    if (cfg.worktree && wd) {
+      const root = await gitRoot(wd)
+      if (root) {
+        const plan = worktreePlan(root, bot.handle, title, tag)
+        try {
+          await addWorktree(root, plan)
+        } catch (e) {
+          return fail(`Không tạo được worktree: ${String(e).split('\n')[0]}`)
+        }
+        worktree = plan
+        cwd = plan.dir
+      }
+    }
+    const act = await subagents.startActivation({
+      provider: providerOf(bot.id),
+      label: `${bot.name}: ${title}`,
+      request: {
+        prompt: [
+          {
+            type: 'text',
+            text: externalBrief({ name: bot.name, task: a.task, reason: a.reason, cwd, worktree }),
+          },
+        ],
+        parent: agent,
+        ...(cwd ? { cwd } : {}),
+      },
+      signal,
+      delivery: 'parent',
+    })
+    const runId = String(act.childId)
+    const rec: ExternalRunRecord = {
+      id: runId,
+      bot: bot.id,
+      handle: bot.handle,
+      name: bot.name,
+      agent: cfg.agent,
+      title,
+      task: a.task.trim(),
+      parentSession: agent.session.id,
+      ...(cwd ? { cwd } : {}),
+      ...(worktree ? { worktree } : {}),
+      status: 'running',
+      timeoutMin: cfg.timeoutMin,
+      startedAt: new Date().toISOString(),
+    }
+    await externals.put(runId, rec)
+    const live = bots().live
+    live.assigned(bot.id, title)
+    live.externalStart(bot.id, runId, title)
+    const timer = setTimeout(() => void stopRun(runId, 'timeout'), cfg.timeoutMin * 60_000)
+    activeRuns.set(runId, { dispose: () => act.dispose(), timer })
+    const settle = async (r: {
+      output?: readonly { type: string; text?: string }[]
+      stopReason?: string
+      diagnostic?: string
+    }) => {
+      clearTimeout(timer)
+      activeRuns.delete(runId)
+      const cur = externals.get(runId) ?? rec
+      const output = (r.output ?? [])
+        .map((c) => (c.type === 'text' ? (c.text ?? '') : ''))
+        .join('\n')
+        .trim()
+      const status: ExternalRunRecord['status'] =
+        r.stopReason === 'completed' ? 'done' : r.stopReason === 'aborted' ? 'stopped' : 'failed'
+      await externals.put(runId, {
+        ...cur,
+        status,
+        finishedAt: new Date().toISOString(),
+        ...(output ? { output: output.slice(0, 8000) } : {}),
+        ...(r.diagnostic ? { diagnostic: r.diagnostic.slice(0, 2000) } : {}),
+        ...(r.stopReason ? { stopReason: r.stopReason } : {}),
+      })
+      live.externalEnd(bot.id, runId, status === 'done')
+    }
+    void act.result.then(settle, (e: unknown) => settle({ stopReason: 'error', diagnostic: String(e) }))
+    const log = domain.table('dispatch') as unknown as Table<DispatchRecord>
+    void log
+      .put(`${Date.now()}-${bot.handle}`, {
+        at: new Date().toISOString(),
+        sessionId: agent.session.id,
+        bot: bot.id,
+        handle: bot.handle,
+        title,
+        task: a.task.trim(),
+        reason: a.reason.trim(),
+        member: runId,
+        reused: false,
+      })
+      .catch((e: unknown) => logger.warn('nhật ký giao việc: %s', String(e)))
+    return { handle: bot.handle, name: bot.name, ok: true, external: label(cfg.agent), runId }
+  }
+
+  /** Tình trạng bot ngoài cho hộp Thêm bot ngoài và hồ sơ bot. */
+  const externalStatus = async () => {
+    await syncExternal()
+    const store = (ctx.get('arisBots') as ArisBots | undefined)?.store
+    return {
+      agents: Object.fromEntries(
+        EXTERNAL_AGENTS.map((agent) => [
+          agent,
+          { installed: !!resolvePackage(EXTERNAL_PACKAGES[agent]), login: loginState(agent) },
+        ]),
+      ),
+      bots: Object.fromEntries(
+        (store?.list() ?? []).flatMap((b) => (b.external ? [[b.id, host.state(b.id)]] : [])),
+      ),
+    }
+  }
+  const runView = (r: ExternalRunRecord) => ({
+    ...r,
+    elapsedMs: (r.finishedAt ? Date.parse(r.finishedAt) : Date.now()) - Date.parse(r.startedAt),
+  })
+
   ctx.provide('arisJobs', {
     list: allJobs,
     forWorkspace: (workspace: string) => allJobs().filter((j) => j.workspace === workspace),
@@ -798,6 +1013,12 @@ export async function apply(ctx: Context): Promise<void> {
           const q = new URL(request.url).searchParams
           if (request.method === 'POST') {
             const body = (await request.json().catch(() => ({}))) as { op?: string; session?: string }
+            if (body.op === 'external-stop' && typeof (body as { run?: unknown }).run === 'string') {
+              const run = (body as { run: string }).run
+              await stopRun(run, 'user')
+              const r = externals.get(run)
+              return json({ ok: true, run: r ? runView(r) : null })
+            }
             if (body.op === 'room-stop' && body.session) {
               stopRoom(body.session)
               return json({ ok: true, room: roomView(body.session) })
@@ -808,6 +1029,14 @@ export async function apply(ctx: Context): Promise<void> {
           const round = q.get('round')
           if (round) return json({ round: rounds.get(round) ?? null })
           // ?room=<phiên>: trạng thái phòng của phiên (thanh phòng trên ô nhập).
+          // ?external=<mã lần chạy>: một việc của bot ngoài (nhánh trong chat).
+          const ext = q.get('external')
+          if (ext) {
+            const r = externals.get(ext)
+            return json({ run: r ? runView(r) : null })
+          }
+          // ?externals=1: plugin đã cài chưa, đã đăng nhập chưa, bot ngoài nào sẵn sàng.
+          if (q.get('externals')) return json(await externalStatus())
           const roomSession = q.get('room')
           if (roomSession) return json(roomView(roomSession))
           // ?jobs=1: việc lớn của các phòng (trang Phòng ban), mới trước.

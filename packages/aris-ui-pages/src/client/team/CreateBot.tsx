@@ -13,11 +13,10 @@ import {
 } from '@aris/ui-kit/react'
 import { useState } from 'react'
 import type { PageProps } from '../page.js'
-import { Disclosure, Dot } from '../ui.js'
+import { Disclosure } from '../ui.js'
 import { botOptions } from '../mind/names.js'
-import { DEMO_AGENTS, DEMO_CREATE_BOT as C } from './demo.js'
-
-const check = { width: 18, height: 18, accentColor: 'var(--a-accent)' }
+import { DEMO_CREATE_BOT as C } from './demo.js'
+import { ExternalBot } from './ExternalBot.js'
 
 /** Gợi ý tên gọi từ tên hiển thị: bỏ dấu, chữ thường (khớp `suggestHandle` ở máy chủ). */
 export const handleOf = (name: string) =>
@@ -269,119 +268,6 @@ function ArisBot({ t, nav }: PageProps) {
         </Button>
         <Button variant="primary" size="lg" disabled={busy || !name.trim()} onClick={() => void create()}>
           {t('cb.create')}
-        </Button>
-      </div>
-    </>
-  )
-}
-
-function ExternalBot({ t, nav }: PageProps) {
-  const [agent, setAgent] = useState<string>('claude')
-  const [perm, setPerm] = useState<'ask' | 'reject' | 'allow'>('ask')
-  const [adv, setAdv] = useState(false)
-  const a = DEMO_AGENTS.find((x) => x.id === agent)!
-  const name = 'Khoa'
-  return (
-    <>
-      <div style={{ display: 'flex', gap: 24 }}>
-        <div
-          style={{
-            flex: 'none',
-            width: 150,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 10,
-          }}
-        >
-          <div className="ap-tile" style={{ width: 112, height: 112, borderRadius: 28 }}>
-            <Mascot id="banh-rang" size={84} />
-          </div>
-          <a className="ap-link" style={{ fontSize: 12.5 }}>
-            {t('ext.changeMascot')}
-          </a>
-        </div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div>
-            <div className="ap-lb" style={{ paddingBottom: 6, color: 'var(--a-ink)' }}>
-              {t('ext.agent')}{' '}
-              <span className="a-muted" style={{ fontWeight: 400 }}>
-                {t('ext.detected')}
-              </span>
-            </div>
-            <div role="radiogroup" aria-label={t('ext.agent')} className="ap-tags" style={{ gap: 6 }}>
-              {DEMO_AGENTS.map((x) => (
-                <button
-                  key={x.id}
-                  type="button"
-                  role="radio"
-                  className="ap-chip ap-pick"
-                  aria-checked={agent === x.id}
-                  aria-pressed={agent === x.id}
-                  onClick={() => setAgent(x.id)}
-                >
-                  {x.name || t('ext.other')}
-                  {x.state === 'login' && <Dot color="var(--a-warn)" size={7} />}
-                  {x.state === 'missing' && <span className="a-muted"> {t('ext.notInstalled')}</span>}
-                </button>
-              ))}
-            </div>
-            <div className="a-muted" style={{ fontSize: 12.5, marginTop: 6 }}>
-              {a.note}
-            </div>
-          </div>
-          <label className="a-field">
-            <span className="l">{t('cb.name')}</span>
-            <TextInput defaultValue={name} />
-          </label>
-          <label className="a-field">
-            <span className="l">{t('ext.workDir')}</span>
-            <TextInput mono defaultValue="~/Desktop/working-project" />
-          </label>
-        </div>
-      </div>
-      <Disclosure
-        title={t('cb.advanced')}
-        hint={t('ext.advancedHint')}
-        open={adv}
-        onToggle={() => setAdv(!adv)}
-      >
-        <div className="ap-frow">
-          <span>{t('ext.whenAsks', { name })}</span>
-          <Segmented
-            label={t('ext.whenAsks', { name })}
-            value={perm}
-            onChange={setPerm}
-            options={[
-              { value: 'ask', label: t('ext.ask') },
-              { value: 'reject', label: t('ext.reject') },
-              { value: 'allow', label: t('ext.allow') },
-            ]}
-          />
-        </div>
-        <div className="ap-frow">
-          <span>{t('ext.cap')}</span>
-          <span className="a-muted">$3 · 45 phút</span>
-        </div>
-        <label className="ap-frow">
-          <span>{t('ext.worktree')}</span>
-          <input type="checkbox" defaultChecked style={check} />
-        </label>
-        <label className="ap-frow">
-          <span>{t('cb.delegable')}</span>
-          <input type="checkbox" defaultChecked style={check} />
-        </label>
-        <div className="ap-frow">
-          <span>{t('ext.command')}</span>
-          <span className="a-mono a-muted">{a.cmd}</span>
-        </div>
-      </Disclosure>
-      <div className="ap-dfoot">
-        <Button size="lg" onClick={nav.close}>
-          {t('cb.cancel')}
-        </Button>
-        <Button variant="primary" size="lg">
-          {t('ext.add')}
         </Button>
       </div>
     </>

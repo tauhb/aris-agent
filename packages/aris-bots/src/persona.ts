@@ -2,6 +2,7 @@
  * Ngữ cảnh `aris:bot`: bot của phiên là ai, tính cách, và đội hình để biết gọi ai. dsh nạp lại
  * mỗi lần dựng prompt nên sửa hồ sơ bot có hiệu lực từ bước kế tiếp.
  */
+import { EXTERNAL_LABEL } from './external.js'
 import type { BotRecord, DepartmentRecord, OwnerRecord } from './domain.js'
 import { DEFAULT_POLICY } from './policy.js'
 
@@ -63,7 +64,12 @@ export function renderPersona(
     for (const b of others) {
       const d = dept(b.department)
       const lead = d?.lead === b.id ? ', trưởng nhóm' : ''
-      lines.push(`- @${b.handle} · ${b.name} · ${b.role || 'thành viên'}${d ? ` (${d.name}${lead})` : ''}`)
+      const ext = b.external
+        ? ` · bot ngoài ${EXTERNAL_LABEL[b.external.agent]}${b.external.assignable ? '' : ', không nhận giao việc'}`
+        : ''
+      lines.push(
+        `- @${b.handle} · ${b.name} · ${b.role || 'thành viên'}${d ? ` (${d.name}${lead})` : ''}${ext}`,
+      )
     }
   }
   // Phòng ban và việc phòng lo, để người chỉ huy xếp việc lớn đúng phòng.
@@ -77,6 +83,10 @@ export function renderPersona(
       )
     }
   }
+  if (others.some((b) => b.external))
+    lines.push(
+      'Bot ngoài làm một việc trọn gói rồi nộp kết quả cuối: không nhớ việc trước, không nhắn tiếp, không vào phòng nhóm. Giao cho bot ngoài thì nội dung việc phải tự đủ (thư mục, mục tiêu, cách kiểm tra).',
+    )
   lines.push('</aris-bot>')
   return lines.join('\n')
 }

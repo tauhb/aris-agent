@@ -112,6 +112,8 @@ export interface DispatchItem {
   sessionId?: string | undefined
   /** Giao không được (lời báo trong kết quả). */
   error?: string | undefined
+  /** Bot ngoài: mã lần chạy (không có phiên riêng). */
+  externalRun?: string | undefined
 }
 
 /** Đọc lần gọi `giao_viec`: các việc trong tham số, ghép với phiên của từng bot trong kết quả. */
@@ -151,6 +153,8 @@ export function dispatchItems(call: SubagentCall): DispatchItem[] {
     if (!item) continue
     const sid = m[2]!.match(/phiên (\S+)$/)?.[1]
     if (sid) item.sessionId = sid
+    const run = m[2]!.match(/việc ngoài (\S+)$/)?.[1]
+    if (run) item.externalRun = run
     const err = m[2]!.match(/không giao được — (.*)$/)?.[1]
     if (err) item.error = err
   }

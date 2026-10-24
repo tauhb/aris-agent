@@ -4,6 +4,7 @@
  */
 import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 import { z } from 'zod'
+import { externalRecord } from './external.js'
 
 export const modelRef = z.object({ provider: z.string(), model: z.string() })
 
@@ -22,6 +23,8 @@ export const botRecord = z.object({
   mascot: z.string(),
   model: modelRef.optional(),
   department: z.string().optional(),
+  /** Bot ngoài (Claude Code, Codex, ACP): chạy qua plugin của dsh, không có phiên riêng. */
+  external: externalRecord.optional(),
   createdAt: z.string(),
 })
 export type BotRecord = z.infer<typeof botRecord>

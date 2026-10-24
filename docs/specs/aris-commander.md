@@ -88,6 +88,21 @@ Suy từ sự kiện phiên của bot: đang chạy là "đang làm", đang đ�
 - Khung chat: mỗi lần `giao_viec` vẽ các nhánh theo bot (đã nhận → đang làm → xong), bấm để mở phiên của bot.
 - Trang Commander (2.5): bot nhận việc, giới hạn, quyết định định tuyến gần đây từ nhật ký.
 
+## Bot ngoài (bước 4)
+
+Bản vẽ 2.1b (Thêm bot ngoài) và 2.1c (nhánh giao việc). Bot ngoài là bot trong đội có cấu hình `external` (`@aris/bots`, `external.ts`): loại agent (`claude-code`, `codex`, `acp`), mức quyền, model, giới hạn phút, worktree, nhận giao việc hay không, lệnh khởi chạy (ACP).
+
+- **Chạy bằng plugin chính thức của dsh**: `@deepseek-ai/dsh-subagent-claude-code` (Agent SDK của Anthropic), `@deepseek-ai/dsh-subagent-codex` (`codex app-server`), `@deepseek-ai/dsh-subagent-acp`. Hộp Thêm bot ngoài cài gói qua bộ cài plugin của dsh nhưng **không bật lớp profile**, nên công cụ chung `subagent_claude_code` không lộ ra cho mọi bot.
+- **Mỗi bot một nhà cung cấp**: aris nạp module từ thư mục profile (`DSH_HOME/profiles/<profile>/node_modules`) và gắn bằng `ctx.plugin` với `providerName: aris-<mã bot>` và mức quyền, model của bot (`ExternalHost`). Đổi cấu hình thì gỡ bản cũ, gắn bản mới; xoá bot thì gỡ. Đồng bộ lúc khởi động, mỗi 30 giây, trước mỗi lần giao và khi giao diện hỏi tình trạng.
+- **Mức quyền** đúng theo plugin: Claude Code `dontAsk`, `acceptEdits` (mặc định), `auto`, `plan`, `bypassPermissions`; Codex `never` (mặc định), `approve-for-me`, `dangerously-bypass-approvals-and-sandbox`; ACP `reject` (mặc định), `allow`. Không có "hỏi người dùng": plugin chạy không người trông.
+- **Giao việc**: `giao_viec` với bot ngoài không đi qua Team mà gọi `ctx.subagents.startActivation` (một lần chạy trọn gói, `delivery: 'parent'`: kết quả về phiên giao thành thông báo của dsh, Aris không cần `wait_agent`). Lời giao tự đủ (bot ngoài không thấy cuộc trò chuyện). Bot ngoài không nhận thẻ Kanban, không vào phòng nhóm; bot tắt "nhận giao việc" thì từ chối.
+- **Thư mục và worktree**: thư mục làm việc là thư mục hiện tại của phiên giao (`ctx.workingDirectory`). Bật worktree và thư mục là repo git thì mỗi việc một worktree mới từ HEAD trên nhánh `aris/<tên gọi>-<tiêu đề>-<mã>`, đặt ở `~/.aris/worktrees/<repo>/`; thay đổi để nguyên cho người dùng xem rồi gộp.
+- **Giới hạn thời gian**: quá `timeoutMin` phút thì aris dừng lần chạy. Chi phí tính vào tài khoản Claude Code/Codex trên máy, aris không đo.
+- **Lưu trữ**: bảng `externals` của kho `aris_commander`: bot, việc, phiên giao, thư mục, worktree, trạng thái (`running`, `done`, `failed`, `stopped` kèm lý do dừng), câu trả lời cuối, lời báo lỗi an toàn. Lần chạy dở lúc aris tắt được ghi là đã dừng. Trạng thái trực tiếp của bot (thanh bên) theo `externalStart`/`externalEnd` của `LiveTracker`.
+- **Đường máy chủ**: `GET /api/aris/commander?externals=1` (gói đã cài chưa, đã đăng nhập agent chưa, bot ngoài nào đã gắn), `GET ?external=<mã lần chạy>`, `POST {op: 'external-stop', run}`.
+- **Giao diện**: hộp Thêm bot ngoài (cài plugin khi cần rồi tạo bot), tab "Bot ngoài" trong hồ sơ bot (cài plugin, đổi mức quyền, model, thời gian, worktree), nhánh trong chat: đã nhận (kèm worktree), đang làm bao lâu và nút Dừng, xong với thẻ kết quả, vấp với lý do, đã dừng.
+- **Chạy ngầm**: bộ cài plugin của dsh gọi `pnpm`; `scripts/dsh.mjs` thêm các chỗ pnpm hay nằm vào PATH của tiến trình dsh (launchd chạy với PATH tối thiểu).
+
 ## Để sau
 
 - `chuyen_giao` (bot nhận việc trả lời thẳng chủ nhân): bước 5, cùng kênh riêng của bot.

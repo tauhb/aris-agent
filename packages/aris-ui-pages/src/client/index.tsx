@@ -290,7 +290,7 @@ export function apply(ctx: ClientContext): void {
     if (!dialog || !Dialog) return null
     return (
       <div className="aris">
-        <Dialog t={t} nav={nav} params={dialog.params} projects={projects} />
+        <Dialog t={t} nav={nav} params={dialog.params} projects={projects} plugins={plugins} />
       </div>
     )
   }
@@ -591,7 +591,7 @@ export function apply(ctx: ClientContext): void {
             params={params}
             system={system}
             models={id === 'settings' ? models : undefined}
-            plugins={id === 'settings' ? plugins : undefined}
+            plugins={id === 'settings' || id === 'bot' ? plugins : undefined}
             pluginConfig={pluginConfig}
             presets={id === 'settings' ? presets : undefined}
           />

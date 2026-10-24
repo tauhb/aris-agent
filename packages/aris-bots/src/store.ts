@@ -4,6 +4,7 @@
  */
 import { randomBytes } from 'node:crypto'
 import type { BotRecord, DepartmentRecord, OwnerRecord, SessionRecord, Tables } from './domain.js'
+import { cleanExternal, ExternalConfigError, type ExternalConfig } from './external.js'
 import { cleanPolicy, DEFAULT_POLICY, type Policy } from './policy.js'
 
 export const COMMANDER_ID = 'aris'
@@ -23,6 +24,8 @@ export interface BotInput {
   mascot?: string
   model?: { provider: string; model: string } | null
   department?: string | null
+  /** Bot ngoài: cấu hình gửi từ hộp Thêm bot ngoài (xem `cleanExternal`); `null` là bỏ. */
+  external?: unknown
 }
 
 export interface Template {
@@ -131,6 +134,15 @@ export class BotStore {
     return [...this.t.departments.entries()].map(([, d]) => d).sort((a, b) => a.order - b.order)
   }
 
+  private external(input: unknown, prev?: ExternalConfig): ExternalConfig {
+    try {
+      return cleanExternal(input, prev)
+    } catch (e) {
+      if (e instanceof ExternalConfigError) throw new BotError(e.message)
+      throw e
+    }
+  }
+
   private validate(input: BotInput, self?: string) {
     const handle = input.handle.trim().replace(/^@/, '').toLowerCase()
     if (!HANDLE_RE.test(handle))
@@ -162,6 +174,7 @@ export class BotStore {
       mascot: clean(input.mascot, 40) || 'tron',
       ...(input.model ? { model: input.model } : {}),
       ...(input.department ? { department: input.department } : {}),
+      ...(input.external ? { external: this.external(input.external) } : {}),
       createdAt: this.now().toISOString(),
     }
     await this.t.bots.put(id, rec)
@@ -186,6 +199,8 @@ export class BotStore {
     else if (patch.model) rec.model = patch.model
     if (patch.department === null) delete rec.department
     else if (patch.department) rec.department = patch.department
+    if (patch.external === null) delete rec.external
+    else if (patch.external !== undefined) rec.external = this.external(patch.external, prev.external)
     await this.t.bots.put(id, rec)
     return rec
   }

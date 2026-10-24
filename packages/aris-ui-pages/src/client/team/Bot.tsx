@@ -20,9 +20,10 @@ import { useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Box } from '../ui.js'
 import { DEMO_PROFILE as P } from './demo.js'
+import { ExternalSettings } from './ExternalBot.js'
 import { MascotPicker } from './MascotPicker.js'
 
-type Tab = 'soul' | 'model' | 'skills' | 'perms'
+type Tab = 'soul' | 'model' | 'skills' | 'perms' | 'external'
 type T = PageProps['t']
 
 const check = { width: 18, height: 18, accentColor: 'var(--a-accent)' }
@@ -222,7 +223,7 @@ function ModelCard({ t, bot, team, nav }: { t: T; bot: BotData; team: TeamView; 
   )
 }
 
-export function BotProfile({ t, nav, params }: PageProps) {
+export function BotProfile({ t, nav, params, plugins }: PageProps) {
   const [tab, setTab] = useState<Tab>('soul')
   const team = useTeam()
   const bot = team.bots.find((b) => b.id === params.id) ?? team.bots.find((b) => b.kind === 'commander')
@@ -238,12 +239,18 @@ export function BotProfile({ t, nav, params }: PageProps) {
       (id) => nav.openSession(id),
       () => {},
     )
-  const tabs: [Tab, string][] = [
-    ['soul', t('bot.soul')],
-    ['model', t('bot.model')],
-    ['skills', t('bot.skills')],
-    ['perms', t('bot.perms')],
-  ]
+  // Bot ngoài không có phiên riêng: chỉ hồ sơ và cấu hình bot ngoài.
+  const tabs: [Tab, string][] = bot.external
+    ? [
+        ['soul', t('bot.soul')],
+        ['external', t('ext.tab')],
+      ]
+    : [
+        ['soul', t('bot.soul')],
+        ['model', t('bot.model')],
+        ['skills', t('bot.skills')],
+        ['perms', t('bot.perms')],
+      ]
   return (
     <div className="ap-split">
       <main className="a-page">
@@ -260,7 +267,7 @@ export function BotProfile({ t, nav, params }: PageProps) {
               {bot.role ? ` · ${bot.role}` : ''}
             </span>
           </div>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          <div style={{ marginLeft: 'auto', display: bot.external ? 'none' : 'flex', gap: 8 }}>
             <Button variant="primary" onClick={() => chat(false)}>
               {t('bot.chatWith', { name })}
             </Button>
@@ -298,6 +305,9 @@ export function BotProfile({ t, nav, params }: PageProps) {
           style={{ maxWidth: 860, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}
         >
           {tab === 'soul' && <ProfileForm t={t} bot={bot} team={team} onDeleted={() => nav.go('map')} />}
+          {tab === 'external' && bot.external && (
+            <ExternalSettings t={t} bot={{ ...bot, external: bot.external }} plugins={plugins} />
+          )}
           {tab === 'model' && <ModelCard t={t} bot={bot} team={team} nav={nav} />}
           {tab === 'skills' && (
             <>

@@ -3,6 +3,8 @@
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync } from 'node:fs'
 import { connect } from 'node:net'
+import { homedir } from 'node:os'
+import { delimiter, dirname, join } from 'node:path'
 import { arisHome, dshBin, socketPath } from './paths.mjs'
 
 const home = arisHome()
@@ -26,8 +28,21 @@ if (profile === 'aris' && !process.env.ARIS_DAEMON && existsSync(sock)) {
   }
 }
 
+// Bộ cài plugin của dsh gọi `pnpm`; launchd chạy aris với PATH tối thiểu nên thêm các chỗ pnpm hay
+// nằm (PNPM_HOME, thư mục pnpm mặc định của macOS/Linux, cạnh node đang chạy) nếu có.
+function withTools(env, home = homedir()) {
+  const extra = [
+    env.PNPM_HOME,
+    join(home, 'Library', 'pnpm'),
+    join(home, '.local', 'share', 'pnpm'),
+    dirname(process.execPath),
+  ].filter((d) => d && existsSync(d))
+  const path = (env.PATH ?? '').split(delimiter).filter(Boolean)
+  return { ...env, PATH: [...path, ...extra.filter((d) => !path.includes(d))].join(delimiter) }
+}
+
 const child = spawn(process.execPath, [dshBin(), ...args], {
   stdio: 'inherit',
-  env: { ...process.env, DSH_HOME: home },
+  env: { ...withTools(process.env), DSH_HOME: home },
 })
 child.on('exit', (code, signal) => process.exit(signal ? 1 : (code ?? 0)))

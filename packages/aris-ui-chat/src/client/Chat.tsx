@@ -14,6 +14,7 @@ import {
 } from './branch.js'
 import type { BotStatus } from '@aris/ui-kit'
 import type { ChatKey, Translate } from './locale.js'
+import { ExternalBranch } from './External.js'
 
 /** Dấu Aris thay con cá DeepSeek ở màn trống (`conversation.hero.brand.mark`). */
 export function HeroMark({ size, className, t }: { size: number; className?: string; t: Translate }) {
@@ -180,16 +181,20 @@ export function DispatchBranches(
   if (items.length === 0) return null
   return (
     <div className="aris aris-taskline">
-      {items.map((item) => (
-        <DispatchBranch
-          key={item.handle}
-          t={props.t}
-          item={item}
-          phase={props.phase}
-          useSessions={props.useSessions}
-          openSession={props.openSession}
-        />
-      ))}
+      {items.map((item) =>
+        item.externalRun ? (
+          <ExternalBranch key={item.handle} t={props.t} item={item} />
+        ) : (
+          <DispatchBranch
+            key={item.handle}
+            t={props.t}
+            item={item}
+            phase={props.phase}
+            useSessions={props.useSessions}
+            openSession={props.openSession}
+          />
+        ),
+      )}
     </div>
   )
 }

@@ -8,6 +8,10 @@ export const CSS = `
 .aris-model{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
 .aris-model .logo{width:20px;height:20px;border-radius:6px;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex:none}
 .aris-taskline{padding:4px 0 6px;font-size:13.5px}
+.aris-ext-result{border:1px solid var(--a-line);border-radius:12px;background:var(--a-panel);padding:10px 12px;display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.aris-ext-result .h{font-size:12px;font-weight:600;color:var(--a-muted)}
+.aris-ext-result .x{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55}
+.aris-ext-result .w{font-size:12.5px;color:var(--a-muted);font-family:'JetBrains Mono',monospace;overflow-wrap:anywhere}
 .aris-room{display:flex;flex-direction:column;gap:10px;padding:4px 0 8px;font-size:14px}
 
 

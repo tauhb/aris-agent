@@ -79,6 +79,10 @@ Mặc định: web và ghi tệp, không chạy lệnh, chạm trần thì dừn
 
 Chạy thử thật (24/10): Minh (Tăng trưởng, không chạy lệnh) gọi `bash` bị từ chối đúng lời của chính sách và gợi ý nhờ @khoa; chi phí lượt đó ghi vào phòng Tăng trưởng; đặt trần 0 USD thì Minh trả lời một câu "dừng vì phòng Tăng trưởng đã hết ngân sách hôm nay".
 
+## Bot ngoài (bước 4)
+
+Hồ sơ bot có thể kèm `external`: loại agent (`claude-code`, `codex`, `acp`), mức quyền đúng theo plugin, model (bỏ trống là theo cài đặt của agent trên máy), `timeoutMin` (5–240, mặc định 45), `worktree`, `assignable`, lệnh khởi chạy (ACP). `cleanExternal` kiểm và điền mặc định; sửa một trường giữ các trường khác, đổi loại agent thì mức quyền về mặc định. Đội hình trong `<aris-bot>` ghi bot ngoài kèm loại agent và nhắc: bot ngoài làm việc trọn gói, không nhớ việc trước, không vào phòng nhóm. Chạy thật ở [aris-commander.md](aris-commander.md#bot-ngoài-bước-4).
+
 ## Đường máy chủ
 
 `/api/aris/bots`: `GET` trả bot, phòng ban, danh sách mẫu, chi phí hôm nay theo phòng (`spend`). `POST` với `op`:

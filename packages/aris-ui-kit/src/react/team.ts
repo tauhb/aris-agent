@@ -18,7 +18,23 @@ export interface BotData {
   mascot: string
   model?: { provider: string; model: string }
   department?: string
+  /** Bot ngoài (Claude Code, Codex, ACP). */
+  external?: ExternalData
   createdAt: string
+}
+
+export type ExternalAgent = 'claude-code' | 'codex' | 'acp'
+
+/** Cấu hình bot ngoài (`@aris/bots`, bản vẽ 2.1b). */
+export interface ExternalData {
+  agent: ExternalAgent
+  permission: string
+  model?: string
+  timeoutMin: number
+  worktree: boolean
+  assignable: boolean
+  command?: string
+  args?: string[]
 }
 
 /** Chính sách chung của phòng ban (bản vẽ 2.6). */

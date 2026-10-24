@@ -98,6 +98,26 @@ export class LiveTracker {
     this.since.set(bot, this.now())
   }
 
+  /** Bot ngoài không có phiên: aris báo bắt đầu theo mã lần chạy. */
+  externalStart(bot: string, runId: string, task: string) {
+    let set = this.running.get(bot)
+    if (!set) this.running.set(bot, (set = new Set()))
+    if (set.size === 0) this.since.set(bot, this.now())
+    set.add(runId)
+    this.tasks.set(runId, task)
+    this.log({ bot, kind: 'started', task })
+  }
+
+  /** Lần chạy của bot ngoài kết thúc: xong hay vấp. */
+  externalEnd(bot: string, runId: string, ok: boolean) {
+    this.running.get(bot)?.delete(runId)
+    const task = this.tasks.get(runId)
+    const status = ok ? 'done' : 'failed'
+    this.last.set(bot, { status, at: this.now(), task })
+    if (task) this.log({ bot, kind: status, task })
+    this.since.set(bot, this.now())
+  }
+
   waitStart(sessionId: string) {
     const bot = this.botOf(sessionId)
     this.waiting.set(bot, (this.waiting.get(bot) ?? 0) + 1)

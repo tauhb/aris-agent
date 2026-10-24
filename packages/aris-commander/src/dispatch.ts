@@ -22,6 +22,8 @@ export interface BotInfo {
   handle: string
   name: string
   kind: 'commander' | 'member'
+  /** Bot ngoài: chạy qua plugin của dsh, không qua Team. */
+  external?: { agent: string; assignable: boolean } | undefined
 }
 
 /** Phần của Team dsh mà giao việc dùng (truyền vào để kiểm thử bằng bản giả). */
@@ -84,6 +86,10 @@ export interface DispatchDeps<A> {
    * thành viên phòng (mã nội bộ trong danh sách).
    */
   lead?: { department: string; members: ReadonlySet<string> } | undefined
+  /** Giao cho bot ngoài: một lần chạy trọn gói (không có thì bot ngoài không nhận việc). */
+  external?:
+    | ((bot: BotInfo, a: Assignment, title: string, agent: A, signal: AbortSignal) => Promise<DispatchResult>)
+    | undefined
 }
 
 export interface DispatchEntry {
@@ -107,6 +113,9 @@ export interface DispatchResult {
   taskId?: string | undefined
   reused?: boolean | undefined
   error?: string | undefined
+  /** Bot ngoài: tên agent và mã lần chạy (không có phiên riêng). */
+  external?: string | undefined
+  runId?: string | undefined
 }
 
 /** Tối đa bot mỗi lần giao, và bot chạy cùng lúc. */
@@ -171,6 +180,19 @@ export async function dispatch<A extends { session: { id: string } }>(
         }
       if (!a.task.trim() || !a.reason.trim())
         return { handle, ok: false, error: 'Mỗi việc cần nội dung và lý do chọn bot.' }
+      if (bot.external) {
+        if (!bot.external.assignable)
+          return { handle, ok: false, error: `@${handle} là bot ngoài không nhận giao việc từ Commander.` }
+        if (a.card?.trim())
+          return { handle, ok: false, error: 'Bot ngoài chưa nhận thẻ Kanban; giao không kèm the.' }
+        if (!d.external) return { handle, ok: false, error: 'Chưa bật chạy bot ngoài.' }
+        const title = clip((a.title ?? a.task).trim().split('\n')[0]!, 80)
+        try {
+          return await d.external(bot, a, title, agent, signal)
+        } catch (e) {
+          return { handle, name: bot.name, ok: false, error: e instanceof Error ? e.message : String(e) }
+        }
+      }
       // Thẻ có sẵn: kiểm trước khi nhắn bot để không giao nửa vời.
       const ref = a.card?.trim()
       let known: TaskInfo | undefined
@@ -245,16 +267,27 @@ export async function dispatch<A extends { session: { id: string } }>(
 /** Câu trả lời của công cụ cho Commander. */
 export function summarize(results: readonly DispatchResult[]): string {
   const lines = results.map((r) =>
-    r.ok
-      ? `- @${r.handle} (${r.name}): ${r.reused ? 'đã nhắn tiếp' : 'đã nhận việc'}${r.taskId ? `, thẻ ${r.taskId}` : ''}, phiên ${r.sessionId}`
-      : `- @${r.handle}: không giao được — ${r.error}`,
+    !r.ok
+      ? `- @${r.handle}: không giao được — ${r.error}`
+      : r.external
+        ? `- @${r.handle} (${r.name}): đã nhận việc (bot ngoài ${r.external}), việc ngoài ${r.runId}`
+        : `- @${r.handle} (${r.name}): ${r.reused ? 'đã nhắn tiếp' : 'đã nhận việc'}${r.taskId ? `, thẻ ${r.taskId}` : ''}, phiên ${r.sessionId}`,
   )
-  const ok = results.some((r) => r.ok)
+  const team = results.some((r) => r.ok && !r.external)
+  const outside = results.some((r) => r.ok && r.external)
   return [
     ...lines,
-    ok
-      ? 'Dùng wait_agent để đợi; kết quả của bot về thành tin nhắn của đội. Khi đủ kết quả thì tổng hợp trả lời người dùng.'
-      : 'Chưa giao được việc nào.',
+    ...(team
+      ? [
+          'Dùng wait_agent để đợi; kết quả của bot về thành tin nhắn của đội. Khi đủ kết quả thì tổng hợp trả lời người dùng.',
+        ]
+      : []),
+    ...(outside
+      ? [
+          'Bot ngoài làm trọn gói rồi nộp kết quả cuối thành thông báo về đây khi xong (không dùng wait_agent cho bot ngoài). Báo người dùng đã giao, đợi thông báo rồi tổng hợp.',
+        ]
+      : []),
+    ...(team || outside ? [] : ['Chưa giao được việc nào.']),
   ].join('\n')
 }
 
