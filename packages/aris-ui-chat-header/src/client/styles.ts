@@ -12,5 +12,8 @@ export const CSS = `
 .aris-ch .stack>*:first-child{margin-left:0}
 .aris-ch .members{color:var(--a-muted);font-size:12.5px}
 .aris-ch .slash{color:var(--a-muted);font-size:16px;padding:0 2px}
+/* Nút … thay của dsh-session-log-export: cùng kích thước. */
+.aris-more{width:28px;color:var(--dsw-alias-label-secondary);flex:none;padding:0}
+.aris-more svg{width:15px;height:15px}
 [data-conversation-header-leading]:not(:has(+ * nav)) .aris-ch .slash{display:none}
 `

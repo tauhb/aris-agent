@@ -18,6 +18,16 @@ export const EN = {
   'when.yesterday': 'yesterday',
   'project.members': '{n} bots and you',
   'project.label': 'Project {name}, {n} bots and you',
+  'more.label': 'More actions',
+  'more.profile': 'Open profile',
+  'more.download': 'Download session log',
+  'export.preparing': 'Exporting session',
+  'export.preparingHint': 'Preparing a ZIP with this session, its sub-sessions and attachments.',
+  'export.started': 'Session download started',
+  'export.startedHint': 'The browser is downloading the session ZIP.',
+  'export.failed': 'Session export failed',
+  'export.failedHint': 'Could not start the session export.',
+  'export.close': 'Close',
 }
 
 export type HeaderKey = keyof typeof EN
@@ -36,6 +46,16 @@ export const VI: Record<HeaderKey, string> = {
   'when.yesterday': 'hôm qua',
   'project.members': '{n} bot và {you}',
   'project.label': 'Dự án {name}, {n} bot và {you}',
+  'more.label': 'Thao tác khác',
+  'more.profile': 'Mở hồ sơ',
+  'more.download': 'Tải nhật ký phiên',
+  'export.preparing': 'Đang xuất phiên',
+  'export.preparingHint': 'Đang chuẩn bị tệp ZIP gồm phiên này, các phiên con và tệp đính kèm.',
+  'export.started': 'Đã bắt đầu tải phiên',
+  'export.startedHint': 'Trình duyệt đang tải tệp ZIP của phiên.',
+  'export.failed': 'Xuất phiên không thành công',
+  'export.failedHint': 'Không bắt đầu xuất phiên được.',
+  'export.close': 'Đóng',
 }
 
 export type Translate = (key: HeaderKey, params?: Record<string, unknown>) => string

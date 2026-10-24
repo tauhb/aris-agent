@@ -5,11 +5,13 @@
 import { mountKitCss, registerPersonal } from '@aris/ui-kit/react'
 import { Leading, NewSessionButton, SessionSwitcher } from './Header.js'
 import { EN, NS, VI } from './locale.js'
+import { MoreMenu, type LogDownloadState } from './MoreMenu.js'
 import { CSS } from './styles.js'
 
 // Bối cảnh client của dsh; chỉ khai báo phần đầu khung dùng.
 interface ClientContext {
   get(name: string): unknown
+  inject(deps: string[], fn: (scope: ClientContext) => void): void
   effect(fn: () => () => void, label?: string): void
   slots: {
     inject(name: string, fn: () => () => void): void
@@ -80,4 +82,29 @@ export function apply(ctx: ClientContext): void {
       NewSessionButton,
     ),
   )
+
+  // Nút "…": thay menu của dsh-session-log-export (bỏ "Góp ý", thêm "Mở hồ sơ").
+  ctx.inject(['sessionLogDownload'], (scope) => {
+    const logs = scope.get('sessionLogDownload') as {
+      store: unknown
+      download(sessionId: string): Promise<void>
+      dismiss(sessionId: string): void
+    }
+    scope.slots.inject('conversation.session.header.utilities', () =>
+      scope.slots.register(
+        {
+          name: 'conversation.session.header.utilities',
+          id: 'session-log-download',
+          priority: -1,
+          locale: NS,
+          inject: () => ({
+            hooks: { logDownload: logs.store as LogDownloadState },
+            download: (sessionId: string) => void logs.download(sessionId),
+            dismiss: (sessionId: string) => logs.dismiss(sessionId),
+          }),
+        },
+        MoreMenu,
+      ),
+    )
+  })
 }
