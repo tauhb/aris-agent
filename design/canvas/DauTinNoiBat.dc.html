@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Đầu tin nổi bật</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.m{color:var(--muted)}
+.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:13px}
+.opt{flex:1 1 560px;min-width:0;display:flex;flex-direction:column;gap:14px}
+.optHead{display:flex;flex-direction:column;gap:2px;padding:0 4px 12px;border-bottom:1px solid var(--line)}
+.optHead b{font-family:'Lexend',sans-serif;font-size:17px}
+.optHead .m{font-size:13px}
+.thread{display:flex;flex-direction:column;gap:30px;padding-top:8px}
+.ub{align-self:flex-end;max-width:82%;background:var(--ink);color:var(--panel);padding:10px 14px;border-radius:18px 18px 6px 18px;line-height:1.7}
+.turn{display:grid;grid-template-columns:36px minmax(0,1fr);column-gap:12px}
+.gut{display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:1px}
+.rail{display:none;flex:1;width:3px;border-radius:2px;background:color-mix(in srgb,var(--c) 55%,transparent)}
+.opt.b .rail{display:block}
+.col{min-width:0;display:flex;flex-direction:column;gap:8px}
+.head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:32px}
+.nm{font-size:15.5px;font-weight:700}
+.t-light .nm{color:var(--tl)}
+.t-dark .nm{color:var(--td)}
+.role{font-size:11.5px;font-weight:600;border-radius:6px;padding:1px 7px}
+.tm{font-size:12.5px;color:var(--muted)}
+.proc{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--muted);padding-bottom:8px;border-bottom:1px solid var(--line)}
+.txt p{margin:0 0 10px}
+.txt p:last-child{margin:0}
+.acts{display:flex;align-items:center;gap:10px;color:var(--muted)}
+.ic{display:inline-flex}
+.pill{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px 0 2px;margin:0 1px;border-radius:999px;border:1px solid color-mix(in srgb,var(--c) 40%,transparent);background:color-mix(in srgb,var(--c) 14%,transparent);font-size:13px;font-weight:600;line-height:1;vertical-align:-4px;white-space:nowrap}
+.pill.inv{background:color-mix(in srgb,currentColor 14%,transparent);border-color:color-mix(in srgb,currentColor 32%,transparent)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14.5px; line-height: 1.65; min-height: 1200px; box-sizing: border-box; padding: 24px 28px 40px; display: flex; flex-direction: column; gap: 20px">
+  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+    <b style="font-family: 'Lexend', sans-serif; font-size: 18px">Đầu tin nổi bật · hai phương án</b>
+    <span class="m" style="font-size: 13px">Phiên chính của dự án, ba lượt liền nhau: Aris, Thơ, Phát</span>
+    <button type="button" onClick="{{toggleTheme}}" class="b2" style="margin-left: auto">{{themeLabel}}</button>
+  </div>
+  <div style="display: flex; flex-wrap: wrap; gap: 56px; align-items: flex-start">
+    <section class="opt a" aria-label="A · Cột linh vật, tên có màu">
+  <div class="optHead"><b>A · Cột linh vật, tên có màu</b><span class="m">Cả lượt thụt vào thẳng hàng với tên; tên và nhãn vai theo màu linh vật.</span></div>
+  <div class="thread">
+    <div class="ub">Cả nhóm chốt tiêu đề cho bài “AI tiết kiệm thời gian”, <button type="button" class="pill inv" style="--c: #FF309C"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Thơ</button> <button type="button" class="pill inv" style="--c: #FF4D5A"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 16H70C76 16 80 19 82 25L94 74C96 82 91 88 83 88H17C9 88 4 82 6 74L18 25C20 19 24 16 30 16Z" fill="#FF4D5A"></path><path d="M44 44L40 54M56 44L60 54" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Phát</button> góp ý giúp mình.</div>
+    <div class="turn" style="--c: #1084FE; --tl: #1D6FE0; --td: #5AA5FF">
+  <div class="gut"><svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="rail"></span></div>
+  <div class="col">
+    <div class="head"><b class="nm">Aris</b><span class="role" style="background: var(--accentSoft); color: var(--accent)">Điều phối</span><span class="tm">01:52</span></div>
+    <div class="proc">Xong sau 6s<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></div>
+    <div class="txt"><p>Mình mời <button type="button" class="pill" style="--c: #FF309C"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Thơ</button> viết tiêu đề, <button type="button" class="pill" style="--c: #FF4D5A"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 16H70C76 16 80 19 82 25L94 74C96 82 91 88 83 88H17C9 88 4 82 6 74L18 25C20 19 24 16 30 16Z" fill="#FF4D5A"></path><path d="M44 44L40 54M56 44L60 54" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Phát</button> đọc lại theo giọng khách. Mỗi bạn một lượt, xong mình tổng hợp.</p></div>
+    <div class="acts" aria-hidden="true"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg></span><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10v11M15 5l-3 5h7a2 2 0 0 1 2 2l-1.5 7a2 2 0 0 1-2 1.5H7"></path></svg></span><span class="m" style="font-size: 12px">Đã dùng 12,4K tok · 01:52</span></div>
+  </div>
+</div>
+    <div class="turn" style="--c: #FF309C; --tl: #B8156F; --td: #FF72BA">
+  <div class="gut"><svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="rail"></span></div>
+  <div class="col">
+    <div class="head"><b class="nm">Thơ</b><span class="role" style="background: color-mix(in srgb, #FF309C 15%, transparent); color: var(--ink)">Nội dung</span><span class="tm">01:54</span></div>
+    <div class="proc">Xong sau 9s<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></div>
+    <div class="txt"><p>Tiêu đề của Thơ: <b>«AI trả lại cho bạn bao nhiêu giờ mỗi tuần? Đó là con số duy nhất đáng bàn.»</b></p><p>Hai câu cũ bán “cách hỏi” và “sự dễ dàng”; chủ doanh nghiệp nhỏ chỉ tin con số đo được trên chính việc của mình, nên mình đổi sang hướng đo lường.</p><p><button type="button" class="pill" style="--c: #FF4D5A"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 16H70C76 16 80 19 82 25L94 74C96 82 91 88 83 88H17C9 88 4 82 6 74L18 25C20 19 24 16 30 16Z" fill="#FF4D5A"></path><path d="M44 44L40 54M56 44L60 54" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Phát</button> đọc to câu của mình xem có tự nhiên như khách nói không?</p></div>
+    <div class="acts" aria-hidden="true"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg></span><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10v11M15 5l-3 5h7a2 2 0 0 1 2 2l-1.5 7a2 2 0 0 1-2 1.5H7"></path></svg></span><span class="m" style="font-size: 12px">01:54</span></div>
+  </div>
+</div>
+    <div class="turn" style="--c: #FF4D5A; --tl: #C21F2C; --td: #FF8089">
+  <div class="gut"><svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 16H70C76 16 80 19 82 25L94 74C96 82 91 88 83 88H17C9 88 4 82 6 74L18 25C20 19 24 16 30 16Z" fill="#FF4D5A"></path><path d="M44 44L40 54M56 44L60 54" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="rail"></span></div>
+  <div class="col">
+    <div class="head"><b class="nm">Phát</b><span class="role" style="background: color-mix(in srgb, #FF4D5A 15%, transparent); color: var(--ink)">Bán hàng và chăm khách</span><span class="tm">01:55</span></div>
+    <div class="proc">Xong sau 7s<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></div>
+    <div class="txt"><p>Đọc to thì ổn, nhưng khách sẽ hỏi ngay “bao nhiêu giờ là bao nhiêu?”. Mình đề xuất chốt luôn con số: <b>«AI trả lại cho chủ shop 6 giờ mỗi tuần — bạn sẽ làm gì với 6 giờ đó?»</b></p><p><button type="button" class="pill" style="--c: #FF309C"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Thơ</button> giữ ý đo lường của bạn, chỉ thay số cụ thể.</p></div>
+    <div class="acts" aria-hidden="true"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg></span><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10v11M15 5l-3 5h7a2 2 0 0 1 2 2l-1.5 7a2 2 0 0 1-2 1.5H7"></path></svg></span><span class="m" style="font-size: 12px">01:55</span></div>
+  </div>
+</div>
+  </div>
+</section>
+    <div aria-hidden="true" style="width: 1px; align-self: stretch; background: var(--line)"></div>
+    <section class="opt b" aria-label="B · Như A, thêm vạch màu dọc">
+  <div class="optHead"><b>B · Như A, thêm vạch màu dọc</b><span class="m">Vạch mảnh màu linh vật chạy dưới linh vật tới hết lượt.</span></div>
+  <div class="thread">
+    <div class="ub">Cả nhóm chốt tiêu đề cho bài “AI tiết kiệm thời gian”, <button type="button" class="pill inv" style="--c: #FF309C"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Thơ</button> <button type="button" class="pill inv" style="--c: #FF4D5A"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 16H70C76 16 80 19 82 25L94 74C96 82 91 88 83 88H17C9 88 4 82 6 74L18 25C20 19 24 16 30 16Z" fill="#FF4D5A"></path><path d="M44 44L40 54M56 44L60 54" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Phát</button> góp ý giúp mình.</div>
+    <div class="turn" style="--c: #1084FE; --tl: #1D6FE0; --td: #5AA5FF">
+  <div class="gut"><svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="rail"></span></div>
+  <div class="col">
+    <div class="head"><b class="nm">Aris</b><span class="role" style="background: var(--accentSoft); color: var(--accent)">Điều phối</span><span class="tm">01:52</span></div>
+    <div class="proc">Xong sau 6s<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></div>
+    <div class="txt"><p>Mình mời <button type="button" class="pill" style="--c: #FF309C"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Thơ</button> viết tiêu đề, <button type="button" class="pill" style="--c: #FF4D5A"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 16H70C76 16 80 19 82 25L94 74C96 82 91 88 83 88H17C9 88 4 82 6 74L18 25C20 19 24 16 30 16Z" fill="#FF4D5A"></path><path d="M44 44L40 54M56 44L60 54" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Phát</button> đọc lại theo giọng khách. Mỗi bạn một lượt, xong mình tổng hợp.</p></div>
+    <div class="acts" aria-hidden="true"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg></span><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10v11M15 5l-3 5h7a2 2 0 0 1 2 2l-1.5 7a2 2 0 0 1-2 1.5H7"></path></svg></span><span class="m" style="font-size: 12px">Đã dùng 12,4K tok · 01:52</span></div>
+  </div>
+</div>
+    <div class="turn" style="--c: #FF309C; --tl: #B8156F; --td: #FF72BA">
+  <div class="gut"><svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="rail"></span></div>
+  <div class="col">
+    <div class="head"><b class="nm">Thơ</b><span class="role" style="background: color-mix(in srgb, #FF309C 15%, transparent); color: var(--ink)">Nội dung</span><span class="tm">01:54</span></div>
+    <div class="proc">Xong sau 9s<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></div>
+    <div class="txt"><p>Tiêu đề của Thơ: <b>«AI trả lại cho bạn bao nhiêu giờ mỗi tuần? Đó là con số duy nhất đáng bàn.»</b></p><p>Hai câu cũ bán “cách hỏi” và “sự dễ dàng”; chủ doanh nghiệp nhỏ chỉ tin con số đo được trên chính việc của mình, nên mình đổi sang hướng đo lường.</p><p><button type="button" class="pill" style="--c: #FF4D5A"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 16H70C76 16 80 19 82 25L94 74C96 82 91 88 83 88H17C9 88 4 82 6 74L18 25C20 19 24 16 30 16Z" fill="#FF4D5A"></path><path d="M44 44L40 54M56 44L60 54" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Phát</button> đọc to câu của mình xem có tự nhiên như khách nói không?</p></div>
+    <div class="acts" aria-hidden="true"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg></span><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10v11M15 5l-3 5h7a2 2 0 0 1 2 2l-1.5 7a2 2 0 0 1-2 1.5H7"></path></svg></span><span class="m" style="font-size: 12px">01:54</span></div>
+  </div>
+</div>
+    <div class="turn" style="--c: #FF4D5A; --tl: #C21F2C; --td: #FF8089">
+  <div class="gut"><svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 16H70C76 16 80 19 82 25L94 74C96 82 91 88 83 88H17C9 88 4 82 6 74L18 25C20 19 24 16 30 16Z" fill="#FF4D5A"></path><path d="M44 44L40 54M56 44L60 54" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><span class="rail"></span></div>
+  <div class="col">
+    <div class="head"><b class="nm">Phát</b><span class="role" style="background: color-mix(in srgb, #FF4D5A 15%, transparent); color: var(--ink)">Bán hàng và chăm khách</span><span class="tm">01:55</span></div>
+    <div class="proc">Xong sau 7s<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></div>
+    <div class="txt"><p>Đọc to thì ổn, nhưng khách sẽ hỏi ngay “bao nhiêu giờ là bao nhiêu?”. Mình đề xuất chốt luôn con số: <b>«AI trả lại cho chủ shop 6 giờ mỗi tuần — bạn sẽ làm gì với 6 giờ đó?»</b></p><p><button type="button" class="pill" style="--c: #FF309C"><svg width="18" height="18" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Thơ</button> giữ ý đo lường của bạn, chỉ thay số cụ thể.</p></div>
+    <div class="acts" aria-hidden="true"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg></span><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10v11M15 5l-3 5h7a2 2 0 0 1 2 2l-1.5 7a2 2 0 0 1-2 1.5H7"></path></svg></span><span class="m" style="font-size: 12px">01:55</span></div>
+  </div>
+</div>
+  </div>
+</section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'light';
+    return {
+      themeClass: 't-' + theme,
+      themeLabel: theme === 'dark' ? 'Sáng' : 'Tối',
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' })
+    };
+  }
+}
+</script>
+</body>
+</html>
