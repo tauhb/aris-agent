@@ -611,7 +611,7 @@ export async function skillsApi(
           // Thành công: tỉ lệ đạt của lần kiểm thử gần nhất (bản so sánh → bản thử).
           success: sum?.cases
             ? {
-                base: e!.base ? sum.pass.base / sum.cases : null,
+                base: sum.pass.base / sum.cases,
                 cand: sum.pass.cand / sum.cases,
                 version: e!.version,
               }
