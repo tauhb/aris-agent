@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Kết nối nền tảng theo bot</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2,h3{font-family:'Lexend',sans-serif;letter-spacing:-.01em;margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FBE7E7}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A1A}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:36px;padding:0 14px;border:0;border-radius:10px;background:var(--ink);color:var(--panel);font-size:13px;font-weight:600}
+.b2{height:36px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font-size:13px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.m{color:var(--muted)}
+.lb{font-size:12px;font-weight:600;color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.tab{border:0;background:transparent;padding:10px 2px;margin-right:18px;font-size:13.5px;color:var(--muted);border-bottom:2px solid transparent}
+.row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.tag{font-size:11.5px;border-radius:6px;padding:1px 7px;background:var(--panel2);color:var(--muted)}
+.logo{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex:none}
+.st{font-size:12px;font-weight:600}
+.cap{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.inp{height:36px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);padding:0 10px;font-size:13px;width:100%;box-sizing:border-box;font-family:inherit}
+.preset{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:9px 10px;font-size:13px;text-align:left}
+.preset[aria-pressed="true"]{border-color:var(--accent);background:var(--accentSoft)}
+.sw{width:34px;height:20px;border-radius:999px;background:var(--ok);position:relative;flex:none;border:0}
+.sw::after{content:"";position:absolute;top:2px;left:16px;width:16px;height:16px;border-radius:50%;background:#fff}
+.sw.off{background:var(--line)}
+.sw.off::after{left:2px}
+.radio{display:flex;gap:10px;align-items:flex-start;padding:8px 0;font-size:13px}
+.note{display:flex;gap:10px;align-items:flex-start;border-radius:10px;padding:10px 12px;font-size:12.5px}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 1000px; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px">
+  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+    <h2 style="font-size: 20px">2.2c · Kết nối nền tảng (MCP) theo bot</h2>
+    <span class="m" style="font-size: 13px">Mỗi bot có kết nối riêng: Khoa dùng GitHub, Thơ dùng Notion… Bot khác không thấy công cụ của kết nối này.</span>
+    <button type="button" class="ib" style="margin-left: auto" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+  </div>
+
+  <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start">
+
+    <!-- A · Hồ sơ bot, tab Skill & tool -->
+    <section aria-label="Hồ sơ bot Khoa, tab Skill và tool" style="flex: 1 1 620px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+      <div class="cap">A · Hồ sơ Khoa · tab Skill &amp; tool</div>
+      <div class="card" style="overflow: hidden; background: var(--bg)">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 16px 20px 0">
+          <svg width="44" height="44" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><rect x="12" y="12" width="76" height="76" rx="22" fill="#22A06B"></rect><circle cx="42" cy="48" r="7" fill="#fff"></circle><circle cx="60" cy="48" r="7" fill="#fff"></circle></svg>
+          <div style="display: flex; flex-direction: column">
+            <span style="font-size: 18px; font-weight: 700">Khoa</span>
+            <span class="m" style="font-size: 12.5px">@khoa · Kỹ thuật</span>
+          </div>
+        </div>
+        <div role="tablist" aria-label="Hồ sơ bot" style="display: flex; flex-wrap: wrap; padding: 6px 20px 0; border-bottom: 1px solid var(--line)">
+          <span class="tab">Tính cách</span><span class="tab">Model</span>
+          <span class="tab" style="color: var(--ink); border-bottom-color: var(--ink); font-weight: 600">Skill &amp; tool</span>
+          <span class="tab">Quyền &amp; kênh</span><span class="tab">Ký ức</span>
+        </div>
+        <div style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 14px">
+          <div class="card">
+            <div style="padding: 12px 14px; display: flex; align-items: center; gap: 10px">
+              <div style="display: flex; flex-direction: column">
+                <b>Kết nối nền tảng · 2</b>
+                <span class="m" style="font-size: 12.5px">Máy chủ MCP chỉ Khoa dùng được. Công cụ hiện trong chat dạng “GitHub · tạo issue”.</span>
+              </div>
+              <button type="button" class="b2" style="margin-left: auto; height: 32px" onClick="{{openAdd}}">+ Thêm kết nối</button>
+            </div>
+            <div class="row">
+              <span class="logo" style="background: #24292F">G</span>
+              <div style="display: flex; flex-direction: column; min-width: 0; flex: 1">
+                <span><b>GitHub</b> <span class="m" style="font-size: 12.5px">· máy chủ chính thức qua URL</span></span>
+                <span class="m" style="font-size: 12.5px">12 công cụ · tạo issue, đọc PR, tìm mã… · hỏi anh trước khi ghi</span>
+              </div>
+              <span class="st" style="color: var(--ok)">● đã kết nối</span>
+              <button type="button" class="sw" aria-label="Tắt GitHub cho Khoa" aria-pressed="true"></button>
+              <button type="button" class="ib" aria-label="Sửa, kiểm tra lại hoặc gỡ GitHub">⋯</button>
+            </div>
+            <div class="row">
+              <span class="logo" style="background: #00B8A9">L</span>
+              <div style="display: flex; flex-direction: column; min-width: 0; flex: 1">
+                <span><b>Lark</b> <span class="m" style="font-size: 12.5px">· lệnh trên máy · npx @larksuiteoapi/lark-mcp</span></span>
+                <span style="font-size: 12.5px; color: var(--danger)">Không kết nối được: App Secret sai hoặc đã hết hạn</span>
+              </div>
+              <span class="st" style="color: var(--danger)">● lỗi</span>
+              <button type="button" class="b2" style="height: 30px">Sửa</button>
+              <button type="button" class="ib" aria-label="Sửa, kiểm tra lại hoặc gỡ Lark">⋯</button>
+            </div>
+          </div>
+          <div class="card">
+            <div style="padding: 12px 14px"><b>Bộ công cụ</b></div>
+            <label class="row"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--accent)">Tìm và đọc web</label>
+            <label class="row"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--accent)">Đọc tệp, PDF, Office</label>
+            <label class="row"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--accent)">Chạy lệnh terminal</label>
+          </div>
+          <div class="note" style="background: var(--panel2)">
+            <span class="m" style="font-size: 16px; line-height: 1">ⓘ</span>
+            <span class="m">Kết nối mới có hiệu lực ở phiên mới của Khoa (và lần Aris giao việc tiếp theo). Nhân bản Khoa thì bản sao không mang theo khoá của kết nối.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- B · Hộp Thêm kết nối -->
+    <section aria-label="Hộp thêm kết nối" style="flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+      <div class="cap">B · Hộp “Thêm kết nối cho Khoa”</div>
+      <div class="card" role="dialog" aria-label="Thêm kết nối cho Khoa" style="padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 18px 50px rgba(0,0,0,.12)">
+        <div style="display: flex; align-items: center"><h3 style="font-size: 17px">Thêm kết nối cho Khoa</h3><button type="button" class="ib" style="margin-left: auto" aria-label="Đóng">✕</button></div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px" role="group" aria-label="Chọn nền tảng">
+          <button type="button" class="preset" aria-pressed="{{pr.github}}" onClick="{{pick.github}}"><span class="logo" style="background: #24292F">G</span><span><b>GitHub</b><br><span class="m" style="font-size: 12px">issue, PR, mã</span></span></button>
+          <button type="button" class="preset" aria-pressed="{{pr.lark}}" onClick="{{pick.lark}}"><span class="logo" style="background: #00B8A9">L</span><span><b>Lark</b><br><span class="m" style="font-size: 12px">Docs, Base, tin nhắn</span></span></button>
+          <button type="button" class="preset" aria-pressed="{{pr.notion}}" onClick="{{pick.notion}}"><span class="logo" style="background: #191919">N</span><span><b>Notion</b><br><span class="m" style="font-size: 12px">trang, cơ sở dữ liệu</span></span></button>
+          <button type="button" class="preset" aria-pressed="{{pr.custom}}" onClick="{{pick.custom}}"><span class="logo" style="background: var(--panel2); color: var(--ink)">+</span><span><b>Tự thêm</b><br><span class="m" style="font-size: 12px">lệnh trên máy hoặc URL</span></span></button>
+        </div>
+
+        <sc-if value="{{show.github}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <label style="display: flex; flex-direction: column; gap: 4px"><span class="lb">Personal access token của GitHub</span><input class="inp mono" type="password" value="github_pat_••••••••••••" aria-label="Token GitHub"><span class="m" style="font-size: 12px">Tạo ở GitHub › Settings › Developer settings; chỉ cấp quyền repo Khoa cần. Lưu trên máy này, không hiện lại.</span></label>
+          </div>
+        </sc-if>
+        <sc-if value="{{show.lark}}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+            <label style="display: flex; flex-direction: column; gap: 4px"><span class="lb">App ID</span><input class="inp mono" value="cli_a1b2c3" aria-label="App ID Lark"></label>
+            <label style="display: flex; flex-direction: column; gap: 4px"><span class="lb">App Secret</span><input class="inp mono" type="password" value="••••••••" aria-label="App Secret Lark"></label>
+          </div>
+        </sc-if>
+        <sc-if value="{{show.notion}}" hint-placeholder-val="{{ false }}">
+          <label style="display: flex; flex-direction: column; gap: 4px"><span class="lb">Integration token của Notion</span><input class="inp mono" type="password" value="ntn_••••••••" aria-label="Token Notion"><span class="m" style="font-size: 12px">Nhớ chia sẻ trang cần dùng cho integration trong Notion.</span></label>
+        </sc-if>
+        <sc-if value="{{show.custom}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <label style="display: flex; flex-direction: column; gap: 4px"><span class="lb">Tên hiển thị</span><input class="inp" value="Trello" aria-label="Tên kết nối"></label>
+            <div style="display: flex; gap: 6px"><button type="button" class="b2" style="height: 30px; border-color: var(--accent); background: var(--accentSoft)">Lệnh trên máy</button><button type="button" class="b2" style="height: 30px">URL</button></div>
+            <label style="display: flex; flex-direction: column; gap: 4px"><span class="lb">Lệnh khởi chạy</span><input class="inp mono" value="npx -y @delorenj/mcp-server-trello" aria-label="Lệnh khởi chạy"></label>
+            <label style="display: flex; flex-direction: column; gap: 4px"><span class="lb">Biến môi trường (mỗi dòng TÊN=giá trị, giá trị được giấu)</span><input class="inp mono" value="TRELLO_API_KEY=••••••" aria-label="Biến môi trường"></label>
+          </div>
+        </sc-if>
+
+        <div>
+          <div class="lb" style="padding-bottom: 2px">Khi Khoa dùng công cụ của kết nối này</div>
+          <label class="radio"><input type="radio" name="ask" checked style="accent-color: var(--accent); margin-top: 3px"><span><b>Hỏi anh trước khi ghi</b><br><span class="m">Đọc, tìm thì tự làm; tạo, sửa, xoá thì xin duyệt (thanh duyệt, Telegram).</span></span></label>
+          <label class="radio"><input type="radio" name="ask" style="accent-color: var(--accent); margin-top: 3px"><span><b>Hỏi trước mỗi lần dùng</b></span></label>
+          <label class="radio"><input type="radio" name="ask" style="accent-color: var(--accent); margin-top: 3px"><span><b>Tự dùng</b> <span class="m">· không hỏi</span></span></label>
+        </div>
+
+        <div class="note" style="background: var(--okSoft)">
+          <span style="color: var(--ok); font-weight: 700">✓</span>
+          <span><b>Kết nối được</b> · 12 công cụ: <span class="mono" style="font-size: 12px">create_issue, get_pull_request, search_code, list_commits</span> <span class="m">+8</span></span>
+        </div>
+
+        <div style="display: flex; gap: 8px; align-items: center; border-top: 1px solid var(--line); padding-top: 14px">
+          <button type="button" class="b2">Kiểm tra kết nối</button>
+          <span style="flex: 1"></span>
+          <button type="button" class="b2">Huỷ</button>
+          <button type="button" class="b1">Thêm cho Khoa</button>
+        </div>
+      </div>
+      <div class="note" style="background: var(--panel2)">
+        <span class="m" style="font-size: 16px; line-height: 1">ⓘ</span>
+        <span class="m">GitHub, Lark, Notion là mẫu điền sẵn. “Tự thêm” nhận mọi máy chủ MCP: lệnh trên máy (stdio) hoặc URL (HTTP). Lần đầu chạy lệnh npx sẽ tải gói về máy.</span>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const p = s.preset || 'github';
+    const ids = ['github', 'lark', 'notion', 'custom'];
+    const pr = {}, show = {}, pick = {};
+    ids.forEach((id) => {
+      pr[id] = id === p ? 'true' : 'false';
+      show[id] = id === p;
+      pick[id] = () => this.setState({ preset: id });
+    });
+    return {
+      themeClass: 't-' + theme, pr: pr, show: show, pick: pick,
+      openAdd: () => this.setState({ preset: 'github' }),
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' })
+    };
+  }
+}
+</script>
+</body>
+</html>
