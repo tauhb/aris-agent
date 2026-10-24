@@ -46,42 +46,24 @@ const cells = (line: string) =>
     .split('|')
     .map((c) => c.trim())
 
-/** Bỏ ký hiệu Markdown trong ô để căn cột cho thẳng. */
+/** Bỏ ký hiệu Markdown trong tên cột. */
 const plainCell = (c: string) => c.replace(/\*\*|__|~~|`/g, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
 
-/** Độ rộng hiển thị (chữ CJK và emoji chiếm hai cột). */
-function width(s: string): number {
-  let w = 0
-  for (const ch of s) w += /[ᄀ-ᅟ⺀-꓏가-힣豈-﫿︰-﹏＀-｠￠-￦\u{1F300}-\u{1FAFF}]/u.test(ch) ? 2 : 1
-  return w
-}
-
-/** Bảng: danh sách theo dòng nếu nhỏ, khối chữ thẳng cột nếu lớn. */
+/**
+ * Bảng thành danh sách theo dòng: ô đầu in đậm, các ô sau "tên cột: nội dung". Telegram không có bảng,
+ * và khối chữ thẳng cột gãy dòng trên điện thoại nên không dùng, kể cả bảng lớn.
+ */
 export function table(header: string[], rows: string[][]): string {
-  const cols = header.length
-  const small = cols <= 4 && rows.length <= 15 && rows.every((r) => r.every((c) => plainCell(c).length <= 60))
-  if (small) {
-    return rows
-      .map((r) => {
-        const [first = '', ...rest] = r
-        const lines = [`• <b>${inline(first)}</b>`]
-        rest.forEach((c, i) => {
-          if (c) lines.push(`   ${escapeHtml(plainCell(header[i + 1] ?? ''))}: ${inline(c)}`)
-        })
-        return lines.join('\n')
-      })
-      .join('\n')
-  }
-  const all = [header, ...rows].map((r) => Array.from({ length: cols }, (_, i) => plainCell(r[i] ?? '')))
-  const widths = Array.from({ length: cols }, (_, i) => Math.max(...all.map((r) => width(r[i]!))))
-  const pad = (s: string, w: number) => s + ' '.repeat(Math.max(0, w - width(s)))
-  const line = (r: string[]) =>
-    r
-      .map((c, i) => pad(c, widths[i]!))
-      .join(' │ ')
-      .trimEnd()
-  const rule = widths.map((w) => '─'.repeat(w)).join('─┼─')
-  return `<pre>${escapeHtml([line(all[0]!), rule, ...all.slice(1).map(line)].join('\n'))}</pre>`
+  const items = rows.map((r) => {
+    const [first = '', ...rest] = r
+    const lines = [`• <b>${inline(first)}</b>`]
+    rest.forEach((c, i) => {
+      if (c) lines.push(`   ${escapeHtml(plainCell(header[i + 1] ?? ''))}: ${inline(c)}`)
+    })
+    return lines
+  })
+  // Mục nhiều dòng thì cách nhau một dòng trống cho dễ đọc.
+  return items.map((l) => l.join('\n')).join(items.some((l) => l.length > 2) ? '\n\n' : '\n')
 }
 
 /** Chia Markdown thành các khối HTML (đoạn, khối mã, bảng, trích dẫn…). */

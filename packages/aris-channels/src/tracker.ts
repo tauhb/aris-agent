@@ -34,7 +34,8 @@ const textOf = (blocks: readonly Block[]) =>
 
 interface TurnState {
   ours: Pending[]
-  lastText: string
+  /** Chữ của mọi tin trả lời trong lượt, theo thứ tự (viết, gọi công cụ, viết tiếp…). */
+  texts: string[]
 }
 
 /** Sự kiện phiên ở dạng tối thiểu tracker cần. */
@@ -68,7 +69,7 @@ export class TurnTracker {
   onEvent(sessionId: string, event: TrackedEvent): TurnResult | undefined {
     switch (event.type) {
       case 'turn/start':
-        this.turns.set(sessionId, { ours: [], lastText: '' })
+        this.turns.set(sessionId, { ours: [], texts: [] })
         this.drafts.delete(sessionId)
         return undefined
       case 'user/message': {
@@ -76,7 +77,7 @@ export class TurnTracker {
         const p = id === undefined ? undefined : this.pending.get(id)
         if (!p) return undefined
         this.pending.delete(p.messageId)
-        const turn = this.turns.get(sessionId) ?? { ours: [], lastText: '' }
+        const turn = this.turns.get(sessionId) ?? { ours: [], texts: [] }
         turn.ours.push(p)
         this.turns.set(sessionId, turn)
         return undefined
@@ -86,7 +87,9 @@ export class TurnTracker {
           ?.content
         const text = content ? textOf(content) : ''
         const turn = this.turns.get(sessionId)
-        if (turn && text) turn.lastText = text
+        if (turn && text) turn.texts.push(text)
+        // Bước đã chốt: chữ đang viết của bước đó đã nằm trong `texts`.
+        this.drafts.delete(sessionId)
         return undefined
       }
       case 'turn/end': {
@@ -97,19 +100,23 @@ export class TurnTracker {
         const reason = (event.data as { reason?: TurnResult['reason'] } | undefined)?.reason ?? {
           kind: 'completed',
         }
-        return { sessionId, ours: turn.ours, text: turn.lastText, reason }
+        return { sessionId, ours: turn.ours, text: turn.texts.join('\n\n'), reason }
       }
       default:
         return undefined
     }
   }
 
-  /** Khung luồng chữ của agent; trả chữ đang viết nếu lượt hiện tại là của kênh. */
+  /**
+   * Khung luồng chữ của agent; trả chữ đang hiện của lượt nếu lượt là của kênh: các đoạn đã chốt
+   * nối với đoạn đang viết, để phần đã trả lời không biến mất khi bot viết tiếp.
+   */
   onStream(
     sessionId: string,
     frame: { type: string; attemptId?: string; chunk?: { type: string; text?: string } },
   ): string | undefined {
-    if (!this.turns.get(sessionId)?.ours.length) return undefined
+    const turn = this.turns.get(sessionId)
+    if (!turn?.ours.length) return undefined
     if (frame.type === 'start') {
       this.drafts.set(sessionId, { attempt: frame.attemptId ?? '', text: '' })
       return undefined
@@ -122,6 +129,6 @@ export class TurnTracker {
     }
     d.text += frame.chunk.text ?? ''
     this.drafts.set(sessionId, d)
-    return d.text
+    return [...turn.texts, d.text].filter((t) => t.trim()).join('\n\n')
   }
 }

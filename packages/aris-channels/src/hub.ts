@@ -6,7 +6,7 @@
 import { commandAllowed, decide, type Trust } from './access.js'
 import { T } from './copy.js'
 import type { BotRecord, InboxRecord, OutboxRecord } from './domain.js'
-import { textToVoice, transcribe, type SpeechToText } from './media.js'
+import { sttNotReady, textToVoice, transcribe, type SpeechToText } from './media.js'
 import { ChannelStore, keyNum, threadKey } from './store.js'
 import { TelegramApi, TelegramError, type Fetch } from './telegram/api.js'
 import { escapeHtml, isSilent, preview, toTelegramHtml } from './telegram/format.js'
@@ -466,7 +466,11 @@ export class ChannelHub {
         const heard = await transcribe(this.d.stt, data, AbortSignal.timeout(120_000))
         body = [body, `${T.voiceNote} ${heard}`].filter(Boolean).join('\n')
       } catch (e) {
-        await this.reply(rt.api, m, T.voiceFail(e instanceof Error ? e.message : String(e)))
+        await this.reply(
+          rt.api,
+          m,
+          sttNotReady(e) ? T.voiceNotReady : T.voiceFail(e instanceof Error ? e.message : String(e)),
+        )
         if (!body) return undefined
       }
     }

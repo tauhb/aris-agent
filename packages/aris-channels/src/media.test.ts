@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ffmpegPath, speakable, textToVoice, toWav16k, transcribe } from './media.js'
+import { ffmpegPath, speakable, textToVoice, toWav16k, transcribe, sttNotReady } from './media.js'
 
 describe('âm thanh', () => {
   it('bỏ ký hiệu Markdown khi đọc thành tiếng', () => {
@@ -26,4 +26,11 @@ describe('âm thanh', () => {
     },
     20_000,
   )
+})
+
+describe('giọng nói chưa chuẩn bị', () => {
+  it('nhận ra lời báo của dsh khi chưa tải mô hình', () => {
+    expect(sttNotReady(new Error('Prepare the local speech provider before recording'))).toBe(true)
+    expect(sttNotReady(new Error('ffmpeg exited 1'))).toBe(false)
+  })
 })

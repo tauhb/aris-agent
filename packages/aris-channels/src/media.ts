@@ -70,6 +70,10 @@ export interface SpeechToText {
   transcribe(spec: never, signal: AbortSignal): Promise<{ text: string }>
 }
 
+/** Bộ nhận giọng nói của dsh chưa tải mô hình (cần chuẩn bị một lần trên web). */
+export const sttNotReady = (e: unknown) =>
+  /prepare|not prepared|not ready/i.test(e instanceof Error ? e.message : String(e))
+
 export async function transcribe(
   stt: SpeechToText | undefined,
   audio: Uint8Array,

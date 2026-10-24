@@ -25,10 +25,16 @@ describe('định dạng Telegram', () => {
     expect(blocks(md)).toEqual(['• <b>T2</b>\n   Việc: <b>Quay</b> video\n• <b>T3</b>\n   Việc: Họp'])
   })
 
-  it('bảng lớn thành khối chữ thẳng cột', () => {
-    const header = ['A', 'B', 'C', 'D', 'E']
-    const out = table(header, [['1', '2', '3', '4', '5']])
-    expect(out).toBe('<pre>A │ B │ C │ D │ E\n──┼───┼───┼───┼──\n1 │ 2 │ 3 │ 4 │ 5</pre>')
+  it('bảng lớn cũng thành danh sách, mục nhiều dòng cách nhau dòng trống', () => {
+    const header = ['#', 'Phong cách', 'Hợp với', 'Lưu ý', 'Nguồn']
+    const out = table(header, [
+      ['1', 'Đời thường', 'Facebook', 'Tránh nhìn ống kính', 'Tự soạn'],
+      ['2', 'Flat-lay', 'Bài hướng dẫn', '', 'Tự soạn'],
+    ])
+    expect(out).toBe(
+      '• <b>1</b>\n   Phong cách: Đời thường\n   Hợp với: Facebook\n   Lưu ý: Tránh nhìn ống kính\n   Nguồn: Tự soạn' +
+        '\n\n• <b>2</b>\n   Phong cách: Flat-lay\n   Hợp với: Bài hướng dẫn\n   Nguồn: Tự soạn',
+    )
   })
 
   it('chia tin dài theo khối, khối mã dài chia theo dòng giữ thẻ', () => {

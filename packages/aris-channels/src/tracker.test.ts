@@ -17,7 +17,7 @@ const text = (t: string) => ({
 })
 
 describe('theo dõi lượt', () => {
-  it('lượt chứa tin của kênh: giao câu trả lời cuối có chữ', () => {
+  it('lượt chứa tin của kênh: giao mọi đoạn trả lời của lượt, theo thứ tự', () => {
     const t = new TurnTracker()
     t.expect(p('m1'))
     t.onEvent('s', { type: 'turn/start' })
@@ -26,7 +26,11 @@ describe('theo dõi lượt', () => {
     t.onEvent('s', { type: 'assistant/message', data: { message: { content: [{ type: 'tool-call' }] } } })
     t.onEvent('s', text('Xong: 490k'))
     const r = t.onEvent('s', { type: 'turn/end', data: { reason: { kind: 'completed' } } })
-    expect(r).toMatchObject({ sessionId: 's', text: 'Xong: 490k', ours: [{ messageId: 'm1' }] })
+    expect(r).toMatchObject({
+      sessionId: 's',
+      text: 'Đang tra cứu…\n\nXong: 490k',
+      ours: [{ messageId: 'm1' }],
+    })
   })
 
   it('lượt anh gõ trên web vào cùng phiên: không giao ra kênh', () => {
@@ -67,5 +71,8 @@ describe('theo dõi lượt', () => {
       t.onStream('s', { type: 'chunk', attemptId: 'a', chunk: { type: 'reasoning-delta', text: '…' } }),
     ).toBeUndefined()
     expect(t.onStream('s', chunk('b', 'Bước 2'))).toBe('Bước 2')
+    // Bước đã chốt vẫn hiện khi bot viết tiếp (tin chèn giữa lượt không mất câu trả lời).
+    t.onEvent('s', text('Bước 2 xong.'))
+    expect(t.onStream('s', chunk('c', 'Còn câu'))).toBe('Bước 2 xong.\n\nCòn câu')
   })
 })

@@ -99,6 +99,8 @@ export const T = {
   stoppedTurn: 'Đã dừng việc này.',
   failedTurn: (e: string) => `Bot gặp lỗi: ${h(e)}`,
   voiceFail: (e: string) => `Chưa nghe được ghi âm: ${h(e)}`,
+  voiceNotReady:
+    'Máy chưa có mô hình nhận giọng nói nên chưa nghe được ghi âm. Mở aris trên web, bấm nút micro ở ô nhập rồi chọn chuẩn bị (tải mô hình một lần, chạy ngay trên máy). Xong thì gửi lại ghi âm nhé.',
   fileTooBig: 'Tệp lớn hơn 20 MB, Telegram không cho bot tải. Gửi qua web nhé.',
   fileFail: (e: string) => `Chưa nhận được tệp: ${h(e)}`,
   voiceNote: '🎙️ (ghi âm)',
