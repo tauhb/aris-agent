@@ -11,15 +11,37 @@ export interface SkillRecord {
   name: string
   description: string
   whenToUse?: string | undefined
-  /** draft: chưa bản nào được duyệt; active: có bản đang dùng; rejected: bản đầu bị từ chối. */
-  status: 'draft' | 'active' | 'rejected'
+  /**
+   * draft: chưa bản nào được duyệt; active: có bản đang dùng; archived: cất vào kho (không nạp cho
+   * bot; người dọn kho hay người dùng cất); rejected: bản đầu bị từ chối.
+   */
+  status: 'draft' | 'active' | 'archived' | 'rejected'
   /** Bản đang dùng (0 khi chưa có). */
   version: number
   uses: number
   lastUsedAt?: string | undefined
+  /** Lúc bật bản đầu tiên (tính "ít dùng" khi chưa dùng lần nào). */
+  activatedAt?: string | undefined
+  /** Ghim: người dọn kho không động tới. */
+  pinned?: boolean | undefined
+  archivedAt?: string | undefined
+  archivedBy?: 'user' | 'curator' | undefined
+  /** Ca thử: yêu cầu thật của người dùng dẫn tới skill (5 ca gần nhất). */
+  cases?: Case[] | undefined
   createdAt: string
   updatedAt: string
 }
+
+export interface Case {
+  request: string
+  sessionId?: string | undefined
+  at: string
+}
+
+/** Ít dùng sau ngần này ngày không dùng; cất vào kho sau ngần này ngày. */
+export const STALE_DAYS = 14
+export const ARCHIVE_DAYS = 30
+const KEEP_CASES = 5
 
 export interface Review {
   at: string
@@ -73,6 +95,8 @@ export interface ProposeInput {
   why?: string | undefined
   quote?: string | undefined
   sessionId?: string | undefined
+  /** Yêu cầu của người dùng trong đoạn vòng học đọc: thành ca thử. */
+  cases?: readonly string[] | undefined
 }
 
 export type SkillEvent =
@@ -182,8 +206,88 @@ export class SkillStore {
       at,
     }
     await this.versions.put(v.id, v)
+    for (const request of input.cases ?? []) await this.addCase(id, { request, sessionId: input.sessionId })
     this.emit({ type: 'opened', version: v, patch: !!current })
     return v
+  }
+
+  /** Thêm một ca thử (bỏ trùng, giữ 5 ca gần nhất). */
+  async addCase(id: string, c: { request: string; sessionId?: string | undefined }): Promise<void> {
+    const s = this.get(id)
+    const request = c.request.trim().slice(0, 2000)
+    if (!s || request.length < 8) return
+    const at = this.now().toISOString()
+    const rest = (s.cases ?? []).filter((x) => x.request !== request)
+    const cases = [...rest, { request, at, ...(c.sessionId ? { sessionId: c.sessionId } : {}) }].slice(
+      -KEEP_CASES,
+    )
+    await this.skills.put(id, { ...s, cases })
+  }
+
+  async pin(id: string, on: boolean): Promise<SkillRecord> {
+    return this.patch(id, () => ({ pinned: on || undefined }))
+  }
+
+  /** Tắt: cất vào kho, không nạp cho bot nữa. */
+  async archive(id: string, by: 'user' | 'curator'): Promise<SkillRecord> {
+    return this.patch(id, (s) => {
+      if (s.status !== 'active') throw new SkillError('Chỉ cất được skill đang dùng.')
+      return { status: 'archived', archivedAt: this.now().toISOString(), archivedBy: by }
+    })
+  }
+
+  /** Dùng lại skill đã cất: đếm lại từ hôm nay để không bị cất ngay. */
+  async unarchive(id: string): Promise<SkillRecord> {
+    return this.patch(id, (s) => {
+      if (s.status !== 'archived' || !s.version) throw new SkillError('Skill này không nằm trong kho.')
+      return {
+        status: 'active',
+        archivedAt: undefined,
+        archivedBy: undefined,
+        activatedAt: this.now().toISOString(),
+        lastUsedAt: undefined,
+      }
+    })
+  }
+
+  /** Số ngày từ lần dùng cuối (chưa dùng thì từ lúc bật). */
+  idleDays(s: SkillRecord): number {
+    const since = Date.parse(s.lastUsedAt ?? s.activatedAt ?? s.updatedAt)
+    return Math.floor((this.now().getTime() - since) / 86_400_000)
+  }
+
+  /** Ít dùng: đang dùng, không ghim, quá 14 ngày không dùng. */
+  isStale(s: SkillRecord): boolean {
+    return s.status === 'active' && !s.pinned && this.idleDays(s) >= STALE_DAYS
+  }
+
+  /** Người dọn kho: cất skill đang dùng, không ghim, quá 30 ngày không dùng. Trả tên đã cất. */
+  async curate(): Promise<string[]> {
+    const out: string[] = []
+    for (const s of this.list())
+      if (s.status === 'active' && !s.pinned && this.idleDays(s) >= ARCHIVE_DAYS) {
+        await this.archive(s.id, 'curator')
+        out.push(s.id)
+      }
+    return out
+  }
+
+  /** Mọi skill và các bản (sao lưu ra tệp). */
+  backup(): { at: string; skills: SkillRecord[]; versions: VersionRecord[] } {
+    return {
+      at: this.now().toISOString(),
+      skills: [...this.skills.entries()].map(([, s]) => s),
+      versions: [...this.versions.entries()].map(([, v]) => v),
+    }
+  }
+
+  private async patch(id: string, fn: (s: SkillRecord) => Partial<SkillRecord>): Promise<SkillRecord> {
+    const s = this.get(id)
+    if (!s) throw new SkillError('Không có skill này.')
+    const next: SkillRecord = { ...s, ...fn(s), updatedAt: this.now().toISOString() }
+    for (const k of Object.keys(next) as (keyof SkillRecord)[]) if (next[k] === undefined) delete next[k]
+    await this.skills.put(id, next)
+    return next
   }
 
   /** Duyệt và bật một bản đề xuất (có thể kèm thân đã sửa: "Sửa rồi bật"). */
@@ -283,6 +387,7 @@ export class SkillStore {
     await this.skills.put(s.id, {
       ...s,
       status: 'active',
+      activatedAt: s.activatedAt ?? this.now().toISOString(),
       version: v.version,
       description: v.description,
       ...(v.whenToUse ? { whenToUse: v.whenToUse } : {}),

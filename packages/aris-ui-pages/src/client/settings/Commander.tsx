@@ -16,8 +16,7 @@ import {
 import { useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Later } from '../team/BotTools.js'
-import { Bot, Col } from '../ui.js'
-import { DEMO_COMMANDER as C } from './demo.js'
+import { Col } from '../ui.js'
 
 const KIND_TONE = { delegate: 'accent', self: 'muted', handoff: 'ok', helpers: 'muted' } as const
 
@@ -40,26 +39,43 @@ interface Settings {
   approve: string[]
 }
 
+/** Bot × loại việc Commander đã học từ các lần giao (`learned` của `/api/aris/commander`). */
+interface Learned {
+  bot: string
+  kind: string
+  times: number
+  done: number
+  failed: number
+  last: string
+}
+
 const endpoint = () => new URL('api/aris/commander', document.baseURI)
 
 function useCommander(): {
   log: Dispatch[] | null
+  learned: Learned[] | null
   settings: Settings | null
   /** Lưu phần sửa; lỗi (nếu có) ghi theo từng ô, trả về đã lưu được chưa. */
   save: (patch: Partial<Record<keyof Settings, unknown>>) => Promise<boolean>
   errors: Partial<Record<keyof Settings, string>>
 } {
   const [log, setLog] = useState<Dispatch[] | null>(null)
+  const [learned, setLearned] = useState<Learned[] | null>(null)
   const [settings, setSettings] = useState<Settings | null>(null)
   const [errors, setErrors] = useState<Partial<Record<keyof Settings, string>>>({})
   useEffect(() => {
     let live = true
     const load = () =>
       fetch(endpoint(), { credentials: 'same-origin' })
-        .then((r) => (r.ok ? (r.json() as Promise<{ recent: Dispatch[]; settings?: Settings }>) : undefined))
+        .then((r) =>
+          r.ok
+            ? (r.json() as Promise<{ recent: Dispatch[]; settings?: Settings; learned?: Learned[] }>)
+            : undefined,
+        )
         .then((d) => {
           if (!live || !d) return
           setLog(d.recent)
+          setLearned(d.learned ?? [])
           if (d.settings) setSettings((cur) => cur ?? d.settings!)
         })
         .catch(() => {})
@@ -83,7 +99,7 @@ function useCommander(): {
     if (out.settings) setSettings(out.settings)
     return !!out.settings
   }
-  return { log, settings, save, errors }
+  return { log, learned, settings, save, errors }
 }
 
 /** Ô số lưu khi rời ô hoặc bấm Enter; rỗng là bỏ giá trị (`null`). */
@@ -131,7 +147,7 @@ export function Commander({ t, nav }: PageProps) {
   const team = useTeam()
   const data = useTeamData()
   const COMMANDER = team.commander
-  const { log, settings, save, errors } = useCommander()
+  const { log, learned, settings, save, errors } = useCommander()
   const [botError, setBotError] = useState<string | null>(null)
   const nameOf = (id: string) => team.members.find((m) => m.id === id)?.name ?? id
   const bots = (data?.bots ?? []).filter((b) => b.kind === 'member')
@@ -314,23 +330,35 @@ export function Commander({ t, nav }: PageProps) {
               </div>
             ))}
           </Card>
-          <Card title={t('cmd.learned')}>
-            <Later t={t} stage={3}>
-              <div style={{ padding: '0 14px 10px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {C.learned.map((l) => (
+          <Card title={t('cmd.learned')} subtitle={t('cmd.learnedHint')}>
+            <div style={{ padding: '0 14px 10px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {learned?.length === 0 && (
+                <span className="a-muted" style={{ fontSize: 13 }}>
+                  {t('cmd.learnedEmpty')}
+                </span>
+              )}
+              {learned?.slice(0, 12).map((l) => {
+                const b = team.members.find((m) => m.id === l.bot)
+                const finished = l.done + l.failed
+                return (
                   <div
-                    key={l.text}
+                    key={`${l.bot}-${l.kind}`}
                     style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5 }}
                   >
-                    <Bot id={l.bot} />
-                    <span style={{ flex: 1 }}>{l.text}</span>
+                    <Mascot id={b?.mascot ?? l.bot} size={22} />
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <b>{b?.name ?? l.bot}</b> · {l.kind}
+                    </span>
                     <span className="a-muted" style={{ fontSize: 12.5 }}>
-                      {l.note}
+                      {t('cmd.learnedRow', { n: l.times })}
+                      {finished
+                        ? ` · ${t('cmd.learnedRate', { p: Math.round((l.done / finished) * 100) })}`
+                        : ''}
                     </span>
                   </div>
-                ))}
-              </div>
-            </Later>
+                )
+              })}
+            </div>
           </Card>
         </Col>
       </div>

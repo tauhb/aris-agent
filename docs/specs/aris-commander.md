@@ -146,3 +146,8 @@ Bản vẽ 2.1c (thanh duyệt), 7.1 (thẻ duyệt Telegram), thanh bên ("n vi
 
 - Trang Hộp duyệt (3.4): giai đoạn 3. Thanh duyệt, thanh bên và Telegram đã có (bước 6).
 - Trần ngân sách mỗi việc: giai đoạn 7.
+
+## Commander tự học (giai đoạn 3, đợt 4)
+
+- `giao_viec` có thêm tham số `loai` (loại việc ngắn, ví dụ "nghiên cứu thị trường"), Commander tự ghi khi giao; bản ghi giao việc lưu `loai` và kết quả (`done` khi lượt của bot kết thúc bình thường, `failed` khi lỗi, `stopped` khi bị dừng).
+- Thống kê theo bot × loại việc: số lần, tỉ lệ xong, lần gần nhất. Hiện ở trang 2.5 ("Commander đã học") và nạp vào ngữ cảnh của Commander (tối đa 12 dòng, nhiều lần trước) để chọn bot cho việc cùng loại.

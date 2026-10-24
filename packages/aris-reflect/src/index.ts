@@ -75,6 +75,8 @@ interface MemoryPort {
 }
 interface SkillsPort {
   activeFor(bot: string): { name: string; description: string; body: string }[]
+  /** Phiên kiểm thử skill: không học. */
+  isEval?(sessionId: string): boolean
   propose(input: {
     bot: string
     name: string
@@ -85,6 +87,7 @@ interface SkillsPort {
     why?: string | undefined
     quote?: string | undefined
     sessionId?: string | undefined
+    cases?: readonly string[] | undefined
   }): Promise<{ id: string; version: number } | undefined>
 }
 interface SpendPort {
@@ -256,6 +259,7 @@ export async function apply(ctx: Context): Promise<void> {
 
   let budgetNoted = ''
   async function reflect(session: Session, turns: TurnLog[], reasons: Reason[]) {
+    if ((ctx.get('arisSkills') as SkillsPort | undefined)?.isEval?.(session.id)) return
     if (await isHelper(session.id)) return
     const bot = bots()?.botOf(session.id) ?? { id: 'aris', name: 'Aris', kind: 'commander' }
     const mem = memory()
@@ -340,11 +344,18 @@ export async function apply(ctx: Context): Promise<void> {
       run.insights = noted
       if (result.skill && skillAllowed && skills) {
         try {
+          // Yêu cầu của người dùng trong đoạn học thành ca thử (kiểm thử bằng chạy lại, đợt 4).
+          const cases = turns
+            .filter((t) => t.tools.length > 0)
+            .map((t) => t.user.join('\n').trim())
+            .filter((x) => x.length >= 8)
+            .slice(-3)
           const v = await skills.propose({
             ...result.skill,
             bot: bot.id,
             by: 'reflect',
             sessionId: session.id,
+            cases,
           })
           run.skill = v ? `${result.skill.name} v${v.version}` : `${result.skill.name} (không đổi)`
         } catch (e) {

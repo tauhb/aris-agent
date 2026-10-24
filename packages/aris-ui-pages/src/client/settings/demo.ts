@@ -121,12 +121,3 @@ export const DEMO_SCREEN = {
     ['10:52', 'Dừng, chờ anh'],
   ],
 } as const
-
-/** Phần còn là bản vẽ của trang 2.5: điều Commander đã học (giai đoạn 3). */
-export const DEMO_COMMANDER = {
-  learned: [
-    { bot: 'lam', text: 'Nghiên cứu thị trường', note: '23 lần · 91% đạt' },
-    { bot: 'mai', text: 'Lịch và email', note: '41 lần · 98% đạt' },
-    { bot: 'tin', text: 'Báo cáo chi tiêu', note: '12 lần · 83% đạt · hay bị sửa định dạng' },
-  ],
-} as const

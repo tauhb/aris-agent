@@ -3,7 +3,7 @@
  * thái, tìm, bảng bot, bản (`v2 → v3` khi có bản vá chờ), trạng thái, lượt dùng. Ít dùng, lưu kho,
  * ghim, tỉ lệ thành công, học từ tài liệu và sao lưu là đợt 4 (để mờ).
  */
-import { Button, Mascot, PageShell, Pill, useTeamData } from '@aris/ui-kit/react'
+import { Button, Mascot, PageShell, Pill, PinIcon, useTeamData } from '@aris/ui-kit/react'
 import { useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Later } from '../team/BotTools.js'
@@ -14,14 +14,22 @@ export interface SkillRow {
   bot: string
   name: string
   description: string
-  status: 'draft' | 'active' | 'rejected'
+  status: 'draft' | 'active' | 'archived' | 'rejected'
   version: number
   uses: number
   updatedAt: string
+  pinned?: boolean
+  /** Ít dùng: 14 ngày không dùng. */
+  stale: boolean
+  idleDays: number
   proposed: { version: number; why?: string; by: string } | null
+  /** Tỉ lệ đạt của lần kiểm thử gần nhất (bản so sánh → bản thử). */
+  success: { base: number | null; cand: number; version: number } | null
 }
 
-type Filter = 'all' | 'pending' | 'active'
+type Filter = 'all' | 'pending' | 'active' | 'rare' | 'archived' | 'pinned'
+
+const pct = (x: number) => `${Math.round(x * 100)}%`
 
 export const dayOf = (iso: string) => {
   const d = new Date(iso)
@@ -33,14 +41,21 @@ export const dayOf = (iso: string) => {
 export function Skills({ t, nav }: PageProps) {
   const team = useTeamData()
   const [rows, setRows] = useState<SkillRow[] | null>(null)
+  const [curator, setCurator] = useState<{ next: string } | null>(null)
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
   useEffect(() => {
     let live = true
     const load = () =>
       fetch(new URL('api/aris/skills', document.baseURI), { credentials: 'same-origin' })
-        .then((r) => (r.ok ? (r.json() as Promise<{ skills: SkillRow[] }>) : undefined))
-        .then((d) => live && d && setRows(d.skills))
+        .then((r) =>
+          r.ok ? (r.json() as Promise<{ skills: SkillRow[]; curator?: { next: string } }>) : undefined,
+        )
+        .then((d) => {
+          if (!live || !d) return
+          setRows(d.skills)
+          setCurator(d.curator ?? null)
+        })
         .catch(() => {})
     void load()
     const timer = setInterval(() => void load(), 10_000)
@@ -54,7 +69,16 @@ export function Skills({ t, nav }: PageProps) {
   const q = query.trim().toLowerCase()
   const shown = all.filter(
     (r) =>
-      (filter === 'all' || (filter === 'pending' ? r.proposed : r.status === 'active')) &&
+      (filter === 'all' ||
+        (filter === 'pending'
+          ? r.proposed
+          : filter === 'rare'
+            ? r.stale
+            : filter === 'archived'
+              ? r.status === 'archived'
+              : filter === 'pinned'
+                ? r.pinned
+                : r.status === 'active')) &&
       (!q || r.name.includes(q) || r.description.toLowerCase().includes(q)),
   )
   const botOf = (id: string) => team?.bots.find((b) => b.id === id)
@@ -62,18 +86,28 @@ export function Skills({ t, nav }: PageProps) {
     ['all', t('sk.all')],
     ['pending', t('sk.pending', { n: pending })],
     ['active', t('sk.active')],
+    ['rare', t('sk.rare')],
+    ['archived', t('sk.archived')],
+    ['pinned', t('sk.pinned')],
   ]
   return (
     <PageShell
       title={t('sk.title')}
-      subtitle={t('sk.summary', { n: all.length, p: pending })}
+      subtitle={`${t('sk.summary', { n: all.length, p: pending })}${curator?.next ? ` · ${t('sk.curatorNext', { d: dayOf(curator.next) || t('sk.today') })}` : ''}`}
       actions={
-        <Later t={t} stage={3} row label={t('sk.later')}>
-          <span style={{ display: 'flex', gap: 8 }}>
+        <>
+          <Later t={t} stage={3} row label={t('sk.learnLater')}>
             <Button disabled>{t('sk.learnFrom')}</Button>
-            <Button disabled>{t('sk.backup')}</Button>
-          </span>
-        </Later>
+          </Later>
+          <a
+            className="a-btn secondary"
+            style={{ textDecoration: 'none' }}
+            href={new URL('api/aris/skills?backup=1', document.baseURI).href}
+            download
+          >
+            {t('sk.backup')}
+          </a>
+        </>
       }
     >
       <div
@@ -105,11 +139,6 @@ export function Skills({ t, nav }: PageProps) {
             {label}
           </button>
         ))}
-        {(['rare', 'archived', 'pinned'] as const).map((k) => (
-          <button key={k} type="button" className="ap-chip" disabled title={t('sk.later')}>
-            {t(`sk.${k}`)}
-          </button>
-        ))}
       </div>
       <div className="a-card" style={{ overflowX: 'auto' }}>
         <div className="ap-sk a-muted" style={{ borderTop: 0, fontSize: 12, fontWeight: 600 }}>
@@ -137,9 +166,21 @@ export function Skills({ t, nav }: PageProps) {
               onClick={() => nav.go('skill', { id: r.id })}
             >
               <span style={{ minWidth: 0 }}>
-                <span className="a-mono" style={{ fontWeight: 500 }}>
+                <span
+                  className={r.status === 'archived' ? 'a-mono a-muted' : 'a-mono'}
+                  style={{ fontWeight: 500 }}
+                >
                   {r.name}
                 </span>
+                {r.pinned && (
+                  <span
+                    className="a-muted"
+                    title={t('sk.pinnedMark')}
+                    style={{ marginLeft: 6, verticalAlign: '-2px' }}
+                  >
+                    <PinIcon />
+                  </span>
+                )}
                 <div className="a-muted ap-li-sub">
                   {r.proposed
                     ? r.version
@@ -159,13 +200,32 @@ export function Skills({ t, nav }: PageProps) {
                   : `v${r.version}`}
               </span>
               <span>
-                <Pill tone={r.proposed ? 'warn' : r.status === 'active' ? 'ok' : 'muted'}>
-                  {r.proposed ? t('sk.st.pending') : t('sk.st.active')}
+                <Pill tone={r.proposed ? 'warn' : r.status === 'active' && !r.stale ? 'ok' : 'muted'}>
+                  {r.proposed
+                    ? t('sk.st.pending')
+                    : r.status === 'archived'
+                      ? t('sk.st.archived')
+                      : r.stale
+                        ? t('sk.st.rare', { n: r.idleDays })
+                        : t('sk.st.active')}
                 </Pill>
               </span>
               <span className={r.uses ? undefined : 'a-muted'}>{r.uses}</span>
-              <span className="a-muted" title={t('sk.later')}>
-                —
+              <span
+                className={r.success ? undefined : 'a-muted'}
+                title={r.success ? t('sk.successHint') : t('sk.noEval')}
+              >
+                {r.success ? (
+                  r.success.base !== null ? (
+                    <>
+                      {pct(r.success.base)} → <b style={{ color: 'var(--a-ok)' }}>{pct(r.success.cand)}</b>
+                    </>
+                  ) : (
+                    pct(r.success.cand)
+                  )
+                ) : (
+                  '—'
+                )}
               </span>
               <span className="a-muted">{dayOf(r.updatedAt) || t('sk.today')}</span>
             </button>

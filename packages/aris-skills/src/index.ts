@@ -12,13 +12,30 @@ import type {} from '@deepseek-ai/dsh-client-connection'
 import type { SkillCandidate, SkillProvider } from '@deepseek-ai/dsh-skill'
 import type {} from '@deepseek-ai/dsh-storage-domain'
 import type {} from '@deepseek-ai/dsh-tools'
+import { randomUUID } from 'node:crypto'
 import { diffStat, lineDiff } from './diff.js'
 import { skillsDomain } from './domain.js'
+import {
+  EVAL_PREFIX,
+  EVAL_USD,
+  MAX_CASES,
+  READ_ONLY_TOOLS,
+  RUN_TIMEOUT_MS,
+  SANDBOX_DENY,
+  caseTitle,
+  judgePrompt,
+  parseJudge,
+  readOnlyBash,
+  summarize,
+  type EvalRecord,
+  type RunResult,
+} from './eval.js'
 import { SkillError, SkillStore, skillId, type ProposeInput, type SkillEvent, type Table } from './store.js'
 
 export * from './lint.js'
 export * from './diff.js'
 export * from './store.js'
+export * from './eval.js'
 
 export const name = 'aris-skills'
 export const inject = ['storageDomain', 'tools']
@@ -36,6 +53,31 @@ export interface ArisSkills {
   answer(id: string, approve: boolean, by: 'telegram'): Promise<unknown>
   /** Mã các bản đang chờ duyệt (Telegram tìm lại thẻ sau khi aris khởi động lại). */
   pending(): string[]
+  /** Phiên kiểm thử skill (vòng học nền bỏ qua). */
+  isEval(sessionId: string): boolean
+}
+
+interface Usage {
+  inputTokens: number
+  outputTokens: number
+  totalTokens?: number
+  cacheReadTokens?: number
+  cacheWriteTokens?: number
+}
+
+/** Model rẻ để chấm: model "Flash" của nhà cung cấp mặc định, không có thì model mặc định. */
+function pickFlash(c: {
+  default?: { provider?: string; model?: string }
+  groups: { id: string; models: { id: string; name?: string }[] }[]
+}): { provider: string; model: string } | undefined {
+  const home = c.groups.find((g) => g.id === c.default?.provider)
+  for (const g of [...(home ? [home] : []), ...c.groups]) {
+    const m = g.models.find((x) => /flash/i.test(`${x.id} ${x.name ?? ''}`) && !x.id.endsWith(':batch'))
+    if (m) return { provider: g.id, model: m.id }
+  }
+  return c.default?.provider && c.default.model
+    ? { provider: c.default.provider, model: c.default.model }
+    : undefined
 }
 
 export async function apply(ctx: Context): Promise<void> {
@@ -46,6 +88,11 @@ export async function apply(ctx: Context): Promise<void> {
     domain.table('skills') as unknown as Table<never>,
     domain.table('versions') as unknown as Table<never>,
   )
+  const evals = domain.table('evals') as unknown as Table<EvalRecord> & {
+    delete(k: string): Promise<boolean>
+  }
+  /** Phiên kiểm thử đang chạy: nguồn skill chỉ trả đúng bản cần thử (0: không skill nào). */
+  const evalMode = new Map<string, { skill: string; version: number }>()
   const botOf = (sessionId: string | undefined) =>
     (ctx.get('arisBots') as { botOf(id: string | undefined): { id: string } } | undefined)?.botOf(sessionId)
       .id ?? 'aris'
@@ -70,12 +117,29 @@ export async function apply(ctx: Context): Promise<void> {
       })),
     on: (fn: (e: SkillEvent) => void) => store.on(fn),
     pending: () => store.pending().map((v) => v.id),
+    isEval: (sessionId: string) => evalMode.has(sessionId),
     answer: async (id: string, approve: boolean, by: 'telegram') => {
       const v = approve ? await store.approve(id, by) : await store.reject(id, by)
       refresh()
       return v
     },
   } satisfies ArisSkills)
+
+  // Phiên kiểm thử thấy đúng một bản (hoặc không skill nào); phiên thường thấy bản đang dùng của bot.
+  const listFor = (sessionId: string) => {
+    const mode = evalMode.get(sessionId)
+    if (!mode) return store.activeFor(botOf(sessionId))
+    const skill = store.get(mode.skill)
+    return skill && mode.version ? [{ skill }] : []
+  }
+  const versionFor = (sessionId: string, skillId: string) => {
+    const mode = evalMode.get(sessionId)
+    if (!mode) return store.active(skillId)
+    const s = store.get(skillId)
+    return s && mode.skill === skillId && mode.version
+      ? store.version(`${s.bot}--${s.name}--v${mode.version}`)
+      : undefined
+  }
 
   // Plugin con mount trong phạm vi agent: nguồn skill chỉ agent đó thấy.
   const agentPlugin = {
@@ -92,7 +156,7 @@ export async function apply(ctx: Context): Promise<void> {
             return {
               name: PROVIDER,
               list: async () =>
-                store.activeFor(botOf(config.sessionId)).map(({ skill }): SkillCandidate => ({
+                listFor(config.sessionId).map(({ skill }): SkillCandidate => ({
                   name: skill.name,
                   description: skill.description,
                   ...(skill.whenToUse ? { whenToUse: skill.whenToUse } : {}),
@@ -103,7 +167,7 @@ export async function apply(ctx: Context): Promise<void> {
                   locator: skill.id,
                 })),
               get: async (c) => {
-                const v = store.active(String(c.locator))
+                const v = versionFor(config.sessionId, String(c.locator))
                 return v
                   ? {
                       name: c.name,
@@ -132,17 +196,296 @@ export async function apply(ctx: Context): Promise<void> {
     }
   })
 
-  // Đếm lượt dùng: công cụ `skill` của dsh nạp một skill của aris.
+  // Lời người dùng gần nhất của mỗi phiên: thành ca thử khi skill được dùng trong lượt đó.
+  const lastAsk = new Map<string, string>()
+  ctx.on('agent/pre-step', ({ agent, messages }, next) => {
+    for (const m of messages)
+      if (m.source.kind === 'user') {
+        const text = m.content
+          .map((b) => (b.type === 'text' ? b.text : ''))
+          .join('\n')
+          .trim()
+        if (text) lastAsk.set(agent.session.id, text)
+      }
+    return next()
+  })
+  ctx.on('session/disposed', (session) => void lastAsk.delete(session.id))
+
+  // Đếm lượt dùng: công cụ `skill` của dsh nạp một skill của aris (không tính phiên kiểm thử).
   ctx.on('tools/post-execute', async (exec, result, next) => {
-    if (exec.name === 'skill' && !result.isError && exec.agent) {
+    const sid = exec.agent?.session.id
+    if (exec.name === 'skill' && !result.isError && sid && !evalMode.has(sid)) {
       const n = (exec.arguments as { name?: unknown } | undefined)?.name
-      if (typeof n === 'string')
-        await store
-          .recordUse(botOf(exec.agent.session.id), n)
-          .catch((e: unknown) => logger.warn('đếm lượt dùng: %s', String(e)))
+      if (typeof n === 'string') {
+        const bot = botOf(sid)
+        await store.recordUse(bot, n).catch((e: unknown) => logger.warn('đếm lượt dùng: %s', String(e)))
+        const ask = lastAsk.get(sid)
+        if (ask) await store.addCase(skillId(bot, n), { request: ask, sessionId: sid }).catch(() => undefined)
+      }
     }
     return next()
   })
+
+  // --- Kiểm thử bằng chạy lại --------------------------------------------------------
+  interface RunState {
+    steps: number
+    tokens: number
+    answer: string
+    denied: number
+    usd: number
+    done?: (reason: string) => void
+  }
+  /** Số liệu của phiên kiểm thử đang chạy, gom từ sự kiện phiên. */
+  const runs = new Map<string, RunState>()
+
+  // Hộp cát của phiên kiểm thử: chỉ đọc.
+  ctx.on(
+    'tools/pre-execute',
+    async (exec, next) => {
+      const sid = exec.agent?.session.id
+      if (!sid || !evalMode.has(sid)) return next()
+      if (READ_ONLY_TOOLS.has(exec.name)) return next()
+      const command = (exec.arguments as { command?: unknown } | undefined)?.command
+      if (exec.name === 'bash' && typeof command === 'string' && readOnlyBash(command)) return next()
+      const run = runs.get(sid)
+      if (run) run.denied++
+      return { kind: 'deny', reason: SANDBOX_DENY }
+    },
+    true,
+  )
+
+  ctx.on('session/event', (session, event) => {
+    const r = runs.get(session.id)
+    if (!r) return
+    if (event.type === 'assistant/message') {
+      const data = event.data as unknown as {
+        usage?: Usage
+        message: { content: { type: string; text?: string }[] }
+      }
+      r.steps++
+      const u = data.usage
+      if (u) r.tokens += u.totalTokens ?? u.inputTokens + u.outputTokens + (u.cacheReadTokens ?? 0)
+      const text = data.message.content
+        .map((b) => (b.type === 'text' ? (b.text ?? '') : ''))
+        .join('\n')
+        .trim()
+      if (text) r.answer = text
+    } else if (event.type === 'turn/end') {
+      r.done?.((event.data as unknown as { reason?: { kind?: string } }).reason?.kind ?? 'completed')
+    }
+  })
+
+  // Tiền của phiên kiểm thử (sổ chi phí của @aris/providers).
+  let offCost: (() => void) | undefined
+  ctx.effect(() => () => offCost?.(), 'aris-skills: tiền kiểm thử')
+  const spend = () =>
+    ctx.get('arisSpend') as
+      | {
+          onCost?(fn: (session: string, usd: number) => void): () => void
+          charge?(provider: string, model: string, usage: Usage, scope: readonly string[]): Promise<number>
+        }
+      | undefined
+  const hookCost = () => {
+    offCost ??= spend()?.onCost?.((session, usd) => {
+      const r = runs.get(session)
+      if (r) r.usd += usd
+    })
+  }
+
+  interface SessionPort {
+    create(req: { workspaceId?: string }): Promise<{ sessionId: string }>
+    prompt(
+      req: { requestId: string; sessionId: string; mode: 'queue'; content: { type: 'text'; text: string }[] },
+      signal: AbortSignal,
+    ): Promise<unknown>
+    rename?(req: { sessionId: string; title: string }): Promise<unknown>
+    cancel?(req: { sessionId: string }): unknown
+    modelCatalog(): Promise<Parameters<typeof pickFlash>[0]>
+  }
+  const sessions = () => ctx.get('sessionController') as SessionPort | undefined
+
+  /** Một lần chạy: phiên mới của bot, đúng bản skill cần thử, gửi yêu cầu, đợi xong. */
+  async function runOnce(o: {
+    bot: string
+    skill: string
+    version: number
+    request: string
+    title: string
+    workspaceId?: string | undefined
+  }): Promise<RunResult & { usd: number }> {
+    const sc = sessions()
+    const bots = ctx.get('arisBots') as
+      { tag(s: string, b: string, via: 'dispatch'): Promise<void> } | undefined
+    if (!sc || !bots) throw new SkillError('Chưa có bộ điều khiển phiên hay dịch vụ đội bot.')
+    const { sessionId } = await sc.create(o.workspaceId ? { workspaceId: o.workspaceId } : {})
+    evalMode.set(sessionId, { skill: o.skill, version: o.version })
+    const r: RunState = { steps: 0, tokens: 0, answer: '', denied: 0, usd: 0 }
+    runs.set(sessionId, r)
+    try {
+      await bots.tag(sessionId, o.bot, 'dispatch')
+      await sc.rename?.({ sessionId, title: o.title }).catch(() => undefined)
+      const ended = new Promise<string>((resolve) => {
+        r.done = resolve
+        setTimeout(() => resolve('timeout'), RUN_TIMEOUT_MS)
+      })
+      await sc.prompt(
+        {
+          requestId: randomUUID(),
+          sessionId,
+          mode: 'queue',
+          content: [{ type: 'text', text: EVAL_PREFIX + o.request }],
+        },
+        AbortSignal.timeout(30_000),
+      )
+      const reason = await ended
+      if (reason === 'timeout') sc.cancel?.({ sessionId })
+      return {
+        session: sessionId,
+        steps: r.steps,
+        tokens: r.tokens,
+        answer: r.answer.slice(0, 4000),
+        denied: r.denied,
+        usd: r.usd,
+        ...(reason !== 'completed' ? { error: reason === 'timeout' ? 'quá 5 phút' : reason } : {}),
+      }
+    } finally {
+      // Giữ chế độ kiểm thử thêm chút để sự kiện cuối (tiền, câu trả lời) về đủ, rồi thả.
+      setTimeout(() => {
+        runs.delete(sessionId)
+        evalMode.delete(sessionId)
+      }, 30_000)
+    }
+  }
+
+  /** Chấm một lần chạy bằng model rẻ; trả kết quả và tiền. */
+  async function judge(request: string, skill: { name: string; description: string }, answer: string) {
+    const sc = sessions()
+    const m = sc ? pickFlash(await sc.modelCatalog()) : undefined
+    const llm = ctx.get('llm') as
+      | { stream(o: Record<string, unknown>): AsyncIterable<{ type: string; text?: string; usage?: Usage }> }
+      | undefined
+    if (!m || !llm) return { pass: undefined, note: 'chưa có model để chấm', usd: 0 }
+    let raw = ''
+    let usage: Usage | undefined
+    for await (const c of llm.stream({
+      provider: m.provider,
+      model: m.model,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: judgePrompt({ request, skill: skill.name, description: skill.description, answer }),
+            },
+          ],
+        },
+      ],
+      maxTokens: 3000,
+    })) {
+      if (c.type === 'text-delta' && c.text) raw += c.text
+      else if (c.type === 'usage') usage = c.usage
+    }
+    const usd = usage ? ((await spend()?.charge?.(m.provider, m.model, usage, ['eval'])) ?? 0) : 0
+    const v = parseJudge(raw)
+    return { pass: v?.pass, note: v?.note ?? 'không đọc được kết quả chấm', usd }
+  }
+
+  let evalRunning: string | undefined
+  /** Kiểm thử một skill: bản đề xuất (hoặc bản đang dùng) so với bản đang dùng (hoặc không skill). */
+  async function startEval(id: string): Promise<EvalRecord> {
+    if (evalRunning) throw new SkillError('Đang có một lần kiểm thử chạy; đợi xong rồi chạy tiếp.')
+    const s = store.get(id)
+    if (!s) throw new SkillError('Không có skill này.')
+    const proposed = store.versionsOf(s.id).find((v) => v.status === 'proposed')
+    const cand = proposed?.version ?? (s.status === 'active' ? s.version : 0)
+    if (!cand) throw new SkillError('Skill chưa có bản nào để kiểm thử.')
+    const base = proposed && s.status === 'active' ? s.version : 0
+    const cases = (s.cases ?? []).slice(-MAX_CASES)
+    if (!cases.length)
+      throw new SkillError(
+        'Chưa có ca thử: skill cần được dùng, hoặc được vòng học đề xuất từ một yêu cầu thật.',
+      )
+    hookCost()
+    const e: EvalRecord = {
+      id: `e-${Date.now().toString(36)}-${randomUUID().slice(0, 4)}`,
+      skill: s.id,
+      version: cand,
+      base,
+      at: new Date().toISOString(),
+      status: 'running',
+      cases: cases.map((c) => ({ request: c.request })),
+      usd: 0,
+      cap: EVAL_USD,
+    }
+    await evals.put(e.id, e)
+    evalRunning = e.id
+    void (async () => {
+      const reg = ctx.get('workspaceRegistry') as
+        { list(): readonly { id: string; sessionIds: readonly string[] }[] } | undefined
+      try {
+        for (let i = 0; i < cases.length && e.status === 'running'; i++) {
+          const c = cases[i]!
+          const workspaceId = c.sessionId
+            ? reg?.list().find((w) => w.sessionIds.includes(c.sessionId!))?.id
+            : undefined
+          for (const side of ['base', 'cand'] as const) {
+            if (e.usd >= e.cap) {
+              e.status = 'stopped'
+              e.note = `chạm trần ${EVAL_USD.toFixed(2).replace('.', ',')} USD sau ${i} ca`
+              break
+            }
+            const version = side === 'base' ? base : cand
+            const run = await runOnce({
+              bot: s.bot,
+              skill: s.id,
+              version,
+              request: c.request,
+              workspaceId,
+              title: `Kiểm thử skill · ${s.name} · ca ${i + 1} · ${version ? `v${version}` : 'không skill'} · ${caseTitle(c.request)}`,
+            }).catch((err: unknown) => ({
+              session: '',
+              steps: 0,
+              tokens: 0,
+              answer: '',
+              denied: 0,
+              usd: 0,
+              error: String(err).slice(0, 200),
+            }))
+            const { usd, ...result } = run
+            e.usd += usd
+            if (!result.error) {
+              const j = await judge(c.request, s, result.answer).catch(() => ({
+                pass: undefined,
+                note: 'lỗi khi chấm',
+                usd: 0,
+              }))
+              e.usd += j.usd
+              Object.assign(result, { ...(j.pass !== undefined ? { pass: j.pass } : {}), note: j.note })
+            }
+            e.cases[i] = { ...e.cases[i]!, [side]: result }
+            await evals.put(e.id, { ...e })
+          }
+        }
+        if (e.status === 'running') e.status = 'done'
+      } catch (err) {
+        e.status = 'failed'
+        e.note = String(err).slice(0, 200)
+      } finally {
+        e.finishedAt = new Date().toISOString()
+        e.usd = Math.round(e.usd * 10000) / 10000
+        await evals.put(e.id, { ...e }).catch(() => undefined)
+        evalRunning = undefined
+      }
+    })()
+    return e
+  }
+  /** Lần kiểm thử gần nhất của một skill (một bản nếu chỉ rõ). */
+  const latestEval = (skill: string, version?: number) =>
+    [...evals.entries()]
+      .map(([, x]) => x)
+      .filter((x) => x.skill === skill && (version === undefined || x.version === version))
+      .sort((a, b) => b.at.localeCompare(a.at))[0]
 
   // Đề xuất quá hạn tự bỏ.
   ctx.effect(() => {
@@ -153,6 +496,26 @@ export async function apply(ctx: Context): Promise<void> {
     return () => clearInterval(timer)
   }, 'aris-skills: đề xuất quá hạn')
 
+  // Người dọn kho: mỗi ngày cất skill 30 ngày không dùng (trừ skill đã ghim).
+  const curator = { last: '', next: '' }
+  ctx.effect(() => {
+    const run = () => {
+      curator.last = new Date().toISOString()
+      curator.next = new Date(Date.now() + 86_400_000).toISOString()
+      void store
+        .curate()
+        .then((ids) => {
+          if (!ids.length) return
+          logger.info('cất %d skill lâu không dùng: %s', ids.length, ids.join(', '))
+          refresh()
+        })
+        .catch((e: unknown) => logger.warn('dọn kho skill: %s', String(e)))
+    }
+    run()
+    const timer = setInterval(run, 86_400_000)
+    return () => clearInterval(timer)
+  }, 'aris-skills: người dọn kho')
+
   ctx.inject(['connection'], (ctx) => {
     ctx.effect(() => {
       const dispose = ctx.connection.fetch.register({
@@ -160,7 +523,7 @@ export async function apply(ctx: Context): Promise<void> {
         methods: ['GET', 'POST'],
         requestBody: 'buffered',
         fetch: async (request) => {
-          const res = await skillsApi(store, request)
+          const res = await skillsApi(store, request, { startEval, latestEval, curator: () => curator })
           if (request.method === 'POST' && res.ok) refresh()
           return res
         },
@@ -190,11 +553,32 @@ function withDiff(store: SkillStore, id: string) {
  *   GET                       → mọi skill, kèm bản đề xuất đang chờ
  *   GET ?pending=all          → bản chờ duyệt (Hộp duyệt), số đã xử lý hôm nay
  *   GET ?id=<bot>--<tên>      → một skill, các bản, bản chờ so với bản đang dùng
+ *   GET ?backup=1             → tệp sao lưu mọi skill và các bản
  *   POST { op: approve | reject | restore, id (mã bản) | skill + version, body? }
+ *   POST { op: pin | archive | unarchive | eval, skill, on? }
  */
-export async function skillsApi(store: SkillStore, request: Request): Promise<Response> {
+export interface SkillsApiExtras {
+  startEval(skill: string): Promise<EvalRecord>
+  latestEval(skill: string, version?: number): EvalRecord | undefined
+  curator(): { last: string; next: string }
+}
+
+const evalView = (e: EvalRecord | undefined) => (e ? { ...e, summary: summarize(e) } : null)
+
+export async function skillsApi(
+  store: SkillStore,
+  request: Request,
+  ext?: SkillsApiExtras,
+): Promise<Response> {
   const q = new URL(request.url).searchParams
   if (request.method !== 'POST') {
+    if (q.get('backup'))
+      return new Response(JSON.stringify(store.backup(), null, 2), {
+        headers: {
+          'content-type': 'application/json; charset=utf-8',
+          'content-disposition': `attachment; filename="aris-skills-${new Date().toISOString().slice(0, 10)}.aris-skills.json"`,
+        },
+      })
     if (q.get('pending') === 'all')
       return json({
         pending: store.pending().map((v) => withDiff(store, v.id)),
@@ -206,14 +590,32 @@ export async function skillsApi(store: SkillStore, request: Request): Promise<Re
       if (!skill) return json({ error: 'Không có skill này.' }, 404)
       const versions = store.versionsOf(id)
       const proposed = versions.find((v) => v.status === 'proposed')
-      return json({ skill, versions, proposed: proposed ? withDiff(store, proposed.id) : null })
+      return json({
+        skill: { ...skill, stale: store.isStale(skill), idleDays: store.idleDays(skill) },
+        versions,
+        proposed: proposed ? withDiff(store, proposed.id) : null,
+        eval: evalView(ext?.latestEval(id, proposed?.version ?? skill.version)),
+      })
     }
     return json({
+      curator: ext?.curator(),
       skills: store.list().map((s) => {
         const proposed = store.versionsOf(s.id).find((v) => v.status === 'proposed')
+        const e = ext?.latestEval(s.id)
+        const sum = e && e.status !== 'running' ? summarize(e) : undefined
         return {
           ...s,
+          stale: store.isStale(s),
+          idleDays: store.idleDays(s),
           proposed: proposed ? { version: proposed.version, why: proposed.why, by: proposed.by } : null,
+          // Thành công: tỉ lệ đạt của lần kiểm thử gần nhất (bản so sánh → bản thử).
+          success: sum?.cases
+            ? {
+                base: e!.base ? sum.pass.base / sum.cases : null,
+                cand: sum.pass.cand / sum.cases,
+                version: e!.version,
+              }
+            : null,
         }
       }),
     })
@@ -224,7 +626,9 @@ export async function skillsApi(store: SkillStore, request: Request): Promise<Re
     skill?: unknown
     version?: unknown
     body?: unknown
+    on?: unknown
   }
+  const skill = typeof body.skill === 'string' ? body.skill : ''
   const id = typeof body.id === 'string' ? body.id : ''
   try {
     switch (body.op) {
@@ -240,6 +644,15 @@ export async function skillsApi(store: SkillStore, request: Request): Promise<Re
           return json({ error: 'Thiếu skill hoặc bản.' }, 400)
         return json({ ok: true, version: await store.restore(body.skill, body.version) })
       }
+      case 'pin':
+        return json({ ok: true, skill: await store.pin(skill, body.on !== false) })
+      case 'archive':
+        return json({ ok: true, skill: await store.archive(skill, 'user') })
+      case 'unarchive':
+        return json({ ok: true, skill: await store.unarchive(skill) })
+      case 'eval':
+        if (!ext) return json({ error: 'Chưa bật kiểm thử.' }, 400)
+        return json({ ok: true, eval: evalView(await ext.startEval(skill)) })
       default:
         return json({ error: 'op không hợp lệ' }, 400)
     }

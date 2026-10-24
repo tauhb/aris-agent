@@ -50,6 +50,7 @@ import {
   type PluginModule,
 } from './external.js'
 import { ApprovalHub } from './approval.js'
+import { learnedContext, learnedFrom } from './learned.js'
 import { ApprovalCenter, callInput, toolAlias, type ApprovalEvent } from './approvals.js'
 import { childEnv, runClaude, stepOf, type DriverHooks } from './claude-driver.js'
 import { runCodex } from './codex-driver.js'
@@ -169,6 +170,7 @@ Cách giao:
 - Sau khi giao_viec: dùng wait_agent đợi kết quả, rồi tổng hợp trả lời người dùng. Nói rõ ai đã làm phần nào.
 - Chuyển giao (chuyen_giao) thay cho giao_viec khi việc vừa thuộc hẳn chuyên môn một bot và người dùng chỉ cần đúng kết quả của bot đó, không cần bạn tổng hợp hay làm tiếp (ví dụ: viết một bài cho bot nội dung, trả lời một câu hỏi chuyên môn). Câu trả lời của bot hiện thẳng cho người dùng như lời của bot; sau đó bạn kết thúc lượt, không viết thêm. Cần gom nhiều bot, sửa lại, hay dùng kết quả cho bước sau thì dùng giao_viec.
 - Bot đã làm việc trong cuộc này thì giao tiếp cho chính bot đó (nó nhớ việc trước).
+- Mỗi việc giao ghi loai (loại việc ngắn, dùng lại cùng tên cho việc cùng loại) để bạn học được bot nào làm tốt loại việc nào; khối <aris-routing-history> (nếu có) là kết quả các lần trước.
 - Giao việc sửa mã cho bot ngoài trên một repo khác thư mục của cuộc này: ghi đường dẫn tuyệt đối của repo vào thu_muc (bot ngoài làm trong worktree riêng của repo đó).
 - Việc lặt vặt không cần chuyên môn (đọc một tệp lớn, tra cứu nhỏ): dùng subagent (trợ lý ẩn danh) thay vì giao bot.
 - Việc lớn: giao_phong; trưởng nhóm tự chia cho thành viên phòng, báo cáo của phòng về đây thành tin nhắn sau, không cần đợi.
@@ -245,6 +247,8 @@ export async function apply(ctx: Context): Promise<void> {
   const domain = await ctx.storageDomain.open(commanderDomain)
   ctx.effect(() => () => void domain.close(), 'aris-commander: domain')
   const log = domain.table('dispatch') as unknown as Table<DispatchRecord>
+  /** Phiên của bot vừa nhận việc → khoá bản ghi giao việc đợi kết quả lượt. */
+  const awaiting = new Map<string, string>()
 
   // Cấu hình Commander (trang 2.5): giới hạn, trần tiền mỗi việc, trợ lý ẩn danh, bot cần duyệt.
   const settingsTable = domain.table('settings') as unknown as Table<CommanderSettings>
@@ -302,7 +306,10 @@ export async function apply(ctx: Context): Promise<void> {
         order: CONTEXT_ORDER,
         text: (c) => {
           const id = c?.agent?.session.id
-          if (isCommander(id)) return GUIDE
+          if (isCommander(id)) {
+            const history = learnedContext(learned(), (bot) => bots().store.get(bot)?.name ?? bot)
+            return history ? `${GUIDE}\n\n${history}` : GUIDE
+          }
           const job = jobOf(id)
           return job
             ? jobContext(job, departmentName(job.department), membersOf(job.department, job.lead))
@@ -399,8 +406,11 @@ export async function apply(ctx: Context): Promise<void> {
           logger.warn('ghi bản ghi giao việc: %s', String(e))
         }
         const at = new Date().toISOString()
+        const key = `${Date.now()}-${entry.handle}`
+        // Kết quả lượt của bot cập nhật vào đúng bản ghi này (Commander tự học).
+        awaiting.set(entry.member, key)
         void log
-          .put(`${Date.now()}-${entry.handle}`, { ...entry, at })
+          .put(key, { ...entry, at })
           .catch((e: unknown) => logger.warn('nhật ký giao việc: %s', String(e)))
       },
     }
@@ -429,6 +439,11 @@ export async function apply(ctx: Context): Promise<void> {
                 description:
                   'Mã thẻ có sẵn để giao: task-n (thẻ đã chia) hoặc c-n (thẻ người dùng tạo trên Kanban).',
               },
+              loai: {
+                type: 'string',
+                description:
+                  'Loại việc ngắn, chữ thường, dùng lại cùng tên cho việc cùng loại (ví dụ: nghiên cứu thị trường, lịch và email, viết bài facebook). Để Commander học bot nào làm tốt việc gì.',
+              },
               thu_muc: {
                 type: 'string',
                 description:
@@ -449,6 +464,7 @@ export async function apply(ctx: Context): Promise<void> {
           ly_do: string
           the?: string
           thu_muc?: string
+          loai?: string
         }[]
         const assignments: Assignment[] = list.map((v) => ({
           bot: v.bot,
@@ -457,6 +473,7 @@ export async function apply(ctx: Context): Promise<void> {
           reason: v.ly_do,
           card: v.the,
           dir: v.thu_muc,
+          kind: v.loai,
         }))
         try {
           const results = await dispatch(
@@ -524,6 +541,24 @@ export async function apply(ctx: Context): Promise<void> {
       },
     }),
   )
+
+  // Commander tự học (giai đoạn 3, đợt 4): lượt của bot vừa nhận việc kết thúc thì ghi kết quả vào
+  // bản ghi giao việc; thống kê bot × loại việc hiện ở trang 2.5 và vào ngữ cảnh của Commander.
+  ctx.on('session/event', (session, event) => {
+    if (event.type !== 'turn/end') return
+    const key = awaiting.get(session.id)
+    if (!key) return
+    awaiting.delete(session.id)
+    const kind = (event.data as unknown as { reason?: { kind?: string } }).reason?.kind
+    const outcome =
+      kind === 'completed' ? 'done' : /cancel|abort|interrupt|stop/.test(kind ?? '') ? 'stopped' : 'failed'
+    const rec = log.get(key)
+    if (rec)
+      void log
+        .put(key, { ...rec, outcome, finishedAt: new Date().toISOString() })
+        .catch((e: unknown) => logger.warn('ghi kết quả giao việc: %s', String(e)))
+  })
+  const learned = () => learnedFrom([...log.entries()].map(([, r]) => r))
 
   // Bot làm xong một lượt bình thường: đánh dấu xong thẻ cũ nhất bot đang giữ (chính bot là chủ thẻ
   // nên có quyền), để bảng việc và Kanban đi đúng tiến độ.
@@ -640,6 +675,10 @@ export async function apply(ctx: Context): Promise<void> {
           required: true,
           description: 'Vì sao chuyển cho bot này (hiện cho người dùng).',
         },
+        loai: {
+          type: 'string',
+          description: 'Loại việc ngắn, chữ thường, như ở giao_viec.',
+        },
       },
       output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
       async execute(args, exec) {
@@ -665,6 +704,7 @@ export async function apply(ctx: Context): Promise<void> {
                 task: String(args.noi_dung ?? ''),
                 reason: String(args.ly_do ?? ''),
                 handoff: true,
+                kind: args.loai as string | undefined,
               },
             ],
             signal,
@@ -1745,7 +1785,7 @@ export async function apply(ctx: Context): Promise<void> {
             .map(([, r]) => r)
             .sort((a, b) => b.at.localeCompare(a.at))
             .slice(0, 50)
-          return new Response(JSON.stringify({ recent, settings: settings() }), {
+          return new Response(JSON.stringify({ recent, settings: settings(), learned: learned() }), {
             headers: { 'content-type': 'application/json; charset=utf-8' },
           })
         },

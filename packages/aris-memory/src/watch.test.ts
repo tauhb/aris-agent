@@ -12,6 +12,7 @@ function setup(reply = '[]') {
   const llmCalls: unknown[] = []
   const ctx = {
     logger: () => ({ warn: () => {}, info: () => {} }),
+    get: () => undefined,
     on: (name: string, fn: Handler) => void handlers.set(name, fn),
     llm: {
       async *stream(options: unknown) {

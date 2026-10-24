@@ -1,6 +1,7 @@
 /** Storage domain `aris_skills`: skill của từng bot và các bản của skill. */
 import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 import { z } from 'zod'
+import type { EvalRecord } from './eval.js'
 import type { SkillRecord, VersionRecord } from './store.js'
 
 const skill: z.ZodType<SkillRecord> = z.object({
@@ -9,10 +10,17 @@ const skill: z.ZodType<SkillRecord> = z.object({
   name: z.string(),
   description: z.string(),
   whenToUse: z.string().optional(),
-  status: z.enum(['draft', 'active', 'rejected']),
+  status: z.enum(['draft', 'active', 'archived', 'rejected']),
   version: z.number().int(),
   uses: z.number().int(),
   lastUsedAt: z.string().optional(),
+  activatedAt: z.string().optional(),
+  pinned: z.boolean().optional(),
+  archivedAt: z.string().optional(),
+  archivedBy: z.enum(['user', 'curator']).optional(),
+  cases: z
+    .array(z.object({ request: z.string(), sessionId: z.string().optional(), at: z.string() }))
+    .optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 })
@@ -43,6 +51,31 @@ const version: z.ZodType<VersionRecord> = z.object({
     .optional(),
 })
 
+const run = z.object({
+  session: z.string(),
+  steps: z.number().int(),
+  tokens: z.number().int(),
+  answer: z.string(),
+  denied: z.number().int(),
+  pass: z.boolean().optional(),
+  note: z.string().optional(),
+  error: z.string().optional(),
+})
+
+const evalRecord: z.ZodType<EvalRecord> = z.object({
+  id: z.string(),
+  skill: z.string(),
+  version: z.number().int(),
+  base: z.number().int(),
+  at: z.string(),
+  status: z.enum(['running', 'done', 'failed', 'stopped']),
+  cases: z.array(z.object({ request: z.string(), base: run.optional(), cand: run.optional() })),
+  usd: z.number(),
+  cap: z.number(),
+  note: z.string().optional(),
+  finishedAt: z.string().optional(),
+})
+
 export const skillsDomain = defineDomain({
   name: 'aris_skills',
   version: 1,
@@ -50,5 +83,6 @@ export const skillsDomain = defineDomain({
   tables: {
     skills: domainTable<string, SkillRecord>(skill),
     versions: domainTable<string, VersionRecord>(version),
+    evals: domainTable<string, EvalRecord>(evalRecord),
   },
 })

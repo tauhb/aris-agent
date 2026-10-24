@@ -14,6 +14,11 @@ export const dispatchRecord = z.object({
   member: z.string(),
   taskId: z.string().optional(),
   reused: z.boolean(),
+  /** Loại việc Commander ghi khi giao (tự học: ai làm tốt việc gì). */
+  kind: z.string().optional(),
+  /** Kết quả lượt của bot: xong, vấp, bị dừng. */
+  outcome: z.enum(['done', 'failed', 'stopped']).optional(),
+  finishedAt: z.string().optional(),
 })
 export type DispatchRecord = z.infer<typeof dispatchRecord>
 

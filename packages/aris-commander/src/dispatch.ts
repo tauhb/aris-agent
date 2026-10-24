@@ -19,6 +19,8 @@ export interface Assignment {
   handoff?: boolean | undefined
   /** Bot ngoài: repo hoặc thư mục cần làm (đường dẫn tuyệt đối), khi khác thư mục của phiên giao. */
   dir?: string | undefined
+  /** Loại việc ngắn ("nghiên cứu thị trường"): Commander tự học bot nào làm tốt việc gì. */
+  kind?: string | undefined
 }
 
 export interface BotInfo {
@@ -110,6 +112,7 @@ export interface DispatchEntry {
   member: string
   taskId?: string | undefined
   reused: boolean
+  kind?: string | undefined
 }
 
 export interface DispatchResult {
@@ -272,6 +275,7 @@ export async function dispatch<A extends { session: { id: string } }>(
           member,
           taskId,
           reused: !!existing,
+          ...(a.kind?.trim() ? { kind: a.kind.trim() } : {}),
         })
         return { handle, name: bot.name, ok: true, sessionId: member, taskId, reused: !!existing }
       } catch (e) {

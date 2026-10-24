@@ -49,6 +49,26 @@ Khi agent được tạo, aris gắn một nguồn skill vào phạm vi của ag
 - `GET /api/aris/skills`: mọi skill (kèm bản đề xuất đang chờ). `?pending=all`: các bản chờ duyệt. `?id=<bot>/<tên>`: một skill, các bản, so sánh bản chờ với bản đang dùng.
 - `POST`: `op` = `approve` (`version`, `body?` khi sửa rồi bật), `reject` (`version`), `restore` (`version`).
 
-## Để sau (đợt 4)
+## Đợt 4 · Kiểm thử, dọn kho
 
-Kiểm thử bằng chạy lại phiên cũ (ứng viên, số bước, token), dọn kho (ít dùng, lưu kho), ghim, sao lưu, "Học skill từ tài liệu…".
+### Kiểm thử bằng chạy lại
+
+- **Ca thử**: yêu cầu thật của người dùng đã dẫn tới skill: lúc vòng học đề xuất (lời người dùng trong các lượt đem học) và mỗi lần skill được dùng (lời người dùng của lượt đó). Giữ 5 ca gần nhất, bỏ trùng.
+- **Chạy**: chỉ khi người dùng bấm "Chạy kiểm thử" ở màn 3.3. Mỗi ca chạy hai lần trong phiên mới của đúng bot đó: **bản so sánh** (bản đang dùng; skill mới thì không có skill) và **bản thử** (bản đề xuất, hoặc bản đang dùng khi không có đề xuất). Nguồn skill của phiên kiểm thử chỉ trả đúng bản cần thử.
+- **Hộp cát**: phiên kiểm thử chỉ được đọc: `read`, `grep`, `glob`, `skill`, `todo_write`, và `bash` với lệnh chỉ đọc (`git log/status/diff/show`, `ls`, `cat`, `head`, `wc`…, không chuyển hướng ghi). Công cụ khác bị từ chối kèm lời "đang kiểm thử, chỉ được đọc; nêu bạn sẽ làm gì rồi làm tiếp". Không mạng, không giao việc, không ghi ký ức; vòng học bỏ qua phiên kiểm thử.
+- **Đo**: số bước (lần gọi model), token, câu trả lời cuối. **Chấm**: một lần gọi model rẻ đọc yêu cầu, mô tả skill và câu trả lời cuối, trả đạt / không kèm lý do; cùng cách chấm cho hai bản.
+- **Trần**: tối đa 5 ca, 0,20 USD mỗi lần kiểm thử (tiền các phiên kiểm thử và lần chấm, ghi sổ chi phí phạm vi `eval`). Chạm trần thì dừng ca còn lại, ghi rõ.
+- **Kết quả**: bảng `evals` (ca, hai bản, số bước, token, đạt, ghi chú, tiền). Màn 3.3 hiện Đạt (bản thử / bản so sánh), Số bước và Token (% thay đổi), bảng ca thử. Bản đề xuất đã kiểm thử là "ứng viên" (nhãn), vẫn chờ duyệt. Màn 3.2 cột Thành công là tỉ lệ đạt của lần kiểm thử gần nhất.
+- Phiên kiểm thử đặt tên "Kiểm thử skill · <tên> · ca N · bản …" để người dùng nhận ra trong danh sách phiên.
+
+### Dọn kho, ghim, tắt, sao lưu
+
+- **Ít dùng**: skill đang dùng, không được dùng 14 ngày (tính từ lần dùng cuối, chưa dùng thì từ lúc bật). Vẫn nạp cho bot, chỉ là nhãn.
+- **Lưu kho**: 30 ngày không dùng thì người dọn kho tự cất (không nạp cho bot nữa); người dùng cũng tự cất được ("Tắt / cất vào kho"). "Dùng lại" đưa về đang dùng.
+- **Ghim**: skill đã ghim không bị dọn.
+- Người dọn kho chạy mỗi ngày (lúc khởi động và mỗi 24 giờ); lần chạy gần nhất và lần kế hiện ở màn 3.2.
+- **Sao lưu**: tải về tệp `.aris-skills.json` gồm mọi skill và các bản. Quay lui từng skill bằng lịch sử bản (đã có).
+
+## Để sau
+
+"Học skill từ tài liệu…" (`/learn`), gộp skill trùng (người dọn kho pha 2), nhập lại từ tệp sao lưu.

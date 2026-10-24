@@ -112,6 +112,9 @@ export function watchConversation(
   ctx.on('agent/turn-stopping', ({ agent, turn }) => {
     const s = turns.get(agent)
     if (!s || s.turn !== turn) return
+    // Phiên kiểm thử skill (@aris/skills): không nhắc, để câu trả lời cuối đúng là kết quả việc.
+    if ((ctx.get('arisSkills') as { isEval?(id: string): boolean } | undefined)?.isEval?.(agent.session.id))
+      return
     const reason = nudgeReason(s, lastNudge.get(agent))
     if (!reason) return
     lastNudge.set(agent, turn)

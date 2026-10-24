@@ -6,7 +6,6 @@
 import { Button, Card, IconButton, PageShell, useTeamData } from '@aris/ui-kit/react'
 import { useCallback, useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
-import { Later } from '../team/BotTools.js'
 import { Box, Col } from '../ui.js'
 import { dayOf } from './Skills.js'
 
@@ -25,8 +24,48 @@ interface Version {
   at: string
 }
 
+interface Run {
+  steps: number
+  tokens: number
+  answer: string
+  denied: number
+  pass?: boolean
+  note?: string
+  error?: string
+}
+
+/** Lần kiểm thử gần nhất (`@aris/skills`, đợt 4). */
+interface Eval {
+  version: number
+  base: number
+  status: 'running' | 'done' | 'failed' | 'stopped'
+  cases: { request: string; base?: Run; cand?: Run }[]
+  usd: number
+  cap: number
+  note?: string
+  summary: {
+    cases: number
+    pass: { cand: number; base: number }
+    steps: { base: number; cand: number; pct: number }
+    tokens: { base: number; cand: number; pct: number }
+  }
+}
+
 interface Detail {
-  skill: { id: string; bot: string; name: string; description: string; version: number; uses: number }
+  skill: {
+    id: string
+    bot: string
+    name: string
+    description: string
+    status: 'draft' | 'active' | 'archived' | 'rejected'
+    version: number
+    uses: number
+    pinned?: boolean
+    stale?: boolean
+    idleDays?: number
+    cases?: { request: string }[]
+  }
+  eval: Eval | null
   versions: Version[]
   proposed:
     | (Version & {
@@ -63,6 +102,12 @@ export function Skill({ t, nav, params }: PageProps) {
     setD(res?.ok ? ((await res.json()) as Detail) : null)
   }, [id])
   useEffect(() => void load(), [load])
+  // Đang kiểm thử: đọc lại mỗi 4 giây cho tới khi xong.
+  useEffect(() => {
+    if (d?.eval?.status !== 'running') return
+    const timer = setInterval(() => void load(), 4000)
+    return () => clearInterval(timer)
+  }, [d?.eval?.status, load])
   const bot = team?.bots.find((b) => b.id === d?.skill.bot)
   const p = d?.proposed
   const current = d?.versions.find((v) => v.status === 'active')
@@ -110,10 +155,14 @@ export function Skill({ t, nav, params }: PageProps) {
       subtitle={
         p
           ? t(p.base ? 'skd.subPatch' : 'skd.subNew', { name: bot?.name ?? d.skill.bot, v: p.version })
-          : t('skd.subActive', { name: bot?.name ?? d.skill.bot, v: d.skill.version, n: d.skill.uses })
+          : t(d.skill.status === 'archived' ? 'skd.subArchived' : 'skd.subActive', {
+              name: bot?.name ?? d.skill.bot,
+              v: d.skill.version,
+              n: d.skill.uses,
+            })
       }
       actions={
-        p && (
+        p ? (
           <>
             <Button disabled={busy} onClick={() => void act({ op: 'reject', id: p.id })}>
               {t('skd.reject')}
@@ -134,6 +183,28 @@ export function Skill({ t, nav, params }: PageProps) {
             >
               {t('skd.approve', { v: `v${p.version}` })}
             </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              disabled={busy}
+              onClick={() => void act({ op: 'pin', skill: d.skill.id, on: !d.skill.pinned })}
+            >
+              {d.skill.pinned ? t('skd.unpin') : t('skd.pin')}
+            </Button>
+            {d.skill.status === 'archived' ? (
+              <Button
+                variant="primary"
+                disabled={busy}
+                onClick={() => void act({ op: 'unarchive', skill: d.skill.id })}
+              >
+                {t('skd.unarchive')}
+              </Button>
+            ) : (
+              <Button disabled={busy} onClick={() => void act({ op: 'archive', skill: d.skill.id })}>
+                {t('skd.archive')}
+              </Button>
+            )}
           </>
         )
       }
@@ -214,38 +285,7 @@ export function Skill({ t, nav, params }: PageProps) {
           </section>
         </Col>
         <Col basis={380}>
-          <Later t={t} stage={3} label={t('sk.later')}>
-            <Box
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-                gap: 10,
-                textAlign: 'center',
-              }}
-            >
-              {(['pass', 'steps', 'tokens'] as const).map((m) => (
-                <div key={m}>
-                  <div className="ap-k">{t(`skd.metric.${m}`)}</div>
-                  <div className="ap-v">—</div>
-                </div>
-              ))}
-            </Box>
-            <Card
-              title={t('skd.cases')}
-              actions={
-                <span className="a-muted" style={{ fontSize: 12 }}>
-                  {t('skd.sandbox')}
-                </span>
-              }
-            >
-              <div
-                className="a-muted"
-                style={{ fontSize: 12.5, padding: '10px 14px', borderTop: '1px solid var(--a-line)' }}
-              >
-                {t('skd.casesLater')}
-              </div>
-            </Card>
-          </Later>
+          <EvalPanel t={t} d={d} busy={busy} onRun={() => void act({ op: 'eval', skill: d.skill.id })} />
           <Box style={{ padding: '10px 14px', fontSize: 13 }}>
             <b>{t('skd.history')}</b>
             <div
@@ -275,5 +315,118 @@ export function Skill({ t, nav, params }: PageProps) {
         </Col>
       </div>
     </PageShell>
+  )
+}
+
+const signed = (n: number) => (n > 0 ? `+${n}%` : `${n}%`)
+
+/** Kiểm thử bằng chạy lại: số liệu, bảng ca thử, nút chạy (trần 5 ca, 0,20 USD). */
+function EvalPanel({
+  t,
+  d,
+  busy,
+  onRun,
+}: {
+  t: PageProps['t']
+  d: Detail
+  busy: boolean
+  onRun: () => void
+}) {
+  const e = d.eval
+  const s = e?.summary
+  const running = e?.status === 'running'
+  const vb = (n: number) => (n ? `v${n}` : t('skd.noSkill'))
+  const cell = (r?: Run) =>
+    !r ? (
+      <span className="a-muted">{running ? '…' : '—'}</span>
+    ) : r.error ? (
+      <span style={{ color: 'var(--a-danger)' }} title={r.error}>
+        {t('skd.runError')}
+      </span>
+    ) : (
+      <span style={{ color: r.pass ? 'var(--a-ok)' : 'var(--a-danger)' }} title={r.note}>
+        {r.pass ? t('skd.pass') : t('skd.fail')}
+      </span>
+    )
+  return (
+    <>
+      <Box
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+          gap: 10,
+          textAlign: 'center',
+        }}
+      >
+        <div>
+          <div className="ap-k">{t('skd.metric.pass')}</div>
+          <div
+            className="ap-v"
+            style={s && s.pass.cand >= s.pass.base && s.cases ? { color: 'var(--a-ok)' } : undefined}
+          >
+            {s?.cases ? `${s.pass.cand}/${s.cases}` : '—'}
+          </div>
+          <div className="ap-k">{s?.cases ? `${vb(e!.base)}: ${s.pass.base}/${s.cases}` : ' '}</div>
+        </div>
+        <div>
+          <div className="ap-k">{t('skd.metric.steps')}</div>
+          <div className="ap-v" style={s && s.steps.pct < 0 ? { color: 'var(--a-ok)' } : undefined}>
+            {s?.cases ? signed(s.steps.pct) : '—'}
+          </div>
+          <div className="ap-k">
+            {s?.cases
+              ? `${s.steps.base.toFixed(1).replace('.', ',')} → ${s.steps.cand.toFixed(1).replace('.', ',')}`
+              : ' '}
+          </div>
+        </div>
+        <div>
+          <div className="ap-k">{t('skd.metric.tokens')}</div>
+          <div className="ap-v" style={s && s.tokens.pct < 0 ? { color: 'var(--a-ok)' } : undefined}>
+            {s?.cases ? signed(s.tokens.pct) : '—'}
+          </div>
+          <div className="ap-k">{t('skd.perRun')}</div>
+        </div>
+      </Box>
+      <Card
+        title={t('skd.cases')}
+        actions={
+          <Button size="sm" disabled={busy || running || !(d.skill.cases ?? []).length} onClick={onRun}>
+            {running ? t('skd.running') : t('skd.run')}
+          </Button>
+        }
+      >
+        {e && (
+          <div className="ap-er a-muted" style={{ fontSize: 12, fontWeight: 600 }}>
+            <span>{t('skd.case')}</span>
+            <span>{vb(e.base)}</span>
+            <span>{vb(e.version)}</span>
+            <span>{t('skd.metric.steps')}</span>
+          </div>
+        )}
+        {e?.cases.map((c, i) => (
+          <div className="ap-er" key={i}>
+            <span className="ap-li-sub" title={c.request} style={{ color: 'var(--a-ink)' }}>
+              {c.request}
+            </span>
+            {cell(c.base)}
+            {cell(c.cand)}
+            <span>{c.cand && !c.cand.error ? c.cand.steps : '—'}</span>
+          </div>
+        ))}
+        <div
+          className="a-muted"
+          style={{ fontSize: 12.5, padding: '10px 14px', borderTop: '1px solid var(--a-line)' }}
+        >
+          {e
+            ? t('skd.evalNote', {
+                usd: e.usd.toFixed(3).replace('.', ','),
+                cap: e.cap.toFixed(2).replace('.', ','),
+              }) + (e.note ? ` · ${e.note}` : '')
+            : (d.skill.cases ?? []).length
+              ? t('skd.evalHint', { n: Math.min(5, (d.skill.cases ?? []).length) })
+              : t('skd.noCases')}
+        </div>
+      </Card>
+    </>
   )
 }
