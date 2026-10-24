@@ -62,9 +62,11 @@ Kiểm tra nằm ở cửa vào, trước khi tin tới model: người lạ kh�
 
 ## Trả lời
 
-- Thả 👀 vào tin của anh khi bắt đầu, ✅ khi xong, ❌ khi lỗi. Kèm "đang gõ…".
+- Thả 👀 vào tin của anh khi bắt đầu, 👍 khi xong, 😢 khi lỗi (Telegram chỉ cho một bộ emoji cảm xúc cố định, không có ✅ ❌). Kèm "đang gõ…".
 - Chữ hiện dần: một tin xem trước được sửa dần (không rung chuông), xong thì xoá tin xem trước và gửi câu trả lời cuối (rung chuông). Chỉ câu trả lời cuối, thẻ duyệt và câu hỏi mới rung chuông.
-- Markdown → HTML của Telegram: in đậm, nghiêng, mã, khối mã, link, trích dẫn, danh sách. **Bảng**: nhỏ thì đổi thành danh sách theo dòng, lớn thì thành khối chữ thẳng cột. Tin dài hơn 4.096 ký tự thì chia ở chỗ xuống dòng.
+- Câu trả lời gồm **mọi đoạn trả lời của lượt** theo thứ tự (viết, gọi công cụ, viết tiếp; tin chèn giữa lượt), không chỉ đoạn cuối. Tin xem trước cũng nối các đoạn đã chốt với đoạn đang viết; lượt xong khi tin xem trước còn đang gửi thì đợi có mã tin rồi xoá.
+- Lượt kết thúc vì aris tắt giữa chừng (`interrupted`): không báo lỗi, giữ tin trong hàng đợi để làm lại khi chạy lên.
+- Markdown → HTML của Telegram: in đậm, nghiêng, mã, khối mã, link, trích dẫn, danh sách. **Bảng**: luôn đổi thành danh sách theo dòng (ô đầu in đậm, "tên cột: nội dung"); khối chữ thẳng cột gãy dòng trên điện thoại nên không dùng. Tin dài hơn 4.096 ký tự thì chia ở chỗ xuống dòng.
 - **Giao bền**: câu trả lời cuối ghi vào hộp thư ra trước khi gửi. Máy tắt lúc chưa gửi: lần sau gửi lại. Tắt đúng lúc đang gửi: gửi lại kèm ghi chú "♻️ có thể trùng". Tối đa 3 lần, trong 24 giờ.
 
 ## Lệnh
