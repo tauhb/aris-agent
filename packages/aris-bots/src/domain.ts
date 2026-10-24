@@ -28,6 +28,17 @@ export const botRecord = z.object({
   external: externalRecord.optional(),
   /** Bộ công cụ riêng của bot (bản vẽ 2.2); không có là theo chính sách phòng. Tắt thì bot không dùng được kể cả phòng cho phép. */
   tools: z.object({ web: z.boolean(), files: z.boolean(), shell: z.boolean() }).partial().optional(),
+  /**
+   * Quyền riêng của bot (bản vẽ 2.2, Quyền & kênh). `write`: không ghi, chỉ trong thư mục làm việc,
+   * mọi nơi (ngoài thư mục làm việc thì hỏi); mặc định mọi nơi. `danger`: thao tác cần duyệt thì hỏi
+   * người dùng hay tự từ chối; mặc định hỏi.
+   */
+  perms: z
+    .object({ write: z.enum(['none', 'workspace', 'anywhere']), danger: z.enum(['ask', 'deny']) })
+    .partial()
+    .optional(),
+  /** Commander được giao việc cho bot (bot thường); bot ngoài dùng `external.assignable`. Mặc định có. */
+  assignable: z.boolean().optional(),
   createdAt: z.string(),
 })
 export type BotRecord = z.infer<typeof botRecord>

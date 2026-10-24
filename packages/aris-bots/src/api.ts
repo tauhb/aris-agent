@@ -40,6 +40,8 @@ export interface ApiDeps {
   catalog?: () => Promise<{ id: string; name: string; models: { id: string; name: string }[] }[]>
   /** Ký ức riêng của bot; không có (plugin ký ức tắt) thì không chép ký ức. */
   memory?: () => MemoryPort | undefined
+  /** Số liệu cột phải hồ sơ bot (`?profile=<mã bot>`). */
+  profile?: (bot: string) => unknown
   /** Kết nối nền tảng (MCP) theo bot. */
   mcp?: McpStore
   /** Kết nối thử một máy chủ MCP. */
@@ -83,6 +85,8 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
     const session = q.get('session')
     if (session) return json({ bot: d.store.botOf(session).id })
     if (q.get('live') && d.live) return json(d.live())
+    const profile = q.get('profile')
+    if (profile && d.profile) return json(d.profile(profile))
     return json(await snapshot(d))
   }
   let body: Record<string, unknown>

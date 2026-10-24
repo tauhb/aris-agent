@@ -26,6 +26,8 @@ export interface BotInfo {
   kind: 'commander' | 'member'
   /** Bot ngoài: chạy qua plugin của dsh, không qua Team. */
   external?: { agent: string; assignable: boolean } | undefined
+  /** Bot thường tắt "Commander được giao việc". */
+  assignable?: boolean | undefined
 }
 
 /** Phần của Team dsh mà giao việc dùng (truyền vào để kiểm thử bằng bản giả). */
@@ -183,6 +185,12 @@ export async function dispatch<A extends { session: { id: string } }>(
           handle,
           ok: false,
           error: `@${handle} không phải thành viên phòng ${d.lead.department}; chỉ giao trong phòng, phần còn lại tự làm hoặc báo Aris.`,
+        }
+      if (bot.assignable === false)
+        return {
+          handle,
+          ok: false,
+          error: `@${handle} đã tắt nhận giao việc từ Commander; tự làm hoặc chọn bot khác.`,
         }
       if (!a.task.trim() || !a.reason.trim())
         return { handle, ok: false, error: 'Mỗi việc cần nội dung và lý do chọn bot.' }

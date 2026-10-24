@@ -22,6 +22,7 @@ const BOTS: BotInfo[] = [
     external: { agent: 'claude-code', assignable: true },
   },
   { id: 'b-4', handle: 'lan', name: 'Lan', kind: 'member', external: { agent: 'codex', assignable: false } },
+  { id: 'b-5', handle: 'an', name: 'An', kind: 'member', assignable: false },
 ]
 
 function setup(busy = 0) {
@@ -299,6 +300,14 @@ describe('giao cho bot ngoài', () => {
     expect(r.map((x) => [x.handle, x.ok, x.error])).toEqual([
       ['lan', false, '@lan là bot ngoài không nhận giao việc từ Commander.'],
       ['khoa', false, 'Bot ngoài chưa nhận thẻ Kanban; giao không kèm the.'],
+    ])
+  })
+
+  it('bot thường tắt "Commander được giao việc" thì báo lỗi', async () => {
+    const { deps } = setup()
+    const r = await dispatch(deps, cmd, [{ bot: 'an', task: 'Việc', reason: 'x' }], signal)
+    expect(r.map((x) => [x.handle, x.ok, x.error])).toEqual([
+      ['an', false, '@an đã tắt nhận giao việc từ Commander; tự làm hoặc chọn bot khác.'],
     ])
   })
 })

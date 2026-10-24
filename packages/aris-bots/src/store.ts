@@ -28,11 +28,22 @@ export interface BotInput {
   external?: unknown
   /** Bộ công cụ riêng: chỉ trường gửi lên mới đổi. */
   tools?: Partial<Record<ToolKey, boolean>>
+  /** Quyền riêng: chỉ trường gửi lên mới đổi. */
+  perms?: { write?: unknown; danger?: unknown }
+  assignable?: boolean
 }
 
 /** Nhóm công cụ bật/tắt được trên hồ sơ bot. */
 export const TOOL_KEYS = ['web', 'files', 'shell'] as const
 export type ToolKey = (typeof TOOL_KEYS)[number]
+
+function cleanPerms(v: unknown, prev: BotRecord['perms'] = {}): BotRecord['perms'] {
+  const p = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>
+  const out = { ...prev }
+  if (p.write === 'none' || p.write === 'workspace' || p.write === 'anywhere') out.write = p.write
+  if (p.danger === 'ask' || p.danger === 'deny') out.danger = p.danger
+  return out
+}
 
 function cleanTools(v: unknown, prev: BotRecord['tools'] = {}): BotRecord['tools'] {
   const t = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>
@@ -189,6 +200,8 @@ export class BotStore {
       ...(input.department ? { department: input.department } : {}),
       ...(input.external ? { external: this.external(input.external) } : {}),
       ...(input.tools ? { tools: cleanTools(input.tools) } : {}),
+      ...(input.perms ? { perms: cleanPerms(input.perms) } : {}),
+      ...(input.assignable === false ? { assignable: false } : {}),
       createdAt: this.now().toISOString(),
     }
     await this.t.bots.put(id, rec)
@@ -214,6 +227,8 @@ export class BotStore {
     if (patch.department === null) delete rec.department
     else if (patch.department) rec.department = patch.department
     if (patch.tools) rec.tools = cleanTools(patch.tools, prev.tools)
+    if (patch.perms) rec.perms = cleanPerms(patch.perms, prev.perms)
+    if (typeof patch.assignable === 'boolean') rec.assignable = patch.assignable
     if (patch.external === null) delete rec.external
     else if (patch.external !== undefined) rec.external = this.external(patch.external, prev.external)
     await this.t.bots.put(id, rec)

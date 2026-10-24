@@ -2,6 +2,7 @@
  * Chính sách chung của phòng ban (quyết định 12, bản vẽ 2.6): model mặc định, ngân sách mỗi ngày,
  * quyền dùng công cụ. Áp cho mọi bot thường của phòng; Commander không theo chính sách phòng.
  */
+import { isAbsolute, relative, resolve } from 'node:path'
 import type { PolicyRecord } from './domain.js'
 
 export type Policy = PolicyRecord
@@ -47,6 +48,20 @@ export function botToolOf(tool: string, args: unknown): BotTool | undefined {
     return (args as { command?: unknown } | undefined)?.command === 'view' ? 'files' : undefined
   const need = NEEDS[tool]
   return need === 'web' || need === 'shell' ? need : undefined
+}
+
+/** Đường dẫn tệp mà lệnh ghi nhắm tới (`write`, `edit`, `str_replace_editor` trừ `view`). */
+export function writeTarget(tool: string, args: unknown): string | undefined {
+  const a = (args ?? {}) as { file_path?: unknown; path?: unknown; command?: unknown }
+  if (tool === 'write' || tool === 'edit') return typeof a.file_path === 'string' ? a.file_path : ''
+  if (tool === 'str_replace_editor' && a.command !== 'view') return typeof a.path === 'string' ? a.path : ''
+  return undefined
+}
+
+/** Đường dẫn nằm trong thư mục làm việc (đường dẫn tương đối tính từ thư mục làm việc). */
+export function insideDir(target: string, dir: string): boolean {
+  const rel = relative(resolve(dir), resolve(dir, target))
+  return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel))
 }
 
 const TOOL_TEXT: Record<BotTool, string> = {

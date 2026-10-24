@@ -179,3 +179,29 @@ export class LiveTracker {
     }
   }
 }
+
+/**
+ * Số liệu 7 ngày của một bot cho cột phải hồ sơ: số việc được giao, số việc xong / vấp (kết quả
+ * sau lần giao, theo tên việc), vài tên việc gần nhất.
+ */
+export function botStats(
+  items: readonly { bot: string; kind: string; task?: string | undefined; at: number }[],
+  bot: string,
+  now = Date.now(),
+): { assigned: number; done: number; failed: number; recent: string[] } {
+  const mine = items.filter((a) => a.bot === bot && a.at >= now - 7 * 86_400_000).sort((a, b) => a.at - b.at)
+  let done = 0
+  let failed = 0
+  const assigned = mine.filter((a) => a.kind === 'assigned')
+  for (const a of assigned) {
+    const end = mine
+      .filter((x) => x.at >= a.at && x.task === a.task && (x.kind === 'done' || x.kind === 'failed'))
+      .pop()
+    if (end?.kind === 'done') done++
+    else if (end?.kind === 'failed') failed++
+  }
+  const recent: string[] = []
+  for (const a of [...assigned].reverse())
+    if (a.task && !recent.includes(a.task) && recent.push(a.task) >= 3) break
+  return { assigned: assigned.length, done, failed, recent }
+}

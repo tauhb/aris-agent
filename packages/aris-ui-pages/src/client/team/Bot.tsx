@@ -20,7 +20,6 @@ import { useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { departmentOptions, modelOptions } from '../options.js'
 import { Box } from '../ui.js'
-import { DEMO_PROFILE as P } from './demo.js'
 import { useChannels } from '../settings/channels-api.js'
 
 /** Kênh riêng của bot (bản vẽ 2.2): tài khoản Telegram gắn trên trang 6.3. */
@@ -43,13 +42,18 @@ function BotChannels({ t, botId, onConnect }: { t: PageProps['t']; botId: string
           </Button>
         )}
       </CardRow>
-      <CardRow label="Lark">
-        <span className="a-muted">{t('bot.later')}</span>
-      </CardRow>
+      <Later t={t} stage={7} row>
+        <CardRow label="Lark">
+          <Button size="sm" disabled>
+            {t('bot.connect')}
+          </Button>
+        </CardRow>
+      </Later>
     </Card>
   )
 }
-import { SkillsTab } from './BotTools.js'
+import { BotAside, PermsCard } from './BotPerms.js'
+import { Later, SkillsTab } from './BotTools.js'
 import { ExternalSettings } from './ExternalBot.js'
 import { MascotPicker } from './MascotPicker.js'
 
@@ -330,16 +334,7 @@ export function BotProfile({ t, nav, params, plugins }: PageProps) {
           {tab === 'skills' && <SkillsTab t={t} nav={nav} bot={bot} />}
           {tab === 'perms' && (
             <>
-              <div className="a-muted" style={{ fontSize: 12.5 }}>
-                {t('bot.sample')}
-              </div>
-              <Card title={t('bot.permTitle')}>
-                {P.permissions.map(([k, v]) => (
-                  <CardRow key={k} label={k}>
-                    <span className="a-muted">{v}</span>
-                  </CardRow>
-                ))}
-              </Card>
+              <PermsCard t={t} bot={bot} />
               {!bot.external && (
                 <BotChannels
                   t={t}
@@ -351,25 +346,7 @@ export function BotProfile({ t, nav, params, plugins }: PageProps) {
           )}
         </div>
       </main>
-      <aside className="ap-aside" aria-label={t('bot.summary')}>
-        <b>{t('bot.summary')}</b>
-        <div style={{ fontSize: 13, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span>
-            <span className="a-muted">{t('bot.handle')}: </span>@{bot.handle}
-          </span>
-          <span>
-            <span className="a-muted">{t('bot.department')}: </span>
-            {team.departments.find((d) => d.id === bot.department)?.name ?? t('bot.noDepartment')}
-          </span>
-          <span>
-            <span className="a-muted">{t('bot.model')}: </span>
-            {bot.model ? bot.model.model : t('bot.modelDefault')}
-          </span>
-        </div>
-        <div className="a-muted" style={{ fontSize: 12.5 }}>
-          {t('bot.activitySoon')}
-        </div>
-      </aside>
+      <BotAside t={t} bot={bot} />
     </div>
   )
 }

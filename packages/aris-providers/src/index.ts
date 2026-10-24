@@ -126,7 +126,11 @@ export async function apply(ctx: Context): Promise<void> {
   const prices = createPrices()
   const ledger = new Ledger(t('ledger'), prices, t('spend'))
   // Chi phí hôm nay theo phòng ban: @aris/bots đọc để áp trần ngân sách và hiện ở trang Phòng ban.
-  ctx.provide('arisSpend', { today: () => ledger.spentToday() })
+  ctx.provide('arisSpend', {
+    today: () => ledger.spentToday(),
+    /** Chi phí 7 ngày của một bot (cột phải hồ sơ bot). */
+    botWeek: (bot: string) => ledger.spentWeek(`bot:${bot}`),
+  })
   const pools = new KeyPools(t('pools'), {
     resolve: async (ref) => (await ctx.credentials.resolve(credentialRef(ref)))?.value,
     set: (ref, value) => ctx.credentials.set(credentialRef(ref), value),
@@ -310,7 +314,10 @@ export async function apply(ctx: Context): Promise<void> {
         usage.inputTokens + usage.outputTokens + (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0),
     )
     ledger
-      .record(provider, model, usage, Date.now(), departmentOf(session.id))
+      .record(provider, model, usage, Date.now(), [
+        departmentOf(session.id),
+        `bot:${arisBots()?.store.botOf(session.id).id ?? 'aris'}`,
+      ])
       .catch((e: unknown) => logger.warn('sổ chi phí: %s', String(e)))
   })
 

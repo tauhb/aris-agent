@@ -266,6 +266,17 @@ export class MemoryStore {
     return n
   }
 
+  /** Cột phải hồ sơ bot: mức đầy ký ức lõi riêng của bot và vài ký ức mới học. */
+  statsOf(bot: string, recent = 3): { core: Usage; recent: { text: string; at: string }[] } {
+    return {
+      core: this.usage(bot, 'notes'),
+      recent: this.list(bot, { book: 'notes', status: 'active' })
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, recent)
+        .map((i) => ({ text: i.text, at: i.createdAt })),
+    }
+  }
+
   async search(bot: string, query: string, limit = 8): Promise<MemoryItem[]> {
     const q = words(query)
     if (q.length === 0) return []

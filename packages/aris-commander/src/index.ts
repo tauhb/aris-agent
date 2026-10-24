@@ -1176,6 +1176,9 @@ export async function apply(ctx: Context): Promise<void> {
     async (req, next) => {
       const sid = req.agent.session.id
       if (!members.has(sid)) return next()
+      // Bot đặt "Hành động nguy hiểm: từ chối" thì không hỏi người dùng.
+      const store = (ctx.get('arisBots') as ArisBots | undefined)?.store
+      if (store?.get(store.botOf(sid).id)?.perms?.danger === 'deny') return 'rejected'
       const call = req.callId ? calls.get(req.callId) : undefined
       const run = `member:${sid}`
       const onAbort = () => hub.endRun(run)

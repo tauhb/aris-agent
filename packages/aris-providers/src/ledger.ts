@@ -28,21 +28,26 @@ export class Ledger {
     private spend?: Table<SpendRecord>,
   ) {}
 
-  /** Ghi một lần gọi; `scope` (phòng ban của bot) thì cộng thêm vào chi phí ngày của phạm vi đó. */
+  /**
+   * Ghi một lần gọi; mỗi phạm vi trong `scope` (phòng ban của bot, `bot:<mã bot>`) được cộng thêm
+   * vào chi phí ngày của phạm vi đó.
+   */
   async record(
     provider: string,
     model: string,
     usage: Usage,
     at = Date.now(),
-    scope?: string,
+    scope?: string | readonly (string | undefined)[],
   ): Promise<void> {
     const day = dayOf(at)
     const key = keyOf(day, provider, model)
     const price = this.prices.of(provider, model)
-    if (scope && this.spend && price) {
-      const sk = `${day}-${scope}`.replace(/[^A-Za-z0-9-]/g, '-')
+    const scopes = (Array.isArray(scope) ? scope : [scope]).filter((x): x is string => !!x)
+    for (const sc of scopes) {
+      if (!this.spend || !price) break
+      const sk = `${day}-${sc}`.replace(/[^A-Za-z0-9-]/g, '-')
       const prev = this.spend.get(sk)
-      await this.spend.put(sk, { day, scope, usd: (prev?.usd ?? 0) + costOf(price, usage) })
+      await this.spend.put(sk, { day, scope: sc, usd: (prev?.usd ?? 0) + costOf(price, usage) })
     }
     const prev = this.table.get(key) ?? {
       day,
@@ -75,6 +80,14 @@ export class Ledger {
     for (const [, r] of this.spend?.entries() ?? [])
       if (r.day === day) out[r.scope] = (out[r.scope] ?? 0) + r.usd
     return out
+  }
+
+  /** Chi phí 7 ngày gần nhất (kể cả hôm nay) của một phạm vi. */
+  spentWeek(scope: string, now = Date.now()): number {
+    const week = new Set(Array.from({ length: 7 }, (_, i) => dayOf(now - i * 86_400_000)))
+    let usd = 0
+    for (const [, r] of this.spend?.entries() ?? []) if (r.scope === scope && week.has(r.day)) usd += r.usd
+    return usd
   }
 
   summary(now = Date.now()): CostSummary {

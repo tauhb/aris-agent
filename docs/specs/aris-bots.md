@@ -100,6 +100,22 @@ Màn hồ sơ bot làm đủ theo bản vẽ 2.2 qua 4 đợt; phần thuộc gi
 
 Chạy thử thật (24/10): thêm cho Khoa kết nối "Tự thêm" tới máy chủ thử `packages/aris-bots/test/echo-mcp.mjs` (công cụ `echo` chỉ đọc, `ghi_chu` ghi) → Kiểm tra kết nối báo 2 công cụ; trong phiên mới, Khoa gọi `mcp__echo_thu__echo` chạy luôn, `mcp__echo_thu__ghi_chu` hiện thanh duyệt "Khoa muốn dùng Echo thử · ghi_chu", cho phép thì chạy, biến môi trường tới được máy chủ; Minh (bot khác) không thấy công cụ `mcp__` nào; Aris giao việc cho Khoa thì phiên con của Khoa cũng dùng được kết nối.
 
+## Hồ sơ bot · Quyền & kênh, cột phải (đợt 2)
+
+**Quyền riêng của bot** (trường `perms`, `assignable` của bot; tab Quyền & kênh):
+
+- **Ghi file**: không ghi; chỉ trong thư mục làm việc (`session.header.cwd` của phiên; ngoài đó thì từ chối kèm lý do); mọi nơi (mặc định; ghi ngoài thư mục làm việc thì hỏi người dùng). Áp cho `write`, `edit`, `str_replace_editor` (trừ `view`); lệnh terminal thuộc Bộ công cụ. Phòng không cho ghi thì ô khoá, ghi "Phòng X không cho". Không áp cho Commander.
+- **Hành động nguy hiểm**: luôn hỏi người dùng (mặc định) hoặc tự từ chối: mọi `approval/request` của phiên bot trả `rejected` ngay (cả phiên con khi được giao việc, qua bộ duyệt của commander).
+- **Commander được giao việc cho bot này** (`assignable`, mặc định có): tắt thì `giao_viec` báo lỗi, đội hình trong lời nhắc ghi "không nhận giao việc từ Commander". Bot ngoài vẫn dùng `external.assignable`.
+- Kênh riêng: Telegram như cũ; Lark hiện mờ "Giai đoạn 7".
+
+**Cột phải "Tóm tắt bot"** (`GET /api/aris/bots?profile=<mã bot>`, tải lại 15 giây một lần): trạng thái trực tiếp và việc đang làm; số việc được giao 7 ngày, tỉ lệ hoàn thành (việc giao có kết quả xong / vấp sau đó, theo tên việc), chi phí 7 ngày của riêng bot, mức đầy ký ức lõi (cuốn `notes`); 3 việc Aris giao gần nhất; 3 ký ức mới học. "Skill tự cải tiến" hiện mờ "Giai đoạn 3".
+
+- Việc gần đây lưu bền 8 ngày (tối đa 3.000 mục) thay vì 30 mục; thanh bên và cột phải phiên vẫn chỉ đọc 30 mục mới nhất.
+- Sổ chi phí (`@aris/providers`) ghi thêm phạm vi `bot:<mã bot>` cho mỗi lần gọi model (trước chỉ ghi theo phòng ban); `arisSpend.botWeek(bot)`. Chi phí trước lúc có bản này không chia được theo bot.
+
+Chạy thử thật (24/10): đặt Khoa "chỉ trong thư mục làm việc", nhờ Khoa dùng `write` ghi `/tmp/…` → bị chặn đúng lời "chỉ cho ghi trong thư mục làm việc /Users/…/aris/workspace", Khoa dừng không lách; cột phải của Khoa: 2 việc 7 ngày, hoàn thành 100%, hai tên việc gần nhất.
+
 ## Nhân bản, xuất, nhập (bản vẽ 2.4)
 
 Hộp "Nhân bản / xuất" trên hồ sơ bot (`portable.ts`). Luôn chép vai trò, mô tả, linh vật; bot ngoài luôn giữ cấu hình bot ngoài (đó là loại bot). Chọn thêm:

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { handleApi } from './api.js'
 import { renderAddress, renderPersona } from './persona.js'
-import { botToolOf } from './policy.js'
+import { botStats } from './live.js'
+import { botToolOf, insideDir, writeTarget } from './policy.js'
 import { BotStore, COMMANDER_ID, suggestHandle } from './store.js'
 import { loadTemplates } from './templates.js'
 import { memTables } from './testing.js'
@@ -275,5 +276,35 @@ describe('bot biết quyền của mình', () => {
     expect(botToolOf('str_replace_editor', { command: 'create' })).toBeUndefined()
     expect(botToolOf('bash', {})).toBe('shell')
     expect(botToolOf('write', {})).toBeUndefined()
+  })
+
+  it('quyền riêng của bot: ghi tệp, hành động nguy hiểm, nhận giao việc; đường dẫn trong thư mục làm việc', async () => {
+    const s = await store()
+    const b = await s.create({ handle: 'kha', name: 'Kha', perms: { write: 'workspace' } })
+    expect(b.perms).toEqual({ write: 'workspace' })
+    const u = await s.update(b.id, { perms: { danger: 'deny', write: 'sai' }, assignable: false })
+    expect(u.perms).toEqual({ write: 'workspace', danger: 'deny' })
+    expect(u.assignable).toBe(false)
+    expect(writeTarget('write', { file_path: '/a/b.txt' })).toBe('/a/b.txt')
+    expect(writeTarget('str_replace_editor', { command: 'view', path: '/a' })).toBeUndefined()
+    expect(writeTarget('read', { file_path: '/a' })).toBeUndefined()
+    expect(insideDir('notes/x.md', '/w/du-an')).toBe(true)
+    expect(insideDir('/w/du-an/x.md', '/w/du-an')).toBe(true)
+    expect(insideDir('../khac/x.md', '/w/du-an')).toBe(false)
+    expect(insideDir('/w/du-an-2/x.md', '/w/du-an')).toBe(false)
+  })
+
+  it('số liệu 7 ngày của bot: việc giao, xong, vấp theo tên việc', () => {
+    const now = 10 * 86_400_000
+    const items = [
+      { bot: 'b', kind: 'assigned', task: 'A', at: now - 100 },
+      { bot: 'b', kind: 'done', task: 'A', at: now - 50 },
+      { bot: 'b', kind: 'assigned', task: 'B', at: now - 40 },
+      { bot: 'b', kind: 'failed', task: 'B', at: now - 30 },
+      { bot: 'b', kind: 'assigned', task: 'C', at: now - 20 },
+      { bot: 'b', kind: 'assigned', task: 'cu', at: now - 8 * 86_400_000 },
+      { bot: 'khac', kind: 'assigned', task: 'X', at: now - 10 },
+    ]
+    expect(botStats(items, 'b', now)).toEqual({ assigned: 3, done: 1, failed: 1, recent: ['C', 'B', 'A'] })
   })
 })

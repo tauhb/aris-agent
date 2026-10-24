@@ -79,6 +79,7 @@ export async function apply(ctx: Context): Promise<void> {
   // Nhân bản, xuất / nhập bot (@aris/bots): chép ký ức riêng của bot.
   ctx.provide('arisMemory', {
     notesOf: (bot: string) => store.notesOf(bot),
+    statsOf: (bot: string) => store.statsOf(bot),
     importNotes: (bot: string, items: readonly { text: string; kind: string; tier: string }[]) =>
       store.importNotes(bot, items),
   })

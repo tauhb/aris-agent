@@ -22,6 +22,10 @@ export interface BotData {
   external?: ExternalData
   /** Bộ công cụ riêng (không có trường nào là theo chính sách phòng). */
   tools?: { web?: boolean; files?: boolean; shell?: boolean }
+  /** Quyền riêng: ghi tệp, thao tác cần duyệt. */
+  perms?: { write?: 'none' | 'workspace' | 'anywhere'; danger?: 'ask' | 'deny' }
+  /** Commander được giao việc (bot thường); không có là có. */
+  assignable?: boolean
   createdAt: string
 }
 

@@ -66,7 +66,9 @@ export function renderPersona(
       const lead = d?.lead === b.id ? ', trưởng nhóm' : ''
       const ext = b.external
         ? ` · bot ngoài ${EXTERNAL_LABEL[b.external.agent]}${b.external.assignable ? '' : ', không nhận giao việc'}`
-        : ''
+        : b.assignable === false
+          ? ' · không nhận giao việc từ Commander'
+          : ''
       lines.push(
         `- @${b.handle} · ${b.name} · ${b.role || 'thành viên'}${d ? ` (${d.name}${lead})` : ''}${ext}`,
       )

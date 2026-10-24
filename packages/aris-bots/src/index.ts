@@ -21,10 +21,10 @@ import type {} from '@deepseek-ai/dsh-user-questions'
 import type {} from '@deepseek-ai/dsh-workspace'
 import { handleApi, type MemoryPort } from './api.js'
 import { botsDomain, type ActivityRecord, type Table, type Tables } from './domain.js'
-import { LiveTracker } from './live.js'
+import { botStats, LiveTracker } from './live.js'
 import { checkConnection, connectionOf, McpStore, needsAsk, pluginConfig, type McpRecord } from './mcp.js'
 import { renderPersona } from './persona.js'
-import { botDenyReason, botToolOf, denyReason, needOf } from './policy.js'
+import { botDenyReason, botToolOf, denyReason, insideDir, needOf, writeTarget } from './policy.js'
 import { BotStore } from './store.js'
 import { loadTemplates } from './templates.js'
 
@@ -78,9 +78,11 @@ export async function apply(ctx: Context): Promise<void> {
   await store.ensureCommander()
   await store.ensurePolicies(await loadTemplates())
 
-  // Việc gần đây lưu bền: giữ 30 mục mới nhất, nạp lại khi khởi động.
+  // Việc gần đây lưu bền: giữ 8 ngày (số liệu 7 ngày ở cột phải hồ sơ bot), tối đa 3.000 mục; nạp lại
+  // 30 mục mới nhất khi khởi động.
   const activity = domain.table('activity') as unknown as Table<ActivityRecord>
-  const keep = 30
+  const keep = 3000
+  const keepMs = 8 * 86_400_000
   const live = new LiveTracker(
     (sessionId) => store.botOf(sessionId).id,
     Date.now,
@@ -95,6 +97,8 @@ export async function apply(ctx: Context): Promise<void> {
         .put(`${item.at}-${Math.random().toString(36).slice(2, 8)}`, rec)
         .then(async () => {
           const all = [...activity.entries()].sort(([, a], [, b]) => b.at - a.at)
+          const old = Date.now() - keepMs
+          for (const [key, r] of all.slice(1)) if (r.at < old) await activity.delete(key)
           for (const [key] of all.slice(keep)) await activity.delete(key)
         })
         .catch((e: unknown) => logger.warn('lưu việc gần đây: %s', String(e)))
@@ -161,9 +165,36 @@ export async function apply(ctx: Context): Promise<void> {
       const need = needOf(exec.name, exec.arguments)
       const p = need ? store.policyOf(bot.id) : undefined
       if (need && p && !p.policy[need]) return { kind: 'deny', reason: denyReason(need, p.department?.name) }
+      // Ghi tệp theo quyền riêng của bot: không ghi; chỉ trong thư mục làm việc; mọi nơi (ngoài thư
+      // mục làm việc thì hỏi).
+      const target = writeTarget(exec.name, exec.arguments)
+      const rec = store.get(bot.id)
+      if (target !== undefined && bot.kind !== 'commander') {
+        const mode = rec?.perms?.write ?? 'anywhere'
+        if (mode === 'none')
+          return {
+            kind: 'deny',
+            reason: `Quyền của ${bot.name} không cho ghi, sửa tệp. Đừng thử lại cách khác để lách; báo người giao việc.`,
+          }
+        const dir = (exec.agent as { session: { header?: { cwd?: string } } }).session.header?.cwd
+        if (dir && target && !insideDir(target, dir)) {
+          if (mode === 'workspace')
+            return {
+              kind: 'deny',
+              reason: `Quyền của ${bot.name} chỉ cho ghi trong thư mục làm việc ${dir}. Ghi vào đó, hoặc báo người giao việc nếu cần ghi chỗ khác.`,
+            }
+          return {
+            kind: 'ask',
+            reason: `${bot.name} ghi ngoài thư mục làm việc: ${target}`,
+            displayReason: {
+              en: `${bot.name} wants to write outside the working folder: ${target}`,
+              vi: `${bot.name} muốn ghi ngoài thư mục làm việc: ${target}`,
+            },
+          }
+        }
+      }
       const own = botToolOf(exec.name, exec.arguments)
-      if (own && store.get(bot.id)?.tools?.[own] === false)
-        return { kind: 'deny', reason: botDenyReason(own, bot.name) }
+      if (own && rec?.tools?.[own] === false) return { kind: 'deny', reason: botDenyReason(own, bot.name) }
       if (exec.name.startsWith('mcp__')) {
         const hit = connectionOf(exec.name, mcp.list(bot.id))
         // Kết nối đã tắt hoặc gỡ nhưng phiên cũ còn công cụ: chặn.
@@ -242,6 +273,8 @@ export async function apply(ctx: Context): Promise<void> {
     'approval/request',
     async (req, next) => {
       const id = req.agent.session.id
+      // Quyền riêng của bot: thao tác cần duyệt thì tự từ chối, không hỏi người dùng.
+      if (store.get(store.botOf(id).id)?.perms?.danger === 'deny') return 'rejected'
       live.waitStart(id)
       try {
         return await next()
@@ -325,6 +358,21 @@ export async function apply(ctx: Context): Promise<void> {
               catalog,
               live: () => live.snapshot(store.list().map((b) => b.id)),
               memory: () => ctx.get('arisMemory') as MemoryPort | undefined,
+              profile: (bot) => {
+                const mem = ctx.get('arisMemory') as
+                  | { statsOf(bot: string): { core: { used: number; cap: number }; recent: unknown[] } }
+                  | undefined
+                const spend = ctx.get('arisSpend') as { botWeek?(bot: string): number } | undefined
+                return {
+                  live: live.of(bot),
+                  week: botStats(
+                    [...activity.entries()].map(([, r]) => r),
+                    bot,
+                  ),
+                  costWeek: spend?.botWeek?.(bot) ?? null,
+                  memory: mem?.statsOf(bot) ?? null,
+                }
+              },
               mcp,
               checkMcp,
               spend: () =>
