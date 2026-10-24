@@ -19,7 +19,7 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-user-approval'
 import type {} from '@deepseek-ai/dsh-user-questions'
 import type {} from '@deepseek-ai/dsh-workspace'
-import { handleApi } from './api.js'
+import { handleApi, type MemoryPort } from './api.js'
 import { botsDomain, type ActivityRecord, type Table, type Tables } from './domain.js'
 import { LiveTracker } from './live.js'
 import { renderPersona } from './persona.js'
@@ -40,6 +40,7 @@ export {
 } from './store.js'
 export type { BotRecord, DepartmentRecord } from './domain.js'
 export * from './external.js'
+export * from './portable.js'
 
 export const name = 'aris-bots'
 export const inject = ['storageDomain', 'systemPrompt', 'sessionController', 'workspaceRegistry', 'tools']
@@ -245,6 +246,7 @@ export async function apply(ctx: Context): Promise<void> {
               open,
               catalog,
               live: () => live.snapshot(store.list().map((b) => b.id)),
+              memory: () => ctx.get('arisMemory') as MemoryPort | undefined,
               spend: () =>
                 (ctx.get('arisSpend') as { today(): Record<string, number> } | undefined)?.today() ?? {},
             },

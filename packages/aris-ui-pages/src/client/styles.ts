@@ -129,6 +129,7 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-disc>.body{padding-bottom:6px}
 .ap-frow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--a-line);font-size:13.5px}
 .ap-dfoot{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding-top:14px;border-top:1px solid var(--a-line)}
+.ap-import{font-size:13px;color:var(--a-accent);cursor:pointer;padding:6px 2px;border-radius:6px}.ap-import:hover{text-decoration:underline}.ap-import:focus-within{outline:2px solid var(--a-accent)}
 .aris .ap-ext-agent{flex:1 1 0;min-width:0;border:1px solid var(--a-line);border-radius:12px;background:var(--a-panel);padding:10px 12px;text-align:left;display:flex;flex-direction:column;gap:3px;color:var(--a-ink);cursor:pointer;font:inherit}
 .aris .ap-ext-agent[data-on]{border-color:var(--a-accent);background:var(--a-accentSoft)}
 .ap-ext-agent .logo{width:22px;height:22px;border-radius:7px;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}

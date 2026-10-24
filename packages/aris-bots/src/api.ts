@@ -2,7 +2,21 @@
  * `/api/aris/bots`: bot, phòng ban, đội mẫu; mở phiên chat thẳng với bot. dsh đã kiểm cookie và
  * quyền chủ nhân trước khi gọi tới đây.
  */
+import {
+  cloneInput,
+  exportBot,
+  importInput,
+  parseBotFile,
+  type CopyParts,
+  type PortableMemory,
+} from './portable.js'
 import { BotError, type BotInput, type BotStore, type Template } from './store.js'
+
+/** Ký ức riêng của bot (dịch vụ `arisMemory`), để nhân bản, xuất, nhập. */
+export interface MemoryPort {
+  notesOf(bot: string): PortableMemory[]
+  importNotes(bot: string, items: readonly PortableMemory[]): Promise<number>
+}
 
 export interface ApiDeps {
   store: BotStore
@@ -15,6 +29,13 @@ export interface ApiDeps {
   spend?: () => Record<string, number>
   /** Danh mục model đang phục vụ (để chọn model riêng cho bot). */
   catalog?: () => Promise<{ id: string; name: string; models: { id: string; name: string }[] }[]>
+  /** Ký ức riêng của bot; không có (plugin ký ức tắt) thì không chép ký ức. */
+  memory?: () => MemoryPort | undefined
+}
+
+const partsOf = (v: unknown): CopyParts => {
+  const p = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>
+  return { config: p.config !== false, soul: p.soul !== false, memory: p.memory === true }
 }
 
 const json = (body: unknown, status = 200) =>
@@ -113,6 +134,39 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
         // Bấm bot trên thanh bên: mở lại phiên gần nhất; "Việc mới với …" thì tạo phiên mới.
         const reuse = body.fresh === true ? undefined : d.store.latestOpen(id)
         return json({ sessionId: reuse ?? (await d.open(id)), reused: !!reuse })
+      }
+      case 'clone': {
+        // Nhân bản (2.4): bot mới cùng vai trò, tên mới; kênh nhắn tin và lịch sử chat không chép.
+        const src = d.store.get(String(body.id))
+        if (!src || src.kind === 'commander') return json({ error: 'Không nhân bản được bot này.' }, 400)
+        const parts = partsOf(body.parts)
+        const input = cloneInput(src, String(body.name ?? ''), parts, (h) => !!d.store.byHandle(h))
+        const bot = await d.store.create(input)
+        const mem = parts.memory ? d.memory?.() : undefined
+        const memory = mem ? await mem.importNotes(bot.id, mem.notesOf(src.id)) : 0
+        return json({ ...(await snapshot(d)), created: bot.id, memory })
+      }
+      case 'export': {
+        const src = d.store.get(String(body.id))
+        if (!src || src.kind === 'commander') return json({ error: 'Không xuất được bot này.' }, 400)
+        const parts = partsOf(body.parts)
+        const memory = parts.memory ? d.memory?.()?.notesOf(src.id) : undefined
+        const dept = src.department ? d.store.departments().find((x) => x.id === src.department) : undefined
+        return json({
+          file: exportBot(src, parts, { departmentName: dept?.name, ...(memory ? { memory } : {}) }),
+        })
+      }
+      case 'import': {
+        const f = parseBotFile(body.file)
+        const input = importInput(
+          f,
+          (h) => !!d.store.byHandle(h),
+          (name) => d.store.departments().find((x) => x.name.toLowerCase() === name.toLowerCase())?.id,
+        )
+        const bot = await d.store.create(input)
+        const mem = f.memory?.length ? d.memory?.() : undefined
+        const memory = mem ? await mem.importNotes(bot.id, f.memory!) : 0
+        return json({ ...(await snapshot(d)), created: bot.id, memory })
       }
       default:
         return json({ error: 'op không hợp lệ' }, 400)

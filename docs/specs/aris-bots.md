@@ -83,6 +83,20 @@ Chạy thử thật (24/10): Minh (Tăng trưởng, không chạy lệnh) gọi 
 
 Hồ sơ bot có thể kèm `external`: loại agent (`claude-code`, `codex`, `acp`), mức quyền (`EXTERNAL_PERMISSIONS`; mặc định hỏi người dùng: Claude Code `manual`, Codex `ask`; đi đường plugin của dsh thì đổi theo `PLUGIN_PERMISSION`), model (bỏ trống là theo cài đặt của agent trên máy), `timeoutMin` (5–240, mặc định 45), `budgetUsd` (chỉ Claude Code, 0,5–100, mặc định 3), `worktree`, `assignable`, lệnh khởi chạy (ACP). `cleanExternal` kiểm và điền mặc định; sửa một trường giữ các trường khác, đổi loại agent thì mức quyền về mặc định. Đội hình trong `<aris-bot>` ghi bot ngoài kèm loại agent và nhắc: bot ngoài làm việc trọn gói, không vào phòng nhóm, giao lại trong cùng phiên thì làm tiếp việc trước. Bot ngoài không mở được phiên chat riêng (`open` từ chối); bấm vào bot ngoài ở thanh bên mở hồ sơ. Chạy thật ở [aris-commander.md](aris-commander.md#bot-ngoài-bước-4).
 
+## Nhân bản, xuất, nhập (bản vẽ 2.4)
+
+Hộp "Nhân bản / xuất" trên hồ sơ bot (`portable.ts`). Luôn chép vai trò, mô tả, linh vật; bot ngoài luôn giữ cấu hình bot ngoài (đó là loại bot). Chọn thêm:
+
+- **Cấu hình và model**: model riêng, phòng ban.
+- **Tính cách (SOUL)**.
+- **Ký ức riêng của bot**: cuốn `notes` (ký ức đang dùng, giữ tầng lõi / lưu trữ; lõi đầy thì xuống lưu trữ), chép một lần qua dịch vụ `arisMemory` của `@aris/memory`. Hồ sơ người dùng dùng chung cả đội nên không chép.
+
+Không bao giờ chép: kênh nhắn tin (token Telegram), khoá API (mọi bot dùng chung kho khoá của aris), lịch sử chat. Skill để giai đoạn 3 (bot chưa có skill riêng), ô hiện mờ.
+
+Nhân bản: tên mới (mặc định "Tên 2"), tên gọi sinh từ tên (bỏ dấu, trùng thì `-2`, `-3`…), xong mở hồ sơ bot mới. Xuất: tệp `<tên gọi>.aris-bot.json` (`format: "aris-bot"`, `version: 1`, phòng ban ghi bằng **tên** vì mã phòng khác nhau giữa các máy, không có mã bot). Nhập: nút "Nhập từ tệp…" ở chân hộp Tạo bot; tên gọi trùng thì đổi, phòng ban khớp theo tên nếu máy này có, ký ức trong tệp nạp vào bot mới. Tệp sai dạng thì báo bằng lời.
+
+Chạy thử thật (24/10): nhân bản Minh thành "Minh Thử" (@minh-thu) kèm ký ức → cùng phòng Tăng trưởng, tính cách, linh vật, 1 mục ký ức dự án; xuất "Minh Thử" rồi nhập lại → @minh-thu-2, phòng khớp theo tên, 1 mục ký ức; tệp lạ bị từ chối. Hai bot thử đã xoá.
+
 ## Đường máy chủ
 
 `/api/aris/bots`: `GET` trả bot, phòng ban, danh sách mẫu, chi phí hôm nay theo phòng (`spend`). `POST` với `op`:
@@ -98,6 +112,9 @@ Hồ sơ bot có thể kèm `external`: loại agent (`claude-code`, `codex`, `a
 | `move` `{ id, department }` | Chuyển bot sang phòng khác (`null`: chưa xếp phòng) |
 | `apply-template` `{ template }` | Áp đội mẫu |
 | `open` `{ id }` | Tạo phiên chat thẳng với bot, trả `sessionId` |
+| `clone` `{ id, name, parts }` | Nhân bản; `parts` = `{ config, soul, memory }`; trả thêm `created`, `memory` (số mục ký ức đã chép) |
+| `export` `{ id, parts }` | Trả `file` (tệp `aris-bot`) |
+| `import` `{ file }` | Tạo bot từ tệp; trả `created`, `memory` |
 
 ## Giao diện (bước 1)
 

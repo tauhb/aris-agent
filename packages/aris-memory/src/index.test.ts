@@ -24,6 +24,7 @@ function fakeContext() {
       context: (c: (typeof contexts)[number]) => (contexts.push(c), () => {}),
     },
     tools: { register: (t: Tool) => (tools.push(t), () => {}) },
+    provide: () => {},
     storageDomain: {
       open: async () => ({
         close: async () => {},

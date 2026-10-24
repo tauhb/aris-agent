@@ -65,6 +65,27 @@ function ArisBot({ t, nav }: PageProps) {
     if (b.model) setModel(`${b.model.provider}\u0000${b.model.model}`)
   }
 
+  /** Nhập bot từ tệp `.aris-bot.json` (xuất ở hộp Nhân bản / xuất 2.4). */
+  async function importFile(file: File) {
+    setBusy(true)
+    setError(null)
+    try {
+      let data: unknown
+      try {
+        data = JSON.parse(await file.text())
+      } catch {
+        throw new Error(t('cb.importBad'))
+      }
+      const r = await teamAction<{ created: string }>({ op: 'import', file: data })
+      nav.close()
+      nav.go('bot', { id: r.created })
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function create() {
     setBusy(true)
     setError(null)
@@ -263,6 +284,20 @@ function ArisBot({ t, nav }: PageProps) {
       </Disclosure>
       {error && <div style={{ color: 'var(--a-danger)', fontSize: 13 }}>{error}</div>}
       <div className="ap-dfoot">
+        <label className="ap-import" style={{ marginRight: 'auto' }}>
+          <input
+            type="file"
+            accept=".json,application/json"
+            hidden
+            disabled={busy}
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              e.target.value = ''
+              if (f) void importFile(f)
+            }}
+          />
+          {t('cb.import')}
+        </label>
         <Button size="lg" onClick={nav.close}>
           {t('cb.cancel')}
         </Button>

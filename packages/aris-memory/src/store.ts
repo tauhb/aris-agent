@@ -230,6 +230,42 @@ export class MemoryStore {
   }
 
   /** Tìm theo từ khoá không dấu trong ký ức đang hiệu lực; tăng lượt dùng của kết quả. */
+  /** Ký ức riêng của bot (cuốn ghi chú, đang dùng) để nhân bản hay xuất ra tệp. */
+  notesOf(bot: string): { text: string; kind: Kind; tier: Tier }[] {
+    return this.list(bot, { book: 'notes', status: 'active' }).map((i) => ({
+      text: i.text,
+      kind: i.kind,
+      tier: i.tier,
+    }))
+  }
+
+  /**
+   * Nạp ký ức riêng cho bot (nhân bản, nhập từ tệp). Loại ký ức lạ thành `lesson`; lõi đầy thì mục
+   * còn lại xuống lưu trữ. Trả số mục đã nạp.
+   */
+  async importNotes(
+    bot: string,
+    items: readonly { text: string; kind: string; tier: string }[],
+  ): Promise<number> {
+    let n = 0
+    for (const it of items) {
+      const kind = (KINDS as readonly string[]).includes(it.kind) ? (it.kind as Kind) : 'lesson'
+      const base = { bot, text: it.text, kind, book: 'notes' as const, trust: 'agent-inferred' as const }
+      try {
+        await this.save({ ...base, tier: it.tier === 'core' ? 'core' : 'archive' })
+      } catch (e) {
+        if (!(e instanceof MemoryError) || it.tier !== 'core') continue
+        try {
+          await this.save({ ...base, tier: 'archive' })
+        } catch {
+          continue
+        }
+      }
+      n++
+    }
+    return n
+  }
+
   async search(bot: string, query: string, limit = 8): Promise<MemoryItem[]> {
     const q = words(query)
     if (q.length === 0) return []

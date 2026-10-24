@@ -76,6 +76,12 @@ export async function apply(ctx: Context): Promise<void> {
   const domain = await ctx.storageDomain.open(memoryDomain)
   ctx.effect(() => () => void domain.close(), 'aris-memory: domain')
   const store = new MemoryStore(domain.table('items'))
+  // Nhân bản, xuất / nhập bot (@aris/bots): chép ký ức riêng của bot.
+  ctx.provide('arisMemory', {
+    notesOf: (bot: string) => store.notesOf(bot),
+    importNotes: (bot: string, items: readonly { text: string; kind: string; tier: string }[]) =>
+      store.importNotes(bot, items),
+  })
   await store
     .dropHardcodedAddress()
     .then((n) => n && logger.info('đổi chữ "chủ nhân" trong %d ký ức', n))
