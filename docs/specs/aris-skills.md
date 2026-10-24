@@ -63,12 +63,27 @@ Khi agent được tạo, aris gắn một nguồn skill vào phạm vi của ag
 
 ### Dọn kho, ghim, tắt, sao lưu
 
-- **Ít dùng**: skill đang dùng, không được dùng 14 ngày (tính từ lần dùng cuối, chưa dùng thì từ lúc bật). Vẫn nạp cho bot, chỉ là nhãn.
-- **Lưu kho**: 30 ngày không dùng thì người dọn kho tự cất (không nạp cho bot nữa); người dùng cũng tự cất được ("Tắt / cất vào kho"). "Dùng lại" đưa về đang dùng.
+- **Ít dùng**: skill đang dùng, không được dùng 30 ngày (đợt 6; đợt 4 là 14) (tính từ lần dùng cuối, chưa dùng thì từ lúc bật). Vẫn nạp cho bot, chỉ là nhãn.
+- **Lưu kho**: 90 ngày không dùng (đợt 6; đợt 4 là 30) thì người dọn kho tự cất (không nạp cho bot nữa); người dùng cũng tự cất được ("Tắt / cất vào kho"). "Dùng lại" đưa về đang dùng.
 - **Ghim**: skill đã ghim không bị dọn.
 - Người dọn kho chạy mỗi ngày (lúc khởi động và mỗi 24 giờ); lần chạy gần nhất và lần kế hiện ở màn 3.2.
 - **Sao lưu**: tải về tệp `.aris-skills.json` gồm mọi skill và các bản. Quay lui từng skill bằng lịch sử bản (đã có).
 
+## Đợt 6 · Bù so với Hermes: `/learn`, người dọn kho có báo cáo
+
+### `/learn` — học skill từ nguồn
+
+- `/learn <nguồn>` trong chat của một bot: nguồn là thư mục, tệp, URL, hay một quy trình tả bằng lời / vừa làm trong cuộc này. Lệnh không tự đọc gì: nó gửi cho bot một lượt có chuẩn viết skill của aris (tên chữ thường nối gạch, mô tả một câu, các mục Khi nào dùng / Các bước / Lỗi thường gặp / Kiểm tra, bài học tổng quát chứ không phải nhật ký), bot tự gom tài liệu bằng công cụ sẵn có (đọc tệp, tìm, đọc web) rồi gọi công cụ `luu_skill`.
+- `luu_skill` chỉ dùng được trong lượt do `/learn` mở (lượt khác bị từ chối kèm lý do). Nó tạo **đề xuất** của bot đó (`by: user`, lý do "Học từ: <nguồn>", 1–3 ca thử là các yêu cầu mẫu bot viết), qua bộ kiểm như mọi đề xuất; trùng tên skill đang có thì thành bản vá. Duyệt như cũ: Hộp duyệt, thẻ Telegram, màn 3.3 (kiểm thử được).
+- Màn 3.2: nút "Học skill từ tài liệu…" chưa có bảng nhập (chưa vẽ); nhãn đổi thành hướng dẫn dùng `/learn` trong chat.
+
+### Người dọn kho
+
+- Mốc mới theo Hermes bản đang đối chiếu: 30 ngày không dùng là ít dùng, 90 ngày thì cất kho. Skill chưa dùng tính từ lúc bật. Ghim thì miễn; skill được routine dùng sẽ miễn khi có routine (giai đoạn 4).
+- Mỗi lần chạy ghi một báo cáo (bảng `curatorRuns`, giữ 30 lần gần nhất): lúc chạy, skill vừa thành ít dùng, skill đã cất (tên, bot, số ngày không dùng).
+- Chạy thử: `GET /api/aris/skills?curator=preview` trả kế hoạch lần tới mà không đổi gì. Màn 3.2 hiện dòng cuối: mốc dọn, kết quả lần gần nhất, và lần tới sẽ cất gì.
+- Gộp skill trùng bằng model (Hermes để tắt mặc định) vẫn để sau.
+
 ## Để sau
 
-"Học skill từ tài liệu…" (`/learn`), gộp skill trùng (người dọn kho pha 2), nhập lại từ tệp sao lưu.
+Bảng nhập cho "Học skill từ tài liệu…" (cần vẽ), gộp skill trùng (người dọn kho pha 2), nhập lại từ tệp sao lưu.

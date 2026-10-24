@@ -107,6 +107,27 @@ describe('kho skill', () => {
     await store.recordUse('lam', input.name)
     expect(store.get('tin--bao-cao-doanh-thu-tuan')?.uses).toBe(1)
   })
+
+  it('người dọn kho: 30 ngày ít dùng, 90 ngày cất; chạy thử không đổi gì; ghim thì miễn', async () => {
+    const { store, tick } = setup()
+    const a = await store.propose(input)
+    await store.approve(a!.id, 'user')
+    const b = await store.propose({ ...input, name: 'tom-tat-email' })
+    await store.approve(b!.id, 'user')
+    await store.pin('tin--tom-tat-email', true)
+    tick('2026-11-24T10:00:00Z')
+    expect(store.curatePlan()).toEqual({
+      archive: [],
+      stale: [{ id: 'tin--bao-cao-doanh-thu-tuan', name: input.name, bot: 'tin', idle: 31 }],
+    })
+    tick('2027-01-23T10:00:00Z')
+    const plan = store.curatePlan()
+    expect(plan.archive.map((s) => s.idle)).toEqual([91])
+    expect(store.get('tin--bao-cao-doanh-thu-tuan')?.status).toBe('active')
+    expect(await store.curate()).toEqual(plan)
+    expect(store.get('tin--bao-cao-doanh-thu-tuan')?.status).toBe('archived')
+    expect(store.get('tin--tom-tat-email')?.status).toBe('active')
+  })
 })
 
 describe('so sánh và API', () => {

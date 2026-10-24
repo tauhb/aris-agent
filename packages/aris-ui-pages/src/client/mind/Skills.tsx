@@ -9,6 +9,14 @@ import type { PageProps } from '../page.js'
 import { Later } from '../team/BotTools.js'
 
 /** Một skill trong `GET /api/aris/skills`. */
+/** Người dọn kho (`curator` của `/api/aris/skills`). */
+interface Curator {
+  next: string
+  report: { at: string; archive: unknown[]; stale: unknown[] } | null
+  staleDays: number
+  archiveDays: number
+}
+
 export interface SkillRow {
   id: string
   bot: string
@@ -19,7 +27,7 @@ export interface SkillRow {
   uses: number
   updatedAt: string
   pinned?: boolean
-  /** Ít dùng: 14 ngày không dùng. */
+  /** Ít dùng: quá `staleDays` ngày không dùng (người dọn kho). */
   stale: boolean
   idleDays: number
   proposed: { version: number; why?: string; by: string } | null
@@ -41,21 +49,24 @@ export const dayOf = (iso: string) => {
 export function Skills({ t, nav, params }: PageProps) {
   const team = useTeamData()
   const [rows, setRows] = useState<SkillRow[] | null>(null)
-  const [curator, setCurator] = useState<{ next: string } | null>(null)
+  const [curator, setCurator] = useState<Curator | null>(null)
+  const [plan, setPlan] = useState<{ archive: { name: string; bot: string }[] } | null>(null)
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
   useEffect(() => {
     let live = true
     const load = () =>
       fetch(new URL('api/aris/skills', document.baseURI), { credentials: 'same-origin' })
-        .then((r) =>
-          r.ok ? (r.json() as Promise<{ skills: SkillRow[]; curator?: { next: string } }>) : undefined,
-        )
+        .then((r) => (r.ok ? (r.json() as Promise<{ skills: SkillRow[]; curator?: Curator }>) : undefined))
         .then((d) => {
           if (!live || !d) return
           setRows(d.skills)
           setCurator(d.curator ?? null)
         })
+        .catch(() => {})
+        .then(() => fetch(new URL('api/aris/skills?curator=preview', document.baseURI)))
+        .then((r) => (r.ok ? (r.json() as Promise<{ plan: NonNullable<typeof plan> }>) : undefined))
+        .then((d) => live && d && setPlan(d.plan))
         .catch(() => {})
     void load()
     const timer = setInterval(() => void load(), 10_000)
@@ -245,7 +256,21 @@ export function Skills({ t, nav, params }: PageProps) {
         })}
       </div>
       <p className="a-muted" style={{ margin: 0, fontSize: 12.5 }}>
-        {t('sk.policyNow')}
+        {t('sk.policyNow', { stale: curator?.staleDays ?? 30, archive: curator?.archiveDays ?? 90 })}
+        {curator?.report &&
+          ` ${t('sk.curatorLast', {
+            d: dayOf(curator.report.at) || t('sk.today'),
+            a: curator.report.archive.length,
+            s: curator.report.stale.length,
+          })}`}
+        {plan &&
+          ` ${
+            plan.archive.length
+              ? t('sk.curatorPlan', {
+                  names: plan.archive.map((s) => `${s.name} (${botOf(s.bot)?.name ?? s.bot})`).join(', '),
+                })
+              : t('sk.curatorNone')
+          }`}
       </p>
     </PageShell>
   )

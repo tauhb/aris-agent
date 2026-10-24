@@ -39,8 +39,8 @@ export interface Case {
 }
 
 /** Ít dùng sau ngần này ngày không dùng; cất vào kho sau ngần này ngày. */
-export const STALE_DAYS = 14
-export const ARCHIVE_DAYS = 30
+export const STALE_DAYS = 30
+export const ARCHIVE_DAYS = 90
 const KEEP_CASES = 5
 
 export interface Review {
@@ -84,6 +84,20 @@ export const PROPOSAL_DAYS = 7
 
 export const skillId = (bot: string, name: string) => `${bot}--${name}`
 export const versionId = (bot: string, name: string, v: number) => `${bot}--${name}--v${v}`
+
+/** Một skill trong kế hoạch / báo cáo của người dọn kho. */
+export interface CuratorItem {
+  id: string
+  name: string
+  bot: string
+  /** Số ngày không dùng. */
+  idle: number
+}
+
+export interface CuratorPlan {
+  archive: CuratorItem[]
+  stale: CuratorItem[]
+}
 
 export interface ProposeInput {
   bot: string
@@ -256,20 +270,34 @@ export class SkillStore {
     return Math.floor((this.now().getTime() - since) / 86_400_000)
   }
 
-  /** Ít dùng: đang dùng, không ghim, quá 14 ngày không dùng. */
+  /** Ít dùng: đang dùng, không ghim, quá `STALE_DAYS` ngày không dùng. */
   isStale(s: SkillRecord): boolean {
     return s.status === 'active' && !s.pinned && this.idleDays(s) >= STALE_DAYS
   }
 
-  /** Người dọn kho: cất skill đang dùng, không ghim, quá 30 ngày không dùng. Trả tên đã cất. */
-  async curate(): Promise<string[]> {
-    const out: string[] = []
-    for (const s of this.list())
-      if (s.status === 'active' && !s.pinned && this.idleDays(s) >= ARCHIVE_DAYS) {
-        await this.archive(s.id, 'curator')
-        out.push(s.id)
-      }
-    return out
+  /**
+   * Kế hoạch của người dọn kho (chạy thử, không đổi gì): skill sẽ cất (đang dùng, không ghim, quá
+   * `ARCHIVE_DAYS` ngày không dùng) và skill đang ít dùng còn giữ.
+   */
+  curatePlan(): CuratorPlan {
+    const item = (s: SkillRecord): CuratorItem => ({
+      id: s.id,
+      name: s.name,
+      bot: s.bot,
+      idle: this.idleDays(s),
+    })
+    const live = this.list().filter((s) => s.status === 'active' && !s.pinned)
+    return {
+      archive: live.filter((s) => this.idleDays(s) >= ARCHIVE_DAYS).map(item),
+      stale: live.filter((s) => this.isStale(s) && this.idleDays(s) < ARCHIVE_DAYS).map(item),
+    }
+  }
+
+  /** Người dọn kho: cất các skill trong kế hoạch. Trả kế hoạch đã làm. */
+  async curate(): Promise<CuratorPlan> {
+    const plan = this.curatePlan()
+    for (const s of plan.archive) await this.archive(s.id, 'curator')
+    return plan
   }
 
   /** Mọi skill và các bản (sao lưu ra tệp). */

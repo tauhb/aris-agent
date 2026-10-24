@@ -100,18 +100,18 @@ describe('dọn kho và ca thử', () => {
     expect(cases).not.toContain('repo /b')
   })
 
-  it('ít dùng sau 14 ngày, tự cất sau 30 ngày; ghim thì giữ; dùng lại đếm từ đầu', async () => {
+  it('ít dùng sau 30 ngày, tự cất sau 90 ngày; ghim thì giữ; dùng lại đếm từ đầu', async () => {
     const { store, tick } = setup()
     const v = await store.propose(input)
     await store.approve(v!.id, 'user')
     const id = 'aris--kiem-tra-repo'
-    tick('2026-10-16T10:00:00Z')
+    tick('2026-11-24T10:00:00Z')
     expect(store.isStale(store.get(id)!)).toBe(true)
     await store.pin(id, true)
-    tick('2026-11-05T10:00:00Z')
-    expect(await store.curate()).toEqual([])
+    tick('2027-01-23T10:00:00Z')
+    expect((await store.curate()).archive).toEqual([])
     await store.pin(id, false)
-    expect(await store.curate()).toEqual([id])
+    expect((await store.curate()).archive.map((s) => s.id)).toEqual([id])
     expect(store.activeFor('aris')).toHaveLength(0)
     expect(store.get(id)).toMatchObject({ status: 'archived', archivedBy: 'curator' })
     await store.unarchive(id)

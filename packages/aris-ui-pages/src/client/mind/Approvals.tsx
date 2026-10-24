@@ -54,6 +54,8 @@ interface SkillItem {
   why?: string
   quote?: string
   sessionId?: string
+  /** Vòng học nền đề xuất (`reflect`) hay người dùng nhờ học bằng `/learn` (`user`). */
+  by?: 'reflect' | 'user' | 'restore'
   warnings: string[]
   at: string
 }
@@ -541,7 +543,7 @@ function SkillDetail({
       <Head
         mascot={bot?.mascot ?? 'aris'}
         title={t(s.base ? 'ap.skillWantsPatch' : 'ap.skillWantsNew', { name, skill: s.name })}
-        context={`${t('ap.via.reflect')} · ${hhmm(s.at)} ${new Date(s.at).toLocaleDateString('vi-VN')}`}
+        context={`${t(s.by === 'user' ? 'ap.via.learn' : 'ap.via.reflect')} · ${hhmm(s.at)} ${new Date(s.at).toLocaleDateString('vi-VN')}`}
       />
       <div className="a-card" style={{ padding: '4px 16px 8px', maxWidth: 720 }}>
         <div className="ap-kv">

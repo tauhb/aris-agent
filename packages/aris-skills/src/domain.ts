@@ -2,7 +2,7 @@
 import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 import { z } from 'zod'
 import type { EvalRecord } from './eval.js'
-import type { SkillRecord, VersionRecord } from './store.js'
+import type { CuratorPlan, SkillRecord, VersionRecord } from './store.js'
 
 const skill: z.ZodType<SkillRecord> = z.object({
   id: z.string(),
@@ -76,6 +76,19 @@ const evalRecord: z.ZodType<EvalRecord> = z.object({
   finishedAt: z.string().optional(),
 })
 
+const curatorItem = z.object({ id: z.string(), name: z.string(), bot: z.string(), idle: z.number().int() })
+
+/** Một lần chạy của người dọn kho (báo cáo). */
+export interface CuratorRun extends CuratorPlan {
+  at: string
+}
+
+const curatorRun: z.ZodType<CuratorRun> = z.object({
+  at: z.string(),
+  archive: z.array(curatorItem),
+  stale: z.array(curatorItem),
+})
+
 export const skillsDomain = defineDomain({
   name: 'aris_skills',
   version: 1,
@@ -84,5 +97,6 @@ export const skillsDomain = defineDomain({
     skills: domainTable<string, SkillRecord>(skill),
     versions: domainTable<string, VersionRecord>(version),
     evals: domainTable<string, EvalRecord>(evalRecord),
+    curator_runs: domainTable<string, CuratorRun>(curatorRun),
   },
 })

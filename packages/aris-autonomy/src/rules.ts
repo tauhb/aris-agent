@@ -17,16 +17,88 @@ export interface Verdict {
   missing?: string | undefined
 }
 
+/** Hợp đồng hoàn thành của một mục tiêu (đợt 6): mục tiêu mơ hồ thì chấm cũng mơ hồ. */
+export interface Contract {
+  /** Xong khi: kết quả cụ thể. */
+  done: string
+  /** Chứng minh bằng: lệnh, tệp, số liệu cho thấy đã xong. */
+  proof: string
+  /** Không được làm hỏng. */
+  keep?: string | undefined
+  /** Phạm vi. */
+  scope?: string | undefined
+  /** Dừng khi: điều kiện bỏ cuộc hay cần hỏi người dùng. */
+  stop?: string | undefined
+}
+
+export function contractPrompt(objective: string): string {
+  return `Người dùng đặt cho một trợ lý AI mục tiêu nhiều lượt dưới đây. Soạn hợp đồng hoàn thành ngắn để một giám khảo độc lập chấm được khi nào là xong. Chỉ dựa vào câu mục tiêu, không bịa yêu cầu mới; điều mục tiêu không nói thì để rỗng.
+
+Mục tiêu: ${objective}
+
+Trả về DUY NHẤT JSON {"done": "xong khi: kết quả cụ thể", "proof": "chứng minh bằng: lệnh, tệp, số liệu cụ thể cho thấy đã xong", "keep": "không được làm hỏng gì (hoặc rỗng)", "scope": "phạm vi (hoặc rỗng)", "stop": "khi nào dừng để hỏi người dùng (hoặc rỗng)"}. Mỗi trường một câu, tiếng Việt.`
+}
+
+export function parseContract(raw: string): Contract | undefined {
+  const s = raw.indexOf('{')
+  const e = raw.lastIndexOf('}')
+  if (s < 0 || e <= s) return undefined
+  try {
+    const v = JSON.parse(raw.slice(s, e + 1)) as Record<string, unknown>
+    // Model hay lặp lại nhãn ("xong khi: …") trong nội dung: bỏ nhãn.
+    const str = (x: unknown) =>
+      typeof x === 'string'
+        ? x
+            .trim()
+            .replace(/^(xong khi|chứng minh bằng|không được làm hỏng|phạm vi|dừng khi)\s*:\s*/i, '')
+            .slice(0, 300)
+        : ''
+    const done = str(v.done)
+    const proof = str(v.proof)
+    if (!done || !proof) return undefined
+    const opt = (k: 'keep' | 'scope' | 'stop') => (str(v[k]) ? { [k]: str(v[k]) } : {})
+    return { done, proof, ...opt('keep'), ...opt('scope'), ...opt('stop') }
+  } catch {
+    return undefined
+  }
+}
+
+/** Hợp đồng và tiêu chí thêm, dạng dòng cho bot và giám khảo đọc. */
+export function contractText(c: Contract | undefined, subgoals: readonly string[] = []): string {
+  return [
+    ...(c
+      ? [
+          `- Xong khi: ${c.done}`,
+          `- Chứng minh bằng: ${c.proof}`,
+          ...(c.keep ? [`- Không được làm hỏng: ${c.keep}`] : []),
+          ...(c.scope ? [`- Phạm vi: ${c.scope}`] : []),
+          ...(c.stop ? [`- Dừng khi: ${c.stop}`] : []),
+        ]
+      : []),
+    ...subgoals.map((g, i) => `- Tiêu chí thêm ${i + 1}: ${g}`),
+  ].join('\n')
+}
+
+/** Tối đa bao nhiêu tiêu chí `/subgoal` cho một mục tiêu. */
+export const MAX_SUBGOALS = 10
+
+/** Đọc phần sau `/subgoal`: rỗng thì xem hợp đồng, có chữ thì thêm tiêu chí. */
+export const parseSubgoal = (raw: string) =>
+  raw.trim() ? ({ kind: 'add', text: raw.trim().slice(0, 300) } as const) : ({ kind: 'show' } as const)
+
 export function judgePrompt(o: {
   objective: string
   round: number
   max: number
   answer: string
   tools: string[]
+  contract?: Contract | undefined
+  subgoals?: readonly string[] | undefined
 }): string {
+  const terms = contractText(o.contract, o.subgoals)
   return `Bạn là giám khảo độc lập cho một trợ lý AI đang làm một mục tiêu nhiều lượt. Đọc mục tiêu và kết quả lượt vừa xong rồi chấm.
 
-Mục tiêu: ${o.objective}
+Mục tiêu: ${o.objective}${terms ? `\nHợp đồng hoàn thành:\n${terms}` : ''}
 Lượt: ${o.round}/${o.max}
 Công cụ trợ lý đã gọi trong lượt: ${o.tools.length ? o.tools.join(', ') : '(không)'}
 
@@ -34,7 +106,7 @@ Câu trả lời cuối của lượt:
 ${o.answer || '(không có)'}
 
 Chấm:
-- "done": mục tiêu đã đạt đủ (có bằng chứng trong câu trả lời: kết quả, tệp, số liệu), không cần làm gì thêm.
+- "done": mục tiêu đã đạt đủ (có bằng chứng trong câu trả lời: kết quả, tệp, số liệu), không cần làm gì thêm.${terms ? ' Có hợp đồng thì chỉ chấm "done" khi câu trả lời có bằng chứng cụ thể đúng phần "Chứng minh bằng" và mọi tiêu chí thêm đều đạt; lời khẳng định đã xong mà không kèm bằng chứng thì chưa đủ.' : ''}
 - "blocked": không thể tiến tiếp nếu không có người dùng (cần quyết định, cần duyệt, thiếu quyền, thiếu dữ liệu chỉ người dùng có).
 - "continue": còn việc trợ lý tự làm được.
 

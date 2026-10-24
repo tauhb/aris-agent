@@ -22,6 +22,18 @@ export const goalRecord = z.object({
   blocked: z.object({ code: z.string(), message: z.string() }).optional(),
   /** 5 lần chấm gần nhất. */
   verdicts: z.array(verdict),
+  /** Hợp đồng hoàn thành do model rẻ soạn từ câu mục tiêu (đợt 6). */
+  contract: z
+    .object({
+      done: z.string(),
+      proof: z.string(),
+      keep: z.string().optional(),
+      scope: z.string().optional(),
+      stop: z.string().optional(),
+    })
+    .optional(),
+  /** Tiêu chí người dùng thêm bằng `/subgoal`. */
+  subgoals: z.array(z.string()).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 })

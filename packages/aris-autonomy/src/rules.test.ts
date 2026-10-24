@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   MARKER_RE,
+  contractText,
+  judgePrompt,
+  parseContract,
+  parseSubgoal,
   heartbeatPrompt,
   humanInterval,
   isStuck,
@@ -44,6 +48,40 @@ describe('giám khảo /goal', () => {
     ).toBe(true)
     expect(isStuck([c('Chưa chạy test đơn vị'), c('Thiếu tài liệu'), c('Chưa chạy test đơn vị')])).toBe(false)
     expect(isStuck([c('a b c'), c('a b c'), { verdict: 'done', reason: '' }])).toBe(false)
+  })
+})
+
+describe('hợp đồng hoàn thành và /subgoal', () => {
+  it('đọc hợp đồng: thiếu "xong khi" hay "chứng minh bằng" thì bỏ, trường rỗng thì lược', () => {
+    expect(
+      parseContract(
+        '```json\n{"done":"Có tệp báo cáo","proof":"ls thấy bao-cao.md","keep":"","scope":"thư mục docs","stop":""}\n```',
+      ),
+    ).toEqual({ done: 'Có tệp báo cáo', proof: 'ls thấy bao-cao.md', scope: 'thư mục docs' })
+    expect(parseContract('{"done":"x","proof":""}')).toBeUndefined()
+    expect(parseContract('{"done":"xong khi: có tệp","proof":"Chứng minh bằng: cat tệp"}')).toEqual({
+      done: 'có tệp',
+      proof: 'cat tệp',
+    })
+    expect(parseContract('không có')).toBeUndefined()
+  })
+
+  it('giám khảo thấy hợp đồng và tiêu chí thêm; không có thì giữ lời chấm cũ', () => {
+    const c = { done: 'Có tệp báo cáo', proof: 'ls thấy bao-cao.md' }
+    expect(contractText(c, ['có bảng so sánh'])).toBe(
+      '- Xong khi: Có tệp báo cáo\n- Chứng minh bằng: ls thấy bao-cao.md\n- Tiêu chí thêm 1: có bảng so sánh',
+    )
+    const base = { objective: 'Viết báo cáo', round: 1, max: 20, answer: 'Xong', tools: [] }
+    const p = judgePrompt({ ...base, contract: c, subgoals: ['có bảng so sánh'] })
+    expect(p).toContain('Hợp đồng hoàn thành:')
+    expect(p).toContain('Tiêu chí thêm 1: có bảng so sánh')
+    expect(p).toContain('không kèm bằng chứng')
+    expect(judgePrompt(base)).not.toContain('Hợp đồng')
+  })
+
+  it('đọc /subgoal', () => {
+    expect(parseSubgoal('  ')).toEqual({ kind: 'show' })
+    expect(parseSubgoal(' có bảng so sánh ')).toEqual({ kind: 'add', text: 'có bảng so sánh' })
   })
 })
 

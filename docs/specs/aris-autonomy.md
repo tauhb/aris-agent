@@ -14,6 +14,17 @@ dsh đã có `/goal`: lưu mục tiêu của phiên, tự gửi lượt tiếp k
   - Bot tự đánh dấu xong: giám khảo vẫn chấm, kết quả chỉ để hiện (không mở lại mục tiêu).
 - Lần chấm gần nhất của mỗi mục tiêu lưu ở bảng `goals` của kho `aris_autonomy` (mục tiêu, pha, số lượt, lời giám khảo, lúc), để màn 3.5 đọc được cả khi phiên đã nguội. Tiền giám khảo ghi sổ chi phí phạm vi `goal`.
 
+### Đợt 6 · Hợp đồng hoàn thành và `/subgoal`
+
+Mục tiêu mơ hồ thì chấm cũng mơ hồ. Theo cách Hermes làm (đọc tài liệu, viết lại):
+
+- Khi `/goal` đặt mục tiêu mới, aris nhờ model rẻ soạn **hợp đồng hoàn thành** từ câu mục tiêu: *xong khi* (kết quả cụ thể), *chứng minh bằng* (lệnh, tệp, số liệu cho thấy đã xong), *không được làm hỏng*, *phạm vi*, *dừng khi* (điều kiện bỏ cuộc hay cần hỏi người dùng). Soạn không được thì mục tiêu chạy như cũ, không chặn.
+- Bước đầu của lượt kế nhận lời báo kèm hợp đồng (chờ soạn tối đa 15 giây), để bot nhắm vào phần chứng minh.
+- `/subgoal <tiêu chí>` thêm một tiêu chí vào mục tiêu đang chạy; `/subgoal` không kèm chữ thì hiện hợp đồng và các tiêu chí. Lượt kế nhận lời báo tiêu chí mới.
+- Giám khảo thấy hợp đồng và mọi tiêu chí; chỉ chấm "xong" khi có bằng chứng đúng phần *chứng minh bằng* và mọi tiêu chí đều đạt.
+- Màn 3.5 hiện hợp đồng (gọn, mở rộng được) và các tiêu chí dưới mục tiêu.
+- Hermes còn có phán quyết "chờ" (đợi tiến trình nền như CI); aris để sau.
+
 ## `/loop` và `/heartbeat`
 
 Hai lệnh "/" của aris, chạy trên lịch nhắc bền của dsh (giao vào đúng phiên, mở lại phiên nguội, lỡ nhiều nhịp thì chỉ giao một lần, tin đến khi bot đang làm thì chờ tới lúc rảnh):

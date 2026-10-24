@@ -20,7 +20,12 @@ import type {} from '@deepseek-ai/dsh-tools'
 import { autonomyDomain, keyOf, type GoalRecord, type LoopRecord, type Table } from './domain.js'
 import {
   MARKER_RE,
+  MAX_SUBGOALS,
   MIN_SECONDS,
+  contractPrompt,
+  contractText,
+  parseContract,
+  parseSubgoal,
   heartbeatPrompt,
   humanInterval,
   isStuck,
@@ -40,6 +45,8 @@ export type { GoalRecord, LoopRecord } from './domain.js'
 export const name = 'aris-autonomy'
 /** Giám khảo chấm lâu hơn mức này thì lượt cứ đóng, mục tiêu chạy tiếp như dsh mặc định. */
 const JUDGE_TIMEOUT_MS = 30_000
+/** Bước đầu của mục tiêu mới chờ hợp đồng hoàn thành soạn xong tối đa chừng này. */
+const CONTRACT_WAIT_MS = 15_000
 export const inject = ['storageDomain', 'llm', 'sessionController']
 
 declare module '@deepseek-ai/dsh-llm' {
@@ -133,7 +140,7 @@ export async function apply(ctx: Context): Promise<void> {
     if (!t || t.turn !== turn) turns.set(sid, (t = { turn, answer: '', tools: [] }))
     return t
   }
-  ctx.on('agent/pre-step', ({ agent, messages, turn }, next) => {
+  ctx.on('agent/pre-step', async ({ agent, messages, turn }, next) => {
     const t = turnOf(agent.session.id, turn)
     if (!t.goal) {
       const g = goalsPort()?.get(agent)
@@ -143,7 +150,24 @@ export async function apply(ctx: Context): Promise<void> {
       const hit = MARKER_RE.exec(textOf(m.content as readonly ContentBlock[]))
       if (hit) t.loop = hit[1]
     }
-    return next()
+    // Mục tiêu mới: chờ hợp đồng hoàn thành (soạn nền), rồi gắn lời báo hợp đồng / tiêu chí mới.
+    const sid = agent.session.id
+    const draft = drafts.get(sid)
+    if (draft) await Promise.race([draft, new Promise((r) => setTimeout(r, CONTRACT_WAIT_MS))])
+    const decision = await next()
+    const note = notices.get(sid)
+    if (!note || decision.kind === 'reject') return decision
+    notices.delete(sid)
+    return {
+      ...decision,
+      messages: [
+        ...decision.messages,
+        createUserMessage({
+          content: [{ type: 'text', text: note }],
+          source: { kind: 'aris-autonomy', form: 'notice', summary: 'Hợp đồng mục tiêu' },
+        }) as (typeof decision.messages)[number],
+      ],
+    }
   })
   ctx.on('tools/post-execute', async (exec, _result, next) => {
     const t = exec.agent ? turns.get(exec.agent.session.id) : undefined
@@ -174,15 +198,48 @@ export async function apply(ctx: Context): Promise<void> {
       max: g?.maxGoalRounds ?? prev!.max,
       ...(g?.blockedReason ? { blocked: g.blockedReason } : {}),
       verdicts: same || cleared ? prev!.verdicts : [],
+      ...((same || cleared) && prev!.contract ? { contract: prev!.contract } : {}),
+      ...((same || cleared) && prev!.subgoals ? { subgoals: prev!.subgoals } : {}),
       createdAt: same || cleared ? prev!.createdAt : at,
       updatedAt: at,
     }
     await goals.put(keyOf(sid), rec)
+    return { rec, fresh: !!g && !same }
+  }
+
+  // Hợp đồng hoàn thành (đợt 6): mục tiêu mới thì soạn nền; bước đầu của lượt kế chờ và nhận lời báo.
+  const drafts = new Map<string, Promise<void>>()
+  const notices = new Map<string, string>()
+  const addNotice = (sid: string, text: string) =>
+    notices.set(sid, notices.has(sid) ? `${notices.get(sid)}\n\n${text}` : text)
+  async function draftContract(sid: string, goalId: string, objective: string) {
+    const raw = await ask(sid, contractPrompt(objective), 3000)
+    const c = raw ? parseContract(raw) : undefined
+    const rec = goals.get(keyOf(sid))
+    if (!c)
+      return void logger.warn(
+        'hợp đồng mục tiêu: model không trả JSON dùng được (%s)',
+        (raw ?? '').slice(0, 200),
+      )
+    if (!rec || rec.goalId !== goalId) return
+    await goals.put(keyOf(sid), { ...rec, contract: c, updatedAt: now() })
+    addNotice(
+      sid,
+      `Hợp đồng hoàn thành của mục tiêu (giám khảo chỉ chấm xong khi có bằng chứng đúng phần "Chứng minh bằng"):\n${contractText(c, rec.subgoals)}\nLàm theo hợp đồng này; xong thì nêu rõ bằng chứng trong câu trả lời.`,
+    )
   }
   ctx.on('goal/changed', ({ agent, change }) => {
-    void saveGoal(agent.session.id, change.goal as unknown as GoalView | undefined, !change.goal).catch(
-      (e: unknown) => logger.warn('ghi mục tiêu: %s', String(e)),
-    )
+    const sid = agent.session.id
+    const g = change.goal as unknown as GoalView | undefined
+    void saveGoal(sid, g, !g)
+      .then((r) => {
+        if (!r?.fresh || !g || g.phase !== 'active') return
+        const p = draftContract(sid, g.id, g.objective)
+          .catch((e: unknown) => logger.warn('soạn hợp đồng mục tiêu: %s', String(e)))
+          .finally(() => drafts.delete(sid))
+        drafts.set(sid, p)
+      })
+      .catch((e: unknown) => logger.warn('ghi mục tiêu: %s', String(e)))
   })
 
   let catalog: { at: number; model?: { provider: string; model: string } } | undefined
@@ -212,36 +269,17 @@ export async function apply(ctx: Context): Promise<void> {
     return catalog.model
   }
 
-  async function judge(agent: Agent, t: TurnState) {
-    const port = goalsPort()
-    const g = port?.get(agent)
-    // Bot tự đánh dấu xong trong lượt: vẫn chấm, kết quả chỉ để hiện.
-    if (!port || !g || g.id !== t.goal || (g.phase !== 'active' && g.phase !== 'complete')) return
+  /** Một lần gọi model rẻ, ghi sổ chi phí phạm vi `goal`. Không có model thì undefined. */
+  async function ask(sid: string, text: string, maxTokens: number): Promise<string | undefined> {
     const m = await flash()
-    if (!m) return
+    if (!m) return undefined
     let raw = ''
     let usage: Usage | undefined
     for await (const c of ctx.llm.stream({
       provider: m.provider,
       model: m.model,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: judgePrompt({
-                objective: g.objective,
-                round: g.roundsStarted,
-                max: g.maxGoalRounds,
-                answer: t.answer.slice(-6000),
-                tools: t.tools,
-              }),
-            },
-          ],
-        },
-      ],
-      maxTokens: 3000,
+      messages: [{ role: 'user', content: [{ type: 'text', text }] }],
+      maxTokens,
     })) {
       if (c.type === 'text-delta') raw += c.text
       else if (c.type === 'usage') usage = c.usage
@@ -251,8 +289,38 @@ export async function apply(ctx: Context): Promise<void> {
         ctx.get('arisSpend') as
           { charge?(p: string, m: string, u: Usage, s: readonly string[]): Promise<number> } | undefined
       )
-        ?.charge?.(m.provider, m.model, usage, ['goal', `bot:${botOf(agent.session.id)}`])
+        ?.charge?.(m.provider, m.model, usage, ['goal', `bot:${botOf(sid)}`])
         .catch(() => undefined)
+    return raw
+  }
+
+  async function judge(agent: Agent, t: TurnState) {
+    const port = goalsPort()
+    const g = port?.get(agent)
+    // Bot tự đánh dấu xong trong lượt: vẫn chấm, kết quả chỉ để hiện.
+    if (!port || !g || g.id !== t.goal || (g.phase !== 'active' && g.phase !== 'complete')) return
+    const rec0 = goals.get(keyOf(agent.session.id))
+    // Đã xong và lượt này đã chấm (lượt kéo thêm một bước sau khi xong): không chấm lại câu xác nhận.
+    if (
+      g.phase === 'complete' &&
+      rec0?.goalId === g.id &&
+      rec0.verdicts.some((v) => v.round === g.roundsStarted)
+    )
+      return
+    const raw = await ask(
+      agent.session.id,
+      judgePrompt({
+        objective: g.objective,
+        round: g.roundsStarted,
+        max: g.maxGoalRounds,
+        answer: t.answer.slice(-6000),
+        tools: t.tools,
+        contract: rec0?.goalId === g.id ? rec0.contract : undefined,
+        subgoals: rec0?.goalId === g.id ? rec0.subgoals : undefined,
+      }),
+      3000,
+    )
+    if (!raw) return
     const v = parseVerdict(raw)
     if (!v) return
     const rec = goals.get(keyOf(agent.session.id))
@@ -393,6 +461,49 @@ export async function apply(ctx: Context): Promise<void> {
   }
 
   ctx.inject(['commands'], (ctx) => {
+    ctx.effect(
+      () =>
+        ctx.commands.register({
+          name: 'subgoal',
+          description:
+            'Thêm tiêu chí cho mục tiêu đang chạy (/subgoal <tiêu chí>); /subgoal không kèm chữ thì xem hợp đồng hoàn thành',
+          input: { hint: '[tiêu chí]' },
+          handler: async ({ agent, rawInput }) => {
+            const sid = agent.session.id
+            const g = goalsPort()?.get(agent)
+            const rec = goals.get(keyOf(sid))
+            if (!g || g.phase === 'complete' || !rec || rec.goalId !== g.id)
+              return {
+                kind: 'error',
+                text: 'Phiên này chưa có mục tiêu đang chạy. Đặt bằng /goal <mục tiêu> trước.',
+              }
+            const c = parseSubgoal(rawInput)
+            if (c.kind === 'show') {
+              const terms = contractText(rec.contract, rec.subgoals)
+              return {
+                kind: 'success',
+                text: terms
+                  ? `Mục tiêu: ${rec.objective}\n${terms}`
+                  : `Mục tiêu: ${rec.objective}\nChưa có hợp đồng hoàn thành (đang soạn hoặc model rẻ không trả lời được).`,
+              }
+            }
+            const list = rec.subgoals ?? []
+            if (list.length >= MAX_SUBGOALS)
+              return { kind: 'error', text: `Mỗi mục tiêu tối đa ${MAX_SUBGOALS} tiêu chí thêm.` }
+            const subgoals = [...list, c.text]
+            await goals.put(keyOf(sid), { ...rec, subgoals, updatedAt: now() })
+            addNotice(
+              sid,
+              `Người dùng thêm tiêu chí ${subgoals.length} cho mục tiêu: ${c.text}\nMục tiêu chỉ xong khi đạt cả tiêu chí này.`,
+            )
+            return {
+              kind: 'success',
+              text: `Đã thêm tiêu chí ${subgoals.length}: ${c.text}. Giám khảo sẽ chấm cả tiêu chí này.`,
+            }
+          },
+        }),
+      'aris-autonomy: /subgoal',
+    )
     ctx.effect(
       () =>
         ctx.commands.register({

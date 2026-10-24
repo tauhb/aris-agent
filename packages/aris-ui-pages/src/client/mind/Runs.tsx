@@ -19,6 +19,10 @@ interface Goal {
   rounds: number
   max: number
   blocked?: { code: string; message: string }
+  /** Hợp đồng hoàn thành (model rẻ soạn khi đặt mục tiêu). */
+  contract?: { done: string; proof: string; keep?: string; scope?: string; stop?: string }
+  /** Tiêu chí thêm bằng `/subgoal`. */
+  subgoals?: string[]
   verdicts: {
     verdict: 'done' | 'continue' | 'blocked'
     reason: string
@@ -189,6 +193,31 @@ export function Runs({ t, nav }: PageProps) {
                     }}
                   />
                 </div>
+                {(g.contract || g.subgoals?.length) && (
+                  <details style={{ fontSize: 12.5, marginBottom: 8 }}>
+                    <summary className="a-muted" style={{ cursor: 'pointer' }}>
+                      {g.contract
+                        ? t('run.contractDone', { done: g.contract.done })
+                        : t('run.subgoals', { n: g.subgoals!.length })}
+                    </summary>
+                    <div style={{ display: 'grid', gap: 2, marginTop: 4, paddingLeft: 14 }}>
+                      {g.contract &&
+                        (['proof', 'keep', 'scope', 'stop'] as const).map(
+                          (k) =>
+                            g.contract![k] && (
+                              <div key={k}>
+                                <span className="a-muted">{t(`run.contract.${k}`)}</span> {g.contract![k]}
+                              </div>
+                            ),
+                        )}
+                      {g.subgoals?.map((x, i) => (
+                        <div key={i}>
+                          <span className="a-muted">{t('run.subgoal', { n: i + 1 })}</span> {x}
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
                 <div style={{ fontSize: 13 }}>
                   {v ? (
                     <>

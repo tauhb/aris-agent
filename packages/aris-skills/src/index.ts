@@ -9,12 +9,15 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-client-connection'
+import type {} from '@deepseek-ai/dsh-commands'
+import { createUserMessage, type ContextFormed } from '@deepseek-ai/dsh-llm'
 import type { SkillCandidate, SkillProvider } from '@deepseek-ai/dsh-skill'
 import type {} from '@deepseek-ai/dsh-storage-domain'
-import type {} from '@deepseek-ai/dsh-tools'
+import { defineTool } from '@deepseek-ai/dsh-tools'
 import { randomUUID } from 'node:crypto'
 import { diffStat, lineDiff } from './diff.js'
-import { skillsDomain } from './domain.js'
+import { LEARN_TOOL, LEARN_WINDOW_MS, MAX_LEARN_CASES, learnPrompt } from './learn.js'
+import { skillsDomain, type CuratorRun } from './domain.js'
 import {
   EVAL_PREFIX,
   EVAL_USD,
@@ -30,12 +33,34 @@ import {
   type EvalRecord,
   type RunResult,
 } from './eval.js'
-import { SkillError, SkillStore, skillId, type ProposeInput, type SkillEvent, type Table } from './store.js'
+import {
+  ARCHIVE_DAYS,
+  STALE_DAYS,
+  SkillError,
+  SkillStore,
+  skillId,
+  type CuratorPlan,
+  type ProposeInput,
+  type SkillEvent,
+  type Table,
+} from './store.js'
 
 export * from './lint.js'
 export * from './diff.js'
 export * from './store.js'
 export * from './eval.js'
+export * from './learn.js'
+
+declare module '@deepseek-ai/dsh-llm' {
+  interface MessageSourceMap {
+    /** Lượt `/learn`: lời nhắc gom tài liệu và viết skill. */
+    'aris-skills': { kind: 'aris-skills' } & ContextFormed
+  }
+}
+export type { CuratorRun } from './domain.js'
+
+/** Số báo cáo của người dọn kho được giữ. */
+export const CURATOR_RUNS_KEPT = 30
 
 export const name = 'aris-skills'
 export const inject = ['storageDomain', 'tools']
@@ -124,6 +149,101 @@ export async function apply(ctx: Context): Promise<void> {
       return v
     },
   } satisfies ArisSkills)
+
+  // /learn (đợt 6): lệnh mở một lượt cho bot tự gom tài liệu bằng công cụ sẵn có và viết skill;
+  // `luu_skill` chỉ nhận trong lượt đó và nộp thành đề xuất chờ duyệt như mọi đề xuất.
+  const learning = new Map<string, { source: string; until: number }>()
+  ctx.inject(['commands'], (ctx) => {
+    ctx.effect(
+      () =>
+        ctx.commands.register({
+          name: 'learn',
+          description: 'Học một skill từ thư mục, tệp, URL hay quy trình tả bằng lời (/learn <nguồn>)',
+          input: { hint: '<thư mục, URL hay quy trình>' },
+          handler: ({ agent, rawInput }) => {
+            const sid = agent.session.id
+            const source = rawInput.trim().slice(0, 500)
+            if (!source)
+              return {
+                kind: 'error',
+                text: 'Thiếu nguồn, ví dụ: /learn ~/du-an/sdk, phần đăng nhập và phân trang',
+              }
+            if (evalMode.has(sid)) return { kind: 'error', text: 'Phiên kiểm thử skill không học skill mới.' }
+            learning.set(sid, { source, until: Date.now() + LEARN_WINDOW_MS })
+            const existing = store.activeFor(botOf(sid)).map(({ skill }) => skill.name)
+            agent.followup(
+              createUserMessage({
+                content: [{ type: 'text', text: learnPrompt(source, existing) }],
+                source: {
+                  kind: 'aris-skills',
+                  form: 'notice',
+                  summary: `Học skill từ: ${source.slice(0, 80)}`,
+                },
+              }),
+            )
+            return {
+              kind: 'success',
+              text: 'Bot sẽ gom tài liệu rồi viết skill; skill chờ duyệt ở Hộp duyệt (và Telegram) như mọi đề xuất.',
+            }
+          },
+        }),
+      'aris-skills: /learn',
+    )
+  })
+  ctx.on('session/disposed', (session) => void learning.delete(session.id))
+  ctx.tools.register(
+    defineTool({
+      name: LEARN_TOOL,
+      description:
+        'Chỉ dùng trong lượt người dùng gõ /learn: nộp skill vừa viết từ nguồn người dùng chỉ để người dùng duyệt. Lượt khác bị từ chối.',
+      parameters: {
+        ten: {
+          type: 'string',
+          required: true,
+          description: 'Tên skill: chữ thường không dấu, số, nối bằng "-".',
+        },
+        mo_ta: { type: 'string', required: true, description: 'Một câu: skill dùng khi nào.' },
+        than: {
+          type: 'string',
+          required: true,
+          description: 'Thân Markdown: ## Khi nào dùng, ## Các bước, ## Lỗi thường gặp, ## Kiểm tra.',
+        },
+        yeu_cau_mau: {
+          type: 'array',
+          items: { type: 'string' },
+          description: `1–${MAX_LEARN_CASES} câu người dùng có thể nhờ mà skill này giúp được (ca kiểm thử).`,
+        },
+      },
+      output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+      async execute(args, exec) {
+        const sid = exec.agent?.session.id
+        const l = sid ? learning.get(sid) : undefined
+        if (!sid || !l || l.until < Date.now())
+          return 'Từ chối: công cụ này chỉ dùng trong lượt người dùng gõ /learn. Muốn lưu cách làm thành skill thì nhờ người dùng gõ /learn <nguồn>.'
+        try {
+          const v = await store.propose({
+            bot: botOf(sid),
+            name: args.ten.trim(),
+            description: args.mo_ta.trim(),
+            body: args.than,
+            by: 'user',
+            why: `Học từ: ${l.source}`,
+            sessionId: sid,
+            cases: (args.yeu_cau_mau ?? [])
+              .map((c) => c.trim())
+              .filter(Boolean)
+              .slice(0, MAX_LEARN_CASES),
+          })
+          if (!v) return 'Thân giống hệt bản đang dùng: không có gì mới để đề xuất.'
+          learning.delete(sid)
+          return `Đã nộp ${v.name} v${v.version} (${v.from ? 'bản vá' : 'skill mới'}), đang chờ người dùng duyệt ở Hộp duyệt${v.warnings.length ? `. Cảnh báo của bộ kiểm: ${v.warnings.join(' ')}` : ''}.`
+        } catch (e) {
+          if (e instanceof SkillError) return `Bộ kiểm từ chối: ${e.message} Sửa rồi gọi lại ${LEARN_TOOL}.`
+          throw e
+        }
+      },
+    }),
+  )
 
   // Phiên kiểm thử thấy đúng một bản (hoặc không skill nào); phiên thường thấy bản đang dùng của bot.
   const listFor = (sessionId: string) => {
@@ -496,17 +616,33 @@ export async function apply(ctx: Context): Promise<void> {
     return () => clearInterval(timer)
   }, 'aris-skills: đề xuất quá hạn')
 
-  // Người dọn kho: mỗi ngày cất skill 30 ngày không dùng (trừ skill đã ghim).
-  const curator = { last: '', next: '' }
+  // Người dọn kho: mỗi ngày cất skill `ARCHIVE_DAYS` ngày không dùng (trừ skill đã ghim), ghi báo cáo.
+  const curatorRuns = domain.table('curator_runs') as unknown as Table<CuratorRun> & {
+    delete(k: string): Promise<boolean>
+  }
+  const lastRun = () =>
+    [...curatorRuns.entries()].map(([, r]) => r).sort((a, b) => b.at.localeCompare(a.at))[0]
+  const curator = { last: lastRun()?.at ?? '', next: '' }
   ctx.effect(() => {
     const run = () => {
       curator.last = new Date().toISOString()
       curator.next = new Date(Date.now() + 86_400_000).toISOString()
       void store
         .curate()
-        .then((ids) => {
-          if (!ids.length) return
-          logger.info('cất %d skill lâu không dùng: %s', ids.length, ids.join(', '))
+        .then(async (plan) => {
+          const at = curator.last
+          // Mã khoá chỉ gồm chữ, số, gạch nối.
+          await curatorRuns.put(at.replace(/[^0-9A-Za-z]/g, '-'), { at, ...plan })
+          const old = [...curatorRuns.entries()]
+            .sort(([, a], [, b]) => b.at.localeCompare(a.at))
+            .slice(CURATOR_RUNS_KEPT)
+          for (const [k] of old) await curatorRuns.delete(k)
+          if (!plan.archive.length) return
+          logger.info(
+            'cất %d skill lâu không dùng: %s',
+            plan.archive.length,
+            plan.archive.map((s) => s.id).join(', '),
+          )
           refresh()
         })
         .catch((e: unknown) => logger.warn('dọn kho skill: %s', String(e)))
@@ -523,7 +659,16 @@ export async function apply(ctx: Context): Promise<void> {
         methods: ['GET', 'POST'],
         requestBody: 'buffered',
         fetch: async (request) => {
-          const res = await skillsApi(store, request, { startEval, latestEval, curator: () => curator })
+          const res = await skillsApi(store, request, {
+            startEval,
+            latestEval,
+            curator: () => ({
+              ...curator,
+              report: lastRun() ?? null,
+              staleDays: STALE_DAYS,
+              archiveDays: ARCHIVE_DAYS,
+            }),
+          })
           if (request.method === 'POST' && res.ok) refresh()
           return res
         },
@@ -554,13 +699,23 @@ function withDiff(store: SkillStore, id: string) {
  *   GET ?pending=all          → bản chờ duyệt (Hộp duyệt), số đã xử lý hôm nay
  *   GET ?id=<bot>--<tên>      → một skill, các bản, bản chờ so với bản đang dùng
  *   GET ?backup=1             → tệp sao lưu mọi skill và các bản
+ *   GET ?curator=preview      → người dọn kho chạy thử: lần tới sẽ cất gì (không đổi gì)
  *   POST { op: approve | reject | restore, id (mã bản) | skill + version, body? }
  *   POST { op: pin | archive | unarchive | eval, skill, on? }
  */
 export interface SkillsApiExtras {
   startEval(skill: string): Promise<EvalRecord>
   latestEval(skill: string, version?: number): EvalRecord | undefined
-  curator(): { last: string; next: string }
+  curator(): CuratorView
+}
+
+/** Người dọn kho cho màn 3.2: lần chạy gần nhất / kế, báo cáo gần nhất, các mốc. */
+export interface CuratorView {
+  last: string
+  next: string
+  report: CuratorRun | null
+  staleDays: number
+  archiveDays: number
 }
 
 const evalView = (e: EvalRecord | undefined) => (e ? { ...e, summary: summarize(e) } : null)
@@ -579,6 +734,7 @@ export async function skillsApi(
           'content-disposition': `attachment; filename="aris-skills-${new Date().toISOString().slice(0, 10)}.aris-skills.json"`,
         },
       })
+    if (q.get('curator') === 'preview') return json({ plan: store.curatePlan() satisfies CuratorPlan })
     if (q.get('pending') === 'all')
       return json({
         pending: store.pending().map((v) => withDiff(store, v.id)),
