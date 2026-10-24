@@ -3,6 +3,15 @@
  * quyền chủ nhân trước khi gọi tới đây.
  */
 import {
+  cleanMcp,
+  McpError,
+  viewOf,
+  type McpCheck,
+  type McpInput,
+  type McpRecord,
+  type McpStore,
+} from './mcp.js'
+import {
   cloneInput,
   exportBot,
   importInput,
@@ -31,6 +40,10 @@ export interface ApiDeps {
   catalog?: () => Promise<{ id: string; name: string; models: { id: string; name: string }[] }[]>
   /** Ký ức riêng của bot; không có (plugin ký ức tắt) thì không chép ký ức. */
   memory?: () => MemoryPort | undefined
+  /** Kết nối nền tảng (MCP) theo bot. */
+  mcp?: McpStore
+  /** Kết nối thử một máy chủ MCP. */
+  checkMcp?: (r: McpRecord) => Promise<McpCheck>
 }
 
 const partsOf = (v: unknown): CopyParts => {
@@ -51,6 +64,7 @@ async function snapshot(d: ApiDeps) {
     owner: d.store.owner(),
     departments: d.store.departments(),
     spend: d.spend?.() ?? {},
+    mcp: d.mcp?.list().map(viewOf) ?? [],
     templates: templates.map((t) => ({
       id: t.id,
       name: t.name,
@@ -85,6 +99,7 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
         break
       case 'delete':
         await d.store.remove(String(body.id))
+        await d.mcp?.removeBot(String(body.id))
         break
       case 'owner':
         await d.store.setOwner(
@@ -135,6 +150,44 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
         const reuse = body.fresh === true ? undefined : d.store.latestOpen(id)
         return json({ sessionId: reuse ?? (await d.open(id)), reused: !!reuse })
       }
+      case 'mcp-test': {
+        // "Kiểm tra kết nối" trong hộp, chưa lưu: khoá để trống khi sửa thì dùng khoá đã lưu.
+        if (!d.mcp || !d.checkMcp) return json({ error: 'Chưa bật kết nối nền tảng.' }, 400)
+        const prev = body.id ? d.mcp.get(String(body.id)) : undefined
+        const clean = cleanMcp(body.input as McpInput, prev)
+        const temp: McpRecord = {
+          ...clean,
+          id: 'test',
+          bot: String(body.bot ?? prev?.bot ?? ''),
+          serverName: prev?.serverName ?? 'test',
+          createdAt: new Date().toISOString(),
+        }
+        return json({ check: await d.checkMcp(temp) })
+      }
+      case 'mcp-add':
+      case 'mcp-update':
+      case 'mcp-check': {
+        if (!d.mcp || !d.checkMcp) return json({ error: 'Chưa bật kết nối nền tảng.' }, 400)
+        let rec: McpRecord
+        if (body.op === 'mcp-add') {
+          const bot = d.store.get(String(body.bot))
+          if (!bot || bot.external) return json({ error: 'Bot này không thêm kết nối được.' }, 400)
+          rec = await d.mcp.add(bot.id, body.input as McpInput)
+        } else {
+          const prev = d.mcp.get(String(body.id))
+          if (!prev) return json({ error: 'Không có kết nối này.' }, 400)
+          rec = body.op === 'mcp-update' ? await d.mcp.update(prev.id, body.input as Partial<McpInput>) : prev
+        }
+        // Bật / tắt không cần kết nối thử lại.
+        const onlyToggle =
+          body.op === 'mcp-update' && Object.keys((body.input as object) ?? {}).every((k) => k === 'enabled')
+        if (!onlyToggle && (body.op !== 'mcp-update' || !rec.check))
+          await d.mcp.setCheck(rec.id, await d.checkMcp(rec))
+        return json({ ...(await snapshot(d)), connection: rec.id })
+      }
+      case 'mcp-delete':
+        await d.mcp?.remove(String(body.id))
+        break
       case 'commander-latest': {
         // Bấm Aris trên thanh bên: phiên gần nhất chưa gắn bot nào trong các ứng viên (mới nhất trước).
         const list = Array.isArray(body.candidates) ? body.candidates.map(String) : []
@@ -178,7 +231,7 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
     }
     return json(await snapshot(d))
   } catch (err) {
-    if (err instanceof BotError) return json({ error: err.message }, 400)
+    if (err instanceof BotError || err instanceof McpError) return json({ error: err.message }, 400)
     return json({ error: err instanceof Error ? err.message : String(err) }, 500)
   }
 }

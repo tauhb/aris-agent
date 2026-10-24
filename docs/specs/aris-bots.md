@@ -83,6 +83,23 @@ Chạy thử thật (24/10): Minh (Tăng trưởng, không chạy lệnh) gọi 
 
 Hồ sơ bot có thể kèm `external`: loại agent (`claude-code`, `codex`, `acp`), mức quyền (`EXTERNAL_PERMISSIONS`; mặc định hỏi người dùng: Claude Code `manual`, Codex `ask`; đi đường plugin của dsh thì đổi theo `PLUGIN_PERMISSION`), model (bỏ trống là theo cài đặt của agent trên máy), `timeoutMin` (5–240, mặc định 45), `budgetUsd` (chỉ Claude Code, 0,5–100, mặc định 3), `worktree`, `assignable`, lệnh khởi chạy (ACP). `cleanExternal` kiểm và điền mặc định; sửa một trường giữ các trường khác, đổi loại agent thì mức quyền về mặc định. Đội hình trong `<aris-bot>` ghi bot ngoài kèm loại agent và nhắc: bot ngoài làm việc trọn gói, không vào phòng nhóm, giao lại trong cùng phiên thì làm tiếp việc trước. Bot ngoài không mở được phiên chat riêng (`open` từ chối); bấm vào bot ngoài ở thanh bên mở hồ sơ. Chạy thật ở [aris-commander.md](aris-commander.md#bot-ngoài-bước-4).
 
+## Hồ sơ bot · Skill & tool (bản vẽ 2.2, 2.2c)
+
+Màn hồ sơ bot làm đủ theo bản vẽ 2.2 qua 4 đợt; phần thuộc giai đoạn sau vẫn hiện như bản vẽ nhưng mờ, có nhãn "Giai đoạn N" (thành phần `Later`).
+
+**Kết nối nền tảng (MCP) theo bot** (`mcp.ts`, bảng `mcp` của domain `aris_bots`): mỗi kết nối thuộc một bot, gồm tên, `serverName` (tiền tố công cụ `mcp__<serverName>__…`, duy nhất trong bot), cách chạy (lệnh trên máy hoặc URL), khoá (biến môi trường hoặc header), cách hỏi (`write` hỏi trước khi ghi, mặc định; `always`; `never`), bật/tắt, kết quả kiểm tra gần nhất (danh sách công cụ, công cụ nào chỉ đọc theo `readOnlyHint`).
+
+- Mẫu điền sẵn: GitHub (máy chủ chính thức `https://api.githubcopilot.com/mcp/`, token thành `Authorization: Bearer`), Lark (`npx -y @larksuiteoapi/lark-mcp mcp -a <App ID> -s <App Secret>`), Notion (`npx -y @notionhq/notion-mcp-server`, `NOTION_TOKEN`). "Tự thêm" nhận mọi máy chủ: lệnh (stdio) hoặc URL (HTTP).
+- Gắn vào phiên: khi agent của phiên được tạo, hoặc ngay sau khi phiên được gắn bot (chat riêng, thành viên đội khi Aris giao việc), aris nạp plugin `@deepseek-ai/dsh-mcp-client` vào `agent.ctx` cho từng kết nối đang bật. Công cụ chỉ agent đó thấy; bot khác không thấy. Agent tắt thì kết nối đóng theo.
+- Kết nối mới có hiệu lực ở phiên mới (giữ prompt cache cho phiên đang dở). Tắt hay gỡ kết nối thì phiên cũ bị chặn gọi công cụ của kết nối đó ngay.
+- Hỏi trước khi ghi: `tools/pre-execute` trả `ask` cho công cụ không chỉ đọc (và công cụ chưa có trong lần kiểm tra) → thanh duyệt trên web, thẻ Telegram khi bot được giao việc.
+- Khoá lưu trên máy, không bao giờ gửi lại giao diện (`viewOf` chỉ trả tên khoá). Sửa mà để trống khoá là giữ khoá cũ. Nhân bản và xuất bot không mang theo kết nối.
+- "Kiểm tra kết nối": mở máy chủ bằng `@modelcontextprotocol/client`, liệt kê công cụ, đóng; lỗi báo bằng lời (thiếu lệnh, khoá sai, không tới được máy chủ). Lần đầu chạy lệnh npx sẽ tải gói về máy.
+
+**Bộ công cụ theo bot** (trường `tools` của bot): tìm và đọc web, đọc tệp (`read`, `read_image`, `glob`, `grep`, `str_replace_editor view`), chạy lệnh terminal. Tắt thì bot bị từ chối kèm lý do. Bot chỉ dùng được khi cả bộ công cụ của bot và chính sách phòng đều cho; phòng không cho thì ô tích bị khoá, ghi "Phòng X không cho". Ghi tệp nằm ở Quyền & kênh. Second Brain (giai đoạn 5), gửi email / tin nhắn ra ngoài (giai đoạn 4), danh sách skill (giai đoạn 3) hiện mờ.
+
+Chạy thử thật (24/10): thêm cho Khoa kết nối "Tự thêm" tới máy chủ thử `packages/aris-bots/test/echo-mcp.mjs` (công cụ `echo` chỉ đọc, `ghi_chu` ghi) → Kiểm tra kết nối báo 2 công cụ; trong phiên mới, Khoa gọi `mcp__echo_thu__echo` chạy luôn, `mcp__echo_thu__ghi_chu` hiện thanh duyệt "Khoa muốn dùng Echo thử · ghi_chu", cho phép thì chạy, biến môi trường tới được máy chủ; Minh (bot khác) không thấy công cụ `mcp__` nào; Aris giao việc cho Khoa thì phiên con của Khoa cũng dùng được kết nối.
+
 ## Nhân bản, xuất, nhập (bản vẽ 2.4)
 
 Hộp "Nhân bản / xuất" trên hồ sơ bot (`portable.ts`). Luôn chép vai trò, mô tả, linh vật; bot ngoài luôn giữ cấu hình bot ngoài (đó là loại bot). Chọn thêm:
@@ -112,6 +129,8 @@ Chạy thử thật (24/10): nhân bản Minh thành "Minh Thử" (@minh-thu) k�
 | `move` `{ id, department }` | Chuyển bot sang phòng khác (`null`: chưa xếp phòng) |
 | `apply-template` `{ template }` | Áp đội mẫu |
 | `open` `{ id }` | Tạo phiên chat thẳng với bot, trả `sessionId` |
+| `mcp-test` `{ bot, id?, input }` | Kiểm tra kết nối chưa lưu (khoá để trống khi sửa thì dùng khoá đã lưu), trả `check` |
+| `mcp-add` `{ bot, input }`, `mcp-update` `{ id, input }`, `mcp-check` `{ id }`, `mcp-delete` `{ id }` | Thêm, sửa (bật/tắt không kiểm tra lại), kiểm tra lại, gỡ kết nối; `GET` trả `mcp` (không có giá trị khoá) |
 | `commander-latest` `{ candidates }` | Bấm Aris trên thanh bên: trả `sessionId` là ứng viên đầu tiên (phiên chat riêng, mới nhất trước) chưa gắn bot nào, không có thì `null` (thanh bên mở phiên mới) |
 | `clone` `{ id, name, parts }` | Nhân bản; `parts` = `{ config, soul, memory }`; trả thêm `created`, `memory` (số mục ký ức đã chép) |
 | `export` `{ id, parts }` | Trả `file` (tệp `aris-bot`) |

@@ -20,6 +20,27 @@ export interface BotData {
   department?: string
   /** Bot ngoài (Claude Code, Codex, ACP). */
   external?: ExternalData
+  /** Bộ công cụ riêng (không có trường nào là theo chính sách phòng). */
+  tools?: { web?: boolean; files?: boolean; shell?: boolean }
+  createdAt: string
+}
+
+/** Kết nối nền tảng (máy chủ MCP) của một bot, bản vẽ 2.2c. Không có giá trị khoá. */
+export interface McpData {
+  id: string
+  bot: string
+  name: string
+  serverName: string
+  preset: 'github' | 'lark' | 'notion' | 'custom'
+  transport: 'stdio' | 'streamable-http'
+  command?: string
+  args?: string[]
+  url?: string
+  /** Tên các khoá đã lưu. */
+  secretKeys: string[]
+  ask: 'write' | 'always' | 'never'
+  enabled: boolean
+  check?: { ok: boolean; at: string; error?: string; tools: { name: string; readOnly: boolean }[] }
   createdAt: string
 }
 
@@ -88,6 +109,8 @@ export interface TeamSnapshot {
   roles?: RolePreset[]
   /** Chi phí hôm nay theo phòng ban (USD). */
   spend?: Record<string, number>
+  /** Kết nối nền tảng của mọi bot. */
+  mcp?: McpData[]
 }
 
 export interface RolePreset {
@@ -303,6 +326,7 @@ export interface TeamView {
   owner: OwnerAddress
   /** Chi phí hôm nay theo phòng ban (USD). */
   spend: Record<string, number>
+  mcp: McpData[]
 }
 
 /** Gom đội theo phòng ban, dạng các thành phần hiện có đang dùng. */
@@ -321,6 +345,7 @@ export function teamView(d: TeamSnapshot | null, noDepartment = '', l: TeamLive 
       roles: [],
       owner: {},
       spend: {},
+      mcp: [],
     }
   const cmd = d.bots.find((b) => b.kind === 'commander')
   const others = d.bots.filter((b) => b.kind !== 'commander')
@@ -344,6 +369,7 @@ export function teamView(d: TeamSnapshot | null, noDepartment = '', l: TeamLive 
     roles: d.roles ?? [],
     owner: d.owner ?? {},
     spend: d.spend ?? {},
+    mcp: d.mcp ?? [],
   }
 }
 

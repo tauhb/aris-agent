@@ -26,6 +26,19 @@ export interface BotInput {
   department?: string | null
   /** Bot ngoài: cấu hình gửi từ hộp Thêm bot ngoài (xem `cleanExternal`); `null` là bỏ. */
   external?: unknown
+  /** Bộ công cụ riêng: chỉ trường gửi lên mới đổi. */
+  tools?: Partial<Record<ToolKey, boolean>>
+}
+
+/** Nhóm công cụ bật/tắt được trên hồ sơ bot. */
+export const TOOL_KEYS = ['web', 'files', 'shell'] as const
+export type ToolKey = (typeof TOOL_KEYS)[number]
+
+function cleanTools(v: unknown, prev: BotRecord['tools'] = {}): BotRecord['tools'] {
+  const t = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>
+  const out = { ...prev }
+  for (const k of TOOL_KEYS) if (typeof t[k] === 'boolean') out[k] = t[k]
+  return out
 }
 
 export interface Template {
@@ -175,6 +188,7 @@ export class BotStore {
       ...(input.model ? { model: input.model } : {}),
       ...(input.department ? { department: input.department } : {}),
       ...(input.external ? { external: this.external(input.external) } : {}),
+      ...(input.tools ? { tools: cleanTools(input.tools) } : {}),
       createdAt: this.now().toISOString(),
     }
     await this.t.bots.put(id, rec)
@@ -199,6 +213,7 @@ export class BotStore {
     else if (patch.model) rec.model = patch.model
     if (patch.department === null) delete rec.department
     else if (patch.department) rec.department = patch.department
+    if (patch.tools) rec.tools = cleanTools(patch.tools, prev.tools)
     if (patch.external === null) delete rec.external
     else if (patch.external !== undefined) rec.external = this.external(patch.external, prev.external)
     await this.t.bots.put(id, rec)

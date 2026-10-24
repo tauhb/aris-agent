@@ -5,6 +5,7 @@
 import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 import { z } from 'zod'
 import { externalRecord } from './external.js'
+import { mcpRecord, type McpRecord } from './mcp.js'
 
 export const modelRef = z.object({ provider: z.string(), model: z.string() })
 
@@ -25,6 +26,8 @@ export const botRecord = z.object({
   department: z.string().optional(),
   /** Bot ngoài (Claude Code, Codex, ACP): chạy qua plugin của dsh, không có phiên riêng. */
   external: externalRecord.optional(),
+  /** Bộ công cụ riêng của bot (bản vẽ 2.2); không có là theo chính sách phòng. Tắt thì bot không dùng được kể cả phòng cho phép. */
+  tools: z.object({ web: z.boolean(), files: z.boolean(), shell: z.boolean() }).partial().optional(),
   createdAt: z.string(),
 })
 export type BotRecord = z.infer<typeof botRecord>
@@ -99,6 +102,7 @@ export const botsDomain = defineDomain({
     sessions: domainTable<string, SessionRecord>(sessionRecord),
     activity: domainTable<string, ActivityRecord>(activityRecord),
     owner: domainTable<string, OwnerRecord>(ownerRecord),
+    mcp: domainTable<string, McpRecord>(mcpRecord),
   },
 })
 

@@ -49,6 +49,7 @@ export {
   type BotLive,
   type TeamLive,
   type BotData,
+  type McpData,
   type ExternalAgent,
   type ExternalData,
   type CatalogGroup,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { handleApi } from './api.js'
 import { renderAddress, renderPersona } from './persona.js'
+import { botToolOf } from './policy.js'
 import { BotStore, COMMANDER_ID, suggestHandle } from './store.js'
 import { loadTemplates } from './templates.js'
 import { memTables } from './testing.js'
@@ -262,5 +263,17 @@ describe('bot biết quyền của mình', () => {
     )
     expect(renderPersona(k, s.list(), s.departments())).not.toContain('Quyền của bạn')
     expect(renderPersona(s.get(COMMANDER_ID)!, s.list(), s.departments())).not.toContain('Quyền của bạn')
+  })
+
+  it('bộ công cụ riêng của bot: chỉ trường gửi lên mới đổi; nhóm công cụ của dsh', async () => {
+    const s = await store()
+    const b = await s.create({ handle: 'kha', name: 'Kha', tools: { shell: false } })
+    expect(b.tools).toEqual({ shell: false })
+    expect((await s.update(b.id, { tools: { web: false } })).tools).toEqual({ shell: false, web: false })
+    expect(botToolOf('glob', {})).toBe('files')
+    expect(botToolOf('str_replace_editor', { command: 'view' })).toBe('files')
+    expect(botToolOf('str_replace_editor', { command: 'create' })).toBeUndefined()
+    expect(botToolOf('bash', {})).toBe('shell')
+    expect(botToolOf('write', {})).toBeUndefined()
   })
 })

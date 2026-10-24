@@ -22,8 +22,9 @@ import type {} from '@deepseek-ai/dsh-workspace'
 import { handleApi, type MemoryPort } from './api.js'
 import { botsDomain, type ActivityRecord, type Table, type Tables } from './domain.js'
 import { LiveTracker } from './live.js'
+import { checkConnection, connectionOf, McpStore, needsAsk, pluginConfig, type McpRecord } from './mcp.js'
 import { renderPersona } from './persona.js'
-import { denyReason, needOf } from './policy.js'
+import { botDenyReason, botToolOf, denyReason, needOf } from './policy.js'
 import { BotStore } from './store.js'
 import { loadTemplates } from './templates.js'
 
@@ -41,6 +42,7 @@ export {
 export type { BotRecord, DepartmentRecord } from './domain.js'
 export * from './external.js'
 export * from './portable.js'
+export * from './mcp.js'
 
 export const name = 'aris-bots'
 export const inject = ['storageDomain', 'systemPrompt', 'sessionController', 'workspaceRegistry', 'tools']
@@ -60,6 +62,7 @@ export interface ArisBots {
   /** Phiên mới trong chat riêng gắn với bot (model riêng của bot), như bấm bot trên thanh bên. */
   open(botId: string): Promise<string>
   store: BotStore
+  mcp: McpStore
   live: LiveTracker
 }
 
@@ -71,6 +74,7 @@ export async function apply(ctx: Context): Promise<void> {
     (['bots', 'departments', 'sessions', 'owner'] as const).map((t) => [t, domain.table(t)]),
   ) as unknown as Tables
   const store = new BotStore(tables)
+  const mcp = new McpStore(domain.table('mcp') as unknown as Table<McpRecord>)
   await store.ensureCommander()
   await store.ensurePolicies(await loadTemplates())
 
@@ -99,9 +103,10 @@ export async function apply(ctx: Context): Promise<void> {
   live.restore([...activity.entries()].map(([, r]) => r))
   const service: ArisBots = {
     botOf: (id) => store.botOf(id),
-    tag: (id, bot, via) => store.tag(id, bot, via),
+    tag: (id, bot, via) => store.tag(id, bot, via).then(() => attachSession(id)),
     open: (id) => open(id),
     store,
+    mcp,
     live,
   }
   ctx.provide('arisBots', service)
@@ -145,19 +150,87 @@ export async function apply(ctx: Context): Promise<void> {
     }),
   )
 
-  // Quyền theo chính sách phòng ban (2.6): bot thường dùng công cụ ngoài quyền thì bị chặn kèm lý do.
+  // Quyền theo chính sách phòng ban (2.6) và bộ công cụ riêng của bot (2.2): dùng công cụ ngoài quyền
+  // thì bị chặn kèm lý do. Công cụ của kết nối MCP: hỏi người dùng theo cách đã chọn (2.2c).
   ctx.on(
     'tools/pre-execute',
     async (exec, next) => {
       const sid = exec.agent?.session.id
+      if (!sid) return next()
+      const bot = store.botOf(sid)
       const need = needOf(exec.name, exec.arguments)
-      if (!sid || !need) return next()
-      const p = store.policyOf(store.botOf(sid).id)
-      if (p && !p.policy[need]) return { kind: 'deny', reason: denyReason(need, p.department?.name) }
+      const p = need ? store.policyOf(bot.id) : undefined
+      if (need && p && !p.policy[need]) return { kind: 'deny', reason: denyReason(need, p.department?.name) }
+      const own = botToolOf(exec.name, exec.arguments)
+      if (own && store.get(bot.id)?.tools?.[own] === false)
+        return { kind: 'deny', reason: botDenyReason(own, bot.name) }
+      if (exec.name.startsWith('mcp__')) {
+        const hit = connectionOf(exec.name, mcp.list(bot.id))
+        // Kết nối đã tắt hoặc gỡ nhưng phiên cũ còn công cụ: chặn.
+        if (hit && !hit.rec.enabled)
+          return { kind: 'deny', reason: `Kết nối ${hit.rec.name} của ${bot.name} đang tắt.` }
+        if (hit && needsAsk(hit.rec, hit.raw))
+          return {
+            kind: 'ask',
+            reason: `${bot.name} dùng ${hit.rec.name} · ${hit.raw}`,
+            displayReason: {
+              en: `${bot.name} wants to use ${hit.rec.name} · ${hit.raw}`,
+              vi: `${bot.name} muốn dùng ${hit.rec.name} · ${hit.raw}`,
+            },
+          }
+      }
       return next()
     },
     true,
   )
+
+  // Kết nối nền tảng (2.2c): gắn máy chủ MCP của bot vào agent của phiên, chỉ agent đó thấy công cụ.
+  // Gắn khi agent được tạo, hoặc ngay sau khi phiên được gắn bot (phiên chat riêng, thành viên đội).
+  type AgentLike = { session: { id: string }; ctx: unknown }
+  const agents = new Map<string, AgentLike>()
+  const mounted = new WeakMap<AgentLike, Map<string, () => void>>()
+  let homePath: string | undefined
+  const cwd = async () =>
+    (homePath ??=
+      (await ensureHome(ctx.workspaceRegistry as never).catch(() => undefined))?.path ?? process.cwd())
+  async function attach(agent: AgentLike) {
+    const bot = store.botOf(agent.session.id)
+    const list = mcp.list(bot.id).filter((r) => r.enabled)
+    if (list.length === 0) return
+    const have = mounted.get(agent) ?? new Map<string, () => void>()
+    mounted.set(agent, have)
+    const mod = await import('@deepseek-ai/dsh-mcp-client')
+    const dir = await cwd()
+    for (const r of list) {
+      if (have.has(r.id)) continue
+      try {
+        const fiber = (agent.ctx as { plugin(p: unknown, c: unknown): { dispose(): unknown } }).plugin(
+          mod,
+          pluginConfig(r, dir),
+        )
+        have.set(r.id, () => void fiber.dispose())
+      } catch (e) {
+        logger.warn('gắn kết nối %s cho %s: %s', r.name, bot.handle, String(e))
+      }
+    }
+  }
+  const attachSession = (sessionId: string) => {
+    const agent = agents.get(sessionId)
+    if (agent) void attach(agent).catch((e: unknown) => logger.warn('gắn kết nối: %s', String(e)))
+  }
+  ctx.on('agent/created', ({ agent }) => {
+    const a = agent as unknown as AgentLike
+    agents.set(a.session.id, a)
+    void attach(a).catch((e: unknown) => logger.warn('gắn kết nối: %s', String(e)))
+  })
+  ctx.on('agent/disposed', ({ agent }) => {
+    const a = agent as unknown as AgentLike
+    if (agents.get(a.session.id) === a) agents.delete(a.session.id)
+  })
+  const checkMcp = async (r: McpRecord) => {
+    const { scrubbedParentEnv } = await import('@deepseek-ai/dsh-subprocess')
+    return checkConnection(r, await cwd(), scrubbedParentEnv)
+  }
 
   // Trạng thái trực tiếp: lượt bắt đầu, kết thúc; đợi anh duyệt hoặc trả lời.
   ctx.on('session/event', (session, event) => {
@@ -200,8 +273,10 @@ export async function apply(ctx: Context): Promise<void> {
     if (!member?.id || !member.name || member.phase !== 'provisioning') return
     const bot = store.byHandle(member.name)
     if (!bot || bot.kind === 'commander' || store.tagOf(member.id)) return
+    const sid = member.id
     store
-      .tag(member.id, bot.id, 'team')
+      .tag(sid, bot.id, 'team')
+      .then(() => attachSession(sid))
       .catch((e: unknown) => logger.warn('gắn bot cho thành viên đội: %s', String(e)))
   })
 
@@ -209,7 +284,10 @@ export async function apply(ctx: Context): Promise<void> {
     const bot = store.get(botId)!
     const home = await ensureHome(ctx.workspaceRegistry as never)
     const { sessionId } = await ctx.sessionController.create({ workspaceId: home.workspaceId as never })
-    if (bot.kind !== 'commander') await store.tag(sessionId, bot.id, 'open')
+    if (bot.kind !== 'commander') {
+      await store.tag(sessionId, bot.id, 'open')
+      attachSession(sessionId)
+    }
     // Model riêng của bot, không có thì model mặc định của phòng.
     const model = store.effectiveModel(bot.id)
     if (model)
@@ -247,6 +325,8 @@ export async function apply(ctx: Context): Promise<void> {
               catalog,
               live: () => live.snapshot(store.list().map((b) => b.id)),
               memory: () => ctx.get('arisMemory') as MemoryPort | undefined,
+              mcp,
+              checkMcp,
               spend: () =>
                 (ctx.get('arisSpend') as { today(): Record<string, number> } | undefined)?.today() ?? {},
             },

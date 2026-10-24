@@ -8,7 +8,6 @@ import {
   Card,
   CardRow,
   Mascot,
-  Tag,
   TextInput,
   openBotSession,
   teamAction,
@@ -48,13 +47,13 @@ function BotChannels({ t, botId, onConnect }: { t: PageProps['t']; botId: string
     </Card>
   )
 }
+import { SkillsTab } from './BotTools.js'
 import { ExternalSettings } from './ExternalBot.js'
 import { MascotPicker } from './MascotPicker.js'
 
 type Tab = 'soul' | 'model' | 'skills' | 'perms' | 'external'
 type T = PageProps['t']
 
-const check = { width: 18, height: 18, accentColor: 'var(--a-accent)' }
 const pairKey = (provider: string, model: string) => `${provider}\u0000${model}`
 
 /** Hồ sơ và tính cách: mọi trường lưu thẳng vào `@aris/bots`. */
@@ -337,39 +336,7 @@ export function BotProfile({ t, nav, params, plugins }: PageProps) {
             <ExternalSettings t={t} bot={{ ...bot, external: bot.external }} plugins={plugins} />
           )}
           {tab === 'model' && <ModelCard t={t} bot={bot} team={team} nav={nav} />}
-          {tab === 'skills' && (
-            <>
-              <div className="a-muted" style={{ fontSize: 12.5 }}>
-                {t('bot.sample')}
-              </div>
-              <Card
-                title={t('bot.skillCount', { n: P.skillCount })}
-                actions={
-                  <a className="ap-link" onClick={() => nav.go('skills')}>
-                    {t('bot.openLibrary')}
-                  </a>
-                }
-              >
-                {P.skills.map((s) => (
-                  <CardRow key={s.id}>
-                    <span className="a-mono grow">{s.id}</span>
-                    <Tag>{s.v}</Tag>
-                    <span className="a-muted" style={{ fontSize: 12.5 }}>
-                      {s.note}
-                    </span>
-                  </CardRow>
-                ))}
-              </Card>
-              <Card title={t('bot.toolset')}>
-                {P.tools.map((tool) => (
-                  <label className="a-row" key={tool.text}>
-                    <input type="checkbox" defaultChecked={tool.on} style={check} />
-                    {tool.text}
-                  </label>
-                ))}
-              </Card>
-            </>
-          )}
+          {tab === 'skills' && <SkillsTab t={t} nav={nav} bot={bot} />}
           {tab === 'perms' && (
             <>
               <div className="a-muted" style={{ fontSize: 12.5 }}>

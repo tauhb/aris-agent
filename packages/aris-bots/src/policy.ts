@@ -35,6 +35,31 @@ export function needOf(tool: string, args: unknown): Perm | undefined {
   return need
 }
 
+/** Nhóm công cụ bật/tắt trên hồ sơ bot (bản vẽ 2.2, Bộ công cụ). */
+export type BotTool = 'web' | 'files' | 'shell'
+
+const FILE_TOOLS = new Set(['read', 'read_image', 'glob', 'grep'])
+
+/** Công cụ thuộc nhóm nào của Bộ công cụ; ghi tệp thuộc Quyền, không ở đây. */
+export function botToolOf(tool: string, args: unknown): BotTool | undefined {
+  if (FILE_TOOLS.has(tool)) return 'files'
+  if (tool === 'str_replace_editor')
+    return (args as { command?: unknown } | undefined)?.command === 'view' ? 'files' : undefined
+  const need = NEEDS[tool]
+  return need === 'web' || need === 'shell' ? need : undefined
+}
+
+const TOOL_TEXT: Record<BotTool, string> = {
+  web: 'tìm và đọc web',
+  files: 'đọc tệp',
+  shell: 'chạy lệnh terminal',
+}
+
+/** Lời từ chối khi bộ công cụ của chính bot tắt nhóm này. */
+export function botDenyReason(tool: BotTool, bot: string): string {
+  return `Bộ công cụ của ${bot} đang tắt "${TOOL_TEXT[tool]}". Đừng thử lại cách khác để lách; báo người giao việc rằng việc này cần ${TOOL_TEXT[tool]}, hoặc nhờ bot khác.`
+}
+
 const PERM_TEXT: Record<Perm, string> = {
   web: 'tìm và đọc web',
   write: 'ghi, sửa tệp',

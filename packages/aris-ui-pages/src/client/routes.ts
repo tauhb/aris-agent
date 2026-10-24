@@ -30,6 +30,7 @@ export const ROUTES = {
   'create-bot': { kind: 'dialog' },
   'create-project': { kind: 'dialog' },
   'clone-bot': { kind: 'dialog' },
+  'mcp-add': { kind: 'dialog' },
   search: { kind: 'dialog' },
 } as const satisfies Record<string, Route>
 
