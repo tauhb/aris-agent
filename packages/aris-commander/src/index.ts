@@ -19,7 +19,8 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-client-connection'
 import type {} from '@deepseek-ai/dsh-experimental-agent-team'
-import { appendPluginRecord } from '@deepseek-ai/dsh-session'
+import { createUserMessage, type ContextFormed } from '@deepseek-ai/dsh-llm'
+import { SessionId, appendPluginRecord } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-storage-domain'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import { defineTool } from '@deepseek-ai/dsh-tools'
@@ -90,6 +91,16 @@ export const DISPATCH_RECORD = 'plugin:aris/dispatch'
 export const ROOM_RECORD = 'plugin:aris/room-say'
 export const LEAD_RECORD = 'plugin:aris/room-lead'
 
+declare module '@deepseek-ai/dsh-llm' {
+  interface MessageSourceMap {
+    /**
+     * Kết quả bot gửi về phiên giao việc (bot ngoài, trưởng nhóm việc lớn): dsh vẽ thành dòng đánh thức
+     * lượt, khung chat của aris vẽ thành thẻ của bot đó thay vì tin của người dùng.
+     */
+    'aris-bot': { kind: 'aris-bot'; bot: string; name: string; run?: string; job?: string } & ContextFormed
+  }
+}
+
 declare module '@deepseek-ai/dsh-session' {
   interface PluginRecordMap {
     'plugin:aris/dispatch': Omit<DispatchEntry, 'sessionId'>
@@ -141,6 +152,8 @@ export const MAX_JOBS = 3
 /** Phần bộ điều khiển phiên của dsh dùng cho việc lớn. */
 interface SessionPort {
   create(req: { workspaceId?: string }): Promise<{ sessionId: string }>
+  /** Agent của phiên, mở lại phiên nguội khi cần. */
+  resolveAgent?(id: SessionId): Promise<{ agent: unknown } | { error: unknown }>
   prompt(
     req: { requestId: string; sessionId: string; mode: 'queue'; content: { type: 'text'; text: string }[] },
     signal: AbortSignal,
@@ -442,6 +455,27 @@ export async function apply(ctx: Context): Promise<void> {
     )
   }
 
+  /**
+   * Bot nộp kết quả về phiên giao: tin nguồn `aris-bot` vào hộp thư của agent (mở lại phiên nguội nếu
+   * cần) để khung chat vẽ thành thẻ của bot. Không mở được agent thì gửi như tin thường.
+   */
+  const relay = async (
+    sessionId: string,
+    text: string,
+    from: { bot: string; name: string; run?: string; job?: string },
+  ) => {
+    const sc = ctx.get('sessionController') as SessionPort | undefined
+    const opened = await sc?.resolveAgent?.(SessionId(sessionId)).catch(() => undefined)
+    const agent = opened && 'agent' in opened ? (opened.agent as { followup(m: unknown): void }) : undefined
+    if (!agent) return prompt(sessionId, text)
+    agent.followup(
+      createUserMessage({
+        content: [{ type: 'text', text }],
+        source: { kind: 'aris-bot', form: 'relay', ...from },
+      }),
+    )
+  }
+
   ctx.tools.register(
     defineTool({
       name: 'giao_phong',
@@ -570,7 +604,12 @@ export async function apply(ctx: Context): Promise<void> {
       ...(result ? { result: result.slice(0, 6000) } : {}),
     }
     await jobs.put(job.id, next)
-    await prompt(job.parentSession, jobReport(next, departmentName(job.department)))
+    const lead = bots().store.get(job.lead)
+    await relay(job.parentSession, jobReport(next, departmentName(job.department)), {
+      bot: job.lead,
+      name: lead?.name ?? job.lead,
+      job: job.id,
+    })
   }
 
   /**
@@ -971,7 +1010,11 @@ export async function apply(ctx: Context): Promise<void> {
       ? `\nThay đổi nằm trong worktree ${r.worktree.dir} (nhánh ${r.worktree.branch}).`
       : ''
     const body = r.output ? `\n\nKết quả của ${r.name}:\n${r.output}` : ''
-    return prompt(r.parentSession, `[Bot ngoài · việc ${r.id}] ${head}${where}${body}`)
+    return relay(r.parentSession, `[Bot ngoài · việc ${r.id}] ${head}${where}${body}`, {
+      bot: r.bot,
+      name: r.name,
+      run: r.id,
+    })
   }
 
   /** Chạy Claude Code hay Codex có sẵn trên máy: từng bước, hỏi quyền, trần tiền, làm tiếp phiên cũ. */

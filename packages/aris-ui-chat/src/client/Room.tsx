@@ -8,6 +8,7 @@ import { Fragment, useEffect, useState } from 'react'
 import type { Translate } from './locale.js'
 import { clock, fetchRound, noteKey, textParts, type RoomEntry, type RoundData } from './room-data.js'
 import type { SubagentCall } from './branch.js'
+import { WithMentions } from './Speaker.js'
 
 const mascotOf = (handle: string) => {
   const team = currentTeam()
@@ -35,7 +36,7 @@ function useRound(callId: string, finished: boolean): RoundData | null {
   return round
 }
 
-function Said({ e }: { e: RoomEntry }) {
+function Said({ e, t }: { e: RoomEntry; t: Translate }) {
   return (
     <div className="aris-room-msg">
       <Mascot id={mascotOf(e.handle)} size={32} />
@@ -49,9 +50,7 @@ function Said({ e }: { e: RoomEntry }) {
             p.kind === 'bold' ? (
               <b key={i}>{p.text}</b>
             ) : p.kind === 'mention' ? (
-              <span key={i} className="at">
-                {p.text}
-              </span>
+              <WithMentions key={i} text={p.text} t={t} />
             ) : (
               <Fragment key={i}>{p.text}</Fragment>
             ),
@@ -80,7 +79,7 @@ export function RoomRound(props: SubagentCall & { callId: string; t: Translate }
       {/* Vòng mới: mỗi tin đã là một dòng riêng trong khung chat (RoomSay); ở đây chỉ còn vòng và ai đang nói. */}
       {(round.posted ? [] : round.entries).map((e, i) =>
         e.kind === 'say' ? (
-          <Said key={i} e={e} />
+          <Said key={i} e={e} t={t} />
         ) : (
           <div key={i} className="aris-room-note">
             {t(noteKey(e), { name: e.name, text: e.text })}
@@ -105,7 +104,7 @@ export function RoomSay({ node, t }: { node: { data: RoomEntry & { round: number
   return (
     <div className="aris aris-room aris-room-say">
       {e.kind === 'say' ? (
-        <Said e={e} />
+        <Said e={e} t={t} />
       ) : (
         <div className="aris-room-note">{t(noteKey(e), { name: e.name, text: e.text })}</div>
       )}

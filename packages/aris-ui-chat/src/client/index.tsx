@@ -2,12 +2,16 @@
  * Khung chat aris: cắm vào chỗ cắm hội thoại, ô nhập và công cụ của dsh, không thay
  * gói nào (trừ nhãn model "1017" tạm của DeepSeek, row này tắt trong patch).
  */
-import { mountKitCss, registerPersonal } from '@aris/ui-kit/react'
+import { getMascot } from '@aris/ui-kit'
+import { arisNavigate, currentTeam, mountKitCss, refreshTeam, registerPersonal } from '@aris/ui-kit/react'
 import { DispatchBranches, HeroMark, ModelLabel, SubagentBranch, TriggerButtons } from './Chat.js'
 import { EN, NS, VI } from './locale.js'
 import { RoomDock, RoomLead, RoomRound, RoomSay } from './Room.js'
 import { ApprovalDock } from './External.js'
 import { roomLeadDefinition, roomSayDefinition } from './room-data.js'
+import { watchMentions, type MentionBot } from './mentions-dom.js'
+import { BotReport, TurnHead, UserMention } from './Speaker.js'
+import { botReportDefinition, findMention, turnHeadDefinition } from './who-data.js'
 import { CSS } from './styles.js'
 
 interface SessionInput {
@@ -24,7 +28,10 @@ interface ClientContext {
     register(options: Record<string, unknown>, component: unknown): () => void
   }
   locale: { register(ns: string, locale: string, dict: Record<string, string>): () => void }
-  uiConversation: { events: { register(definition: unknown): () => void } }
+  uiConversation: {
+    events: { register(definition: unknown): () => void }
+    userText: { register(rule: unknown): () => void }
+  }
   sessions: {
     list: unknown
     scope(sessionId: string): { get(name: string): unknown } | undefined
@@ -130,6 +137,79 @@ export function apply(ctx: ClientContext): void {
   ctx.uiConversation.events.register(roomLeadDefinition)
   ctx.slots.inject('conversation.chat.node', () =>
     ctx.slots.register({ name: 'conversation.chat.node', key: 'aris-room-lead', locale: NS }, RoomLead),
+  )
+
+  // Ai đang nói (bản vẽ 1.7): đầu tin mỗi lượt theo bot của phiên.
+  ctx.uiConversation.events.register(turnHeadDefinition)
+  ctx.slots.inject('conversation.chat.node', () =>
+    ctx.slots.register(
+      {
+        name: 'conversation.chat.node',
+        key: 'aris-turn-head',
+        locale: NS,
+        inject: (sessionId: string) => ({ sessionId }),
+      },
+      TurnHead,
+    ),
+  )
+  // Kết quả bot gửi về phiên (nguồn `aris-bot`): thẻ của bot thay cho dòng "đánh thức lượt".
+  ctx.uiConversation.events.register(botReportDefinition)
+  ctx.slots.inject('conversation.chat.node', () =>
+    ctx.slots.register({ name: 'conversation.chat.node', key: 'aris-bot-report', locale: NS }, BotReport),
+  )
+
+  // `@tên` của bot trong đội: tên thành viên trong tin của người dùng (quy tắc chữ của dsh)…
+  const teamBots = (): ReadonlyMap<string, MentionBot> =>
+    new Map(
+      currentTeam().bots.map((b) => [
+        b.handle.toLowerCase(),
+        {
+          id: b.id,
+          handle: b.handle,
+          name: b.name,
+          mascot: b.mascot,
+          color: getMascot(b.mascot)?.color ?? '#64748B',
+        },
+      ]),
+    )
+  ctx.effect(() => {
+    // Quy tắc nhớ kết quả theo chữ, nên đăng ký lại khi đội đổi tên gọi.
+    let handles = ''
+    let off: (() => void) | undefined
+    const sync = () => {
+      const now = new Set(teamBots().keys())
+      const key = [...now].sort().join(',')
+      if (key === handles) return
+      handles = key
+      off?.()
+      off = ctx.uiConversation.userText.register({
+        id: 'aris-bot',
+        order: 20,
+        match: (text: string, from: number) => {
+          const hit = findMention(text, from, now)
+          return hit && { id: 'aris-bot', start: hit.start, end: hit.end, data: { handle: hit.handle } }
+        },
+      })
+    }
+    void refreshTeam().then(sync, () => undefined)
+    const timer = setInterval(sync, 30_000)
+    return () => {
+      clearInterval(timer)
+      off?.()
+    }
+  }, 'aris-ui-chat: user mentions')
+  ctx.slots.inject('conversation.user.text.node', () =>
+    ctx.slots.register({ name: 'conversation.user.text.node', key: 'aris-bot', locale: NS }, UserMention),
+  )
+  // …và trong câu trả lời của bot (Markdown của dsh không có chỗ cắm cho chữ thường).
+  ctx.effect(
+    () =>
+      watchMentions(
+        teamBots,
+        (b) => b.name,
+        (b) => arisNavigate('bot', { id: b.id }),
+      ),
+    'aris-ui-chat: reply mentions',
   )
 
   // Thanh phòng trên ô nhập ở phiên chính của dự án: vòng, số tin, Dừng phòng.

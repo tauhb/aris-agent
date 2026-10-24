@@ -3,6 +3,24 @@
  * Thành phần lấy từ bộ thành phần (`KIT_CSS` của `@aris/ui-kit/react`).
  */
 export const CSS = `
+.aris-who{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px 0 2px;margin:0 1px;border-radius:999px;border:1px solid color-mix(in srgb,var(--who) 40%,transparent);background:color-mix(in srgb,var(--who) 14%,transparent);font:inherit;font-size:.93em;font-weight:600;line-height:1;vertical-align:-3px;color:inherit;cursor:pointer;white-space:nowrap}
+.aris-who svg{flex:none}
+.aris-who:hover{background:color-mix(in srgb,var(--who) 24%,transparent)}
+.aris-who:focus-visible{outline:2px solid currentColor;outline-offset:1px}
+.aris-who.inv{background:color-mix(in srgb,currentColor 14%,transparent);border-color:color-mix(in srgb,currentColor 32%,transparent)}
+.aris-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.aris-head b{font-size:14.5px;font-weight:650;color:var(--a-ink)}
+.aris-head .role{font-size:11.5px;font-weight:600;border-radius:6px;padding:1px 7px;color:var(--a-ink);background:color-mix(in srgb,var(--who,#64748B) 14%,transparent)}
+.aris-head .role.lead{color:var(--a-accent);background:var(--a-accentSoft)}
+.aris-head .time{font-size:12.5px;color:var(--a-muted)}
+.aris-turn-head{padding:12px 0 2px}
+.aris-report{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid var(--a-line);border-radius:14px;background:var(--a-panel)}
+.aris-report .st{font-size:12.5px;color:var(--a-muted)}
+.aris-report .x{white-space:pre-wrap;line-height:1.6;overflow-wrap:anywhere;color:var(--a-ink);font-size:14px}
+.aris-report .x code{font-family:var(--a-mono,ui-monospace,monospace);font-size:12.5px;background:var(--a-hover);border-radius:5px;padding:1px 5px}
+.aris-report .x.clamp{display:-webkit-box;-webkit-line-clamp:8;-webkit-box-orient:vertical;overflow:hidden}
+.aris-report .more{align-self:flex-start;border:0;background:transparent;color:var(--a-accent);font:inherit;font-size:12.5px;padding:0;cursor:pointer}
+[data-chat-flow-kind="aris-bot-report"]+[data-chat-flow-kind="turn-trigger"]{display:none}
 .aris-triggers{display:inline-flex;align-items:center;gap:2px}
 .aris-triggers .a-ib{font-size:15px;font-weight:500}
 .aris-model{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
@@ -36,7 +54,6 @@ export const CSS = `
 .aris-room-lead{display:flex;align-items:center;gap:10px;padding:14px 0 2px}
 .aris-room-lead b{font-size:14.5px;font-weight:650;color:var(--a-ink)}
 .aris-room-lead span{font-size:12.5px;color:var(--a-muted)}
-.aris-room-msg .at{color:var(--a-accent);font-weight:600}
 .aris-room-note{align-self:center;text-align:center;font-size:12.5px;color:var(--a-muted)}
 .aris-room-typing{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--a-muted)}
 .aris-room-typing .dot{width:7px;height:7px;border-radius:50%;background:var(--a-accent);animation:aris-room-pulse 1.2s ease-in-out infinite}
