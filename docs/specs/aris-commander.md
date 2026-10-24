@@ -10,7 +10,7 @@
   - Bot đã có: nhắn tiếp (`sendMessage`), bot nhớ việc trước trong cùng cuộc.
 - Mỗi việc thành một **thẻ trên bảng việc** của Team, gán cho bot (Kanban). Tham số `the` (tuỳ chọn) giao một thẻ có sẵn thay vì tạo thẻ mới: `task-n` (thẻ đã chia, phải sẵn sàng: thẻ nó chờ đã xong) hoặc `c-n` (thẻ người dùng tạo trên Kanban; giao xong thì thẻ của đội thay chỗ). Thẻ sai hoặc đang chờ thì báo trước, không nhắn bot.
 - Công cụ trả ngay; Commander đợi bằng `wait_agent` rồi tổng hợp. Câu trả lời của công cụ có mã phiên của từng bot (giao diện vẽ nhánh).
-- Giới hạn: tối đa 4 bot mỗi lần, 6 bot chạy cùng lúc; mỗi bot một việc mỗi lần; không giao cho Commander.
+- Giới hạn: tối đa 4 bot mỗi lần, số bot chạy cùng lúc theo cấu hình Commander (mặc định 6); mỗi bot một việc mỗi lần; không giao cho Commander.
 
 ## Công cụ `tao_the` (chỉ Commander, bước 3c)
 
@@ -21,7 +21,7 @@ Chia một việc lớn thành tối đa 12 thẻ trên bảng việc của Team
 - Tham số: `phong` (tên phòng, có hay không chữ "Phòng" đều được), `tieu_de`, `noi_dung` (đủ ngữ cảnh để trưởng nhóm tự chia). Phòng phải có trưởng nhóm.
 - aris mở **một phiên mới cho trưởng nhóm** trong cùng workspace với phiên giao (dự án thì nằm trong dự án), đánh dấu là phiên giao việc, rồi gửi bản giao việc. Bản ghi việc lớn ở kho `aris_commander`, bảng `jobs`: phòng, trưởng nhóm, tiêu đề, việc, phiên giao, phiên trưởng nhóm, trạng thái (`running`, `done`, `failed`), báo cáo.
 - Trưởng nhóm có ngữ cảnh riêng (`jobContext`): chia việc bằng `tao_the`, giao bằng `giao_viec` **chỉ cho thành viên phòng mình** (giao người ngoài phòng bị từ chối, nêu rõ lý do), tự làm phần nhỏ, cuối cùng trả một báo cáo gọn. Trưởng nhóm được lập đội (`spawn_teammate`) trong phiên việc lớn; Team của phiên đó là bảng việc riêng của phòng.
-- Giới hạn: tối đa 3 việc lớn đang chạy cùng lúc.
+- Giới hạn: số việc lớn đang chạy cùng lúc theo cấu hình Commander (mặc định 3; 0 là tắt giao cả phòng).
 - **Chốt việc lớn**: đọc thẳng log phiên trưởng nhóm (không đánh thức phiên). Xong khi trưởng nhóm đã xong ít nhất một lượt, có câu trả lời, và phiên trưởng nhóm cùng mọi phiên thành viên của đội đó đều rảnh; câu trả lời cuối của trưởng nhóm là báo cáo. Lượt lỗi thì việc lớn thành `failed`. Xét lại khi trưởng nhóm xong lượt, khi xem danh sách việc lớn, và 5 giây sau khi aris khởi động, nên aris chạy lại giữa chừng vẫn chốt được.
 - Chốt xong, báo cáo được gửi vào phiên giao (xếp hàng), Commander đọc và trả lời người dùng.
 - `GET /api/aris/commander?jobs=1`: 30 việc lớn gần nhất kèm tiến độ (thẻ xong / tổng thẻ trên bảng việc của trưởng nhóm). Dịch vụ `arisJobs` (`list`, `forWorkspace`, `progressOf`) cho Kanban của dự án.
@@ -86,7 +86,15 @@ Suy từ sự kiện phiên của bot: đang chạy là "đang làm", đang đ�
 - Sơ đồ 3D, Bản đồ đội: trạng thái thật.
 - Cột phải: việc gần đây thật.
 - Khung chat: mỗi lần `giao_viec` vẽ các nhánh theo bot (đã nhận → đang làm → xong), bấm để mở phiên của bot.
-- Trang Commander (2.5): bot nhận việc, giới hạn, quyết định định tuyến gần đây từ nhật ký.
+- Trang Commander (2.5): bot nhận việc, giới hạn, quyết định định tuyến gần đây từ nhật ký. "Commander đã học" (giai đoạn 3) và Driver trên Kanban (giai đoạn 4) còn là bản vẽ, để mờ.
+
+### Cấu hình Commander (trang 2.5, `settings.ts`)
+
+- Kho `aris_commander`, bảng `settings`, một bản ghi `commander`: `parallel` (bot chạy cùng lúc, 1–12, mặc định 6), `nested` (việc lớn của phòng chạy cùng lúc, 0–6, mặc định 3), `budgetUsd` (trần tiền mỗi việc, không có là không giới hạn, tối đa 100), `helpers` (trợ lý ẩn danh, mặc định bật), `approve` (bot cần duyệt mỗi lần giao). Đọc trong `GET /api/aris/commander` (`settings`), sửa bằng `POST {op:'settings', patch}`; số sai khoảng báo lỗi rõ, không tự kẹp.
+- **Được giao việc cho**: cờ `assignable` của từng bot (`@aris/bots`, cùng công tắc ở tab Quyền của hồ sơ bot); bot ngoài đổi cả `external.assignable`.
+- **Duyệt mỗi lần**: Commander gọi `giao_viec` / `chuyen_giao` có bot trong `approve` thì `tools/pre-execute` trả `ask` ("Commander muốn giao việc cho Khoa (cần duyệt mỗi lần)"), duyệt trên web hoặc Telegram như mọi yêu cầu quyền. Từ chối thì nhánh trong chat báo "{you} đã từ chối giao việc này"; cả lần giao bị chặn (quá giới hạn…) thì mọi nhánh báo không giao được.
+- **Trợ lý ẩn danh** tắt: công cụ `agent` của dsh bị từ chối ở phiên của Commander, kèm lý do.
+- **Trần tiền mỗi việc**: `@aris/providers` báo tiền từng lần gọi model theo phiên (`arisSpend.onCost`); Commander cộng theo phiên của bot từ lúc giao (giao tiếp thì đếm lại). Chạm trần: bước đầu của lượt nhận lời báo để bot trả lời một câu đã làm tới đâu, các bước sau bị từ chối. Bộ đếm ở bộ nhớ (aris khởi động lại thì đếm lại). Bot ngoài: trần nhỏ hơn giữa trần của bot và trần của Commander.
 - Ai đang nói (bản vẽ 1.7, `@aris/ui-chat`, `Speaker.tsx`, `who-data.ts`):
   - Mỗi lượt trả lời có đầu tin: linh vật, tên, nhãn vai ("Điều phối" cho Aris, chức danh cho bot, "bot ngoài · Claude Code" cho bot ngoài) và giờ. Người trả lời là bot của phiên (`useSessionBot`): phiên của Aris là Aris, phiên riêng của bot là bot đó. Đầu tin là một nút sự kiện riêng (`aris-turn-head`, theo `turn/start` và sự kiện trả lời sớm nhất của lượt), ở tầng `input` để đứng trên khối "quá trình" của dsh.
   - Phương án B (bản vẽ 1.7b): linh vật 32px đứng ở cột trái, tên đậm mang màu linh vật (sẫm hơn ở nền sáng, sáng hơn ở nền tối). Các dòng của lượt do dsh vẽ (khối quá trình, câu trả lời, công cụ, hàng nút cuối lượt) thụt vào 44px và có vạch dọc màu linh vật, chạy từ dưới linh vật tới hết lượt. Màu là của bot của phiên: đầu tin gắn `--aris-who` lên khung dòng chảy, vạch là màu đó trộn với nền nên các đoạn chồng lên nhau không đậm thêm. Đầu tin "Aris · Điều phối" sau một vòng phòng nhóm dùng cùng kiểu; thẻ của bot (phòng nhóm, kết quả nộp về) không thụt, nên vạch đứt ở chỗ đổi người.
@@ -105,7 +113,7 @@ Bản vẽ 2.1b (Thêm bot ngoài) và 2.1c (nhánh giao việc), vẽ lại the
 - **Ghi trạng thái theo hàng đợi**: bước, yêu cầu quyền, nút Dừng và lúc chốt cùng sửa một bản ghi; `updateRun` xếp các lần sửa của một lần chạy nối đuôi nhau để không mất yêu cầu đang chờ.
 - **Làm tiếp**: giao lại cho cùng bot trong cùng phiên thì chạy tiếp phiên cũ của agent (`--resume` / `thread/resume`, `sessionRef`, `resumedFrom`), cùng thư mục hoặc worktree.
 - **Giao việc**: `giao_viec` với bot ngoài không đi qua Team. Lời giao tự đủ (bot ngoài không thấy cuộc trò chuyện). Xong, vấp hay dừng thì aris báo về phiên giao bằng một tin "[Bot ngoài · việc <mã>] …" nguồn `aris-bot` (khung chat vẽ thành thẻ của bot, xem Giao diện). Bot ngoài không nhận thẻ Kanban, không vào phòng nhóm; bot tắt "nhận giao việc" thì từ chối. Đường plugin: `ctx.subagents.startActivation` với `delivery: 'parent'`.
-- **Thư mục và worktree**: thư mục làm việc là thư mục hiện tại của phiên giao. Bật worktree và thư mục là repo git thì mỗi việc một worktree mới từ HEAD trên nhánh `aris/<tên gọi>-<tiêu đề>-<mã>`, đặt ở `~/.aris/worktrees/<repo>/`. Đường dẫn repo gốc trong nội dung việc đổi thành đường dẫn worktree (`inWorktree`), lời giao nói rõ chỉ đọc ghi trong worktree (sandbox của Codex chặn ghi ra ngoài). Thay đổi để nguyên cho người dùng xem rồi gộp.
+- **Thư mục và worktree**: thư mục làm việc (`targetDir`) là thư mục Commander nêu khi giao (`thu_muc`, đường dẫn tuyệt đối, phải có thật); không nêu mà phiên giao không ở trong repo nào thì repo đầu tiên nhắc trong nội dung việc (gốc repo); còn lại là thư mục hiện tại của phiên giao. Giao tiếp với thư mục khác lần trước thì làm mới ở thư mục đó, không nối phiên cũ. Bật worktree và thư mục là repo git thì mỗi việc một worktree mới từ HEAD trên nhánh `aris/<tên gọi>-<tiêu đề>-<mã>`, đặt ở `~/.aris/worktrees/<repo>/`. Đường dẫn repo gốc trong nội dung việc đổi thành đường dẫn worktree (`inWorktree`), lời giao nói rõ chỉ đọc ghi trong worktree (sandbox của Codex chặn ghi ra ngoài). Thay đổi để nguyên cho người dùng xem rồi gộp.
 - **Biến môi trường**: tiến trình agent không nhận biến tên kết thúc bằng `KEY`, `TOKEN`, `SECRET`, `PASSWORD` hay bắt đầu bằng `DSH_` (`childEnv`); agent dùng đăng nhập riêng của nó.
 - **Giới hạn**: quá `timeoutMin` phút thì aris dừng lần chạy. Trần tiền mỗi việc (`budgetUsd`, 0,5–100 USD, mặc định 3) chỉ có ở Claude Code.
 - **Lưu trữ**: bảng `externals` của kho `aris_commander`: bot, việc, phiên giao, thư mục, worktree, đường chạy, các bước, yêu cầu chờ và đã trả lời, chi phí, trần tiền, phiên agent, trạng thái (`running`, `done`, `failed`, `stopped` kèm lý do dừng), câu trả lời cuối, lời báo lỗi an toàn. Lần chạy dở lúc aris tắt được ghi là đã dừng. Nhật ký giao thức gọn (tên tin, không nội dung) ở `~/.aris/logs/external-<mã>.log`. Trạng thái trực tiếp của bot (thanh bên) theo `externalStart`/`externalWaiting`/`externalEnd` của `LiveTracker`.

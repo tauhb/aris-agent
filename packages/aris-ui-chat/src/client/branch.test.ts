@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { MASCOTS } from '@aris/ui-kit'
-import { branchBot, branchSteps, subagentArgs, subagentId, type SubagentCall } from './branch.js'
+import {
+  branchBot,
+  branchSteps,
+  dispatchItems,
+  subagentArgs,
+  subagentId,
+  type SubagentCall,
+} from './branch.js'
 
 const result = (over: Partial<Extract<SubagentCall, { phase: 'result' }>['block']> = {}): SubagentCall => ({
   phase: 'result',
@@ -54,5 +61,34 @@ describe('nhánh việc từ lần gọi subagent', () => {
     expect(branchSteps(result({ isError: true, error: { code: 'interrupted' } }), undefined)[0]!.key).toBe(
       'branch.stopped',
     )
+  })
+})
+
+describe('nhánh giao việc', () => {
+  const call = (text: string, isError = false): SubagentCall => ({
+    phase: 'result',
+    block: {
+      callId: 'c2',
+      call: {
+        argsRaw: '{"viec":[{"bot":"khoa","tieu_de":"Trả lời ok"},{"bot":"minh","noi_dung":"Tóm tắt"}]}',
+      },
+      content: [{ type: 'text', text }],
+      isError,
+    },
+  })
+  it('đọc phiên và lỗi theo từng bot', () => {
+    const items = dispatchItems(
+      call('- @khoa (Khoa): đã nhận việc, phiên p-1\n- @minh: không giao được — đang bận'),
+    )
+    expect(items.map((i) => [i.handle, i.sessionId, i.error])).toEqual([
+      ['khoa', 'p-1', undefined],
+      ['minh', undefined, 'đang bận'],
+    ])
+  })
+  it('cả lần giao bị chặn hay bị từ chối: mọi nhánh báo không giao được', () => {
+    expect(
+      dispatchItems(call('Không giao được: Đã có 6 bot đang chạy (tối đa 6).')).map((i) => i.error),
+    ).toEqual(['Đã có 6 bot đang chạy (tối đa 6).', 'Đã có 6 bot đang chạy (tối đa 6).'])
+    expect(dispatchItems(call('Error: the user rejected tool "giao_viec"', true))[0]?.rejected).toBe(true)
   })
 })

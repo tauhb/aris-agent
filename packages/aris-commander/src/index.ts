@@ -41,6 +41,7 @@ import {
   ExternalHost,
   inWorktree,
   gitRoot,
+  targetDir,
   label,
   loginState,
   moduleLoader,
@@ -53,6 +54,14 @@ import { ApprovalCenter, callInput, toolAlias, type ApprovalEvent } from './appr
 import { childEnv, runClaude, stepOf, type DriverHooks } from './claude-driver.js'
 import { runCodex } from './codex-driver.js'
 import { cliVersion, findBinary } from './cli.js'
+import {
+  DEFAULT_SETTINGS,
+  SettingsError,
+  TaskSpend,
+  cleanSettings,
+  externalBudget,
+  type CommanderSettings,
+} from './settings.js'
 import { EXTERNAL_AGENTS, EXTERNAL_PACKAGES, providerOf, type BotRecord } from '@aris/bots'
 import {
   dispatch,
@@ -105,6 +114,8 @@ declare module '@deepseek-ai/dsh-llm' {
      * lượt, khung chat của aris vẽ thành thẻ của bot đó thay vì tin của người dùng.
      */
     'aris-bot': { kind: 'aris-bot'; bot: string; name: string; run?: string; job?: string } & ContextFormed
+    /** Lời báo của Commander gắn vào bước của bot (chạm trần tiền mỗi việc). */
+    'aris-commander': { kind: 'aris-commander' } & ContextFormed
   }
 }
 
@@ -158,6 +169,7 @@ Cách giao:
 - Sau khi giao_viec: dùng wait_agent đợi kết quả, rồi tổng hợp trả lời người dùng. Nói rõ ai đã làm phần nào.
 - Chuyển giao (chuyen_giao) thay cho giao_viec khi việc vừa thuộc hẳn chuyên môn một bot và người dùng chỉ cần đúng kết quả của bot đó, không cần bạn tổng hợp hay làm tiếp (ví dụ: viết một bài cho bot nội dung, trả lời một câu hỏi chuyên môn). Câu trả lời của bot hiện thẳng cho người dùng như lời của bot; sau đó bạn kết thúc lượt, không viết thêm. Cần gom nhiều bot, sửa lại, hay dùng kết quả cho bước sau thì dùng giao_viec.
 - Bot đã làm việc trong cuộc này thì giao tiếp cho chính bot đó (nó nhớ việc trước).
+- Giao việc sửa mã cho bot ngoài trên một repo khác thư mục của cuộc này: ghi đường dẫn tuyệt đối của repo vào thu_muc (bot ngoài làm trong worktree riêng của repo đó).
 - Việc lặt vặt không cần chuyên môn (đọc một tệp lớn, tra cứu nhỏ): dùng subagent (trợ lý ẩn danh) thay vì giao bot.
 - Việc lớn: giao_phong; trưởng nhóm tự chia cho thành viên phòng, báo cáo của phòng về đây thành tin nhắn sau, không cần đợi.
 </aris-commander>`
@@ -165,9 +177,6 @@ Cách giao:
 interface AgentLike {
   session: { id: string }
 }
-
-/** Tối đa việc lớn của phòng ban chạy cùng lúc. */
-export const MAX_JOBS = 3
 
 /** Phần bộ điều khiển phiên của dsh dùng cho việc lớn. */
 interface SessionPort {
@@ -237,6 +246,20 @@ export async function apply(ctx: Context): Promise<void> {
   ctx.effect(() => () => void domain.close(), 'aris-commander: domain')
   const log = domain.table('dispatch') as unknown as Table<DispatchRecord>
 
+  // Cấu hình Commander (trang 2.5): giới hạn, trần tiền mỗi việc, trợ lý ẩn danh, bot cần duyệt.
+  const settingsTable = domain.table('settings') as unknown as Table<CommanderSettings>
+  const settings = (): CommanderSettings => ({ ...DEFAULT_SETTINGS, ...settingsTable.get('commander') })
+  // Tiền của từng việc giao cho bot trong đội (theo phiên của bot), cộng từ sổ chi phí của aris-providers.
+  const taskSpend = new TaskSpend()
+  let offCost: (() => void) | undefined
+  ctx.effect(() => () => offCost?.(), 'aris-commander: cost')
+  const hookCost = () => {
+    if (offCost) return
+    const spend = ctx.get('arisSpend') as
+      { onCost?(fn: (session: string, usd: number) => void): () => void } | undefined
+    offCost = spend?.onCost?.((session, usd) => taskSpend.add(session, usd))
+  }
+
   const bots = () => {
     const b = ctx.get('arisBots') as ArisBots | undefined
     if (!b) throw new DispatchError('Chưa có dịch vụ đội bot (@aris/bots).')
@@ -290,7 +313,22 @@ export async function apply(ctx: Context): Promise<void> {
     'aris-commander: guide',
   )
 
-  // Luật đội: bot thường không tự lập đội (không có vòng giao việc lặp).
+  /** Tên các bot trong lời gọi giao_viec / chuyen_giao mà người dùng muốn duyệt mỗi lần giao. */
+  const approveNeeded = (args: unknown, cfg: CommanderSettings): string[] => {
+    if (!cfg.approve.length) return []
+    const a = (args ?? {}) as { bot?: unknown; viec?: unknown }
+    const handles = Array.isArray(a.viec) ? a.viec.map((v) => (v as { bot?: unknown } | null)?.bot) : [a.bot]
+    const store = (ctx.get('arisBots') as ArisBots | undefined)?.store
+    const names: string[] = []
+    for (const h of handles) {
+      if (typeof h !== 'string') continue
+      const bot = store?.byHandle(h.trim().replace(/^@/, '').toLowerCase())
+      if (bot && cfg.approve.includes(bot.id) && !names.includes(bot.name)) names.push(bot.name)
+    }
+    return names
+  }
+
+  // Luật đội: bot thường không tự lập đội (không có vòng giao việc lặp); cấu hình Commander (2.5).
   ctx.on(
     'tools/pre-execute',
     async (exec, next) => {
@@ -301,7 +339,28 @@ export async function apply(ctx: Context): Promise<void> {
           reason:
             'Chỉ Commander, hoặc trưởng nhóm đang nhận việc lớn của phòng, được lập đội và giao việc. Cần đồng đội giúp thì nhắn họ bằng send_message, hoặc báo Commander.',
         }
-      return next()
+      if (!isCommander(sid)) return next()
+      const cfg = settings()
+      if (exec.name === 'agent' && !cfg.helpers)
+        return {
+          kind: 'deny',
+          reason:
+            'Người dùng đã tắt trợ lý ẩn danh của Commander (trang Commander). Tự làm, hoặc giao_viec cho một bot trong đội.',
+        }
+      const asked =
+        exec.name === 'giao_viec' || exec.name === 'chuyen_giao' ? approveNeeded(exec.arguments, cfg) : []
+      if (!asked.length) return next()
+      const decision = await next()
+      if (decision.kind === 'deny') return decision
+      const names = asked.join(', ')
+      return {
+        kind: 'ask',
+        reason: `Giao việc cho ${names} cần duyệt mỗi lần`,
+        displayReason: {
+          en: `Commander wants to hand a task to ${names} (needs approval each time)`,
+          vi: `Commander muốn giao việc cho ${names} (cần duyệt mỗi lần)`,
+        },
+      }
     },
     true,
   )
@@ -314,12 +373,16 @@ export async function apply(ctx: Context): Promise<void> {
       botOf: (id) => b.botOf(id),
       byHandle: (h) => b.store.byHandle(h),
       busyBots: () => b.live.busyBots('aris'),
+      maxBusy: settings().parallel,
       cards: (ctx.get('arisProjects') as { cards?: DraftCards } | undefined)?.cards,
       lead: isCommander(agent.session.id) ? undefined : leadScope(agent.session.id),
       external: (bot, a, title, parent, signal) =>
         runExternal(b.store.get(bot.id)!, a, title, parent, signal),
       record(entry) {
         b.live.assigned(entry.bot, entry.title, entry.member)
+        const cap = settings().budgetUsd
+        if (cap !== undefined) hookCost()
+        taskSpend.start(entry.member, cap, entry.title)
         const bot = b.store.get(entry.bot)
         members.set(entry.member, {
           bot: entry.bot,
@@ -366,6 +429,11 @@ export async function apply(ctx: Context): Promise<void> {
                 description:
                   'Mã thẻ có sẵn để giao: task-n (thẻ đã chia) hoặc c-n (thẻ người dùng tạo trên Kanban).',
               },
+              thu_muc: {
+                type: 'string',
+                description:
+                  'Chỉ bot ngoài: đường dẫn tuyệt đối tới repo hoặc thư mục cần làm, khi khác thư mục của phiên này (ví dụ người dùng nói "sửa lỗi trong repo X"). Bỏ trống thì dùng thư mục của phiên.',
+              },
             },
           },
         },
@@ -380,6 +448,7 @@ export async function apply(ctx: Context): Promise<void> {
           noi_dung: string
           ly_do: string
           the?: string
+          thu_muc?: string
         }[]
         const assignments: Assignment[] = list.map((v) => ({
           bot: v.bot,
@@ -387,6 +456,7 @@ export async function apply(ctx: Context): Promise<void> {
           task: v.noi_dung,
           reason: v.ly_do,
           card: v.the,
+          dir: v.thu_muc,
         }))
         try {
           const results = await dispatch(
@@ -508,6 +578,39 @@ export async function apply(ctx: Context): Promise<void> {
       }),
     )
   }
+
+  // Trần tiền mỗi việc (2.5): bot trong đội chạm trần thì bước đầu của lượt nhận lời báo để trả lời
+  // một câu (Commander biết vì sao dừng), các bước sau trong lượt bị từ chối.
+  const overTurn = new Map<string, number>()
+  const usd = (n: number) => n.toFixed(2).replace('.', ',')
+  ctx.on(
+    'agent/pre-step',
+    async ({ agent, turn, signal }, next) => {
+      const decision = await next()
+      if (decision.kind === 'reject' || signal.aborted) return decision
+      const id = (agent as unknown as AgentLike).session.id
+      const over = taskSpend.over(id)
+      if (!over) return decision
+      if (overTurn.get(id) === turn) return { kind: 'reject' }
+      overTurn.set(id, turn)
+      return {
+        ...decision,
+        messages: [
+          ...decision.messages,
+          createUserMessage({
+            content: [
+              {
+                type: 'text',
+                text: `Việc «${over.title}» đã dùng ${usd(over.spent)} USD, chạm trần ${usd(over.cap)} USD mỗi việc người dùng đặt cho Commander. Dừng việc này, không gọi công cụ; trả lời đúng một câu ngắn: đã làm tới đâu và dừng vì chạm trần tiền.`,
+              },
+            ],
+            source: { kind: 'aris-commander', form: 'notice', summary: 'chạm trần tiền mỗi việc' },
+          }) as (typeof decision.messages)[number],
+        ],
+      }
+    },
+    true,
+  )
 
   // Bot đích của chuyển giao xong việc thì dsh báo "việc con vừa cập nhật" về phiên của Aris và đánh
   // thức thêm một lượt. Câu trả lời đã gửi thẳng cho người dùng nên gỡ thông báo đó khỏi hộp thư.
@@ -631,8 +734,11 @@ export async function apply(ctx: Context): Promise<void> {
           return `Phòng ${dep.name} chưa có trưởng nhóm: nhờ người dùng đặt trưởng nhóm ở trang Phòng ban, hoặc giao_viec cho từng bot.`
         const task = String(args.noi_dung ?? '').trim()
         if (!task) return 'Cần nội dung việc.'
-        if (allJobs().filter((j) => j.status === 'running').length >= MAX_JOBS)
-          return `Đang có ${MAX_JOBS} việc lớn của phòng ban chạy; đợi bớt rồi giao tiếp.`
+        const maxJobs = settings().nested
+        if (maxJobs === 0)
+          return 'Người dùng đã tắt giao việc lớn cho cả phòng (trang Commander). Chia thẻ và giao_viec cho từng bot.'
+        if (allJobs().filter((j) => j.status === 'running').length >= maxJobs)
+          return `Đang có ${maxJobs} việc lớn của phòng ban chạy; đợi bớt rồi giao tiếp.`
         const title = String(args.tieu_de ?? task)
           .trim()
           .split('\n')[0]!
@@ -1054,20 +1160,25 @@ export async function apply(ctx: Context): Promise<void> {
     await activeRuns.get(runId)?.dispose()
   }
 
-  /** Thư mục cho một việc của bot ngoài: thư mục của phiên giao, hoặc worktree mới khi bật. */
+  /**
+   * Thư mục cho một việc của bot ngoài (xem {@link targetDir}): thư mục Commander nêu, repo nhắc trong
+   * việc khi phiên giao không ở trong repo, hoặc thư mục của phiên; worktree mới từ repo đó khi bật.
+   */
   async function workdir(
     bot: BotRecord,
     title: string,
     agent: AgentLike,
+    a: Assignment,
   ): Promise<
     { cwd?: string | undefined; worktree?: { branch: string; dir: string; repo: string } } | { error: string }
   > {
-    const wd = (ctx.get('workingDirectory') as { get(session: unknown): string } | undefined)?.get(
+    const session = (ctx.get('workingDirectory') as { get(session: unknown): string } | undefined)?.get(
       (agent as unknown as { session: unknown }).session,
     )
-    if (!bot.external?.worktree || !wd) return { cwd: wd }
-    const root = await gitRoot(wd)
-    if (!root) return { cwd: wd }
+    const target = await targetDir({ explicit: a.dir, task: a.task, session })
+    if ('error' in target) return target
+    const { dir: wd, root } = target
+    if (!bot.external?.worktree || !wd || !root) return { cwd: wd }
     const plan = worktreePlan(root, bot.handle, title, randomUUID().replace(/-/g, '').slice(0, 8))
     try {
       await addWorktree(root, plan)
@@ -1240,9 +1351,10 @@ export async function apply(ctx: Context): Promise<void> {
     bin: string,
   ): Promise<DispatchResult> {
     const cfg = bot.external!
+    const budget = externalBudget(cfg.budgetUsd, settings().budgetUsd)
     const fail = (error: string): DispatchResult => ({ handle: bot.handle, name: bot.name, ok: false, error })
     // Đã giao cho bot này trong cuộc: làm tiếp phiên Claude Code cũ, cùng thư mục.
-    const prev = [...externals.entries()]
+    let prev = [...externals.entries()]
       .map(([, r]) => r)
       .filter(
         (r) =>
@@ -1255,7 +1367,14 @@ export async function apply(ctx: Context): Promise<void> {
       .sort((x, y) => y.startedAt.localeCompare(x.startedAt))[0]
     if (prev?.status === 'running')
       return fail(`${bot.name} đang làm việc «${prev.title}»; đợi xong rồi giao tiếp.`)
-    const place = prev ? { cwd: prev.cwd, worktree: prev.worktree } : await workdir(bot, title, agent)
+    // Commander nêu thư mục khác lần trước: làm mới ở thư mục đó, không nối phiên cũ.
+    if (prev && a.dir?.trim()) {
+      const want = await targetDir({ explicit: a.dir, task: a.task })
+      const had = prev.worktree?.repo ?? (prev.cwd ? await gitRoot(prev.cwd) : undefined) ?? prev.cwd
+      if ('error' in want) return fail(want.error)
+      if ((want.root ?? want.dir) !== had) prev = undefined
+    }
+    const place = prev ? { cwd: prev.cwd, worktree: prev.worktree } : await workdir(bot, title, agent, a)
     if ('error' in place) return fail(place.error)
     const runId = randomUUID()
     const rec: ExternalRunRecord = {
@@ -1271,7 +1390,7 @@ export async function apply(ctx: Context): Promise<void> {
       ...(place.cwd ? { cwd: place.cwd } : {}),
       ...(place.worktree ? { worktree: place.worktree } : {}),
       ...(prev ? { resumedFrom: prev.id } : {}),
-      ...(cfg.budgetUsd ? { budgetUsd: cfg.budgetUsd } : {}),
+      ...(budget ? { budgetUsd: budget } : {}),
       status: 'running',
       timeoutMin: cfg.timeoutMin,
       steps: [],
@@ -1351,7 +1470,7 @@ export async function apply(ctx: Context): Promise<void> {
               prompt: brief,
               permission: cfg.permission,
               model: cfg.model,
-              budgetUsd: cfg.budgetUsd,
+              budgetUsd: budget,
               resume: prev?.sessionRef,
               mcpConfig,
             },
@@ -1410,7 +1529,7 @@ export async function apply(ctx: Context): Promise<void> {
     if (state === 'error') return fail(`Không gắn được plugin ${label(cfg.agent)}; xem nhật ký aris.`)
     const subagents = ctx.get('subagents') as SubagentsPort | undefined
     if (!subagents) return fail('Profile này chưa có dịch vụ bot con (subagents) của dsh.')
-    const place = await workdir(bot, title, agent)
+    const place = await workdir(bot, title, agent, a)
     if ('error' in place) return fail(place.error)
     const { cwd, worktree } = place
     const act = await subagents.startActivation({
@@ -1575,6 +1694,16 @@ export async function apply(ctx: Context): Promise<void> {
               const r = externals.get(run)
               return json({ ok: true, run: r ? runView(r) : null })
             }
+            if (body.op === 'settings') {
+              try {
+                const next = cleanSettings((body as { patch?: unknown }).patch, settings())
+                await settingsTable.put('commander', next)
+                return json({ ok: true, settings: next })
+              } catch (e) {
+                if (e instanceof SettingsError) return json({ error: e.message }, 400)
+                throw e
+              }
+            }
             if (body.op === 'room-stop' && body.session) {
               stopRoom(body.session)
               return json({ ok: true, room: roomView(body.session) })
@@ -1613,7 +1742,7 @@ export async function apply(ctx: Context): Promise<void> {
             .map(([, r]) => r)
             .sort((a, b) => b.at.localeCompare(a.at))
             .slice(0, 50)
-          return new Response(JSON.stringify({ recent }), {
+          return new Response(JSON.stringify({ recent, settings: settings() }), {
             headers: { 'content-type': 'application/json; charset=utf-8' },
           })
         },

@@ -160,6 +160,15 @@ describe('giao việc', () => {
       'đang chạy',
     )
   })
+
+  it('giới hạn bot chạy cùng lúc theo cấu hình Commander', async () => {
+    const { deps } = setup(2)
+    await expect(
+      dispatch({ ...deps, maxBusy: 2 }, cmd, [{ bot: 'minh', task: 'x', reason: 'y' }], signal),
+    ).rejects.toThrow('tối đa 2')
+    const r = await dispatch({ ...deps, maxBusy: 3 }, cmd, [{ bot: 'minh', task: 'x', reason: 'y' }], signal)
+    expect(r[0]?.ok).toBe(true)
+  })
 })
 
 describe('giao thẻ có sẵn', () => {

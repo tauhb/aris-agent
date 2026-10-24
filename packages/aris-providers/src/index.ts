@@ -18,7 +18,7 @@ import { providersDomain, type Link, type SwitchRecord, type Table } from './dom
 import { classify, Router, type Failure } from './fallback.js'
 import { KeyPools } from './keys.js'
 import { dayOf, Ledger } from './ledger.js'
-import { createPrices } from './prices.js'
+import { costOf, createPrices } from './prices.js'
 import { probe, probeInputError } from './probe.js'
 
 export * from './probe.js'
@@ -127,10 +127,16 @@ export async function apply(ctx: Context): Promise<void> {
   const prices = createPrices()
   const ledger = new Ledger(t('ledger'), prices, t('spend'))
   // Chi phí hôm nay theo phòng ban: @aris/bots đọc để áp trần ngân sách và hiện ở trang Phòng ban.
+  const costListeners = new Set<(session: string, usd: number) => void>()
   ctx.provide('arisSpend', {
     today: () => ledger.spentToday(),
     /** Chi phí 7 ngày của một bot (cột phải hồ sơ bot). */
     botWeek: (bot: string) => ledger.spentWeek(`bot:${bot}`),
+    /** Tiền của từng lần gọi model theo phiên (Commander áp trần tiền mỗi việc); trả về hàm huỷ. */
+    onCost(fn: (session: string, usd: number) => void): () => void {
+      costListeners.add(fn)
+      return () => void costListeners.delete(fn)
+    },
   })
   const pools = new KeyPools(t('pools'), {
     resolve: async (ref) => (await ctx.credentials.resolve(credentialRef(ref)))?.value,
@@ -339,6 +345,11 @@ export async function apply(ctx: Context): Promise<void> {
         `bot:${arisBots()?.store.botOf(session.id).id ?? 'aris'}`,
       ])
       .catch((e: unknown) => logger.warn('sổ chi phí: %s', String(e)))
+    const price = costListeners.size ? prices.of(provider, model) : undefined
+    if (price) {
+      const usd = costOf(price, usage)
+      for (const fn of costListeners) fn(session.id, usd)
+    }
   })
 
   ctx.inject(['connection'], (ctx) => {

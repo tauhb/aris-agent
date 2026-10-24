@@ -1,6 +1,18 @@
-import { describe, expect, it } from 'vitest'
+import { execFileSync } from 'node:child_process'
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { afterAll, describe, expect, it } from 'vitest'
 import { cleanExternal } from '@aris/bots'
-import { externalBrief, ExternalHost, inWorktree, worktreePlan, type PluginModule } from './external.js'
+import {
+  externalBrief,
+  ExternalHost,
+  inWorktree,
+  pathsIn,
+  targetDir,
+  worktreePlan,
+  type PluginModule,
+} from './external.js'
 
 const mod: PluginModule = { apply: () => undefined }
 
@@ -77,5 +89,50 @@ describe('đường dẫn trong worktree', () => {
       'Sửa /u/.aris/worktrees/shop/k-1/src/a.ts rồi chạy test trong /u/.aris/worktrees/shop/k-1',
     )
     expect(inWorktree('không đổi', undefined)).toBe('không đổi')
+  })
+})
+
+describe('thư mục cho bot ngoài', () => {
+  const base = realpathSync(mkdtempSync(join(tmpdir(), 'aris-target-')))
+  const repo = join(base, 'demo-login')
+  const plain = join(base, 'chat')
+  mkdirSync(join(repo, 'src'), { recursive: true })
+  mkdirSync(plain)
+  writeFileSync(join(repo, 'src', 'login.js'), '')
+  execFileSync('git', ['init', '-q', repo])
+  afterAll(() => rmSync(base, { recursive: true, force: true }))
+
+  it('lấy đường dẫn tuyệt đối và ~/ trong nội dung việc', () => {
+    expect(pathsIn('Sửa lỗi trong repo /u/code/shop. Xem «~/notes/a.md», rồi chạy test.', '/home/x')).toEqual(
+      ['/u/code/shop', '/home/x/notes/a.md'],
+    )
+    expect(pathsIn('không có đường dẫn, chỉ 1/2 phần')).toEqual([])
+  })
+
+  it('thư mục Commander nêu được ưu tiên, phải có thật', async () => {
+    expect(await targetDir({ explicit: join(repo, 'src'), task: 'x', session: plain })).toEqual({
+      dir: join(repo, 'src'),
+      root: repo,
+    })
+    expect(await targetDir({ explicit: 'code/shop', task: 'x' })).toEqual({
+      error: 'Thư mục «code/shop» phải là đường dẫn tuyệt đối.',
+    })
+    expect('error' in (await targetDir({ explicit: join(base, 'khong-co'), task: 'x' }))).toBe(true)
+  })
+
+  it('phiên giao không ở trong repo: dùng repo nhắc trong việc', async () => {
+    const task = `Sửa lỗi đăng nhập trong ${join(repo, 'src', 'login.js')}, ghi kết quả ra /tmp/ket-qua.txt`
+    expect(await targetDir({ task, session: plain })).toEqual({ dir: repo, root: repo })
+  })
+
+  it('phiên giao ở trong repo: giữ thư mục của phiên, không đoán từ nội dung', async () => {
+    const other = join(base, 'other')
+    mkdirSync(other)
+    execFileSync('git', ['init', '-q', other])
+    expect(await targetDir({ task: `xem ${repo}`, session: other })).toEqual({ dir: other, root: other })
+    expect(await targetDir({ task: 'không nêu repo', session: plain })).toEqual({
+      dir: plain,
+      root: undefined,
+    })
   })
 })

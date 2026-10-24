@@ -87,6 +87,9 @@ export interface BranchStepModel {
   params?: Record<string, unknown>
 }
 
+/** Lời dsh trả về khi người dùng từ chối lần gọi công cụ. */
+const REJECTED = /user rejected tool/i
+
 /** Các bước hiện trong nhánh theo pha của lần gọi và trạng thái phiên bot con. */
 export function branchSteps(call: SubagentCall, child: { running: boolean } | undefined): BranchStepModel[] {
   if (call.phase !== 'result') return [{ status: 'working', key: 'branch.preparing' }]
@@ -94,6 +97,7 @@ export function branchSteps(call: SubagentCall, child: { running: boolean } | un
   if (error?.code === 'interrupted') return [{ status: 'idle', key: 'branch.stopped' }]
   if (isError) {
     const text = content.find((c) => c.text)?.text ?? error?.message ?? ''
+    if (REJECTED.test(text)) return [{ status: 'failed', key: 'branch.rejected' }]
     return [{ status: 'failed', key: 'branch.failed', params: { error: text.split('\n')[0] } }]
   }
   const received: BranchStepModel = { status: 'done', key: 'branch.received' }
@@ -114,6 +118,8 @@ export interface DispatchItem {
   error?: string | undefined
   /** Bot ngoài: mã lần chạy (không có phiên riêng). */
   externalRun?: string | undefined
+  /** Người dùng từ chối lần giao (duyệt mỗi lần). */
+  rejected?: boolean | undefined
 }
 
 /** Đọc lần gọi `giao_viec`: các việc trong tham số, ghép với phiên của từng bot trong kết quả. */
@@ -158,5 +164,18 @@ export function dispatchItems(call: SubagentCall): DispatchItem[] {
     const err = m[2]!.match(/không giao được — (.*)$/)?.[1]
     if (err) item.error = err
   }
+  // Không có dòng của bot: cả lần giao bị chặn (quá giới hạn, người dùng từ chối…), không bot nào nhận.
+  const whole =
+    text
+      .split('\n')
+      .find((l) => l.trim())
+      ?.replace(/^Không giao được:\s*/, '')
+      .trim() || 'không giao được'
+  const rejected = REJECTED.test(text)
+  for (const item of items)
+    if (!item.sessionId && !item.externalRun && !item.error) {
+      item.error = whole
+      if (rejected) item.rejected = true
+    }
   return items
 }

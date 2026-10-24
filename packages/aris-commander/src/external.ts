@@ -10,10 +10,10 @@
  */
 import { execFile } from 'node:child_process'
 import { existsSync } from 'node:fs'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { homedir } from 'node:os'
-import { basename, join } from 'node:path'
+import { basename, dirname, isAbsolute, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { promisify } from 'node:util'
 import {
@@ -173,6 +173,55 @@ export async function gitRoot(dir: string): Promise<string | undefined> {
   } catch {
     return undefined
   }
+}
+
+/** Đường dẫn tuyệt đối (hoặc `~/…`) nhắc trong nội dung việc, theo thứ tự xuất hiện, bỏ trùng. */
+export function pathsIn(text: string, home = homedir()): string[] {
+  const out: string[] = []
+  for (const m of text.matchAll(/(?:^|[\s"'`(«“])((?:~\/|\/)[^\s"'`)»”,;]+)/g)) {
+    let p = m[1]!.replace(/[.:]+$/, '')
+    if (p.startsWith('~/')) p = join(home, p.slice(2))
+    if (p.length > 1 && !out.includes(p)) out.push(p)
+  }
+  return out
+}
+
+/** Thư mục có thật gần nhất của một đường dẫn: chính nó, hoặc thư mục chứa khi là tệp. */
+async function dirOf(path: string): Promise<string | undefined> {
+  try {
+    return (await stat(path)).isDirectory() ? path : dirname(path)
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Thư mục làm việc cho một việc của bot ngoài, theo thứ tự:
+ * 1. `explicit`: thư mục Commander nêu khi giao (tham số `thu_muc`), phải có thật;
+ * 2. phiên giao việc không ở trong repo nào: repo đầu tiên nhắc trong nội dung việc (gốc repo);
+ * 3. thư mục của phiên giao việc.
+ * `root` là gốc repo của thư mục chọn được (để tạo worktree), không có khi không phải repo.
+ */
+export async function targetDir(
+  o: { explicit?: string | undefined; task: string; session?: string | undefined },
+  home = homedir(),
+): Promise<{ dir?: string | undefined; root?: string | undefined } | { error: string }> {
+  if (o.explicit?.trim()) {
+    const raw = o.explicit.trim()
+    const path = raw.startsWith('~/') ? join(home, raw.slice(2)) : raw
+    if (!isAbsolute(path)) return { error: `Thư mục «${raw}» phải là đường dẫn tuyệt đối.` }
+    const dir = await dirOf(path)
+    if (!dir) return { error: `Không có thư mục ${path} trên máy.` }
+    return { dir, root: await gitRoot(dir) }
+  }
+  const sessionRoot = o.session ? await gitRoot(o.session) : undefined
+  if (!sessionRoot)
+    for (const p of pathsIn(o.task, home)) {
+      const dir = await dirOf(p)
+      const root = dir ? await gitRoot(dir) : undefined
+      if (root) return { dir: root, root }
+    }
+  return { dir: o.session, root: sessionRoot }
 }
 
 /** Tạo worktree mới từ HEAD trên nhánh riêng. */

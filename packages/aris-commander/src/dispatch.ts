@@ -17,6 +17,8 @@ export interface Assignment {
   card?: string | undefined
   /** Chuyển giao: câu trả lời cuối của bot gửi thẳng cho người dùng, Commander không viết lại. */
   handoff?: boolean | undefined
+  /** Bot ngoài: repo hoặc thư mục cần làm (đường dẫn tuyệt đối), khi khác thư mục của phiên giao. */
+  dir?: string | undefined
 }
 
 export interface BotInfo {
@@ -82,6 +84,8 @@ export interface DispatchDeps<A> {
   byHandle(handle: string): BotInfo | undefined
   /** Số bot (trừ Commander) đang chạy. */
   busyBots(): number
+  /** Tối đa bot chạy cùng lúc (cấu hình Commander, trang 2.5); mặc định {@link MAX_BUSY}. */
+  maxBusy?: number | undefined
   /** Đã giao: ghi nhật ký, việc gần đây. */
   record(entry: DispatchEntry): void
   cards?: DraftCards | undefined
@@ -124,7 +128,7 @@ export interface DispatchResult {
   worktree?: { dir: string; branch: string } | undefined
 }
 
-/** Tối đa bot mỗi lần giao, và bot chạy cùng lúc. */
+/** Tối đa bot mỗi lần giao, và bot chạy cùng lúc khi chưa đặt giới hạn. */
 export const MAX_PER_CALL = 4
 export const MAX_BUSY = 6
 
@@ -169,10 +173,9 @@ export async function dispatch<A extends { session: { id: string } }>(
   const fresh = assignments.filter(
     (a) => !members.some((m) => m.name === handleOf(a.bot) && m.status === 'running'),
   )
-  if (d.busyBots() + fresh.length > MAX_BUSY)
-    throw new DispatchError(
-      `Đã có ${d.busyBots()} bot đang chạy (tối đa ${MAX_BUSY}); đợi bớt rồi giao tiếp.`,
-    )
+  const maxBusy = d.maxBusy ?? MAX_BUSY
+  if (d.busyBots() + fresh.length > maxBusy)
+    throw new DispatchError(`Đã có ${d.busyBots()} bot đang chạy (tối đa ${maxBusy}); đợi bớt rồi giao tiếp.`)
 
   return Promise.all(
     assignments.map(async (a): Promise<DispatchResult> => {

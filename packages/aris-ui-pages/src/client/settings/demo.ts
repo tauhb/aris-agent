@@ -122,60 +122,11 @@ export const DEMO_SCREEN = {
   ],
 } as const
 
-/** 2.5 · GĐ2 (dịch vụ đội bot, định tuyến của Commander). */
+/** Phần còn là bản vẽ của trang 2.5: điều Commander đã học (giai đoạn 3). */
 export const DEMO_COMMANDER = {
-  delegates: [
-    { bot: 'mai', text: 'Mai · email, lịch, giấy tờ', on: true, approve: false },
-    { bot: 'lam', text: 'Lâm · nghiên cứu, tổng hợp', on: true, approve: false },
-    { bot: 'tin', text: 'Tín · tài chính, ngân sách', on: true, approve: false },
-    { bot: 'dev', text: 'Dev · lập trình', on: true, approve: true },
-  ],
-  limits: { parallel: '4', nested: '4', budget: '0,30' },
-  routing: [
-    {
-      at: '10:42',
-      req: 'Tóm tắt 3 đối thủ',
-      kind: 'delegate',
-      bot: 'Lâm',
-      why: 'Khớp “nghiên cứu” · tin cậy 0,92',
-      result: 'đang',
-    },
-    {
-      at: '10:42',
-      req: 'Xếp lịch họp T5',
-      kind: 'delegate',
-      bot: 'Mai',
-      why: 'Khớp “lịch” · 0,95',
-      result: 'chờ anh',
-    },
-    {
-      at: '09:15',
-      req: 'Dịch đoạn email sang tiếng Anh',
-      kind: 'self',
-      bot: '',
-      why: 'Việc nhẹ, xong trong 1 lượt',
-      result: '✓',
-    },
-    {
-      at: '08:30',
-      req: 'Viết bài Facebook về khoá học',
-      kind: 'handoff',
-      bot: 'Hạ',
-      why: 'Hạ sở hữu toàn bộ kết quả',
-      result: '✓',
-    },
-    {
-      at: 'hôm qua',
-      req: 'Kiểm tra 40 link trong tài liệu',
-      kind: 'helpers',
-      bot: '4',
-      why: 'Quét độc lập, chia lô song song',
-      result: '✓',
-    },
-  ],
   learned: [
     { bot: 'lam', text: 'Nghiên cứu thị trường', note: '23 lần · 91% đạt' },
     { bot: 'mai', text: 'Lịch và email', note: '41 lần · 98% đạt' },
-    { bot: 'tin', text: 'Báo cáo chi tiêu', note: '12 lần · 83% đạt · hay bị anh sửa định dạng' },
+    { bot: 'tin', text: 'Báo cáo chi tiêu', note: '12 lần · 83% đạt · hay bị sửa định dạng' },
   ],
 } as const

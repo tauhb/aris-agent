@@ -1,6 +1,7 @@
 /** Storage domain `aris_commander`: nhật ký giao việc (quyết định định tuyến) cho trang 2.5. */
 import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 import { z } from 'zod'
+import { commanderSettings, type CommanderSettings } from './settings.js'
 
 export const dispatchRecord = z.object({
   at: z.string(),
@@ -144,6 +145,8 @@ export const commanderDomain = defineDomain({
     jobs: domainTable<string, JobRecord>(jobRecord),
     rounds: domainTable<string, RoundRecord>(roundRecord),
     externals: domainTable<string, ExternalRunRecord>(externalRunRecord),
+    /** Cấu hình Commander (trang 2.5), một bản ghi khoá `commander`. */
+    settings: domainTable<string, CommanderSettings>(commanderSettings),
   },
 })
 

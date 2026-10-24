@@ -177,6 +177,11 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .aris .ap-mascots button[aria-checked=true]{border:2px solid var(--a-accent);background:var(--a-accentSoft)}
 .aris .ap-chip.ap-pick{height:32px;font-size:13px;color:var(--a-ink);display:inline-flex;align-items:center;gap:6px}
 .aris .ap-chip.ap-pick[aria-pressed=true]{border-color:var(--a-accent);color:var(--a-accent);background:var(--a-accentSoft);font-weight:600}
+.aris .ap-chip.ap-each{height:24px;padding:0 9px;font-size:12px;flex:none}
+.aris .ap-chip.ap-each[aria-pressed=true]{border-color:var(--a-warn);color:var(--a-warn);background:var(--a-warnSoft)}
+.ap-limit{display:flex;flex-direction:column;min-width:0}
+.ap-limit>.a-muted{font-size:12px}
+.ap-limit>.err{font-size:12px;color:var(--a-danger)}
 .ap-disc{border-top:1px solid var(--a-line);margin-top:6px}
 .aris .ap-disc>button{width:100%;display:flex;align-items:center;gap:8px;padding:12px 0;font-size:13.5px;font-weight:600}
 .ap-disc .chev{display:inline-block;transition:transform .15s;color:var(--a-muted)}

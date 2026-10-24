@@ -156,14 +156,16 @@ function DispatchBranch(props: {
   const sid = item.sessionId
   const running = props.useSessions((list) => (sid === undefined ? undefined : list.byId[sid]?.running))
   const bot = branchBot(item.handle, item.handle)
-  const steps: { status: BotStatus; key: ChatKey; params?: Record<string, unknown> }[] = item.error
-    ? [{ status: 'failed', key: 'branch.failed', params: { error: item.error } }]
-    : props.phase !== 'result'
-      ? [{ status: 'working', key: 'branch.preparing' }]
-      : [
-          { status: 'done', key: 'branch.received' },
-          running ? { status: 'working', key: 'branch.running' } : { status: 'done', key: 'branch.done' },
-        ]
+  const steps: { status: BotStatus; key: ChatKey; params?: Record<string, unknown> }[] = item.rejected
+    ? [{ status: 'failed', key: 'branch.rejected' }]
+    : item.error
+      ? [{ status: 'failed', key: 'branch.failed', params: { error: item.error } }]
+      : props.phase !== 'result'
+        ? [{ status: 'working', key: 'branch.preparing' }]
+        : [
+            { status: 'done', key: 'branch.received' },
+            running ? { status: 'working', key: 'branch.running' } : { status: 'done', key: 'branch.done' },
+          ]
   return (
     <TaskBranch
       mascot={bot.mascot}
