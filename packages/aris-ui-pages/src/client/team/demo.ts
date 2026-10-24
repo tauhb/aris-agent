@@ -110,12 +110,6 @@ export const DEMO_PROFILE = {
     { task: 'Vòng học nền', provider: 'DeepSeek', model: 'deepseek-chat', note: 'theo cài đặt chung' },
     { task: 'Dự phòng khi lỗi', provider: 'Anthropic', model: 'Claude Haiku 5.5', note: '' },
   ],
-  skills: [
-    { id: 'nghien-cuu-doi-thu', v: 'v3', note: 'dùng 9 lần · 89% thành công' },
-    { id: 'tom-tat-nguon', v: 'v2', note: 'dùng 31 lần · 97%' },
-    { id: 'bang-so-sanh', v: 'v1', note: 'dùng 4 lần' },
-  ],
-  skillCount: 14,
   tools: [
     { text: 'Tìm và đọc web', on: true },
     { text: 'Đọc tệp, PDF, Office', on: true },

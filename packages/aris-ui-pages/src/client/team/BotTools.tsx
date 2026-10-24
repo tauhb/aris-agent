@@ -9,6 +9,7 @@ import {
   Dialog,
   Menu,
   MenuItem,
+  Pill,
   Switch,
   Tag,
   TextInput,
@@ -19,9 +20,9 @@ import {
   type McpData,
   type TeamView,
 } from '@aris/ui-kit/react'
-import { useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { PageProps } from '../page.js'
-import { DEMO_PROFILE as P } from './demo.js'
+import type { SkillRow } from '../mind/Skills.js'
 
 type T = PageProps['t']
 type Preset = McpData['preset']
@@ -267,26 +268,68 @@ function Toolset({ t, bot, team }: { t: T; bot: BotData; team: TeamView }) {
   )
 }
 
+/** Skill của bot (`@aris/skills`): đang dùng, chờ duyệt, ít dùng, lưu kho; bấm để mở chi tiết. */
+function BotSkills({ t, nav, bot }: { t: T; nav: PageProps['nav']; bot: BotData }) {
+  const [rows, setRows] = useState<SkillRow[] | null>(null)
+  useEffect(() => {
+    let live = true
+    void fetch(new URL('api/aris/skills', document.baseURI), { credentials: 'same-origin' })
+      .then((r) => (r.ok ? (r.json() as Promise<{ skills: SkillRow[] }>) : undefined))
+      .then((d) => live && d && setRows(d.skills.filter((s) => s.bot === bot.id)))
+      .catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [bot.id])
+  const state = (s: SkillRow) =>
+    s.proposed
+      ? { tone: 'warn' as const, text: t('bot.sk.pending', { v: s.proposed.version }) }
+      : s.status === 'archived'
+        ? { tone: 'muted' as const, text: t('bot.sk.archived') }
+        : s.stale
+          ? { tone: 'muted' as const, text: t('bot.sk.rare', { n: s.idleDays }) }
+          : { tone: 'ok' as const, text: t('bot.sk.active') }
+  return (
+    <Card
+      title={t('bot.skillCount', { n: rows?.length ?? 0 })}
+      subtitle={t('bot.skillHint', { name: bot.name })}
+      actions={
+        <a className="ap-link" onClick={() => nav.go('skills', { bot: bot.id })}>
+          {t('bot.openLibrary')}
+        </a>
+      }
+    >
+      {rows?.length === 0 && (
+        <CardRow>
+          <span className="a-muted" style={{ fontSize: 13 }}>
+            {t('bot.skillEmpty', { name: bot.name })}
+          </span>
+        </CardRow>
+      )}
+      {rows?.map((s) => {
+        const st = state(s)
+        return (
+          <CardRow key={s.id}>
+            <a className="a-mono grow ap-link" onClick={() => nav.go('skill', { id: s.id })}>
+              {s.name}
+            </a>
+            <Tag>v{s.version || s.proposed?.version}</Tag>
+            <Pill tone={st.tone}>{st.text}</Pill>
+            <span className="a-muted" style={{ fontSize: 12.5 }}>
+              {t('bot.sk.uses', { n: s.uses })}
+            </span>
+          </CardRow>
+        )
+      })}
+    </Card>
+  )
+}
+
 export function SkillsTab({ t, nav, bot }: { t: T; nav: PageProps['nav']; bot: BotData }) {
   const team = useTeam()
   return (
     <>
-      <Later t={t} stage={3}>
-        <Card
-          title={t('bot.skillCount', { n: P.skillCount })}
-          actions={<span className="ap-link">{t('bot.openLibrary')}</span>}
-        >
-          {P.skills.map((s) => (
-            <CardRow key={s.id}>
-              <span className="a-mono grow">{s.id}</span>
-              <Tag>{s.v}</Tag>
-              <span className="a-muted" style={{ fontSize: 12.5 }}>
-                {s.note}
-              </span>
-            </CardRow>
-          ))}
-        </Card>
-      </Later>
+      <BotSkills t={t} nav={nav} bot={bot} />
       <McpCard t={t} nav={nav} bot={bot} team={team} />
       <Toolset t={t} bot={bot} team={team} />
       <div className="ap-hint a-muted">ⓘ {t('mcp.newSessions', { name: bot.name })}</div>

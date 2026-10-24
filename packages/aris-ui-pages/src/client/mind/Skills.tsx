@@ -38,7 +38,7 @@ export const dayOf = (iso: string) => {
     : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
-export function Skills({ t, nav }: PageProps) {
+export function Skills({ t, nav, params }: PageProps) {
   const team = useTeamData()
   const [rows, setRows] = useState<SkillRow[] | null>(null)
   const [curator, setCurator] = useState<{ next: string } | null>(null)
@@ -69,6 +69,7 @@ export function Skills({ t, nav }: PageProps) {
   const q = query.trim().toLowerCase()
   const shown = all.filter(
     (r) =>
+      (!params.bot || r.bot === params.bot) &&
       (filter === 'all' ||
         (filter === 'pending'
           ? r.proposed
@@ -128,6 +129,17 @@ export function Skills({ t, nav }: PageProps) {
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
+        {params.bot && (
+          <button
+            type="button"
+            className="ap-chip"
+            aria-pressed
+            title={t('sk.clearBot')}
+            onClick={() => nav.go('skills')}
+          >
+            {t('sk.botFilter', { name: botOf(params.bot)?.name ?? params.bot })} ×
+          </button>
+        )}
         {chips.map(([id, label]) => (
           <button
             key={id}
