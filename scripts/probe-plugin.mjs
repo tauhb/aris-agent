@@ -13,8 +13,8 @@ export function apply(ctx) {
       // Đợi dsh nạp xong các row khác rồi mới kiểm tra.
       const assembly = await ctx.systemPrompt.assemble()
       const result = {
-        tool: Boolean(ctx.tools.get('aris_hello')),
-        section: assembly.sections.some((s) => s.name === 'aris:hello'),
+        tool: Boolean(ctx.tools.get('memory')),
+        section: assembly.sections.some((s) => s.name === 'aris:memory-guide'),
       }
       const line = 'ARIS_PROBE ' + JSON.stringify(result)
       appendFileSync(join(process.env.DSH_HOME ?? '.', 'probe.out'), line + '\n')

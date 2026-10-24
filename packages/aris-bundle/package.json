@@ -21,7 +21,6 @@
     "@aris/channels": "workspace:*",
     "@aris/commander": "workspace:*",
     "@aris/daemon": "workspace:*",
-    "@aris/hello": "workspace:*",
     "@aris/home": "workspace:*",
     "@aris/memory": "workspace:*",
     "@aris/projects": "workspace:*",

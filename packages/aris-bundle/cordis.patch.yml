@@ -1,8 +1,6 @@
 # Lớp aris: mọi năng lực của aris là một row ở đây. Lớp này xếp sau bundle của
 # dsh (dsh-base, rồi web/acp/headless), nên cùng một bộ row chạy được ở mọi mặt.
 - insert:
-    - id: aris-hello
-      name: '@aris/hello'
     - id: aris-bots
       name: '@aris/bots'
     - id: aris-commander
