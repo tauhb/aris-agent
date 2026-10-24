@@ -44,18 +44,18 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
         <button type="button" onClick="{{toggleTheme}}" class="b2" style="margin-left: auto; height: 32px; font-size: 12.5px">{{themeLabel}}</button>
         <button type="button" aria-label="Đóng" style="margin-left: 6px; width: 34px; height: 34px; border: 0; border-radius: 9px; background: transparent; font-size: 20px; color: var(--muted)">×</button>
       </div>
-      <p class="m" style="margin: 0; padding: 0 22px 14px; font-size: 13px">Đưa Claude Code, Codex hoặc một agent khác vào đội. Aris giao một việc trọn gói, bot ngoài làm một mình rồi nộp kết quả cuối.</p>
+      <p class="m" style="margin: 0; padding: 0 22px 14px; font-size: 13px">Đưa Claude Code, Codex hoặc một agent khác vào đội. aris chạy thẳng bản trên máy bạn: theo dõi từng bước, hỏi bạn khi cần quyền.</p>
 
       <div style="padding: 0 22px 12px">
         <div class="lb" style="padding-bottom: 6px">Agent</div>
         <div role="radiogroup" aria-label="Agent ngoài" style="display: flex; gap: 8px">
           <button type="button" role="radio" aria-checked="{{ck.claude}}" onClick="{{pick.claude}}" class="ag" style="{{cs.claude}}">
             <span style="display: flex; align-items: center; gap: 8px"><span style="width: 22px; height: 22px; border-radius: 7px; background: #D97757; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-family: 'Lexend', sans-serif; font-weight: 700; font-size: 12px">C</span><b>Claude Code</b></span>
-            <span class="m" style="font-size: 12px">Plugin chính thức của dsh</span>
+            <span class="m" style="font-size: 12px">claude trên máy · 2.1.260</span>
           </button>
           <button type="button" role="radio" aria-checked="{{ck.codex}}" onClick="{{pick.codex}}" class="ag" style="{{cs.codex}}">
             <span style="display: flex; align-items: center; gap: 8px"><span style="width: 22px; height: 22px; border-radius: 7px; background: #10A37F; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-family: 'Lexend', sans-serif; font-weight: 700; font-size: 12px">X</span><b>Codex</b></span>
-            <span class="m" style="font-size: 12px">Plugin chính thức của dsh</span>
+            <span class="m" style="font-size: 12px">codex trên máy · 0.160.0</span>
           </button>
           <button type="button" role="radio" aria-checked="{{ck.acp}}" onClick="{{pick.acp}}" class="ag" style="{{cs.acp}}">
             <span style="display: flex; align-items: center; gap: 8px"><span style="width: 22px; height: 22px; border-radius: 7px; background: var(--panel2); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px">…</span><b>Agent ACP khác</b></span>
@@ -84,12 +84,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
       </div>
 
       <div style="margin: 0 22px 10px; border-radius: 12px; background: var(--panel2); padding: 12px 14px">
-        <div style="font-weight: 600; font-size: 13.5px; padding-bottom: 6px">Bot ngoài khác bot của aris</div>
+        <div style="font-weight: 600; font-size: 13.5px; padding-bottom: 6px">Bot ngoài làm việc thế nào</div>
         <ul style="margin: 0; padding-left: 18px; font-size: 13px; display: flex; flex-direction: column; gap: 3px">
-          <li><b>Mỗi việc là một lần chạy mới:</b> không nhớ việc trước, không nhắn tiếp được giữa chừng.</li>
-          <li><b>Chỉ nộp kết quả cuối:</b> trên nhánh thấy đã nhận, đang làm bao lâu, xong hay vấp; không thấy từng bước bên trong.</li>
-          <li><b>Chạy không người trông:</b> không hỏi lại bạn được; xin quyền thì xử theo mức quyền chọn dưới đây.</li>
-          <li><b>Dùng tài khoản {{ag.account}} trên máy bạn:</b> chi phí tính vào gói của bạn, aris không đo được; aris chỉ giới hạn thời gian.</li>
+          <li><b>Từng bước hiện trên nhánh:</b> đọc tệp, sửa tệp, chạy lệnh, kèm chi phí đã tiêu.</li>
+          <li><b>Hỏi bạn khi cần quyền:</b> thẻ duyệt hiện ngay trên nhánh; không trả lời trong 15 phút thì coi như từ chối.</li>
+          <li><b>Nhớ việc trong cuộc:</b> Aris giao tiếp cho {{ag.name}} trong cùng cuộc thì {{ag.name}} làm tiếp phiên cũ.</li>
+          <li><b>Dùng tài khoản {{ag.account}} trên máy bạn:</b> chi phí tính vào gói đó; aris dừng việc khi chạm trần tiền hoặc trần thời gian.</li>
         </ul>
       </div>
 
@@ -113,6 +113,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
         <sc-if value="{{adv}}" hint-placeholder-val="{{ false }}">
           <div style="padding-bottom: 6px">
             <div class="row"><span>Model</span><input class="inp" style="width: 300px; height: 32px; font-size: 13px" placeholder="{{ag.modelPh}}"></div>
+            <sc-if value="{{ag.hasBudget}}" hint-placeholder-val="{{ true }}"><div class="row"><span>Trần tiền mỗi việc</span><input class="inp" style="width: 140px; height: 32px; font-size: 13px" value="3 USD"></div></sc-if>
             <div class="row"><span>Dừng việc nếu chạy quá</span><select class="inp" style="width: 140px; height: 32px; font-size: 13px"><option>30 phút</option><option selected>45 phút</option><option>90 phút</option></select></div>
             <label class="row" style="cursor: pointer"><span>Mỗi việc chạy trong một git worktree riêng <span class="m" style="font-size: 12.5px">· thay đổi không đụng nhánh đang làm</span></span><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--accent)"></label>
             <label class="row" style="cursor: pointer"><span>Commander được giao việc cho bot này</span><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--accent)"></label>
@@ -141,41 +142,43 @@ class Component extends DCLogic {
     const adv = !!s.adv;
     const A = {
       claude: {
-        name: 'Khoa', account: 'Claude Code', job: 'Sửa lỗi, viết và đọc mã trong repo; chạy test',
+        name: 'Khoa', account: 'Claude Code', job: 'Sửa lỗi, viết và đọc mã trong repo; chạy test', hasBudget: true,
         login: 'Đã đăng nhập Claude Code trên máy', loginColor: 'var(--ok)',
-        install: 'Cài plugin “Claude Code subagent” khi bấm Thêm vào đội · tải khoảng 92 MB',
-        modelPh: 'Theo cài đặt Claude Code trên máy', advExtra: '', footer: 'Sẽ cài plugin chính thức của dsh (khoảng 92 MB)',
+        install: 'Dùng claude 2.1.260 có sẵn trên máy · không tải thêm',
+        modelPh: 'Theo cài đặt Claude Code trên máy', advExtra: ', trần tiền', footer: 'Dùng claude có sẵn trên máy',
         perms: [
-          { k: 'dontAsk', label: 'Chỉ việc đã được phép', desc: 'Việc chưa được phép trong cài đặt Claude Code thì tự từ chối' },
-          { k: 'acceptEdits', label: 'Cho sửa tệp', desc: 'Sửa tệp trong thư mục làm việc; lệnh khác vẫn từ chối', tag: 'khuyên dùng' },
-          { k: 'auto', label: 'Claude tự xét', desc: 'Bộ phân loại của Claude Code tự cho hoặc không cho' },
+          { k: 'manual', label: 'Hỏi bạn', desc: 'Việc chưa được phép thì hiện thẻ duyệt trên nhánh', tag: 'khuyên dùng' },
+          { k: 'acceptEdits', label: 'Cho sửa tệp, hỏi phần còn lại', desc: 'Sửa tệp trong thư mục làm việc; lệnh khác hỏi bạn' },
+          { k: 'dontAsk', label: 'Chỉ việc đã được phép', desc: 'Không hỏi; việc chưa được phép thì từ chối' },
           { k: 'plan', label: 'Chỉ lên kế hoạch', desc: 'Không đụng tệp, nộp kế hoạch làm kết quả' },
           { k: 'bypass', label: 'Toàn quyền', desc: 'Bỏ mọi kiểm tra quyền, kể cả lệnh nguy hiểm', danger: true }
         ],
-        def: 'acceptEdits'
+        def: 'manual'
       },
       codex: {
-        name: 'Tín', account: 'Codex', job: 'Viết mã, tái cấu trúc, rà lỗi trong repo',
+        name: 'Tín', account: 'Codex', job: 'Viết mã, tái cấu trúc, rà lỗi trong repo', hasBudget: false,
         login: 'Đã đăng nhập Codex trên máy', loginColor: 'var(--ok)',
-        install: 'Cài plugin “Codex subagent” khi bấm Thêm vào đội · tải khoảng 114 MB',
-        modelPh: 'Theo cài đặt Codex trên máy', advExtra: '', footer: 'Sẽ cài plugin chính thức của dsh (khoảng 114 MB)',
+        install: 'Dùng codex 0.160.0 có sẵn trên máy · không tải thêm · Codex không báo tiền, chỉ giới hạn thời gian',
+        modelPh: 'Theo cài đặt Codex trên máy', advExtra: '', footer: 'Dùng codex có sẵn trên máy',
         perms: [
-          { k: 'never', label: 'Trong sandbox, không hỏi', desc: 'Chạy trong sandbox của Codex; lỗi quyền trả lại cho Codex tự xoay', tag: 'khuyên dùng' },
+          { k: 'ask', label: 'Hỏi bạn', desc: 'Codex xin chạy lệnh hay sửa tệp thì hiện thẻ duyệt trên nhánh', tag: 'khuyên dùng' },
           { k: 'approve', label: 'Codex tự duyệt', desc: 'Ghi được trong thư mục làm việc; xin quyền thì Codex tự xét' },
+          { k: 'never', label: 'Trong sandbox, không hỏi', desc: 'Chạy trong sandbox; lỗi quyền trả lại cho Codex tự xoay' },
           { k: 'danger', label: 'Toàn quyền, không sandbox', desc: 'Bỏ duyệt và sandbox, chạy được mọi lệnh', danger: true }
         ],
-        def: 'never'
+        def: 'ask'
       },
       acp: {
-        name: 'Minh Gemini', account: 'của agent đó', job: 'Tra cứu và tóm tắt tài liệu dài',
+        name: 'Minh Gemini', account: 'của agent đó', job: 'Tra cứu và tóm tắt tài liệu dài', hasBudget: false,
         login: 'aris không kiểm được đăng nhập của agent khác', loginColor: 'var(--warn)',
-        install: 'Cài plugin “ACP subagent” của dsh · nhập lệnh khởi chạy ở Nâng cao',
-        modelPh: 'Theo cài đặt của agent', advExtra: ', lệnh khởi chạy', footer: 'Sẽ cài plugin ACP của dsh',
+        install: 'Agent nói ACP (Gemini CLI, OpenCode…) · nhập lệnh khởi chạy ở Nâng cao',
+        modelPh: 'Theo cài đặt của agent', advExtra: ', lệnh khởi chạy', footer: 'Chạy lệnh ACP trên máy',
         perms: [
-          { k: 'reject', label: 'Luôn từ chối', desc: 'Mọi yêu cầu quyền của agent đều bị từ chối', tag: 'khuyên dùng' },
+          { k: 'ask', label: 'Hỏi bạn', desc: 'Agent xin quyền thì hiện thẻ duyệt trên nhánh', tag: 'khuyên dùng' },
+          { k: 'reject', label: 'Luôn từ chối', desc: 'Mọi yêu cầu quyền của agent đều bị từ chối' },
           { k: 'allow', label: 'Tự cho phép', desc: 'Chọn “cho phép” cho mọi yêu cầu quyền', danger: true }
         ],
-        def: 'reject'
+        def: 'ask'
       }
     };
     const ag = A[sel];
