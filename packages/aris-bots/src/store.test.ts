@@ -305,6 +305,12 @@ describe('bot biết quyền của mình', () => {
       { bot: 'b', kind: 'assigned', task: 'cu', at: now - 8 * 86_400_000 },
       { bot: 'khac', kind: 'assigned', task: 'X', at: now - 10 },
     ]
-    expect(botStats(items, 'b', now)).toEqual({ assigned: 3, done: 1, failed: 1, recent: ['C', 'B', 'A'] })
+    const st = botStats(items, 'b', now)
+    expect(st).toMatchObject({ assigned: 3, done: 1, failed: 1 })
+    expect(st.recent.map((r) => [r.task, r.result])).toEqual([
+      ['C', 'open'],
+      ['B', 'failed'],
+      ['A', 'done'],
+    ])
   })
 })

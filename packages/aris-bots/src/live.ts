@@ -180,28 +180,49 @@ export class LiveTracker {
   }
 }
 
+/** Một việc gần đây của bot trong cột phải hồ sơ: kết quả sau lần giao (đang làm nếu chưa có). */
+export interface RecentTask {
+  task: string
+  at: number
+  result: 'done' | 'failed' | 'open'
+}
+
 /**
- * Số liệu 7 ngày của một bot cho cột phải hồ sơ: số việc được giao, số việc xong / vấp (kết quả
- * sau lần giao, theo tên việc), vài tên việc gần nhất.
+ * Số liệu 7 ngày của một bot cho cột phải hồ sơ: số việc được giao (và hôm nay), số việc xong / vấp
+ * (kết quả sau lần giao, theo tên việc), 3 việc gần nhất kèm kết quả.
  */
 export function botStats(
   items: readonly { bot: string; kind: string; task?: string | undefined; at: number }[],
   bot: string,
   now = Date.now(),
-): { assigned: number; done: number; failed: number; recent: string[] } {
+): { assigned: number; today: number; done: number; failed: number; recent: RecentTask[] } {
   const mine = items.filter((a) => a.bot === bot && a.at >= now - 7 * 86_400_000).sort((a, b) => a.at - b.at)
+  const midnight = new Date(now).setHours(0, 0, 0, 0)
   let done = 0
   let failed = 0
   const assigned = mine.filter((a) => a.kind === 'assigned')
-  for (const a of assigned) {
+  const resultOf = (a: (typeof mine)[number]): RecentTask['result'] => {
     const end = mine
       .filter((x) => x.at >= a.at && x.task === a.task && (x.kind === 'done' || x.kind === 'failed'))
       .pop()
-    if (end?.kind === 'done') done++
-    else if (end?.kind === 'failed') failed++
+    return end?.kind === 'done' ? 'done' : end?.kind === 'failed' ? 'failed' : 'open'
   }
-  const recent: string[] = []
-  for (const a of [...assigned].reverse())
-    if (a.task && !recent.includes(a.task) && recent.push(a.task) >= 3) break
-  return { assigned: assigned.length, done, failed, recent }
+  for (const a of assigned) {
+    const r = resultOf(a)
+    if (r === 'done') done++
+    else if (r === 'failed') failed++
+  }
+  const recent: RecentTask[] = []
+  for (const a of [...assigned].reverse()) {
+    if (!a.task || recent.some((r) => r.task === a.task)) continue
+    recent.push({ task: a.task, at: a.at, result: resultOf(a) })
+    if (recent.length >= 3) break
+  }
+  return {
+    assigned: assigned.length,
+    today: assigned.filter((a) => a.at >= midnight).length,
+    done,
+    failed,
+    recent,
+  }
 }

@@ -109,7 +109,7 @@ Chạy thử thật (24/10): thêm cho Khoa kết nối "Tự thêm" tới máy 
 - **Commander được giao việc cho bot này** (`assignable`, mặc định có): tắt thì `giao_viec` báo lỗi, đội hình trong lời nhắc ghi "không nhận giao việc từ Commander". Bot ngoài vẫn dùng `external.assignable`.
 - Kênh riêng: Telegram như cũ; Lark hiện mờ "Giai đoạn 7".
 
-**Cột phải "Tóm tắt bot"** (`GET /api/aris/bots?profile=<mã bot>`, tải lại 15 giây một lần): trạng thái trực tiếp và việc đang làm; số việc được giao 7 ngày, tỉ lệ hoàn thành (việc giao có kết quả xong / vấp sau đó, theo tên việc), chi phí 7 ngày của riêng bot, mức đầy ký ức lõi (cuốn `notes`); 3 việc Aris giao gần nhất; 3 ký ức mới học. "Skill tự cải tiến" hiện mờ "Giai đoạn 3".
+**Cột phải "Tóm tắt bot"** (vẽ lại theo bản vẽ 2.2d, phương án A: thẻ đầu tô theo màu linh vật có tên, vai, phòng, trạng thái và việc đang làm; 4 ô chỉ số không viền có dòng phụ; việc Aris giao gần đây có dấu ✓ / ! / • theo kết quả và ngày; học gần đây dạng dòng thời gian) (`GET /api/aris/bots?profile=<mã bot>`, tải lại 15 giây một lần): trạng thái trực tiếp và việc đang làm; số việc được giao 7 ngày, tỉ lệ hoàn thành (việc giao có kết quả xong / vấp sau đó, theo tên việc), chi phí 7 ngày của riêng bot, mức đầy ký ức lõi (cuốn `notes`); 3 việc Aris giao gần nhất; 3 ký ức mới học. "Skill tự cải tiến" hiện mờ "Giai đoạn 3".
 
 - Việc gần đây lưu bền 8 ngày (tối đa 3.000 mục) thay vì 30 mục; thanh bên và cột phải phiên vẫn chỉ đọc 30 mục mới nhất.
 - Sổ chi phí (`@aris/providers`) ghi thêm phạm vi `bot:<mã bot>` cho mỗi lần gọi model (trước chỉ ghi theo phòng ban); `arisSpend.botWeek(bot)`. Chi phí trước lúc có bản này không chia được theo bot.

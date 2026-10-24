@@ -2,18 +2,8 @@
  * Hồ sơ bot (bản vẽ 2.2), đợt 2: tab "Quyền & kênh" (quyền riêng của bot) và cột phải "Tóm tắt bot"
  * (trạng thái, số liệu 7 ngày, ký ức lõi, việc Aris hay giao, học gần đây).
  */
-import {
-  Card,
-  CardRow,
-  Select,
-  StatusPill,
-  Switch,
-  Tag,
-  teamAction,
-  useTeam,
-  type BotData,
-} from '@aris/ui-kit/react'
-import type { BotStatus } from '@aris/ui-kit'
+import { Card, CardRow, Select, Mascot, Switch, teamAction, useTeam, type BotData } from '@aris/ui-kit/react'
+import { getMascot, type BotStatus } from '@aris/ui-kit'
 import { useEffect, useState, type ReactNode } from 'react'
 import type { PageProps } from '../page.js'
 import { Later } from './BotTools.js'
@@ -105,8 +95,14 @@ export function PermsCard({ t, bot }: { t: T; bot: BotData }) {
 }
 
 interface Profile {
-  live: { status: string; task?: string }
-  week: { assigned: number; done: number; failed: number; recent: string[] }
+  live: { status: string; task?: string; since: number }
+  week: {
+    assigned: number
+    today: number
+    done: number
+    failed: number
+    recent: { task: string; at: number; result: 'done' | 'failed' | 'open' }[]
+  }
   costWeek: number | null
   memory: { core: { used: number; cap: number }; recent: { text: string; at: string }[] } | null
 }
@@ -134,89 +130,177 @@ function useProfile(bot: string): Profile | null {
   return data
 }
 
-function Tile({ label, value }: { label: string; value: ReactNode }) {
+function Stat({
+  label,
+  value,
+  sub,
+  tone,
+}: {
+  label: string
+  value: ReactNode
+  sub?: ReactNode | undefined
+  tone?: string | undefined
+}) {
   return (
-    <div className="ap-stat">
-      <div className="lb">{label}</div>
-      <div className="v">{value}</div>
+    <div className="ap-astat">
+      <span className="lb">{label}</span>
+      <span className="v" style={tone ? { color: tone } : undefined}>
+        {value}
+      </span>
+      {sub && <span className="s">{sub}</span>}
     </div>
   )
 }
 
-/** Cột phải "Tóm tắt bot": thay danh sách tên gọi / phòng / model cũ. */
+const two = (n: number) => String(n).padStart(2, '0')
+const hhmm = (ms: number) => {
+  const d = new Date(ms)
+  return `${two(d.getHours())}:${two(d.getMinutes())}`
+}
+const STATUS_TONE: Record<BotStatus, string> = {
+  working: 'var(--a-ok)',
+  waiting: 'var(--a-warn)',
+  done: 'var(--a-ok)',
+  failed: 'var(--a-danger)',
+  idle: 'var(--a-muted)',
+}
+
+/** Cột phải "Tóm tắt bot" (bản vẽ 2.2d, phương án A): thẻ đầu theo màu linh vật, ô chỉ số 7 ngày, việc gần đây, học gần đây. */
 export function BotAside({ t, bot }: { t: T; bot: BotData }) {
   const team = useTeam()
   const p = useProfile(bot.id)
   const member = bot.kind === 'commander' ? team.commander : team.members.find((m) => m.id === bot.id)
   const status = (p?.live.status ?? member?.status ?? 'idle') as BotStatus
+  const since = p?.live.since ?? 0
   const task = status !== 'idle' ? p?.live.task : undefined
+  const color = getMascot(bot.mascot)?.color ?? 'var(--a-accent)'
+  const dept = team.departments.find((d) => d.id === bot.department)?.name
   const w = p?.week
   const resolved = w ? w.done + w.failed : 0
   const money = (n: number) =>
-    n.toLocaleString(undefined, {
+    n.toLocaleString(t('aside.numLocale'), {
       minimumFractionDigits: 2,
       maximumFractionDigits: n > 0 && n < 0.01 ? 4 : 2,
     })
   const core = p?.memory?.core
+  const corePct = core ? Math.round((core.used / Math.max(core.cap, 1)) * 100) : null
+  const day = (ms: number) => {
+    const d = new Date(ms)
+    const today = new Date().setHours(0, 0, 0, 0)
+    const diff = Math.round((today - new Date(ms).setHours(0, 0, 0, 0)) / 86_400_000)
+    return diff <= 0
+      ? t('aside.today')
+      : diff === 1
+        ? t('aside.yesterday')
+        : `${two(d.getDate())}/${two(d.getMonth() + 1)}`
+  }
+  const statusLine =
+    status === 'idle'
+      ? since
+        ? t('aside.idleSince', { time: `${hhmm(since)} ${day(since)}` })
+        : t('bot.st.idle')
+      : `${t(`bot.st.${status}`)}${since ? ` · ${t('aside.since', { time: hhmm(since) })}` : ''}`
   return (
-    <aside className="ap-aside" aria-label={t('bot.summary')}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <StatusPill status={status} label={t(`bot.st.${status}`)} />
-        {task && (
-          <span className="a-muted" style={{ fontSize: 13 }}>
-            {task}
+    <aside className="ap-aside ap-aside-a" aria-label={t('bot.summary')}>
+      <div className="ap-hero" style={{ ['--bot' as string]: color }}>
+        <div className="who">
+          <Mascot id={bot.mascot} size={40} />
+          <span className="txt">
+            <b>{bot.name}</b>
+            <span className="a-muted">
+              {[...new Set([bot.role, dept].filter(Boolean))].join(' · ') || `@${bot.handle}`}
+            </span>
           </span>
-        )}
+        </div>
+        <span className="ap-chip2">
+          <span className="ap-dot2" style={{ background: STATUS_TONE[status] }} />
+          {statusLine}
+        </span>
+        {task && <span className="task">{task}</span>}
       </div>
-      <div className="ap-stats">
-        <Tile label={t('bot.aside.assigned')} value={w ? t('bot.aside.tasks', { n: w.assigned }) : '…'} />
-        <Tile
-          label={t('bot.aside.done')}
-          value={w ? (resolved ? `${Math.round((w.done / resolved) * 100)}%` : '—') : '…'}
-        />
-        <Tile
-          label={t('bot.aside.cost')}
-          value={p ? (p.costWeek === null ? '—' : `${money(p.costWeek)} USD`) : '…'}
-        />
-        <Tile
-          label={t('bot.aside.core')}
-          value={core ? `${Math.round((core.used / Math.max(core.cap, 1)) * 100)}%` : p ? '—' : '…'}
-        />
-      </div>
+
       <div>
-        <div className="ap-lb">{t('bot.aside.often', { name: bot.name })}</div>
+        <div className="ap-asec">{t('aside.week')}</div>
+        <div className="ap-astats">
+          <Stat
+            label={t('aside.assigned')}
+            value={w ? t('bot.aside.tasks', { n: w.assigned }) : '…'}
+            sub={w ? t('aside.todayCount', { n: w.today }) : undefined}
+          />
+          <Stat
+            label={t('bot.aside.done')}
+            value={w ? (resolved ? `${Math.round((w.done / resolved) * 100)}%` : '—') : '…'}
+            tone={w && resolved ? (w.failed > w.done ? 'var(--a-danger)' : 'var(--a-ok)') : undefined}
+            sub={
+              w
+                ? resolved
+                  ? t('aside.doneSub', { done: w.done, failed: w.failed })
+                  : t('aside.noneDone')
+                : undefined
+            }
+          />
+          <Stat
+            label={t('aside.cost')}
+            value={p ? (p.costWeek === null ? '—' : `${money(p.costWeek)} USD`) : '…'}
+            sub={p && p.costWeek !== null ? t('aside.perDay', { usd: money(p.costWeek / 7) }) : undefined}
+          />
+          <Stat
+            label={t('bot.aside.core')}
+            value={corePct === null ? (p ? '—' : '…') : `${corePct}%`}
+            sub={
+              core ? (
+                <span className="ap-bar">
+                  <i style={{ width: `${Math.min(100, corePct ?? 0)}%`, background: color }} />
+                </span>
+              ) : undefined
+            }
+          />
+        </div>
+      </div>
+
+      <div>
+        <div className="ap-asec">{t('bot.aside.often', { name: bot.name })}</div>
         {w?.recent.length ? (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {w.recent.map((x) => (
-              <Tag key={x}>{x}</Tag>
-            ))}
-          </div>
+          w.recent.map((r) => (
+            <div className="ap-atask" key={r.task + r.at}>
+              <span className={`ic ${r.result}`} aria-label={t(`aside.result.${r.result}`)}>
+                {r.result === 'done' ? '✓' : r.result === 'failed' ? '!' : '•'}
+              </span>
+              <span className="tt">{r.task}</span>
+              <span className="a-muted when">{day(r.at)}</span>
+            </div>
+          ))
         ) : (
           <span className="a-muted" style={{ fontSize: 12.5 }}>
             {t('bot.aside.noTasks')}
           </span>
         )}
       </div>
+
       <div>
-        <div className="ap-lb">{t('bot.aside.learned')}</div>
-        <div style={{ fontSize: 13, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {p?.memory?.recent.length ? (
-            p.memory.recent.map((m) => (
-              <span key={m.at + m.text} className="ap-clamp">
-                {t('bot.aside.remember', { text: m.text })}
-              </span>
-            ))
-          ) : (
-            <span className="a-muted" style={{ fontSize: 12.5 }}>
-              {t('bot.aside.noLearned')}
-            </span>
-          )}
-          <Later t={t} stage={3} row>
-            <span className="a-muted" style={{ fontSize: 12.5, padding: '6px 0', display: 'block' }}>
-              {t('bot.aside.skillLearn')}
-            </span>
-          </Later>
-        </div>
+        <div className="ap-asec">{t('bot.aside.learned')}</div>
+        {p?.memory?.recent.length ? (
+          <div className="ap-tl" style={{ ['--bot' as string]: color }}>
+            {p.memory.recent.map((m) => (
+              <div key={m.at + m.text}>
+                <span className="ap-clamp">{m.text}</span>
+                <span className="a-muted when">{t('aside.memoryAt', { when: day(Date.parse(m.at)) })}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <span className="a-muted" style={{ fontSize: 12.5 }}>
+            {t('bot.aside.noLearned')}
+          </span>
+        )}
+      </div>
+
+      <div style={{ marginTop: 'auto' }}>
+        <Later t={t} stage={3} row>
+          <span className="a-muted" style={{ fontSize: 12.5, padding: '8px 0', display: 'block' }}>
+            {t('bot.aside.skillLearn')}
+          </span>
+        </Later>
       </div>
     </aside>
   )
