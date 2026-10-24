@@ -352,6 +352,7 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 | Đặc tả | `docs/specs/<package>.md` trước khi code; cập nhật nhật ký tham khảo khi đọc Hermes/Tako/VoxAgent |
 | Nâng cấp dsh | Đọc hướng dẫn nâng cấp → đổi phiên bản ghim → chạy kiểm thử hợp đồng + phát lại → mới hợp nhất |
 | Giao diện | Mọi màn dùng `aris-ui-kit`; đối chiếu canvas trước khi đóng giai đoạn |
+| Revamp giao diện (sau khi xong chức năng) | Gom các việc thuần giao diện làm một lần cuối: menu chính / thanh bên (bản vẽ `MenuChinh.dc.html`: Tổng quan và Tự học, chưa chọn A/B), Bảng điều khiển nối dữ liệu thật. Trong lúc làm chức năng thì không đổi thanh bên |
 | Chi phí | Theo dõi từ giai đoạn 1; mỗi tính năng nền có trần token riêng |
 
 ## Anh cần chuẩn bị (tổng hợp)
