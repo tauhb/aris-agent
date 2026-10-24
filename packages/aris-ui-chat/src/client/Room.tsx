@@ -8,7 +8,7 @@ import { Fragment, useEffect, useState } from 'react'
 import type { Translate } from './locale.js'
 import { clock, fetchRound, noteKey, textParts, type RoomEntry, type RoundData } from './room-data.js'
 import type { SubagentCall } from './branch.js'
-import { WithMentions } from './Speaker.js'
+import { Head, WithMentions } from './Speaker.js'
 
 const mascotOf = (handle: string) => {
   const team = currentTeam()
@@ -114,13 +114,11 @@ export function RoomSay({ node, t }: { node: { data: RoomEntry & { round: number
 
 /** Đầu tin của Aris sau một vòng bàn (`conversation.chat.node`, kiểu `aris-room-lead`). */
 export function RoomLead({ node, t }: { node: { data: { at: string } }; t: Translate }) {
-  useTeamData()
-  const lead = currentTeam().commander
+  const lead = useTeamData()?.bots.find((b) => b.kind === 'commander')
+  if (!lead) return null
   return (
     <div className="aris aris-room-lead">
-      <Mascot id={lead.mascot ?? 'aris'} size={32} />
-      <b>{lead.name}</b>
-      <span>{[t('room.lead'), clock(node.data.at)].join(' · ')}</span>
+      <Head bot={lead} time={clock(node.data.at)} big t={t} />
     </div>
   )
 }

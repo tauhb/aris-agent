@@ -9,11 +9,21 @@ export const CSS = `
 .aris-who:focus-visible{outline:2px solid currentColor;outline-offset:1px}
 .aris-who.inv{background:color-mix(in srgb,currentColor 14%,transparent);border-color:color-mix(in srgb,currentColor 32%,transparent)}
 .aris-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
-.aris-head b{font-size:14.5px;font-weight:650;color:var(--a-ink)}
+.aris-head .nm{font-size:14.5px;font-weight:650;color:var(--a-ink)}
 .aris-head .role{font-size:11.5px;font-weight:600;border-radius:6px;padding:1px 7px;color:var(--a-ink);background:color-mix(in srgb,var(--who,#64748B) 14%,transparent)}
 .aris-head .role.lead{color:var(--a-accent);background:var(--a-accentSoft)}
 .aris-head .time{font-size:12.5px;color:var(--a-muted)}
-.aris-turn-head{padding:12px 0 2px}
+.aris-head.big{gap:8px 12px;min-height:32px}
+.aris-head.big .nm{font-size:15.5px;font-weight:700;color:color-mix(in srgb,var(--who) 72%,#000)}
+[data-ds-dark-theme] .aris-head.big .nm{color:color-mix(in srgb,var(--who) 62%,#fff)}
+.aris-turn-head,.aris-room-lead{padding:14px 0 2px}
+/* Phương án B (bản vẽ 1.7b): lượt trả lời thụt vào thẳng hàng với tên, vạch màu linh vật chạy dọc từ dưới linh vật tới hết lượt. */
+[data-slot="conversation.chat.flow"]{--aris-rail:color-mix(in srgb,var(--aris-who,#64748B) 55%,Canvas)}
+[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="aris-turn-head"],[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="aris-room-lead"]{position:relative}
+[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="aris-turn-head"]::after,[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="aris-room-lead"]::after{content:"";position:absolute;left:14.5px;top:52px;bottom:0;width:3px;border-radius:2px 2px 0 0;background:var(--aris-rail)}
+[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-process"],[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="assistant-step"],[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="tool-call"],[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-tail"],[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-error"],[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-max-tokens"],[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="model-retry"],[data-slot="conversation.chat.flow"]>[data-chat-group-key]{position:relative;padding-left:44px}
+[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-process"]::before,[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="assistant-step"]::before,[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="tool-call"]::before,[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-tail"]::before,[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-error"]::before,[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-max-tokens"]::before,[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="model-retry"]::before,[data-slot="conversation.chat.flow"]>[data-chat-group-key]::before{content:"";position:absolute;left:14.5px;top:-16px;bottom:0;width:3px;background:var(--aris-rail)}
+[data-slot="conversation.chat.flow"]>[data-chat-flow-kind="turn-tail"]::before{border-radius:0 0 2px 2px}
 .aris-report{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid var(--a-line);border-radius:14px;background:var(--a-panel)}
 .aris-report .st{font-size:12.5px;color:var(--a-muted)}
 .aris-report .x{white-space:pre-wrap;line-height:1.6;overflow-wrap:anywhere;color:var(--a-ink);font-size:14px}
@@ -51,9 +61,6 @@ export const CSS = `
 .aris-room-msg .h b{font-size:14.5px;font-weight:650;color:var(--a-ink)}
 .aris-room-msg .h span{font-size:12.5px;color:var(--a-muted)}
 .aris-room-msg .x{white-space:pre-wrap;line-height:1.6;overflow-wrap:anywhere;color:var(--a-ink)}
-.aris-room-lead{display:flex;align-items:center;gap:10px;padding:14px 0 2px}
-.aris-room-lead b{font-size:14.5px;font-weight:650;color:var(--a-ink)}
-.aris-room-lead span{font-size:12.5px;color:var(--a-muted)}
 .aris-room-note{align-self:center;text-align:center;font-size:12.5px;color:var(--a-muted)}
 .aris-room-typing{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--a-muted)}
 .aris-room-typing .dot{width:7px;height:7px;border-radius:50%;background:var(--a-accent);animation:aris-room-pulse 1.2s ease-in-out infinite}

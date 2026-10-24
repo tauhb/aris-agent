@@ -4,7 +4,7 @@
  */
 import { getMascot } from '@aris/ui-kit'
 import { Mascot, arisNavigate, useSessionBot, useTeamData, type BotData } from '@aris/ui-kit/react'
-import { useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import type { Translate } from './locale.js'
 import { clock } from './room-data.js'
 import { botSource, inlineParts, reportParts, splitMentions } from './who-data.js'
@@ -47,20 +47,29 @@ function roleOf(bot: BotData, t: Translate): string {
   return bot.role
 }
 
-function Head({ bot, time, note, t }: { bot: BotData; time?: string; note?: string; t: Translate }) {
+export function Head({
+  bot,
+  time,
+  note,
+  big,
+  t,
+}: {
+  bot: BotData
+  time?: string
+  note?: string
+  /** Đầu lượt (phương án B): linh vật 32px đứng ở cột trái, tên mang màu linh vật. */
+  big?: boolean
+  t: Translate
+}) {
   const lead = bot.kind === 'commander'
   return (
-    <div className="aris-head">
-      <Mascot id={bot.mascot} size={24} />
-      <b>{bot.name}</b>
-      {roleOf(bot, t) && (
-        <span
-          className={lead ? 'role lead' : 'role'}
-          style={lead ? undefined : ({ '--who': colorOf(bot.mascot) } as CSSProperties)}
-        >
-          {roleOf(bot, t)}
-        </span>
-      )}
+    <div
+      className={big ? 'aris-head big' : 'aris-head'}
+      style={{ '--who': colorOf(bot.mascot) } as CSSProperties}
+    >
+      <Mascot id={bot.mascot} size={big ? 32 : 24} />
+      <b className="nm">{bot.name}</b>
+      {roleOf(bot, t) && <span className={lead ? 'role lead' : 'role'}>{roleOf(bot, t)}</span>}
       <span className="time">{[note, time].filter(Boolean).join(' · ')}</span>
     </div>
   )
@@ -83,10 +92,17 @@ export function TurnHead({
   t: Translate
 }) {
   const bot = useSessionBot(sessionId)
+  const ref = useRef<HTMLDivElement>(null)
+  const color = bot ? colorOf(bot.mascot) : undefined
+  // Màu của người trả lời cho cả khung dòng chảy: các dòng của lượt (dsh vẽ) thụt vào và có vạch màu này.
+  useEffect(() => {
+    const flow = ref.current?.closest<HTMLElement>('[data-slot="conversation.chat.flow"]')
+    if (flow && color) flow.style.setProperty('--aris-who', color)
+  }, [color])
   if (!bot) return null
   return (
-    <div className="aris aris-turn-head">
-      <Head bot={bot} time={timeOf(node.data.time)} t={t} />
+    <div ref={ref} className="aris aris-turn-head">
+      <Head bot={bot} time={timeOf(node.data.time)} big t={t} />
     </div>
   )
 }
