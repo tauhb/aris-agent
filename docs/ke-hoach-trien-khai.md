@@ -21,11 +21,11 @@
 | **1 · Một bot dùng hằng ngày** | 2 tuần | Nhắn Aris qua Telegram, Aris nhớ anh, đổi được model; chạy ngầm 24/7 và `aris ask` trong script | 1.1 (chưa có đội), 1.6, 3.1, 6.2, 6.3 (Telegram), 6.7 |
 | **2 · Đội bot và Commander** | 3 tuần | 5 bot có linh vật, Aris giao việc cho đội **kể cả bot ngoài** (Claude Code, Codex, Hermes…), thấy dòng việc rẽ nhánh và bản đồ 3D | 1.1–1.5, 2.1–2.5, 2.1b |
 | **3 · Tự tiến hoá** | 3 tuần | Bot tự học ký ức, tự đề xuất skill có kiểm thử, anh duyệt qua Telegram | 2.3, 3.2–3.5, 7.1, 7.3 |
-| **4 · Tự động** | 2 tuần | Routine 8h sáng tự gửi, Kanban cho dự án dài | 4.1–4.3, 7.2 |
+| **4 · Tự động** | 2 tuần | Routine 8h sáng tự gửi, Kanban cho dự án dài; bot dùng trình duyệt, sửa tệp có điểm khôi phục | 4.1–4.3, 7.2, 3.5 (điểm khôi phục) |
 | **5 · Second Brain và đồ thị** | 3 tuần | Ghi âm Telegram → ghi chú có liên kết, hỏi bộ não, đồ thị 2D/3D | 5.1–5.4 |
 | **6 · Mở cửa: aris trong nền tảng khác** | 2 tuần | Aris làm agent thành viên trong IDE, **Buzz Desktop**, Open WebUI; gọi và được gọi bởi agent khác (A2A); mở tool cho Claude Desktop/Cursor (MCP) | 6.3b Mặt tích hợp, 6.4 |
 | **7 · Cứng cáp và lên server** | 2 tuần | Chạy 24/7 trên server, an toàn mạng, ngân sách, Lark + Zalo, đo đối đầu với Hermes | 6.1, 6.4, 6.5 |
-| **8 · Mở rộng** | theo nhu cầu | Màn hình của bot, trình duyệt tự động, chat web trên điện thoại, Buzz như kênh nhắn tin… | 6.6, 7.4 |
+| **8 · Mở rộng** | theo nhu cầu | Màn hình của bot, computer-use, chat web trên điện thoại, Buzz như kênh nhắn tin… | 6.6, 7.4 |
 
 Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai đoạn G).
 
@@ -242,7 +242,7 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 | `aris-reflect` | Vòng học chạy nền qua `ctx.jobs`, kích hoạt theo **tín hiệu** (bị sửa sai, "nhớ nhé", nhiều bước, lỗi rồi tìm ra cách) + lưới an toàn theo bộ đếm; fork phiên để trúng prompt cache; đầu ra JSON có schema; trần token/lần và /ngày |
 | `aris-user-model` | Nhận định về anh có độ tin cậy và bằng chứng; chỉ vòng học được cập nhật; ≥ 0,8 mới vào prompt |
 | `aris-skill-forge` | Tạo/vá skill (`SKILL.md`), linter "bài học, không phải nhật ký"; **kiểm thử bằng chạy lại phiên cũ** trong sandbox không mạng; vòng đời nháp → ứng viên → đang dùng; Commander học "ai làm tốt việc gì" |
-| `aris-curator` | Skill không dùng 14 ngày → ít dùng, 30 ngày → lưu kho; ghim; sao lưu và quay lui |
+| `aris-curator` | Skill không dùng 30 ngày → ít dùng, 90 ngày → lưu kho (đợt 6; ban đầu 14/30); ghim; sao lưu và quay lui |
 | `aris-approvals` | Hộp duyệt chung (hành động, ký ức, skill); thẻ duyệt có nút trên Telegram; hết hạn ⇒ từ chối; gợi ý luật từ lịch sử duyệt |
 | Tự trị | `/goal` (giám khảo chấm sau mỗi lượt), `/loop`, `/heartbeat` |
 
@@ -267,6 +267,8 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 | `aris-cron` | Tạo routine bằng lời → hiện bản dịch lịch để xác nhận; chạy ở phiên mới với quyền chặt; giao kết quả ra kênh; chạy bù khi máy tắt; chế độ chỉ chạy script không dùng AI; báo khi lỗi liên tiếp; tạm dừng tất cả |
 | `aris-kanban` | Bảng việc bền dùng chung cho đội: thẻ, phụ thuộc, người nhận là bot; Commander tự chia việc (tự động/thủ công); Driver mặc định tắt |
 | Webhook | Sự kiện ngoài (vd. GitHub) tạo phiên qua `ctx.webhookRuntime` |
+| Trình duyệt tự động (bù Hermes) | Cắm MCP trình duyệt (Playwright hoặc Chrome DevTools) làm bộ công cụ bật theo bot, quyền hỏi trước khi gửi biểu mẫu; dsh bản ghim không có gói trình duyệt. Routine như "tin đối thủ trong tuần" cần đọc web động |
+| Điểm khôi phục tệp (bù Hermes) | Chụp thư mục làm việc (git ẩn) trước khi bot sửa tệp; "Xem khác biệt" và "Khôi phục" ở màn 3.5 (phần đang để mờ); bắt buộc cho routine chạy không người trông |
 
 **Giao diện**: 4.1 Routine, 4.2 Tạo routine, 4.3 Kanban, 7.2 Thẻ báo cáo routine. Thêm tab **Routine · N** trong hồ sơ bot (bản vẽ 2.2 có nhãn tab nhưng chưa vẽ nội dung; vẽ 2.2e trước: bảng routine của bot như 4.1, lọc theo bot, nút "+ Routine cho <bot>", cảnh báo routine lỗi) — ghi nhận 24/10.
 
@@ -282,6 +284,8 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 |---|---|
 | `aris-brain` | Kho ghi chú Markdown (mở được bằng Obsidian, có git); Hộp thư vào nhận tin chuyển tiếp, link, ảnh, ghi âm từ Telegram/Lark/Zalo hoặc `/note`; xử lý nền: chép lời, tóm tắt, gắn thẻ, đề xuất chỗ xếp, trích người/dự án/ngày hẹn |
 | Tìm kiếm | SQLite FTS5 + chỉ mục vector (model nhúng qua `aris-providers`, có thể chạy Ollama trên máy); "Hỏi bộ não" trả lời có trích dẫn; tool `brain_search`, `brain_capture`; phân quyền đọc/ghi theo bot |
+| Giọng nói và ảnh (bù Hermes) | Trả lời bằng giọng trên Telegram (đọc văn bản, có giọng tiếng Việt), tạo ảnh từ lời mô tả; qua MCP hoặc công cụ gọi API, bật theo bot |
+| Hiểu chủ nhân sâu (bù Hermes) | Hồ sơ chủ nhân suy luận thường xuyên hơn (mỗi vài lượt, nhiều vòng: suy, tự soát, hoà giải), làm nóng đầu phiên, tìm theo nghĩa trên các nhận định; dùng chung chỉ mục vector của Second Brain |
 | `aris-graph` | Chỉ mục cạnh: `[[liên kết]]`, thực thể, nguồn gốc ký ức; gợi ý nối; đồ thị quanh ghi chú (2D) và đồ thị toàn cục (3D) |
 
 **Giao diện**: 5.1 Ghi chú (đồ thị 2D quanh ghi chú), 5.2 Hộp thư vào, 5.3 Đồ thị toàn cục 3D, 5.4 Hỏi bộ não; phần "Từ Second Brain" trong menu đính kèm.
@@ -340,13 +344,35 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 ## Giai đoạn 8 · Mở rộng (theo nhu cầu)
 
 - 6.6 Màn hình của bot (desktop ảo, cầm lái khi gặp đăng nhập/2FA).
-- Trình duyệt tự động, computer-use (dsh có sẵn `browser-use`, `computer-use`).
+- Computer-use (điều khiển cả máy). Trình duyệt tự động đã chuyển lên giai đoạn 4; dsh bản ghim 0.2.1-rc.2 không có gói `browser-use` hay `computer-use` (kiểm 25/10).
 - 7.4 Chat web trên điện thoại (PWA).
 - Buzz như một kênh nhắn tin ngang Telegram (M10); thêm Discord, Slack, WhatsApp khi cần.
 - Bot tự viết tool qua hệ con `extensions` của dsh (luôn cần duyệt).
-- Nhập cấu hình/skill từ Claude Code, Codex, Cursor; kho skill cộng đồng; xuất trajectory để huấn luyện.
+- Nhập cấu hình/skill từ Claude Code, Codex, Cursor; kho skill cộng đồng (cài qua quét bảo mật và duyệt); xuất trajectory để huấn luyện.
+- Phần bù Hermes còn lại: phán quyết "chờ" của `/goal` (đợi tiến trình nền như CI), gộp skill trùng bằng model.
 
 ---
+
+## Bù năng lực một bot so với Hermes (đánh giá 25/10)
+
+Câu hỏi: người dùng chỉ dùng Aris, không tạo bot khác, thì có mạnh như một Hermes không (aris nhiều bot tương đương Hermes nhiều profile; mỗi profile Hermes là một Hermes đầy đủ). Đối chiếu tài liệu Hermes bản đang cài và gói dsh bản ghim (nhật ký clean-room 24/10):
+
+- **Ngang hoặc hơn**: vòng lặp và công cụ lõi của dsh (lệnh, tệp, tìm, tìm và đọc web, MCP, agent con, chạy script nhiều bước, kế hoạch, nén ngữ cảnh); ký ức có hiệu lực ngay; tự học có duyệt và kiểm thử skill; `/goal` có hợp đồng và chặn khi không tiến triển; trần chi phí, dự phòng provider, xoay vòng khoá.
+- **Còn kém, xếp vào giai đoạn**:
+
+| Chỗ kém | Hermes | Xếp vào |
+|---|---|---|
+| Trình duyệt tự động | Nhiều backend | Giai đoạn 4 (MCP trình duyệt) |
+| Điểm khôi phục tệp, `/rollback` | Tự chụp trước khi sửa | Giai đoạn 4 |
+| Lịch tự động (routine) | Có | Giai đoạn 4 (đã có) |
+| Đọc văn bản thành giọng, chế độ thoại, tạo ảnh | 10 provider giọng, 11 model ảnh | Giai đoạn 5 |
+| Hiểu người dùng sâu (kiểu Honcho) | Biện chứng nhiều vòng, làm nóng đầu phiên | Giai đoạn 5 |
+| API tương thích OpenAI, A2A | Có | Giai đoạn 6 (đã có) |
+| Kênh nhắn tin | ~35 nền tảng | Giai đoạn 7 (Lark, Zalo), giai đoạn 8 (Discord, Slack, WhatsApp…) |
+| Computer-use, kho skill cộng đồng, phán quyết "chờ", gộp skill trùng | Có | Giai đoạn 8 |
+| Độ trưởng thành, hàng trăm skill dựng sẵn | Nhiều năm dùng thật | Đo đối đầu ở giai đoạn 7; skill tích luỹ qua dùng thật |
+
+Ưu tiên cắm MCP có sẵn thay vì tự viết khi được (trình duyệt, giọng, ảnh). Chất lượng một bot còn phụ thuộc model: mặc định DeepSeek Flash; việc khó đổi model mạnh hơn qua `aris-providers`.
 
 ## Việc xuyên suốt mọi giai đoạn
 

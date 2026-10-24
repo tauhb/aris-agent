@@ -66,7 +66,7 @@ Hermes là một dự án rất lớn (~1,09 triệu dòng Python, ~20.700 file)
 | A10 | Agent con: đơn lẻ, song song (lô), chạy nền trả kết quả sau | `delegate_task`, mặc định tối đa 10 song song | `subagent` (preset riêng, `depthLimit`), giao kết quả qua inbox | ✅ | P0 | 🖥️ UI-14 |
 | A11 | Terminal: local, SSH, Docker; tiến trình nền | Nhiều backend | sandbox local + `ssh`; thêm provider Docker | ⚠️ | P1 | — |
 | A12 | Checkpoint & `/rollback` file trước khi sửa | Shadow git repo | dsh `worktrees` + snapshot trước thao tác ghi | ⚠️ | P1 | 🖥️ UI-14 |
-| A13 | Trình duyệt tự động, computer-use | Nhiều backend browser, cua-driver | `browser-use`, `computer-use` của dsh | ✅ | P2 | — |
+| A13 | Trình duyệt tự động, computer-use | Nhiều backend browser, cua-driver | dsh bản ghim 0.2.1-rc.2 **không có** gói trình duyệt hay computer-use (kiểm 25/10; trước đây ghi nhầm là có sẵn). Trình duyệt: cắm MCP (Playwright, Chrome DevTools) ở giai đoạn 4; computer-use để giai đoạn 8 | ❌ | P1 | — |
 | A14 | Nhìn ảnh, đọc tài liệu (PDF/Office) | Vision, document extraction | dsh `attachment`, `office-to-pdf` | ✅ | P1 | — |
 | A15 | Giọng nói: ghi âm → chữ, đọc trả lời (TTS) | STT/TTS 10 provider | dsh `voice-input` + provider TTS tiếng Việt | ⚠️ | P1 | — |
 | A16 | Tạo ảnh/video | FAL, xAI… | Tool gọi API tạo ảnh | ❌ | P2 | — |
@@ -576,4 +576,5 @@ Quy tắc thiết kế:
 | Độ rộng provider | Hermes ~85 provider dựng sẵn | Kiểu SDK "tương thích OpenAI" + URL + khoá phủ phần lớn; danh mục dựng sẵn tăng dần |
 | Kho skill dựng sẵn | Hermes có hàng trăm skill | aris dùng chung **định dạng `SKILL.md`** nên anh cài được skill cộng đồng; aris không chép skill của Hermes vào repo |
 | Độ trưởng thành | Hermes ~1 triệu dòng, nhiều năm sửa lỗi thực tế | Bám log append-only của dsh, kiểm thử "hỗn loạn" từ giai đoạn 1, chạy thật 14 ngày trước khi gọi là ổn |
+| Năng lực một bot (đánh giá 25/10) | Dùng Aris một mình: ngang Hermes về vòng học, ký ức, tự quản; kém về trình duyệt, điểm khôi phục tệp, giọng nói, tạo ảnh, kênh | Xếp vào giai đoạn 4, 5, 7, 8 — mục "Bù năng lực một bot so với Hermes" của kế hoạch triển khai |
 | "Hiệu năng vượt trội" | **Hiện mới là chỉ tiêu** (mục 10.3), chưa có số đo | Bộ đo đối đầu ở giai đoạn 7 (30 tác vụ, cùng máy, cùng model); chưa đạt thì chưa tuyên bố |
