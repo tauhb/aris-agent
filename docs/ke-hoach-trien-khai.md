@@ -145,7 +145,7 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 ## Giai đoạn 2 · Đội bot và Commander (tuần 6–8)
 
-> **Nghiệm thu 24/10** ([biên bản](nghiem-thu/giai-doan-2.md)): `pnpm check` đạt (335 test). Tiêu chí 1–4 đạt (thử lại 1 và 4 trong ngày: Aris giao Minh và An song song, duyệt lời mời họp; Thơ gọi `giao_viec` bị từ chối), 5 đạt về cơ chế (thử với 2 việc con), 6 đạt một phần (bot ngoài Claude Code chạy và duyệt trên web; chưa thử duyệt trên Telegram cho bot ngoài). Còn lại: thử tiêu chí 6 trên Telegram, trang Commander 2.5 nối dữ liệu thật, Bảng điều khiển ra menu chính.
+> **Nghiệm thu 24/10** ([biên bản](nghiem-thu/giai-doan-2.md)): `pnpm check` đạt (335 test). Tiêu chí 1, 2, 3, 4, 6 đạt, 5 đạt về cơ chế (thử với 2 việc con). Thử lại trong ngày: Aris giao Minh và An song song, duyệt lời mời họp; Thơ gọi `giao_viec` bị từ chối; Kiệt (Claude Code) sửa lỗi đăng nhập repo thử, 6 lần xin quyền đều duyệt trên Telegram. Còn lại: worktree cho repo nêu trong việc khi phiên giao không ở repo đó, trang Commander 2.5 nối dữ liệu thật, Bảng điều khiển ra menu chính.
 
 > **Hồ sơ bot đợt 4/4 xong 24/10 — Tính cách; màn Hồ sơ bot (2.2, 2.2c) làm đủ** ([đặc tả](specs/aris-bots.md#hồ-sơ-bot--tính-cách-đợt-4)): tính cách theo phiên bản (xem, khôi phục), "Nhờ Aris viết lại" có gợi ý nhanh và so sánh bên cạnh bản hiện tại. Cả 4 đợt: Skill & tool (kết nối MCP, bộ công cụ), Quyền & kênh, cột phải số liệu thật, Model theo việc, Tính cách. Phần thuộc giai đoạn sau hiện mờ, ghi rõ giai đoạn.
 

@@ -15,7 +15,7 @@ Ngày 24/10/2026, nhánh `claude/fervent-bose-b47879`. Tiêu chí lấy từ [k�
 | 3 | Nhắn thẳng cho một bot qua bot Telegram riêng của nó | **Đạt** | Bước 5: trang 6.3 gắn tài khoản Telegram cho từng bot; người dùng đã thử nhắn riêng và nhận trả lời của đúng bot. |
 | 4 | Bot thường không giao việc tiếp; chỉ Commander và trưởng nhóm đang nhận việc của phòng được mở Team | **Đạt** | Thử 24/10 18:21: Thơ gọi `giao_viec` → "Không giao được: Chỉ Commander, hoặc trưởng nhóm đang nhận việc lớn của phòng, được giao việc."; `spawn_teammate` bị chặn ở phiên bot thường (luật đội). Thêm: bot tắt "Commander được giao việc" thì `giao_viec` của Aris cũng báo lỗi (test). |
 | 5 | Giao "nghiên cứu sâu 5 đối thủ" cho một phòng ⇒ trưởng nhóm mở Team riêng, nộp báo cáo vào thẻ Kanban | **Đạt về cơ chế** (thử với 2 việc con, chưa chạy đúng 5 báo cáo) | Bước 3d: Aris `giao_phong` phòng Tăng trưởng → Thơ (trưởng nhóm) chia 2 thẻ cho Minh, Phát trong Team riêng → xong 2/2 → báo cáo về Aris; Kanban có thẻ "Việc lớn · Tăng trưởng" kèm tiến độ. |
-| 6 | "Sửa lỗi đăng nhập trong repo X" ⇒ giao bot ngoài Claude Code, thấy từng bước trên nhánh, duyệt lệnh nguy hiểm trên Telegram | **Đạt một phần**: còn thiếu duyệt trên Telegram cho bot ngoài | Bước 4: Kiệt (Claude Code) chạy lệnh, đọc README, ghi tệp trong worktree, từng bước hiện trên nhánh, duyệt trên thanh duyệt web, 0,15 / 3,00 USD. Thẻ Telegram cho yêu cầu của bot ngoài đã có trong mã (cùng đường với bot trong đội, đã thử với Khoa ở bước 6) nhưng chưa thử thật với bot ngoài. |
+| 6 | "Sửa lỗi đăng nhập trong repo X" ⇒ giao bot ngoài Claude Code, thấy từng bước trên nhánh, duyệt lệnh nguy hiểm trên Telegram | **Đạt** | Thử 24/10 18:27 với repo thử `demo-login` (test báo đúng mật khẩu vẫn không đăng nhập được): Aris giao Kiệt (Claude Code); nhánh hiện từng bước (chạy test, đọc `login.js`, sửa, chạy lại test); 6 lần xin quyền (lệnh Bash, sửa tệp) đều được người dùng duyệt trên Telegram (bản ghi `by: telegram`); Kiệt sửa đúng chỗ (`digest('base64')` thành `digest('hex')`), test đạt, 0,19 USD. Lưu ý: việc giao từ phiên chat riêng (thư mục không phải repo) nên không có worktree, Kiệt sửa thẳng repo gốc; worktree chỉ tạo khi thư mục của phiên giao việc là repo (đã thử ở bước 4). |
 
 ## Hạng mục trong kế hoạch
 
@@ -34,8 +34,8 @@ Ngày 24/10/2026, nhánh `claude/fervent-bose-b47879`. Tiêu chí lấy từ [k�
 
 ## Còn lại
 
-- Tiêu chí 6: thử duyệt lệnh của bot ngoài trên Telegram.
 - Tiêu chí 1: người dùng xác nhận thẻ "CẦN DUYỆT · An" trên Telegram đã tự cập nhật thành "đã duyệt trên web".
+- Bot ngoài nhận việc có đường dẫn repo khác thư mục của phiên giao việc: chưa tạo worktree cho repo đó (sửa thẳng repo gốc).
 - Tiêu chí 5 ở quy mô 5 báo cáo (tuỳ chọn, tốn thêm chi phí model).
 - Trang Commander 2.5 nối dữ liệu thật cho danh sách bot và giới hạn.
 - Bảng điều khiển (6.1) đã rời Cài đặt, sẽ ra menu chính; hiện vẫn là dữ liệu mẫu.
