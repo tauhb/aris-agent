@@ -5,7 +5,6 @@
 import { Button, Dialog, teamAction, type BotData } from '@aris/ui-kit/react'
 import { useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
-import { Box } from '../ui.js'
 
 type T = PageProps['t']
 
@@ -197,97 +196,71 @@ function RewriteDialog({
   )
 }
 
-/** Thẻ "Tính cách (SOUL)" theo bản vẽ 2.2. Bản Aris viết chỉ vào ô sửa; bấm Lưu mới lưu (ghi là Aris viết). */
-export function SoulCard({ t, bot }: { t: T; bot: BotData }) {
-  const [soul, setSoul] = useState(bot.soul)
-  const [fromAris, setFromAris] = useState(false)
+/**
+ * Mục "Tính cách (SOUL)" trong biểu mẫu hồ sơ (bản vẽ 2.2): dòng phiên bản, ô sửa, Lịch sử phiên bản,
+ * Nhờ Aris viết lại. Bản Aris viết chỉ vào ô sửa (`onAris`); nút Lưu của hồ sơ mới lưu.
+ */
+export function SoulField({
+  t,
+  bot,
+  value,
+  onChange,
+  fromAris,
+  onAris,
+}: {
+  t: T
+  bot: BotData
+  value: string
+  onChange: (soul: string) => void
+  fromAris: boolean
+  onAris: (soul: string) => void
+}) {
   const [dialog, setDialog] = useState<'history' | 'rewrite' | null>(null)
-  const [busy, setBusy] = useState(false)
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
-  useEffect(() => {
-    setSoul(bot.soul)
-    setFromAris(false)
-  }, [bot.id, bot.soul])
   const meta = bot.soulMeta
-  async function save() {
-    setBusy(true)
-    setMsg(null)
-    try {
-      await teamAction({ op: 'update', id: bot.id, patch: { soul }, ...(fromAris ? { soulBy: 'aris' } : {}) })
-      setMsg({ ok: true, text: t('bot.saved') })
-      setFromAris(false)
-    } catch (e) {
-      setMsg({ ok: false, text: (e as Error).message })
-    } finally {
-      setBusy(false)
-    }
-  }
   return (
-    <>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: 10,
-          flexWrap: 'wrap',
-        }}
-      >
-        <span style={{ fontWeight: 600 }}>{t('bot.soulTitle')}</span>
+    <div className="a-field">
+      <span className="ap-soulhead">
+        <span className="l">{t('bot.soulTitle')}</span>
         {meta && (
           <span className="a-muted" style={{ fontSize: 12.5 }}>
             {t('soul.meta', { date: dateOf(meta.at), n: meta.version })}
           </span>
         )}
-      </div>
+      </span>
       <textarea
         className="ap-soul a-mono"
         rows={6}
-        value={soul}
-        onChange={(e) => (setSoul(e.target.value), setMsg(null))}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         aria-label={t('bot.soulTitle')}
       />
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        <Button onClick={() => setDialog('history')}>{t('soul.history')}</Button>
-        <Button onClick={() => setDialog('rewrite')}>{t('soul.askAris')}</Button>
-        <span style={{ flex: 1 }} />
-        {fromAris && soul !== bot.soul && !msg && (
+      <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <Button size="sm" onClick={() => setDialog('history')}>
+          {t('soul.history')}
+        </Button>
+        <Button size="sm" onClick={() => setDialog('rewrite')}>
+          {t('soul.askAris')}
+        </Button>
+        {fromAris && value !== bot.soul && (
           <span className="a-muted" style={{ fontSize: 12.5 }}>
             {t('soul.unsavedAris')}
           </span>
         )}
-        {msg && (
-          <span style={{ fontSize: 12.5, color: msg.ok ? 'var(--a-ok)' : 'var(--a-danger)' }}>
-            {msg.text}
-          </span>
-        )}
-        <Button variant="primary" disabled={busy || soul === bot.soul} onClick={() => void save()}>
-          {t('bot.save')}
-        </Button>
-      </div>
-      <Box style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 14px' }}>
-        <span className="a-muted" style={{ fontSize: 18, lineHeight: 1 }}>
-          ⓘ
-        </span>
-        <span className="a-muted" style={{ fontSize: 13 }}>
-          {t('bot.soulNote', { name: bot.name })}
-        </span>
-      </Box>
+      </span>
+      <span className="h">ⓘ {t('bot.soulNote', { name: bot.name })}</span>
       {dialog === 'history' && <HistoryDialog t={t} bot={bot} onClose={() => setDialog(null)} />}
       {dialog === 'rewrite' && (
         <RewriteDialog
           t={t}
           bot={bot}
-          draft={soul}
+          draft={value}
           onClose={() => setDialog(null)}
           onUse={(next) => {
-            setSoul(next)
-            setFromAris(true)
-            setMsg(null)
+            onAris(next)
             setDialog(null)
           }}
         />
       )}
-    </>
+    </div>
   )
 }

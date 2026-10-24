@@ -45,6 +45,7 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-taskrow .ctl{flex:1 1 260px;min-width:0;max-width:380px;display:flex}
 .ap-later.row .ap-taskrow{border-top:0}
 .ap-soul{flex:none;min-height:150px;resize:vertical}
+.ap-soulhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .ap-sec{font-weight:600;padding-top:10px;margin-top:4px;border-top:1px solid var(--a-line)}
 .ap-soul.view{margin:0;white-space:pre-wrap;word-break:break-word;min-height:120px;max-height:340px;overflow:auto}
 .ap-soulhist{display:grid;grid-template-columns:minmax(180px,230px) minmax(0,1fr);gap:12px}

@@ -352,7 +352,6 @@ export const TEAM_TEXT = text(
     'ext.installFailed': 'Could not install the plugin: {error}',
 
     'later.stage': 'Stage {n}',
-    'bot.profileTitle': 'Bot profile',
     'soul.meta': 'top of the prompt · last edited {date} · version {n}',
     'soul.history': 'Version history',
     'soul.askAris': 'Ask Aris to rewrite',
@@ -915,7 +914,6 @@ export const TEAM_TEXT = text(
     'ext.noTarget': 'Bản dsh này không có plugin {agent} để cài.',
     'ext.installFailed': 'Không cài được plugin: {error}',
     'later.stage': 'Giai đoạn {n}',
-    'bot.profileTitle': 'Hồ sơ bot',
     'soul.meta': 'đứng đầu prompt · sửa lần cuối {date} · phiên bản {n}',
     'soul.history': 'Lịch sử phiên bản',
     'soul.askAris': 'Nhờ Aris viết lại',

@@ -52,7 +52,7 @@ function BotChannels({ t, botId, onConnect }: { t: PageProps['t']; botId: string
   )
 }
 import { BotAside, PermsCard } from './BotPerms.js'
-import { SoulCard } from './BotSoul.js'
+import { SoulField } from './BotSoul.js'
 import { Later, SkillsTab } from './BotTools.js'
 import { ExternalSettings } from './ExternalBot.js'
 import { MascotPicker } from './MascotPicker.js'
@@ -77,12 +77,15 @@ function ProfileForm({
   const [form, setForm] = useState(bot)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  // Ô SOUL đang giữ bản Aris viết (lưu thì ghi phiên bản là "Aris viết").
+  const [fromAris, setFromAris] = useState(false)
   useEffect(() => {
     setForm(bot)
     setMsg(null)
+    setFromAris(false)
   }, [bot])
   const set = (patch: Partial<BotData>) => (setForm({ ...form, ...patch }), setMsg(null))
-  const dirty = (['name', 'handle', 'role', 'description', 'mascot', 'department'] as const).some(
+  const dirty = (['name', 'handle', 'role', 'description', 'soul', 'mascot', 'department'] as const).some(
     (k) => (form[k] ?? '') !== (bot[k] ?? ''),
   )
 
@@ -97,9 +100,11 @@ function ProfileForm({
           handle: form.handle,
           role: form.role,
           description: form.description,
+          ...(form.soul !== bot.soul ? { soul: form.soul } : {}),
           mascot: form.mascot,
           department: form.department || null,
         },
+        ...(fromAris && form.soul !== bot.soul ? { soulBy: 'aris' } : {}),
       })
       setMsg({ ok: true, text: t('bot.saved') })
     } catch (e) {
@@ -123,7 +128,6 @@ function ProfileForm({
 
   return (
     <>
-      <div className="ap-sec">{t('bot.profileTitle')}</div>
       <div className="ap-grid-2" style={{ gap: 12 }}>
         <label className="a-field">
           <span className="l">{t('bot.name')}</span>
@@ -152,6 +156,14 @@ function ProfileForm({
           </div>
         )}
       </div>
+      <SoulField
+        t={t}
+        bot={bot}
+        value={form.soul}
+        onChange={(soul) => (set({ soul }), setFromAris(false))}
+        fromAris={fromAris}
+        onAris={(soul) => (set({ soul }), setFromAris(true))}
+      />
       <label className="a-field">
         <span className="l">{t('bot.about')}</span>
         <textarea
@@ -367,12 +379,7 @@ export function BotProfile({ t, nav, params, plugins }: PageProps) {
           className="a-page-body"
           style={{ maxWidth: 860, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}
         >
-          {tab === 'soul' && (
-            <>
-              <SoulCard t={t} bot={bot} />
-              <ProfileForm t={t} bot={bot} team={team} onDeleted={() => nav.go('map')} />
-            </>
-          )}
+          {tab === 'soul' && <ProfileForm t={t} bot={bot} team={team} onDeleted={() => nav.go('map')} />}
           {tab === 'external' && bot.external && (
             <ExternalSettings t={t} bot={{ ...bot, external: bot.external }} plugins={plugins} />
           )}
