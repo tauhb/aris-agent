@@ -78,6 +78,8 @@ export class RoomState {
   /** Bot đã nói gì trong lượt này (tin, bỏ lượt, bị bỏ qua…), cho cột phải của dự án. */
   spoke = new Map<string, RoomEntry['kind']>()
   speaking: string | undefined
+  /** Vòng vừa xong: câu trả lời kế tiếp của Aris là lời điều phối, cần đầu tin riêng. */
+  leadPending = false
   abort = new AbortController()
 
   /** Người dùng nhắn vào phòng: lệnh dừng áp ngay; tin có nội dung mở một lượt mới. */

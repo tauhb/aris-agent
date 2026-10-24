@@ -38,11 +38,11 @@ function useRound(callId: string, finished: boolean): RoundData | null {
 function Said({ e }: { e: RoomEntry }) {
   return (
     <div className="aris-room-msg">
-      <Mascot id={mascotOf(e.handle)} size={28} />
+      <Mascot id={mascotOf(e.handle)} size={32} />
       <div className="b">
         <div className="h">
           <b>{e.name}</b>
-          {e.role ? ` · ${e.role}` : ''} · {clock(e.at)}
+          <span>{[e.role, clock(e.at)].filter(Boolean).join(' · ')}</span>
         </div>
         <div className="x">
           {textParts(e.text).map((p, i) =>
@@ -109,6 +109,19 @@ export function RoomSay({ node, t }: { node: { data: RoomEntry & { round: number
       ) : (
         <div className="aris-room-note">{t(noteKey(e), { name: e.name, text: e.text })}</div>
       )}
+    </div>
+  )
+}
+
+/** Đầu tin của Aris sau một vòng bàn (`conversation.chat.node`, kiểu `aris-room-lead`). */
+export function RoomLead({ node, t }: { node: { data: { at: string } }; t: Translate }) {
+  useTeamData()
+  const lead = currentTeam().commander
+  return (
+    <div className="aris aris-room-lead">
+      <Mascot id={lead.mascot ?? 'aris'} size={32} />
+      <b>{lead.name}</b>
+      <span>{[t('room.lead'), clock(node.data.at)].join(' · ')}</span>
     </div>
   )
 }

@@ -31,6 +31,8 @@ export interface RoundData {
 
 /** Bản ghi một tin của phòng nhóm trong phiên (`@aris/commander`). */
 export const ROOM_RECORD = 'plugin:aris/room-say'
+/** Bản ghi đầu tin "Aris · Điều phối" trước câu trả lời của Aris sau một vòng bàn. */
+export const LEAD_RECORD = 'plugin:aris/room-lead'
 
 interface EventLike {
   type: string
@@ -127,4 +129,40 @@ export function clock(at: string): string {
   return Number.isNaN(d.getTime())
     ? ''
     : d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
+}
+
+/**
+ * Đầu tin của Aris sau một vòng bàn: đặt ngay trước câu trả lời (`before` là số thứ tự của tin đó
+ * trong phiên), ở mức lượt, để lời điều phối không nhập vào tin của bot ngay trên.
+ */
+export const roomLeadDefinition = {
+  kind: 'aris-room-lead',
+  target: 'chat',
+  match: (event: EventLike) => (event.type === LEAD_RECORD ? { id: String(event.seq), role: 'start' } : null),
+  start: (_context: unknown, match: { event: EventLike }) => ({
+    seq: match.event.seq,
+    data: match.event.data,
+  }),
+  update: (context: { state: unknown }) => context.state,
+  buildViewNode: (context: {
+    key: string
+    id: string
+    state?: { seq: number; data: unknown }
+    start?: { location?: unknown }
+  }) => {
+    const before = (context.state?.data as { before?: unknown } | undefined)?.before
+    return context.state === undefined || typeof before !== 'number'
+      ? null
+      : {
+          key: context.key,
+          kind: 'aris-room-lead',
+          id: context.id,
+          target: 'chat',
+          anchorSeq: before - 0.5,
+          location: context.start?.location ?? { kind: 'unresolved' },
+          visibility: 'visible',
+          groupTree: 'turn',
+          data: context.state.data,
+        }
+  },
 }

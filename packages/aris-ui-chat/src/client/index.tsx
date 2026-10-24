@@ -5,8 +5,8 @@
 import { mountKitCss, registerPersonal } from '@aris/ui-kit/react'
 import { DispatchBranches, HeroMark, ModelLabel, SubagentBranch, TriggerButtons } from './Chat.js'
 import { EN, NS, VI } from './locale.js'
-import { RoomDock, RoomRound, RoomSay } from './Room.js'
-import { roomSayDefinition } from './room-data.js'
+import { RoomDock, RoomLead, RoomRound, RoomSay } from './Room.js'
+import { roomLeadDefinition, roomSayDefinition } from './room-data.js'
 import { CSS } from './styles.js'
 
 interface SessionInput {
@@ -124,6 +124,11 @@ export function apply(ctx: ClientContext): void {
   ctx.uiConversation.events.register(roomSayDefinition)
   ctx.slots.inject('conversation.chat.node', () =>
     ctx.slots.register({ name: 'conversation.chat.node', key: 'aris-room-say', locale: NS }, RoomSay),
+  )
+  // Đầu tin "Aris · Điều phối" trước câu trả lời của Aris sau một vòng, tách khỏi tin của bot.
+  ctx.uiConversation.events.register(roomLeadDefinition)
+  ctx.slots.inject('conversation.chat.node', () =>
+    ctx.slots.register({ name: 'conversation.chat.node', key: 'aris-room-lead', locale: NS }, RoomLead),
   )
 
   // Thanh phòng trên ô nhập ở phiên chính của dự án: vòng, số tin, Dừng phòng.

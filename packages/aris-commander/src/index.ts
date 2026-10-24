@@ -59,12 +59,15 @@ export const inject = ['tools', 'systemPrompt', 'storageDomain']
 export const DISPATCH_RECORD = 'plugin:aris/dispatch'
 
 export const ROOM_RECORD = 'plugin:aris/room-say'
+export const LEAD_RECORD = 'plugin:aris/room-lead'
 
 declare module '@deepseek-ai/dsh-session' {
   interface PluginRecordMap {
     'plugin:aris/dispatch': Omit<DispatchEntry, 'sessionId'>
     /** Một tin trong phòng nhóm: khung chat vẽ thành tin riêng của bot, không gập theo lượt của Aris. */
     'plugin:aris/room-say': RoomEntry & { callId: string; round: number; maxRounds: number }
+    /** Đầu tin "Aris · Điều phối" đặt ngay trước câu trả lời của Aris sau một vòng bàn. */
+    'plugin:aris/room-lead': { before: number; at: string }
   }
 }
 
@@ -622,6 +625,20 @@ export async function apply(ctx: Context): Promise<void> {
     else if (type === 'assistant/message') {
       const text = textOf((event.data as unknown as { message?: unknown }).message)
       if (text.trim()) said.set(sid, text)
+      // Aris nói sau một vòng bàn: đặt đầu tin "Aris · Điều phối" ngay trước lời đó (ghi sau khi
+      // sự kiện này xong, vì không được ghi chen trong lúc phiên đang phát sự kiện).
+      const room = rooms.get(sid)
+      if (room?.leadPending && text.trim()) {
+        room.leadPending = false
+        const before = event.seq as unknown as number
+        setTimeout(() => {
+          try {
+            appendPluginRecord(session as never, LEAD_RECORD, { before, at: new Date().toISOString() })
+          } catch (e) {
+            logger.warn('ghi đầu tin của Aris: %s', String(e))
+          }
+        }, 0)
+      }
     } else if (type === 'turn/end') {
       const kind = (event.data as unknown as { reason?: { kind?: string } }).reason?.kind
       const spoken: Spoken = {
@@ -693,6 +710,7 @@ export async function apply(ctx: Context): Promise<void> {
         const no = cannotOpen(room, project.rules)
         if (no) return no
         try {
+          room.leadPending = false
           const record = await runRound(
             {
               team: team() as unknown as RoomTeam,
@@ -725,6 +743,7 @@ export async function apply(ctx: Context): Promise<void> {
               signal: exec.signal ?? new AbortController().signal,
             },
           )
+          room.leadPending = record.entries.length > 0
           return roundReport(record, room, project.rules)
         } catch (e) {
           if (e instanceof DispatchError) return `Không mở được vòng: ${e.message}`
