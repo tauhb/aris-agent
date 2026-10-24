@@ -275,7 +275,7 @@ export function BotAside({ t, bot, nav }: { t: T; bot: BotData; nav: PageProps['
             value={corePct === null ? (p ? '—' : '…') : `${corePct}%`}
             sub={
               core ? (
-                <span className="ap-bar">
+                <span className="ap-gauge">
                   <i style={{ width: `${Math.min(100, corePct ?? 0)}%`, background: color }} />
                 </span>
               ) : undefined
@@ -324,11 +324,11 @@ export function BotAside({ t, bot, nav }: { t: T; bot: BotData; nav: PageProps['
                 </button>
                 <span className="src">
                   {m.channel === 'telegram' ? (
-                    <span className="ap-src">Telegram</span>
+                    <span className="ap-lsrc">Telegram</span>
                   ) : m.sessionId ? (
                     <button
                       type="button"
-                      className="ap-src link"
+                      className="ap-lsrc link"
                       title={t('aside.openSession')}
                       onClick={() => nav.openSession(m.sessionId!)}
                     >

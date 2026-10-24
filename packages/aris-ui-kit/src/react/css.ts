@@ -219,7 +219,7 @@ ${scope(`
 .a-graph{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
 
 .a-page{display:flex;flex-direction:column;min-height:100%;min-width:0;background:var(--a-bg);flex:1}
-.a-page-head{display:flex;align-items:center;gap:12px;padding:12px 24px;border-bottom:1px solid var(--a-line)}
+.a-page-head{display:flex;align-items:center;gap:12px;padding:12px 24px;border-bottom:1px solid var(--a-line);flex:none;flex-wrap:wrap}
 .a-page-head>.grow{display:flex;flex-direction:column;min-width:0}
 .a-page-title{margin:0;font-size:14px;font-weight:600}
 .a-page-sub{font-size:12px;color:var(--a-muted)}

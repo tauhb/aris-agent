@@ -181,11 +181,15 @@ function RewriteDialog({
       </div>
       <div className="ap-soulcmp">
         <div>
-          <div className="ap-lb">{t('soul.now')}</div>
+          <div className="ap-lb" style={{ paddingBottom: 6 }}>
+            {t('soul.now')}
+          </div>
           <pre className="ap-soul a-mono view">{draft || t('soul.empty')}</pre>
         </div>
         <div>
-          <div className="ap-lb">{t('soul.proposal')}</div>
+          <div className="ap-lb" style={{ paddingBottom: 6 }}>
+            {t('soul.proposal')}
+          </div>
           <pre className="ap-soul a-mono view">
             {busy ? t('soul.writing') : (result ?? t('soul.noProposal'))}
           </pre>

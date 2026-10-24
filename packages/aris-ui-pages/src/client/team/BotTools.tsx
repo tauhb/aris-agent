@@ -65,7 +65,7 @@ const LOGO: Record<Preset, { letter: string; color: string }> = {
 function Logo({ preset }: { preset: Preset }) {
   const l = LOGO[preset]
   return (
-    <span className="ap-logo" style={{ background: l.color }} aria-hidden="true">
+    <span className="ap-mlogo" style={{ background: l.color }} aria-hidden="true">
       {l.letter}
     </span>
   )

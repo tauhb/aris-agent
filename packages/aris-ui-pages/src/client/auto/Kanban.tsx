@@ -145,7 +145,7 @@ function Card({
       <div className="tt">{c.title}</div>
       {pct !== null && (
         <div className="ap-kprog">
-          <span className="ap-bar">
+          <span className="ap-gauge">
             <i style={{ width: `${pct}%`, background: c.failed ? 'var(--a-danger)' : color }} />
           </span>
           <span className="a-muted">{t('kb.progress', c.progress!)}</span>

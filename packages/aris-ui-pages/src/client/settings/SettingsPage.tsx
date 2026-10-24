@@ -9,7 +9,6 @@ import type { ComponentType } from 'react'
 import type { PageProps } from '../page.js'
 import { Channels } from './Channels.js'
 import { Commander } from './Commander.js'
-import { Dashboard } from './Dashboard.js'
 import { Guard } from './Guard.js'
 import { Integrations } from './Integrations.js'
 import { Plugin } from './Plugin.js'
@@ -19,7 +18,6 @@ import { Screen } from './Screen.js'
 import { Stats } from './Stats.js'
 
 export const SECTIONS: Record<string, ComponentType<PageProps>> = {
-  dashboard: Dashboard,
   provider: Provider,
   channels: Channels,
   integrations: Integrations,
@@ -32,7 +30,6 @@ export const SECTIONS: Record<string, ComponentType<PageProps>> = {
 }
 
 const ORDER = [
-  'dashboard',
   'provider',
   'channels',
   'integrations',
@@ -53,11 +50,14 @@ const SYS = 'sys:'
 export function SettingsPage(props: PageProps) {
   const { t, nav, params, system } = props
   const requested = params.section ?? ''
-  const sysId = requested.startsWith(SYS) ? requested.slice(SYS.length) : undefined
-  const sys = sysId !== undefined ? system?.sections.find((s) => s.id === sysId) : undefined
-  const active = sys ? requested : requested in SECTIONS ? requested : 'dashboard'
-  const Section = SECTIONS[active]
+  const sysOf = (id: string) =>
+    id.startsWith(SYS) ? system?.sections.find((s) => s.id === id.slice(SYS.length)) : undefined
+  // Bảng điều khiển (6.1) đã rời Cài đặt, sẽ ra menu chính; mặc định mở "Chung" của dsh.
   const general = system?.sections.find((s) => s.id === GENERAL_SECTION)
+  const fallback = general ? SYS + general.id : 'provider'
+  const active = sysOf(requested) || requested in SECTIONS ? requested : fallback
+  const sys = sysOf(active)
+  const Section = SECTIONS[active]
   return (
     <SettingsShell
       caption={t('set.caption')}

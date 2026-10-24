@@ -7,6 +7,8 @@ export const CSS = `
 .ap-root>.a-settings,.ap-root>.a-page{flex:1;min-height:0}
 .ap-root .a-page{overflow-y:auto}
 .ap-root .a-page-head{position:sticky;top:0;z-index:2;background:var(--a-bg);min-height:59px}
+.ap-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.ap-stat{border:1px solid var(--a-line);border-radius:12px;background:var(--a-panel);padding:14px 16px}
 .ap-k{font-size:12px;color:var(--a-muted)}
 .ap-v{font-size:22px;font-weight:700;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
 .ap-v small{font-size:14px;font-weight:400;color:var(--a-muted)}
@@ -32,7 +34,6 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-split>.a-page{flex:1}
 .ap-search{display:flex;align-items:center;gap:6px;border:1px solid var(--a-line);border-radius:9px;padding:5px 8px;margin:0 4px 4px;background:var(--a-panel);color:var(--a-muted)}
 .ap-search input{flex:1;min-width:0;border:0;background:transparent;color:var(--a-ink);font:inherit;font-size:13px;outline:none}
-.ap-lb{font-size:12px;font-weight:600;color:var(--a-muted);padding-bottom:6px}
 .ap-aside .a-tag{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ap-clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .ap-taskrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:10px 14px;border-top:1px solid var(--a-line);font-size:13.5px}
@@ -41,7 +42,6 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-later.row .ap-taskrow{border-top:0}
 .ap-soul{flex:none;min-height:150px;resize:vertical}
 .ap-soulhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.ap-sec{font-weight:600;padding-top:10px;margin-top:4px;border-top:1px solid var(--a-line)}
 .ap-soul.view{margin:0;white-space:pre-wrap;word-break:break-word;min-height:120px;max-height:340px;overflow:auto}
 .ap-soulhist{display:grid;grid-template-columns:minmax(180px,230px) minmax(0,1fr);gap:12px}
 .ap-soulhist .list{display:flex;flex-direction:column;gap:4px;max-height:340px;overflow:auto}
@@ -64,7 +64,7 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-astat .lb{font-size:12px;color:var(--a-muted)}
 .ap-astat .v{font-size:19px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ap-astat .s{font-size:11.5px;color:var(--a-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ap-bar{display:block;height:6px;border-radius:999px;background:var(--a-line);overflow:hidden;margin-top:6px}.ap-bar>i{display:block;height:100%;border-radius:999px}
+.ap-gauge{display:block;height:6px;border-radius:999px;background:var(--a-line);overflow:hidden;margin-top:6px}.ap-gauge>i{display:block;height:100%;border-radius:999px}
 .ap-atask{display:flex;align-items:flex-start;gap:8px;font-size:13px;padding:5px 0}
 .ap-atask .ic{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:none;margin-top:1px;background:var(--a-panel2);color:var(--a-muted)}
 .ap-atask .ic.done{background:var(--a-okSoft);color:var(--a-ok)}.ap-atask .ic.failed{background:var(--a-dangerSoft);color:var(--a-danger)}
@@ -83,9 +83,9 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .aris .ap-learn .txt{text-align:left;font-size:13px;line-height:1.45;padding:0;color:var(--a-ink)}
 .aris .ap-learn .txt:hover{text-decoration:underline;text-decoration-color:var(--a-line)}
 .ap-learn .src{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:11.5px}
-.ap-src{color:var(--a-muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.aris .ap-src.link{color:var(--a-accent);font-size:11.5px;padding:0}
-.aris .ap-src.link:hover{text-decoration:underline}
+.ap-lsrc{color:var(--a-muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aris .ap-lsrc.link{color:var(--a-accent);font-size:11.5px;padding:0}
+.aris .ap-lsrc.link:hover{text-decoration:underline}
 .ap-proj{font-size:11px;font-weight:600;line-height:16px;border-radius:999px;padding:0 7px;background:var(--a-panel2);color:var(--a-ink);white-space:nowrap}
 .ap-focus{outline:2px solid var(--a-accent);outline-offset:-2px;border-radius:10px;background:var(--a-accentSoft)}
 .ap-initial{width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:var(--a-panel2);color:var(--a-ink);font-weight:700;font-size:12.5px;flex:none}
@@ -188,7 +188,7 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-later{position:relative}.ap-later-body{opacity:.5;pointer-events:none}
 .ap-phase{position:absolute;top:-9px;right:12px;height:18px;line-height:16px;box-sizing:border-box;font-size:11px;font-weight:600;border-radius:6px;padding:0 7px;background:var(--a-panel);color:var(--a-muted);border:1px solid var(--a-line);white-space:nowrap}
 .ap-later.row{display:flex;align-items:center;border-top:1px solid var(--a-line)}.ap-later.row .ap-later-body{flex:1;min-width:0}.ap-later.row .a-row{border-top:0}.ap-later.row .ap-phase{position:static;margin-right:14px}
-.ap-logo{width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex:none}
+.ap-mlogo{width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex:none}
 .ap-presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
 .aris button.ap-preset{display:flex;align-items:center;gap:10px;border:1px solid var(--a-line);border-radius:10px;background:var(--a-panel);color:var(--a-ink);padding:8px 10px;font:inherit;font-size:13px;text-align:left;cursor:pointer;line-height:1.35}
 .aris button.ap-preset[aria-pressed="true"]{border-color:var(--a-accent);background:var(--a-accentSoft)}
@@ -255,7 +255,7 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-kdone{width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;background:var(--a-okSoft);color:var(--a-ok);flex:none}
 .ap-kid{margin-left:auto;font-family:var(--dsh-font-family-code-default);font-size:10.5px;color:var(--a-muted);opacity:.7}
 .ap-kc .tt{font-weight:600;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.ap-kprog{display:flex;align-items:center;gap:8px;font-size:11.5px}.ap-kprog .ap-bar{flex:1;margin-top:0}
+.ap-kprog{display:flex;align-items:center;gap:8px;font-size:11.5px}.ap-kprog .ap-gauge{flex:1;margin-top:0}
 .ap-kwait{font-size:12px;color:var(--a-warn)}
 .ap-kc-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .ap-kc .ft{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--a-muted);flex-wrap:wrap}
