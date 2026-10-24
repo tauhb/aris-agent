@@ -72,3 +72,11 @@ export {
   type ProjectEntry,
   type ProjectRules,
 } from './projects.js'
+export {
+  fetchRoomStatus,
+  roomRole,
+  stopRoom,
+  useRoomStatus,
+  type RoomSpoke,
+  type RoomStatus,
+} from './room.js'

@@ -103,6 +103,21 @@ export class MemoryStore {
     private readonly now: () => Date = () => new Date(),
   ) {}
 
+  /**
+   * Ký ức cũ có chữ "chủ nhân" viết cứng (ghi trước khi có hồ sơ xưng hô); đổi thành "người dùng"
+   * để bot gọi theo hồ sơ. Chạy mỗi lần khởi động, không còn gì thì thôi. Trả số ký ức đã sửa.
+   */
+  async dropHardcodedAddress(): Promise<number> {
+    const fix = (s: string) => s.replace(/chủ nhân/g, 'người dùng').replace(/Chủ nhân/g, 'Người dùng')
+    let n = 0
+    for (const [id, item] of [...this.table.entries()])
+      if (/chủ nhân/i.test(item.text)) {
+        await this.table.put(id, { ...item, text: fix(item.text) })
+        n++
+      }
+    return n
+  }
+
   /** Mọi bản ghi chưa xoá của bot, mới nhất trước. */
   list(bot: string, filter: Partial<Pick<MemoryItem, 'tier' | 'status' | 'book'>> = {}): MemoryItem[] {
     const out: MemoryItem[] = []

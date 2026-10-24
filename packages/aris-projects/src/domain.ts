@@ -13,7 +13,7 @@ export const rulesRecord = z.object({
   maxMessages: z.number().int(),
   /** Hiểu lệnh "dừng @bot". */
   stopCommand: z.boolean(),
-  /** Aris chủ trì và tổng hợp cuối mỗi vòng. */
+  /** Phòng nhóm: bàn xong thì Aris gộp ý thành kết luận. */
   arisSummarizes: z.boolean(),
 })
 export type Rules = z.infer<typeof rulesRecord>

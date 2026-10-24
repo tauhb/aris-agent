@@ -48,6 +48,16 @@ describe('MemoryStore', () => {
     expect(table.map.get(m.id)?.status).toBe('deleted')
   })
 
+  it('ký ức cũ viết cứng "chủ nhân" được đổi thành "người dùng"', async () => {
+    const { s } = store()
+    const a = await s.save({ ...base, text: 'Chủ nhân thích báo cáo dạng bảng, gửi chủ nhân bản gọn' })
+    const b = await s.save({ ...base, text: 'Họp chiều thứ 5' })
+    expect(await s.dropHardcodedAddress()).toBe(1)
+    expect(s.get(a.id)?.text).toBe('Người dùng thích báo cáo dạng bảng, gửi người dùng bản gọn')
+    expect(s.get(b.id)?.text).toBe('Họp chiều thứ 5')
+    expect(await s.dropHardcodedAddress()).toBe(0)
+  })
+
   it('từ chối khi vượt trần và báo cách xử lý', async () => {
     const { s } = store()
     await s.save({ ...base, text: 'x'.repeat(CAPS.owner - 10) })

@@ -75,6 +75,8 @@ export class RoomState {
   seen = new Map<string, number>()
   /** Bot người dùng bảo dừng (tên gọi); giữ tới khi người dùng gọi lại bot đó. */
   stopped = new Set<string>()
+  /** Bot đã nói gì trong lượt này (tin, bỏ lượt, bị bỏ qua…), cho cột phải của dự án. */
+  spoke = new Map<string, RoomEntry['kind']>()
   speaking: string | undefined
   abort = new AbortController()
 
@@ -90,6 +92,7 @@ export class RoomState {
       this.closed = c.stopAll
       this.lines = [{ who: 'Người dùng', text: text.trim() }]
       this.seen.clear()
+      this.spoke.clear()
       this.abort = new AbortController()
     }
     return c
@@ -203,6 +206,7 @@ export async function runRound<A>(
       ...(reason ? { reason } : {}),
       text,
     })
+    state.spoke.set(bot.handle, kind)
     record.used = state.used
     await d.save(record)
   }

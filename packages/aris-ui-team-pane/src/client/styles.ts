@@ -23,4 +23,6 @@ export const CSS = `
 .aris-project .kv{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;font-size:13px}
 .aris-project .kv .path{max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
 .aris-project .kv input{width:16px;height:16px;accent-color:var(--a-accent)}
+.aris-project .state.room-speaking{color:var(--a-ink);font-weight:600}
+.aris-project .state.room-said,.aris-project .state.room-passed,.aris-project .state.room-stopped{color:var(--a-muted)}
 `

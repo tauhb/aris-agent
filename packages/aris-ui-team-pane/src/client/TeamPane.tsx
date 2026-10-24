@@ -24,6 +24,8 @@ import {
   useTeamLive,
   type ActivityItem,
   type BoardCard,
+  roomRole,
+  useRoomStatus,
 } from '@aris/ui-kit/react'
 import { useCallback, useRef, useState, type ComponentType, type ReactNode } from 'react'
 import type { Translate } from './locale.js'
@@ -199,6 +201,8 @@ function ProjectPane({
     return m ? [m] : []
   })
   const orbitStatus = (s: BotStatus) => t(`orbit.${s}`)
+  // Phòng nhóm ở phiên chính: bot đang nói, đã nói, bỏ lượt, đã dừng trong lượt này.
+  const [room] = useRoomStatus(p?.mainSession)
   const setMembers = (members: string[]) => {
     if (!entry) return
     setError(null)
@@ -256,7 +260,14 @@ function ProjectPane({
             <span className="txt">
               <b>{m.name}</b>
             </span>
-            <span className="a-muted state">{t(`status.${m.status}`)}</span>
+            {(() => {
+              const role = m.handle ? roomRole(room, m.handle) : undefined
+              return role ? (
+                <span className={`state room-${role}`}>{t(`room.${role}`)}</span>
+              ) : (
+                <span className="a-muted state">{t(`status.${m.status}`)}</span>
+              )
+            })()}
             <IconButton
               size="sm"
               label={t('project.removeBot', { name: m.name })}

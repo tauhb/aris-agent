@@ -3,20 +3,10 @@
  * các tin của bot, bỏ lượt và bị bỏ qua là dòng ghi chú, bot đang nói có dấu "đang nghĩ". Thanh
  * phòng trên ô nhập: vòng, số tin, ai đang nói, nút Dừng phòng hoặc Gửi cả phòng.
  */
-import { Button, Mascot, currentTeam, useTeamData } from '@aris/ui-kit/react'
+import { Button, Mascot, currentTeam, stopRoom, useRoomStatus, useTeamData } from '@aris/ui-kit/react'
 import { Fragment, useEffect, useState } from 'react'
 import type { Translate } from './locale.js'
-import {
-  clock,
-  fetchRoom,
-  fetchRound,
-  noteKey,
-  stopRoom,
-  textParts,
-  type RoomEntry,
-  type RoomStatus,
-  type RoundData,
-} from './room-data.js'
+import { clock, fetchRound, noteKey, textParts, type RoomEntry, type RoundData } from './room-data.js'
 import type { SubagentCall } from './branch.js'
 
 const mascotOf = (handle: string) => {
@@ -107,28 +97,6 @@ export function RoomRound(props: SubagentCall & { callId: string; t: Translate }
   )
 }
 
-/** Trạng thái phòng của phiên: đọc lại mỗi 3 giây (phiên không phải phòng nhóm thì thôi). */
-function useRoom(sessionId: string): [RoomStatus | null, () => void] {
-  const [room, setRoom] = useState<RoomStatus | null>(null)
-  const [tick, setTick] = useState(0)
-  useEffect(() => {
-    let alive = true
-    let timer: ReturnType<typeof setTimeout> | undefined
-    const load = async () => {
-      const r = await fetchRoom(sessionId).catch(() => null)
-      if (!alive) return
-      setRoom(r)
-      if (r?.project) timer = setTimeout(() => void load(), 3000)
-    }
-    void load()
-    return () => {
-      alive = false
-      clearTimeout(timer)
-    }
-  }, [sessionId, tick])
-  return [room, () => setTick((n) => n + 1)]
-}
-
 /** Thanh phòng trên ô nhập (`conversation.input.dock`), chỉ ở phiên chính của dự án. */
 export function RoomDock({
   sessionId,
@@ -139,7 +107,7 @@ export function RoomDock({
   insert: (text: string) => void
   t: Translate
 }) {
-  const [room, reload] = useRoom(sessionId)
+  const [room, reload] = useRoomStatus(sessionId)
   const [stopping, setStopping] = useState(false)
   if (!room?.project) return null
   const stop = async () => {

@@ -131,6 +131,7 @@ describe('một vòng', () => {
     ])
     expect(state.used).toBe(2)
     expect(state.round).toBe(1)
+    expect(Object.fromEntries(state.spoke)).toEqual({ lam: 'say', tin: 'say', dev: 'pass' })
     expect(briefs.lam![0]).toContain('Người dùng: @all Đề xuất 3 mục tiêu quý 4')
     expect(briefs.lam![0]).toContain('Aris (điều phối): Đề xuất 3 mục tiêu quý 4.')
     expect(briefs.tin![0]).toContain('Lâm (Nghiên cứu): Video hướng dẫn')

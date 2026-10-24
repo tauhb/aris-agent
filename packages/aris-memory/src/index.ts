@@ -72,9 +72,14 @@ function describe(item: MemoryItem): string {
 }
 
 export async function apply(ctx: Context): Promise<void> {
+  const logger = ctx.logger('aris-memory')
   const domain = await ctx.storageDomain.open(memoryDomain)
   ctx.effect(() => () => void domain.close(), 'aris-memory: domain')
   const store = new MemoryStore(domain.table('items'))
+  await store
+    .dropHardcodedAddress()
+    .then((n) => n && logger.info('đổi chữ "chủ nhân" trong %d ký ức', n))
+    .catch((e: unknown) => logger.warn('sửa cách gọi trong ký ức: %s', String(e)))
   // Bot của phiên do @aris/bots giữ; không có plugin đó thì mọi phiên là của Commander.
   const botOf = (sessionId: string | undefined) =>
     (ctx.get('arisBots') as { botOf(id: string | undefined): { id: string } } | undefined)?.botOf(sessionId)
@@ -103,7 +108,11 @@ export async function apply(ctx: Context): Promise<void> {
         'Trí nhớ bền của bạn: lưu, sửa, quên, tìm ký ức. Ký ức lõi luôn nằm sẵn trong <aris-memory>; lưu trữ chỉ thấy khi search.',
       parameters: {
         action: { type: 'string', enum: ['save', 'update', 'forget', 'search'], required: true },
-        text: { type: 'string', description: 'Nội dung ký ức (save, update), viết thành một câu.' },
+        text: {
+          type: 'string',
+          description:
+            'Nội dung ký ức (save, update), viết thành một câu. Nhắc tới người dùng thì viết "người dùng", không dùng anh, chị, chủ nhân.',
+        },
         id: { type: 'string', description: 'Mã ký ức trong ngoặc vuông (update, forget).' },
         query: { type: 'string', description: 'Từ khoá cần tìm (search).' },
         book: {

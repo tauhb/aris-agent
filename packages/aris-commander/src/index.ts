@@ -736,6 +736,7 @@ export async function apply(ctx: Context): Promise<void> {
       maxMessages: project.rules.maxMessages,
       closed: room?.closed ?? false,
       stopped: [...(room?.stopped ?? [])],
+      spoke: Object.fromEntries(room?.spoke ?? []),
       ...(speaking ? { speaking: { handle: speaking.handle, name: speaking.name, id: speaking.id } } : {}),
     }
   }

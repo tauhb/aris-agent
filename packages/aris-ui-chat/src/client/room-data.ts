@@ -27,39 +27,12 @@ export interface RoundData {
   entries: RoomEntry[]
 }
 
-export interface RoomStatus {
-  project: boolean
-  running?: boolean
-  round?: number
-  maxRounds?: number
-  used?: number
-  maxMessages?: number
-  closed?: boolean
-  stopped?: string[]
-  speaking?: { handle: string; name: string; id: string }
-}
-
 const endpoint = (query: string) => new URL(`api/aris/commander?${query}`, document.baseURI)
 
 export async function fetchRound(callId: string): Promise<RoundData | null> {
   const res = await fetch(endpoint(`round=${encodeURIComponent(callId)}`), { credentials: 'same-origin' })
   if (!res.ok) return null
   return ((await res.json()) as { round: RoundData | null }).round
-}
-
-export async function fetchRoom(sessionId: string): Promise<RoomStatus> {
-  const res = await fetch(endpoint(`room=${encodeURIComponent(sessionId)}`), { credentials: 'same-origin' })
-  if (!res.ok) return { project: false }
-  return (await res.json()) as RoomStatus
-}
-
-export async function stopRoom(sessionId: string): Promise<void> {
-  await fetch(endpoint(''), {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ op: 'room-stop', session: sessionId }),
-  })
 }
 
 /** Dòng ghi chú (không phải tin) cho bot không nói ở vòng này. */
