@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Cây bộ não — phương án</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2,h3{font-family:'Lexend',sans-serif;letter-spacing:-.01em;margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--faint:#9A9EA6;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--warn:#B45309;--warnSoft:#FCEFDF;--me:#1D6FE0;--meSoft:#E6F0FE;--lib:#C2620A;--libSoft:#FBEEDD;--src:#5C616C;--srcSoft:#ECEBE6;--co:#0E8A7E;--coSoft:#DDF3EF}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--faint:#6B7280;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--warn:#F5A35C;--warnSoft:#3A2614;--me:#5AA5FF;--meSoft:#16263F;--lib:#F5A35C;--libSoft:#33251A;--src:#9CA3B0;--srcSoft:#23262D;--co:#3CC9B8;--coSoft:#123430}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.cap{display:flex;align-items:baseline;gap:8px}
+.cap b{font-family:'Lexend',sans-serif;font-size:15px}
+.tree{width:248px;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:12px 8px;display:flex;flex-direction:column;gap:1px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+.note{font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:5px;max-width:300px}
+.note li{margin-left:-4px}
+.note ul{margin:0;padding-left:16px;display:flex;flex-direction:column;gap:4px}
+.ic{width:15px;height:15px;flex:none}
+.row{display:flex;align-items:center;gap:7px;border-radius:7px;padding:4px 8px;font-size:13px;color:var(--ink);min-height:22px}
+.row .n{margin-left:auto;font-size:11.5px;color:var(--muted)}
+.row.mute{color:var(--faint)}
+.row.cur{background:var(--accentSoft);color:var(--accent);font-weight:600}
+.pill{font-size:11px;font-weight:600;border-radius:999px;padding:0 7px;line-height:18px;background:var(--panel2);color:var(--muted)}
+/* hiện tại */
+.old .seg{display:flex;padding:3px;border:1px solid var(--line);border-radius:10px;margin:0 2px 8px}
+.old .seg span{flex:1;padding:5px 8px;border-radius:8px;font-size:12.5px;color:var(--muted)}
+.old .th{display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:var(--muted);padding:12px 10px 3px;text-transform:uppercase;letter-spacing:.05em}
+.old .th i{font-style:normal;text-transform:none;letter-spacing:0;font-weight:500}
+.old .it{display:flex;justify-content:space-between;padding:6px 10px;font-size:13px}
+/* phương án A */
+.a .seg{display:flex;gap:3px;padding:3px;border-radius:11px;background:var(--panel2);margin:0 2px 10px}
+.a .seg button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:8px;padding:6px 0;background:transparent;font-size:12.5px;font-weight:500;color:var(--muted)}
+.a .seg button.on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+.a .layer{border-radius:11px;padding:6px 4px 6px;margin-top:6px}
+.a .lh{display:flex;align-items:center;gap:8px;padding:4px 6px 6px}
+.a .lh .sq{width:24px;height:24px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.a .lh b{font-size:13px;display:block;line-height:1.2}
+.a .lh small{font-size:11px;color:var(--muted);display:block;line-height:1.3}
+.a .sub{padding-left:30px;position:relative}
+.a .sub::before{content:'';position:absolute;left:19px;top:0;bottom:0;border-left:1px solid var(--line)}
+/* phương án B */
+.b .tabs{display:flex;gap:16px;padding:0 8px;border-bottom:1px solid var(--line);margin:0 2px 10px}
+.b .tabs button{display:flex;align-items:center;gap:6px;border:0;background:transparent;padding:6px 0 8px;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.b .tabs button.on{color:var(--ink);font-weight:600}
+.b .sh{display:flex;align-items:center;gap:7px;padding:10px 8px 3px;font-size:12px;font-weight:600;color:var(--ink)}
+.b .sh .dot{width:8px;height:8px;border-radius:50%}
+.b .sh .n{margin-left:auto;font-size:11px;color:var(--muted);font-weight:500}
+.b .sub{padding-left:28px;position:relative}
+.b .sub::before{content:'';position:absolute;left:16px;top:0;bottom:0;border-left:1px solid var(--line)}
+.b .legend{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;color:var(--muted);padding:8px 8px 0;border-top:1px solid var(--line);margin-top:8px}
+.b .legend span{display:inline-flex;align-items:center;gap:4px}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; padding: 28px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+  <div style="display: flex; align-items: center; gap: 12px">
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <h1 style="font-size: 22px">Cây bộ não · hiện tại, phương án A, phương án B</h1>
+      <span style="color: var(--muted); font-size: 13px">Cùng dữ liệu: không gian Cá nhân, 1 người, 1 dự án, nhật ký hôm nay, chưa có nguồn. Bấm chuyển không gian ở A và B để xem màu.</span>
+    </div>
+    <button type="button" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="margin-left: auto; width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--muted)">◐</button>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start">
+
+    <!-- ===== Hiện tại ===== -->
+    <div class="col old">
+      <div class="cap"><b>Hiện tại</b><span style="color: var(--muted); font-size: 12px">đang chạy</span></div>
+      <div class="tree">
+        <div class="seg"><span style="background: var(--hover); color: var(--ink)">Cá nhân</span><span>Công ty</span></div>
+        <div style="margin: 0 2px 8px; height: 30px; border: 1px solid var(--line); border-radius: 9px; padding: 0 10px; display: flex; align-items: center; font-size: 12.5px; color: var(--faint)">Tìm trong Cá nhân</div>
+        <div class="it" style="background: var(--warnSoft); border-radius: 8px; margin: 0 2px; font-weight: 600"><span>Hộp thư vào</span><span style="color: var(--warn)">0</span></div>
+        <div class="th"><span>Nhật ký</span><i>anh Tầu viết</i></div>
+        <div class="it"><span>Hôm nay · 25/10</span></div>
+        <div class="it" style="color: var(--muted)"><span>Các ngày trước</span></div>
+        <div class="th"><span>Wiki</span><i style="color: var(--warn)">Thủ thư viết</i></div>
+        <div class="it"><span>Người</span><span style="color: var(--muted)">1</span></div>
+        <div class="it"><span>Dự án</span><span style="color: var(--muted)">1</span></div>
+        <div class="it" style="color: var(--muted)"><span>Chủ đề</span></div>
+        <div class="it" style="color: var(--muted)"><span>Tóm tắt nguồn</span></div>
+        <div class="it" style="color: var(--muted)"><span>Tổng hợp</span></div>
+        <div class="it" style="color: var(--muted)"><span>Khác</span></div>
+        <div class="th"><span>Nguồn</span><i>không sửa</i></div>
+        <div class="it" style="color: var(--muted)"><span>Chưa có nguồn nào</span></div>
+      </div>
+      <div class="note"><ul>
+        <li>Tab không giống nút chuyển; không biết đang ở không gian nào.</li>
+        <li>Ba lớp cùng một kiểu tiêu đề; chú thích bên phải tranh chỗ.</li>
+        <li>Không biểu tượng, không mũi tên mở nhóm; nhóm trống chiếm chỗ.</li>
+        <li>Hộp thư vào 0 vẫn tô cam.</li>
+      </ul></div>
+    </div>
+
+    <!-- ===== Phương án A ===== -->
+    <div class="col a">
+      <div class="cap"><b>A · Ba lớp có màu</b><span style="color: var(--accent); font-size: 12px; font-weight: 600">em đề xuất</span></div>
+      <div class="tree">
+        <div class="seg" role="tablist" aria-label="Không gian">
+          <button type="button" role="tab" class="{{aP}}" onClick="{{toP}}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="{{pIc}}" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path></svg>Cá nhân</button>
+          <button type="button" role="tab" class="{{aC}}" onClick="{{toC}}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="{{cIc}}" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1"></path></svg>Công ty</button>
+        </div>
+        <div style="margin: 0 2px 6px; height: 30px; border: 1px solid var(--line); border-radius: 9px; padding: 0 10px; display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--faint)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>Tìm trong {{spaceName}}</div>
+        <div class="row"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"></path><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"></path></svg>Hộp thư vào<span class="n">0</span></div>
+
+        <div class="layer" style="background: var(--meSoft)">
+          <div class="lh"><span class="sq" style="background: var(--panel); color: var(--me)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg></span><span><b style="color: var(--me)">Nhật ký</b><small>Tầu viết · cũng là nguồn</small></span></div>
+          <div class="row cur"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>Hôm nay · T7 25/10</div>
+          <div class="row" style="color: var(--muted)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>Các ngày trước<span class="n">0</span></div>
+        </div>
+
+        <div class="layer" style="background: var(--libSoft)">
+          <div class="lh"><span class="sq" style="background: var(--panel); color: var(--lib)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"></path></svg></span><span><b style="color: var(--lib)">Wiki</b><small>Thủ thư viết · 2 trang</small></span></div>
+          <div class="row"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--lib)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path></svg>Người<span class="n pill">1</span></div>
+          <div class="row sub">Chị Hà</div>
+          <div class="row"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--lib)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>Dự án<span class="n pill">1</span></div>
+          <div class="row mute" style="font-size: 12px; padding-left: 30px">+ 4 nhóm chưa có trang</div>
+        </div>
+
+        <div class="layer" style="background: var(--srcSoft)">
+          <div class="lh"><span class="sq" style="background: var(--panel); color: var(--src)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></span><span><b>Nguồn</b><small>giữ nguyên, không ai sửa</small></span></div>
+          <div class="row mute" style="font-size: 12.5px">Chưa có nguồn · thả tệp vào Hộp thư vào</div>
+        </div>
+      </div>
+      <div class="note"><ul>
+        <li>Chuyển không gian là nút thật: bên chọn nổi lên nền trắng, có biểu tượng; Cá nhân xanh dương, Công ty xanh ngọc.</li>
+        <li>Mỗi lớp một khối nền nhạt, biểu tượng và màu riêng: Nhật ký xanh (bạn viết), Wiki cam (Thủ thư), Nguồn xám (khoá).</li>
+        <li>Ai viết chuyển xuống dòng phụ dưới tên lớp.</li>
+        <li>Nhóm có mũi tên và biểu tượng loại; trang con có đường dẫn dọc; nhóm trống gom một dòng.</li>
+        <li>Hộp thư vào trung tính khi 0, chỉ cam khi có mục.</li>
+      </ul></div>
+    </div>
+
+    <!-- ===== Phương án B ===== -->
+    <div class="col b">
+      <div class="cap"><b>B · Cây gọn kiểu Obsidian</b></div>
+      <div class="tree">
+        <div class="tabs" role="tablist" aria-label="Không gian">
+          <button type="button" role="tab" class="{{aP}}" onClick="{{toP}}" style="border-bottom-color: {{bP}}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="{{pIc}}" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path></svg>Cá nhân</button>
+          <button type="button" role="tab" class="{{aC}}" onClick="{{toC}}" style="border-bottom-color: {{bC}}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="{{cIc}}" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1"></path></svg>Công ty</button>
+        </div>
+        <div style="margin: 0 2px 4px; height: 30px; border: 1px solid var(--line); border-radius: 9px; padding: 0 10px; display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--faint)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>Tìm trong {{spaceName}}</div>
+        <div class="row"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"></path><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"></path></svg>Hộp thư vào<span class="n">0</span></div>
+
+        <div class="sh"><span class="dot" style="background: var(--me)"></span>Nhật ký</div>
+        <div class="row cur"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>Hôm nay · T7 25/10</div>
+        <div class="row" style="color: var(--muted)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>Các ngày trước</div>
+
+        <div class="sh"><span class="dot" style="background: var(--lib)"></span>Wiki<span class="n">2 trang</span></div>
+        <div class="row"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>Người<span class="n">1</span></div>
+        <div class="row sub"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--lib)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"></path></svg>Chị Hà</div>
+        <div class="row"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>Dự án<span class="n">1</span></div>
+        <div class="row mute"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>Chủ đề</div>
+        <div class="row mute"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>Tóm tắt nguồn</div>
+        <div class="row mute"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>Tổng hợp</div>
+
+        <div class="sh"><span class="dot" style="background: var(--src)"></span>Nguồn<span class="n">🔒</span></div>
+        <div class="row mute" style="font-size: 12.5px">Chưa có nguồn</div>
+
+        <div class="legend">
+          <span><span style="width: 7px; height: 7px; border-radius: 50%; background: var(--me)"></span>Tầu viết</span>
+          <span><span style="width: 7px; height: 7px; border-radius: 50%; background: var(--lib)"></span>Thủ thư viết</span>
+          <span><span style="width: 7px; height: 7px; border-radius: 50%; background: var(--src)"></span>giữ nguyên</span>
+        </div>
+      </div>
+      <div class="note"><ul>
+        <li>Không gian thành tab gạch chân có biểu tượng, gạch màu theo không gian.</li>
+        <li>Lớp chỉ là tiêu đề có chấm màu, không khối nền; ai viết gom vào chú giải cuối cây.</li>
+        <li>Mỗi trang có biểu tượng màu theo lớp; nhóm có mũi tên; nhóm trống hiện mờ.</li>
+        <li>Gọn, giống Obsidian; nhưng ba lớp phân biệt kém hơn A.</li>
+      </ul></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const personal = (s.space || 'ca-nhan') === 'ca-nhan';
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      toP: () => this.setState({ space: 'ca-nhan' }),
+      toC: () => this.setState({ space: 'cong-ty' }),
+      aP: personal ? 'on' : '',
+      aC: personal ? '' : 'on',
+      pIc: personal ? 'var(--me)' : 'var(--faint)',
+      cIc: personal ? 'var(--faint)' : 'var(--co)',
+      bP: personal ? 'var(--me)' : 'transparent',
+      bC: personal ? 'transparent' : 'var(--co)',
+      spaceName: personal ? 'Cá nhân' : 'Công ty'
+    };
+  }
+}
+</script>
+</body>
+</html>
