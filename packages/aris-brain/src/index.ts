@@ -48,6 +48,14 @@ import { buildGraph, linkMention, nodeType, unlinkedMention } from './graph.js'
 import { brainMap, MEMBER_GUIDE, mentioned, nudge, referenced, STRONG_LINE } from './hints.js'
 import { findingRecord, runRecord, type Finding, type SoatRun } from './soat.js'
 import { SoatError, startSoat } from './soat-run.js'
+import { VectorStore } from './semantic.js'
+import {
+  DEFAULT_SEMANTIC,
+  startSemantic,
+  type EmbedPort,
+  type Semantic,
+  type SemanticConfig,
+} from './semantic-run.js'
 import { sweepMessage, VaultGit } from './git.js'
 import { batchRecord, isOpen, LIBRARIAN_DAILY_USD, type Batch } from './ingest.js'
 import { sttNotReady, transcribe, type SpeechToText } from '@aris/channels'
@@ -111,6 +119,14 @@ const settingsRecord = z.object({
   dismissedLinks: z.array(z.string()).optional(),
   /** Đã tạo Thủ thư một lần (người dùng xoá thì không tạo lại). */
   librarian: z.boolean().optional(),
+  /** Tìm theo nghĩa (đợt 5a): model nhúng (null là tắt), phần gửi đi nhúng, tạm dừng. */
+  semantic: z
+    .object({
+      model: z.object({ provider: z.string(), model: z.string() }).nullable(),
+      scopes: z.object({ personal: z.boolean(), company: z.boolean(), memory: z.boolean() }),
+      paused: z.boolean().optional(),
+    })
+    .optional(),
 })
 type Settings = z.infer<typeof settingsRecord>
 
@@ -229,6 +245,9 @@ export async function apply(ctx: Context): Promise<void> {
   const catalog = new Catalog(join(indexDir, 'index.sqlite'))
   ctx.effect(() => () => catalog.close(), 'aris-brain: chỉ mục')
 
+  // Tìm theo nghĩa (đợt 5a): khởi động sau lần quét đầu; trước đó indexFile chưa đồng bộ đoạn.
+  const late: { semantic?: Semantic } = {}
+
   const relOf = (abs: string) => relative(root, abs).split(sep).join('/')
   const skip = (rel: string) =>
     rel.split('/').some((p) => SKIP_DIRS.has(p)) || rel.endsWith('/.gitkeep') || rel === '.gitkeep'
@@ -240,14 +259,19 @@ export async function apply(ctx: Context): Promise<void> {
     if (!st) {
       // Tệp hay thư mục đã mất: bỏ nó và mọi thứ bên dưới.
       for (const e of catalog.all())
-        if (e.path === rel || e.path.startsWith(`${rel}/`)) catalog.remove(e.path)
+        if (e.path === rel || e.path.startsWith(`${rel}/`)) {
+          catalog.remove(e.path)
+          late.semantic?.syncPage(e.path)
+        }
       return undefined
     }
     if (st.isDirectory()) return undefined
     const md = extname(rel).toLowerCase() === '.md'
     const text = md ? await readFile(abs, 'utf8').catch(() => undefined) : undefined
     if (md && text === undefined) return undefined
-    return catalog.put(rel, text, { size: st.size, mtime: st.mtimeMs })
+    const e = catalog.put(rel, text, { size: st.size, mtime: st.mtimeMs })
+    late.semantic?.syncPage(rel)
+    return e
   }
 
   async function scan(): Promise<number> {
@@ -274,6 +298,46 @@ export async function apply(ctx: Context): Promise<void> {
   }
   const total = await scan()
   logger.info('bộ não %s: %d tệp', root, total)
+
+  type MemoryPort = {
+    activeAll?(): (Omit<MemHit, 'book' | 'tier'> & { book?: string; tier?: string })[]
+    searchAll?(q: string, limit?: number): MemHit[]
+  }
+  const memoryPort = () => ctx.get('arisMemory') as MemoryPort | undefined
+  const semanticConfig = (): SemanticConfig => settings().semantic ?? DEFAULT_SEMANTIC
+  const vectors = new VectorStore(join(indexDir, 'vectors.sqlite'))
+  const semantic = startSemantic({
+    store: vectors,
+    config: semanticConfig,
+    embedder: () => ctx.get('arisEmbed') as EmbedPort | undefined,
+    pages: () => catalog.all().map((entry) => ({ entry, body: catalog.get(entry.path)?.body ?? '' })),
+    page: (path) => {
+      const e = catalog.get(path)
+      return e ? { entry: e, body: e.body } : undefined
+    },
+    wanted: (e) =>
+      !!e.space && !e.binary && !e.name.startsWith('_') && ASK_LAYERS.has(e.layer) && e.path.endsWith('.md'),
+    memories: () =>
+      memoryPort()
+        ?.activeAll?.()
+        .map((m) => ({ ...m, book: m.book ?? 'notes', tier: m.tier ?? 'semantic' })),
+    botName: (id) =>
+      bots()
+        ?.store.list()
+        .find((b) => b.id === id)?.name ?? id,
+    keyword: (query, allow, limit) => catalog.search(query, allow, limit),
+    memoryKeyword: (query, limit) =>
+      memoryPort()?.searchAll?.(keyTerms(query).join(' ') || query, limit) ?? [],
+    logger,
+  })
+  late.semantic = semantic
+  ctx.effect(
+    () => () => {
+      semantic.stop()
+      vectors.close()
+    },
+    'aris-brain: tìm theo nghĩa',
+  )
 
   // Theo dõi thay đổi (Obsidian, Finder, aris): gom theo nhịp ngắn rồi lập lại chỉ mục.
   ctx.effect(() => {
@@ -730,14 +794,18 @@ export async function apply(ctx: Context): Promise<void> {
         countLookup(sid, 'search')
         const limit = Math.min(20, Math.max(1, Math.round(Number(args.so_ket_qua) || 8)))
         const query = String(args.query ?? '')
-        const hits = catalog.search(query, (e) => ok(e) && inScope(e) && (!space || e.space === space), limit)
+        const hits = await semantic.searchPages(
+          query,
+          (e) => ok(e) && inScope(e) && (!space || e.space === space),
+          limit,
+        )
         asks.step(sid, { kind: 'tim', text: query, n: hits.length })
         if (!hits.length) return 'Không thấy gì khớp trong phần bộ não bạn được đọc.'
         return [
           `Kết quả trong bộ não (${hits.length}):`,
           ...hits.map(
             (h, i) =>
-              `${i + 1}. [[${h.entry.name}]] · ${h.entry.title} — ${where(h.entry)}${h.entry.binary ? ' (tệp gốc, không có chữ)' : ''}\n   ${h.snippet}`,
+              `${i + 1}. [[${h.entry.name}]] · ${h.entry.title} — ${where(h.entry)}${h.entry.binary ? ' (tệp gốc, không có chữ)' : ''}${h.via === 'nghia' ? ' · khớp theo nghĩa' : ''}\n   ${h.snippet}`,
           ),
           'Đọc trọn trang bằng brain_read với ten là tên trong [[...]].',
         ].join('\n')
@@ -799,10 +867,16 @@ export async function apply(ctx: Context): Promise<void> {
         const sid = (exec.agent as AgentLike | undefined)?.session.id
         if (!asks.ofSession(sid)?.scope.memory)
           return 'Không dùng được ở đây: chỉ dùng khi trả lời ở màn Hỏi bộ não có bật "Cả ký ức bot".'
-        const mem = ctx.get('arisMemory') as { searchAll?(q: string, limit?: number): MemHit[] } | undefined
-        if (!mem?.searchAll) return 'Chưa có dịch vụ ký ức.'
+        if (!memoryPort()?.searchAll) return 'Chưa có dịch vụ ký ức.'
         const query = String(args.query ?? '')
-        const hits = mem.searchAll(keyTerms(query).join(' ') || query, 8)
+        const hits = (await semantic.searchMemories(query, 8)).map((m) => ({
+          id: m.id,
+          bot: m.bot,
+          book: m.book,
+          tier: m.tier,
+          text: m.text,
+          at: m.at,
+        }))
         asks.step(sid, { kind: 'ky-uc', text: query, n: hits.length }, { mems: hits })
         if (!hits.length) return 'Không thấy ký ức nào khớp.'
         const names = new Map((bots()?.store.list() ?? []).map((b) => [b.id, b.name]))
@@ -1251,6 +1325,17 @@ export async function apply(ctx: Context): Promise<void> {
                   })),
               })
             // Lượt tra bộ não theo bot trong 7 ngày (tầng 3; đợt 4 dùng khi soát).
+            // Tìm theo nghĩa (6.2b): trạng thái, model hỗ trợ, có khoá chưa.
+            if (q.get('semantic') !== null) {
+              const port = ctx.get('arisEmbed') as EmbedPort | undefined
+              const cfg = semanticConfig()
+              return json({
+                ...semantic.status(),
+                available: !!port,
+                models: port?.models() ?? [],
+                hasKey: cfg.model && port ? await port.hasKey(cfg.model.provider) : false,
+              })
+            }
             if (q.get('lookups') !== null)
               return json({
                 days: [...lookupsT.entries()]
@@ -1534,6 +1619,61 @@ export async function apply(ctx: Context): Promise<void> {
                 if (e instanceof IngestError) return json({ error: e.message }, 409)
                 throw e
               }
+            case 'semantic-config': {
+              const cur = semanticConfig()
+              const m = b.model as { provider?: unknown; model?: unknown } | null | undefined
+              const port = ctx.get('arisEmbed') as EmbedPort | undefined
+              const model =
+                m === undefined
+                  ? cur.model
+                  : m === null
+                    ? null
+                    : port?.models().find((x) => x.provider === m.provider && x.model === m.model)
+              if (model === undefined) return json({ error: 'model nhúng không hợp lệ' }, 400)
+              const sc = (b.scopes ?? {}) as Partial<Record<keyof SemanticConfig['scopes'], unknown>>
+              const scopes = { ...cur.scopes }
+              for (const k of ['personal', 'company', 'memory'] as const)
+                if (typeof sc[k] === 'boolean') scopes[k] = sc[k]
+              await settingsT.put('main', {
+                ...settings(),
+                semantic: {
+                  model: model && { provider: model.provider, model: model.model },
+                  scopes,
+                  paused: typeof b.paused === 'boolean' ? b.paused : cur.paused,
+                },
+              })
+              semantic.changed()
+              return json({ ok: true, ...semantic.status() })
+            }
+            case 'semantic-reset':
+              semantic.reset()
+              return json({ ok: true, ...semantic.status() })
+            case 'semantic-try': {
+              const query = String(b.query ?? '').trim()
+              if (!query) return json({ error: 'chưa có câu tìm' }, 400)
+              const pages = await semantic.searchPages(
+                query,
+                (e) => !!e.space && ASK_LAYERS.has(e.layer) && !e.name.startsWith('_'),
+                6,
+              )
+              const mems = await semantic.searchMemories(query, 3)
+              const names = new Map((bots()?.store.list() ?? []).map((x) => [x.id, x.name]))
+              return json({
+                hits: [
+                  ...pages.map((h) => ({
+                    title: h.entry.title,
+                    path: h.entry.path,
+                    place: where(h.entry),
+                    via: h.via,
+                  })),
+                  ...mems.map((m) => ({
+                    title: `Ký ức của ${names.get(m.bot) ?? m.bot}`,
+                    text: m.text.slice(0, 120),
+                    via: m.via,
+                  })),
+                ],
+              })
+            }
             case 'link':
             case 'link-dismiss':
               try {

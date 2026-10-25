@@ -28,6 +28,7 @@ import type {
   ProviderEntry,
 } from '../page.js'
 import { modelOptions } from '../options.js'
+import { EmbedSelect, SemanticCard, useSemantic, type SemanticApi } from './Semantic.js'
 import { Box, Col, Dot } from '../ui.js'
 import {
   ACCOUNT_ROUTE,
@@ -84,7 +85,7 @@ const TASKS: readonly { id: string; note?: string }[] = [
   { id: 'reflect', note: 'pv.followCompaction' },
   { id: 'title', note: 'pv.followSession' },
   { id: 'eval', note: 'pv.phase3' },
-  { id: 'embed', note: 'pv.step3' },
+  { id: 'embed' },
 ]
 
 const pairKey = (provider: string, model: string) => `${provider}\u0000${model}`
@@ -811,11 +812,13 @@ function Tasks({
   models,
   groups,
   error,
+  sem,
 }: {
   t: T
   models: ModelSettings
   groups: readonly ModelGroup[]
   error: string | null
+  sem: SemanticApi
 }) {
   const form = models.form(DEFAULT_NS)
   const snap = useForm(form)
@@ -872,6 +875,8 @@ function Tasks({
                 )}
               </span>
             )
+          ) : task.id === 'embed' ? (
+            <EmbedSelect t={t} sem={sem} />
           ) : (
             <span className="ap-sel a-muted">{t(task.note!)}</span>
           )}
@@ -1021,6 +1026,7 @@ function Fallback({
 
 export function Provider({ t, models }: PageProps) {
   const ps = useProvidersState()
+  const sem = useSemantic()
   const [entries, setEntries] = useState<readonly ProviderEntry[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [groups, setGroups] = useState<readonly ModelGroup[]>([])
@@ -1182,7 +1188,8 @@ export function Provider({ t, models }: PageProps) {
           </Col>
           <Col basis={360}>
             <CostBox t={t} cost={ps.data?.cost} />
-            <Tasks t={t} models={models} groups={groups} error={catalogError} />
+            <Tasks t={t} models={models} groups={groups} error={catalogError} sem={sem} />
+            <SemanticCard t={t} sem={sem} />
             <Fallback
               t={t}
               chain={ps.data?.chain}

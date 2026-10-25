@@ -19,9 +19,11 @@ import { classify, Router, type Failure } from './fallback.js'
 import { KeyPools } from './keys.js'
 import { dayOf, Ledger } from './ledger.js'
 import { costOf, createPrices } from './prices.js'
+import { EMBED_MODELS, embed, GOOGLE_KEY_REFS, type EmbedRequest } from './embed.js'
 import { probe, probeInputError } from './probe.js'
 
 export * from './probe.js'
+export * from './embed.js'
 export { classify, nextLink, Router } from './fallback.js'
 export { KeyPools, fingerprint } from './keys.js'
 export { Ledger, dayOf } from './ledger.js'
@@ -151,6 +153,25 @@ export async function apply(ctx: Context): Promise<void> {
     resolve: async (ref) => (await ctx.credentials.resolve(credentialRef(ref)))?.value,
     set: (ref, value) => ctx.credentials.set(credentialRef(ref), value),
     unset: (ref) => ctx.credentials.unset(credentialRef(ref)),
+  })
+
+  // Nhúng cho tìm theo nghĩa (@aris/brain): khoá đọc ở máy chủ, không rời máy ngoài lần gọi tới Google.
+  ctx.provide('arisEmbed', {
+    models: () => EMBED_MODELS.map((m) => ({ provider: m.provider, model: m.model, dims: m.dims })),
+    async hasKey(provider: string) {
+      if (provider !== 'google') return false
+      for (const ref of GOOGLE_KEY_REFS)
+        if ((await ctx.credentials.resolve(credentialRef(ref)))?.value) return true
+      return false
+    },
+    embed: (r: EmbedRequest) =>
+      embed(
+        {
+          fetch: (...a) => fetch(...a),
+          key: async (ref) => (await ctx.credentials.resolve(credentialRef(ref)))?.value,
+        },
+        r,
+      ),
   })
 
   // Số token của lần gọi gần nhất mỗi phiên: mắt xích dự phòng phải chứa nổi.

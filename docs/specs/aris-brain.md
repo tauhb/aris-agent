@@ -399,6 +399,30 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
   trang chỉ hiện ở phía trước, trang đang chọn và trang nối với nó. Dùng chung bộ lọc, độ uốn và trang đang chọn với
   cây 2D (`sphereLayout`, `bundlePoints` trong `tree-layout.ts`; vẽ ở `TreeGraph3D.tsx`).
 
+## Đợt 5a — Tìm theo nghĩa (bản vẽ 6.2b, làm 25/10)
+
+- Chốt 25/10: không cài Ollama (quá nặng); nhúng bằng Gemini gói miễn phí (`gemini-embedding-2`, 768 chiều). Gói miễn
+  phí cho Google dùng nội dung gửi lên để cải thiện sản phẩm, nên trang 6.2 ghi rõ và cho bỏ tích từng phần. Groq
+  không có model nhúng. Nhúng chỉ dùng một model (vector hai model không so được); ảnh và video mới có thứ tự ưu tiên
+  (đợt 5c, bản vẽ 6.2c, 2.2f).
+- `@aris/providers` cung cấp `arisEmbed`: gọi `batchEmbedContents` (lô 100), khoá đọc ở máy chủ theo thứ tự
+  `GOOGLE_API_KEY` (tên dsh đặt cho route google), `GEMINI_API_KEY`; phân loại lỗi thiếu khoá, khoá hỏng, hạn mức (đọc
+  `retryDelay`), mạng.
+- `@aris/brain`: kho vector `~/.aris/brain/vectors.sqlite` cạnh chỉ mục từ khoá. Trang của người dùng (wiki, nguồn,
+  nhật ký) cắt theo mục, đoạn khoảng 1.200 chữ; ký ức đang hiệu lực của các bot mỗi ký ức một đoạn (đồng bộ 20 giây
+  sau khởi động rồi mỗi 10 phút). Mỗi đoạn có mã băm: trang sửa chỉ nhúng lại đoạn đổi; đổi model thì nhúng lại hết.
+- Nhúng ở nền từng lô 50 đoạn; chạm hạn mức thì tạm dừng tới giờ Google cho; thiếu khoá thì chờ, kiểm lại mỗi phút.
+  Câu tìm được nhúng (có bộ nhớ đệm); tìm cosine trên mọi vector trong bộ nhớ, mỗi trang lấy đoạn khớp nhất, bỏ
+  dưới 0,45; gộp với từ khoá bằng reciprocal rank fusion. Chưa có vector (thiếu khoá, tắt, hạn mức) thì tìm từ khoá
+  như cũ.
+- Dùng ở `brain_search` (mọi bot, Thủ thư khi trả lời Hỏi bộ não; kết quả ghi "khớp theo nghĩa") và `brain_memory`.
+  Ô tìm trong cây 5.1 và "Từ Second Brain" vẫn tìm từ khoá.
+- Trang 6.2: dòng "Nhúng (tìm theo nghĩa)" chọn model hay Tắt; thẻ "Tìm theo nghĩa": trạng thái, tiến độ, hạn mức,
+  phần gửi đi nhúng (Cá nhân, Công ty, ký ức bot), thử tìm (ghi từ khoá / theo nghĩa / cả hai), nhúng lại, tạm dừng.
+  API: `GET ?semantic`, POST `semantic-config`, `semantic-reset`, `semantic-try`.
+- Đã chạy trên máy: 40 đoạn trang và 33 ký ức chờ nhúng, trạng thái "chỉ từ khoá" khi chưa có khoá, tìm thử ra kết
+  quả từ khoá. Chưa chạy nhúng thật (chờ khoá Gemini).
+
 ## Đã chốt (25/10)
 
 - Duyệt khi nạp: mặc định {you} duyệt ở Hộp thư vào; `/note` và nhật ký của {you} tự nạp.

@@ -320,6 +320,11 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-gstage .legend .note{flex-basis:100%;border-top:1px solid var(--a-line);padding-top:6px}
 .ap-gstage .hint{position:absolute;right:16px;top:14px;font-size:12px;color:var(--a-muted);background:var(--a-panel);border:1px solid var(--a-line);border-radius:999px;padding:4px 12px}
 .ap-gaside{flex:1 1 260px;max-width:290px;min-width:240px}
+.ap-box2{border-radius:9px;background:var(--a-panel2);padding:9px 11px;font-size:12.5px}
+.ap-via{font-size:11px;font-weight:600;border-radius:6px;padding:1px 7px;white-space:nowrap}
+.ap-via-nghia{background:var(--a-accentSoft);color:var(--a-accent)}
+.ap-via-ca-hai{background:var(--a-okSoft);color:var(--a-ok)}
+.ap-via-tu-khoa{background:var(--a-panel2);color:var(--a-muted)}
 .ap-ftree{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
 .ap-ftree:active{cursor:grabbing}
 .ap-ftree .ring{fill:none;stroke:var(--a-line);stroke-dasharray:2 6}
