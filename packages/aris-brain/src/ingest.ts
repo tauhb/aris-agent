@@ -59,7 +59,7 @@ export const batchRecord = z.object({
     /** Đường dẫn nguồn trong kho (trong `hop-thu-vao/`, hay nhật ký). */
     path: z.string(),
     title: z.string(),
-    kind: z.enum(['tai-lieu', 'link', 'ghi-chu', 'nhat-ky']),
+    kind: z.enum(['tai-lieu', 'link', 'ghi-chu', 'nhat-ky', 'anh', 'ghi-am']),
     from: z.enum(['thu-muc', 'web', 'note', 'telegram', 'bot', 'tu-dong']),
     url: z.string().optional(),
     /** Bot gửi nguồn (khi `from` là `bot`). */
@@ -137,7 +137,7 @@ export function review(
 /** Thư mục wiki được ghi của một bản nạp. */
 export function wikiRoot(space: Space, dept?: string): string {
   if (space === 'ca-nhan') return 'ca-nhan/wiki/'
-  return dept ? `cong-ty/wiki/phong-ban/${dept}/` : 'cong-ty/wiki/'
+  return dept ? `cong-ty/wiki/phong-ban/${dept}/` : 'cong-ty/wiki/chung/'
 }
 
 /** Kiểm đường dẫn Thủ thư muốn ghi: trong wiki của không gian, `.md`, tên tệp không dấu. */
@@ -246,7 +246,7 @@ export function librarianPrompt(o: {
     '',
     'Việc của bạn: tích hợp nguồn này vào wiki, như một thủ thư cẩn thận.',
     '1. Đọc nguồn bên dưới. Tra brain_search và brain_read để tìm các trang đã có liên quan (người, dự án, chủ đề, khách hàng…).',
-    `2. Luôn tạo một trang tóm tắt ở ${summaryDir}<ten-khong-dau>.md: ý chính, số liệu kèm chú thích [^1], cuối trang có mục "## Nguồn" với dòng [^1]: [[${name}]].`,
+    `2. Luôn tạo trang tóm tắt đúng đường dẫn ${summaryDir}tom-tat-${slugOf(name).slice(0, 60)}.md (mỗi nguồn một trang, không dùng tên khác): ý chính, số liệu kèm chú thích [^1], cuối trang có mục "## Nguồn" với dòng [^1]: [[${name}]].`,
     '3. Sửa hay tạo các trang liên quan: thêm ý mới kèm chú thích nguồn, thêm liên kết [[...]]. Giữ nguyên phần đã có; chỉ sửa ý cũ khi nguồn mới nói khác, và khi đó ghi canh_bao nói rõ mâu thuẫn.',
     '4. Mỗi trang gọi brain_draft một lần với toàn bộ nội dung mới (có nhãn đầu trang). Trang tạo mới thì loai=moi; thêm ý thì bo-sung; chỉ thêm liên kết thì lien-ket; đổi một ý đã có thì sua-y.',
     `5. Chỉ ghi trong ${root}. Tên tệp không dấu, nối gạch ngang. Không ghi index.md, log.md (aris tự giữ).`,

@@ -37,6 +37,7 @@ import type { SpeechToText } from './media.js'
 import { ChannelStore, type Tables } from './store.js'
 
 export { ChannelHub } from './hub.js'
+export { sttNotReady, toWav16k, transcribe, type SpeechToText } from './media.js'
 export { ChannelStore } from './store.js'
 
 declare module '@deepseek-ai/dsh-llm' {

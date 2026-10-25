@@ -169,7 +169,9 @@ describe('git của kho', () => {
       'ca-nhan/nhat-ky/2026-10-25.md',
       'ca-nhan/wiki/nguoi/chi-ha.md',
     ])
-    expect(await git.commit('chỉ một tệp', ['ca-nhan/wiki/nguoi/chi-ha.md'])).toBeTruthy()
+    expect(
+      await git.commit('chỉ một tệp', ['ca-nhan/wiki/nguoi/chi-ha.md', 'hop-thu-vao/da-chuyen-di.md']),
+    ).toBeTruthy()
     expect(await git.pending()).toEqual(['ca-nhan/nhat-ky/2026-10-25.md'])
     expect(existsSync(join(root, '.git'))).toBe(true)
     expect(sweepMessage('Tầu', ['a/b.md', 'c.md', 'd.md', 'e.md', 'f.md'])).toBe(

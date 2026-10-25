@@ -145,6 +145,9 @@ importers:
 
   packages/aris-brain:
     dependencies:
+      '@aris/channels':
+        specifier: workspace:*
+        version: link:../aris-channels
       yaml:
         specifier: 2.9.1
         version: 2.9.1

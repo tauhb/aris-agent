@@ -160,8 +160,12 @@ export function Inbox({ t, nav }: PageProps) {
   }
   const pickFile = async (f: File | undefined) => {
     if (!f) return
-    if (!/\.(md|markdown|txt)$/i.test(f.name)) return setError(t('ib.fileLater'))
-    const j = await post({ op: 'add', text: await f.text(), title: f.name.replace(/\.[^.]+$/, '') })
+    if (f.size > 25 * 1024 * 1024) return setError(t('ib.fileTooBig'))
+    const bytes = new Uint8Array(await f.arrayBuffer())
+    let bin = ''
+    for (let i = 0; i < bytes.length; i += 0x8000)
+      bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+    const j = await post({ op: 'add', file: { name: f.name, data: btoa(bin) } })
     if (j?.batch) {
       setAdding(false)
       setPick(j.batch.id)
@@ -475,7 +479,7 @@ export function Inbox({ t, nav }: PageProps) {
                 {t('ib.pickFile')}
                 <input
                   type="file"
-                  accept=".md,.markdown,.txt"
+                  accept=".md,.markdown,.txt,.pdf,.doc,.docx,.rtf,.odt,.html,.htm,.png,.jpg,.jpeg,.heic,.webp,.gif,.tif,.tiff,.m4a,.mp3,.wav,.ogg,.oga,.opus,.aac,.flac"
                   style={{ display: 'none' }}
                   onChange={(e) => void pickFile(e.target.files?.[0])}
                 />

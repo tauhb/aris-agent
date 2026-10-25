@@ -98,6 +98,13 @@ describe('mức duyệt', () => {
     ).toBe('ky')
   })
 
+  it('thư mục wiki của bản nạp: Công ty không thuộc phòng nào thì vào phần Chung', async () => {
+    const { wikiRoot } = await import('./ingest.js')
+    expect(wikiRoot('ca-nhan')).toBe('ca-nhan/wiki/')
+    expect(wikiRoot('cong-ty')).toBe('cong-ty/wiki/chung/')
+    expect(wikiRoot('cong-ty', 'van-hanh')).toBe('cong-ty/wiki/phong-ban/van-hanh/')
+  })
+
   it('thứ tự lập: nguồn của người dùng trước nguồn bot gửi', () => {
     const b = (id: string, from: Batch['source']['from'], at: string): Batch => ({
       id,
@@ -198,7 +205,7 @@ describe('bản nháp và trang', () => {
       revise: ['ghi rõ hai mốc'],
       today: '2026-10-25',
     })
-    expect(p).toContain('cong-ty/wiki/phong-ban/van-hanh/tom-tat/')
+    expect(p).toContain('cong-ty/wiki/phong-ban/van-hanh/tom-tat/tom-tat-2026-10-25-0912-bao-cao.md')
     expect(p).toContain('[^1]: [[2026-10-25-0912-bao-cao]]')
     expect(p).toContain('- ghi rõ hai mốc')
     expect(p).toContain('(trống)')
@@ -282,5 +289,35 @@ describe('git của kho: gộp ba chiều, hoàn tác, lịch sử', () => {
     expect(eventKind('Tầu sửa Chị Hà', 'Tầu')).toBe('sua')
     expect(eventKind('Tầu ghi nhanh', 'Tầu')).toBe('ghi-nhanh')
     expect(eventKind('Tạo khuôn bộ não', 'Tầu')).toBe('he-thong')
+  })
+})
+
+describe('đọc tệp trên máy', () => {
+  it('loại tệp theo đuôi', async () => {
+    const { fileKind } = await import('./native.js')
+    expect(fileKind('a/b.PDF')).toBe('pdf')
+    expect(fileKind('x.docx')).toBe('doc')
+    expect(fileKind('anh.HEIC')).toBe('anh')
+    expect(fileKind('ghi-am.m4a')).toBe('ghi-am')
+    expect(fileKind('note.md')).toBe('chu')
+    expect(fileKind('bang.xlsx')).toBe('khac')
+  })
+
+  it('Word đọc bằng textutil (macOS)', async () => {
+    if (process.platform !== 'darwin') return
+    const { extractNative } = await import('./native.js')
+    const { execFileSync } = await import('node:child_process')
+    const dir = await mkdtemp(join(tmpdir(), 'aris-brain-doc-'))
+    dirs.push(dir)
+    await writeFile(join(dir, 'a.txt'), 'Báo giá in ấn tháng 11\nTờ rơi A5: 1.200 đồng\n')
+    execFileSync('/usr/bin/textutil', [
+      '-convert',
+      'docx',
+      join(dir, 'a.txt'),
+      '-output',
+      join(dir, 'a.docx'),
+    ])
+    expect(await extractNative(join(dir, 'a.docx'))).toContain('Tờ rơi A5: 1.200 đồng')
+    await expect(extractNative(join(dir, 'a.xlsx'))).rejects.toThrow('chưa đọc được')
   })
 })

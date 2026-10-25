@@ -32,6 +32,7 @@ import {
 import { Catalog, type Entry } from './catalog.js'
 import { sweepMessage, VaultGit } from './git.js'
 import { batchRecord, isOpen, LIBRARIAN_DAILY_USD, type Batch } from './ingest.js'
+import { sttNotReady, transcribe, type SpeechToText } from '@aris/channels'
 import { IngestError, startIngest, type IngestState } from './pipeline.js'
 import { dayKey, ensureVault, placeOf, SPACES, type Space } from './vault.js'
 
@@ -40,6 +41,7 @@ export * from './catalog.js'
 export * from './extract.js'
 export * from './git.js'
 export * from './ingest.js'
+export * from './native.js'
 export * from './page.js'
 export * from './vault.js'
 
@@ -329,6 +331,20 @@ export async function apply(ctx: Context): Promise<void> {
       if (!b) throw new IngestError('Chưa có dịch vụ đội bot.')
       return b.open(bot)
     },
+    botOf: (sessionId) => bots()?.botOf(sessionId).id ?? 'aris',
+    transcribe: (audio) =>
+      transcribe(
+        ctx.get('speechToText') as SpeechToText | undefined,
+        audio,
+        AbortSignal.timeout(300_000),
+      ).catch((e: unknown) => {
+        throw new IngestError(
+          sttNotReady(e)
+            ? 'Máy chưa có mô hình nhận giọng nói. Mở aris trên web, bấm nút micro ở ô nhập rồi chuẩn bị (tải một lần), xong bấm Lập lại.'
+            : `Không chép lời được: ${e instanceof Error ? e.message : String(e)}`,
+          { cause: e },
+        )
+      }),
   })
 
   ctx.inject(['commands'], (ctx) => {
@@ -563,6 +579,14 @@ export async function apply(ctx: Context): Promise<void> {
     const id = typeof b.id === 'string' ? b.id : ''
     switch (b.op) {
       case 'add':
+        if (b.file && typeof b.file === 'object') {
+          const f = b.file as { name?: unknown; data?: unknown }
+          if (typeof f.name !== 'string' || typeof f.data !== 'string')
+            throw new IngestError('Tệp không hợp lệ.')
+          return {
+            batch: await ingest.addFile({ name: f.name, data: Buffer.from(f.data, 'base64'), from: 'web' }),
+          }
+        }
         return {
           batch: await ingest.add({
             ...(typeof b.text === 'string' ? { text: b.text } : {}),

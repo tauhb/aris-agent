@@ -8,9 +8,10 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import { randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
-import { basename, dirname, extname, join } from 'node:path'
+import { basename, dirname, extname, isAbsolute, join, relative, resolve } from 'node:path'
 import type { Entry } from './catalog.js'
-import { fetchPage, readable, safeUrl, sourceFile, sourceText } from './extract.js'
+import { fetchPage, safeUrl, sourceFile, sourceText } from './extract.js'
+import { extractNative, fileKind } from './native.js'
 import { merge3, type VaultGit } from './git.js'
 import {
   checkDraftPath,
@@ -36,6 +37,8 @@ import {
 import { parsePage } from './page.js'
 import { dayKey, SPACES, type Space } from './vault.js'
 
+/** Tệp gửi vào lớn hơn chừng này thì từ chối. */
+export const FILE_MAX_BYTES = 25 * 1024 * 1024
 /** Thủ thư lập một bản nạp lâu hơn chừng này thì dừng. */
 const PLAN_TIMEOUT_MS = 10 * 60_000
 const TICK_MS = 5000
@@ -70,6 +73,10 @@ export interface IngestDeps {
   depts: () => { id: string; name: string }[]
   librarian: string
   open: (bot: string) => Promise<string>
+  /** Mã bot của một phiên (ghi nguồn do bot nào gửi). */
+  botOf: (sessionId: string | undefined) => string
+  /** Chép lời một tệp ghi âm (dịch vụ nhận giọng nói của dsh); không có thì báo lỗi. */
+  transcribe: (audio: Uint8Array) => Promise<string>
 }
 
 interface SessionPort {
@@ -207,12 +214,47 @@ export function startIngest(d: IngestDeps) {
   // --- Vào ---------------------------------------------------------------------------------------
   const readText = (rel: string) => readFile(join(root, rel), 'utf8').catch(() => '')
 
+  /** Bản chữ đi kèm một tệp gốc (cùng tên, đuôi .md). */
+  const companionOf = (path: string) => `${path.slice(0, path.length - extname(path).length)}.md`
+  /** Tệp .md là bản chữ của một tệp gốc nằm cạnh. */
+  const isCompanion = (path: string) =>
+    path.endsWith('.md') &&
+    d.catalog.all().some((x) => x.path !== path && x.binary && companionOf(x.path) === path)
+
+  /** Chữ của nguồn: tệp chữ đọc thẳng; tệp khác trích ra bản .md đi kèm (một lần). */
+  async function sourceTextOf(b: Batch): Promise<string> {
+    const kind = fileKind(b.source.path)
+    if (kind === 'chu') return sourceText(await readText(b.source.path))
+    if (kind === 'khac') throw new IngestError('Loại tệp này chưa đọc được.')
+    const side = companionOf(b.source.path)
+    if (existsSync(join(root, side))) return sourceText(await readText(side))
+    const abs = join(root, b.source.path)
+    const text =
+      kind === 'ghi-am'
+        ? await d.transcribe(new Uint8Array(await readFile(abs)))
+        : await extractNative(abs).catch((e: unknown) => {
+            throw new IngestError(`Không đọc được tệp: ${e instanceof Error ? e.message : String(e)}`)
+          })
+    if (!text.trim()) throw new IngestError('Không thấy chữ nào trong tệp (ảnh mờ, ghi âm trống?).')
+    const label =
+      kind === 'ghi-am' ? 'Bản chép lời' : kind === 'anh' ? 'Chữ nhận dạng từ ảnh' : 'Chữ trích từ tệp'
+    await writeFile(
+      join(root, side),
+      `---\nloai: ${kind === 'ghi-am' ? 'ghi-am' : kind === 'anh' ? 'anh' : 'tai-lieu'}\ntep-goc: ${JSON.stringify(basename(b.source.path))}\n---\n\n# ${b.source.title}\n\n${label} của [[${basename(b.source.path)}]].\n\n${text.trim()}\n`,
+    )
+    await d.indexFile(side)
+    return text.trim()
+  }
+
   /** Tệp mới trong `hop-thu-vao/` chưa có bản nạp: tạo bản nạp. */
   async function scanInbox() {
     const known = new Set(all().map((b) => b.source.path))
     for (const e of d.catalog.all()) {
       if (e.layer !== 'hop-thu-vao' || known.has(e.path) || basename(e.path).startsWith('.')) continue
-      const ok = readable(e.path)
+      // Bản chữ aris trích ra cho một tệp gốc nằm cạnh nó: không phải nguồn riêng.
+      if (isCompanion(e.path)) continue
+      const kind = fileKind(e.path)
+      const ok = kind !== 'khac'
       const at = iso()
       const id = newId()
       await batches.put(id, {
@@ -220,17 +262,62 @@ export function startIngest(d: IngestDeps) {
         createdAt: at,
         updatedAt: at,
         status: ok ? 'moi' : 'chua-doc',
-        source: { path: e.path, title: e.title, kind: 'tai-lieu', from: 'thu-muc' },
+        source: {
+          path: e.path,
+          title: e.title,
+          kind: kind === 'anh' ? 'anh' : kind === 'ghi-am' ? 'ghi-am' : 'tai-lieu',
+          from: 'thu-muc',
+        },
         ops: [],
         cost: 0,
-        ...(ok
-          ? {}
-          : { note: 'Loại tệp này chưa đọc được (PDF, Word, ảnh, ghi âm có ở đợt 2b). Có thể Chỉ lưu.' }),
+        ...(ok ? {} : { note: 'Loại tệp này chưa đọc được (Excel, PowerPoint…). Có thể Chỉ lưu tệp gốc.' }),
       })
     }
   }
 
   /** Người dùng gửi chữ hay link từ màn 5.2 (hay bot, Telegram ở đợt 2b). */
+  /** Một tệp gửi vào (tải lên trên web, Telegram, bot): chép vào Hộp thư vào, tạo bản nạp. */
+  async function addFile(input: {
+    name: string
+    data: Uint8Array
+    from: Batch['source']['from']
+    by?: string
+  }) {
+    if (input.data.byteLength > FILE_MAX_BYTES) throw new IngestError('Tệp lớn hơn 25 MB.')
+    const at = now()
+    const ext = extname(input.name)
+      .toLowerCase()
+      .replace(/[^.a-z0-9]/g, '')
+    const stem = basename(input.name, extname(input.name))
+    const rel = `hop-thu-vao/${inboxName(at, stem).replace(/\.md$/, '')}${ext}`
+    await mkdir(join(root, 'hop-thu-vao'), { recursive: true })
+    await writeFile(join(root, rel), input.data)
+    await d.indexFile(rel)
+    const kind = fileKind(rel)
+    const id = newId()
+    const b: Batch = {
+      id,
+      createdAt: at.toISOString(),
+      updatedAt: at.toISOString(),
+      status: kind === 'khac' ? 'chua-doc' : 'moi',
+      source: {
+        path: rel,
+        title: stem.slice(0, 120) || 'Tệp',
+        kind: kind === 'anh' ? 'anh' : kind === 'ghi-am' ? 'ghi-am' : kind === 'chu' ? 'ghi-chu' : 'tai-lieu',
+        from: input.from,
+        ...(input.by ? { by: input.by } : {}),
+      },
+      ops: [],
+      cost: 0,
+      ...(kind === 'khac'
+        ? { note: 'Loại tệp này chưa đọc được (Excel, PowerPoint…). Có thể Chỉ lưu tệp gốc.' }
+        : {}),
+    }
+    await batches.put(id, b)
+    void tick()
+    return b
+  }
+
   async function add(input: {
     text?: string
     url?: string
@@ -316,9 +403,8 @@ export function startIngest(d: IngestDeps) {
 
   async function plan(b0: Batch) {
     let b = b0
-    const raw = await readText(b.source.path)
-    if (!raw.trim()) throw new IngestError('Nguồn trống hay không đọc được.')
-    const text = sourceText(raw)
+    const text = await sourceTextOf(b)
+    if (!text.trim()) throw new IngestError('Nguồn trống hay không đọc được.')
     if (!b.space) {
       // Model có bước suy nghĩ ăn vào giới hạn token: để rộng (như bước soạn routine).
       const c = parseClassify(
@@ -330,7 +416,13 @@ export function startIngest(d: IngestDeps) {
         space: c?.space ?? 'ca-nhan',
         ...(c?.dept ? { dept: c.dept } : {}),
         ...(c?.summary ? { summary: c.summary } : {}),
-        ...(c?.title && b.source.from !== 'thu-muc' ? { source: { ...b.source, title: c.title } } : {}),
+        // Tiêu đề do người dùng đặt thì giữ; tiêu đề chỉ là tên tệp hay dòng đầu thì dùng tiêu đề phân loại.
+        ...(c?.title &&
+        (b.source.from !== 'thu-muc' ||
+          /\.[a-z0-9]{2,5}$/i.test(b.source.title) ||
+          !/\s/.test(b.source.title))
+          ? { source: { ...b.source, title: c.title } }
+          : {}),
         sensitive: c?.sensitive ?? false,
         ...(c
           ? {}
@@ -484,6 +576,55 @@ export function startIngest(d: IngestDeps) {
     }),
   )
 
+  // --- Bot gửi nguồn vào Hộp thư vào -----------------------------------------------------------------
+  ctx.tools.register(
+    defineTool({
+      name: 'brain_capture',
+      description:
+        'Gửi một nguồn vào Hộp thư vào của bộ não người dùng để Thủ thư nạp vào wiki (người dùng duyệt): chữ, link web, hay một tệp trong thư mục làm việc của bạn (PDF, Word, ảnh, ghi âm, .md). Dùng khi người dùng nhờ lưu, hay khi bạn có kết quả đáng giữ lâu dài.',
+      parameters: {
+        noi_dung: { type: 'string', description: 'Chữ cần lưu (Markdown).' },
+        link: { type: 'string', description: 'Link web cần lưu (http, https).' },
+        tep: { type: 'string', description: 'Đường dẫn tệp trong thư mục làm việc của bạn.' },
+        tieu_de: { type: 'string', description: 'Tiêu đề ngắn của nguồn.' },
+      },
+      output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+      async execute(args, exec) {
+        const agent = exec.agent as (AgentLike & { session: { header?: { cwd?: string } } }) | undefined
+        const by = d.botOf(agent?.session.id)
+        try {
+          const file = String(args.tep ?? '').trim()
+          if (file) {
+            const cwd = agent?.session.header?.cwd
+            if (!cwd) return 'Không làm được: phiên không có thư mục làm việc.'
+            const abs = resolve(cwd, file)
+            const rel = relative(resolve(cwd), abs)
+            if (rel.startsWith('..') || isAbsolute(rel))
+              return 'Không làm được: chỉ gửi được tệp trong thư mục làm việc của bạn.'
+            if (abs.startsWith(resolve(root))) return 'Không làm được: tệp này đã nằm trong bộ não.'
+            const b = await addFile({
+              name: basename(abs),
+              data: new Uint8Array(await readFile(abs)),
+              from: 'bot',
+              by,
+            })
+            return `Đã gửi tệp «${b.source.title}» vào Hộp thư vào; Thủ thư sẽ lập bản nạp, người dùng duyệt.`
+          }
+          const b = await add({
+            ...(String(args.noi_dung ?? '').trim() ? { text: String(args.noi_dung) } : {}),
+            ...(String(args.link ?? '').trim() ? { url: String(args.link) } : {}),
+            ...(String(args.tieu_de ?? '').trim() ? { title: String(args.tieu_de) } : {}),
+            from: 'bot',
+            by,
+          })
+          return `Đã gửi «${b.source.title}» vào Hộp thư vào; Thủ thư sẽ lập bản nạp, người dùng duyệt.`
+        } catch (e) {
+          return `Không làm được: ${e instanceof Error ? e.message : String(e)}`
+        }
+      },
+    }),
+  )
+
   /** Nội dung trang trong bản nháp của phiên đang nạp (để `brain_read` thấy bản mới). */
   function draftRead(sessionId: string | undefined, path: string): string | undefined {
     const t = sessionId ? drafting.get(sessionId) : undefined
@@ -504,8 +645,17 @@ export function startIngest(d: IngestDeps) {
     if (existsSync(join(root, b.source.path))) await rename(join(root, b.source.path), join(root, dest))
     await d.indexFile(b.source.path)
     await d.indexFile(dest)
-    // Tệp trong Hộp thư vào có thể chưa từng được git theo dõi: thêm theo cả thư mục.
-    const sha = await commit(`Lưu nguồn: ${b.source.title}`, ['hop-thu-vao', dest])
+    const paths = [b.source.path, dest]
+    // Bản chữ đi kèm đi theo tệp gốc.
+    const side = companionOf(b.source.path)
+    if (side !== b.source.path && existsSync(join(root, side))) {
+      const sideDest = companionOf(dest)
+      await rename(join(root, side), join(root, sideDest))
+      await d.indexFile(side)
+      await d.indexFile(sideDest)
+      paths.push(side, sideDest)
+    }
+    const sha = await commit(`Lưu nguồn: ${b.source.title}`, paths)
     return put({ ...b, source: { ...b.source, path: dest }, ...(sha ? { sourceCommit: sha } : {}) })
   }
 
@@ -599,7 +749,12 @@ export function startIngest(d: IngestDeps) {
     if (b.source.path.startsWith('hop-thu-vao/')) {
       await rm(join(root, b.source.path), { force: true })
       await d.indexFile(b.source.path)
-      await commit(`Bỏ nguồn: ${b.source.title}`, ['hop-thu-vao'])
+      const side = companionOf(b.source.path)
+      if (side !== b.source.path) {
+        await rm(join(root, side), { force: true })
+        await d.indexFile(side)
+      }
+      await commit(`Bỏ nguồn: ${b.source.title}`, [b.source.path, companionOf(b.source.path)])
     }
     return put({ ...b, status: 'bo', ops: [] })
   }
@@ -731,5 +886,20 @@ export function startIngest(d: IngestDeps) {
   /** Số bản nạp chờ người dùng duyệt. */
   const waiting = () => all().filter((b) => b.status === 'cho-duyet').length
 
-  return { add, approve, keep, drop, redo, revert, note, draftRead, draftByName, waiting, all, spent, tick }
+  return {
+    add,
+    addFile,
+    approve,
+    keep,
+    drop,
+    redo,
+    revert,
+    note,
+    draftRead,
+    draftByName,
+    waiting,
+    all,
+    spent,
+    tick,
+  }
 }

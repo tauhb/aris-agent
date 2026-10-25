@@ -62,8 +62,14 @@ export class VaultGit {
 
   /** Commit các tệp đã cho (hay mọi thay đổi); không có gì đổi thì thôi. Trả mã commit. */
   async commit(message: string, paths?: readonly string[]): Promise<string | undefined> {
-    if (paths?.length) await this.run(['add', '-A', '--', ...paths])
-    else await this.run(['add', '-A'])
+    if (paths?.length) {
+      // Đường dẫn đã mất mà git chưa từng theo dõi (tệp chuyển đi từ Hộp thư vào) thì bỏ qua, không thì
+      // `git add` báo lỗi cả lệnh.
+      const keep: string[] = []
+      for (const p of paths)
+        if (existsSync(join(this.root, p)) || (await this.run(['ls-files', '--', p])).trim()) keep.push(p)
+      if (keep.length) await this.run(['add', '-A', '--', ...keep])
+    } else await this.run(['add', '-A'])
     const staged = await this.run(['diff', '--cached', '--name-only'])
     if (!staged.trim()) return undefined
     await this.run(['commit', '-q', '--no-verify', '-m', message])

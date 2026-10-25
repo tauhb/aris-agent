@@ -233,6 +233,32 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
 - Chưa thử thật: tự nạp nhật ký lúc 23:00 (chờ tới giờ), nhắc 7 ngày và tự Chỉ lưu 30 ngày, gộp ba chiều
   trùng chỗ (đã có bài thử tự động).
 
+## Đợt 2b — đọc tệp, bot gửi vào bộ não, Telegram (phần 1 xong 25/10)
+
+- Đọc tệp chỉ bằng công cụ có sẵn của macOS: Word, RTF, ODT, HTML qua `textutil`; PDF qua PDFKit, PDF scan
+  không có lớp chữ thì dựng ảnh từng trang (tối đa 30 trang) rồi nhận dạng chữ bằng Vision; ảnh qua Vision
+  (tiếng Việt, tiếng Anh), vẽ lên nền trắng và phóng to gấp đôi khi ảnh nhỏ. PDF và ảnh đi qua một công cụ
+  Swift nhỏ, biên dịch lần đầu bằng `swiftc` vào `~/.aris/brain/bin/aris-extract-<mã băm>`. Ghi âm đổi sang
+  WAV 16 kHz bằng ffmpeg rồi chép lời bằng dịch vụ chép lời của dsh (cần chuẩn bị mô hình trước bằng nút mic
+  trên web; chưa chuẩn bị thì bản nạp báo lỗi rõ, bấm Lập lại sau).
+- Chữ trích ra ghi thành tệp đi kèm `.md` cùng tên (frontmatter `loai`, `tep-goc`), đi theo tệp gốc khi lưu
+  nguồn hay bỏ. Hộp thư vào bỏ qua tệp đi kèm khi quét.
+- Nút "+ Thêm" ở 5.2 nhận mọi loại tệp trên, tối đa 25 MB.
+- Công cụ `brain_capture` cho mọi bot (cả Aris): gửi chữ, link, hay một tệp trong thư mục làm việc của bot vào
+  Hộp thư vào (`from: bot`, ghi tên bot); không gửi được tệp nằm ngoài thư mục làm việc hay đã nằm trong bộ não.
+- Tiêu đề: nguồn không đến từ thư mục, hay tiêu đề trông như tên tệp, thì dùng tiêu đề của bước phân loại.
+  Trang tóm tắt đặt tên theo nguồn (`tom-tat-<tên nguồn>.md`) để hai nguồn không đè nhau. Wiki Công ty không
+  thuộc phòng nào nằm ở `cong-ty/wiki/chung/`.
+- Commit chỉ gồm các đường dẫn còn trên đĩa hay git đang theo dõi, để không cuốn theo tệp khác trong Hộp thư vào.
+- Chạy thử thật: PDF báo giá in ấn ⇒ phân loại Công ty, trang tóm tắt ở `chung/`, duyệt ⇒ hai commit, tệp đi
+  kèm đi theo. Ảnh chụp báo giá ⇒ nhận dạng đủ chữ. Ghi âm ⇒ báo đúng lỗi chưa chuẩn bị mô hình chép lời.
+  Nhờ Aris "lưu vào bộ não" một quy tắc ⇒ Aris gọi `brain_capture`, bản nạp đến từ bot aris, Thủ thư xếp
+  Công ty · Tăng trưởng.
+- Còn (phần 2, chờ duyệt bản vẽ 7.5): Telegram — `/note`, chuyển tiếp tin thì hỏi "Lưu vào bộ não?", ghi âm,
+  ảnh, tệp kèm chữ "lưu"; thẻ bản nạp (duyệt nhanh: Đồng ý, Xem trên web, Chỉ lưu; duyệt kỹ: chỉ Xem trên web,
+  Chỉ lưu); thẻ nhắc chờ quá 7 ngày.
+- Chưa thử thật: chép lời ghi âm (chờ chuẩn bị mô hình), PDF scan nhiều trang.
+
 ## Đã chốt (25/10)
 
 - Duyệt khi nạp: mặc định {you} duyệt ở Hộp thư vào; `/note` và nhật ký của {you} tự nạp.
