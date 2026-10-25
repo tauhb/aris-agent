@@ -39,11 +39,12 @@ export interface MediaState {
   models: MediaModel[]
   today: Record<Kind, number>
   bots: BotRow[]
+  keys: { provider: string; name: string; site: string; hasKey: boolean }[]
 }
 
 const endpoint = () => new URL('api/aris/media', document.baseURI)
 const same = (a: Link, b: Link) => a.provider === b.provider && a.model === b.model
-const PROVIDER: Record<string, string> = { google: 'Google Gemini', openrouter: 'OpenRouter' }
+const PROVIDER: Record<string, string> = { google: 'Google Gemini', openrouter: 'OpenRouter', fal: 'fal.ai' }
 const usd = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 3 })
 
 export function useMedia() {
@@ -309,6 +310,72 @@ export function BotMediaRows({ t, botId, onManage }: { t: T; botId: string; onMa
   )
 }
 
+/** Khoá của nhà cung cấp chỉ dùng cho ảnh, video (fal.ai): chỉ ghi, không đọc lại được. */
+function KeysCard({ t, api }: { t: T; api: MediaApi }) {
+  const [values, setValues] = useState<Record<string, string>>({})
+  const keys = api.data?.keys ?? []
+  if (!keys.length) return null
+  const save = (provider: string) => {
+    const v = (values[provider] ?? '').trim()
+    if (v)
+      void api.act({ op: 'key', provider, value: v }).then(() => setValues({ ...values, [provider]: '' }))
+  }
+  return (
+    <Card title={t('md.keys')} subtitle={t('md.keysHint')}>
+      <div style={{ padding: '0 14px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {keys.map((k) => (
+          <div key={k.provider} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+              <b>{k.name}</b>
+              <span className={`ap-pill2 ${k.hasKey ? 'ok' : ''}`}>
+                {k.hasKey ? t('md.keySet') : t('md.noKey')}
+              </span>
+              <span className="a-muted" style={{ fontSize: 12, marginLeft: 'auto' }}>
+                {t('md.keySite', { site: k.site })}
+              </span>
+            </div>
+            <form
+              style={{ display: 'flex', gap: 6 }}
+              onSubmit={(e) => {
+                e.preventDefault()
+                save(k.provider)
+              }}
+            >
+              <input
+                className="a-inp a-mono"
+                type="password"
+                autoComplete="off"
+                aria-label={t('md.keyInput', { name: k.name })}
+                placeholder={k.hasKey ? t('md.keyReplace') : t('md.keyPaste')}
+                value={values[k.provider] ?? ''}
+                onChange={(e) => setValues({ ...values, [k.provider]: e.target.value })}
+                style={{ flex: 1, minWidth: 0 }}
+              />
+              <Button
+                size="sm"
+                variant="primary"
+                disabled={api.busy || !(values[k.provider] ?? '').trim()}
+                onClick={() => save(k.provider)}
+              >
+                {t('md.keySave')}
+              </Button>
+              {k.hasKey && (
+                <Button
+                  size="sm"
+                  disabled={api.busy}
+                  onClick={() => void api.act({ op: 'key', provider: k.provider, value: '' })}
+                >
+                  {t('md.keyRemove')}
+                </Button>
+              )}
+            </form>
+          </div>
+        ))}
+      </div>
+    </Card>
+  )
+}
+
 /** Mục Cài đặt › Ảnh và video. */
 export function MediaSettings({ t }: PageProps) {
   const api = useMedia()
@@ -332,6 +399,7 @@ export function MediaSettings({ t }: PageProps) {
     <PageShell title={t('md.title')} subtitle={t('md.subtitle')}>
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         <div style={{ flex: '1 1 420px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <KeysCard t={t} api={api} />
           {KINDS.map((kind) => (
             <Card
               key={kind}

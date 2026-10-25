@@ -37,6 +37,7 @@ import {
   hasMediaKey,
   MEDIA_KINDS,
   MEDIA_MODELS,
+  MEDIA_ONLY_PROVIDERS,
   type MediaKind,
   type MediaPolicy,
 } from './media.js'
@@ -606,6 +607,12 @@ export async function apply(ctx: Context): Promise<void> {
     return {
       settings: mediaSettings(),
       models: MEDIA_MODELS.map((m) => ({ ...m, hasKey: keys[m.provider] ?? false })),
+      // Nhà cung cấp chỉ cho ảnh, video: khoá nhập ở mục này (không bao giờ trả giá trị khoá).
+      keys: Object.entries(MEDIA_ONLY_PROVIDERS).map(([id, p]) => ({
+        provider: id,
+        ...p,
+        hasKey: keys[id] ?? false,
+      })),
       today: { image: spent['media-image'] ?? 0, video: spent['media-video'] ?? 0 },
       bots: (bots?.list() ?? []).map((b) => ({
         id: b.id,
@@ -657,6 +664,15 @@ export async function apply(ctx: Context): Promise<void> {
           ...cur,
           caps: { image: num(c.image, cur.caps.image), video: num(c.video, cur.caps.video) },
         })
+        return json({ ok: true, ...(await mediaState()) })
+      }
+      case 'key': {
+        const p = MEDIA_ONLY_PROVIDERS[String(b.provider ?? '')]
+        if (!p) return json({ error: 'nhà cung cấp không hợp lệ' }, 400)
+        const value = typeof b.value === 'string' ? b.value.trim() : ''
+        if (value.length > 500 || /\s/.test(value)) return json({ error: 'khoá không hợp lệ' }, 400)
+        if (value) await ctx.credentials.set(credentialRef(p.ref), value)
+        else await ctx.credentials.unset(credentialRef(p.ref))
         return json({ ok: true, ...(await mediaState()) })
       }
       case 'bot': {

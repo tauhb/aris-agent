@@ -1,7 +1,7 @@
 /**
  * Tạo ảnh và video (giai đoạn 5, đợt 5c; bản vẽ 6.2c, 2.2f, 1.9): danh mục model, thứ tự ưu tiên chung hay riêng
- * của bot, gọi Gemini (`/v1beta/interactions`) và OpenRouter (`/api/v1/images`), phân loại lỗi để thử model kế
- * tiếp. Thuần phần dựng yêu cầu, đọc kết quả, chọn chuỗi; phần gọi mạng nhận `fetch` và hàm đọc khoá từ ngoài.
+ * của bot, gọi Gemini (`/v1beta/interactions`), OpenRouter (`/api/v1/images`) và fal.ai (hàng đợi
+ * `queue.fal.run`), phân loại lỗi để thử model kế tiếp. Thuần phần dựng yêu cầu, đọc kết quả, chọn chuỗi; phần gọi mạng nhận `fetch` và hàm đọc khoá từ ngoài.
  */
 import type { Link } from './domain.js'
 import { GOOGLE_KEY_REFS } from './embed.js'
@@ -19,6 +19,8 @@ export interface MediaModel {
   paid: boolean
   /** Tỉ lệ nhận được. */
   ratios: readonly string[]
+  /** Video: số giây một lần tạo (để ước tính tiền). */
+  seconds?: number | undefined
 }
 
 /** Giá theo trang giá của Google (10/2026) và OpenRouter. Video tính khoảng 8 giây mỗi lần tạo. */
@@ -55,12 +57,38 @@ export const MEDIA_MODELS: readonly MediaModel[] = [
     ratios: ['1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3'],
   },
   {
+    kind: 'image',
+    provider: 'fal',
+    model: 'fal-ai/flux/schnell',
+    usd: 0.006,
+    paid: true,
+    ratios: ['1:1', '16:9', '9:16', '4:3', '3:4'],
+  },
+  {
+    kind: 'image',
+    provider: 'fal',
+    model: 'fal-ai/flux/dev',
+    usd: 0.05,
+    paid: true,
+    ratios: ['1:1', '16:9', '9:16', '4:3', '3:4'],
+  },
+  {
     kind: 'video',
     provider: 'google',
     model: 'gemini-omni-1.1-flash',
     usd: 0.1,
     paid: true,
     ratios: ['16:9', '9:16'],
+    seconds: 8,
+  },
+  {
+    kind: 'video',
+    provider: 'fal',
+    model: 'fal-ai/kling-video/v2.5-turbo/pro/text-to-video',
+    usd: 0.07,
+    paid: true,
+    ratios: ['16:9', '9:16', '1:1'],
+    seconds: 5,
   },
 ]
 
@@ -74,6 +102,12 @@ export const mediaModel = (kind: MediaKind, l: Link) =>
 export const KEY_REFS: Record<string, readonly string[]> = {
   google: GOOGLE_KEY_REFS,
   openrouter: ['OPENROUTER_API_KEY'],
+  fal: ['FAL_KEY'],
+}
+
+/** Nhà cung cấp chỉ dùng cho ảnh, video (không có ở trang Provider của dsh): khoá nhập ở mục Ảnh và video. */
+export const MEDIA_ONLY_PROVIDERS: Record<string, { name: string; ref: string; site: string }> = {
+  fal: { name: 'fal.ai', ref: 'FAL_KEY', site: 'fal.ai/dashboard/keys' },
 }
 
 // --- Chính sách -------------------------------------------------------------------------------
@@ -99,8 +133,12 @@ export const DEFAULT_MEDIA: MediaSettings = {
   image: [
     { provider: 'google', model: 'gemini-3.1-flash-lite-image' },
     { provider: 'openrouter', model: 'openai/gpt-image-2' },
+    { provider: 'fal', model: 'fal-ai/flux/dev' },
   ],
-  video: [{ provider: 'google', model: 'gemini-omni-1.1-flash' }],
+  video: [
+    { provider: 'google', model: 'gemini-omni-1.1-flash' },
+    { provider: 'fal', model: 'fal-ai/kling-video/v2.5-turbo/pro/text-to-video' },
+  ],
   caps: { image: 1, video: 2 },
 }
 
@@ -174,13 +212,23 @@ export const FAIL_TEXT: Record<FailKind, string> = {
 }
 
 export function classifyMedia(status: number, body: unknown): MediaError {
-  const err = (body as { error?: { message?: unknown; status?: unknown } } | undefined)?.error
-  const text = String(err?.message ?? (typeof body === 'string' ? body : `HTTP ${status}`)).slice(0, 300)
+  const b = body as { error?: { message?: unknown; status?: unknown } | string; detail?: unknown } | undefined
+  const err = typeof b?.error === 'object' ? b.error : undefined
+  // fal trả `{"detail": "..."}` hay `{"detail": [{"msg": "..."}]}`.
+  const detail = Array.isArray(b?.detail)
+    ? b.detail.map((d) => String((d as { msg?: unknown }).msg ?? '')).join('; ')
+    : b?.detail
+  const text = String(
+    err?.message ??
+      (typeof b?.error === 'string' ? b.error : undefined) ??
+      detail ??
+      (typeof body === 'string' ? body : `HTTP ${status}`),
+  ).slice(0, 300)
   const all = `${text} ${String(err?.status ?? '')}`
   // Gói miễn phí có hạn mức 0 cho model trả phí: Google trả 429, nhưng thật ra là chưa bật thanh toán.
   if (status === 429 && /free[_ ]?tier/i.test(all)) return new MediaError('billing', text)
   if (status === 429) return new MediaError('rate', text)
-  if (status === 402 || /insufficient (credits|balance|funds)/i.test(all))
+  if (status === 402 || /insufficient (credits|balance|funds)|exhausted balance|user is locked/i.test(all))
     return new MediaError('money', text)
   if (/billing|paid tier|free tier|FAILED_PRECONDITION|not available.*free/i.test(all))
     return new MediaError('billing', text)
@@ -249,6 +297,110 @@ export function openrouterFiles(body: unknown): { files: MediaFile[]; usd?: numb
 export interface MediaDeps {
   fetch: typeof fetch
   key(ref: string): Promise<string | undefined>
+  /** Chờ giữa hai lần hỏi trạng thái hàng đợi (thay được khi kiểm thử). */
+  sleep?: (ms: number) => Promise<void>
+}
+
+/** Kích thước ảnh của FLUX trên fal theo tỉ lệ. */
+const FAL_SIZE: Record<string, string> = {
+  '1:1': 'square_hd',
+  '16:9': 'landscape_16_9',
+  '9:16': 'portrait_16_9',
+  '4:3': 'landscape_4_3',
+  '3:4': 'portrait_4_3',
+}
+
+/** Thân yêu cầu gửi fal theo loại model. */
+export function falBody(r: MediaRequest, count: number) {
+  if (r.kind === 'video')
+    return {
+      prompt: r.prompt,
+      duration: '5',
+      aspect_ratio: r.ratio && ['16:9', '9:16', '1:1'].includes(r.ratio) ? r.ratio : '16:9',
+    }
+  return {
+    prompt: r.prompt,
+    image_size: FAL_SIZE[r.ratio ?? '1:1'] ?? 'square_hd',
+    num_images: count,
+    output_format: 'jpeg',
+  }
+}
+
+/** Đường dẫn tệp trong kết quả fal: `images[].url` hay `video.url`. */
+export function falUrls(body: unknown, kind: MediaKind): { url: string; mime: string }[] {
+  const b = body as {
+    images?: { url?: unknown; content_type?: unknown }[]
+    video?: { url?: unknown; content_type?: unknown }
+  }
+  const list = kind === 'image' ? (b?.images ?? []) : b?.video ? [b.video] : []
+  return list.flatMap((f) =>
+    typeof f.url === 'string'
+      ? [
+          {
+            url: f.url,
+            mime:
+              typeof f.content_type === 'string'
+                ? f.content_type
+                : kind === 'image'
+                  ? 'image/jpeg'
+                  : 'video/mp4',
+          },
+        ]
+      : [],
+  )
+}
+
+/** Gửi vào hàng đợi fal, chờ xong, lấy kết quả rồi tải tệp về. */
+async function viaFal(
+  d: MediaDeps,
+  key: string,
+  model: string,
+  r: MediaRequest,
+  count: number,
+): Promise<MediaFile[]> {
+  const auth = { authorization: `Key ${key}` }
+  const sub = (await call(
+    d,
+    `https://queue.fal.run/${model}`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...auth },
+      body: JSON.stringify(falBody(r, count)),
+    },
+    60_000,
+  )) as { status_url?: string; response_url?: string }
+  if (!sub?.status_url || !sub.response_url) throw new MediaError('other', 'fal không trả mã yêu cầu')
+  const sleep = d.sleep ?? ((ms: number) => new Promise<void>((res) => setTimeout(res, ms)))
+  const deadline = Date.now() + (r.kind === 'video' ? 600_000 : 180_000)
+  for (;;) {
+    const st = (await call(d, sub.status_url, { headers: auth }, 30_000)) as {
+      status?: string
+      error?: unknown
+    }
+    if (st?.status === 'COMPLETED') {
+      if (st.error) throw new MediaError('unsupported', String(st.error).slice(0, 300))
+      break
+    }
+    if (Date.now() > deadline) throw new MediaError('network', 'fal làm quá lâu, đã thôi chờ')
+    await sleep(r.kind === 'video' ? 5000 : 1500)
+  }
+  const out = await call(d, sub.response_url, { headers: auth }, 60_000)
+  const files: MediaFile[] = []
+  for (const f of falUrls(out, r.kind)) {
+    let res: Response
+    try {
+      res = await d.fetch(f.url, { signal: AbortSignal.timeout(300_000) })
+    } catch (e) {
+      throw new MediaError('network', String(e))
+    }
+    if (!res.ok) throw new MediaError('network', `tải tệp từ fal: HTTP ${res.status}`)
+    const type = res.headers.get('content-type')?.split(';')[0]
+    files.push({
+      mime: type && !type.includes('octet') ? type : f.mime,
+      data: new Uint8Array(await res.arrayBuffer()),
+    })
+  }
+  return files
 }
 
 async function keyOf(d: MediaDeps, provider: string): Promise<string | undefined> {
@@ -307,6 +459,13 @@ export async function generateOne(
     if (!files.length) throw new MediaError('other', 'không nhận được ảnh')
     return { files, usd: usd ?? 0 }
   }
+  if (link.provider === 'fal') {
+    const files = await viaFal(d, key, link.model, r, count)
+    if (!files.length)
+      throw new MediaError('other', `không nhận được ${r.kind === 'image' ? 'ảnh' : 'video'}`)
+    const unit = info.usd ?? 0
+    return { files, usd: r.kind === 'video' ? unit * (info.seconds ?? 5) : unit * files.length }
+  }
   // Gemini: mỗi lần gọi một ảnh; muốn nhiều ảnh thì gọi nhiều lần.
   const files: MediaFile[] = []
   for (let i = 0; i < count; i++) {
@@ -340,7 +499,7 @@ export async function generateOne(
   }
   if (!files.length) throw new MediaError('other', `không nhận được ${r.kind === 'image' ? 'ảnh' : 'video'}`)
   const unit = info.usd ?? 0
-  return { files, usd: r.kind === 'video' ? unit * VIDEO_SECONDS : unit * files.length }
+  return { files, usd: r.kind === 'video' ? unit * (info.seconds ?? VIDEO_SECONDS) : unit * files.length }
 }
 
 export interface Attempt {

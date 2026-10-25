@@ -99,6 +99,14 @@ Plugin máy chủ `@aris/providers` thêm ba phần. Dữ liệu ở storage dom
   giây mỗi lần). Gemini gọi `POST /v1beta/interactions` (`response_format` ảnh hay video, đọc khối `image`/`video` có
   `data` hay `uri` ở bất kỳ đâu trong câu trả lời); OpenRouter gọi `POST /api/v1/images` (`data[i].b64_json`,
   `usage.cost`). Khoá: `GOOGLE_API_KEY`/`GEMINI_API_KEY`, `OPENROUTER_API_KEY`.
+- **fal.ai** (thêm 25/10): không phải nhà cung cấp chat nên không có ở trang Provider của dsh; khoá `FAL_KEY` nhập ở
+  thẻ "Khoá nhà cung cấp ảnh, video" của mục Ảnh và video (chỉ ghi, có Xoá khoá). Gọi hàng đợi
+  `POST queue.fal.run/<model>` với `Authorization: Key …`, hỏi `status_url` tới `COMPLETED`, lấy `response_url`
+  (`images[].url` hay `video.url`) rồi tải tệp. Model: `fal-ai/flux/schnell` (khoảng 0,006 USD/ảnh),
+  `fal-ai/flux/dev` (khoảng 0,05), Kling 2.5 Turbo Pro video 5 giây (khoảng 0,07 USD/giây). Giá là ước tính theo
+  trang so sánh, cần đối chiếu trang giá của fal. Lỗi số dư của fal (`Exhausted balance`) tính là hết tiền.
+- Đã thử thật với khoá Gemini: model ảnh Gemini chỉ xuất JPEG (xin PNG bị trả lỗi), và dự án ở gói miễn phí có hạn
+  mức 0 cho model ảnh (Google trả 429, aris báo là chưa bật thanh toán).
 - **Thứ tự ưu tiên**: chung cho cả đội (bảng `media`, mặc định ảnh Gemini → OpenRouter, video Gemini) và theo bot (bản
   ghi bot `media.image`/`media.video`: `off`, `shared`, `own` + danh sách nhiều model + `fallback` rơi về chung + trần
   riêng). Model lỗi thì thử model kế: thiếu khoá, khoá hỏng, chưa bật thanh toán, hết tiền, giới hạn tốc độ, không làm
