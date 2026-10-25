@@ -391,6 +391,8 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
 - Ký ức bot là nhánh riêng, mỗi bot một thư mục gộp sẵn; mở ra thì lá là nội dung ký ức. Lọc: liên kết giữa trang,
   nguồn, nhật ký, ký ức bot. API `?graph` trả thêm danh sách phòng ban để đặt tên nhánh.
 - Tính toán ở `tree-layout.ts` (thuần, có kiểm thử), vẽ ở `TreeGraph.tsx`.
+- Đã vẽ thử cây 3D (bản vẽ 5.3c, kiểu cầu và kiểu nón) để so: 3D đẹp nhưng nhãn phía sau phải xoay mới đọc, nhánh
+  chồng nhau theo góc nhìn; chốt 25/10 giữ cây 2D.
 
 ## Đã chốt (25/10)
 
