@@ -122,6 +122,13 @@ export function watchConversation(
       )
     )
       return
+    // Phiên của Thủ thư (@aris/brain): lời cuối là bản nạp hay câu trả lời Hỏi bộ não, không chen lời nhắc.
+    if (
+      (ctx.get('arisBrain') as { isLibrarian?(id: string): boolean } | undefined)?.isLibrarian?.(
+        agent.session.id,
+      )
+    )
+      return
     const reason = nudgeReason(s, lastNudge.get(agent))
     if (!reason) return
     lastNudge.set(agent, turn)

@@ -312,6 +312,8 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 > **Đợt 2b phần 1 xong 25/10** ([đặc tả](specs/aris-brain.md#đợt-2b--đọc-tệp-bot-gửi-vào-bộ-não-telegram-phần-1-xong-2510)): đọc PDF, Word, ảnh bằng công cụ có sẵn của macOS (PDFKit, Vision, `textutil`), ghi âm qua ffmpeg và chép lời của dsh, công cụ `brain_capture` cho mọi bot. Phần 2 xong 25/10: Telegram theo bản vẽ 7.5 — `/note`, chuyển tiếp thì hỏi lưu, tệp kèm "lưu" và trả lời "lưu", thẻ bản nạp có Đồng ý, nhắc chờ quá 7 ngày.
 
+> **Đợt 3a xong 25/10 — Hỏi bộ não** ([đặc tả](specs/aris-brain.md#đợt-3a--hỏi-bộ-não-bản-vẽ-54-xong-2510)): bản vẽ 5.4 vẽ lại và 5.7 mới duyệt 25/10. Tìm kiếm hiểu câu hỏi tự nhiên (bỏ từ đệm, tìm nới). Màn 5.4 dữ liệu thật: mỗi câu hỏi một phiên của Thủ thư, phạm vi áp ở công cụ tra, tìm cả ký ức các bot (`brain_memory`), số trích dẫn và cột Nguồn có đoạn trích, tiến độ theo thời gian thực, hỏi tiếp, dừng, lưu câu trả lời vào Hộp thư vào, nhờ Aris tìm ngoài bộ não. Còn đợt 3b: bộ não trong khung chat (bản vẽ 5.7) và ba tầng chỉ dẫn.
+
 **Giao diện**: 5.1 Ghi chú (đồ thị 2D quanh ghi chú), 5.2 Hộp thư vào, 5.3 Đồ thị toàn cục 3D, 5.4 Hỏi bộ não; phần "Từ Second Brain" trong menu đính kèm.
 
 **Nghiệm thu**: gửi một ghi âm Telegram ⇒ có ghi chú đã chép lời, xếp đúng dự án, nối với ghi chú liên quan; "Hỏi bộ não" trả lời đúng kèm nguồn; mở thẳng thư mục bằng Obsidian được.

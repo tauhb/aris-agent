@@ -49,6 +49,23 @@ describe('MemoryStore', () => {
     expect(table.map.get(m.id)?.status).toBe('deleted')
   })
 
+  it('tìm trong ký ức mọi bot: chỉ ký ức đang hiệu lực, không tính lượt dùng', async () => {
+    const { s } = store()
+    await s.save({ ...base, bot: 'b-tin', text: 'Người dùng muốn giữ quảng cáo dưới 30% ngân sách' })
+    await s.save({
+      ...base,
+      bot: 'b-minh',
+      book: 'notes',
+      kind: 'fact',
+      text: 'Kênh YouTube đăng video thứ 3',
+    })
+    const gone = await s.save({ ...base, text: 'Ngân sách quảng cáo tháng 9 là 10 triệu' })
+    await s.forget(gone.id)
+    const hits = s.searchAll('ngan sach quang cao')
+    expect(hits.map((h) => h.bot)).toEqual(['b-tin'])
+    expect(hits[0]!.uses).toBe(0)
+  })
+
   it('ký ức cũ viết cứng "chủ nhân" được đổi thành "người dùng"', async () => {
     const { s } = store()
     const a = await s.save({ ...base, text: 'Chủ nhân thích báo cáo dạng bảng, gửi chủ nhân bản gọn' })

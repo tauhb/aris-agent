@@ -75,11 +75,37 @@ export function terms(query: string): string[] {
     .slice(0, 12)
 }
 
-/** Câu truy vấn FTS5: mọi từ đều phải có, từ cuối khớp tiền tố. */
-export function ftsQuery(query: string): string | undefined {
-  const ws = terms(query)
+/**
+ * Từ đệm của câu hỏi tự nhiên ("mình đã quyết gì về…"): xét trên chữ có dấu, vì bỏ dấu rồi thì "có" và
+ * "cô", "đã" và "da" trùng nhau.
+ */
+const FILLER = new Set(
+  (
+    'mình tôi đã đang sẽ gì về của cho là và với các những một nào khi thì có không được này đó kia ở tại ' +
+    'thế sao bao nhiêu như để từ đến trong ra vào rồi chưa hay hoặc mà nhé ạ ơi giúp hãy nhỉ vậy đấy cái ' +
+    'việc điều nên phải cần muốn biết'
+  ).split(' '),
+)
+
+/** Từ khoá chính của câu tìm: bỏ từ đệm (câu toàn từ đệm thì giữ nguyên). */
+export function keyTerms(query: string): string[] {
+  const words = query
+    .normalize('NFC')
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean)
+  const kept = words.filter((w) => !FILLER.has(w))
+  return terms((kept.length ? kept : words).join(' '))
+}
+
+/**
+ * Câu truy vấn FTS5 theo từ khoá chính. `all`: mọi từ đều phải có, từ cuối khớp tiền tố; `any`: chỉ cần
+ * một từ (tìm nới khi tìm đủ từ không ra).
+ */
+export function ftsQuery(query: string, mode: 'all' | 'any' = 'all'): string | undefined {
+  const ws = keyTerms(query)
   if (!ws.length) return undefined
-  return ws.map((w, i) => `"${w}"${i === ws.length - 1 ? '*' : ''}`).join(' ')
+  return ws.map((w, i) => `"${w}"${i === ws.length - 1 ? '*' : ''}`).join(mode === 'all' ? ' ' : ' OR ')
 }
 
 /** Đoạn trích quanh lần khớp đầu tiên (trên chữ gốc), tối đa `width` ký tự. */
@@ -87,16 +113,26 @@ export function snippetOf(body: string, query: string, width = 180): string {
   const plain = body
     .replace(FRONT, '')
     .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/\[\^[^\]\n]*\]:?/g, '')
+    .replace(/\[\[([^\]|\n]+)(?:\|([^\]\n]*))?\]\]/g, (_m, a: string, b?: string) => b || a)
     .replace(/[#>*_`|]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
   const f = fold(plain)
-  const hit = terms(query)
-    .map((w) => f.indexOf(w))
-    .filter((i) => i >= 0)
-    .sort((a, b) => a - b)[0]
+  // Chỗ khớp nhiều từ khoá khác nhau nhất trong một khung trích.
+  const ws = keyTerms(query)
+  const lead = Math.floor(width / 3)
+  let hit: number | undefined
+  let best = 0
+  for (const w of ws)
+    for (let i = f.indexOf(w), n = 0; i >= 0 && n < 20; i = f.indexOf(w, i + 1), n++) {
+      const from = Math.max(0, i - lead)
+      const win = f.slice(from, from + width)
+      const score = ws.filter((x) => win.includes(x)).length
+      if (score > best) [best, hit] = [score, i]
+    }
   if (hit === undefined) return plain.slice(0, width) + (plain.length > width ? '…' : '')
-  const start = Math.max(0, hit - Math.floor(width / 3))
+  const start = Math.max(0, hit - lead)
   const end = Math.min(plain.length, start + width)
   return `${start > 0 ? '…' : ''}${plain.slice(start, end)}${end < plain.length ? '…' : ''}`
 }

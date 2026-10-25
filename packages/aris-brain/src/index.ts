@@ -12,6 +12,7 @@ import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { execFile } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
 import { existsSync, watch, type FSWatcher } from 'node:fs'
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
@@ -29,7 +30,20 @@ import {
   type AccessRules,
   type Reader,
 } from './access.js'
+import {
+  answerSource,
+  AskError,
+  askRecord,
+  askScope,
+  citations,
+  scopeLabel,
+  startAsks,
+  type Ask,
+  type AskTurn,
+  type MemHit,
+} from './ask.js'
 import { Catalog, type Entry } from './catalog.js'
+import { keyTerms, snippetOf } from './page.js'
 import { sweepMessage, VaultGit } from './git.js'
 import { batchRecord, isOpen, LIBRARIAN_DAILY_USD, type Batch } from './ingest.js'
 import { sttNotReady, transcribe, type SpeechToText } from '@aris/channels'
@@ -80,6 +94,8 @@ const SWEEP_MS = 10 * 60_000
 const DEPT_SYNC_MS = 60_000
 /** Trang đọc qua `brain_read` dài hơn thì cắt. */
 const READ_MAX_CHARS = 24_000
+/** Lớp trang Hỏi bộ não được tra. */
+const ASK_LAYERS = new Set(['wiki', 'nguon', 'nhat-ky'])
 const SKIP_DIRS = new Set(['.git', '.obsidian', '.trash', 'node_modules'])
 
 const settingsRecord = z.object({
@@ -103,6 +119,7 @@ const brainDomain = defineDomain({
   tables: {
     settings: domainTable<string, Settings>(settingsRecord),
     batches: domainTable<string, Batch>(batchRecord),
+    asks: domainTable<string, Ask>(askRecord),
     ingest: domainTable<string, IngestState>(ingestState),
   },
 })
@@ -384,6 +401,8 @@ export async function apply(ctx: Context): Promise<void> {
     conflicts: b.conflicts?.length ?? 0,
   })
   ctx.provide('arisBrain', {
+    /** Phiên của Thủ thư (nạp, hỏi bộ não): @aris/memory không chen lời nhắc lưu ký ức. */
+    isLibrarian: (sessionId: string) => bots()?.botOf(sessionId).id === LIBRARIAN,
     on: (fn: (e: unknown) => void) =>
       ingest.on((e) =>
         fn(
@@ -429,6 +448,37 @@ export async function apply(ctx: Context): Promise<void> {
     }
   }
   const allows = (r: Reader) => (e: Entry) => canRead(r, e, rules())
+
+  // --- Hỏi bộ não (5.4) ---------------------------------------------------------------------------
+  const asks = startAsks({
+    ctx,
+    logger,
+    table: domain.table('asks') as unknown as Table<Ask>,
+    open: async (bot) => {
+      const b = bots()
+      if (!b) throw new AskError('Chưa có dịch vụ đội bot.')
+      return b.open(bot)
+    },
+    librarian: LIBRARIAN,
+    deptName: (id) => depts().find((x) => x.id === id)?.name,
+    today: () => dayKey(new Date()),
+  })
+  /** Phiên hỏi bộ não: công cụ tra chỉ thấy phạm vi người dùng chọn (phòng ban gồm cả phần chung). */
+  const askFilter = (sessionId: string | undefined) => {
+    const s = asks.ofSession(sessionId)?.scope
+    if (!s) return () => true
+    // Chỉ trang của người dùng (wiki, nguồn, nhật ký): không mục lục, mẫu trang, Hộp thư vào.
+    return (e: Entry) =>
+      !!e.space &&
+      ASK_LAYERS.has(e.layer) &&
+      !e.name.startsWith('_') &&
+      (!s.space || e.space === s.space) &&
+      (s.space !== 'cong-ty' ||
+        !s.dept ||
+        (s.dept === 'chung'
+          ? !e.dept
+          : canRead({ id: 'pham-vi', role: 'member', department: s.dept }, e, rules())))
+  }
 
   ctx.on(
     'tools/pre-execute',
@@ -491,15 +541,15 @@ export async function apply(ctx: Context): Promise<void> {
       },
       output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
       async execute(args, exec) {
-        const reader = readerOf((exec.agent as AgentLike | undefined)?.session.id)
+        const sid = (exec.agent as AgentLike | undefined)?.session.id
+        const reader = readerOf(sid)
         const space = SPACES.find((s) => s === args.khong_gian)
         const ok = allows(reader)
+        const inScope = askFilter(sid)
         const limit = Math.min(20, Math.max(1, Math.round(Number(args.so_ket_qua) || 8)))
-        const hits = catalog.search(
-          String(args.query ?? ''),
-          (e) => ok(e) && (!space || e.space === space),
-          limit,
-        )
+        const query = String(args.query ?? '')
+        const hits = catalog.search(query, (e) => ok(e) && inScope(e) && (!space || e.space === space), limit)
+        asks.step(sid, { kind: 'tim', text: query, n: hits.length })
         if (!hits.length) return 'Không thấy gì khớp trong phần bộ não bạn được đọc.'
         return [
           `Kết quả trong bộ não (${hits.length}):`,
@@ -540,26 +590,70 @@ export async function apply(ctx: Context): Promise<void> {
         // Thủ thư đang nạp: trang đã ghi lên bản nháp thì đọc bản nháp.
         const draft = ingest.draftRead(sid, ten.includes('/') ? ten : '') ?? ingest.draftByName(sid, ten)
         if (draft) return `(bản nháp của lần nạp này)\n\n${draft}`
+        const inScope = askFilter(sid)
         return readPage(
           reader,
           ten,
           SPACES.find((s) => s === args.khong_gian),
+          inScope,
+          (e) => asks.step(sid, { kind: 'doc', text: e.title }, { read: e.path }),
         )
       },
     }),
   )
 
-  async function readPage(reader: Reader, ten: string, space?: Space): Promise<string> {
+  ctx.tools.register(
+    defineTool({
+      name: 'brain_memory',
+      description:
+        'Chỉ dùng khi đang trả lời ở màn Hỏi bộ não và người dùng bật "Cả ký ức bot": tìm từ khoá trong ký ức của mọi bot (điều bot ghi nhớ về người dùng và công việc). Trả về [[ky-uc:mã]] kèm bot, ngày, nội dung.',
+      parameters: {
+        query: { type: 'string', required: true, description: 'Từ khoá, ví dụ ngân sách, tên người.' },
+      },
+      output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+      async execute(args, exec) {
+        const sid = (exec.agent as AgentLike | undefined)?.session.id
+        if (!asks.ofSession(sid)?.scope.memory)
+          return 'Không dùng được ở đây: chỉ dùng khi trả lời ở màn Hỏi bộ não có bật "Cả ký ức bot".'
+        const mem = ctx.get('arisMemory') as { searchAll?(q: string, limit?: number): MemHit[] } | undefined
+        if (!mem?.searchAll) return 'Chưa có dịch vụ ký ức.'
+        const query = String(args.query ?? '')
+        const hits = mem.searchAll(keyTerms(query).join(' ') || query, 8)
+        asks.step(sid, { kind: 'ky-uc', text: query, n: hits.length }, { mems: hits })
+        if (!hits.length) return 'Không thấy ký ức nào khớp.'
+        const names = new Map((bots()?.store.list() ?? []).map((b) => [b.id, b.name]))
+        return [
+          `Ký ức khớp (${hits.length}):`,
+          ...hits.map(
+            (m) =>
+              `- [[ky-uc:${m.id}]] ${names.get(m.bot) ?? m.bot} · ${m.book === 'owner' ? 'về người dùng' : 'ghi chép'} · ${m.at.slice(0, 10)}: ${m.text}`,
+          ),
+        ].join('\n')
+      },
+    }),
+  )
+
+  async function readPage(
+    reader: Reader,
+    ten: string,
+    space?: Space,
+    inScope: (e: Entry) => boolean = () => true,
+    onRead?: (e: Entry) => void,
+  ): Promise<string> {
     const raw = ten
       .trim()
       .replace(/^\[\[|\]\]$/g, '')
       .trim()
-    const ok = allows(reader)
+    const allowed = allows(reader)
+    const ok = (e: Entry) => allowed(e) && inScope(e)
+    const name = raw.replace(/\.md$/i, '')
+    // Trùng tên ở hai không gian: lấy trang đọc được (ưu tiên không gian được chỉ).
     const entry = raw.includes('/')
       ? catalog.get(raw.replace(/^\/+/, ''))
-      : catalog.byName(space, raw.replace(/\.md$/i, ''))
+      : [space, ...SPACES].map((s) => catalog.byName(s, name)).find((e) => e && ok(e))
     if (!entry || !ok(entry)) return 'Không có trang này trong phần bộ não bạn được đọc.'
     if (entry.binary) return `${entry.path} là tệp gốc (không có chữ); đọc bản .md cùng tên nếu có.`
+    onRead?.(entry)
     const text = await readFile(join(root, entry.path), 'utf8').catch(() => '')
     const back = catalog
       .backlinks(entry.name)
@@ -627,6 +721,130 @@ export async function apply(ctx: Context): Promise<void> {
   }
   const hasObsidian = () =>
     existsSync('/Applications/Obsidian.app') || existsSync(join(homedir(), 'Applications', 'Obsidian.app'))
+
+  const deptName = (id: string) => depts().find((x) => x.id === id)?.name
+
+  /** Nguồn của một lượt trả lời, theo thứ tự trích dẫn; đoạn trích quanh ý vừa nói trước chỗ trích. */
+  function sourcesOf(t: AskTurn) {
+    const answer = t.answer ?? ''
+    const names = new Map((bots()?.store.list() ?? []).map((b) => [b.id, b]))
+    return citations(answer).map((c, i) => {
+      const near = answer.slice(Math.max(0, c.at - 160), c.at)
+      if (c.kind === 'mem') {
+        const m = t.mems.find((x) => x.id === c.ref)
+        if (!m) return { n: i + 1, kind: 'mem' as const, ref: c.ref, missing: true }
+        const bot = names.get(m.bot)
+        return {
+          n: i + 1,
+          kind: 'mem' as const,
+          ref: c.ref,
+          bot: m.bot,
+          botName: bot?.name ?? m.bot,
+          dept: bot?.department ? (deptName(bot.department) ?? bot.department) : null,
+          book: m.book,
+          tier: m.tier,
+          at: m.at,
+          snippet: snippetOf(m.text, near, 200),
+          terms: keyTerms(near),
+        }
+      }
+      const read = t.reads.map((p) => catalog.get(p)).find((e) => e?.name === c.ref && !e.binary)
+      const e =
+        read ??
+        [undefined, ...SPACES]
+          .map((s) => catalog.byName(s, c.ref))
+          .map((x) => (x ? catalog.get(x.path) : undefined))
+          .find(Boolean)
+      if (!e) return { n: i + 1, kind: 'page' as const, ref: c.ref, missing: true }
+      return {
+        n: i + 1,
+        ref: c.ref,
+        ...view(e),
+        pageKind: e.kind ?? null,
+        kind: 'page' as const,
+        snippet: snippetOf(e.body, near, 200),
+        terms: keyTerms(near),
+      }
+    })
+  }
+  const askView = (a: Ask) => ({
+    ...a,
+    scopeLabel: scopeLabel(a.scope, a.scope.dept ? deptName(a.scope.dept) : undefined),
+    turns: a.turns.map((t) => ({ ...t, sources: sourcesOf(t) })),
+  })
+
+  async function askOp(b: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const id = typeof b.id === 'string' ? b.id : ''
+    const text = typeof b.q === 'string' ? b.q : ''
+    switch (b.op) {
+      case 'ask': {
+        const scope = askScope.safeParse(b.scope)
+        if (!scope.success) throw new AskError('Phạm vi không hợp lệ.')
+        return { ask: askView(await asks.create(text, scope.data)) }
+      }
+      case 'ask-follow':
+        return { ask: askView(await asks.follow(id, text)) }
+      case 'ask-stop':
+        await asks.stop(id)
+        return {}
+      case 'ask-delete':
+        await asks.remove(id)
+        return {}
+      case 'ask-save': {
+        // Câu trả lời tốt thành nguồn trong Hộp thư vào: Thủ thư nạp thành trang wiki, người dùng duyệt.
+        const a = asks.get(id)
+        const t = a?.turns[Number(b.turn ?? a.turns.length - 1)]
+        if (!a || !t?.answer) throw new AskError('Chưa có câu trả lời để lưu.')
+        const label = scopeLabel(a.scope, a.scope.dept ? deptName(a.scope.dept) : undefined)
+        return {
+          batch: await ingest.add({
+            text: answerSource(t, label),
+            title: `Hỏi: ${t.q}`.slice(0, 120),
+            from: 'web',
+          }),
+        }
+      }
+      case 'ask-aris': {
+        // Nhờ Aris tìm ngoài bộ não: phiên mới của Aris với câu hỏi này.
+        const a = asks.get(id)
+        const t = a?.turns[Number(b.turn ?? a.turns.length - 1)]
+        if (!a || !t) throw new AskError('Không có câu hỏi này.')
+        const sc = ctx.get('sessionController') as
+          | {
+              prompt(
+                r: {
+                  requestId: string
+                  sessionId: string
+                  mode: 'queue'
+                  content: { type: 'text'; text: string }[]
+                },
+                s: AbortSignal,
+              ): Promise<unknown>
+            }
+          | undefined
+        const b0 = bots()
+        if (!sc || !b0) throw new AskError('Chưa có dịch vụ phiên.')
+        const sessionId = await b0.open('aris')
+        await sc.prompt(
+          {
+            requestId: randomUUID(),
+            sessionId,
+            mode: 'queue',
+            content: [
+              {
+                type: 'text',
+                text: `Bộ não chưa có câu trả lời cho câu hỏi này, tìm giúp ở nơi khác (web, tệp, email nếu có công cụ): ${t.q}`,
+              },
+            ],
+          },
+          AbortSignal.timeout(30_000),
+        )
+        return { sessionId }
+      }
+      default:
+        throw new AskError('op không hợp lệ')
+    }
+  }
 
   async function ingestOp(b: Record<string, unknown>): Promise<Record<string, unknown>> {
     const id = typeof b.id === 'string' ? b.id : ''
@@ -711,6 +929,32 @@ export async function apply(ctx: Context): Promise<void> {
                 backlinks: catalog.backlinks(e.name).map(view),
                 readers: readersOf(e),
               })
+            }
+            if (q.get('asks') !== null)
+              return json({
+                asks: asks.list().map((a) => {
+                  const t = a.turns.at(-1)
+                  return {
+                    id: a.id,
+                    title: a.title,
+                    updatedAt: a.updatedAt,
+                    scope: scopeLabel(a.scope, a.scope.dept ? deptName(a.scope.dept) : undefined),
+                    status: t?.status ?? 'xong',
+                    sources: t?.answer ? citations(t.answer).length : 0,
+                    unseen: t?.answer?.startsWith('Chưa thấy') ?? false,
+                  }
+                }),
+                usdToday: asks
+                  .list()
+                  .flatMap((a) => a.turns)
+                  .filter((t) => t.at.startsWith(dayKey(new Date())))
+                  .reduce((s, t) => s + t.cost, 0),
+                departments: depts().map((d) => ({ id: d.id, name: d.name })),
+              })
+            const askId = q.get('ask')
+            if (askId !== null) {
+              const a = asks.get(askId)
+              return a ? json({ ask: askView(a) }) : json({ error: 'Không có câu hỏi này.' }, 404)
             }
             const space = SPACES.find((s) => s === q.get('space'))
             if (q.get('inbox') !== null)
@@ -849,6 +1093,18 @@ export async function apply(ctx: Context): Promise<void> {
                 return json({ ok: true, ...(await ingestOp(b)) })
               } catch (e) {
                 if (e instanceof IngestError) return json({ error: e.message }, 409)
+                throw e
+              }
+            case 'ask':
+            case 'ask-follow':
+            case 'ask-stop':
+            case 'ask-delete':
+            case 'ask-save':
+            case 'ask-aris':
+              try {
+                return json({ ok: true, ...(await askOp(b)) })
+              } catch (e) {
+                if (e instanceof AskError || e instanceof IngestError) return json({ error: e.message }, 409)
                 throw e
               }
             default:

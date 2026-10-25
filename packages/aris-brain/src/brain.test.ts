@@ -6,7 +6,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { bashTouchesVault, canRead, containsVault, insideVault, readTarget, type Reader } from './access.js'
 import { Catalog } from './catalog.js'
 import { sweepMessage, VaultGit } from './git.js'
-import { fold, linksOf, parsePage, snippetOf } from './page.js'
+import { askPrompt, citations, scopeLabel } from './ask.js'
+import { fold, keyTerms, linksOf, parsePage, snippetOf } from './page.js'
 import { ensureVault, placeOf, slugOf } from './vault.js'
 
 const dirs: string[] = []
@@ -83,6 +84,32 @@ describe('đọc trang', () => {
 
 describe('chỉ mục', () => {
   const st = { size: 1, mtime: 1 }
+  it('câu hỏi tự nhiên: bỏ từ đệm, không trang nào đủ từ thì tìm nới; đoạn trích quanh chỗ khớp nhiều từ', () => {
+    expect(keyTerms('Mình đã quyết gì về ngân sách quảng cáo quý 4?')).toEqual([
+      'quyet',
+      'ngan',
+      'sach',
+      'quang',
+      'cao',
+      'quy',
+      '4',
+    ])
+    // "cô" không phải từ đệm dù bỏ dấu trùng với "có".
+    expect(keyTerms('cô Lan có nói gì không')).toEqual(['co', 'lan', 'noi'])
+    expect(keyTerms('là gì')).toEqual(['la', 'gi'])
+    const c = new Catalog()
+    c.put(
+      'cong-ty/wiki/chung/ke-hoach-quy-4.md',
+      '# Kế hoạch quý 4\n\nMở đầu dài dòng về kênh. 50 triệu chia: 30 sản xuất, 15 quảng cáo, 5 dự phòng.',
+      st,
+    )
+    c.put('ca-nhan/wiki/nguoi/chi-ha.md', '# Chị Hà\n\nBáo giá thumbnail 2 triệu.', st)
+    const hits = c.search('Mình đã quyết gì về ngân sách quảng cáo quý 4?', () => true)
+    expect(hits.map((h) => h.entry.name)).toEqual(['ke-hoach-quy-4'])
+    expect(hits[0]!.snippet).toContain('15 quảng cáo')
+    expect(c.search('chi ha', () => true).map((h) => h.entry.name)).toEqual(['chi-ha'])
+  })
+
   it('tìm có dấu hay không dấu, cả chữ đ; liên kết ngược; lọc theo quyền', () => {
     const c = new Catalog()
     c.put('ca-nhan/wiki/nguoi/chi-ha.md', '# Chị Hà\n\nEditor dựng video, phụ trách [[kenh-youtube-q4]].', st)
@@ -176,6 +203,37 @@ describe('git của kho', () => {
     expect(existsSync(join(root, '.git'))).toBe(true)
     expect(sweepMessage('Tầu', ['a/b.md', 'c.md', 'd.md', 'e.md', 'f.md'])).toBe(
       'Tầu sửa: b.md, c.md, d.md (+2)',
+    )
+  })
+})
+
+describe('hỏi bộ não', () => {
+  it('trích dẫn theo thứ tự xuất hiện, không trùng; ký ức tách riêng', () => {
+    const a =
+      'Quý 4 dành 15 triệu [[ke-hoach-quy-4]]. Từ tháng 11 tăng lên 60 triệu [[kenh-youtube-q4|Kênh]]. ' +
+      'Giữ dưới 30% [[ky-uc:m-abc]]. Nhắc lại [[ke-hoach-quy-4]].'
+    expect(citations(a).map(({ kind, ref }) => [kind, ref])).toEqual([
+      ['page', 'ke-hoach-quy-4'],
+      ['page', 'kenh-youtube-q4'],
+      ['mem', 'm-abc'],
+    ])
+    expect(citations(a)[1]!.at).toBe(a.indexOf('[[kenh'))
+  })
+
+  it('phạm vi và lời nhờ Thủ thư', () => {
+    expect(scopeLabel({ memory: false })).toBe('Toàn bộ (Cá nhân và Công ty)')
+    expect(scopeLabel({ space: 'cong-ty', dept: 'chung', memory: true })).toBe(
+      'Công ty · chung, cả ký ức các bot',
+    )
+    expect(scopeLabel({ space: 'cong-ty', dept: 'tang-truong', memory: false }, 'Tăng trưởng')).toBe(
+      'Công ty · phòng Tăng trưởng (gồm phần chung)',
+    )
+    const p = askPrompt({ question: 'Chị Hà là ai?', scope: { memory: false }, today: '2026-10-25' })
+    expect(p).toContain('Câu hỏi: Chị Hà là ai?')
+    expect(p).toContain('Chưa thấy trong bộ não.')
+    expect(p).not.toContain('brain_memory')
+    expect(askPrompt({ question: 'x', scope: { memory: true }, today: '2026-10-25' })).toContain(
+      '[[ky-uc:mã]]',
     )
   })
 })

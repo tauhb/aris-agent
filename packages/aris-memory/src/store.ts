@@ -373,6 +373,26 @@ export class MemoryStore {
     }
   }
 
+  /**
+   * Tìm trong ký ức đang hiệu lực của mọi bot (Hỏi bộ não, giai đoạn 5): cả hai cuốn, lõi và lưu trữ.
+   * Chỉ đọc: không tính là bot đã dùng ký ức.
+   */
+  searchAll(query: string, limit = 8): MemoryItem[] {
+    const q = words(query)
+    if (q.length === 0) return []
+    const out: { item: MemoryItem; score: number }[] = []
+    for (const [, item] of this.table.entries()) {
+      if (item.status !== 'active') continue
+      const w = new Set(words(item.text))
+      const hits = q.filter((x) => w.has(x) || [...w].some((y) => y.startsWith(x))).length
+      if (hits) out.push({ item, score: hits / q.length })
+    }
+    return out
+      .sort((a, b) => b.score - a.score || b.item.createdAt.localeCompare(a.item.createdAt))
+      .slice(0, limit)
+      .map((x) => x.item)
+  }
+
   async search(bot: string, query: string, limit = 8): Promise<MemoryItem[]> {
     const q = words(query)
     if (q.length === 0) return []

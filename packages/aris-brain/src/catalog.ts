@@ -198,26 +198,35 @@ export class Catalog {
   }
 
   /** Tìm từ khoá; `allow` lọc theo quyền đọc. Tiêu đề nặng gấp 5 lần thân trang. */
+  /**
+   * Tìm theo từ khoá chính: trang có đủ mọi từ; không trang nào có đủ thì tìm nới (trang khớp một phần, xếp
+   * theo mức khớp), để câu hỏi tự nhiên vẫn ra kết quả.
+   */
   search(query: string, allow: (e: Entry) => boolean, limit = 8): Hit[] {
-    const q = ftsQuery(query)
-    if (!q) return []
-    let rows: Row[]
-    try {
-      rows = this.db
-        .prepare(
-          `SELECT p.* FROM fts JOIN pages p ON p.path = fts.path
-           WHERE fts MATCH ? ORDER BY bm25(fts, 0, 5.0, 1.0) LIMIT 200`,
-        )
-        .all(q) as unknown as Row[]
-    } catch {
-      return []
-    }
     const out: Hit[] = []
-    for (const r of rows) {
-      const e = toEntry(r)
-      if (!allow(e)) continue
-      out.push({ entry: e, snippet: snippetOf(r.body ?? '', query) })
-      if (out.length >= limit) break
+    const seen = new Set<string>()
+    for (const mode of ['all', 'any'] as const) {
+      const q = ftsQuery(query, mode)
+      if (!q || out.length) break
+      let rows: Row[]
+      try {
+        rows = this.db
+          .prepare(
+            `SELECT p.* FROM fts JOIN pages p ON p.path = fts.path
+             WHERE fts MATCH ? ORDER BY bm25(fts, 0, 5.0, 1.0) LIMIT 200`,
+          )
+          .all(q) as unknown as Row[]
+      } catch {
+        continue
+      }
+      for (const r of rows) {
+        if (seen.has(r.path)) continue
+        const e = toEntry(r)
+        if (!allow(e)) continue
+        seen.add(r.path)
+        out.push({ entry: e, snippet: snippetOf(r.body ?? '', query) })
+        if (out.length >= limit) break
+      }
     }
     return out
   }

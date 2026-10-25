@@ -115,38 +115,6 @@ export const DEMO_INBOX = [
   plan: [string, string][]
 }[]
 
-/** 5.4 · Hỏi bộ não. */
-export const DEMO_ASK = {
-  scopes: ['Toàn bộ', 'Kênh YouTube Q4', 'Tài chính', 'Chỉ ghi chú'],
-  question: 'Mình đã quyết gì về ngân sách quảng cáo cho quý 4?',
-  answer: [
-    [
-      'Quý 4 dành ',
-      { b: '15 triệu' },
-      ' cho quảng cáo trong tổng 50 triệu, theo đề xuất của Tín trong dự án Kế hoạch quý 4 ',
-      { cite: 1 },
-      '. Con số này khớp với nguyên tắc anh ghi từ tháng 9: giữ quảng cáo dưới 30% ngân sách ',
-      { cite: 2 },
-      '.',
-    ],
-    [
-      'Chưa thấy quyết định chia 15 triệu cho kênh nào. Ghi chú gần nhất chỉ nói “ưu tiên video ngắn” ',
-      { cite: 3 },
-      '.',
-    ],
-  ] as (string | { b: string } | { cite: number })[][],
-  followUp: 'Hỏi Tín chia theo kênh',
-  sources: [
-    {
-      n: 1,
-      title: 'Dự án Kế hoạch quý 4',
-      note: 'Tín, 23/10 10:14 — “50 triệu chia: 30 sản xuất, 15 quảng cáo, 5 dự phòng”',
-    },
-    { n: 2, title: 'Ghi chú: Giữ quảng cáo dưới 30%', note: 'Lĩnh vực / Tài chính · 02/09' },
-    { n: 3, title: 'Chiến lược nội dung YouTube Q4', note: 'Dự án / Kênh YouTube Q4 · hôm nay' },
-  ],
-}
-
 /**
  * 5.3 · Đồ thị tri thức mẫu: 5 cụm, sinh ổn định từ một hạt giống (theo canvas) để
  * lần nào mở cũng cùng hình.

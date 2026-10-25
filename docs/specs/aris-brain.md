@@ -277,6 +277,33 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
   chờ".
 - Thử tự động: hai bài thử ở `hub.test.ts` (gửi vào bộ não; thẻ, Đồng ý, sửa thẻ, tự nạp, nhắc).
 
+## Đợt 3a — Hỏi bộ não (bản vẽ 5.4, xong 25/10)
+
+- Tìm kiếm: bỏ từ đệm của câu hỏi tự nhiên ("mình, đã, gì, về, của…", xét trên chữ có dấu nên "cô" không bị
+  bỏ như "có"); trang có đủ mọi từ khoá đứng trước, không trang nào đủ thì tìm nới (khớp một phần, xếp theo mức
+  khớp). Đoạn trích lấy quanh chỗ khớp nhiều từ khoá nhất, bỏ ký hiệu chú thích và ngoặc liên kết. Mọi bot dùng
+  `brain_search` đều được lợi.
+- Mỗi câu hỏi một phiên của Thủ thư (bảng `asks`: câu hỏi, phạm vi, các lượt; mỗi lượt có các bước tra, trang đã
+  đọc, ký ức tìm thấy, câu trả lời, tiền). Hỏi tiếp nối vào cùng phiên. Phạm vi (Toàn bộ, Cá nhân, Công ty, Công
+  ty · chung, một phòng gồm cả phần chung, Cả ký ức bot) áp ngay ở `brain_search`, `brain_read`: phiên hỏi chỉ
+  thấy trang wiki, nguồn, nhật ký trong phạm vi (không mục lục, mẫu trang, Hộp thư vào).
+- Công cụ `brain_memory`: tìm trong ký ức đang hiệu lực của mọi bot (hai cuốn, lõi và lưu trữ; chỉ đọc, không
+  tính lượt dùng của bot), chỉ dùng được trong phiên hỏi có bật "Cả ký ức bot". Trích bằng `[[ky-uc:mã]]`.
+- Câu trả lời: lời của Thủ thư có trích dẫn (hay mở đầu "Chưa thấy"); lời dẫn giữa các bước và lời nói thêm sau
+  đó không đè lên. Màn 5.4 đánh số trích dẫn theo thứ tự xuất hiện, cột Nguồn có đoạn trích quanh ý vừa nói, tô
+  từ khoá; bấm số thì tô nguồn. Tiến độ (Tìm, Đọc, Tìm trong ký ức) hiện theo thời gian thực; Dừng huỷ lượt.
+- Lưu vào bộ não: câu hỏi và câu trả lời (kèm `[[...]]`) vào Hộp thư vào, Thủ thư nạp, người dùng duyệt. Chưa
+  thấy: nút Thêm vào Hộp thư vào và "Nhờ Aris tìm ngoài bộ não" (phiên mới của Aris với câu hỏi đó). Tiền câu hỏi
+  hiện trên 5.4, không tính vào trần 0,5 USD/ngày của việc nạp nền.
+- Phiên của Thủ thư (nạp và hỏi) không nhận lời "Nhắc của trí nhớ" của `@aris/memory`: lần chạy thử đầu, lời nhắc
+  chen vào sau câu trả lời làm Thủ thư nói thêm một câu đè lên.
+- Xoá câu hỏi chỉ xoá bản ghi; phiên của Thủ thư vẫn ở lịch sử phiên (dsh chưa có lệnh xoá phiên).
+- Chạy thử thật: "Chị Hà báo giá dựng video và thumbnail bao nhiêu?" ⇒ tra 3 lần, đọc 3 trang, 1 lần ký ức, 4
+  nguồn, 0,005 USD, tự nhận ra tháng 11 vượt ngân sách kênh; hỏi tiếp lịch quay ⇒ cùng phiên, trả lời "chưa ghi rõ
+  ngày"; Lưu vào bộ não ⇒ vào Hộp thư vào. "Hợp đồng với nhà in hết hạn khi nào?" (Công ty · chung, tắt ký ức)
+  ⇒ "Chưa thấy trong bộ não", nói đã tra gì, trích báo giá và trang In ấn. Dừng giữa chừng ⇒ "đã dừng".
+- Chưa thử thật: "Nhờ Aris tìm ngoài bộ não", phạm vi một phòng ban.
+
 ## Đã chốt (25/10)
 
 - Duyệt khi nạp: mặc định {you} duyệt ở Hộp thư vào; `/note` và nhật ký của {you} tự nạp.
