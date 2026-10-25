@@ -392,7 +392,12 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
   nguồn, nhật ký, ký ức bot. API `?graph` trả thêm danh sách phòng ban để đặt tên nhánh.
 - Tính toán ở `tree-layout.ts` (thuần, có kiểm thử), vẽ ở `TreeGraph.tsx`.
 - Đã vẽ thử cây 3D (bản vẽ 5.3c, kiểu cầu và kiểu nón) để so: 3D đẹp nhưng nhãn phía sau phải xoay mới đọc, nhánh
-  chồng nhau theo góc nhìn; chốt 25/10 giữ cây 2D.
+  chồng nhau theo góc nhìn. Chốt 25/10: giữ cây 2D và thêm **Cây 3D kiểu cầu** làm cách xem thứ ba (Liên kết | Cây 2D |
+  Cây 3D). Brain ở tâm, trang và nhánh đã gộp rải theo đường xoắn trên mặt cầu (Cá nhân nửa trên, khe giữa không gian
+  và giữa các lớp), thư mục ở lớp trong theo hướng trung bình của con; liên kết 3D uốn theo nhánh như bản 2D. Kéo để
+  xoay, cuộn để phóng to, tự xoay chậm (tắt khi giảm chuyển động); bấm thư mục để gộp, bấm trang để tô liên kết; nhãn
+  trang chỉ hiện ở phía trước, trang đang chọn và trang nối với nó. Dùng chung bộ lọc, độ uốn và trang đang chọn với
+  cây 2D (`sphereLayout`, `bundlePoints` trong `tree-layout.ts`; vẽ ở `TreeGraph3D.tsx`).
 
 ## Đã chốt (25/10)
 

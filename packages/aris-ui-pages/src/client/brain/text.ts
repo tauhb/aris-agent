@@ -68,7 +68,12 @@ export const BRAIN_TEXT = text(
     'gr.askAbout': 'Ask about this page',
     'gr.mode': 'View',
     'gr.mode.links': 'Links',
-    'gr.mode.tree': 'Folder tree',
+    'gr.mode.tree': '2D tree',
+    'gr.mode.tree3d': '3D tree',
+    'gr.tree3dAlt':
+      '3D brain graph as a folder tree: Brain at the center, {n} pages on the sphere, links bent along the branches. Drag to rotate, scroll to zoom.',
+    'gr.tree3dHint':
+      'Drag to rotate · scroll to zoom · click a folder to collapse, a page to highlight its links',
     'gr.treeAlt': 'Brain graph as a folder tree: {n} pages, links bent along the branches.',
     'gr.expand': 'Expand {name} ({n} pages)',
     'gr.collapse': 'Collapse {name}',
@@ -560,7 +565,11 @@ export const BRAIN_TEXT = text(
     'gr.askAbout': 'Hỏi về trang này',
     'gr.mode': 'Cách xem',
     'gr.mode.links': 'Liên kết',
-    'gr.mode.tree': 'Cây thư mục',
+    'gr.mode.tree': 'Cây 2D',
+    'gr.mode.tree3d': 'Cây 3D',
+    'gr.tree3dAlt':
+      'Đồ thị bộ não dạng cây thư mục 3D: Brain ở tâm, {n} trang trên mặt cầu, liên kết uốn theo nhánh. Kéo để xoay, cuộn để phóng to.',
+    'gr.tree3dHint': 'Kéo để xoay · cuộn để phóng to · bấm thư mục để gộp, bấm trang để tô liên kết',
     'gr.treeAlt': 'Đồ thị bộ não dạng cây thư mục: {n} trang, liên kết uốn theo nhánh.',
     'gr.expand': 'Mở {name} ({n} trang)',
     'gr.collapse': 'Gộp {name}',

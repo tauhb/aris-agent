@@ -21,6 +21,7 @@ import type { PageProps } from '../page.js'
 import { Dot } from '../ui.js'
 import { foldersOf } from './tree-layout.js'
 import { TreeGraph } from './TreeGraph.js'
+import { TreeGraph3D } from './TreeGraph3D.js'
 
 type Space = '' | 'ca-nhan' | 'cong-ty'
 
@@ -50,7 +51,8 @@ const LEGEND: GraphNodeType[] = ['note', 'project', 'area', 'person', 'session',
 const color = (type: GraphNodeType) => (type === 'session' ? 'var(--a-muted)' : NODE_COLORS[type])
 const label = (type: GraphNodeType) => `nb.type.${type}`
 /** Nhãn trên đồ thị: tên dài (nguồn thường lấy dòng đầu) cắt còn ~28 ký tự; tên đầy đủ ở ô Đang chọn. */
-type Mode = 'links' | 'tree'
+type Mode = 'links' | 'tree' | 'tree3d'
+const MODES: readonly Mode[] = ['links', 'tree', 'tree3d']
 const MODE_KEY = 'aris.brain.graphMode'
 /** Tên thư mục trên cây: không gian, lớp, nhóm có tên tiếng Việt; phòng ban theo tên phòng. */
 const FOLDER: Record<string, string> = {
@@ -79,7 +81,8 @@ const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/
 /** Cách xem đã chọn lần trước (mỗi người xem một trình duyệt). */
 const savedMode = (): Mode => {
   try {
-    return localStorage.getItem(MODE_KEY) === 'tree' ? 'tree' : 'links'
+    const m = localStorage.getItem(MODE_KEY)
+    return MODES.find((x) => x === m) ?? 'links'
   } catch {
     return 'links'
   }
@@ -166,7 +169,25 @@ export function BrainGraph({ t, nav }: PageProps) {
     else next.add(key)
     setCollapsed(next)
   }
-  const tree = mode === 'tree'
+  const tree = mode !== 'links'
+
+  const treeProps = {
+    t,
+    nodes: data?.nodes ?? [],
+    edges: data?.edges ?? [],
+    label: folderLabel,
+    collapsed,
+    onToggle: toggle,
+    selected: sel,
+    onSelect: setSelected,
+    showLinks,
+    beta,
+    zoom,
+    onZoom: (z: number) => setZoom(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z))),
+    resetKey: reset,
+    skip,
+    folded,
+  }
 
   const find = (text: string) => {
     setQ(text)
@@ -185,7 +206,7 @@ export function BrainGraph({ t, nav }: PageProps) {
           </IconButton>
           <span style={{ fontWeight: 600, fontSize: 16 }}>{t('gr.title')}</span>
           <div className="ap-seg" role="tablist" aria-label={t('gr.mode')}>
-            {(['links', 'tree'] as const).map((m) => (
+            {MODES.map((m) => (
               <button
                 type="button"
                 role="tab"
@@ -229,23 +250,11 @@ export function BrainGraph({ t, nav }: PageProps) {
           {data && !graph.nodes.length ? (
             <div className="a-muted ap-gempty">{t('gr.empty')}</div>
           ) : tree ? (
-            <TreeGraph
-              t={t}
-              nodes={data?.nodes ?? []}
-              edges={data?.edges ?? []}
-              label={folderLabel}
-              collapsed={collapsed}
-              onToggle={toggle}
-              selected={sel}
-              onSelect={setSelected}
-              showLinks={showLinks}
-              beta={beta}
-              zoom={zoom}
-              onZoom={(z) => setZoom(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z)))}
-              resetKey={reset}
-              skip={skip}
-              folded={folded}
-            />
+            mode === 'tree3d' ? (
+              <TreeGraph3D {...treeProps} />
+            ) : (
+              <TreeGraph {...treeProps} />
+            )
           ) : (
             <KnowledgeGraph
               graph={graph}
@@ -345,7 +354,9 @@ export function BrainGraph({ t, nav }: PageProps) {
             )}
             <span className="note">{t(tree ? 'gr.treeNote' : 'gr.note')}</span>
           </div>
-          <div className="hint">{t(tree ? 'gr.treeHint' : 'gr.hint')}</div>
+          <div className="hint">
+            {t(mode === 'tree3d' ? 'gr.tree3dHint' : tree ? 'gr.treeHint' : 'gr.hint')}
+          </div>
         </div>
       </main>
       <aside className="ap-aside ap-gaside" aria-label={t('gr.panel')}>

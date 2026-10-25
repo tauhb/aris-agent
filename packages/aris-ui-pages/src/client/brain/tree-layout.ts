@@ -213,3 +213,110 @@ export function branchPath(n: TNode): string {
   const rm = (p.r + n.r) / 2
   return `M${p.x.toFixed(1)} ${p.y.toFixed(1)} Q${(rm * Math.cos(n.angle)).toFixed(1)} ${(rm * Math.sin(n.angle)).toFixed(1)} ${n.x.toFixed(1)} ${n.y.toFixed(1)}`
 }
+
+export type Vec3 = readonly [number, number, number]
+
+/**
+ * Cây 3D kiểu cầu (5.3c): Brain ở tâm, trang (và nhánh đã gộp) rải theo một đường xoắn trên mặt cầu bán kính 1 từ
+ * đỉnh xuống đáy nên anh em nằm liền nhau, chừa khe giữa hai không gian và giữa các lớp; thư mục nằm ở lớp trong,
+ * theo hướng trung bình của con, bán kính theo độ sâu. Dùng lại cấu trúc của `buildTree`.
+ */
+export function sphereLayout(t: TreeLayout): Map<TNode, Vec3> {
+  const pos = new Map<TNode, Vec3>()
+  const outer = t.all.filter((n) => n !== t.root && (n.leaf !== undefined || n.collapsed))
+  const anc = (n: TNode, depth: number) => {
+    let a = n
+    while (a.parent && a.depth > depth) a = a.parent
+    return a
+  }
+  let u = 0
+  let pt: TNode | undefined
+  let ps: TNode | undefined
+  const units = outer.map((n) => {
+    const top = anc(n, 1)
+    const sub = anc(n, 2)
+    if (pt && top !== pt) u += 2.2
+    else if (ps && sub !== ps) u += 0.7
+    pt = top
+    ps = sub
+    return u++
+  })
+  const total = Math.max(1, u)
+  const turns = Math.max(1.5, Math.sqrt(outer.length) / 1.5)
+  outer.forEach((n, i) => {
+    const f = (units[i]! + 0.5) / total
+    const y = -0.96 + 1.92 * f
+    const r = Math.sqrt(1 - y * y)
+    const th = f * turns * Math.PI * 2
+    pos.set(n, [r * Math.cos(th), y, r * Math.sin(th)])
+  })
+  const maxDepth = Math.max(
+    1,
+    ...t.all.filter((n) => n.leaf === undefined && !n.collapsed).map((n) => n.depth),
+  )
+  const dir = (n: TNode): Vec3 => {
+    const own = pos.get(n)
+    if (own) return own
+    const v = [0, 0, 0]
+    for (const k of n.kids) {
+      const d = dir(k)
+      v[0]! += d[0]
+      v[1]! += d[1]
+      v[2]! += d[2]
+    }
+    const l = Math.hypot(v[0]!, v[1]!, v[2]!) || 1
+    // Lớp thư mục đầu cách tâm đủ xa để tên Cá nhân, Công ty không chồng lên Brain.
+    const r = n === t.root ? 0 : 0.28 + (0.5 * (n.depth - 1)) / Math.max(1, maxDepth - 1)
+    const p: Vec3 = [(v[0]! / l) * r, (v[1]! / l) * r, (v[2]! / l) * r]
+    pos.set(n, p)
+    return [v[0]! / l, v[1]! / l, v[2]! / l]
+  }
+  dir(t.root)
+  return pos
+}
+
+/** Liên kết 3D: đi lên tổ tiên chung rồi xuống, nắn thẳng theo `beta`, làm mượt bằng B-spline bậc 3 (điểm mẫu). */
+export function bundlePoints(
+  a: TNode,
+  b: TNode,
+  beta: number,
+  pos: ReadonlyMap<TNode, Vec3>,
+  steps = 8,
+): Vec3[] {
+  const up: TNode[] = []
+  for (let n: TNode | undefined = a; n; n = n.parent) up.push(n)
+  const down: TNode[] = []
+  let lca: TNode | undefined
+  for (let n: TNode | undefined = b; n; n = n.parent) {
+    if (up.includes(n)) {
+      lca = n
+      break
+    }
+    down.push(n)
+  }
+  const chain = [...up.slice(0, up.indexOf(lca!) + 1), ...down.reverse()]
+  const k = chain.length
+  const A = pos.get(chain[0]!) ?? [0, 0, 0]
+  const B = pos.get(chain[k - 1]!) ?? [0, 0, 0]
+  const pts = chain.map((n, i): Vec3 => {
+    const f = k > 1 ? i / (k - 1) : 0
+    const p = pos.get(n) ?? [0, 0, 0]
+    return [0, 1, 2].map((c) => beta * p[c]! + (1 - beta) * (A[c]! + (B[c]! - A[c]!) * f)) as unknown as Vec3
+  })
+  const P = [pts[0]!, pts[0]!, ...pts, pts[k - 1]!, pts[k - 1]!]
+  const out: Vec3[] = []
+  for (let i = 0; i + 3 < P.length; i++) {
+    for (let s = 0; s < steps; s++) {
+      const f = s / steps
+      const w = [
+        (1 - f) ** 3 / 6,
+        (3 * f ** 3 - 6 * f ** 2 + 4) / 6,
+        (-3 * f ** 3 + 3 * f ** 2 + 3 * f + 1) / 6,
+        f ** 3 / 6,
+      ]
+      out.push([0, 1, 2].map((c) => w.reduce((sum, wj, j) => sum + wj * P[i + j]![c]!, 0)) as unknown as Vec3)
+    }
+  }
+  out.push(pts[k - 1]!)
+  return out
+}

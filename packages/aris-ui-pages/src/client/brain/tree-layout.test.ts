@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { branchPath, buildTree, bundlePath, foldersOf, LEAF_R } from './tree-layout.js'
+import {
+  branchPath,
+  buildTree,
+  bundlePath,
+  bundlePoints,
+  foldersOf,
+  LEAF_R,
+  sphereLayout,
+} from './tree-layout.js'
 
 const nodes = [
   { id: 'ca-nhan/wiki/nguoi/chi-ha.md', title: 'Chị Hà', type: 'person' },
@@ -67,5 +75,34 @@ describe('đồ thị cây thư mục', () => {
     const near = bundlePath(t.shownOf[0]!, t.shownOf[1]!, 0.8)
     expect(near.split(' C').length).toBeLessThan(d.split(' C').length)
     expect(branchPath(a)).toMatch(/^M.* Q.*/)
+  })
+})
+
+describe('cây 3D kiểu cầu', () => {
+  it('trang trên mặt cầu, thư mục bên trong, gốc ở tâm', () => {
+    const t = buildTree({ nodes, label, collapsed: new Set() })
+    const pos = sphereLayout(t)
+    expect(pos.get(t.root)).toEqual([0, 0, 0])
+    for (const n of t.all) {
+      const r = Math.hypot(...pos.get(n)!)
+      if (n.leaf !== undefined) expect(r).toBeCloseTo(1)
+      else if (n !== t.root) expect(r).toBeLessThan(0.8)
+    }
+    // Cá nhân (đầu danh sách) nằm nửa trên, ký ức bot (cuối) nửa dưới.
+    expect(pos.get(t.shownOf[0]!)![1]).toBeLessThan(0)
+    expect(pos.get(t.shownOf[4]!)![1]).toBeGreaterThan(0)
+  })
+
+  it('nhánh gộp nằm ở mặt cầu; liên kết đi từ trang này tới trang kia', () => {
+    const t = buildTree({ nodes, label, collapsed: new Set(['ca-nhan/wiki']) })
+    const pos = sphereLayout(t)
+    const wiki = t.all.find((n) => n.key === 'ca-nhan/wiki')!
+    expect(Math.hypot(...pos.get(wiki)!)).toBeCloseTo(1)
+    const a = t.shownOf[2]!
+    const b = t.shownOf[3]!
+    const pts = bundlePoints(a, b, 0.8, pos)
+    expect(pts[0]).toEqual(pos.get(a))
+    expect(pts.at(-1)).toEqual(pos.get(b))
+    expect(pts.length).toBeGreaterThan(8)
   })
 })
