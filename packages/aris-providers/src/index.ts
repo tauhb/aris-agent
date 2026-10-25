@@ -17,7 +17,7 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { chainOf, handleState } from './api.js'
 import {
   providersDomain,
@@ -61,10 +61,19 @@ export const inject = ['llm', 'storageDomain', 'credentials', 'tools']
 
 /** Bản ghi trong log phiên mỗi lần chuyển dự phòng. */
 export const SWITCH_RECORD = 'plugin:aris/provider-switch'
+/** Bản ghi ảnh, video bot vừa tạo: khung chat vẽ thành dòng riêng của lượt, không gập vào phần gọi công cụ. */
+export const MEDIA_RECORD = 'plugin:aris/media'
 
 declare module '@deepseek-ai/dsh-session' {
   interface PluginRecordMap {
     'plugin:aris/provider-switch': { from: Link; to: Link; code: string; message: string }
+    'plugin:aris/media': {
+      kind: 'image' | 'video'
+      ids: string[]
+      model: string
+      usd: number
+      prompt: string
+    }
   }
 }
 
@@ -516,10 +525,23 @@ export async function apply(ctx: Context): Promise<void> {
       departmentOf(sid),
     ])
     if (sid) fresh.set(sid, [...(fresh.get(sid) ?? []), ...made.map((m) => m.id)])
+    try {
+      if (agent)
+        appendPluginRecord(agent.session as never, MEDIA_RECORD, {
+          kind,
+          ids: made.map((m) => m.id),
+          model: out.link.model,
+          usd: out.usd,
+          prompt: prompt.slice(0, 500),
+        })
+    } catch (e) {
+      logger.warn('ghi bản ghi ảnh, video: %s', String(e))
+    }
     return [
       `Đã tạo ${made.length} ${word} bằng ${out.link.model} (khoảng ${usdText(out.usd)} USD). Người dùng đã thấy ${word} trong khung chat; đừng chép lại đường dẫn hay mô tả lại từng ${word}, chỉ nói ngắn khác nhau ở đâu nếu có nhiều.`,
       ...(failed.length ? [`Trước đó đã thử: ${failed.join('; ')}.`] : []),
-      `Tệp: ${made.map((m) => m.path).join(', ')}`,
+      // Đường dẫn tương đối: đường dẫn tuyệt đối trong câu trả lời bị dsh vẽ thành ảnh lần nữa.
+      `Tệp (trong thư mục làm việc, chỉ dùng khi cần cho việc khác, không đưa vào câu trả lời): ${made.map((m) => join(KIND_TEXT[kind].dir, day, basename(m.path))).join(', ')}`,
       `[aris-media] ${JSON.stringify({ kind, ids: made.map((m) => m.id), model: out.link.model, usd: out.usd, tried: out.tried.map((a) => ({ model: a.link.model, kind: a.kind, message: a.message.slice(0, 160) })) })}`,
     ].join('\n')
   }
@@ -531,9 +553,9 @@ export async function apply(ctx: Context): Promise<void> {
     defineTool({
       name: 'tao_anh',
       description:
-        'Tạo ảnh từ lời mô tả (ảnh bìa, minh hoạ, ảnh sản phẩm…). Viết mô tả cụ thể: chủ thể, bố cục, phong cách, màu, chữ cần có trên ảnh (chữ tiếng Việt viết đúng dấu trong ngoặc kép). Ảnh lưu vào thư mục làm việc và hiện ngay trong khung chat. Chỉ dùng khi người dùng muốn có ảnh.',
+        'Tạo ảnh từ lời mô tả (ảnh bìa, minh hoạ, ảnh sản phẩm…). Viết mô tả bằng tiếng Anh (model ảnh hiểu tiếng Anh tốt nhất), cụ thể: chủ thể, bố cục, phong cách, màu; chữ cần có trên ảnh giữ nguyên tiếng Việt đúng dấu trong ngoặc kép. Ảnh lưu vào thư mục làm việc và hiện ngay trong khung chat. Chỉ dùng khi người dùng muốn có ảnh.',
       parameters: {
-        mo_ta: { type: 'string', required: true, description: 'Mô tả ảnh cần tạo.' },
+        mo_ta: { type: 'string', required: true, description: 'Mô tả ảnh cần tạo, viết bằng tiếng Anh.' },
         ti_le: { type: 'string', enum: ratioEnum('image'), description: 'Tỉ lệ khung, mặc định 1:1.' },
         so_luong: { type: 'number', description: 'Số phương án (1–4, mặc định 1).' },
       },
@@ -555,9 +577,9 @@ export async function apply(ctx: Context): Promise<void> {
     defineTool({
       name: 'tao_video',
       description:
-        'Tạo một đoạn video ngắn (khoảng 8 giây) từ lời mô tả: cảnh, chuyển động máy quay, ánh sáng, âm thanh nếu cần. Tốn tiền hơn ảnh nhiều; chỉ dùng khi người dùng muốn có video. Video lưu vào thư mục làm việc và hiện trong khung chat.',
+        'Tạo một đoạn video ngắn (khoảng 8 giây) từ lời mô tả viết bằng tiếng Anh: cảnh, chuyển động máy quay, ánh sáng, âm thanh nếu cần. Tốn tiền hơn ảnh nhiều; chỉ dùng khi người dùng muốn có video. Video lưu vào thư mục làm việc và hiện trong khung chat.',
       parameters: {
-        mo_ta: { type: 'string', required: true, description: 'Mô tả video cần tạo.' },
+        mo_ta: { type: 'string', required: true, description: 'Mô tả video cần tạo, viết bằng tiếng Anh.' },
         ti_le: {
           type: 'string',
           enum: ratioEnum('video'),

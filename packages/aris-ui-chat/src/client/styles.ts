@@ -126,6 +126,9 @@ export const CSS = `
 .aris-media-item a,.aris-media-item button{color:var(--a-accent,#1D6FE0);text-decoration:none;border:0;background:transparent;padding:0;font:inherit;font-size:12.5px;cursor:pointer}
 .aris-media-item button:disabled{color:var(--a-muted,#5C616C);cursor:default}
 .aris-media .foot{padding:0 12px 10px}
+.aris-media-show{margin:6px 0 4px;border:0;background:transparent;max-width:640px}
+.aris-media-show .grid{border-top:0;padding:0}
+.aris-media-show .foot{padding:6px 0 0}
 .aris-media .warnbox{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 12px 12px;padding:8px 10px;border-radius:9px;background:var(--a-warnSoft,#FCEFDF);font-size:12.5px}
 .aris-media .warnbox span{flex:1;min-width:200px}
 .aris-media .warnbox button{border:1px solid var(--a-line,#E4E2DC);border-radius:8px;background:var(--a-panel,#fff);padding:3px 10px;font:inherit;font-size:12.5px;cursor:pointer;color:inherit}

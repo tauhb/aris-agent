@@ -15,7 +15,7 @@ import { botTriggerSource } from './bot-source.js'
 import { botReportDefinition, findMention, handoffDefinition, turnHeadDefinition } from './who-data.js'
 import { CSS } from './styles.js'
 import { BrainPicker, BrainReadCall, BrainSearchCall, UserPage, brainTriggerSource } from './Brain.js'
-import { MediaCall } from './Media.js'
+import { MediaCall, MediaShow, mediaDefinition } from './Media.js'
 import { brainPages, cachedPages, LINK } from './brain-data.js'
 import { openPeek, watchPageLinks } from './brain-dom.js'
 
@@ -318,7 +318,11 @@ export function apply(ctx: ClientContext): void {
       BrainReadCall,
     ),
   )
-  // Ảnh, video bot tạo (đợt 5c, bản vẽ 1.9).
+  // Ảnh, video bot tạo (đợt 5c, bản vẽ 1.9): dòng riêng của lượt, ngoài phần gọi công cụ đã gập.
+  ctx.uiConversation.events.register(mediaDefinition)
+  ctx.slots.inject('conversation.chat.node', () =>
+    ctx.slots.register({ name: 'conversation.chat.node', key: 'aris-media', locale: NS }, MediaShow),
+  )
   const ImageCall = (p: Parameters<typeof MediaCall>[0]) => <MediaCall {...p} kind="image" />
   const VideoCall = (p: Parameters<typeof MediaCall>[0]) => <MediaCall {...p} kind="video" />
   ctx.slots.inject('tool.call.toolview', () =>

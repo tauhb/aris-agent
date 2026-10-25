@@ -116,14 +116,17 @@ Plugin máy chủ `@aris/providers` thêm ba phần. Dữ liệu ở storage dom
   Tắt thì công cụ trả lời "chưa được bật" (dsh không ẩn công cụ theo từng agent). Trần mỗi ngày: chung ảnh 1 USD, video
   2 USD; riêng theo bot nếu đặt; tiền cộng vào sổ chi phí (`media-<loại>`, `bot:<mã>`, phòng ban).
 - Tệp lưu ở `<thư mục làm việc của phiên>/anh|video/<ngày>/`, ghi bảng `media_files`; giao diện lấy qua
-  `GET /api/aris/media?file=<mã>`. Kết quả công cụ có dòng `[aris-media] {…}` để khung chat vẽ ảnh, video (Mở lớn, Tải
-  về, Lưu vào bộ não qua Hộp thư vào). Telegram: tệp vừa tạo của phiên gửi bằng `sendPhoto`/`sendVideo` trước câu trả
+  `GET /api/aris/media?file=<mã>`. Mỗi lần tạo xong ghi bản ghi phiên `plugin:aris/media`; khung chat vẽ nó thành một
+  dòng riêng ở mức lượt (`groupTree: 'turn'`), nên ảnh, video hiện ngay chứ không nằm trong phần "Đã gọi công cụ" đang
+  gập (Mở lớn, Tải về, Lưu vào bộ não qua Hộp thư vào). Dòng `[aris-media] {…}` cuối kết quả công cụ vẫn giữ cho phần
+  công cụ và các phiên cũ chưa có bản ghi. Kết quả công cụ chỉ đưa đường dẫn tương đối: đường dẫn tuyệt đối bot chép vào
+  câu trả lời bị dsh vẽ thành ảnh lần nữa. Mô tả gửi model viết bằng tiếng Anh (flux đọc tiếng Việt sai chủ thể). Telegram: tệp vừa tạo của phiên gửi bằng `sendPhoto`/`sendVideo` trước câu trả
   lời, chú thích là tên model.
 - Giao diện: Cài đặt › Ảnh và video (hai thứ tự, trần, cách chọn, bảng gán theo bot có ô sửa), tab Model của hồ sơ
   bot (dòng Tạo ảnh, Tạo video). API `GET/POST /api/aris/media` (`chain`, `caps`, `bot`).
 - Đã chạy trên máy: nhờ Aris tạo một ảnh ⇒ thử Gemini (chưa có khoá) rồi OpenRouter (hết số dư), khung chat và tin trả
-  lời ghi đúng hai lý do; gán danh sách riêng cho Thơ hiện đúng ở tab Model. Chưa tạo được ảnh, video thật (chưa có
-  khoá Gemini bật thanh toán, OpenRouter hết số dư); Telegram gửi ảnh chưa thử.
+  lời ghi đúng hai lý do; gán danh sách riêng cho Thơ hiện đúng ở tab Model. Sau khi có khoá fal: tạo ảnh thật bằng
+  fal-ai/flux/dev (khoảng 0,05 USD), ảnh hiện một lần ngay trong lượt. Video và Telegram gửi ảnh chưa thử.
 
 ## Để sau
 

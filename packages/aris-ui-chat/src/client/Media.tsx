@@ -163,3 +163,73 @@ export function MediaCall(props: SubagentCall & { t: Translate; kind: Meta['kind
     </div>
   )
 }
+
+/** Bản ghi ảnh, video bot vừa tạo trong phiên (`@aris/providers`). */
+export const MEDIA_RECORD = 'plugin:aris/media'
+
+interface MediaRecordData {
+  kind: Meta['kind']
+  ids: string[]
+  model: string
+  usd: number
+  prompt: string
+}
+
+interface EventLike {
+  type: string
+  seq: number
+  data: unknown
+}
+
+/**
+ * Mỗi bản ghi `plugin:aris/media` thành một dòng riêng ở mức lượt (`groupTree: 'turn'`): ảnh, video hiện ngay trong
+ * lượt, không bị gập vào phần "Đã gọi công cụ" của dsh.
+ */
+export const mediaDefinition = {
+  kind: 'aris-media',
+  target: 'chat',
+  match: (event: EventLike) =>
+    event.type === MEDIA_RECORD ? { id: String(event.seq), role: 'start' } : null,
+  start: (_context: unknown, match: { event: EventLike }) => ({
+    seq: match.event.seq,
+    data: match.event.data,
+  }),
+  update: (context: { state: unknown }) => context.state,
+  buildViewNode: (context: {
+    key: string
+    id: string
+    state?: { seq: number; data: unknown }
+    start?: { location?: unknown }
+  }) =>
+    context.state === undefined
+      ? null
+      : {
+          key: context.key,
+          kind: 'aris-media',
+          id: context.id,
+          target: 'chat',
+          anchorSeq: context.state.seq,
+          location: context.start?.location ?? { kind: 'unresolved' },
+          visibility: 'visible',
+          groupTree: 'turn',
+          data: context.state.data,
+        },
+}
+
+/** Dòng ảnh, video trong lượt: lưới tệp kèm Mở lớn, Tải về, Lưu vào bộ não; model và tiền ở dưới. */
+export function MediaShow({ node, t }: { node: { data: MediaRecordData }; t: Translate }) {
+  const d = node.data
+  if (!d?.ids?.length) return null
+  return (
+    <div className="aris aris-media aris-media-show">
+      <div className={`grid ${d.ids.length > 1 ? 'two' : ''}`}>
+        {d.ids.map((id, i) => (
+          <Item key={id} t={t} id={id} kind={d.kind} n={i + 1} />
+        ))}
+      </div>
+      <div className="foot mut">
+        {d.model} · {t('media.cost', { n: d.ids.length, usd: usd(d.usd ?? 0) })}
+      </div>
+    </div>
+  )
+}
