@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Sao lưu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FCEBE9}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b2{height:30px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:12.5px;flex:none;white-space:nowrap}
+.b1{height:32px;padding:0 14px;border:0;border-radius:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:600;flex:none;white-space:nowrap}
+.b1[disabled]{opacity:.45;cursor:default}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.ch{padding:12px 14px;display:flex;align-items:center;gap:8px}
+.sn{display:block;border-radius:8px;padding:7px 10px;font-size:13.5px;color:var(--ink);text-decoration:none}
+.r{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.num{width:70px;height:30px;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit;font-size:13px;text-align:center}
+.seg{white-space:nowrap;border:0;border-radius:7px;padding:4px 10px;background:transparent;font-size:12.5px;color:var(--muted)}
+.seg.on{background:var(--hover);color:var(--ink);font-weight:600}
+.cb{width:18px;height:18px;accent-color:var(--accent)}
+.chip{font-size:12px;border-radius:6px;padding:2px 8px;background:var(--panel2);white-space:nowrap}
+.pill{font-size:12px;font-weight:600;border-radius:999px;padding:1px 9px;white-space:nowrap;flex:none}
+.fig{font-variant-numeric:tabular-nums;white-space:nowrap}
+.step{width:22px;height:22px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex:none}
+.code{font-family:'JetBrains Mono',monospace;font-size:17px;letter-spacing:.06em;padding:12px 14px;border:1px dashed var(--line);border-radius:10px;background:var(--panel2);text-align:center}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="settings" bot="none" hint-size="260px,900px"></dc-import>
+  <nav aria-label="Cài đặt" style="flex: 0 1 210px; min-width: 190px; border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px">
+    <div class="m" style="padding: 0 10px 8px; font-weight: 600; font-size: 12px">Cài đặt và vận hành</div>
+    <a class="sn" href="DieuKhien.dc.html">Bảng điều khiển</a>
+    <a class="sn" href="Provider.dc.html">Provider và model</a>
+    <a class="sn" href="Kenh.dc.html">Kênh và ghép đôi</a>
+    <a class="sn" href="MatTichHop.dc.html">Ứng dụng khác</a>
+    <a class="sn" href="BaoMat.dc.html">Ngân sách, duyệt, an toàn</a>
+    <a class="sn" href="SaoLuu.dc.html" aria-current="page" style="background: var(--hover); font-weight: 600">Sao lưu</a>
+    <a class="sn" href="ThongKe.dc.html">Thống kê và nhật ký</a>
+    <a class="sn" href="Commander.dc.html">Commander</a>
+    <a class="sn" href="ManHinhBot.dc.html">Màn hình của bot</a>
+    <a class="sn" href="Plugin.dc.html">Plugin</a>
+  </nav>
+  <main style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <div style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 600">Sao lưu</span><span class="m" style="font-size: 12px">Hằng đêm, mã hoá, vào thư mục {{you}} chọn, có thử khôi phục</span></div>
+      <span role="group" aria-label="Xem trạng thái (chỉ trên bản vẽ)" style="margin-left: auto; display: inline-flex; border: 1px dashed var(--line); border-radius: 8px; padding: 2px">
+        <button type="button" class="{{vSetup}}" onClick="{{toSetup}}">Lần đầu</button>
+        <button type="button" class="{{vOk}}" onClick="{{toOk}}">Bình thường</button>
+        <button type="button" class="{{vFail}}" onClick="{{toFail}}">Đêm qua lỗi</button>
+      </span>
+      <span class="pill" style="color: {{stateColor}}; background: {{stateBg}}">{{stateText}}</span>
+      <sc-if value="{{on}}" hint-placeholder-val="{{ true }}">
+        <button type="button" class="b2" onClick="{{runNow}}">{{runText}}</button>
+      </sc-if>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+
+    <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 16px">
+      <sc-if value="{{failed}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; border: 1px solid var(--danger); background: var(--dangerSoft); border-radius: 12px; padding: 10px 14px">
+          <span style="flex: 1; min-width: 260px; font-size: 13.5px"><b>Đêm qua không sao lưu được:</b> không thấy thư mục <span class="mono" style="font-size: 12.5px">/Volumes/T7/aris-sao-luu</span> (ổ ngoài chưa cắm). Đã báo qua Telegram lúc 02:00. Bản gần nhất còn dùng được: hôm kia, 02:00.</span>
+          <button type="button" class="b2">Chọn thư mục khác</button>
+          <button type="button" class="b2" onClick="{{toOk}}">Thử lại</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{setup}}" hint-placeholder-val="{{ false }}">
+        <div class="card" style="max-width: 760px">
+          <div class="ch"><span style="flex: 1; min-width: 0"><b>Bật sao lưu</b><span class="m" style="display: block; font-size: 12.5px">Ba bước, chỉ làm một lần. Chưa bật thì dữ liệu chỉ nằm trên máy này.</span></span></div>
+          <div class="r" style="align-items: flex-start">
+            <span class="step" style="{{s1Style}}">1</span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+              <b>Chọn thư mục để cất bản sao lưu</b>
+              <span class="m" style="font-size: 13px">Nên là ổ ngoài hay một thư mục trong iCloud Drive, để máy hỏng vẫn còn bản. Thư mục trên chính ổ máy này chỉ cứu được khi lỡ xoá.</span>
+              <span style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><button type="button" class="b2" onClick="{{pickDir}}">{{pickText}}</button><span class="mono" style="font-size: 12.5px">{{dirText}}</span></span>
+            </span>
+          </div>
+          <div class="r" style="align-items: flex-start">
+            <span class="step" style="{{s2Style}}">2</span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+              <b>Cất mã khôi phục</b>
+              <span class="m" style="font-size: 13px">Bản sao lưu được khoá bằng một khoá nằm trong Keychain của máy này. Nếu máy hỏng hay đổi máy, chỉ mã dưới đây mở được bản sao lưu. aris không cất mã này ở đâu khác và chỉ hiện một lần.</span>
+              <div class="code">7QXM-4KD2-HV9P-R3TB-WN6E-8FJC</div>
+              <span style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap"><button type="button" class="b2">Chép mã</button><label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px"><input type="checkbox" class="cb" checked="{{saved}}" onChange="{{toggleSaved}}">Đã cất mã vào trình quản lý mật khẩu hay giấy</label></span>
+            </span>
+          </div>
+          <div class="r" style="align-items: flex-start">
+            <span class="step" style="{{s3Style}}">3</span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+              <b>Chạy bản đầu tiên và thử khôi phục ngay</b>
+              <span class="m" style="font-size: 13px">Khoảng 30 MB, dưới một phút. Xong aris giải nén thử vào thư mục tạm để chắc là mở lại được.</span>
+              <span><button type="button" class="b1" disabled="{{notReady}}" onClick="{{enable}}">Bật sao lưu</button></span>
+            </span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{on}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+          <div style="flex: 1 1 430px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+            <div class="card">
+              <div class="ch"><b>Lịch và nơi cất</b></div>
+              <div class="r"><span style="flex: 1">Chạy mỗi đêm lúc</span><input class="num" value="02:00" aria-label="Giờ sao lưu"><span class="m" style="font-size: 12.5px; width: 170px">máy ngủ thì chạy khi thức</span></div>
+              <div class="r"><span style="flex: 1">Giữ bản hằng ngày</span><input class="num" value="7" aria-label="Số bản hằng ngày"><span class="m" style="font-size: 12.5px; width: 170px">bản gần nhất</span></div>
+              <div class="r"><span style="flex: 1">Giữ bản hằng tuần</span><input class="num" value="4" aria-label="Số bản hằng tuần"><span class="m" style="font-size: 12.5px; width: 170px">bản Chủ nhật</span></div>
+              <div class="r" style="flex-wrap: wrap">
+                <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span>Thư mục</span><span class="mono m" style="font-size: 12px; overflow: hidden; text-overflow: ellipsis">{{dirShown}}</span></span>
+                <button type="button" class="b2">Đổi</button>
+              </div>
+              <div class="r m" style="font-size: 12.5px">{{spaceText}}</div>
+              <label class="r"><span style="flex: 1">Báo qua Telegram khi sao lưu hay diễn tập lỗi</span><input type="checkbox" class="cb" checked></label>
+            </div>
+
+            <div class="card">
+              <div class="ch"><b>Gồm những gì</b><span class="m" style="font-size: 12.5px">trước khi nén</span></div>
+              <sc-for list="{{parts}}" as="p" hint-placeholder-count="5">
+                <div class="r">
+                  <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span>{{p.name}}</span><span class="m" style="font-size: 12px">{{p.hint}}</span></span>
+                  <span class="fig m" style="font-size: 12.5px">{{p.size}}</span>
+                </div>
+              </sc-for>
+              <div class="r" style="flex-wrap: wrap; gap: 6px"><span class="m" style="font-size: 12.5px; width: 100%">Không gồm</span><span class="chip">Khoá API (nằm trong Keychain)</span><span class="chip">Plugin đã cài (cài lại được)</span><span class="chip">Chỉ mục tìm kiếm (dựng lại được)</span><span class="chip">Nhật ký chạy</span></div>
+            </div>
+          </div>
+
+          <div style="flex: 1.2 1 440px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+            <div class="card">
+              <div class="ch"><b>Các bản đã có</b><span class="m" style="font-size: 12.5px">{{countText}}</span></div>
+              <sc-for list="{{copies}}" as="c" hint-placeholder-count="6">
+                <div class="r">
+                  <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span>{{c.when}}</span><span class="m" style="font-size: 12px">{{c.hint}}</span></span>
+                  <span class="fig m" style="font-size: 12.5px">{{c.size}}</span>
+                  <span class="pill" style="color: {{c.color}}; background: {{c.bg}}">{{c.state}}</span>
+                  <button type="button" class="b2">Giải nén ra…</button>
+                </div>
+              </sc-for>
+              <div class="r m" style="font-size: 12.5px"><span>“Giải nén ra” mở bản sao lưu vào thư mục {{you}} chọn, không đụng dữ liệu đang chạy. Khôi phục đè lên aris xem ở thẻ dưới.</span></div>
+            </div>
+
+            <div class="card">
+              <div class="ch"><span style="flex: 1; min-width: 0"><b>Diễn tập khôi phục</b><span class="m" style="display: block; font-size: 12.5px">Mỗi Chủ nhật, ngay sau bản sao lưu đêm đó</span></span><span class="pill" style="color: var(--ok); background: var(--okSoft)">đạt · CN 26/10</span></div>
+              <sc-for list="{{drill}}" as="d" hint-placeholder-count="5">
+                <div class="r" style="border-top: 0; padding-top: 5px; padding-bottom: 5px">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+                  <span style="flex: 1; min-width: 0">{{d.step}}</span>
+                  <span class="m fig" style="font-size: 12.5px">{{d.note}}</span>
+                </div>
+              </sc-for>
+              <div class="r"><span class="m" style="flex: 1; font-size: 12.5px">Mất 9 giây. Thư mục tạm đã xoá.</span><button type="button" class="b2">Diễn tập ngay</button></div>
+            </div>
+
+            <div class="card">
+              <div class="ch"><b>Khôi phục đè lên aris</b></div>
+              <div class="r m" style="font-size: 13px; flex-direction: column; align-items: stretch; gap: 8px">
+                <span>Dùng khi máy mới hay dữ liệu hỏng. aris phải dừng hẳn, nên làm bằng lệnh trong Terminal:</span>
+                <span class="mono" style="font-size: 12.5px; color: var(--ink); background: var(--panel2); border-radius: 8px; padding: 8px 10px">aris-restore /Volumes/T7/aris-sao-luu/2026-10-26.aris</span>
+                <span>Lệnh hỏi mã khôi phục nếu máy không có khoá trong Keychain, cất dữ liệu hiện tại sang bên rồi mới chép đè.</span>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="r" style="border-top: 0"><span style="flex: 1; min-width: 0"><b>Mã khôi phục</b><span class="m" style="display: block; font-size: 12.5px">Đã cất lúc bật sao lưu, 20/10. Đổi mã thì bản cũ vẫn mở bằng mã cũ.</span></span><button type="button" class="b2">Đổi mã</button></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const view = s.view || 'ok';
+    const seg = (on) => 'seg' + (on ? ' on' : '');
+    const setup = view === 'setup';
+    const failed = view === 'fail';
+    const picked = !!s.picked;
+    const saved = !!s.saved;
+    const running = !!s.running;
+    const done = 'background:var(--ok);color:#fff';
+    const todo = 'background:var(--panel2);color:var(--muted)';
+    const ok = { color: 'var(--ok)', bg: 'var(--okSoft)' };
+    const copy = (when, hint, size, state = 'đủ', tone = ok) => ({ when, hint, size, state, color: tone.color, bg: tone.bg });
+    const copies = [
+      ...(failed ? [copy('Hôm nay, 02:00', 'không chạy được: thiếu ổ', '—', 'lỗi', { color: 'var(--danger)', bg: 'var(--dangerSoft)' })] : [copy('Hôm nay, 02:00', 'bản ngày · đã diễn tập', '8,4 MB')]),
+      copy('Hôm qua, 02:00', 'bản ngày', '8,3 MB'),
+      copy('Thứ Sáu 24/10, 02:00', 'bản ngày', '8,1 MB'),
+      copy('Thứ Năm 23/10, 02:00', 'bản ngày', '7,9 MB'),
+      copy('Chủ nhật 19/10, 02:00', 'bản tuần · đã diễn tập', '7,2 MB'),
+      copy('Chủ nhật 12/10, 02:00', 'bản tuần · đã diễn tập', '6,8 MB'),
+    ];
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      you: 'anh Tầu',
+      vSetup: seg(setup), vOk: seg(view === 'ok'), vFail: seg(failed),
+      toSetup: () => this.setState({ view: 'setup', picked: false, saved: false }),
+      toOk: () => this.setState({ view: 'ok' }),
+      toFail: () => this.setState({ view: 'fail' }),
+      setup, failed, on: !setup,
+      stateText: setup ? 'chưa bật' : failed ? 'đêm qua lỗi' : running ? 'đang sao lưu…' : 'bản gần nhất: 02:00 hôm nay',
+      stateColor: setup ? 'var(--muted)' : failed ? 'var(--danger)' : 'var(--ok)',
+      stateBg: setup ? 'var(--panel2)' : failed ? 'var(--dangerSoft)' : 'var(--okSoft)',
+      runText: running ? 'Đang chạy…' : 'Sao lưu ngay',
+      runNow: () => this.setState({ running: !running }),
+      pickDir: () => this.setState({ picked: true }),
+      pickText: picked ? 'Đổi thư mục' : 'Chọn thư mục…',
+      dirText: picked ? '/Volumes/T7/aris-sao-luu' : 'chưa chọn',
+      saved, toggleSaved: () => this.setState({ saved: !saved }),
+      s1Style: picked ? done : todo,
+      s2Style: saved ? done : todo,
+      s3Style: todo,
+      notReady: !(picked && saved),
+      enable: () => this.setState({ view: 'ok' }),
+      dirShown: '/Volumes/T7/aris-sao-luu',
+      spaceText: failed ? 'Ổ chưa cắm. Các bản đang có chiếm 46 MB.' : 'Ổ còn trống 412 GB. Các bản đang có chiếm 46 MB.',
+      parts: [
+        { name: 'Phiên trò chuyện và tệp đính kèm', hint: 'mọi bot, cả phiên nền và bot con', size: '10,3 MB' },
+        { name: 'Dữ liệu các bot', hint: 'ký ức, hồ sơ, routine, dự án, phòng ban, chi phí, hàng rào', size: '3,7 MB' },
+        { name: 'Bộ não', hint: '~/aris/brain, cả lịch sử git', size: '1,3 MB' },
+        { name: 'Thư mục làm việc', hint: '~/aris/workspace', size: '12 MB' },
+        { name: 'Điểm khôi phục và cấu hình aris', hint: '~/.aris, trừ bản làm việc tạm', size: '1,3 MB' },
+      ],
+      countText: failed ? '9 bản · 46 MB' : '10 bản · 46 MB',
+      copies,
+      drill: [
+        { step: 'Giải mã bằng khoá trong Keychain', note: 'đúng khoá' },
+        { step: 'Giải nén vào thư mục tạm', note: '2.418 tệp' },
+        { step: 'Mở được 15 kho dữ liệu của các bot', note: '15 / 15' },
+        { step: 'Bộ não: git kiểm không lỗi', note: '214 trang' },
+        { step: 'So với dữ liệu đang chạy lúc sao lưu', note: 'khớp' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

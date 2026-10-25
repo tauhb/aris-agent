@@ -653,6 +653,15 @@
       "w": 1440,
       "x": 1520,
       "y": 1320
+    },
+    "SaoLuu.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "6.4b · Sao lưu (GĐ7 đợt 7b) — hằng đêm, mã hoá, vào thư mục người dùng chọn; bật lần đầu ba bước kèm mã khôi phục; giữ bản ngày và bản tuần; diễn tập khôi phục mỗi tuần; báo lỗi qua Telegram",
+      "w": 1440,
+      "x": 1520,
+      "y": 6600
     }
   },
   "createdOnFiles": {
@@ -795,6 +804,7 @@
     "Provider.dc.html",
     "Kenh.dc.html",
     "BaoMat.dc.html",
+    "SaoLuu.dc.html",
     "ThongKe.dc.html",
     "ManHinhBot.dc.html",
     "MatTichHop.dc.html",
