@@ -623,6 +623,16 @@
       "expand": "fill",
       "is_interactive": true,
       "page": "g6"
+    },
+    "HoSoBotModel.dc.html": {
+      "x": 0,
+      "y": 7920,
+      "w": 1440,
+      "h": 900,
+      "title": "2.2f · Hồ sơ bot — tab Model: tạo ảnh, tạo video (tắt, theo thứ tự chung, danh sách riêng nhiều model)",
+      "expand": "fill",
+      "is_interactive": true,
+      "page": "g2"
     }
   },
   "createdOnFiles": {
@@ -790,7 +800,8 @@
     "TimTheoNghia.dc.html",
     "HoSoChung.dc.html",
     "TaoAnh.dc.html",
-    "ModelAnhVideo.dc.html"
+    "ModelAnhVideo.dc.html",
+    "HoSoBotModel.dc.html"
   ],
   "pages": [
     {

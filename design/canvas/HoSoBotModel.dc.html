@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Hồ sơ bot — tab Model</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px;white-space:nowrap}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.tabs{display:flex;gap:18px;border-bottom:1px solid var(--line);padding:0 24px;font-size:13px}
+.tabs span{padding:9px 0;color:var(--muted)}
+.tabs .on{color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--accent)}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start;padding:11px 14px;border-top:1px solid var(--line);font-size:13px}
+.row.new{background:var(--accentSoft)}
+.sel{height:34px;box-sizing:border-box;border:1px solid var(--line);border-radius:9px;background:var(--panel);padding:0 10px;font-size:12.5px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.ch{display:grid;grid-template-columns:14px 20px minmax(0,1fr) auto 22px;gap:7px;align-items:center;padding:7px 10px;border-top:1px solid var(--line);font-size:12.5px}
+.ch .n{width:18px;height:18px;border-radius:6px;background:var(--panel2);font-size:10.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.st{font-size:10.5px;font-weight:600;border-radius:6px;padding:1px 6px;white-space:nowrap}
+.s-ok{background:var(--okSoft);color:var(--ok)}
+.s-warn{background:var(--warnSoft);color:var(--warn)}
+.menu{position:absolute;right:0;top:38px;width:300px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.35);padding:5px;z-index:2;font-size:12.5px}
+.menu div{padding:7px 9px;border-radius:7px;display:flex;flex-direction:column}
+.menu .on{background:var(--hover)}
+.badge{font-size:11px;font-weight:600;border-radius:6px;padding:1px 7px;background:var(--panel2);color:var(--muted)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; height: 900px; display: flex; overflow: hidden">
+  <dc-import name="Sidebar" active="none" bot="ha" hint-size="260px,900px"></dc-import>
+  <main style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; overflow-y: auto">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 14px 24px 10px">
+      <span style="width: 40px; height: 40px; border-radius: 12px; background: #D9468F; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700">H</span>
+      <div style="display: flex; flex-direction: column"><span style="font-family: 'Lexend', sans-serif; font-weight: 600; font-size: 18px">Hạ</span><span class="m" style="font-size: 12.5px">@ha · Nội dung</span></div>
+      <span style="margin-left: auto; display: flex; gap: 6px"><button type="button" class="b2" style="background: var(--ink); color: var(--panel); border-color: var(--ink)">Chat với Hạ</button><button type="button" class="b2">Việc mới</button><button type="button" class="b2">Nhân bản / xuất</button></span>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+    <div class="tabs"><span>Tính cách</span><span class="on">Model</span><span>Skill &amp; tool</span><span>Quyền &amp; kênh</span><span>Routine</span><span>Ký ức</span><span>Hiểu về Tầu</span></div>
+    <div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 14px">
+      <div class="card">
+        <div style="padding: 11px 14px"><b>Model theo từng việc của Hạ</b></div>
+        <div class="row"><div><div>Chat và làm việc</div><div class="m" style="font-size: 12px">Phiên chat mới với bot và việc Aris giao cho bot.</div></div><div class="sel">Model mặc định<span class="m">▾</span></div></div>
+        <div class="row"><div><div>Suy luận sâu (khi /goal)</div><div class="m" style="font-size: 12px">Dùng khi phiên của bot đang chạy /goal.</div></div><div class="sel">Như model chat<span class="m">▾</span></div></div>
+        <div class="row"><div><div>Dự phòng khi lỗi</div><div class="m" style="font-size: 12px">Thử trước khi model lỗi, sau đó tới chuỗi dự phòng chung.</div></div><div class="sel">Theo chuỗi dự phòng chung<span class="m">▾</span></div></div>
+
+        <div class="row new">
+          <div><div><b>Tạo ảnh</b> <span class="badge">mới</span></div><div class="m" style="font-size: 12px">Công cụ tạo ảnh của Hạ. Danh sách riêng: thử từ trên xuống, model lỗi hay chưa bật thanh toán thì sang model kế.</div>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; margin-top: 8px"><input type="checkbox" style="accent-color: var(--accent)">Hết danh sách riêng thì rơi về thứ tự chung</label>
+            <div style="font-size: 12.5px; margin-top: 4px">Trần riêng <b>0,50 USD</b>/ngày <span class="m">· hôm nay 0,07 · hỏi trước khi tạo quá 4 ảnh</span></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div class="sel" style="border-color: var(--accent)">Danh sách riêng · 2 model<span class="m">▾</span></div>
+            <div style="border: 1px solid var(--line); border-radius: 10px; background: var(--panel); overflow: hidden">
+              <div class="ch" style="border-top: 0"><span class="m">⋮</span><span class="n">1</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap"><span class="dot" style="background: #6467F2"></span> <span class="mono" style="font-size: 11.5px">openai/gpt-image-2</span></span><span class="st s-ok">sẵn sàng</span><span class="m">×</span></div>
+              <div class="ch"><span class="m">⋮</span><span class="n">2</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap"><span class="dot" style="background: #4285F4"></span> <span class="mono" style="font-size: 11.5px">gemini-3.1-flash-lite-image</span></span><span class="st s-warn">thanh toán</span><span class="m">×</span></div>
+              <div style="padding: 6px 10px; border-top: 1px solid var(--line); font-size: 12px; color: var(--accent)">+ Thêm model ảnh</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row new">
+          <div><div><b>Tạo video</b> <span class="badge">mới</span></div><div class="m" style="font-size: 12px">Theo thứ tự chung ở Cài đặt › Ảnh và video. Chọn "Danh sách riêng" để Hạ dùng model khác đội.</div></div>
+          <div style="position: relative">
+            <div class="sel">Theo thứ tự chung<span class="m">▾</span></div>
+            <div class="m" style="font-size: 11.5px; margin-top: 4px">hiện là: gemini-omni-1.1-flash</div>
+            <sc-if value="{{showMenu}}" hint-placeholder-val="{{ true }}">
+              <div class="menu" role="listbox" aria-label="Cách chọn model video">
+                <div><b>Tắt</b><span class="m">Hạ không thấy công cụ tạo video</span></div>
+                <div class="on"><b>Theo thứ tự chung</b><span class="m">gemini-omni-1.1-flash</span></div>
+                <div><b>Danh sách riêng…</b><span class="m">chọn một hay nhiều model, xếp thứ tự</span></div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+        <div style="padding: 10px 14px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; font-size: 12.5px"><span class="m">Cùng dữ liệu với bảng "Gán theo bot" ở Cài đặt › Ảnh và video: sửa một chỗ, chỗ kia đổi theo.</span><a href="ModelAnhVideo.dc.html" style="color: var(--accent); text-decoration: none">Quản lý ảnh và video ›</a></div>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center">
+        <button type="button" class="b2" onClick="{{toggleMenu}}">{{menuLabel}}</button>
+        <span class="m" style="font-size: 12px">Bot nào để Tắt thì không có công cụ đó trong danh sách tool; bật ở đây là bật luôn, không cần sang Skill &amp; tool.</span>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'dark';
+    const menu = s.menu === undefined ? true : s.menu;
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      showMenu: menu,
+      menuLabel: menu ? 'Ẩn menu chọn' : 'Mở menu chọn của Tạo video',
+      toggleMenu: () => this.setState({ menu: !menu })
+    };
+  }
+}
+</script>
+</body>
+</html>
