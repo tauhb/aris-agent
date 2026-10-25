@@ -355,6 +355,8 @@ Code, Codex làm bot ngoài: cùng một lõi, một bộ dữ liệu.
 ## Giai đoạn 7 · Cứng cáp và lên server (tuần 19–20)
 
 > **Chốt 26/10: làm ở local trước, chưa lên server.** Mục 1 (container, `systemd`, chỉ cho gọi ra API cần thiết, proxy công cụ mạng) để tới khi lên server; các mục còn lại làm trên máy Mac. Nghiệm thu "chạy liên tục 14 ngày" tính trên máy local.
+>
+> **Đợt (chốt 26/10)**: 7a An toàn và ngân sách (màn 6.4 thật: trần ngày cả đội, báo khi tới ngưỡng, nút dừng khẩn cấp, danh sách cấm cứng cho mọi bot, chế độ duyệt, kho bí mật trong Keychain của macOS) → 7b Sao lưu (hằng đêm, mã hoá, vào thư mục local do người dùng chọn, diễn tập khôi phục) → 7c Quan sát (màn 6.5 thật, đo token, otel, phát lại phiên) → 7f Đo và rà soát (rà soát bảo mật, build dsh từ mã nguồn, đo đối đầu với Hermes). 7d Kênh Lark (kèm Mai đọc email, lịch) khi có ứng dụng Lark, rồi 7e Kênh Zalo cá nhân. Webhook để tới khi lên server.
 
 **Việc cần làm**
 1. **Lên server**: container, `systemd`, egress allowlist (chỉ cho các API cần thiết), proxy có nhật ký cho tool mạng.
