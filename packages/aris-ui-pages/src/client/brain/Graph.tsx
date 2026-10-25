@@ -132,7 +132,6 @@ export function BrainGraph({ t, nav }: PageProps) {
               </button>
             ))}
           </div>
-          <span className="a-muted ap-gnote">{t('gr.note')}</span>
           <input
             className="a-inp"
             type="search"
@@ -140,7 +139,7 @@ export function BrainGraph({ t, nav }: PageProps) {
             onChange={(e) => find(e.target.value)}
             placeholder={t('gr.search')}
             aria-label={t('gr.search')}
-            style={{ flex: '0 1 220px', width: 'auto', minWidth: 140, height: 32 }}
+            style={{ marginLeft: 'auto', flex: '0 1 240px', width: 'auto', minWidth: 140, height: 32 }}
           />
         </div>
         <div className="ap-gstage">
@@ -159,20 +158,42 @@ export function BrainGraph({ t, nav }: PageProps) {
               label={t('gr.alt', { n: graph.clusters.length, clusters: graph.clusters.join(', ') })}
             />
           )}
-          <div className="zoom">
+          <div className="zoom" role="group" aria-label={t('gr.zoomGroup')}>
             <button
               type="button"
               aria-label={t('gr.zoomIn')}
               onClick={() => setZoom(Math.min(ZOOM_MAX, zoom * 1.2))}
             >
-              +
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
             </button>
             <button
               type="button"
               aria-label={t('gr.zoomOut')}
               onClick={() => setZoom(Math.max(ZOOM_MIN, zoom / 1.2))}
             >
-              −
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14" />
+              </svg>
             </button>
             <button
               type="button"
@@ -182,7 +203,20 @@ export function BrainGraph({ t, nav }: PageProps) {
                 setReset(reset + 1)
               }}
             >
-              ⟲
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M3 12a9 9 0 1 0 3-6.7" />
+                <path d="M3 4v5h5" />
+              </svg>
             </button>
           </div>
           <div className="legend">
@@ -192,6 +226,7 @@ export function BrainGraph({ t, nav }: PageProps) {
                 {t(label(k))}
               </span>
             ))}
+            <span className="note">{t('gr.note')}</span>
           </div>
           <div className="hint">{t('gr.hint')}</div>
         </div>

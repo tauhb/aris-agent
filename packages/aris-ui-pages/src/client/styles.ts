@@ -308,10 +308,14 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-inc{display:flex;flex-direction:column;gap:8px;font-size:13.5px}
 .ap-gstage{position:relative;flex:1;min-height:560px}
 .ap-gstage>canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.ap-gstage .zoom{position:absolute;left:16px;top:14px;display:flex;flex-direction:column;gap:6px}
-.aris .ap-gstage .zoom button{width:34px;height:34px;border:1px solid var(--a-line);border-radius:10px;background:var(--a-panel);font-size:16px;color:var(--a-ink)}
+.ap-gstage .zoom{position:absolute;left:16px;top:14px;display:flex;flex-direction:column;background:var(--a-panel);border:1px solid var(--a-line);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.aris .ap-gstage .zoom button{width:34px;height:34px;padding:0;margin:0;border:0;border-radius:0;background:transparent;display:flex;align-items:center;justify-content:center;color:var(--a-muted)}
+.aris .ap-gstage .zoom button+button{border-top:1px solid var(--a-line)}
+.aris .ap-gstage .zoom button:hover{background:var(--a-hover);color:var(--a-ink)}
+.aris .ap-gstage .zoom button:focus-visible{outline:2px solid var(--a-accent);outline-offset:-2px}
 .ap-gstage .legend{position:absolute;left:16px;bottom:14px;display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--a-muted);background:var(--a-panel);border:1px solid var(--a-line);border-radius:12px;padding:7px 12px}
 .ap-gstage .legend span{display:inline-flex;align-items:center;gap:6px}
+.ap-gstage .legend .note{flex-basis:100%;border-top:1px solid var(--a-line);padding-top:6px}
 .ap-gstage .hint{position:absolute;right:16px;top:14px;font-size:12px;color:var(--a-muted);background:var(--a-panel);border:1px solid var(--a-line);border-radius:999px;padding:4px 12px}
 .ap-gaside{flex:1 1 260px;max-width:290px;min-width:240px}
 .ap-gaside .ap-h{padding:0 0 6px}
@@ -338,7 +342,6 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-around-sug{border-top:1px solid var(--a-line);padding-top:10px;display:flex;flex-direction:column;gap:8px;font-size:13px}
 .ap-around-row{display:flex;flex-direction:column;gap:6px}
 .ap-around-acts{display:flex;gap:6px}
-.ap-gnote{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 0}
 .ap-gempty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px}
 .ap-soat{--ap-mem:#8B5CF6;--ap-memSoft:color-mix(in srgb,#8B5CF6 15%,transparent)}
 .ap-soatmain{flex:999 1 620px;min-width:0;min-height:0;display:flex;flex-direction:column}
