@@ -47,8 +47,16 @@ const SENT = 'Đã gửi.'
 export const BASH_DENY =
   'Routine chỉ đọc: lệnh này không chắc là chỉ đọc nên bị từ chối. Viết lại thành các lệnh đọc đơn giản, mỗi lệnh một lần gọi hay nối bằng | và ; (ls, cat, wc, grep, find, git log, git show --stat, head, tail), không dùng vòng lặp, if, $(…), cd kèm lệnh ghi hay chuyển hướng vào tệp; hoặc dùng công cụ read, grep, glob. Routine này không được ghi hay sửa gì.'
 
-/** Công cụ đọc web: routine như "tin đối thủ" cần, vẫn là chỉ đọc. */
-const WEB_READ = new Set(['web_search', 'web_fetch'])
+/**
+ * Công cụ đọc web và đọc tài nguyên của kết nối MCP: routine như "tin đối thủ" cần, vẫn là chỉ đọc.
+ */
+const WEB_READ = new Set([
+  'web_search',
+  'web_fetch',
+  'list_mcp_resources',
+  'list_mcp_resource_templates',
+  'read_mcp_resource',
+])
 
 /** Dịch vụ cho plugin khác: vòng học nền, lời nhắc ký ức bỏ qua phiên routine. */
 export interface ArisRoutine {
@@ -751,7 +759,8 @@ export async function apply(ctx: Context): Promise<void> {
           bot: r.bot,
           streak: r.failStreak,
           error: failed[0]?.error ?? '',
-          session: failed[0]?.sessionId ?? null,
+          // Phiên của lần lỗi gần nhất có phiên (lần chạy script không có): để xem và nhờ bot sửa.
+          session: failed.find((x) => x.sessionId)?.sessionId ?? null,
         }
       })
 
@@ -875,9 +884,18 @@ export async function apply(ctx: Context): Promise<void> {
         }
         case 'fix': {
           const failed = runsOf(r!.id).filter((x) => x.status === 'failed' || x.status === 'cap')
-          const sid = failed[0]?.sessionId
+          // Lần chạy script không có phiên: nhờ bot ở phiên của lần lỗi gần nhất có phiên.
+          const sid = failed.find((x) => x.sessionId)?.sessionId
           const sc = sessions()
-          if (!sid || !sc) return json({ error: 'Chưa có lần chạy lỗi nào để xem.' }, 409)
+          if (!sid || !sc)
+            return json(
+              {
+                error: failed.length
+                  ? 'Các lần lỗi đều là lần chạy script, không có phiên để bot xem: sửa lệnh của routine.'
+                  : 'Chưa có lần chạy lỗi nào để xem.',
+              },
+              409,
+            )
           await sc.prompt(
             {
               requestId: randomUUID(),

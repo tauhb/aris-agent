@@ -592,8 +592,13 @@ export async function apply(ctx: Context): Promise<void> {
     const answer = lastAnswer.get(session.id)
     lastAnswer.delete(session.id)
     const kind = (event.data as unknown as { reason?: { kind?: string } }).reason?.kind
+    // Chạm trần tiền mỗi việc: bot trả lời một câu rồi xong lượt, nhưng việc chưa xong nên tính là vấp.
     const outcome =
-      kind === 'completed' ? 'done' : /cancel|abort|interrupt|stop/.test(kind ?? '') ? 'stopped' : 'failed'
+      kind === 'completed' && !taskSpend.over(session.id)
+        ? 'done'
+        : /cancel|abort|interrupt|stop/.test(kind ?? '')
+          ? 'stopped'
+          : 'failed'
     const rec = log.get(key)
     if (rec)
       void log
@@ -750,7 +755,7 @@ export async function apply(ctx: Context): Promise<void> {
   }, 'aris-commander: Driver')
 
   // Bot làm xong một lượt bình thường: đánh dấu xong thẻ cũ nhất bot đang giữ (chính bot là chủ thẻ
-  // nên có quyền), để bảng việc và Kanban đi đúng tiến độ.
+  // nên có quyền), để bảng việc và Kanban đi đúng tiến độ. Lượt dừng vì chạm trần tiền thì không.
   const finishing = new Set<string>()
   ctx.on('session/event', (session, event) => {
     if (event.type !== 'turn/end') return
@@ -758,7 +763,7 @@ export async function apply(ctx: Context): Promise<void> {
     const agents = ctx.get('agents') as { get(id: string): unknown } | undefined
     const t = ctx.get('agentTeams') as unknown as CardTeam | undefined
     const agent = agents?.get(session.id) as AgentLike | undefined
-    if (!agent || !t || finishing.has(session.id)) return
+    if (!agent || !t || finishing.has(session.id) || taskSpend.over(session.id)) return
     const m = t.tryMembership(agent)
     if (m?.role !== 'teammate') return
     const mine = t

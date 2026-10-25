@@ -134,7 +134,12 @@ export function humanCron(expr: string): string {
   }
   const f = expr.trim().split(/\s+/)
   const every = /^\*\/(\d+)$/
-  if (f[3] !== '*') return expr
+  if (f[3] !== '*') {
+    // Một ngày trong năm: "0 3 1 1 *" ⇒ "Ngày 1/1 hằng năm, 03:00".
+    if (s.minute.size !== 1 || s.hour.size !== 1 || s.month.size !== 1 || s.dom.size !== 1 || !s.dowAny)
+      return expr
+    return `Ngày ${[...s.dom][0]}/${[...s.month][0]} hằng năm, ${two([...s.hour][0]!)}:${two([...s.minute][0]!)}`
+  }
   if (f[1] === '*' && f[2] === '*' && f[4] === '*') {
     const m = every.exec(f[0]!)
     if (m) return `Mỗi ${m[1]} phút`
