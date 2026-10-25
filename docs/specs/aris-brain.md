@@ -196,6 +196,43 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
 - Còn để sau: `[[...]]` trong câu trả lời ở khung chat chưa bấm được (đợt 3); mục lục `index.md` của Công
   ty liệt kê trang mọi phòng ban, nên khi Thủ thư viết mục lục (đợt 2) cần tách theo phòng.
 
+## Đợt 2a — nạp: Hộp thư vào, Thủ thư lập bản nạp, duyệt, ghép, nhật ký (xong 25/10)
+
+- Vào: thả tệp vào `hop-thu-vao/` (aris tự thấy), nút "+ Thêm" ở 5.2 (dán chữ, link, chọn tệp `.md`/`.txt`),
+  `/note` (ghi nối vào nhật ký hôm nay của Cá nhân, mục "Ghi nhanh · giờ:phút"). Link được tải và đổi sang
+  chữ bằng `textutil` của macOS (không tải địa chỉ trong máy). Loại tệp khác vào trạng thái "chưa đọc được"
+  (đợt 2b), chỉ lưu hay bỏ được.
+- Phân loại: một lần gọi model Flash (giới hạn 3000 token vì model có bước suy nghĩ): không gian, phòng ban,
+  tiêu đề, một câu tóm tắt, cờ nhạy cảm. Không phân loại được thì tạm xếp Cá nhân kèm ghi chú.
+- Thủ thư lập bản nạp trong phiên riêng cho mỗi nguồn, lần lượt từng nguồn (nguồn của người dùng trước nguồn
+  bot gửi), tối đa 10 phút. Công cụ `brain_draft` ghi toàn bộ trang lên bản nháp (lưu trong bảng `batches`
+  của kho dữ liệu aris), kèm loại thay đổi, một câu tóm tắt cho mục lục, cảnh báo mâu thuẫn; `brain_read`
+  của phiên đó đọc bản nháp trước. aris tự đặt nhãn `tom-tat`, `cap-nhat`.
+- Đánh dấu ⚠: Thủ thư báo mâu thuẫn, sửa ý cũ, trang người dùng từng sửa tay (commit "<tên> sửa…"), trang
+  Người khi nguồn nhạy cảm. Mức: tự nạp (nhật ký, ghi nhanh, hay chỉ tóm tắt và liên kết; có ⚠ thì không),
+  duyệt kỹ (có ⚠ hay đụng thư mục phòng ban), còn lại duyệt nhanh.
+- Ghép: chuyển nguồn sang `<không gian>/nguon/<tháng>/` (commit "Lưu nguồn: …"), rồi ghi các trang đã chọn,
+  gộp ba chiều bằng `git merge-file` khi trang đổi trong lúc chờ (trùng chỗ thì bỏ trang đó, nút Lập lại),
+  viết lại `index.md` (theo loại; Công ty chia theo phòng) và thêm dòng `log.md` (commit "Nạp: …"). Hai
+  commit tách riêng để hoàn tác bản nạp không đẩy nguồn về Hộp thư vào.
+- Hoàn tác (5.6): `git revert` commit đó; `log.md` vẫn chỉ ghi thêm. Trùng chỗ với thay đổi sau thì không
+  hoàn tác và báo.
+- Tự nạp nhật ký mỗi ngày từ 23:00 (nhật ký chỉ có tiêu đề thì thôi). Chờ duyệt quá 7 ngày nhắc qua
+  Telegram của Aris; quá 30 ngày tự Chỉ lưu. Trần tiền Thủ thư 0,5 USD/ngày (gồm cả phân loại), chạm trần thì
+  nguồn chờ sang ngày sau.
+- Màn 5.2 và 5.6 dữ liệu thật theo bản vẽ đã duyệt; khác biệt theo câu, hiện chữ đã dựng (đậm, liên kết, chú
+  thích).
+- Chạy thử thật: ghi chú cuộc gọi về chị Hà (giá mới 2 triệu) ⇒ Thủ thư tạo 4 thay đổi (tóm tắt, Lịch quay
+  tháng 11, sửa Chị Hà, bổ sung Kênh YouTube Q4), tự phát hiện mâu thuẫn giá và cảnh báo ngân sách tháng 11
+  thiếu, mức duyệt kỹ, 0,0098 USD; Đồng ý ⇒ một commit, mục lục và nhật ký đúng. Link Wikipedia Zettelkasten
+  ⇒ phân loại Cá nhân, tiêu đề tiếng Việt, 2 trang mới, duyệt nhanh; hoàn tác ở 5.6 ⇒ trang gỡ, nguồn giữ.
+  `/note`, Chỉ lưu, Bỏ với tệp PDF chưa đọc được đều đúng.
+- Lỗi tìm ra khi chạy thử và đã sửa: phân loại trả rỗng vì 400 token không đủ cho bước suy nghĩ; commit "Lưu
+  nguồn" hỏng vì tệp trong Hộp thư vào chưa từng được git theo dõi; hoàn tác làm mất dòng nạp trong
+  `log.md`; cộng tiền song song ghi đè nhau; chọn Chỉ lưu hay Bỏ lúc Thủ thư đang lập bị kết quả lập ghi đè.
+- Chưa thử thật: tự nạp nhật ký lúc 23:00 (chờ tới giờ), nhắc 7 ngày và tự Chỉ lưu 30 ngày, gộp ba chiều
+  trùng chỗ (đã có bài thử tự động).
+
 ## Đã chốt (25/10)
 
 - Duyệt khi nạp: mặc định {you} duyệt ở Hộp thư vào; `/note` và nhật ký của {you} tự nạp.

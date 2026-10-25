@@ -7,6 +7,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-client-connection'
+import type {} from '@deepseek-ai/dsh-commands'
 import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import { defineTool } from '@deepseek-ai/dsh-tools'
@@ -30,16 +31,44 @@ import {
 } from './access.js'
 import { Catalog, type Entry } from './catalog.js'
 import { sweepMessage, VaultGit } from './git.js'
+import { batchRecord, isOpen, LIBRARIAN_DAILY_USD, type Batch } from './ingest.js'
+import { IngestError, startIngest, type IngestState } from './pipeline.js'
 import { dayKey, ensureVault, placeOf, SPACES, type Space } from './vault.js'
 
 export * from './access.js'
 export * from './catalog.js'
+export * from './extract.js'
 export * from './git.js'
+export * from './ingest.js'
 export * from './page.js'
 export * from './vault.js'
 
 export const name = 'aris-brain'
 export const inject = ['storageDomain', 'systemPrompt', 'tools']
+
+/** Một sự kiện của Nhật ký bộ não (màn 5.6), đọc từ git của kho. */
+export interface LogEvent {
+  sha: string
+  at: number
+  kind: 'nap' | 'tu-nap' | 'sua' | 'sua-obsidian' | 'ghi-nhanh' | 'hoan-tac' | 'luu-nguon' | 'bo' | 'he-thong'
+  subject: string
+  files: { status: string; path: string }[]
+  /** Đã bị hoàn tác (mã commit hoàn tác). */
+  reverted?: string | undefined
+}
+
+/** Loại sự kiện theo tiêu đề commit aris đặt. */
+export function eventKind(subject: string, who: string): LogEvent['kind'] {
+  if (subject.startsWith('Nạp: ')) return 'nap'
+  if (subject.startsWith('Tự nạp: ')) return 'tu-nap'
+  if (subject.startsWith('Hoàn tác: ')) return 'hoan-tac'
+  if (subject.startsWith('Lưu nguồn: ')) return 'luu-nguon'
+  if (subject.startsWith('Bỏ nguồn: ')) return 'bo'
+  if (subject.startsWith(`${who} sửa: `)) return 'sua-obsidian'
+  if (subject.startsWith(`${who} sửa `)) return 'sua'
+  if (subject.startsWith(`${who} ghi nhanh`)) return 'ghi-nhanh'
+  return 'he-thong'
+}
 
 /** Mã bot Thủ thư (trùng `LIBRARIAN_ID` của @aris/bots). */
 const LIBRARIAN = 'b-thu-thu'
@@ -59,16 +88,28 @@ const settingsRecord = z.object({
 })
 type Settings = z.infer<typeof settingsRecord>
 
+const ingestState = z.object({
+  spendDay: z.string().optional(),
+  spendUsd: z.number().optional(),
+  diaryDone: z.record(z.string(), z.string()).optional(),
+})
+
 const brainDomain = defineDomain({
   name: 'aris_brain',
   version: 1,
   layout: 'per-record',
-  tables: { settings: domainTable<string, Settings>(settingsRecord) },
+  tables: {
+    settings: domainTable<string, Settings>(settingsRecord),
+    batches: domainTable<string, Batch>(batchRecord),
+    ingest: domainTable<string, IngestState>(ingestState),
+  },
 })
 
 interface Table<V> {
   get(k: string): V | undefined
+  entries(): Iterable<[string, V]>
   put(k: string, v: V): Promise<void>
+  delete(k: string): Promise<boolean>
 }
 
 interface BotLike {
@@ -80,6 +121,7 @@ interface BotLike {
 }
 interface BotsPort {
   botOf(sessionId: string | undefined): BotLike
+  open(botId: string): Promise<string>
   store: {
     list(): BotLike[]
     departments(): { id: string; name: string; about?: string | undefined }[]
@@ -266,6 +308,47 @@ export async function apply(ctx: Context): Promise<void> {
     return () => clearInterval(timer)
   }, 'aris-brain: Thủ thư')
 
+  // --- Nạp (đợt 2a) ------------------------------------------------------------------------------
+  const ingestT = domain.table('ingest') as unknown as Table<IngestState>
+  const ingest = startIngest({
+    ctx,
+    logger,
+    root,
+    git,
+    hasGit,
+    batches: domain.table('batches') as unknown as Table<Batch>,
+    state: () => ingestT.get('main') ?? {},
+    saveState: (s) => ingestT.put('main', s),
+    catalog,
+    indexFile,
+    who,
+    depts,
+    librarian: LIBRARIAN,
+    open: async (bot) => {
+      const b = bots()
+      if (!b) throw new IngestError('Chưa có dịch vụ đội bot.')
+      return b.open(bot)
+    },
+  })
+
+  ctx.inject(['commands'], (ctx) => {
+    ctx.effect(
+      () =>
+        ctx.commands.register({
+          name: 'note',
+          description: 'Ghi nhanh vào nhật ký hôm nay của bộ não (/note <nội dung>)',
+          input: { hint: '<nội dung>' },
+          handler: async ({ rawInput }) => {
+            const text = rawInput.trim()
+            if (!text) return { kind: 'error', text: 'Dùng: /note <nội dung>' }
+            const rel = await ingest.note(text)
+            return { kind: 'success', text: `Đã ghi vào ${rel}. Nhật ký tự nạp vào wiki lúc 23:00.` }
+          },
+        }),
+      'aris-brain: /note',
+    )
+  })
+
   // --- Quyền ----------------------------------------------------------------------------------
   const readerOf = (sessionId: string | undefined): Reader => {
     const b = bots()?.botOf(sessionId)
@@ -380,10 +463,17 @@ export async function apply(ctx: Context): Promise<void> {
       },
       output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
       async execute(args, exec) {
-        const reader = readerOf((exec.agent as AgentLike | undefined)?.session.id)
+        const sid = (exec.agent as AgentLike | undefined)?.session.id
+        const reader = readerOf(sid)
+        const ten = String(args.ten ?? '')
+          .trim()
+          .replace(/^\[\[|\]\]$/g, '')
+        // Thủ thư đang nạp: trang đã ghi lên bản nháp thì đọc bản nháp.
+        const draft = ingest.draftRead(sid, ten.includes('/') ? ten : '') ?? ingest.draftByName(sid, ten)
+        if (draft) return `(bản nháp của lần nạp này)\n\n${draft}`
         return readPage(
           reader,
-          String(args.ten ?? ''),
+          ten,
           SPACES.find((s) => s === args.khong_gian),
         )
       },
@@ -469,6 +559,55 @@ export async function apply(ctx: Context): Promise<void> {
   const hasObsidian = () =>
     existsSync('/Applications/Obsidian.app') || existsSync(join(homedir(), 'Applications', 'Obsidian.app'))
 
+  async function ingestOp(b: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const id = typeof b.id === 'string' ? b.id : ''
+    switch (b.op) {
+      case 'add':
+        return {
+          batch: await ingest.add({
+            ...(typeof b.text === 'string' ? { text: b.text } : {}),
+            ...(typeof b.url === 'string' ? { url: b.url } : {}),
+            ...(typeof b.title === 'string' ? { title: b.title } : {}),
+            from: 'web',
+          }),
+        }
+      case 'approve': {
+        const chosen = Array.isArray(b.chon) ? b.chon.filter((n): n is number => typeof n === 'number') : []
+        return { batch: await ingest.approve(id, chosen) }
+      }
+      case 'keep':
+        return { batch: await ingest.keep(id) }
+      case 'drop':
+        return { batch: await ingest.drop(id) }
+      case 'revise': {
+        const text = typeof b.text === 'string' ? b.text.trim().slice(0, 2000) : ''
+        if (!text) throw new IngestError('Gõ điều cần Thủ thư sửa.')
+        const cur = ingest.all().find((x) => x.id === id)
+        return { batch: await ingest.redo(id, { revise: [...(cur?.revise ?? []), text] }) }
+      }
+      case 'space': {
+        const space = SPACES.find((s) => s === b.space)
+        if (!space) throw new IngestError('Không gian không hợp lệ.')
+        const dept =
+          space === 'cong-ty' && typeof b.dept === 'string' && depts().some((d) => d.id === b.dept)
+            ? b.dept
+            : undefined
+        const cur = ingest.all().find((x) => x.id === id)
+        const patch: Partial<Batch> = { space, ...(dept ? { dept } : {}) }
+        if (cur && !dept) delete (cur as Partial<Batch>).dept
+        return { batch: await ingest.redo(id, patch) }
+      }
+      case 'replan':
+        return { batch: await ingest.redo(id, {}) }
+      case 'revert': {
+        const sha = typeof b.commit === 'string' ? b.commit : ''
+        return { commit: await ingest.revert(sha) }
+      }
+      default:
+        throw new IngestError('op không hợp lệ')
+    }
+  }
+
   ctx.inject(['connection'], (ctx) => {
     ctx.effect(() => {
       const dispose = ctx.connection.fetch.register({
@@ -496,8 +635,44 @@ export async function apply(ctx: Context): Promise<void> {
                 readers: readersOf(e),
               })
             }
-            const query = q.get('q')
             const space = SPACES.find((s) => s === q.get('space'))
+            if (q.get('inbox') !== null)
+              return json({
+                batches: ingest
+                  .all()
+                  .filter((x) => isOpen(x) || Date.now() - Date.parse(x.updatedAt) < 86_400_000)
+                  .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+                spend: { usd: ingest.spent(), cap: LIBRARIAN_DAILY_USD },
+                departments: depts().map((d) => ({ id: d.id, name: d.name })),
+              })
+            const logSpace = SPACES.find((s) => s === q.get('log'))
+            if (logSpace) {
+              if (!hasGit) return json({ events: [], git: false })
+              const days = Math.min(90, Math.max(1, Number(q.get('days')) || 7))
+              const list = await git.log(`${logSpace}/`, days).catch(() => [])
+              const reverted = new Map<string, string>()
+              for (const c of list) {
+                const m = /\(([0-9a-f]{7})\)$/.exec(c.subject)
+                if (c.subject.startsWith('Hoàn tác: ') && m) reverted.set(m[1]!, c.sha)
+              }
+              const events: LogEvent[] = list.map((c) => ({
+                sha: c.sha,
+                at: c.at,
+                kind: eventKind(c.subject, who()),
+                subject: c.subject,
+                files: c.files.filter((f) => f.path.startsWith(`${logSpace}/`)),
+                ...(reverted.get(c.sha.slice(0, 7)) ? { reverted: reverted.get(c.sha.slice(0, 7)) } : {}),
+              }))
+              return json({ events, git: true, spend: { usd: ingest.spent(), cap: LIBRARIAN_DAILY_USD } })
+            }
+            const sha = q.get('commit')
+            if (sha !== null) {
+              if (!hasGit || !/^[0-9a-f]{7,40}$/.test(sha))
+                return json({ error: 'Không có thay đổi này.' }, 404)
+              const patch = await git.show(sha, space ? `${space}/` : '.').catch(() => '')
+              return json({ patch })
+            }
+            const query = q.get('q')
             if (query !== null)
               return json({
                 hits: catalog
@@ -514,7 +689,7 @@ export async function apply(ctx: Context): Promise<void> {
               git: hasGit,
               today: dayKey(new Date()),
               departments: depts().map((d) => ({ id: d.id, name: d.name })),
-              inbox: all.filter((e) => e.layer === 'hop-thu-vao').length,
+              inbox: ingest.waiting(),
               entries: (space ? userPages.filter((e) => e.space === space) : userPages)
                 .filter((e) => !e.name.startsWith('_'))
                 .map(view),
@@ -585,6 +760,20 @@ export async function apply(ctx: Context): Promise<void> {
               await new Promise<void>((ok) => execFile('open', args, () => ok()))
               return json({ ok: true, app, setup: app === 'obsidian' && !registered ? root : null })
             }
+            case 'add':
+            case 'approve':
+            case 'keep':
+            case 'drop':
+            case 'revise':
+            case 'space':
+            case 'replan':
+            case 'revert':
+              try {
+                return json({ ok: true, ...(await ingestOp(b)) })
+              } catch (e) {
+                if (e instanceof IngestError) return json({ error: e.message }, 409)
+                throw e
+              }
             default:
               return json({ error: 'op không hợp lệ' }, 400)
           }

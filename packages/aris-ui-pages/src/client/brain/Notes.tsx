@@ -671,6 +671,14 @@ export function Notes({ t, nav, params }: PageProps) {
         <span>{readers.join(' · ')}</span>
         <span className="a-muted">{t(p?.dept ? 'nb.whoDept' : `nb.who.${space}`)}</span>
       </div>
+      <button
+        type="button"
+        className="ap-link"
+        style={{ alignSelf: 'flex-start' }}
+        onClick={() => nav.go('brain', { view: 'log', space })}
+      >
+        {t('nb.toLog')}
+      </button>
     </aside>
   )
 

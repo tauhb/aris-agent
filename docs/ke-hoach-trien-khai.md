@@ -308,6 +308,8 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 > **Đợt 1 xong 25/10 — Kho, chỉ mục, công cụ đọc, Thủ thư, màn 5.1** ([đặc tả](specs/aris-brain.md#đợt-1--kho-chỉ-mục-công-cụ-đọc-thủ-thư-màn-51-xong-2510)): gói mới `@aris/brain` tạo kho `~/aris/brain` theo khuôn (luật `AGENTS.md`, mẫu trang, thư mục phòng ban), git thật (aris commit ngay, Obsidian gom 10 phút), chỉ mục tìm từ khoá bỏ dấu ở `~/.aris/brain`, `brain_search`/`brain_read` lọc theo quyền, chặn bot đọc thẳng kho, bot Thủ thư mặc định, màn 5.1 dữ liệu thật (bản vẽ duyệt 25/10). Chạy thử thật đạt cả 5 điểm nghiệm thu của đợt.
 
+> **Đợt 2a xong 25/10 — Nạp** ([đặc tả](specs/aris-brain.md#đợt-2a--nạp-hộp-thư-vào-thủ-thư-lập-bản-nạp-duyệt-ghép-nhật-ký-xong-2510)): Hộp thư vào (thả tệp, nút Thêm chữ/link, `/note` vào nhật ký), phân loại, Thủ thư lập bản nạp trên bản nháp bằng `brain_draft`, ba mức duyệt, ghép có gộp ba chiều, mục lục và `log.md` do aris giữ, hoàn tác ở màn 5.6, tự nạp nhật ký 23:00, trần 0,5 USD/ngày. Màn 5.2, 5.6 dữ liệu thật (bản vẽ duyệt 25/10); cây 5.1 làm lại theo phương án A. Chạy thử thật: Thủ thư tự phát hiện mâu thuẫn giá và thiếu ngân sách. Đợt 2b còn: PDF, Word, ảnh, ghi âm, Telegram (thẻ 7.4), `brain_capture` cho bot.
+
 **Giao diện**: 5.1 Ghi chú (đồ thị 2D quanh ghi chú), 5.2 Hộp thư vào, 5.3 Đồ thị toàn cục 3D, 5.4 Hỏi bộ não; phần "Từ Second Brain" trong menu đính kèm.
 
 **Nghiệm thu**: gửi một ghi âm Telegram ⇒ có ghi chú đã chép lời, xếp đúng dự án, nối với ghi chú liên quan; "Hỏi bộ não" trả lời đúng kèm nguồn; mở thẳng thư mục bằng Obsidian được.
