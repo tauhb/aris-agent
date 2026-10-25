@@ -7,6 +7,7 @@ import { bashTouchesVault, canRead, containsVault, insideVault, readTarget, type
 import { Catalog } from './catalog.js'
 import { sweepMessage, VaultGit } from './git.js'
 import { askPrompt, citations, scopeLabel } from './ask.js'
+import { brainMap, GUEST_MARK, mentioned, nudge, referenced, type PageRef } from './hints.js'
 import { fold, keyTerms, linksOf, parsePage, snippetOf } from './page.js'
 import { ensureVault, placeOf, slugOf } from './vault.js'
 
@@ -235,5 +236,50 @@ describe('hỏi bộ não', () => {
     expect(askPrompt({ question: 'x', scope: { memory: true }, today: '2026-10-25' })).toContain(
       '[[ky-uc:mã]]',
     )
+  })
+})
+
+describe('chỉ dẫn tra bộ não', () => {
+  const pages: PageRef[] = [
+    { name: 'chi-ha', title: 'Chị Hà', path: 'ca-nhan/wiki/nguoi/chi-ha.md', layer: 'wiki', group: 'nguoi' },
+    {
+      name: 'kenh-youtube-q4',
+      title: 'Kênh YouTube Q4',
+      path: 'ca-nhan/wiki/du-an/kenh-youtube-q4.md',
+      layer: 'wiki',
+      group: 'du-an',
+    },
+    {
+      name: 'tom-tat-x',
+      title: 'Tóm tắt: Chị Hà gọi',
+      path: 'ca-nhan/wiki/tom-tat/x.md',
+      layer: 'wiki',
+      group: 'tom-tat',
+    },
+    { name: 'ab', title: 'AB', path: 'ca-nhan/wiki/ab.md', layer: 'wiki' },
+  ]
+  it('nhắc theo tên: khớp cả cụm tiêu đề không dấu, bỏ trang tóm tắt, tiêu đề ngắn, trang đã đưa vào tin', () => {
+    expect(
+      mentioned('nhớ hỏi chi ha về lịch giao, kênh youtube q4 thì sao', pages).map((p) => p.name),
+    ).toEqual(['chi-ha', 'kenh-youtube-q4'])
+    expect(mentioned('Chị Hàng xóm', pages)).toEqual([])
+    expect(mentioned('ab ab', pages)).toEqual([])
+    expect(mentioned('[[Chị Hà]] báo giá', pages)).toEqual([])
+  })
+  it('trang đưa vào tin bằng [[...]]: được đọc lượt này, trừ tin của người không phải người dùng chính', () => {
+    const find = (ref: string) => pages.find((p) => p.name === ref || p.title === ref)
+    expect(
+      referenced('xem [[Kênh YouTube Q4]] và [[chi-ha]], [[khong-co]]', find).map((p) => p.name),
+    ).toEqual(['kenh-youtube-q4', 'chi-ha'])
+    expect(referenced(`[Lan] xem [[chi-ha]]\n(${GUEST_MARK}: chỉ trả lời câu hỏi)`, find)).toEqual([])
+  })
+  it('bản đồ thu gọn và dòng nhắc', () => {
+    expect(brainMap(pages)).toContain('- [[chi-ha]] Chị Hà')
+    expect(brainMap(pages)).not.toContain('tom-tat-x')
+    expect(brainMap([])).toBe('')
+    expect(nudge({ granted: [], named: [] })).toBe('')
+    const n = nudge({ granted: [pages[1]!], named: [pages[0]!] })
+    expect(n).toContain('được đọc trong lượt này (brain_read): [[kenh-youtube-q4]]')
+    expect(n).toContain('nhắc tới trang có trong bộ não: [[chi-ha]] Chị Hà')
   })
 })

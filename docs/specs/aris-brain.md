@@ -304,6 +304,34 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
   ⇒ "Chưa thấy trong bộ não", nói đã tra gì, trích báo giá và trang In ấn. Dừng giữa chừng ⇒ "đã dừng".
 - Chưa thử thật: "Nhờ Aris tìm ngoài bộ não", phạm vi một phòng ban.
 
+## Đợt 3b — bộ não trong khung chat, ba tầng chỉ dẫn (bản vẽ 5.7, xong 25/10)
+
+- Nhãn trang: `[[...]]` trong câu trả lời của bot (thay trong DOM khi chữ đứng yên, như tên thành viên) và trong
+  tin của người dùng (quy tắc chữ `aris-page` của dsh) thành nhãn màu theo lớp (wiki cam, nguồn xám, nhật ký
+  xanh); trang chưa có thì viền chấm. Bấm nhãn mở thẻ xem nhanh: tiêu đề, lớp, không gian, tóm tắt (nhãn `tom-tat`
+  hay đoạn đầu), số trang liên kết tới, "Mở ở Second Brain". Tên trong `[[...]]` khớp theo tên tệp hay tiêu đề.
+- Dòng công cụ "Tra bộ não" (từ khoá, số trang, mỗi trang một dòng có lớp và nơi) và "Đọc trang" (nhãn trang).
+- Nút "Từ Second Brain" ở ô nhập: ô tìm trang (Tất cả / Cá nhân / Công ty), trang bot của phiên chưa được đọc có
+  nhãn "<bot> chưa được đọc"; chọn thì chèn `[[Tiêu đề]]`. Menu `@` có thêm nhóm "Trang bộ não" (sau nhóm bot, gõ
+  từ 2 chữ): ô nhập của dsh chỉ nhận ký tự gợi ý `/` và `@` nên không làm được "gõ `[[`" như bản vẽ.
+- Cấp quyền theo lượt: tin của người dùng có `[[...]]` thì bot được đọc các trang đó (`brain_search`,
+  `brain_read`) tới hết lượt, kể cả ngoài quyền. Tin của người không phải người dùng chính trên Telegram (có dòng
+  "Người này không phải người dùng chính") không cấp. Lời Aris giao việc cho bot (`giao_viec`) có `[[...]]` cũng
+  cấp, vì Aris đọc được mọi trang và người dùng tin Aris.
+- Tầng 1: mọi bot có lời dặn ngắn và bản đồ thu gọn (15 trang wiki bot đọc được, mới sửa trước, bỏ trang tóm tắt);
+  Aris giữ lời dặn riêng cộng bản đồ; phiên của Thủ thư không có (đã có lời nhờ riêng).
+- Tầng 2: tin của người dùng nhắc tới tiêu đề một trang bot đọc được (khớp cả cụm, không dấu, tiêu đề từ 4 chữ
+  cái) thì ngữ cảnh của lượt có dòng "Tin vừa rồi nhắc tới trang có trong bộ não: [[...]]" (tối đa 5 trang, chỉ
+  tên). Dòng này nằm trong ngữ cảnh của bot, không hiện trong khung chat (bản vẽ đã sửa theo).
+- Tầng 3: đếm lượt `brain_search`, `brain_read` theo bot và ngày (bảng `lookups`, giữ 60 ngày; `?lookups`).
+- Chạy thử thật: hỏi Aris "Chị Hà thường giao bản dựng sau mấy ngày?" ⇒ Aris đọc thẳng trang, trả lời kèm nhãn
+  Chị Hà (bấm mở thẻ xem nhanh) và nhãn viền chấm cho trang chưa có. Với Minh (Tăng trưởng): chọn "Kênh YouTube
+  Q4" (Cá nhân, nhãn "Minh chưa được đọc") ⇒ Minh đọc được trang trong lượt đó, trả lời kèm nhãn; tin của người
+  dùng hiện nhãn trang. "Việc in ấn tháng 11 đang thế nào?" ⇒ ngữ cảnh của Minh có dòng nhắc [[in-an]], Minh đọc và
+  trích. Menu `@kenh` hiện nhóm Trang bộ não, chọn thì chèn `[[Kênh YouTube Q4]]`. Đếm: Aris 1, Minh 3 lượt đọc.
+- Lỗi tìm ra khi chạy thử: quy tắc chữ trả `null` khi không khớp (dsh cần `undefined`) làm hỏng nhãn trong tin của
+  người dùng.
+
 ## Đã chốt (25/10)
 
 - Duyệt khi nạp: mặc định {you} duyệt ở Hộp thư vào; `/note` và nhật ký của {you} tự nạp.

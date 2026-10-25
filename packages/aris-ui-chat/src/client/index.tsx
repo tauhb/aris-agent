@@ -14,6 +14,9 @@ import { BotReport, HandoffTurn, TurnHead, UserMention } from './Speaker.js'
 import { botTriggerSource } from './bot-source.js'
 import { botReportDefinition, findMention, handoffDefinition, turnHeadDefinition } from './who-data.js'
 import { CSS } from './styles.js'
+import { BrainPicker, BrainReadCall, BrainSearchCall, UserPage, brainTriggerSource } from './Brain.js'
+import { brainPages, cachedPages, LINK } from './brain-data.js'
+import { openPeek, watchPageLinks } from './brain-dom.js'
 
 interface SessionInput {
   focus(): void
@@ -254,6 +257,92 @@ export function apply(ctx: ClientContext): void {
       ),
     'aris-ui-chat: reply mentions',
   )
+
+  // --- Bộ não trong khung chat (giai đoạn 5, bản vẽ 5.7) ----------------------------------------
+  const dict = () => (document.documentElement.lang.startsWith('vi') ? VI : EN)
+  const spaceLabel = (s: string) => dict()[`brain.space.${s}` as keyof typeof EN] ?? s
+  // `[[...]]` trong tin của người dùng thành nhãn trang…
+  ctx.uiConversation.userText.register({
+    id: 'aris-page',
+    order: 30,
+    match: (text: string, from: number) => {
+      const re = new RegExp(LINK.source, 'g')
+      re.lastIndex = from
+      const m = re.exec(text)
+      if (!m) return undefined
+      return {
+        id: 'aris-page',
+        start: m.index,
+        end: m.index + m[0].length,
+        data: { ref: m[1]!.trim(), shown: m[2]?.trim() ?? '' },
+      }
+    },
+  })
+  ctx.slots.inject('conversation.user.text.node', () =>
+    ctx.slots.register({ name: 'conversation.user.text.node', key: 'aris-page', locale: NS }, UserPage),
+  )
+  // …và trong câu trả lời của bot; bấm nhãn mở thẻ xem nhanh, "Mở ở Second Brain" mở trang ở 5.1.
+  ctx.effect(
+    () =>
+      watchPageLinks(cachedPages, brainPages, (el, page) =>
+        openPeek(
+          el,
+          page,
+          {
+            open: dict()['brain.open'],
+            missing: dict()['brain.missing'],
+            backlinks: (n) => dict()['brain.backlinks'].replace('{n}', String(n)),
+            layer: (l) => dict()[`brain.layer.${l}` as keyof typeof EN] ?? l,
+            space: spaceLabel,
+          },
+          (p) => arisNavigate('brain', { view: 'notes', space: p.space, path: p.path }),
+        ),
+      ),
+    'aris-ui-chat: brain links',
+  )
+  ctx.effect(() => {
+    void brainPages()
+    return () => undefined
+  }, 'aris-ui-chat: brain pages')
+  // Dòng công cụ "Tra bộ não", "Đọc trang".
+  ctx.slots.inject('tool.call.toolview', () =>
+    ctx.slots.register(
+      { name: 'tool.call.toolview', key: 'brain_search', priority: -1, locale: NS },
+      BrainSearchCall,
+    ),
+  )
+  ctx.slots.inject('tool.call.toolview', () =>
+    ctx.slots.register(
+      { name: 'tool.call.toolview', key: 'brain_read', priority: -1, locale: NS },
+      BrainReadCall,
+    ),
+  )
+  // Nút "Từ Second Brain" ở ô nhập; nhóm "Trang bộ não" trong menu `@`.
+  ctx.slots.inject('conversation.input.left', () =>
+    ctx.slots.register(
+      {
+        name: 'conversation.input.left',
+        id: 'aris-brain',
+        order: 110,
+        locale: NS,
+        inject: (sessionId: string) => ({
+          sessionId,
+          insert: (text: string) => {
+            const input = inputOf(sessionId)
+            input?.focus()
+            input?.paste(text)
+          },
+        }),
+      },
+      BrainPicker,
+    ),
+  )
+  ctx.effect(() => {
+    const triggers = ctx.get('inputTriggers') as { registerSource(src: unknown): () => void }
+    return triggers.registerSource(
+      brainTriggerSource({ section: () => dict()['brain.section'], place: (p) => spaceLabel(p.space) }),
+    )
+  }, 'aris-ui-chat: @ brain pages')
 
   // Thanh phòng trên ô nhập ở phiên chính của dự án: vòng, số tin, Dừng phòng.
   ctx.slots.inject('conversation.input.dock', () =>

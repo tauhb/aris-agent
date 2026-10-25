@@ -43,7 +43,8 @@ import {
   type MemHit,
 } from './ask.js'
 import { Catalog, type Entry } from './catalog.js'
-import { keyTerms, snippetOf } from './page.js'
+import { fold, keyTerms, snippetOf } from './page.js'
+import { brainMap, MEMBER_GUIDE, mentioned, nudge, referenced } from './hints.js'
 import { sweepMessage, VaultGit } from './git.js'
 import { batchRecord, isOpen, LIBRARIAN_DAILY_USD, type Batch } from './ingest.js'
 import { sttNotReady, transcribe, type SpeechToText } from '@aris/channels'
@@ -112,6 +113,13 @@ const ingestState = z.object({
   diaryDone: z.record(z.string(), z.string()).optional(),
 })
 
+/** Lượt tra bộ não trong một ngày, theo bot (tầng 3 của chỉ dẫn). */
+const lookupRecord = z.object({
+  day: z.string(),
+  bots: z.record(z.string(), z.object({ search: z.number(), read: z.number() })),
+})
+type Lookups = z.infer<typeof lookupRecord>
+
 const brainDomain = defineDomain({
   name: 'aris_brain',
   version: 1,
@@ -121,6 +129,7 @@ const brainDomain = defineDomain({
     batches: domainTable<string, Batch>(batchRecord),
     asks: domainTable<string, Ask>(askRecord),
     ingest: domainTable<string, IngestState>(ingestState),
+    lookups: domainTable<string, Lookups>(lookupRecord),
   },
 })
 
@@ -505,12 +514,88 @@ export async function apply(ctx: Context): Promise<void> {
   )
 
   // --- Lời dặn và công cụ -----------------------------------------------------------------------
+  // --- Ba tầng chỉ dẫn (đợt 3b, bản vẽ 5.7) ------------------------------------------------------
+  /** Trang của người dùng một bot đọc được, mới sửa trước (bản đồ, nhắc theo tên). */
+  const readable = (r: Reader) =>
+    catalog
+      .all()
+      .filter((e) => e.space && !e.binary && allows(r)(e))
+      .sort((a, b) => b.mtime - a.mtime)
+  /** `[[tên]]` hay `[[Tiêu đề]]` → trang (mọi không gian). */
+  const resolveRef = (ref: string): Entry | undefined => {
+    const name = ref.trim().replace(/\.md$/i, '')
+    const hit = [undefined, ...SPACES].map((s) => catalog.byName(s, name)).find(Boolean)
+    if (hit) return hit
+    const f = fold(name)
+    return catalog.all().find((e) => e.space && !e.binary && fold(e.title) === f)
+  }
+  /** Lượt đang chạy của mỗi phiên: trang người dùng đưa vào tin (được đọc), trang được nhắc tên. */
+  const turnHints = new Map<string, { granted: Entry[]; named: Entry[] }>()
+  const granted = (sessionId: string | undefined, e: Entry) =>
+    !!sessionId && !!turnHints.get(sessionId)?.granted.some((g) => g.path === e.path)
+  ctx.on('agent/pre-step', ({ agent, messages }, next) => {
+    const said = messages
+      .filter((m) => m.source.kind === 'user')
+      .map((m) =>
+        (m.content as readonly { type: string; text?: string }[])
+          .map((b) => (b.type === 'text' ? (b.text ?? '') : ''))
+          .join('\n'),
+      )
+      .join('\n')
+    const sid = agent.session.id
+    if (said.trim() && !asks.ofSession(sid)) {
+      const got = referenced(said, resolveRef) as Entry[]
+      const named = (mentioned(said, readable(readerOf(sid))) as Entry[]).filter(
+        (p) => !got.some((g) => g.path === p.path),
+      )
+      if (got.length || named.length) turnHints.set(sid, { granted: got, named })
+      else turnHints.delete(sid)
+    }
+    return next()
+  })
+  ctx.on('session/event', (session, event) => {
+    if (event.type === 'turn/end') turnHints.delete(session.id)
+  })
+
+  // Tầng 3: đếm lượt tra theo bot và ngày (giữ 60 ngày).
+  const lookupsT = domain.table('lookups') as unknown as Table<Lookups>
+  let lookupChain: Promise<unknown> = Promise.resolve()
+  const countLookup = (sessionId: string | undefined, kind: 'search' | 'read') => {
+    const bot = readerOf(sessionId).id
+    lookupChain = lookupChain
+      .then(async () => {
+        const day = dayKey(new Date())
+        const cur = lookupsT.get(day) ?? { day, bots: {} }
+        const b = cur.bots[bot] ?? { search: 0, read: 0 }
+        await lookupsT.put(day, { ...cur, bots: { ...cur.bots, [bot]: { ...b, [kind]: b[kind] + 1 } } })
+      })
+      .catch(() => undefined)
+  }
+  ctx.effect(() => {
+    const cutoff = dayKey(new Date(Date.now() - 60 * 86_400_000))
+    for (const [k] of [...lookupsT.entries()]) if (k < cutoff) void lookupsT.delete(k)
+    return () => undefined
+  }, 'aris-brain: dọn lượt tra cũ')
+
   ctx.effect(
     () =>
       ctx.systemPrompt.context({
         name: 'aris:brain',
         order: 60,
-        text: (c) => (readerOf(c?.agent?.session.id).role === 'commander' ? GUIDE(root) : ''),
+        text: (c) => {
+          const sid = c?.agent?.session.id
+          // Phiên nạp và phiên hỏi bộ não của Thủ thư có lời nhờ riêng.
+          if (asks.ofSession(sid)) return ''
+          const r = readerOf(sid)
+          const base =
+            r.role === 'librarian'
+              ? ''
+              : [r.role === 'commander' ? GUIDE(root) : MEMBER_GUIDE, brainMap(readable(r))]
+                  .filter(Boolean)
+                  .join('\n')
+          const h = sid ? turnHints.get(sid) : undefined
+          return [base, h ? nudge(h) : ''].filter(Boolean).join('\n')
+        },
         interpolate: false,
       }),
     'aris-brain: lời dặn',
@@ -544,8 +629,10 @@ export async function apply(ctx: Context): Promise<void> {
         const sid = (exec.agent as AgentLike | undefined)?.session.id
         const reader = readerOf(sid)
         const space = SPACES.find((s) => s === args.khong_gian)
-        const ok = allows(reader)
+        const can = allows(reader)
+        const ok = (e: Entry) => can(e) || granted(sid, e)
         const inScope = askFilter(sid)
+        countLookup(sid, 'search')
         const limit = Math.min(20, Math.max(1, Math.round(Number(args.so_ket_qua) || 8)))
         const query = String(args.query ?? '')
         const hits = catalog.search(query, (e) => ok(e) && inScope(e) && (!space || e.space === space), limit)
@@ -591,11 +678,13 @@ export async function apply(ctx: Context): Promise<void> {
         const draft = ingest.draftRead(sid, ten.includes('/') ? ten : '') ?? ingest.draftByName(sid, ten)
         if (draft) return `(bản nháp của lần nạp này)\n\n${draft}`
         const inScope = askFilter(sid)
+        countLookup(sid, 'read')
         return readPage(
           reader,
           ten,
           SPACES.find((s) => s === args.khong_gian),
           inScope,
+          sid,
           (e) => asks.step(sid, { kind: 'doc', text: e.title }, { read: e.path }),
         )
       },
@@ -638,6 +727,7 @@ export async function apply(ctx: Context): Promise<void> {
     ten: string,
     space?: Space,
     inScope: (e: Entry) => boolean = () => true,
+    sessionId?: string,
     onRead?: (e: Entry) => void,
   ): Promise<string> {
     const raw = ten
@@ -645,7 +735,8 @@ export async function apply(ctx: Context): Promise<void> {
       .replace(/^\[\[|\]\]$/g, '')
       .trim()
     const allowed = allows(reader)
-    const ok = (e: Entry) => allowed(e) && inScope(e)
+    // Trang người dùng đưa vào tin của lượt này: bot được đọc dù ngoài quyền.
+    const ok = (e: Entry) => (allowed(e) || granted(sessionId, e)) && inScope(e)
     const name = raw.replace(/\.md$/i, '')
     // Trùng tên ở hai không gian: lấy trang đọc được (ưu tiên không gian được chỉ).
     const entry = raw.includes('/')
@@ -928,6 +1019,53 @@ export async function apply(ctx: Context): Promise<void> {
                 text,
                 backlinks: catalog.backlinks(e.name).map(view),
                 readers: readersOf(e),
+              })
+            }
+            // Khung chat (bản vẽ 5.7): tên các trang để dựng nhãn [[...]], trang cho ô "Từ Second Brain".
+            if (q.get('names') !== null)
+              return json({
+                pages: catalog
+                  .all()
+                  .filter((e) => e.space && !e.binary && !e.name.startsWith('_') && e.layer !== 'hop-thu-vao')
+                  .map((e) => ({
+                    name: e.name,
+                    title: e.title,
+                    path: e.path,
+                    space: e.space,
+                    layer: e.layer,
+                  })),
+              })
+            // Lượt tra bộ não theo bot trong 7 ngày (tầng 3; đợt 4 dùng khi soát).
+            if (q.get('lookups') !== null)
+              return json({
+                days: [...lookupsT.entries()]
+                  .map(([, v]) => v)
+                  .filter((v) => v.day >= dayKey(new Date(Date.now() - 7 * 86_400_000)))
+                  .sort((a, b) => b.day.localeCompare(a.day)),
+              })
+            const pick = q.get('pick')
+            if (pick !== null) {
+              const sid = q.get('session') ?? undefined
+              const reader = readerOf(sid)
+              const can = allows(reader)
+              const pickSpace = SPACES.find((x) => x === q.get('space'))
+              const userPage = (e: Entry) =>
+                !!e.space &&
+                !e.binary &&
+                !e.name.startsWith('_') &&
+                ['wiki', 'nguon', 'nhat-ky'].includes(e.layer) &&
+                (!pickSpace || e.space === pickSpace)
+              const list = pick.trim()
+                ? catalog.search(pick, userPage, 12).map((h) => h.entry)
+                : catalog
+                    .all()
+                    .filter((e) => userPage(e) && e.layer === 'wiki')
+                    .sort((a, b) => b.mtime - a.mtime)
+                    .slice(0, 8)
+              const bot = sid ? bots()?.botOf(sid) : undefined
+              return json({
+                bot: bot ? { id: bot.id, name: bot.name } : null,
+                pages: list.map((e) => ({ ...view(e), readable: can(e) })),
               })
             }
             if (q.get('asks') !== null)
