@@ -67,6 +67,12 @@ Không có Driver, mọi bước chuyển trên bảng chờ Aris tốn một l�
 - Kết quả lượt của bot (câu trả lời cuối) được ghi vào nhật ký giao việc để thẻ sau đọc được.
 - Để sau (Hermes có): tự chia thẻ thô bằng model, thẻ chế độ mục tiêu, bình luận trên thẻ, tệp đính kèm, lịch sử từng lần chạy trong chi tiết thẻ (cần vẽ).
 
+## Trang bộ não của dự án (bản vẽ 4.3b)
+
+Dự án có trường `page` (trang Dự án trong bộ não). Tạo dự án ⇒ `@aris/brain` tạo trang từ mẫu Dự án và ghi
+`page`; dự án cũ nối ở nút đầu Kanban. Ngữ cảnh `aris:project` thêm "Trang bộ não của dự án: [[tên]] — tóm
+tắt" khi bot của phiên được đọc trang. Chi tiết ở [đặc tả bộ não](aris-brain.md).
+
 ## Giao diện
 
 - 1.5 Tạo dự án (bản vẽ `TaoPhong.dc.html`): tên, thành viên từ đội thật (Aris chủ trì cố định), thư mục gợi ý `~/aris/projects/<tên>` hoặc chọn bằng bộ chọn thư mục, mục tiêu, luật (Nâng cao). Tạo xong mở phiên chính.

@@ -4,7 +4,7 @@
  * `/api/aris/brain?soat`.
  */
 import { Button, IconButton, Mascot } from '@aris/ui-kit/react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import type { PageProps } from '../page.js'
 
 type Space = 'ca-nhan' | 'cong-ty'
@@ -19,6 +19,8 @@ type Kind =
   | 'trung-ten'
   | 'lau-chua-cap-nhat'
   | 'bot-bo-qua'
+  | 'ky-uc-nen-vao'
+  | 'so-lieu-chua-ngay'
 
 interface Finding {
   id: string
@@ -35,6 +37,8 @@ interface Finding {
   quotes?: { page: string; text: string }[]
   note?: string
   stats?: { nudged: number; followed: number }
+  memory?: { id: string; bot: string; text: string; at: string }
+  forget?: boolean
   status: 'mo' | 'bo-qua' | 'xu-ly'
   batch?: string
   batchStatus?: string | null
@@ -62,7 +66,8 @@ interface Data {
 
 const GROUPS: { key: string; kinds: Kind[] }[] = [
   { key: 'deep', kinds: ['mau-thuan', 'nhan-dinh-cu'] },
-  { key: 'quick', kinds: ['lien-ket-gay', 'chua-co-trang', 'phong-da-xoa'] },
+  { key: 'edge', kinds: ['ky-uc-nen-vao'] },
+  { key: 'quick', kinds: ['lien-ket-gay', 'so-lieu-chua-ngay', 'chua-co-trang', 'phong-da-xoa'] },
   { key: 'tidy', kinds: ['mo-coi', 'thieu-tom-tat', 'trung-ten', 'lau-chua-cap-nhat'] },
   { key: 'bot', kinds: ['bot-bo-qua'] },
 ]
@@ -77,7 +82,33 @@ const ICON: Record<Kind, [string, string]> = {
   'trung-ten': ['⧉', 'muted'],
   'lau-chua-cap-nhat': ['⏱', 'muted'],
   'bot-bo-qua': ['◉', 'mem'],
+  'ky-uc-nen-vao': ['⇢', 'mem'],
+  'so-lieu-chua-ngay': ['📅', 'ok'],
 }
+
+/** Số liệu (con số kèm đơn vị) và ngày "tính đến" trong một câu trích, để tô (bản vẽ 5.5b). */
+const FIGURE =
+  /([$€]\s?\d[\d.,]*|\d[\d.,]*\s*(?:%|đ|đồng|vnđ|vnd|nghìn|ngàn|k|triệu|tr|tỷ|tỉ|usd|tờ|bản|cái|chiếc|đơn|khách|người|video|sản phẩm)(?![\p{L}\p{N}]))|(tính đến\s+(?:\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4}))/giu
+function Marked({ text }: { text: string }) {
+  const out: ReactNode[] = []
+  let last = 0
+  for (const m of text.matchAll(FIGURE)) {
+    out.push(text.slice(last, m.index))
+    out.push(
+      m[2] ? (
+        <span key={m.index} className="ap-sbdt">
+          {m[2]}
+        </span>
+      ) : (
+        <mark key={m.index}>{m[1]}</mark>
+      ),
+    )
+    last = m.index + m[0].length
+  }
+  out.push(text.slice(last))
+  return <>{out}</>
+}
+const ddmm = (day: string) => day.slice(8, 10) + '/' + day.slice(5, 7)
 
 const endpoint = (q = '') => new URL(`api/aris/brain${q}`, document.baseURI)
 const when = (iso: string) => {
@@ -306,7 +337,9 @@ export function Soat({ t, nav }: PageProps) {
                       {f.quotes.map((q, i) => (
                         <div className="ap-sbquote" key={i}>
                           <b className="a-muted">{q.page}</b>
-                          <div>“{q.text}”</div>
+                          <div>
+                            “<Marked text={q.text} />”
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -449,6 +482,175 @@ export function Soat({ t, nav }: PageProps) {
                   ))}
                 </div>
               )}
+
+            {pick === 'ky-uc-nen-vao' && (
+              <div className="ap-sbkho" aria-label={t('sb.kho')}>
+                <div className="mem">
+                  <b>{t('sb.kho.mem')}</b>
+                  <span>{t('sb.kho.memAbout')}</span>
+                </div>
+                <div className="me">
+                  <b>{t('sb.kho.owner')}</b>
+                  <span>{t('sb.kho.ownerAbout')}</span>
+                </div>
+                <div className="lib">
+                  <b>{t('sb.kho.brain')}</b>
+                  <span>{t('sb.kho.brainAbout')}</span>
+                </div>
+              </div>
+            )}
+            {pick === 'ky-uc-nen-vao' &&
+              shown.map((f) => {
+                const bot = data?.bots.find((b) => b.id === f.bot)?.name ?? f.bot ?? ''
+                const has = f.detail === 'co-roi'
+                return (
+                  <div className="a-card ap-sbcard" key={f.id}>
+                    <div className="ap-sbrow0">
+                      <span className="ap-sbmem">{t('sb.memOf', { bot })}</span>
+                      <span className="a-muted">→</span>
+                      <Pg info={f.pageInfo[0] ?? { path: '', title: f.title, exists: false }} nav={nav} />
+                      {f.memory && (
+                        <span className="ap-sblab">
+                          {t('sb.savedOn', { day: ddmm(f.memory.at.slice(0, 10)) })}
+                        </span>
+                      )}
+                    </div>
+                    <div className="ap-sbquote mem">
+                      <b className="a-muted">{t('sb.memory')}</b>
+                      <div>{f.memory?.text}</div>
+                    </div>
+                    {has && (
+                      <div className="ap-sbnote">
+                        <b>{t('sb.librarian')}:</b> {t('sb.memHas')} “{f.quotes?.[0]?.text}”
+                      </div>
+                    )}
+                    {f.status === 'xu-ly' ? (
+                      <div className="ap-sbdone">
+                        <span>
+                          ✓ {t('sb.asked', { status: f.batchStatus ? t(`sb.batch.${f.batchStatus}`) : '…' })}{' '}
+                          <a className="ap-link" onClick={() => nav.go('brain', { view: 'inbox' })}>
+                            {t('sb.toInbox')}
+                          </a>
+                        </span>
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={!!f.forget}
+                            disabled={busy}
+                            onChange={(e) =>
+                              void post({ op: 'soat-forget-after', id: f.id, on: e.target.checked })
+                            }
+                          />
+                          {t('sb.forgetAfter', { bot })}
+                        </label>
+                      </div>
+                    ) : f.status === 'bo-qua' ? (
+                      <div className="ap-sbacts">{actions(f)}</div>
+                    ) : (
+                      <div className="ap-sbacts">
+                        {has && (
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            disabled={busy}
+                            onClick={() => void post({ op: 'soat-forget', id: f.id })}
+                          >
+                            {t('sb.forgetNow')}
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant={has ? 'secondary' : 'primary'}
+                          disabled={busy}
+                          onClick={() => void post({ op: 'soat-fix', id: f.id, forget: true })}
+                        >
+                          {t('sb.toBrain')}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={busy}
+                          onClick={() => void post({ op: 'soat-dismiss', id: f.id })}
+                        >
+                          {t('sb.dismiss')}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            {pick === 'ky-uc-nen-vao' && (
+              <>
+                <div className="ap-sbrule">
+                  <b>{t('sb.ruleRoot')}</b> {t('sb.ruleRootText')}
+                </div>
+                <div className="a-muted ap-sbhint">{t('sb.toBrainHint')}</div>
+              </>
+            )}
+
+            {pick === 'so-lieu-chua-ngay' && shown.length > 0 && (
+              <div className="a-card ap-sblist">
+                {shown.map((f) => (
+                  <div className="ap-sbline ap-sbfig" key={f.id}>
+                    <Pg info={f.pageInfo[0] ?? { path: '', title: f.title, exists: false }} nav={nav} />
+                    <div className="ap-sbfiglines">
+                      {(f.quotes ?? []).map((q, i) => (
+                        <div className="ap-sbquote" key={i}>
+                          <Marked text={q.text} />
+                        </div>
+                      ))}
+                      {(f.count ?? 0) > (f.quotes?.length ?? 0) && (
+                        <span className="a-muted">
+                          {t('sb.moreLines', { n: (f.count ?? 0) - (f.quotes?.length ?? 0) })}
+                        </span>
+                      )}
+                    </div>
+                    <span className="ap-sbacts">
+                      {f.status === 'mo' && f.detail && (
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          disabled={busy}
+                          title={t('sb.dateTip', { day: f.detail })}
+                          onClick={() => void post({ op: 'soat-date', id: f.id })}
+                        >
+                          {t(f.target === 'nguon' ? 'sb.dateSource' : 'sb.dateEdit', { day: ddmm(f.detail) })}
+                        </Button>
+                      )}
+                      {f.status === 'mo' ? (
+                        <>
+                          <Button
+                            size="sm"
+                            disabled={busy}
+                            onClick={() => void post({ op: 'soat-fix', id: f.id })}
+                          >
+                            {t('sb.checkSource')}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            disabled={busy}
+                            onClick={() => void post({ op: 'soat-dismiss', id: f.id })}
+                          >
+                            {t('sb.dismiss')}
+                          </Button>
+                        </>
+                      ) : (
+                        actions(f)
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {pick === 'so-lieu-chua-ngay' && (
+              <>
+                <div className="a-muted ap-sbhint">{t('sb.dateHint')}</div>
+                <div className="ap-sbrule">
+                  <b>{t('sb.ruleFigures')}</b> {t('sb.ruleFiguresText')}
+                </div>
+              </>
+            )}
 
             {pick === 'bot-bo-qua' && shown.length > 0 && (
               <div className="a-card ap-sblist">

@@ -29,6 +29,8 @@ export interface ProjectInput {
   mainSession?: string
   split?: 'auto' | 'manual'
   driver?: boolean
+  /** Trang Dự án trong bộ não; null để bỏ nối. */
+  page?: string | null
 }
 
 export class ProjectStore {
@@ -72,6 +74,8 @@ export class ProjectStore {
     if (split) rec.split = split
     const driver = typeof input.driver === 'boolean' ? input.driver : prev?.driver
     if (driver) rec.driver = true
+    const page = input.page === undefined ? prev?.page : input.page ? clean(input.page, 400) : undefined
+    if (page) rec.page = page
     await this.table.put(keyOf(workspace), rec)
     return rec
   }

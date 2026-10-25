@@ -53,6 +53,17 @@ export const inject = [
 /** Sau tính cách (290), ký ức lõi (300); trước hướng dẫn giao việc của Commander (310). */
 export const CONTEXT_ORDER = 305
 
+/** Phần của @aris/brain dự án dùng (bản vẽ 4.3b). */
+interface BrainPort {
+  /** Trang bộ não bot của phiên được đọc: tên, tiêu đề, tóm tắt. */
+  pageFor?(
+    sessionId: string,
+    path: string,
+  ): { name: string; title: string; summary?: string | undefined } | undefined
+  /** Tạo trang Dự án mới (hay nối trang có sẵn) và ghi vào dự án. */
+  linkProject?(o: { workspace: string; path?: string }): Promise<unknown>
+}
+
 /** Dịch vụ cho plugin khác: dự án của một phiên (Kanban, chat chung ở bước sau). */
 export interface ArisProjects {
   store: ProjectStore
@@ -172,6 +183,7 @@ export async function apply(ctx: Context): Promise<void> {
           const found = id ? service.ofSession(id) : undefined
           const b = bots()
           if (!found || !b || !id) return ''
+          const brain = ctx.get('arisBrain') as BrainPort | undefined
           return renderProject(
             found.project,
             b.store.botOf(id),
@@ -179,6 +191,7 @@ export async function apply(ctx: Context): Promise<void> {
             found.path,
             cards.list(found.project.workspace),
             found.project.mainSession === id,
+            found.project.page ? brain?.pageFor?.(id, found.project.page) : undefined,
           )
         },
         interpolate: false,
@@ -218,6 +231,8 @@ export async function apply(ctx: Context): Promise<void> {
               cards,
               board,
               handleOf: (id) => bots()?.store.get(id)?.handle,
+              linkPage: async (workspace) =>
+                (ctx.get('arisBrain') as BrainPort | undefined)?.linkProject?.({ workspace }),
               async prompt(sessionId, text) {
                 await ctx.sessionController.prompt(
                   {

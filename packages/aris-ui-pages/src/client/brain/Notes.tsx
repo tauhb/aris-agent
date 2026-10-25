@@ -3,7 +3,7 @@
  * Wiki · Nguồn, đọc trang (Markdown, `[[liên kết]]`, chú thích nguồn, liên kết ngược), sửa trang có gợi ý
  * `[[`, trạng thái trống, "Ai đọc được". Dữ liệu từ `/api/aris/brain`.
  */
-import { Button, Pill } from '@aris/ui-kit/react'
+import { Button, Pill, useBoard } from '@aris/ui-kit/react'
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import type { PageProps, Translate } from '../page.js'
 import { Later } from '../team/BotTools.js'
@@ -44,6 +44,68 @@ interface PageData {
   text: string
   backlinks: Entry[]
   readers: string[]
+  /** Dự án Kanban nối với trang Dự án này (bản vẽ 4.3b). */
+  project?: { workspace: string; name: string } | null
+}
+
+const KB_COLS = [
+  ['ready', 'var(--a-muted)'],
+  ['doing', '#00B5A5'],
+  ['waiting', 'var(--a-warn)'],
+  ['done', 'var(--a-ok)'],
+] as const
+
+/** Thẻ Kanban ở đầu trang Dự án: đọc thẳng từ bảng, không ghi vào tệp (bản vẽ 4.3b). */
+function ProjectBoard({
+  t,
+  nav,
+  project,
+}: {
+  t: PageProps['t']
+  nav: PageProps['nav']
+  project: { workspace: string; name: string }
+}) {
+  const board = useBoard(project.workspace)
+  const cards = (board?.cards ?? []).filter((c) => c.column !== 'unassigned' || c.kind === 'draft')
+  const n = (col: string) => cards.filter((c) => c.column === col).length
+  const total = cards.length || 1
+  const open = cards.filter((c) => c.column === 'doing' || c.column === 'waiting').slice(0, 4)
+  return (
+    <div className="a-card ap-npboard" aria-label={t('nb.kanban', { name: project.name })}>
+      <div className="ap-npbh">
+        <b>{t('nb.kanban', { name: project.name })}</b>
+        <span className="a-muted">{t('nb.kanbanN', { n: cards.length })}</span>
+        <Button size="sm" onClick={() => nav.go('kanban', { project: project.workspace })}>
+          {t('nb.openBoard')}
+        </Button>
+      </div>
+      {board && (
+        <>
+          <div className="ap-npbar" aria-hidden="true">
+            {KB_COLS.map(([col, tone]) => (
+              <span key={col} style={{ width: `${(n(col) / total) * 100}%`, background: tone }} />
+            ))}
+          </div>
+          <div className="ap-npcounts">
+            {KB_COLS.map(([col, tone]) => (
+              <span key={col} style={{ color: tone }}>
+                {t(`nb.kb.${col}`, { n: n(col) })}
+              </span>
+            ))}
+          </div>
+          {open.map((c) => (
+            <div className="ap-npli" key={c.id}>
+              <span
+                className="dot"
+                style={{ background: c.column === 'doing' ? '#00B5A5' : 'var(--a-warn)' }}
+              />
+              <span>{c.title}</span>
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  )
 }
 
 const endpoint = (q = '') => new URL(`api/aris/brain${q}`, document.baseURI)
@@ -458,6 +520,8 @@ export function Notes({ t, nav, params }: PageProps) {
   // --- Giữa --------------------------------------------------------------------------------
   const p = page?.page
   const doc = useMemo(() => (page ? parseMarkdown(page.text) : null), [page])
+  /** Thẻ Kanban đứng ngay sau tiêu đề trang (khối h1 đầu tiên; không có thì trước mọi khối). */
+  const headEnd = doc ? doc.blocks.findIndex((b) => b.kind === 'h' && b.level === 1) : -1
   const editable = !!p && !p.binary && p.layer !== 'nguon'
   const crumb = p
     ? [
@@ -616,7 +680,15 @@ export function Notes({ t, nav, params }: PageProps) {
           ) : (
             <>
               {!doc.blocks.some((b) => b.kind === 'h' && b.level === 1) && <h1>{p.title}</h1>}
-              <Markdown doc={doc} links={links} />
+              {page.project ? (
+                <>
+                  <Markdown doc={{ ...doc, blocks: doc.blocks.slice(0, headEnd + 1) }} links={links} />
+                  <ProjectBoard t={t} nav={nav} project={page.project} />
+                  <Markdown doc={{ ...doc, blocks: doc.blocks.slice(headEnd + 1) }} links={links} />
+                </>
+              ) : (
+                <Markdown doc={doc} links={links} />
+              )}
               {doc.notes.length > 0 && (
                 <div className="ap-bnotes">
                   <b>{t('nb.pageSources', { n: doc.notes.length })}</b>

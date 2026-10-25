@@ -42,6 +42,8 @@ export function renderProject(
   drafts: readonly CardRecord[] = [],
   /** Phiên chính của dự án: phòng nhóm, Aris điều phối cuộc bàn chung. */
   main = false,
+  /** Trang Dự án trong bộ não, khi bot được đọc (bản vẽ 4.3b). */
+  page?: { name: string; title: string; summary?: string | undefined },
 ): string {
   const members = p.members.flatMap((id) => {
     const b = bots.find((x) => x.id === id)
@@ -50,6 +52,10 @@ export function renderProject(
   const lines = ['<aris-project>', `Phiên này thuộc dự án «${p.name}».`]
   if (path) lines.push(`Thư mục làm việc của dự án: ${path}`)
   if (p.goal) lines.push(`Mục tiêu: ${p.goal}`)
+  if (page)
+    lines.push(
+      `Trang bộ não của dự án: [[${page.name}]] (${page.title})${page.summary ? ` — ${page.summary}` : ''}. Đọc bằng brain_read khi cần quyết định, số liệu, lịch sử của dự án.`,
+    )
   lines.push(
     members.length
       ? `Thành viên: Aris chủ trì; ${members.map((b) => `@${b.handle} (${b.name}, ${b.role || 'thành viên'})`).join('; ')}.`

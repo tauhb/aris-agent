@@ -21,10 +21,12 @@ import {
   machineFindings,
   mergeFindings,
   relink,
+  stampDates,
   weekKey,
   type Finding,
   type FindingKind,
   type NewFinding,
+  type SoatMemory,
   type SoatPage,
   type SoatRun,
 } from './soat.js'
@@ -82,6 +84,12 @@ export interface SoatDeps {
   }
   notify: (markdown: string) => Promise<unknown>
   today: () => string
+  /** Ký ức đang hiệu lực của mọi bot (@aris/memory); không có dịch vụ thì undefined. */
+  memories: () => SoatMemory[] | undefined
+  /** Xoá một ký ức (@aris/memory). */
+  forgetMemory: (id: string) => Promise<unknown>
+  /** Bản nạp đổi trạng thái: ký ức gốc xoá khi bản nạp "đưa vào bộ não" đã ghép. */
+  onBatch: (fn: (batch: { id: string; status: string }) => void) => () => void
 }
 
 export class SoatError extends Error {}
@@ -145,12 +153,16 @@ export function startSoat(d: SoatDeps) {
       cost: 0,
     }
     try {
+      const memories = d.memories()
       const found = machineFindings({
         pages: await userPages(),
         depts: d.depts().map((x) => x.id),
         lookups: d.lookups(),
         botName: d.botName,
+        memories,
       })
+      // Dịch vụ ký ức chưa sẵn (vừa khởi động): giữ phát hiện ký ức cũ thay vì gỡ.
+      if (!memories) found.push(...all().filter((f) => f.kind === 'ky-uc-nen-vao'))
       run.found = await store(found, 'may')
     } catch (e) {
       run.status = 'loi'
@@ -350,6 +362,8 @@ export function startSoat(d: SoatDeps) {
       n('nhan-dinh-cu') && `${n('nhan-dinh-cu')} nhận định cũ`,
       n('lien-ket-gay') + n('chua-co-trang') && `${n('lien-ket-gay') + n('chua-co-trang')} liên kết gãy`,
       n('phong-da-xoa') && `${n('phong-da-xoa')} phòng đã xoá còn trang`,
+      n('ky-uc-nen-vao') && `${n('ky-uc-nen-vao')} ký ức nên vào bộ não`,
+      n('so-lieu-chua-ngay') && `${n('so-lieu-chua-ngay')} trang có số liệu chưa ghi ngày`,
     ].filter(Boolean)
     if (open.length)
       await d
@@ -420,13 +434,74 @@ export function startSoat(d: SoatDeps) {
     await findings.put(id, { ...f, status: 'mo' })
   }
 
-  /** Nhờ Thủ thư sửa: bản nạp loại "soát" vào Hộp thư vào. */
-  async function fix(id: string) {
+  /**
+   * Nhờ Thủ thư sửa: bản nạp loại "soát" vào Hộp thư vào. Ký ức nên vào bộ não: `forget` thì ký ức gốc xoá
+   * khi bản nạp đã ghép.
+   */
+  async function fix(id: string, forget = false) {
     const f = get(id)
     const space = f.space ?? (f.pages[0]?.startsWith('cong-ty/') ? 'cong-ty' : 'ca-nhan')
     const b = await d.ingest.addSoat({ space, title: f.title, task: fixTask(f, nameOf) })
-    await findings.put(id, { ...f, status: 'xu-ly', batch: b.id })
+    await findings.put(id, {
+      ...f,
+      status: 'xu-ly',
+      batch: b.id,
+      ...(f.kind === 'ky-uc-nen-vao' ? { forget } : {}),
+    })
     return b
+  }
+
+  /** Bỏ hay giữ việc xoá ký ức gốc khi bản nạp ghép (ô đánh dấu dưới phát hiện đang xử lý). */
+  async function setForget(id: string, on: boolean) {
+    const f = get(id)
+    if (f.kind !== 'ky-uc-nen-vao') throw new SoatError('Phát hiện này không phải ký ức.')
+    await findings.put(id, { ...f, forget: on })
+  }
+
+  /** Xoá ký ức thừa (trang đã có ý này). */
+  async function forgetNow(id: string) {
+    const f = get(id)
+    if (f.kind !== 'ky-uc-nen-vao' || !f.memory) throw new SoatError('Phát hiện này không phải ký ức.')
+    await d.forgetMemory(f.memory.id)
+    await findings.delete(id)
+  }
+
+  ctx.effect(
+    () =>
+      d.onBatch((b) => {
+        if (b.status !== 'da-nap') return
+        for (const f of all())
+          if (f.batch === b.id && f.kind === 'ky-uc-nen-vao' && f.memory) {
+            const memory = f.memory
+            void (async () => {
+              // Giữ ký ức thì đánh dấu đã xem, để máy soát không báo lại.
+              if (!f.forget) return void (await findings.put(f.id, { ...f, status: 'bo-qua' }))
+              await d
+                .forgetMemory(memory.id)
+                .catch((e: unknown) => d.logger.warn('xoá ký ức %s: %s', memory.id, String(e)))
+              await findings.delete(f.id)
+            })()
+          }
+      }),
+    'aris-brain: ký ức vào bộ não',
+  )
+
+  /** Ghi ngày cho số liệu chưa ghi ngày của một trang (sửa ngay, có commit). */
+  async function stamp(id: string, date?: string) {
+    const f = get(id)
+    if (f.kind !== 'so-lieu-chua-ngay') throw new SoatError('Phát hiện này không phải số liệu.')
+    const day = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : f.detail
+    if (!day) throw new SoatError('Thiếu ngày.')
+    const path = f.pages[0]!
+    const body = await readFile(join(d.root, path), 'utf8').catch(() => undefined)
+    if (body === undefined) throw new SoatError('Không còn trang này.')
+    const r = stampDates(body, day)
+    if (!r.n) throw new SoatError('Trang không còn số liệu chưa ghi ngày.')
+    await writeFile(join(d.root, path), r.text)
+    await d.indexFile(path)
+    await commit(`${d.who()} ghi ngày số liệu ở [[${nameOf(path)}]]`, [path])
+    await findings.delete(id)
+    return r.n
   }
 
   /** Sửa liên kết gãy thành một trang có sẵn (sửa ngay, có commit). */
@@ -506,6 +581,9 @@ export function startSoat(d: SoatDeps) {
     dismiss,
     restore,
     fix,
+    setForget,
+    forgetNow,
+    stamp,
     relinkTo,
     move,
     running,

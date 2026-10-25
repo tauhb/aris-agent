@@ -23,6 +23,8 @@ export interface ProjectData {
   split?: 'auto' | 'manual'
   /** Driver: tự giao thẻ đủ phụ thuộc cho bot dự kiến. */
   driver?: boolean
+  /** Trang Dự án trong bộ não (đường dẫn trong kho, bản vẽ 4.3b). */
+  page?: string
   createdAt: string
 }
 
@@ -125,6 +127,8 @@ export interface BoardData {
   cards: BoardCard[]
   split: 'auto' | 'manual'
   driver?: boolean
+  /** Trang Dự án trong bộ não, nếu đã nối. */
+  page?: string | null
 }
 
 const boards = new Map<string, BoardData>()

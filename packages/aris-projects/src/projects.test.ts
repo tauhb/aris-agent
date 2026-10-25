@@ -36,6 +36,12 @@ describe('kho dự án', () => {
     expect(q).toMatchObject({ name: 'Ra mắt khoá học', goal: 'Bán 100 suất', members: ['b-1', 'b-2'] })
     expect(q.rules.maxRounds).toBe(5)
     expect((await s.upsert('ws-1', { goal: null })).goal).toBeUndefined()
+    // Trang Dự án trong bộ não (4.3b): giữ khi sửa trường khác, null để bỏ nối.
+    expect((await s.upsert('ws-1', { page: 'ca-nhan/wiki/du-an/q4.md' })).page).toBe(
+      'ca-nhan/wiki/du-an/q4.md',
+    )
+    expect((await s.upsert('ws-1', { driver: true })).page).toBe('ca-nhan/wiki/du-an/q4.md')
+    expect((await s.upsert('ws-1', { page: null })).page).toBeUndefined()
     await expect(s.upsert('ws-2', {})).rejects.toThrow('cần có tên')
     expect((await s.upsert('ws-2', {}, 'tên thư mục')).name).toBe('tên thư mục')
   })
@@ -80,6 +86,16 @@ describe('ngữ cảnh dự án', () => {
     expect(main).toContain('dừng @tên')
     expect(main).toContain('đừng chép lại lời bot')
   })
+  it('trang bộ não của dự án vào ngữ cảnh khi bot được đọc', () => {
+    const t = renderProject(p, BOTS[1]!, BOTS, undefined, [], false, {
+      name: 'kenh-youtube-q4',
+      title: 'Kênh YouTube Q4',
+      summary: '8 video mỗi tháng',
+    })
+    expect(t).toContain('Trang bộ não của dự án: [[kenh-youtube-q4]] (Kênh YouTube Q4) — 8 video mỗi tháng.')
+    expect(renderProject(p, BOTS[1]!, BOTS)).not.toContain('Trang bộ não')
+  })
+
   it('bot thành viên chỉ nhận mục tiêu và đồng đội', () => {
     const t = renderProject(p, BOTS[1]!, BOTS)
     expect(t).toContain('Bạn là thành viên dự án')

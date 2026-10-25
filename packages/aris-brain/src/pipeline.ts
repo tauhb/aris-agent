@@ -855,7 +855,8 @@ export function startIngest(d: IngestDeps) {
   }
 
   // --- Nhật ký: ghi nhanh, tự nạp cuối ngày --------------------------------------------------------
-  async function note(text: string, space: Space = 'ca-nhan') {
+  /** Ghi nhanh vào nhật ký hôm nay; `by` là tên bot ghi (không có: người dùng). */
+  async function note(text: string, space: Space = 'ca-nhan', by?: string) {
     const at = now()
     const rel = `${space}/nhat-ky/${dayKey(at)}.md`
     const abs = join(root, rel)
@@ -865,10 +866,10 @@ export function startIngest(d: IngestDeps) {
     await mkdir(dirname(abs), { recursive: true })
     await writeFile(
       abs,
-      `${cur.replace(/\s*$/, '\n')}\n## Ghi nhanh · ${two(at.getHours())}:${two(at.getMinutes())}\n\n${text.trim()}\n`,
+      `${cur.replace(/\s*$/, '\n')}\n## Ghi nhanh · ${two(at.getHours())}:${two(at.getMinutes())}${by ? ` · ${by}` : ''}\n\n${text.trim()}\n`,
     )
     await d.indexFile(rel)
-    await commit(`${d.who()} ghi nhanh`, [rel])
+    await commit(`${by ?? d.who()} ghi nhanh`, [rel])
     return rel
   }
 

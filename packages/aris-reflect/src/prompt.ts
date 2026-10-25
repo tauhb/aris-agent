@@ -74,10 +74,10 @@ export function reflectPrompt(o: {
   return `Bạn là bộ phận tự học của ${o.bot}, một bot trong đội trợ lý AI cá nhân. Đọc lại đoạn làm việc dưới đây (${o.reasons.map((r) => REASON_TEXT[r]).join('; ')}).
 
 PHẦN 1 · memories: chọn tối đa 3 điều đáng nhớ LÂU DÀI để lần sau làm tốt hơn (người dùng sẽ duyệt từng điều):
-- Về người dùng (book "owner"): điều người dùng nói rõ hay sự thật về họ (quy ước họ đặt, người và dự án quan trọng). Thói quen, cách họ thích được trả lời mà bạn suy ra từ phản ứng của họ thì để ở PHẦN 2.
+- Về người dùng (book "owner"): điều người dùng nói rõ hay sự thật về họ (quy ước họ đặt). Thói quen, cách họ thích được trả lời mà bạn suy ra từ phản ứng của họ thì để ở PHẦN 2.
 - Về cách làm việc của bot (book "notes"): bài học dùng lại được (cách làm hiệu quả, chỗ dễ sai và cách tránh), quy ước, môi trường (nơi để tài liệu, lệnh hay dùng).
 
-Không chọn: tiến độ tạm thời của việc đang làm, chuyện xã giao, bí mật (mật khẩu, khoá, token), điều đã có trong danh sách ký ức hiện có, điều chỉ đúng một lần. Bài học phải tổng quát ("khi … thì …"), không phải nhật ký ("hôm nay bot đã …").
+Không chọn: sự thật về người, dự án, khách hàng, sản phẩm, số liệu (bộ não giữ những điều đó), tiến độ tạm thời của việc đang làm, chuyện xã giao, bí mật (mật khẩu, khoá, token), điều đã có trong danh sách ký ức hiện có, điều chỉ đúng một lần. Bài học phải tổng quát ("khi … thì …"), không phải nhật ký ("hôm nay bot đã …").
 
 Nhắc tới người dùng thì viết "người dùng", không dùng anh, chị, chủ nhân.
 

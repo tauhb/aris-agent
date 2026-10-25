@@ -3,7 +3,7 @@
  * mẫu trang; nhận biết một tệp thuộc không gian, lớp, phòng ban nào. Thuần, trừ `ensureVault`.
  */
 import { existsSync } from 'node:fs'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 
 export const SPACES = ['ca-nhan', 'cong-ty'] as const
@@ -77,6 +77,20 @@ export function dayKey(d: Date): string {
 
 // --- Luật và mẫu --------------------------------------------------------------------------
 
+/** Luật số liệu hay đổi (bản vẽ 5.5b); kho cũ được thêm mục này một lần. */
+const FIGURES_SECTION = `## Số liệu hay đổi
+
+- Giá, báo giá, chỉ tiêu, ngân sách, số lượng tối thiểu ghi kèm ngày ngay sau con số:
+  \`Đặt tối thiểu 2.000 tờ (tính đến 2026-10-21).\` Ngày là ngày của nguồn.
+- Hai số khác nhau về cùng một điều: số có ngày mới hơn là số đang đúng; số cũ chuyển xuống mục
+  \`## Lịch sử\` của trang.
+`
+
+/** Mục luật thêm sau khi kho đã tạo: thiếu dấu hiệu thì ghi thêm vào cuối \`AGENTS.md\`. */
+export const RULE_UPGRADES: readonly { marker: string; text: string }[] = [
+  { marker: '## Số liệu hay đổi', text: FIGURES_SECTION },
+]
+
 const AGENTS_ROOT = `# Luật của bộ não
 
 Kho này là bộ não của người dùng, theo mẫu "LLM Wiki": người dùng đưa nguồn vào, Thủ thư đọc rồi viết
@@ -108,6 +122,7 @@ thành wiki có liên kết. Mở được bằng Obsidian; mọi thay đổi c�
 loai: nguoi | du-an | chu-de | tom-tat | tong-hop | khach-hang | san-pham | quy-trinh | so-lieu
 trang-thai: dang-chay | luu-tru
 phong-ban: <mã phòng ban>   (chỉ trong Công ty)
+kanban: <mã dự án>          (trang dự án nối bảng Kanban, aris tự ghi)
 the: [nhãn, nhãn]
 nguon: <số nguồn đã nạp>
 cap-nhat: YYYY-MM-DD
@@ -116,6 +131,7 @@ cap-nhat: YYYY-MM-DD
 
 - Trạng thái là nhãn: dự án xong thì đổi \`trang-thai: luu-tru\`, không dời tệp.
 
+${FIGURES_SECTION}
 ## Mục lục và nhật ký thay đổi
 
 - \`index.md\` của mỗi không gian: mỗi trang một dòng \`- [[ten-tep]] — tóm tắt một câu\`, chia theo loại.
@@ -148,7 +164,7 @@ const TEMPLATES: Record<string, string> = {
   'nguoi.md':
     '---\nloai: nguoi\nthe: []\nnguon: 0\ncap-nhat:\n---\n\n# Tên người\n\nLà ai, liên quan thế nào.\n\n## Ghi nhận\n\n## Nguồn\n',
   'du-an.md':
-    '---\nloai: du-an\ntrang-thai: dang-chay\nthe: []\nnguon: 0\ncap-nhat:\n---\n\n# Tên dự án\n\n## Mục tiêu\n\n## Quyết định\n\n## Việc đang mở\n\n## Nguồn\n',
+    '---\nloai: du-an\ntrang-thai: dang-chay\nthe: []\nnguon: 0\ncap-nhat:\n---\n\n# Tên dự án\n\n## Mục tiêu\n\n## Quyết định\n\n## Việc đang mở\n\n## Lịch sử\n\n## Nguồn\n',
   'chu-de.md':
     '---\nloai: chu-de\nthe: []\nnguon: 0\ncap-nhat:\n---\n\n# Chủ đề\n\n## Điều đã biết\n\n## Câu hỏi còn mở\n\n## Nguồn\n',
   'tom-tat.md':
@@ -158,7 +174,7 @@ const TEMPLATES: Record<string, string> = {
   'khach-hang.md':
     '---\nloai: khach-hang\ntrang-thai: dang-chay\nthe: []\nnguon: 0\ncap-nhat:\n---\n\n# Tên khách hàng\n\n## Liên hệ\n\n## Lịch sử làm việc\n\n## Nguồn\n',
   'san-pham.md':
-    '---\nloai: san-pham\nthe: []\nnguon: 0\ncap-nhat:\n---\n\n# Tên sản phẩm\n\n## Mô tả\n\n## Giá và gói\n\n## Nguồn\n',
+    '---\nloai: san-pham\nthe: []\nnguon: 0\ncap-nhat:\n---\n\n# Tên sản phẩm\n\n## Mô tả\n\n## Giá và gói\n\n- Gói cơ bản: 0 đ (tính đến YYYY-MM-DD)\n\n## Lịch sử\n\n## Nguồn\n',
   'quy-trinh.md':
     '---\nloai: quy-trinh\nphong-ban:\nnguon: 0\ncap-nhat:\n---\n\n# Tên quy trình\n\n## Các bước\n\n1.\n\n## Nguồn\n',
   'nhat-ky.md': '# Nhật ký\n\n',
@@ -228,6 +244,16 @@ export async function ensureVault(
       () => made.push(rel),
       () => undefined,
     )
+  }
+  // Luật thêm sau: ghi vào cuối AGENTS.md của kho cũ một lần.
+  const rules = join(root, 'AGENTS.md')
+  const cur = await readFile(rules, 'utf8').catch(() => undefined)
+  if (cur !== undefined) {
+    const add = RULE_UPGRADES.filter((u) => !cur.includes(u.marker))
+    if (add.length) {
+      await writeFile(rules, `${cur.replace(/\s*$/, '\n')}\n${add.map((u) => u.text).join('\n')}`)
+      made.push('AGENTS.md')
+    }
   }
   return made
 }

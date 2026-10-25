@@ -10,6 +10,7 @@ import {
   Dialog,
   Mascot,
   PageShell,
+  PROJECTS_CHANGED,
   Segmented,
   Select,
   TextInput,
@@ -22,7 +23,7 @@ import {
   type ProjectEntry,
   type TeamView,
 } from '@aris/ui-kit/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Initial, botOptions } from '../options.js'
 import type { PageProps } from '../page.js'
 
@@ -307,6 +308,152 @@ function NewCard({
   )
 }
 
+interface ProjectPageOpt {
+  path: string
+  title: string
+  space: 'ca-nhan' | 'cong-ty'
+  linkedTo: string | null
+}
+
+const brainApi = (q = '') => new URL(`api/aris/brain${q}`, document.baseURI)
+
+/**
+ * Nút trang bộ não ở đầu bảng (bản vẽ 4.3b): đã nối thì mở trang; chưa nối thì hộp chọn tạo trang mới từ
+ * mẫu Dự án hay nối trang có sẵn.
+ */
+function BrainLink({
+  t,
+  nav,
+  workspace,
+  page,
+}: {
+  t: T
+  nav: PageProps['nav']
+  workspace: string
+  page: string | undefined
+}) {
+  const [pages, setPages] = useState<ProjectPageOpt[] | null>(null)
+  const [open, setOpen] = useState(false)
+  const [mode, setMode] = useState<'new' | 'old'>('new')
+  const [pick, setPick] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  useEffect(() => {
+    let live = true
+    void fetch(brainApi('?projectPages=1'))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: { pages: ProjectPageOpt[] } | null) => live && setPages(j?.pages ?? []))
+      .catch(() => live && setPages([]))
+    return () => {
+      live = false
+    }
+  }, [page, open])
+  if (page) {
+    const title = pages?.find((p) => p.path === page)?.title ?? page.split('/').pop()!.replace(/\.md$/, '')
+    return (
+      <Button
+        size="sm"
+        className="ap-kbrain"
+        title={page}
+        onClick={() => nav.go('brain', { view: 'notes', space: page.split('/')[0] ?? 'ca-nhan', path: page })}
+      >
+        📄 {t('kb.brainPage', { title })}
+      </Button>
+    )
+  }
+  const free = (pages ?? []).filter((p) => !p.linkedTo)
+  const link = async () => {
+    setBusy(true)
+    setError(null)
+    const r = await fetch(brainApi(), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        op: 'project-link',
+        workspace,
+        ...(mode === 'old' ? { path: pick || free[0]?.path } : {}),
+      }),
+    }).catch(() => null)
+    const j = (await r?.json().catch(() => null)) as { error?: string } | null
+    setBusy(false)
+    if (!r?.ok) return setError(j?.error ?? 'HTTP error')
+    setOpen(false)
+    window.dispatchEvent(new CustomEvent(PROJECTS_CHANGED))
+  }
+  return (
+    <>
+      <Button size="sm" className="ap-kbrain empty" onClick={() => setOpen(true)}>
+        📄 {t('kb.brainLink')}
+      </Button>
+      <Dialog
+        open={open}
+        title={t('kb.brainTitle')}
+        description={t('kb.brainHint')}
+        onClose={() => setOpen(false)}
+        closeLabel={t('kb.cancel')}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              {t('kb.cancel')}
+            </Button>
+            <Button
+              variant="primary"
+              disabled={busy || (mode === 'old' && !free.length)}
+              onClick={() => void link()}
+            >
+              {t('kb.brainDo')}
+            </Button>
+          </>
+        }
+      >
+        <div className="ap-kbopts" role="radiogroup" aria-label={t('kb.brainTitle')}>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={mode === 'new'}
+            className={mode === 'new' ? 'on' : ''}
+            onClick={() => setMode('new')}
+          >
+            <span aria-hidden="true">＋</span>
+            <span>
+              <b>{t('kb.brainNew')}</b>
+              <small>{t('kb.brainNewHint')}</small>
+            </span>
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={mode === 'old'}
+            className={mode === 'old' ? 'on' : ''}
+            onClick={() => setMode('old')}
+          >
+            <span aria-hidden="true">⇢</span>
+            <span>
+              <b>{t('kb.brainOld')}</b>
+              <small>{free.length ? t('kb.brainOldHint', { n: free.length }) : t('kb.brainNone')}</small>
+            </span>
+          </button>
+        </div>
+        {mode === 'old' && free.length > 0 && (
+          <Select
+            label={t('kb.brainOld')}
+            value={pick || free[0]!.path}
+            options={free.map((p) => ({
+              id: p.path,
+              name: p.title,
+              note: t(p.space === 'cong-ty' ? 'kb.spaceCo' : 'kb.spaceMe'),
+            }))}
+            onChange={setPick}
+            searchPlaceholder={t('sel.search')}
+            emptyLabel={t('sel.empty')}
+          />
+        )}
+        {error && <span style={{ color: 'var(--a-danger)', fontSize: 12.5 }}>{error}</span>}
+      </Dialog>
+    </>
+  )
+}
+
 export function Kanban({ t, nav, params }: PageProps) {
   const team = useTeam()
   const projects = useProjects()
@@ -356,6 +503,12 @@ export function Kanban({ t, nav, params }: PageProps) {
       })}
       actions={
         <>
+          <BrainLink
+            t={t}
+            nav={nav}
+            workspace={current.workspace}
+            page={board?.page ?? current.project?.page ?? undefined}
+          />
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
             <span className="a-muted">{t('kb.split')}</span>
             <Segmented

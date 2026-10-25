@@ -24,7 +24,7 @@ export function transcriptText(lines: readonly TranscriptLine[], maxChars = 2400
 }
 
 export function reflectPrompt(transcript: string, existing: readonly string[]): string {
-  return `Bạn là bộ phận trí nhớ của trợ lý cá nhân. Đoạn hội thoại dưới đây sắp được tóm tắt để tiết kiệm ngữ cảnh. Hãy rút ra những điều đáng nhớ LÂU DÀI mà nếu mất sẽ đáng tiếc: sở thích, thói quen, quy ước làm việc của người dùng; người, dự án, sự kiện quan trọng; bài học về cách làm. Bỏ qua tiến độ tạm thời của việc đang làm, chuyện xã giao, và bí mật (mật khẩu, khoá, token).
+  return `Bạn là bộ phận trí nhớ của trợ lý cá nhân. Đoạn hội thoại dưới đây sắp được tóm tắt để tiết kiệm ngữ cảnh. Hãy rút ra những điều đáng nhớ LÂU DÀI mà nếu mất sẽ đáng tiếc: sở thích, thói quen, quy ước làm việc của người dùng; bài học về cách làm. Bỏ qua tiến độ tạm thời của việc đang làm, chuyện xã giao, bí mật (mật khẩu, khoá, token), và sự thật về người, dự án, khách hàng, số liệu (bộ não giữ những điều đó).
 
 Không lặp lại điều đã có trong danh sách ký ức hiện có.
 

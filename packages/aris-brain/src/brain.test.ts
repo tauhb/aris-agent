@@ -11,14 +11,19 @@ import { brainMap, GUEST_MARK, mentioned, nudge, referenced, type PageRef } from
 import {
   fixTask,
   machineFindings,
+  memoryFindings,
+  figureFindings,
   mergeFindings,
   relink,
+  stampDates,
+  undatedLines,
   weekKey,
   type Finding,
   type SoatPage,
 } from './soat.js'
 import { buildGraph, linkMention, unlinkedMention, type GraphPage } from './graph.js'
 import { fold, keyTerms, linksOf, parsePage, snippetOf } from './page.js'
+import { kanbanOf, projectPageText, withKanban } from './project-page.js'
 import { ensureVault, placeOf, slugOf } from './vault.js'
 
 const dirs: string[] = []
@@ -66,8 +71,12 @@ describe('khuôn kho', () => {
       { id: 'van-hanh', name: 'Vận hành' },
       { id: 'nghien-cuu', name: 'Nghiên cứu' },
     ])
-    expect(again).toEqual(['cong-ty/wiki/phong-ban/nghien-cuu/_phong-ban.md'])
-    expect(await readFile(join(root, 'AGENTS.md'), 'utf8')).toBe('luật của tôi')
+    // Luật sửa tay giữ nguyên; mục luật thêm sau (số liệu hay đổi) ghi vào cuối đúng một lần.
+    expect(again).toEqual(['cong-ty/wiki/phong-ban/nghien-cuu/_phong-ban.md', 'AGENTS.md'])
+    const rules = await readFile(join(root, 'AGENTS.md'), 'utf8')
+    expect(rules.startsWith('luật của tôi\n\n## Số liệu hay đổi')).toBe(true)
+    expect(await ensureVault(root, [{ id: 'van-hanh', name: 'Vận hành' }])).toEqual([])
+    expect(await readFile(join(root, 'AGENTS.md'), 'utf8')).toBe(rules)
   })
 })
 
@@ -392,6 +401,99 @@ describe('soát bộ não', () => {
     expect(
       fixTask(of('chua-co-trang')[0]! as Finding, (p) => p.split('/').pop()!.replace('.md', '')),
     ).toContain('Trang [[nha-in]] được nhắc 3 lần')
+  })
+})
+
+describe('ranh giới ba kho và số liệu có ngày (5.5b)', () => {
+  const day = 86_400_000
+  const pg = (path: string, body: string, mtime = 100 * day): SoatPage => {
+    const place = placeOf(path)
+    const name = path.split('/').pop()!.replace(/\.md$/, '')
+    return {
+      path,
+      name,
+      title: /^# (.+)$/m.exec(body)?.[1] ?? name,
+      space: place.space,
+      layer: place.layer,
+      dept: place.dept,
+      group: place.group,
+      mtime,
+      body,
+    }
+  }
+  const ha = pg(
+    'ca-nhan/wiki/nguoi/chi-ha.md',
+    '---\nloai: nguoi\n---\n# Chị Hà\n\n## Ghi nhận\n\n- Chị Hà dựng video cho kênh, giao trong 3 ngày.\n',
+  )
+  const kenh = pg(
+    'ca-nhan/wiki/du-an/kenh-youtube-q4.md',
+    '---\nloai: du-an\n---\n# Kênh YouTube Q4\n\nTháng 11: 8 video, ngân sách 15 triệu.[^1]\nĐăng thứ Ba (tính đến 2026-10-14): 2.000 người đăng ký.\n\n## Lịch sử\n\n- Giá cũ 1,5 triệu mỗi video.\n\n## Nguồn\n\n[^1]: [[goi-21-10]] giá 300 nghìn\n',
+  )
+  const nguon = pg('ca-nhan/nguon/2026-10/goi-21-10.md', '# Gọi 21/10', 120 * day)
+  const tap = pg('ca-nhan/wiki/chu-de/lich-tap.md', '# Lịch tập\n\nChạy 5 người, 10%.')
+  it('ký ức nhắc tên trang Người, Dự án; trang đã có câu gần giống thì gợi ý xoá ký ức', () => {
+    const f = memoryFindings(
+      [ha, kenh, tap],
+      [
+        {
+          id: 'm1',
+          bot: 'b-minh',
+          text: 'Chị Hà dựng video cho kênh, giao trong 3 ngày',
+          at: '2026-10-18T01:00:00Z',
+        },
+        {
+          id: 'm2',
+          bot: 'aris',
+          text: 'Dự án Kênh YouTube Q4 đăng thứ Ba và thứ Sáu',
+          at: '2026-10-12T01:00:00Z',
+        },
+        { id: 'm3', bot: 'aris', text: 'Người dùng thích trả lời ngắn', at: '2026-10-12T01:00:00Z' },
+        { id: 'm4', bot: 'aris', text: 'Lịch tập chạy bộ buổi sáng', at: '2026-10-12T01:00:00Z' },
+      ],
+    )
+    expect(f.map((x) => [x.memory?.id, x.title, x.detail ?? ''])).toEqual([
+      ['m1', 'Chị Hà', 'co-roi'],
+      ['m2', 'Kênh YouTube Q4', ''],
+    ])
+    expect(
+      fixTask({ ...f[1]!, status: 'mo', firstSeen: 'a', lastSeen: 'a' }, () => 'kenh-youtube-q4'),
+    ).toContain('Ký ức của aris')
+  })
+  it('số liệu chưa ghi ngày: bỏ dòng đã có ngày, mục Lịch sử, Nguồn; ngày gợi ý theo nguồn mới nhất', () => {
+    expect(undatedLines(kenh.body)).toEqual(['Tháng 11: 8 video, ngân sách 15 triệu.[^1]'])
+    const f = figureFindings([ha, kenh, tap], [ha, kenh, nguon, tap])
+    expect(f.map((x) => [x.title, x.count, x.target])).toEqual([['Kênh YouTube Q4', 1, 'nguon']])
+    expect(f[0]!.detail).toBe(new Date(120 * day).toISOString().slice(0, 10))
+  })
+  it('ghi ngày trước dấu chấm và chú thích nguồn', () => {
+    const r = stampDates(kenh.body, '2026-10-21')
+    expect(r.n).toBe(1)
+    expect(r.text).toContain('ngân sách 15 triệu (tính đến 2026-10-21).[^1]')
+    expect(undatedLines(r.text)).toEqual([])
+    expect(stampDates('---\nloai: du-an\n---\n- Giá: 3.990.000 đ', '2026-10-01').text).toContain(
+      '- Giá: 3.990.000 đ (tính đến 2026-10-01)',
+    )
+    expect(stampDates('| 11 | 8 | 15 triệu |', '2026-10-21').text).toBe(
+      '| 11 | 8 | 15 triệu (tính đến 2026-10-21) |',
+    )
+  })
+})
+
+describe('dự án nối trang bộ não (4.3b)', () => {
+  it('trang mới có nhãn kanban; ghi nhãn vào trang có sẵn không làm hỏng nhãn khác', () => {
+    const text = projectPageText({
+      name: 'Kênh YouTube Q4',
+      goal: '8 video mỗi tháng',
+      workspace: 'ws-1',
+      today: '2026-10-25',
+    })
+    expect(kanbanOf(text)).toBe('ws-1')
+    expect(parsePage(text, '').title).toBe('Kênh YouTube Q4')
+    const old = '---\nloai: du-an\ntrang-thai: dang-chay\nkanban: cu\n---\n# A\n'
+    const next = withKanban(old, 'ws-2')
+    expect(kanbanOf(next)).toBe('ws-2')
+    expect(next).toBe('---\nloai: du-an\ntrang-thai: dang-chay\nkanban: ws-2\n---\n# A\n')
+    expect(kanbanOf(withKanban('# B\n', 'ws-3'))).toBe('ws-3')
   })
 })
 

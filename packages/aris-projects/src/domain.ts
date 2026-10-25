@@ -32,6 +32,8 @@ export const projectRecord = z.object({
   split: z.enum(['auto', 'manual']).optional(),
   /** Driver (Kanban, giai đoạn 4 đợt 4): tự giao thẻ đủ phụ thuộc cho bot dự kiến; mặc định tắt. */
   driver: z.boolean().optional(),
+  /** Trang Dự án trong bộ não (đường dẫn trong kho, bản vẽ 4.3b). */
+  page: z.string().optional(),
   createdAt: z.string(),
 })
 export type ProjectRecord = z.infer<typeof projectRecord>

@@ -59,7 +59,8 @@ export const SECTION_ORDER = 60
 export const CONTEXT_ORDER = 300
 
 export const GUIDE = `Bạn có trí nhớ bền giữa các phiên qua tool \`memory\`. Ký ức lõi hiện có nằm trong khối <aris-memory> (nếu có) và luôn được nạp sẵn.
-- Lưu khi người dùng nói "nhớ là…", sửa lại cách bạn làm, cho biết sở thích, thói quen, quy ước, người, dự án; hoặc khi bạn rút ra bài học sẽ dùng lại.
+- Lưu khi người dùng nói "nhớ là…", sửa lại cách bạn làm, cho biết sở thích, thói quen, quy ước; hoặc khi bạn rút ra bài học sẽ dùng lại.
+- Không lưu vào ký ức sự thật về người, dự án, khách hàng, sản phẩm, số liệu (ví dụ "chị Hà là đối tác dựng video", "giá in 1.200 đ/tờ"): đó là việc của bộ não. Ghi chúng bằng brain_note (vào nhật ký hôm nay, Thủ thư nạp vào đúng trang).
 - book=owner cho điều về người dùng; book=notes cho môi trường, quy ước, bài học của bạn.
 - tier=core cho điều cần nhớ mọi lúc, viết thành một câu ngắn; tier=archive cho chi tiết, sự kiện, dự án; tìm lại bằng action=search khi cần.
 - origin=user khi người dùng nói ra; origin=inferred khi bạn tự suy ra; origin=external khi lấy từ web, tệp, email (chỉ được vào archive). Chỉ origin=user có hiệu lực ngay; inferred và external thành đề xuất chờ người dùng duyệt.
@@ -105,6 +106,8 @@ export async function apply(ctx: Context): Promise<void> {
       store
         .activeAll()
         .map((m) => ({ id: m.id, bot: m.bot, book: m.book, tier: m.tier, text: m.text, at: m.updatedAt })),
+    /** Soát bộ não (@aris/brain): xoá ký ức đã đưa vào bộ não, hay thừa vì trang đã có. */
+    forget: (id: string) => store.forget(id),
     /** Hỏi bộ não (@aris/brain): tìm trong ký ức đang hiệu lực của mọi bot, chỉ đọc. */
     searchAll: (query: string, limit?: number) =>
       store.searchAll(query, limit).map((m) => ({

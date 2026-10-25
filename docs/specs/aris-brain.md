@@ -423,6 +423,38 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
 - Đã chạy trên máy: 40 đoạn trang và 33 ký ức chờ nhúng, trạng thái "chỉ từ khoá" khi chưa có khoá, tìm thử ra kết
   quả từ khoá. Chưa chạy nhúng thật (chờ khoá Gemini).
 
+## Ranh giới ba kho, số liệu có ngày, dự án nối bộ não (bản vẽ 5.5b, 4.3b, làm 25/10)
+
+- **Ba kho**: ký ức bot giữ cách làm việc, quy ước, bài học; hồ sơ chủ nhân giữ thói quen, sở thích, mục tiêu;
+  bộ não giữ người, dự án, khách hàng, sản phẩm, số liệu. Lời dặn công cụ `memory`, lời nhờ rút ký ức trước khi
+  tóm tắt phiên (`@aris/memory`) và vòng học nền (`@aris/reflect`) không còn bảo lưu "người, dự án".
+- **Chặn từ gốc**: công cụ `brain_note` (mọi bot): ghi nhanh sự thật vào nhật ký hôm nay của không gian bot
+  được đọc (`## Ghi nhanh · HH:MM · <bot>`, commit "<bot> ghi nhanh"); Thủ thư tự nạp lúc 23:00. Lời dặn bộ
+  não của Aris và bot thường nhắc dùng `brain_note` thay cho ký ức.
+- **Soát, loại `ky-uc-nen-vao`** (máy, nhóm "Ranh giới"): ký ức đang hiệu lực nhắc tiêu đề một trang Người,
+  Dự án, Khách hàng (tối thiểu 4 chữ cái, trang tên dài nhất); trang có câu trùng từ từ 0,5 thì ghi
+  `detail: co-roi` kèm câu đó. Nút: Đưa vào bộ não (bản nạp "soát", ô "Xoá ký ức sau khi nạp" bật sẵn; bản nạp
+  ghép thì xoá ký ức gốc, bỏ ô thì đánh dấu đã xem), Xoá ký ức (trang đã có), Bỏ qua. Dịch vụ ký ức chưa sẵn
+  lúc soát thì giữ phát hiện cũ.
+- **Soát, loại `so-lieu-chua-ngay`** (máy, nhóm "Sửa nhanh"): trang Dự án, Sản phẩm, Khách hàng, Số liệu có dòng
+  chứa con số kèm tiền, %, số lượng mà thiếu "tính đến <ngày>" (bỏ tiêu đề, chú thích nguồn, mục Nguồn và Lịch
+  sử). Ngày gợi ý: nguồn mới nhất trang trỏ tới, không có thì ngày sửa trang. "Ghi ngày" thêm
+  `(tính đến YYYY-MM-DD)` trước dấu chấm cuối câu và chú thích (dòng bảng thì trong ô có số), một commit
+  "<người dùng> ghi ngày số liệu ở [[trang]]"; "Nhờ Thủ thư xem nguồn" là bản nạp "soát".
+- **Quy ước số liệu**: `AGENTS.md` có mục "Số liệu hay đổi" (kho cũ được thêm vào cuối một lần, commit "Bổ sung
+  khuôn"), mẫu Sản phẩm và Dự án có mục Lịch sử; lời nhờ nạp, sửa theo soát và soát sâu cùng luật: số có ngày
+  mới hơn là số đang đúng, số cũ xuống mục Lịch sử.
+- **Dự án nối bộ não**: dự án (`@aris/projects`) có trường `page`; trang Dự án có nhãn `kanban: <mã dự án>`.
+  Dự án mới tự có trang từ mẫu Dự án ở `ca-nhan/wiki/du-an/`; dự án cũ nối ở đầu Kanban (tạo mới hay chọn
+  trang Dự án chưa nối). Op `project-link`, `GET ?projectPages`; `GET ?page=` trả `project` để màn Ghi chú
+  hiện thẻ Kanban (đếm theo cột, việc đang làm và chờ duyệt, Mở bảng) ngay sau tiêu đề. Bot trong dự án được
+  nạp tên và tóm tắt trang khi được đọc trang đó. Trang đổi tên thì tìm lại theo nhãn `kanban:`.
+- Đã chạy trên máy: máy soát thấy ký ức của Aris về Chị Hà và 5 dòng số liệu ở Kênh YouTube Q4; Đưa vào bộ não
+  tạo bản nạp; Ghi ngày ghi 5 dòng (2 dòng bảng); Kanban "Thử dự án aris" tạo trang mới, trang hiện thẻ Kanban;
+  nhắn Aris "nhớ giúp: chị Hà 2 triệu mỗi video" ⇒ Aris ghi `brain_note`, không lưu ký ức. Chưa thử: bản nạp
+  ghép rồi xoá ký ức gốc, ngữ cảnh dự án có tóm tắt trang (có kiểm thử đơn vị).
+- Còn: ghi nhanh sau 23:00 nằm trong nhật ký đã tự nạp của ngày đó nên không được nạp (có từ trước, cả `/note`).
+
 ## Đã chốt (25/10)
 
 - Duyệt khi nạp: mặc định {you} duyệt ở Hộp thư vào; `/note` và nhật ký của {you} tự nạp.

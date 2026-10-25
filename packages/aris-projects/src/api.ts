@@ -28,6 +28,8 @@ export interface ApiDeps {
   handleOf: (botId: string) => string | undefined
   /** Gửi một tin của người dùng vào phiên (đánh thức Aris ở phiên chính). */
   prompt: (sessionId: string, text: string) => Promise<void>
+  /** Dự án mới: tạo trang Dự án trong bộ não và nối (bản vẽ 4.3b); lỗi không chặn việc tạo dự án. */
+  linkPage?: (workspace: string) => Promise<unknown>
 }
 
 const json = (body: unknown, status = 200) =>
@@ -59,7 +61,13 @@ async function ensureMain(d: ApiDeps, w: WorkspaceLike): Promise<string> {
 
 async function boardOf(d: ApiDeps, workspace: string) {
   const p = d.store.get(workspace)
-  return { workspace, cards: await d.board(workspace), split: p?.split ?? 'auto', driver: p?.driver ?? false }
+  return {
+    workspace,
+    cards: await d.board(workspace),
+    split: p?.split ?? 'auto',
+    driver: p?.driver ?? false,
+    page: p?.page ?? null,
+  }
 }
 
 /** Lời nhắn Aris khi người dùng bấm "Giao ngay" trên một thẻ chờ. */
@@ -103,6 +111,7 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
         const taken = d.store.get(w.id)
         if (taken) throw new ProjectError(`Thư mục này đã là dự án «${taken.name}».`)
         await d.store.upsert(w.id, { ...p, name }, name)
+        await d.linkPage?.(w.id).catch(() => undefined)
         const sessionId = await ensureMain(d, w)
         return json({ ...snapshot(d), workspace: w.id, sessionId })
       }
