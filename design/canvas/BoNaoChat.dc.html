@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Bộ não trong chat</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em;margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--faint:#9A9EA6;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--lib:#C2620A;--libSoft:#FBEEDD;--me:#1D6FE0;--meSoft:#E6F0FE;--src:#5C616C;--srcSoft:#ECEBE6;--co:#0E8A7E;--shadow:0 12px 32px rgba(20,23,28,.12),0 2px 6px rgba(20,23,28,.06)}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--faint:#6B7280;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--lib:#F5A35C;--libSoft:#33251A;--me:#5AA5FF;--meSoft:#16263F;--src:#9CA3B0;--srcSoft:#23262D;--co:#3CC9B8;--shadow:0 12px 32px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.3)}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ic{width:15px;height:15px;flex:none}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.ib.on{background:var(--hover);color:var(--ink)}
+.tool{height:32px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink)}
+.d{font-size:12.5px;color:var(--muted)}
+.lab{position:absolute;top:12px;left:14px;font-size:12px;font-weight:600;color:var(--muted)}
+.sec{border:1px solid var(--line);border-radius:16px;background:var(--bg);padding:40px 16px 14px;display:flex;flex-direction:column;gap:10px;position:relative;min-height:0}
+.who{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.who b{color:var(--ink)}
+.me{align-self:flex-end;max-width:82%;background:var(--panel2);padding:9px 13px;border-radius:16px 16px 4px 16px}
+.pg{display:inline-flex;align-items:center;gap:4px;border:0;border-radius:6px;padding:0 6px 0 4px;font:inherit;font-size:13px;font-weight:600;line-height:21px;vertical-align:baseline;background:var(--libSoft);color:var(--lib)}
+.pg svg{width:13px;height:13px}
+.pg.src{background:var(--srcSoft);color:var(--src)}
+.pg.jr{background:var(--meSoft);color:var(--me)}
+.pg.none{background:transparent;color:var(--muted);border:1px dashed var(--line);font-weight:500}
+.peek{position:absolute;width:330px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:12px 14px;font-size:13px;display:flex;flex-direction:column;gap:6px;z-index:2}
+.lay{font-size:11px;font-weight:600;border-radius:6px;padding:1px 7px;white-space:nowrap}
+.l-wiki{background:var(--libSoft);color:var(--lib)}.l-src{background:var(--srcSoft);color:var(--src)}.l-jr{background:var(--meSoft);color:var(--me)}
+.call{border:1px solid var(--line);border-radius:10px;background:var(--panel);font-size:13px}
+.call .h{display:flex;align-items:center;gap:8px;padding:7px 10px}
+.call .r{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 32px;border-top:1px solid var(--line);font-size:12.5px}
+.mi{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;border-radius:8px;padding:7px 8px;text-align:left;font-size:13.5px;color:var(--ink)}
+.mi:hover,.mi.sel{background:var(--hover)}
+.spaces{display:flex;gap:3px;padding:3px;border-radius:10px;background:var(--panel2)}
+.spaces button{border:0;border-radius:7px;padding:3px 10px;background:transparent;font-size:12px;color:var(--muted)}
+.spaces button.on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 0 0 1px var(--line)}
+.lock{font-size:11px;font-weight:600;border-radius:6px;padding:1px 7px;background:var(--warnSoft);color:var(--warn);white-space:nowrap}
+.note{display:flex;align-items:center;gap:6px;align-self:flex-end;font-size:12px;color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:3px 10px}
+.box{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:10px 10px 8px 14px}
+.box.f{border-color:var(--accent)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="width: 1440px; height: 900px; box-sizing: border-box; background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; padding: 24px 32px; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; align-items: center; gap: 12px">
+    <div style="display: flex; flex-direction: column">
+      <span style="font-weight: 700; font-size: 18px">Bộ não trong chat</span>
+      <span class="d">Bot trích trang bằng [[tên trang]] ⇒ thành nhãn bấm được. Chọn trang đưa vào tin nhắn. Bot tự được nhắc khi tin nhắc tới trang đã có.</span>
+    </div>
+    <button type="button" onClick="{{toggleTheme}}" style="margin-left: auto; height: 34px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); font-size: 13px">{{themeLabel}}</button>
+  </div>
+
+  <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 18px">
+
+    <!-- A · Nhãn trang trong câu trả lời -->
+    <section class="sec" aria-label="Trang trong câu trả lời">
+      <span class="lab">A · Trang trong câu trả lời — bấm nhãn để xem nhanh</span>
+      <div class="me">Chị Hà báo giá thumbnail bao nhiêu?</div>
+      <div class="who"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="42" fill="#1D6FE0"></circle><path d="M34 62L50 30L66 62" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"></path></svg><b>Aris</b></div>
+      <div style="position: relative; display: flex; flex-direction: column; gap: 8px; max-width: 600px">
+        <div>Từ tháng 11 chị Hà báo <b>2 triệu</b> một thumbnail, trước đó 1,5 triệu. Ghi theo
+          <button type="button" class="pg" onClick="{{togglePeek}}" aria-expanded="{{peekOpen}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"></path><path d="M14 3v5h5"></path></svg>Chị Hà</button>
+          và cuộc gọi sáng 25/10
+          <button type="button" class="pg src"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1"></rect><path d="M5 9v10h14V9"></path></svg>Ghi chú cuộc gọi 25/10</button>.
+        </div>
+        <div>Lịch quay tháng 11 đã tính theo giá mới
+          <button type="button" class="pg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"></path><path d="M14 3v5h5"></path></svg>Lịch quay tháng 11</button>;
+          còn bảng giá nhà in thì chưa có trang
+          <span class="pg none" title="Bộ não chưa có trang này">nha-in-minh-phat</span>.
+        </div>
+        <sc-if value="{{peek}}" hint-placeholder-val="{{ true }}">
+          <div class="peek" style="top: calc(100% + 8px); left: 120px" role="dialog" aria-label="Xem nhanh Chị Hà">
+            <div style="display: flex; align-items: center; gap: 6px"><b style="font-size: 14px">Chị Hà</b><span class="lay l-wiki">Wiki</span><span class="d">Cá nhân · người</span></div>
+            <div class="d" style="color: var(--ink)">Thiết kế thumbnail cho kênh YouTube từ 2025. Từ tháng 11 giá 2 triệu một thumbnail (trước 1,5 triệu)…</div>
+            <div class="d">Sửa 25/10 · 4 trang liên kết tới</div>
+            <a href="GhiChu.dc.html" style="font-size: 12.5px; color: var(--accent); font-weight: 600; text-decoration: none">Mở ở Second Brain ›</a>
+          </div>
+        </sc-if>
+      </div>
+      <div class="d" style="margin-top: auto">Màu theo lớp: <span class="lay l-wiki">Wiki</span> <span class="lay l-src">Nguồn</span> <span class="lay l-jr">Nhật ký</span> · trang chưa có: viền chấm, không bấm được.</div>
+    </section>
+
+    <!-- B · Bot tra bộ não -->
+    <section class="sec" aria-label="Bot tra bộ não">
+      <span class="lab">B · Bot tra bộ não — dòng công cụ gọn, mở ra xem đã tra gì</span>
+      <div class="me">@Minh viết kịch bản video thumbnail cho tuần sau</div>
+      <div class="who"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg><b>Minh</b>Nghiên cứu · Tăng trưởng</div>
+      <div class="call">
+        <div class="h"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--lib)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"></path></svg><b>Tra bộ não</b><span class="d">“thumbnail kịch bản”</span><span class="d" style="margin-left: auto">3 trang</span></div>
+        <div class="r"><span class="lay l-wiki">Wiki</span>Quy tắc đặt tên video<span class="d" style="margin-left: auto">Công ty · Tăng trưởng</span></div>
+        <div class="r"><span class="lay l-wiki">Wiki</span>Video ngắn<span class="d" style="margin-left: auto">Công ty · chung</span></div>
+        <div class="r"><span class="lay l-src">Nguồn</span>5 xu hướng video ngắn 2026<span class="d" style="margin-left: auto">Công ty · 10/2026</span></div>
+      </div>
+      <div class="call"><div class="h"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--lib)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"></path><path d="M14 3v5h5"></path></svg><b>Đọc trang</b><button type="button" class="pg">Quy tắc đặt tên video</button><span class="d" style="margin-left: auto">1,2 nghìn chữ</span></div></div>
+      <div style="max-width: 600px">Kịch bản 3 tập, tiêu đề theo <button type="button" class="pg">Quy tắc đặt tên video</button>: dưới 60 ký tự, số tập ở cuối…</div>
+      <div class="d" style="margin-top: auto">Minh thuộc Tăng trưởng nên chỉ thấy Công ty · chung và phòng mình; trang Cá nhân không hiện trong kết quả.</div>
+    </section>
+
+    <!-- C · Từ Second Brain -->
+    <section class="sec" aria-label="Chọn trang từ Second Brain" style="justify-content: flex-end">
+      <span class="lab">C · Nút “Từ Second Brain” ở ô nhập — chọn trang đưa vào tin</span>
+      <div role="dialog" aria-label="Từ Second Brain" style="background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 8px; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <label style="flex: 1; display: flex; align-items: center; gap: 6px; border: 1px solid var(--accent); border-radius: 9px; padding: 5px 9px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Tìm trang</span><input value="kenh" style="flex: 1; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 13.5px; outline: none"></label>
+          <div class="spaces" role="tablist" aria-label="Không gian"><button type="button" role="tab" class="on">Tất cả</button><button type="button" role="tab">Cá nhân</button><button type="button" role="tab">Công ty</button></div>
+        </div>
+        <button type="button" class="{{pick1}}" onClick="{{choose}}"><span class="lay l-wiki">Wiki</span><b style="font-weight: 600">Kênh YouTube Q4</b><span class="d">Cá nhân · dự án</span><span class="lock" style="margin-left: auto">Minh chưa được đọc</span></button>
+        <button type="button" class="mi"><span class="lay l-wiki">Wiki</span><b style="font-weight: 600">Kênh YouTube</b><span class="d">Công ty · Tăng trưởng</span></button>
+        <button type="button" class="mi"><span class="lay l-src">Nguồn</span><b style="font-weight: 600">Báo cáo 90 ngày của kênh</b><span class="d">Công ty · 10/2026</span></button>
+        <div class="d" style="border-top: 1px solid var(--line); padding: 6px 8px 2px">Trang bot chưa được đọc: chọn thì bot được đọc trang đó trong lượt này. ↑↓ chọn · ↵ chèn · Esc đóng</div>
+      </div>
+      <div class="box f">
+        <div style="font-size: 15px; padding: 2px 0 8px">@Minh lên ý tưởng thumbnail cho <sc-if value="{{picked}}" hint-placeholder-val="{{ false }}"><span class="pg" style="font-size: 14px">Kênh YouTube Q4</span></sc-if><span style="border-right: 2px solid var(--accent)"></span></div>
+        <div style="display: flex; align-items: center; gap: 4px">
+          <span class="ib"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg></span>
+          <span class="ib" style="font-family: 'JetBrains Mono', monospace; font-size: 15px">/</span>
+          <span class="ib" style="font-weight: 600; font-size: 15px">@</span>
+          <span class="ib on" title="Từ Second Brain"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"></path></svg></span>
+          <span class="d">gõ [[ cũng mở</span>
+          <span style="flex: 1"></span><span class="tool"><span style="width: 8px; height: 8px; border-radius: 50%; background: #4D6BFE"></span><b>deepseek-chat</b></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- D · Nhắc theo tên -->
+    <section class="sec" aria-label="Nhắc theo tên">
+      <span class="lab">D · Nhắc theo tên — tin nhắc tới trang đã có thì bot được nhắc, không tốn tiền</span>
+      <div class="me">@Minh lên ý tưởng thumbnail cho <span class="pg" style="font-size: 13px">Kênh YouTube Q4</span>, nhớ hỏi chị Hà về lịch giao</div>
+      <div class="note"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"></path></svg>Nhắc Minh: bộ não có <b style="color: var(--ink)">Chị Hà</b> · Tầu cho đọc <b style="color: var(--ink)">Kênh YouTube Q4</b> lượt này</div>
+      <div class="who"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg><b>Minh</b></div>
+      <div class="call"><div class="h"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--lib)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"></path><path d="M14 3v5h5"></path></svg><b>Đọc trang</b><button type="button" class="pg">Kênh YouTube Q4</button><span class="lock">Tầu cho đọc lượt này</span></div></div>
+      <div style="max-width: 600px">Ba ý tưởng thumbnail theo mục tiêu quý 4 của kênh… Chị Hà là trang Cá nhân nên Minh không đọc; Minh hỏi lại Tầu về lịch giao.</div>
+      <div class="d" style="margin-top: auto">Dòng nhắc chỉ chứa tên trang bot được đọc (tối đa 5), không chứa nội dung; bot tự quyết có đọc. Trang Tầu chọn ở C thì bot đọc được trong lượt đó dù ngoài quyền.</div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const peek = s.peek !== false;
+    return {
+      themeClass: 't-' + theme,
+      themeLabel: theme === 'dark' ? 'Giao diện sáng' : 'Giao diện tối',
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      peek,
+      peekOpen: peek ? 'true' : 'false',
+      togglePeek: () => this.setState({ peek: !peek }),
+      picked: !!s.picked,
+      pick1: 'mi sel',
+      choose: () => this.setState({ picked: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

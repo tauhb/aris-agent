@@ -284,6 +284,9 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
 - {you} được sửa thẳng trang wiki (Thủ thư coi là chỉ dẫn).
 - Tên tệp không dấu nối gạch ngang.
 - Tìm từ khoá trước; tìm theo nghĩa để đợt cuối.
+- Đợt 3 (chốt 25/10, bản vẽ 5.4 vẽ lại và 5.7 mới): Thủ thư trả lời ở 5.4, mỗi câu hỏi một phiên; tìm cả trong
+  ký ức các bot (phiên chat cũ để sau); trang {you} chọn bằng "Từ Second Brain" thì bot được đọc trong lượt đó dù
+  ngoài quyền; nhắc theo tên bật cho mọi bot, lọc theo quyền, tối đa 5 trang; tầng 3 đợt này chỉ đếm lượt tra.
 
 ## Còn bàn trước khi làm
 

@@ -170,10 +170,11 @@
       "expand": "fill",
       "h": 900,
       "page": "g5",
-      "title": "5.4 · Hỏi bộ não",
+      "title": "5.4 · Hỏi bộ não — Thủ thư trả lời kèm nguồn (bộ não, ký ức bot), chưa thấy, đang tra, câu mới",
       "w": 1440,
       "x": 1520,
-      "y": 1320
+      "y": 1320,
+      "is_interactive": true
     },
     "HopDuyet.dc.html": {
       "expand": "fill",
@@ -541,6 +542,16 @@
       "title": "7.5 · Telegram — gửi vào bộ não, thẻ bản nạp",
       "is_interactive": true,
       "page": "g7"
+    },
+    "BoNaoChat.dc.html": {
+      "x": 0,
+      "y": 3360,
+      "w": 1440,
+      "h": 900,
+      "title": "5.7 · Bộ não trong chat — nhãn [[trang]], bot tra, Từ Second Brain, nhắc theo tên",
+      "expand": "fill",
+      "is_interactive": true,
+      "page": "g5"
     }
   },
   "createdOnFiles": {
@@ -700,7 +711,8 @@
     "BanDo.dc.html",
     "Phong.dc.html",
     "SecondBrain.dc.html",
-    "CayBoNao.dc.html"
+    "CayBoNao.dc.html",
+    "BoNaoChat.dc.html"
   ],
   "pages": [
     {

@@ -12,55 +12,216 @@
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 <style>
 body{margin:0}
-h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
-.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE}
-.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em;margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--faint:#9A9EA6;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--lib:#C2620A;--libSoft:#FBEEDD;--me:#1D6FE0;--meSoft:#E6F0FE;--src:#5C616C;--srcSoft:#ECEBE6;--co:#0E8A7E;--coSoft:#DFF3F0;--mem:#7A4FD0;--memSoft:#EFE8FB;--mark:#FFF1B8}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--faint:#6B7280;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--lib:#F5A35C;--libSoft:#33251A;--me:#5AA5FF;--meSoft:#16263F;--src:#9CA3B0;--srcSoft:#23262D;--co:#3CC9B8;--coSoft:#13302C;--mem:#B79BF5;--memSoft:#2A2140;--mark:#4A3F12}
 button{font-family:inherit;cursor:pointer;color:inherit}
 button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ic{width:15px;height:15px;flex:none}
 .ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.ib:hover{background:var(--hover);color:var(--ink)}
+.b1{height:32px;padding:0 13px;border:0;border-radius:9px;background:var(--ink);color:var(--panel);font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.b2{height:32px;padding:0 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px;display:inline-flex;align-items:center;gap:6px}
 .m{color:var(--muted)}
-.chip{height:30px;border:1px solid var(--line);border-radius:999px;background:var(--panel);padding:0 12px;font-size:12.5px;color:var(--muted)}
-.cit{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:5px;background:var(--accentSoft);color:var(--accent);font-size:11px;font-weight:700;text-decoration:none;padding:0 4px;vertical-align:2px}
-.src{display:flex;gap:10px;padding:10px 12px;border-top:1px solid var(--line);font-size:13px}
-.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px}
+.mono{font-family:'JetBrains Mono',monospace}
+.spaces{display:flex;gap:3px;padding:3px;border-radius:11px;background:var(--panel2)}
+.spaces button{display:flex;align-items:center;gap:6px;border:0;border-radius:8px;padding:5px 12px;background:transparent;font-size:12.5px;font-weight:500;color:var(--muted)}
+.spaces button.on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+.tog{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:12.5px;background:var(--panel);color:var(--muted)}
+.tog.on{border-color:var(--mem);color:var(--mem);background:var(--memSoft);font-weight:600}
+.hq{display:flex;flex-direction:column;gap:1px;width:100%;text-align:left;border:0;background:transparent;border-radius:10px;padding:8px 10px;font-size:13px;color:var(--ink)}
+.hq:hover{background:var(--hover)}
+.hq.on{background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,.05),0 0 0 1px var(--line)}
+.hq .s{font-size:11.5px;color:var(--muted)}
+.grp{font-size:11.5px;font-weight:600;color:var(--faint);padding:12px 10px 4px;text-transform:uppercase;letter-spacing:.04em}
+.q{align-self:flex-end;max-width:78%;background:var(--panel2);padding:10px 14px;border-radius:16px 16px 4px 16px}
+.q .sc{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;text-align:right}
+.who{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.who b{color:var(--ink)}
+.ans{display:flex;flex-direction:column;gap:10px;max-width:760px}
+.ans p{margin:0}
+.cit{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:5px;background:var(--accentSoft);color:var(--accent);font-size:11px;font-weight:700;text-decoration:none;padding:0 4px;vertical-align:2px;margin-left:2px}
+.cit.mem{background:var(--memSoft);color:var(--mem)}
+.steps{border:1px solid var(--line);border-radius:10px;background:var(--panel);font-size:12.5px}
+.steps summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:7px 10px;color:var(--muted)}
+.steps summary::-webkit-details-marker{display:none}
+.step{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 32px;color:var(--muted)}
+.step .ok{color:var(--ok);font-weight:700}
+.src{display:flex;gap:10px;padding:11px 14px;border-top:1px solid var(--line);font-size:13px}
+.src.hl{background:var(--accentSoft)}
+.lay{font-size:11px;font-weight:600;border-radius:6px;padding:1px 7px;white-space:nowrap}
+.l-wiki{background:var(--libSoft);color:var(--lib)}.l-src{background:var(--srcSoft);color:var(--src)}.l-jr{background:var(--meSoft);color:var(--me)}.l-mem{background:var(--memSoft);color:var(--mem)}
+.ex{font-size:12.5px;color:var(--muted);margin-top:3px}
+.ex mark{background:var(--mark);color:var(--ink);border-radius:3px;padding:0 2px}
+.lnk{font-size:12px;color:var(--accent);text-decoration:none;font-weight:500}
+.miss{border:1px dashed var(--line);border-radius:12px;padding:12px 14px;background:var(--panel);display:flex;flex-direction:column;gap:8px}
+.ex-q{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:10px 14px;font-size:13.5px;text-align:left}
+.ex-q:hover{border-color:var(--accent)}
+.box{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:10px 10px 8px 14px;display:flex;align-items:flex-end;gap:8px}
+.box textarea{flex:1;resize:none;border:0;background:transparent;color:var(--ink);font:inherit;outline:none}
+.send{width:34px;height:34px;border-radius:50%;border:0;background:var(--ink);color:var(--panel);display:inline-flex;align-items:center;justify-content:center;flex:none}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--lib);flex:none;animation:p 1.2s ease-in-out infinite}
+@keyframes p{50%{opacity:.3}}
 </style>
 </helmet>
-<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.6; min-height: 900px; display: flex; flex-wrap: wrap">
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; height: 900px; display: flex; overflow: hidden">
   <dc-import name="Sidebar" active="brain" bot="none" hint-size="260px,900px"></dc-import>
-  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
-    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
-      <a href="GhiChu.dc.html" class="ib" aria-label="Quay lại Second Brain" style="text-decoration: none">‹</a>
-      <span style="font-weight: 600">Hỏi bộ não</span><span class="m" style="font-size: 12.5px">chỉ trả lời từ ghi chú, ký ức và phiên chat của anh</span>
-      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="margin-left: auto"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+
+  <!-- ===== Câu đã hỏi ===== -->
+  <nav aria-label="Câu đã hỏi" style="width: 244px; flex: none; border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 14px 10px">
+    <div style="display: flex; align-items: center; gap: 6px; padding: 0 2px 10px">
+      <a href="GhiChu.dc.html" class="ib" aria-label="Về bộ não" style="text-decoration: none; font-size: 18px">‹</a>
+      <h1 style="font-size: 17px">Hỏi bộ não</h1>
     </div>
-    <div style="flex: 1; padding: 24px; max-width: 760px; width: 100%; box-sizing: border-box; margin: 0 auto; display: flex; flex-direction: column; gap: 18px">
-      <div style="display: flex; flex-wrap: wrap; gap: 6px"><span class="m" style="font-size: 12.5px; padding: 4px 4px 0 0">Tìm trong</span><button type="button" class="chip" style="background: var(--hover); color: var(--ink); font-weight: 600">Toàn bộ</button><button type="button" class="chip">Kênh YouTube Q4</button><button type="button" class="chip">Tài chính</button><button type="button" class="chip">Chỉ ghi chú</button></div>
-      <div style="align-self: flex-end; max-width: 80%; background: var(--panel2); padding: 10px 14px; border-radius: 16px 16px 4px 16px">Mình đã quyết gì về ngân sách quảng cáo cho quý 4?</div>
-      <div style="display: flex; flex-direction: column; gap: 10px">
-        <div>Quý 4 dành <b>15 triệu</b> cho quảng cáo trong tổng 50 triệu, theo đề xuất của Tín trong phòng Kế hoạch quý 4 <a class="cit" href="#s1">1</a>. Con số này khớp với nguyên tắc anh ghi từ tháng 9: giữ quảng cáo dưới 30% ngân sách <a class="cit" href="#s2">2</a>.</div>
-        <div>Chưa thấy quyết định chia 15 triệu cho kênh nào. Ghi chú gần nhất chỉ nói “ưu tiên video ngắn” <a class="cit" href="#s3">3</a>.</div>
-        <div style="display: flex; gap: 6px; flex-wrap: wrap"><button type="button" class="b2">Lưu thành ghi chú</button><button type="button" class="b2">Hỏi Tín chia theo kênh</button><button type="button" class="b2">Sao chép</button></div>
+    <button type="button" class="b1" onClick="{{toNew}}" style="justify-content: center; margin: 0 2px 6px">＋ Câu hỏi mới</button>
+    <div class="grp">Hôm nay</div>
+    <button type="button" class="{{cA1}}" onClick="{{toA1}}">Mình đã quyết gì về ngân sách quảng cáo quý 4?<span class="s">Toàn bộ · 3 nguồn · 10:12</span></button>
+    <button type="button" class="{{cLive}}" onClick="{{toLive}}">Chị Hà báo giá thumbnail bao nhiêu?<span class="s" style="display: flex; align-items: center; gap: 6px"><span class="dot"></span>Thủ thư đang tra</span></button>
+    <button type="button" class="{{cA2}}" onClick="{{toA2}}">Hợp đồng với nhà in Minh Phát hết hạn khi nào?<span class="s">Công ty · chưa thấy · 09:40</span></button>
+    <div class="grp">Tuần này</div>
+    <button type="button" class="hq">Video ngắn nên dài bao nhiêu?<span class="s">Cá nhân · 2 nguồn · Thứ 5</span></button>
+    <button type="button" class="hq">Quy tắc đặt tên video kênh YouTube<span class="s">Công ty · Tăng trưởng · 1 nguồn · Thứ 3</span></button>
+    <div class="m" style="margin-top: auto; font-size: 12px; padding: 10px 8px 0; border-top: 1px solid var(--line)">Mỗi câu hỏi là một phiên của Thủ thư, hỏi tiếp được. Hôm nay dùng 0,006 USD.</div>
+  </nav>
+
+  <!-- ===== Giữa: hỏi và trả lời ===== -->
+  <main style="flex: 1 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px 24px 10px; border-bottom: 1px solid var(--line)">
+      <span class="m" style="font-size: 12.5px">Tìm trong</span>
+      <div class="spaces" role="radiogroup" aria-label="Phạm vi">
+        <button type="button" role="radio" aria-checked="true" class="on">Toàn bộ</button>
+        <button type="button" role="radio" aria-checked="false"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--me)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path></svg>Cá nhân</button>
+        <button type="button" role="radio" aria-checked="false"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--co)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1"></path></svg>Công ty ▾</button>
       </div>
-      <div style="margin-top: auto; border: 1px solid var(--line); background: var(--panel); border-radius: 18px; padding: 10px 10px 8px 14px; display: flex; gap: 8px; align-items: flex-end">
-        <label style="flex: 1; display: flex"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Câu hỏi</span><textarea rows="2" placeholder="Hỏi tiếp…" style="flex: 1; resize: none; border: 0; background: transparent; color: var(--ink); font: inherit; outline: none"></textarea></label>
-        <button type="button" aria-label="Gửi" style="width: 36px; height: 36px; border-radius: 50%; border: 0; background: var(--ink); color: var(--panel); display: inline-flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+      <button type="button" class="tog on" aria-pressed="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6c0 2.4 1.4 3.7 2.5 5 .8.9 1.5 1.8 1.5 3h4c0-1.2.7-2.1 1.5-3 1.1-1.3 2.5-2.6 2.5-5a6 6 0 0 0-6-6zM10 21h4"></path></svg>Cả ký ức bot</button>
+      <button type="button" class="ib" style="margin-left: auto" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+
+    <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 20px 28px; display: flex; flex-direction: column; gap: 16px">
+
+      <!-- Có câu trả lời -->
+      <sc-if value="{{isA1}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <div class="q">Mình đã quyết gì về ngân sách quảng cáo quý 4?<span class="sc">Toàn bộ · cả ký ức bot</span></div>
+          <div class="ans">
+            <div class="who"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><path d="M24 8H62L84 30V84C84 89 80 92 75 92H24C19 92 16 89 16 84V16C16 11 19 8 24 8Z" fill="#0891B2"></path><path d="M62 8V22C62 26 65 30 70 30H84Z" fill="#000" fill-opacity=".18"></path><path d="M42 50L40 62M57 50L55 62" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><b>Thủ thư</b>trả lời từ 3 nguồn</div>
+            <details class="steps">
+              <summary><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>Tra 3 lần, đọc 4 trang, 1 ký ức · 9 giây · 0,002 USD</summary>
+              <div class="step"><span class="ok">✓</span>Tìm “ngân sách quảng cáo” → 2 trang</div>
+              <div class="step"><span class="ok">✓</span>Tìm “quý 4 ngân sách kênh” → 3 trang</div>
+              <div class="step"><span class="ok">✓</span>Đọc Kế hoạch quý 4, Kênh YouTube Q4, Video ngắn, Duyệt chi tiêu</div>
+              <div class="step" style="padding-bottom: 8px"><span class="ok">✓</span>Tìm trong ký ức bot “quảng cáo” → ký ức của Tín</div>
+            </details>
+            <p>Quý 4 dành <b>15 triệu</b> cho quảng cáo trong tổng 50 triệu <a class="cit" href="#s1">1</a>. Từ tháng 11 ngân sách kênh tăng lên 60 triệu, nhưng chưa trang nào chia lại phần quảng cáo theo con số mới <a class="cit" href="#s2">2</a>.</p>
+            <p>Tín có ghi nhớ một nguyên tắc của Tầu: giữ quảng cáo dưới 30% tổng ngân sách <a class="cit mem" href="#s3">3</a>. Với 60 triệu thì trần là 18 triệu.</p>
+            <p>Chưa thấy quyết định chia 15 triệu cho kênh nào.</p>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap">
+              <button type="button" class="b2"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v13H8l-4 4z"></path><path d="M12 8v5M9.5 10.5h5"></path></svg>Lưu vào bộ não</button>
+              <button type="button" class="b2">Sao chép</button>
+              <button type="button" class="b2">Mở phiên của Thủ thư</button>
+            </div>
+            <div class="m" style="font-size: 12px">Lưu vào bộ não: câu hỏi và câu trả lời vào Hộp thư vào, Thủ thư nạp thành trang wiki (duyệt như mọi bản nạp).</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Chưa thấy -->
+      <sc-if value="{{isA2}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <div class="q">Hợp đồng với nhà in Minh Phát hết hạn khi nào?<span class="sc">Công ty · chung · cả ký ức bot</span></div>
+          <div class="ans">
+            <div class="who"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><path d="M24 8H62L84 30V84C84 89 80 92 75 92H24C19 92 16 89 16 84V16C16 11 19 8 24 8Z" fill="#0891B2"></path><path d="M62 8V22C62 26 65 30 70 30H84Z" fill="#000" fill-opacity=".18"></path><path d="M42 50L40 62M57 50L55 62" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><b>Thủ thư</b>tra 4 lần · 0,001 USD</div>
+            <p><b>Chưa thấy trong bộ não.</b> Có một nguồn nhắc tới nhà in Minh Phát (báo giá in tờ rơi tháng 11) nhưng không nói gì về hợp đồng <a class="cit" href="#s1">1</a>. Ký ức các bot cũng không có.</p>
+            <div class="miss">
+              <span style="font-size: 13px">Có hợp đồng thì gửi vào Hộp thư vào, Thủ thư sẽ nạp thành trang về nhà in Minh Phát.</span>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap"><button type="button" class="b2">＋ Thêm vào Hộp thư vào</button><button type="button" class="b2">Nhờ Aris tìm ngoài bộ não</button></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Đang tra -->
+      <sc-if value="{{isLive}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <div class="q">Chị Hà báo giá thumbnail bao nhiêu?<span class="sc">Toàn bộ · cả ký ức bot</span></div>
+          <div class="ans">
+            <div class="who"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><path d="M24 8H62L84 30V84C84 89 80 92 75 92H24C19 92 16 89 16 84V16C16 11 19 8 24 8Z" fill="#0891B2"></path><path d="M62 8V22C62 26 65 30 70 30H84Z" fill="#000" fill-opacity=".18"></path><path d="M42 50L40 62M57 50L55 62" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><b>Thủ thư</b>đang tra…</div>
+            <div class="steps" style="padding: 6px 0">
+              <div class="step" style="padding-left: 10px"><span class="ok">✓</span>Tìm “chị Hà thumbnail giá” → 2 trang</div>
+              <div class="step" style="padding-left: 10px"><span class="ok">✓</span>Đọc Chị Hà</div>
+              <div class="step" style="padding-left: 10px; color: var(--ink)"><span class="dot"></span>Đọc Lịch quay tháng 11</div>
+            </div>
+            <div><button type="button" class="b2"><span style="width: 10px; height: 10px; border-radius: 2px; background: var(--ink)"></span>Dừng</button></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Câu hỏi mới -->
+      <sc-if value="{{isNew}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 14px; max-width: 640px; margin: 60px auto 0; text-align: center; align-items: center">
+          <svg width="52" height="52" viewBox="0 0 100 100" aria-hidden="true"><path d="M24 8H62L84 30V84C84 89 80 92 75 92H24C19 92 16 89 16 84V16C16 11 19 8 24 8Z" fill="#0891B2"></path><path d="M62 8V22C62 26 65 30 70 30H84Z" fill="#000" fill-opacity=".18"></path><path d="M42 50L40 62M57 50L55 62" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>
+          <h2 style="font-size: 22px">Tầu muốn tra gì trong bộ não?</h2>
+          <div class="m" style="font-size: 13.5px">Thủ thư tìm trong wiki, nguồn, nhật ký và ký ức các bot, rồi trả lời kèm nguồn. Không có nguồn thì nói “chưa thấy”, không đoán.</div>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; margin-top: 6px">
+            <button type="button" class="ex-q">Tuần này mình đã quyết những gì?</button>
+            <button type="button" class="ex-q">Chị Hà là ai, đang làm gì với mình?</button>
+            <button type="button" class="ex-q">Kênh YouTube Q4 đang vướng gì?</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="padding: 0 28px 20px">
+      <div class="box">
+        <label style="flex: 1; display: flex"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Câu hỏi</span><textarea rows="2" placeholder="{{boxHint}}"></textarea></label>
+        <button type="button" class="send" aria-label="Hỏi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
       </div>
     </div>
   </main>
-  <aside aria-label="Nguồn" style="flex: 1 1 300px; max-width: 340px; min-width: 260px; border-left: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column">
-    <div style="padding: 14px 14px 8px; font-weight: 600">Nguồn · 3</div>
-    <div class="src" id="s1"><span class="cit">1</span><span style="flex: 1"><b>Phòng Kế hoạch quý 4</b><div class="m" style="font-size: 12.5px">Tín, 23/10 10:14 — “50 triệu chia: 30 sản xuất, 15 quảng cáo, 5 dự phòng”</div></span></div>
-    <div class="src" id="s2"><span class="cit">2</span><span style="flex: 1"><b>Ghi chú: Giữ quảng cáo dưới 30%</b><div class="m" style="font-size: 12.5px">Lĩnh vực / Tài chính · 02/09</div></span></div>
-    <div class="src" id="s3"><span class="cit">3</span><span style="flex: 1"><b>Chiến lược nội dung YouTube Q4</b><div class="m" style="font-size: 12.5px">Dự án / Kênh YouTube Q4 · hôm nay</div></span></div>
-    <div class="m" style="margin-top: auto; padding: 12px 14px; font-size: 12px; border-top: 1px solid var(--line)">Không có nguồn ⇒ aris nói “chưa thấy”, không đoán.</div>
+
+  <!-- ===== Nguồn ===== -->
+  <aside aria-label="Nguồn" style="width: 340px; flex: none; border-left: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column">
+    <sc-if value="{{isA1}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column">
+        <div style="padding: 16px 14px 10px; font-weight: 600">Nguồn · 3</div>
+        <div class="src hl" id="s1"><span class="cit">1</span><span style="flex: 1; min-width: 0"><b>Kế hoạch quý 4</b><div style="display: flex; gap: 5px; margin-top: 3px"><span class="lay l-wiki">Wiki</span><span class="m" style="font-size: 12px">Công ty · chung</span></div><div class="ex">“50 triệu chia: 30 sản xuất, <mark>15 quảng cáo</mark>, 5 dự phòng”</div><a class="lnk" href="GhiChu.dc.html">Mở trang ›</a></span></div>
+        <div class="src" id="s2"><span class="cit">2</span><span style="flex: 1; min-width: 0"><b>Kênh YouTube Q4</b><div style="display: flex; gap: 5px; margin-top: 3px"><span class="lay l-wiki">Wiki</span><span class="m" style="font-size: 12px">Cá nhân · dự án</span></div><div class="ex">“ngân sách quý 4 tăng lên <mark>60 triệu từ tháng 11</mark>”</div><a class="lnk" href="GhiChu.dc.html">Mở trang ›</a></span></div>
+        <div class="src" id="s3"><span class="cit mem">3</span><span style="flex: 1; min-width: 0"><b>Ký ức của Tín</b><div style="display: flex; gap: 5px; margin-top: 3px; align-items: center"><span class="lay l-mem">Ký ức bot</span><span class="m" style="font-size: 12px">Tài chính · lõi · 02/09</span></div><div class="ex">“Tầu muốn giữ <mark>quảng cáo dưới 30%</mark> tổng ngân sách”</div><a class="lnk" href="#">Mở ký ức của Tín ›</a></span></div>
+      </div>
+    </sc-if>
+    <sc-if value="{{isA2}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column">
+        <div style="padding: 16px 14px 10px; font-weight: 600">Nguồn · 1</div>
+        <div class="src" id="s1b"><span class="cit">1</span><span style="flex: 1; min-width: 0"><b>Báo giá in ấn tháng 11</b><div style="display: flex; gap: 5px; margin-top: 3px"><span class="lay l-src">Nguồn</span><span class="m" style="font-size: 12px">Công ty · 10/2026 · PDF</span></div><div class="ex">“<mark>Nhà in Minh Phát</mark> báo giá in tờ rơi A5…”</div><a class="lnk" href="GhiChu.dc.html">Mở nguồn ›</a></span></div>
+      </div>
+    </sc-if>
+    <sc-if value="{{noSrc}}" hint-placeholder-val="{{ false }}">
+      <div class="m" style="padding: 16px 14px; font-size: 13px">Nguồn hiện ở đây khi Thủ thư trả lời. Số trong câu trả lời ứng với nguồn: bấm số thì nguồn được tô sáng.</div>
+    </sc-if>
+    <div class="m" style="margin-top: auto; padding: 12px 14px; font-size: 12px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px">
+      <div style="display: flex; flex-wrap: wrap; gap: 5px"><span class="lay l-wiki">Wiki</span><span class="lay l-src">Nguồn</span><span class="lay l-jr">Nhật ký</span><span class="lay l-mem">Ký ức bot</span></div>
+      <span>Thủ thư chỉ trả lời từ bộ não và ký ức bot. Phiên chat cũ chưa tìm được.</span>
+    </div>
   </aside>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
-    const theme = (this.state && this.state.theme) || this.props.theme || 'light';
-    return { themeClass: 't-' + theme, toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const pick = s.pick || 'a1';
+    const c = (k) => 'hq' + (pick === k ? ' on' : '');
+    const go = (k) => () => this.setState({ pick: k });
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      isA1: pick === 'a1', isA2: pick === 'a2', isLive: pick === 'live', isNew: pick === 'new',
+      noSrc: pick === 'live' || pick === 'new',
+      cA1: c('a1'), cA2: c('a2'), cLive: c('live'),
+      toA1: go('a1'), toA2: go('a2'), toLive: go('live'), toNew: go('new'),
+      boxHint: pick === 'new' ? 'Hỏi bộ não…' : 'Hỏi tiếp…'
+    };
   }
 }
 </script>
