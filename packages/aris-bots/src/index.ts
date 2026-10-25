@@ -36,6 +36,7 @@ export {
   BotStore,
   COMMANDER_ID,
   HANDLE_RE,
+  LIBRARIAN_ID,
   suggestHandle,
   type BotInput,
   type Template,

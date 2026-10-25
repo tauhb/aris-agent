@@ -8,6 +8,8 @@ import { cleanExternal, ExternalConfigError, type ExternalConfig } from './exter
 import { cleanPolicy, DEFAULT_POLICY, type Policy } from './policy.js'
 
 export const COMMANDER_ID = 'aris'
+/** Bot Thủ thư mặc định của bộ não (giai đoạn 5): người duy nhất ghi wiki. */
+export const LIBRARIAN_ID = 'b-thu-thu'
 /** Tên gọi: chữ thường không dấu, số, `-`, bắt đầu bằng chữ. */
 export const HANDLE_RE = /^[a-z][a-z0-9-]{0,23}$/
 const DEPT_RE = /^[a-z][a-z0-9-]{0,39}$/
@@ -89,6 +91,21 @@ const COMMANDER_DEFAULT: Omit<BotRecord, 'createdAt'> = {
   mascot: 'aris',
 }
 
+const LIBRARIAN_DEFAULT: Omit<BotRecord, 'createdAt'> = {
+  id: LIBRARIAN_ID,
+  kind: 'member',
+  handle: 'thu-thu',
+  name: 'Thủ thư',
+  role: 'Giữ bộ não',
+  description:
+    'Đọc nguồn người dùng đưa vào bộ não rồi viết thành wiki có liên kết: tóm tắt, người, dự án, chủ đề; giữ mục lục, soát mâu thuẫn mỗi tuần.',
+  soul: 'Cẩn thận, ngăn nắp, trung thực với nguồn. Mỗi ý đều có chú thích nguồn; không chắc thì ghi là chưa chắc, không đoán.',
+  mascot: 'trang-giay',
+  tools: { web: false, files: false, shell: false },
+  perms: { write: 'none', danger: 'deny' },
+  assignable: false,
+}
+
 /** Bỏ dấu tiếng Việt và ký tự lạ để gợi ý tên gọi từ tên hiển thị. */
 export function suggestHandle(name: string): string {
   return name
@@ -117,6 +134,20 @@ export class BotStore {
     if (c) return c
     const rec: BotRecord = { ...COMMANDER_DEFAULT, createdAt: this.now().toISOString() }
     await this.t.bots.put(COMMANDER_ID, rec)
+    return rec
+  }
+
+  /**
+   * Tạo bot Thủ thư nếu chưa có (bộ não gọi một lần; người dùng xoá rồi thì bộ não không tạo lại). Tên
+   * gọi `thu-thu` đã có bot khác dùng thì thêm số.
+   */
+  async ensureLibrarian(): Promise<BotRecord> {
+    const c = this.t.bots.get(LIBRARIAN_ID)
+    if (c) return c
+    let handle = LIBRARIAN_DEFAULT.handle
+    for (let i = 2; this.byHandle(handle); i++) handle = `${LIBRARIAN_DEFAULT.handle}-${i}`
+    const rec: BotRecord = { ...LIBRARIAN_DEFAULT, handle, createdAt: this.now().toISOString() }
+    await this.t.bots.put(LIBRARIAN_ID, rec)
     return rec
   }
 

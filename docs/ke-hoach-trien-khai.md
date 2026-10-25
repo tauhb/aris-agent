@@ -306,6 +306,8 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 > **Định hướng chốt 25/10, chưa làm** ([đặc tả](specs/aris-brain.md)): lấy mẫu "LLM Wiki" của Karpathy làm gốc: ba lớp Nguồn (bất biến) / Wiki (bot viết) / Luật (`AGENTS.md`), ba thao tác Nạp / Hỏi / Soát, `index.md` và `log.md`. Kho `~/aris/brain` chia hai không gian Cá nhân và Công ty cùng một khuôn; Công ty có `wiki/chung/` và `wiki/phong-ban/<mã>/`. Thêm bot mặc định **Thủ thư** là người duy nhất ghi wiki; các bot khác tra qua `brain_search`/`brain_read` theo quyền và gửi nguồn qua `brain_capture`, có lời dặn ngắn, bản đồ mục lục và nhắc theo tên. Tìm từ khoá trước, tìm theo nghĩa để đợt cuối. Giọng nói trên Telegram (chép lời, `/voice`) đã có từ trước; còn tạo ảnh. Kênh Lark, Zalo chưa có. Chia đợt và bản vẽ còn bàn tiếp.
 
+> **Đợt 1 xong 25/10 — Kho, chỉ mục, công cụ đọc, Thủ thư, màn 5.1** ([đặc tả](specs/aris-brain.md#đợt-1--kho-chỉ-mục-công-cụ-đọc-thủ-thư-màn-51-xong-2510)): gói mới `@aris/brain` tạo kho `~/aris/brain` theo khuôn (luật `AGENTS.md`, mẫu trang, thư mục phòng ban), git thật (aris commit ngay, Obsidian gom 10 phút), chỉ mục tìm từ khoá bỏ dấu ở `~/.aris/brain`, `brain_search`/`brain_read` lọc theo quyền, chặn bot đọc thẳng kho, bot Thủ thư mặc định, màn 5.1 dữ liệu thật (bản vẽ duyệt 25/10). Chạy thử thật đạt cả 5 điểm nghiệm thu của đợt.
+
 **Giao diện**: 5.1 Ghi chú (đồ thị 2D quanh ghi chú), 5.2 Hộp thư vào, 5.3 Đồ thị toàn cục 3D, 5.4 Hỏi bộ não; phần "Từ Second Brain" trong menu đính kèm.
 
 **Nghiệm thu**: gửi một ghi âm Telegram ⇒ có ghi chú đã chép lời, xếp đúng dự án, nối với ghi chú liên quan; "Hỏi bộ não" trả lời đúng kèm nguồn; mở thẳng thư mục bằng Obsidian được.

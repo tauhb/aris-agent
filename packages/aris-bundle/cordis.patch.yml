@@ -21,6 +21,8 @@
       name: '@aris/routine'
     - id: aris-checkpoints
       name: '@aris/checkpoints'
+    - id: aris-brain
+      name: '@aris/brain'
     - id: aris-recall
       name: '@aris/recall'
     - id: aris-home

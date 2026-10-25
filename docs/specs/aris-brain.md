@@ -164,6 +164,38 @@ khiến); nguồn từ web, email không tự thành ký ức của bot.
 Ký ức của bot (`aris-memory`) là sổ tay ngắn luôn trong lời dặn; bộ não là thư viện tra khi cần. Ký ức bền
 có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
 
+## Đợt 1 — kho, chỉ mục, công cụ đọc, Thủ thư, màn 5.1 (xong 25/10)
+
+- Gói `@aris/brain`. Lần đầu chạy tạo khuôn `~/aris/brain` (đổi được bằng `ARIS_BRAIN_DIR`): `AGENTS.md`
+  chung và của mỗi không gian (luật, định dạng trang, chú thích `[^n]`, liên kết theo tên tệp), `README.md`,
+  `_mau/`, `index.md`, `log.md`, `.gitignore`; mỗi phòng ban một thư mục `wiki/phong-ban/<mã>/_phong-ban.md`
+  (phòng mới tự có thư mục sau tối đa một phút). Không ghi đè tệp đã có.
+- Git thật của kho: thay đổi do aris làm commit ngay ("<tên người dùng> sửa <trang>"); thay đổi bằng
+  Obsidian gom thành một commit mỗi 10 phút.
+- Chỉ mục ở `~/.aris/brain/index.sqlite` (SQLite có sẵn trong Node): mỗi tệp một dòng, liên kết `[[...]]`
+  để tính liên kết ngược, tìm toàn văn trên chữ đã bỏ dấu (`đ` đổi thành `d`), tiêu đề nặng gấp 5 thân trang.
+  Theo dõi thư mục kho: sửa bên Obsidian thì khoảng nửa giây sau chỉ mục cập nhật. Mất chỉ mục thì quét lại.
+- Công cụ `brain_search` (từ khoá, đoạn trích quanh chỗ khớp hiện chữ có dấu) và `brain_read` (theo tên hay
+  đường dẫn; trang không được đọc thì trả "không có", không lộ là có tồn tại). Lời dặn ngắn trong ngữ cảnh
+  của Aris; đủ ba tầng chỉ dẫn để đợt 3.
+- Chặn đường vòng: bot thường dùng `read`, `read_image`, `glob`, `grep`, `str_replace_editor view` vào kho,
+  quét thư mục chứa kho (ví dụ `~`), hay bash nhắc tới kho thì bị từ chối kèm hướng dẫn dùng công cụ bộ não.
+  Aris và Thủ thư đọc thẳng được.
+- Bot Thủ thư (`b-thu-thu`, linh vật trang giấy) tạo một lần: không web, không đọc tệp thường, không bash,
+  không ghi tệp, Commander không giao việc. Người dùng xoá thì không tạo lại.
+- API `/api/aris/brain`: danh sách tệp của không gian, đọc trang (kèm liên kết ngược, ai đọc được), tìm, lưu
+  (từ chối sửa nguồn; tệp vừa đổi bên Obsidian thì báo xung đột, không ghi đè), tạo nhật ký hôm nay, mở bằng
+  Obsidian (kho chưa đăng ký làm vault thì mở Obsidian và hướng dẫn "Open folder as vault"; không tự sửa cấu
+  hình Obsidian) hay Finder.
+- Màn 5.1 dữ liệu thật theo bản vẽ đã duyệt; Markdown hiển thị bằng bộ dựng riêng (không HTML thô). Đồ thị
+  quanh trang, gợi ý nối (đợt 4) và "Thả tệp vào Hộp thư vào" (đợt 2) để mờ.
+- Chạy thử thật: kho được tạo đủ khuôn và 3 thư mục phòng ban; trang tạo ngoài web hiện ở 5.1; gõ "chi ha"
+  ra trang Chị Hà; sửa trên web có gợi ý `[[`, lưu thành tệp và commit; hỏi Aris "Chị Hà là ai" thì Aris tự
+  tra và trích `[[chi-ha]]`; Minh (phòng Tăng trưởng) không tìm thấy trang của phòng Vận hành, `read` thẳng
+  tệp bị chặn.
+- Còn để sau: `[[...]]` trong câu trả lời ở khung chat chưa bấm được (đợt 3); mục lục `index.md` của Công
+  ty liệt kê trang mọi phòng ban, nên khi Thủ thư viết mục lục (đợt 2) cần tách theo phòng.
+
 ## Đã chốt (25/10)
 
 - Duyệt khi nạp: mặc định {you} duyệt ở Hộp thư vào; `/note` và nhật ký của {you} tự nạp.

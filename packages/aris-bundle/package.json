@@ -19,6 +19,7 @@
   "dependencies": {
     "@aris/autonomy": "workspace:*",
     "@aris/bots": "workspace:*",
+    "@aris/brain": "workspace:*",
     "@aris/channels": "workspace:*",
     "@aris/checkpoints": "workspace:*",
     "@aris/commander": "workspace:*",

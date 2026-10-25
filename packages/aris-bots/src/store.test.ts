@@ -3,7 +3,7 @@ import { handleApi } from './api.js'
 import { renderAddress, renderPersona } from './persona.js'
 import { botStats } from './live.js'
 import { botToolOf, insideDir, writeTarget } from './policy.js'
-import { BotStore, COMMANDER_ID, suggestHandle } from './store.js'
+import { BotStore, COMMANDER_ID, LIBRARIAN_ID, suggestHandle } from './store.js'
 import { loadTemplates } from './templates.js'
 import { memTables } from './testing.js'
 
@@ -21,6 +21,22 @@ describe('kho bot', () => {
     await expect(s.remove(COMMANDER_ID)).rejects.toThrow('Commander')
     expect(s.botOf('session-x').id).toBe(COMMANDER_ID)
     expect(s.botOf(undefined).id).toBe(COMMANDER_ID)
+  })
+
+  it('Thủ thư: tạo một lần, công cụ chỉ của bộ não; tên gọi trùng thì thêm số', async () => {
+    const s = await store()
+    await s.create({ handle: 'thu-thu', name: 'Thư', role: 'Viết' })
+    const t = await s.ensureLibrarian()
+    expect(t).toMatchObject({
+      id: LIBRARIAN_ID,
+      kind: 'member',
+      handle: 'thu-thu-2',
+      name: 'Thủ thư',
+      tools: { web: false, files: false, shell: false },
+      perms: { write: 'none' },
+      assignable: false,
+    })
+    expect((await s.ensureLibrarian()).createdAt).toBe(t.createdAt)
   })
 
   it('tạo bot: mã nội bộ tự sinh, tên gọi hợp lệ và không trùng', async () => {
