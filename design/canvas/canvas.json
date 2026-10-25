@@ -188,10 +188,11 @@
       "expand": "fill",
       "h": 900,
       "page": "g5",
-      "title": "5.2 · Hộp thư vào",
+      "title": "5.2 · Hộp thư vào — duyệt bản nạp (cần duyệt, đang xử lý, đã tự nạp)",
       "w": 1440,
       "x": 1520,
-      "y": 0
+      "y": 0,
+      "is_interactive": true
     },
     "Kanban.dc.html": {
       "expand": "fill",
@@ -521,6 +522,16 @@
       "w": 1440,
       "x": 1520,
       "y": 2640
+    },
+    "NhatKyBoNao.dc.html": {
+      "x": 1520,
+      "y": 2340,
+      "w": 1440,
+      "h": 900,
+      "title": "5.6 · Nhật ký bộ não — thay đổi của kho, hoàn tác",
+      "expand": "fill",
+      "is_interactive": true,
+      "page": "g5"
     }
   },
   "createdOnFiles": {
@@ -658,6 +669,7 @@
     "HopThuVao.dc.html",
     "DoThi.dc.html",
     "HoiBoNao.dc.html",
+    "NhatKyBoNao.dc.html",
     "DieuKhien.dc.html",
     "Provider.dc.html",
     "Kenh.dc.html",

@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<title>aris · Hộp thư vào Second Brain</title>
+<title>aris · Hộp thư vào</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -12,70 +12,289 @@
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 <style>
 body{margin:0}
-h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
-.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF}
-.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em;margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--faint:#9A9EA6;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FCEBE9;--lib:#C2620A;--libSoft:#FBEEDD;--add:#15803D;--addSoft:#E2F3E9;--del:#C0262D;--delSoft:#FCEBE9}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--faint:#6B7280;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18;--lib:#F5A35C;--libSoft:#33251A;--add:#4ADE9B;--addSoft:#15302A;--del:#F97066;--delSoft:#3A1A18}
 button{font-family:inherit;cursor:pointer;color:inherit}
-button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ic{width:15px;height:15px;flex:none}
 .ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
-.b1{height:32px;padding:0 12px;border:0;border-radius:9px;background:var(--ink);color:var(--panel);font-size:12.5px;font-weight:600}
-.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px}
+.b1{height:34px;padding:0 14px;border:0;border-radius:9px;background:var(--ink);color:var(--panel);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.b2{height:34px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:13px;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.b3{height:34px;padding:0 10px;border:0;border-radius:9px;background:transparent;color:var(--muted);font-size:13px}
 .m{color:var(--muted)}
-.card{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
-.src{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
-.sug{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px}
-.tag{border-radius:6px;padding:1px 8px;background:var(--panel2);color:var(--muted);font-size:12px}
+.mono{font-family:'JetBrains Mono',monospace}
+.pill{font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 9px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.tag{font-size:11.5px;border-radius:6px;padding:1px 7px;background:var(--panel2);color:var(--muted);white-space:nowrap}
+.item{display:flex;flex-direction:column;gap:5px;width:100%;text-align:left;border:1px solid transparent;background:transparent;border-radius:12px;padding:10px 12px;font-size:13px;color:var(--ink)}
+.item:hover{background:var(--hover)}
+.item.sel{background:var(--panel);border-color:var(--line);box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.item .t{font-weight:600;font-size:13.5px;display:flex;gap:6px;align-items:center}
+.item .s{font-size:12px;color:var(--muted)}
+.lane{font-size:11.5px;font-weight:600;color:var(--muted);padding:12px 12px 4px;display:flex;justify-content:space-between}
+.grp{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+.gh{display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600}
+.gh .n{margin-left:auto;font-weight:500;color:var(--muted);font-size:12px}
+.op{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 14px;border-top:1px solid var(--line);font-size:13px}
+.ck{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--muted);display:inline-flex;align-items:center;justify-content:center;margin-top:2px;background:var(--panel)}
+.ck.on{background:var(--accent);border-color:var(--accent);color:#fff;font-size:11px;font-weight:700}
+.diff{display:flex;flex-direction:column;gap:4px;margin-top:6px;font-size:13px;line-height:1.55}
+.del{background:var(--delSoft);color:var(--del);text-decoration:line-through;border-radius:6px;padding:2px 8px}
+.add{background:var(--addSoft);color:var(--ink);border-radius:6px;padding:2px 8px;border-left:3px solid var(--add)}
+.cite{font-size:10px;font-weight:700;color:var(--accent);vertical-align:super}
+.why{font-size:12px;color:var(--warn);margin-top:4px}
+.lnk{color:var(--accent);text-decoration:none;font-size:12.5px;background:none;border:0;padding:0}
+.chev{width:14px;height:14px;color:var(--muted)}
+a{color:var(--accent)}
 </style>
 </helmet>
 <div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
   <dc-import name="Sidebar" active="brain" bot="none" hint-size="260px,900px"></dc-import>
-  <main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column">
-    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
-      <a href="GhiChu.dc.html" class="ib" aria-label="Quay lại Second Brain" style="text-decoration: none">‹</a>
-      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Hộp thư vào</span><span class="m" style="font-size: 12px">12 mục · aris đã xử lý sẵn, anh chỉ cần duyệt chỗ xếp</span></div>
-      <div style="margin-left: auto; display: flex; gap: 8px; align-items: center">
-        <button type="button" class="b2" style="height: 36px">Ghi nhanh</button>
-        <button type="button" class="b1" style="height: 36px">Xếp hết theo gợi ý</button>
-        <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+
+  <!-- ===== Danh sách mục trong Hộp thư vào ===== -->
+  <section aria-label="Hộp thư vào" style="flex: 0 1 340px; min-width: 300px; border-right: 1px solid var(--line); display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 8px; padding: 12px 14px 10px">
+      <a href="GhiChu.dc.html" class="ib" aria-label="Về bộ não" style="text-decoration: none; font-size: 18px">‹</a>
+      <div style="display: flex; flex-direction: column; line-height: 1.25">
+        <h1 style="font-size: 17px">Hộp thư vào</h1>
+        <span class="m" style="font-size: 12px">{{listSub}}</span>
       </div>
+      <button type="button" class="b1" style="margin-left: auto; height: 32px" onClick="{{toggleAdd}}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Thêm</button>
     </div>
-    <div style="padding: 18px 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; align-items: start">
-      <div class="card">
-        <span class="src"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10a7 7 0 0 0 14 0M12 17v4"></path></svg>Ghi âm Telegram · 1:42 · 07:55</span>
-        <b>Ý tưởng: series “AI cho chủ shop” 5 tập</b>
-        <div class="m" style="font-size: 13px">Đã chép lời và tóm tắt: 5 tập, mỗi tập 1 công cụ, kết bằng mời vào khoá học.</div>
-        <div class="sug"><span class="m">Xếp vào</span><span class="tag">Dự án / Kênh YouTube Q4</span><span class="tag">#ý-tưởng</span><span class="m">· tạo việc</span><span class="tag">Hạ viết dàn ý</span></div>
-        <div style="display: flex; gap: 6px"><button type="button" class="b1">Đồng ý</button><button type="button" class="b2">Sửa</button><button type="button" class="b2">Xoá</button></div>
+
+    <sc-if value="{{adding}}" hint-placeholder-val="{{ false }}">
+      <div style="margin: 0 12px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px">
+        <textarea aria-label="Dán chữ hay link" placeholder="Dán chữ hay link vào đây…" style="width: 100%; box-sizing: border-box; min-height: 64px; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; font: inherit; font-size: 13px; background: var(--bg); color: var(--ink); resize: vertical"></textarea>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px">
+          <button type="button" class="b2" style="height: 30px">Chọn tệp…</button>
+          <span class="m">hay kéo thả vào đây · PDF, Word, ảnh, ghi âm, .md</span>
+          <button type="button" class="b1" style="margin-left: auto; height: 30px">Gửi vào</button>
+        </div>
       </div>
-      <div class="card">
-        <span class="src"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"></path><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg>Link chuyển tiếp · Lark · hôm qua</span>
-        <b>Bài phân tích: xu hướng video ngắn 2026</b>
-        <div class="m" style="font-size: 13px">Tóm tắt 5 ý chính, trích 2 số liệu kèm nguồn.</div>
-        <div class="sug"><span class="m">Xếp vào</span><span class="tag">Tài nguyên / Marketing</span><span class="m">· nối với</span><span class="tag">Chiến lược nội dung YouTube Q4</span></div>
-        <div style="display: flex; gap: 6px"><button type="button" class="b1">Đồng ý</button><button type="button" class="b2">Sửa</button><button type="button" class="b2">Xoá</button></div>
-      </div>
-      <div class="card">
-        <span class="src"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>Ảnh danh thiếp · Zalo · hôm qua</span>
-        <b>Anh [TÊN] — đối tác in ấn</b>
-        <div class="m" style="font-size: 13px">Đọc được tên, công ty, số điện thoại, email.</div>
-        <div class="sug"><span class="m">Tạo trang</span><span class="tag">Người / [TÊN]</span><span class="m">· nhắc</span><span class="tag">gọi lại thứ 2</span></div>
-        <div style="display: flex; gap: 6px"><button type="button" class="b1">Đồng ý</button><button type="button" class="b2">Sửa</button><button type="button" class="b2">Xoá</button></div>
-      </div>
-      <div class="card">
-        <span class="src"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>/note từ chat với Aris · 2 ngày trước</span>
-        <b>Giữ quảng cáo dưới 30% ngân sách</b>
-        <div class="sug"><span class="m">Xếp vào</span><span class="tag">Lĩnh vực / Tài chính</span><span class="m">· cho phép bot đọc:</span><span class="tag">Tín</span><span class="tag">Aris</span></div>
-        <div style="display: flex; gap: 6px"><button type="button" class="b1">Đồng ý</button><button type="button" class="b2">Sửa</button><button type="button" class="b2">Xoá</button></div>
-      </div>
+    </sc-if>
+
+    <div style="flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0 8px 12px; display: flex; flex-direction: column; gap: 2px">
+      <sc-if value="{{has}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <div class="lane"><span>Cần duyệt · 2</span></div>
+          <button type="button" class="item {{sel1}}" onClick="{{pick1}}">
+            <span class="t"><span class="pill" style="background: var(--warnSoft); color: var(--warn)">⚠ duyệt kỹ</span><span>Báo cáo kênh 90 ngày.pdf</span></span>
+            <span class="s">Cá nhân · tài liệu 12 trang · sửa 3 trang, 1 trang mới</span>
+            <span class="s">Thả vào thư mục · 09:12</span>
+          </button>
+          <button type="button" class="item {{sel2}}" onClick="{{pick2}}">
+            <span class="t"><span class="pill" style="background: var(--accentSoft); color: var(--accent)">duyệt nhanh</span><span>Xu hướng video ngắn 2026</span></span>
+            <span class="s">Cá nhân · link · 1 trang mới, bổ sung 1 trang</span>
+            <span class="s">Telegram, chuyển tiếp từ kênh tin · hôm qua</span>
+          </button>
+
+          <div class="lane"><span>Đang xử lý · 2</span></div>
+          <div class="item" style="cursor: default">
+            <span class="t"><span class="pill" style="background: var(--panel2); color: var(--muted)">⋯ Thủ thư đang lập</span><span>Ghi âm 07:55 · 1:42</span></span>
+            <span class="s">Đã chép lời · phân loại: Cá nhân / dự án Kênh YouTube Q4</span>
+          </div>
+          <div class="item" style="cursor: default">
+            <span class="t"><span class="pill" style="background: var(--panel2); color: var(--muted)">chờ mai</span><span>Hợp đồng in ấn.docx</span></span>
+            <span class="s">Thủ thư đã dùng hết 0,50 USD hôm nay · nạp lại lúc 00:05</span>
+          </div>
+
+          <div class="lane"><span>Đã tự nạp hôm nay · 2</span><a href="NhatKyBoNao.dc.html" style="font-weight: 500; text-decoration: none">Nhật ký ›</a></div>
+          <div class="item" style="cursor: default; padding-top: 6px; padding-bottom: 6px">
+            <span class="s"><b style="color: var(--ink); font-weight: 600">Nhật ký 24/10</b> · tự nạp 23:00 · bổ sung 2 trang</span>
+            <span class="s"><b style="color: var(--ink); font-weight: 600">Ghi chú: giữ quảng cáo dưới 30%</b> · chỉ tóm tắt và liên kết</span>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 24px 12px; display: flex; flex-direction: column; gap: 8px; font-size: 13px">
+          <b>Hộp thư vào trống</b>
+          <span class="m">Gửi nguồn vào bằng một trong các cách:</span>
+          <span>· Nút <b>Thêm</b>: dán chữ, link hay chọn tệp</span>
+          <span>· Thả tệp vào thư mục <span class="mono" style="font-size: 12px">~/aris/brain/hop-thu-vao</span></span>
+          <span>· Telegram: gõ <span class="mono" style="font-size: 12px">/note</span>, hay chuyển tiếp tin cho Aris rồi bấm “Lưu vào bộ não”</span>
+        </div>
+      </sc-if>
     </div>
+  </section>
+
+  <!-- ===== Chi tiết bản nạp ===== -->
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <sc-if value="{{show1}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; min-height: 100%">
+        <div style="padding: 18px 28px 14px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+            <h2 style="font-size: 20px">Báo cáo kênh 90 ngày.pdf</h2>
+            <span class="pill" style="background: var(--warnSoft); color: var(--warn)">⚠ duyệt kỹ · 1 mâu thuẫn</span>
+            <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="margin-left: auto"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12.5px">
+            <span class="m">Thả vào thư mục · 25/10 09:12 · PDF 12 trang, đã đọc chữ</span>
+            <button type="button" class="b2" style="height: 26px; font-size: 12px">Không gian: Cá nhân ▾</button>
+            <a href="#" style="font-size: 12.5px">Mở nguồn ›</a>
+          </div>
+          <div style="background: var(--libSoft); border-radius: 10px; padding: 8px 12px; font-size: 13px"><b style="color: var(--lib)">Thủ thư tóm tắt</b> · Báo cáo 90 ngày của kênh: video hướng dẫn giữ chân tốt nhất (62% xem hết), ngân sách quý 4 tăng lên 60 triệu từ tháng 11. <span class="m" style="font-size: 12px">· lập bản nạp tốn 0,004 USD</span></div>
+        </div>
+
+        <div style="flex: 1; overflow-y: auto; padding: 16px 28px 18px; display: flex; flex-direction: column; gap: 12px; max-width: 820px; width: 100%; box-sizing: border-box">
+          <div class="grp" style="border-color: var(--warn)">
+            <div class="gh" style="background: var(--warnSoft); color: var(--warn)">⚠ Cần Tầu xem<span class="n" style="color: var(--warn)">1 trang</span></div>
+            <div class="op">
+              <button type="button" class="ck {{ckA}}" onClick="{{tA}}" aria-label="Chọn thay đổi này" style="padding: 0">{{ckAm}}</button>
+              <div>
+                <b>Kênh YouTube Q4</b> <span class="m" style="font-size: 12px">· sửa một ý cũ</span>
+                <div class="diff">
+                  <span class="del">Ngân sách 50 triệu cho cả quý.</span>
+                  <span class="add">Ngân sách 60 triệu cho cả quý, tăng 10 triệu từ tháng 11.<span class="cite">1</span></span>
+                </div>
+                <div class="why">Mâu thuẫn: trang đang ghi 50 triệu, lấy từ Ghi âm Telegram 21/10. Nguồn mới (Báo cáo, trang 3) ghi 60 triệu.</div>
+              </div>
+              <a href="GhiChu.dc.html" class="lnk">Mở trang</a>
+            </div>
+          </div>
+
+          <div class="grp">
+            <div class="gh">Trang mới<span class="n">1</span></div>
+            <div class="op">
+              <button type="button" class="ck {{ckB}}" onClick="{{tB}}" aria-label="Chọn thay đổi này" style="padding: 0">{{ckBm}}</button>
+              <div>
+                <b>Tóm tắt: Báo cáo kênh 90 ngày</b> <span class="m" style="font-size: 12px">· tom-tat/ · luôn có</span>
+                <div class="m" style="font-size: 12.5px; margin-top: 2px">5 ý chính, 3 số liệu kèm trang nguồn, liên kết tới [[kenh-youtube-q4]], [[video-ngan]]</div>
+              </div>
+              <button type="button" class="lnk">Xem</button>
+            </div>
+          </div>
+
+          <div class="grp">
+            <button type="button" class="gh" onClick="{{toggleMore}}" style="width: 100%; border: 0; background: transparent; text-align: left" aria-expanded="{{moreOpen}}">Bổ sung<span class="n">2 trang · {{moreHint}}</span></button>
+            <sc-if value="{{moreShow}}" hint-placeholder-val="{{ true }}">
+              <div>
+                <div class="op">
+                  <button type="button" class="ck {{ckC}}" onClick="{{tC}}" aria-label="Chọn thay đổi này" style="padding: 0">{{ckCm}}</button>
+                  <div>
+                    <b>Video ngắn</b> <span class="m" style="font-size: 12px">· chủ đề · thêm 2 ý</span>
+                    <div class="diff">
+                      <span class="add">Video dưới 60 giây có tỉ lệ xem hết 71%, cao hơn video dài 2,3 lần.<span class="cite">1</span></span>
+                      <span class="add">Khung giờ đăng tốt nhất: 20:00–22:00.<span class="cite">1</span></span>
+                    </div>
+                  </div>
+                  <a href="#" class="lnk">Mở trang</a>
+                </div>
+                <div class="op">
+                  <button type="button" class="ck {{ckD}}" onClick="{{tD}}" aria-label="Chọn thay đổi này" style="padding: 0">{{ckDm}}</button>
+                  <div>
+                    <b>Chị Hà</b> <span class="m" style="font-size: 12px">· người · thêm 1 ý</span>
+                    <div class="diff"><span class="add">Dựng 18 trên 24 video của kênh trong 90 ngày qua.<span class="cite">1</span></span></div>
+                  </div>
+                  <a href="GhiChu.dc.html" class="lnk">Mở trang</a>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <div class="grp">
+            <div class="op" style="border-top: 0">
+              <button type="button" class="ck {{ckE}}" onClick="{{tE}}" aria-label="Chọn thay đổi này" style="padding: 0">{{ckEm}}</button>
+              <div><b>Chỉ thêm liên kết</b> <span class="m" style="font-size: 12.5px">· + [[bao-cao-kenh-90-ngay]] ở 3 trang: Ra mắt khoá học AI, Tổng quan, Nhật ký 22/10</span></div>
+              <span></span>
+            </div>
+          </div>
+
+          <sc-if value="{{asking}}" hint-placeholder-val="{{ false }}">
+            <div class="grp" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
+              <b style="font-size: 13px">Nhờ Thủ thư sửa bản nạp</b>
+              <textarea aria-label="Điều cần sửa" style="width: 100%; box-sizing: border-box; min-height: 60px; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; font: inherit; font-size: 13px; background: var(--bg); color: var(--ink)">Ngân sách mới chỉ áp từ tháng 11; tháng 10 vẫn 15 triệu, ghi rõ hai mốc.</textarea>
+              <div style="display: flex; gap: 8px; justify-content: flex-end"><button type="button" class="b3" onClick="{{toggleAsk}}">Huỷ</button><button type="button" class="b1" style="height: 30px">Gửi Thủ thư</button></div>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="position: sticky; bottom: 0; border-top: 1px solid var(--line); background: var(--bg); padding: 12px 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+          <button type="button" class="b1">Đồng ý {{chosen}}/5 thay đổi</button>
+          <button type="button" class="b2" onClick="{{toggleAsk}}">Nhờ sửa</button>
+          <button type="button" class="b2">Chỉ lưu</button>
+          <button type="button" class="b3">Bỏ…</button>
+          <span class="m" style="margin-left: auto; font-size: 12px">Đồng ý: ghép vào wiki, một commit, hoàn tác được ở Nhật ký</span>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{show2}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; min-height: 100%">
+        <div style="padding: 18px 28px 14px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+            <h2 style="font-size: 20px">Xu hướng video ngắn 2026</h2>
+            <span class="pill" style="background: var(--accentSoft); color: var(--accent)">duyệt nhanh</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12.5px">
+            <span class="m">Telegram, chuyển tiếp · 24/10 21:40 · link, đã tải trang</span>
+            <button type="button" class="b2" style="height: 26px; font-size: 12px">Không gian: Cá nhân ▾</button>
+            <a href="#" style="font-size: 12.5px">Mở link ›</a>
+          </div>
+          <div style="background: var(--libSoft); border-radius: 10px; padding: 8px 12px; font-size: 13px"><b style="color: var(--lib)">Thủ thư tóm tắt</b> · Bài phân tích 5 xu hướng video ngắn 2026, 2 số liệu kèm nguồn gốc. <span class="m" style="font-size: 12px">· 0,002 USD</span></div>
+        </div>
+        <div style="flex: 1; padding: 16px 28px; display: flex; flex-direction: column; gap: 12px; max-width: 820px">
+          <div class="grp">
+            <div class="gh">Trang mới<span class="n">1</span></div>
+            <div class="op"><span class="ck on" style="color: #fff; font-size: 11px">✓</span><div><b>Tóm tắt: Xu hướng video ngắn 2026</b> <span class="m" style="font-size: 12px">· tom-tat/</span></div><button type="button" class="lnk">Xem</button></div>
+          </div>
+          <div class="grp">
+            <div class="gh">Bổ sung<span class="n">1 trang</span></div>
+            <div class="op"><span class="ck on" style="color: #fff; font-size: 11px">✓</span><div><b>Video ngắn</b> <span class="m" style="font-size: 12px">· thêm 1 ý</span><div class="diff"><span class="add">Xu hướng 2026: video dọc có phụ đề tự động chiếm 64% lượt xem.<span class="cite">2</span></span></div></div><a href="#" class="lnk">Mở trang</a></div>
+          </div>
+          <div class="m" style="font-size: 12.5px">Không có gì cần Tầu xem kỹ, nên bản nạp này cũng duyệt được trên Telegram.</div>
+        </div>
+        <div style="position: sticky; bottom: 0; border-top: 1px solid var(--line); background: var(--bg); padding: 12px 28px; display: flex; gap: 8px">
+          <button type="button" class="b1">Đồng ý 2/2 thay đổi</button><button type="button" class="b2">Nhờ sửa</button><button type="button" class="b2">Chỉ lưu</button><button type="button" class="b3">Bỏ…</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+      <div style="margin: auto; text-align: center; color: var(--muted); font-size: 13.5px; padding: 40px">Không có bản nạp nào chờ duyệt.<br><a href="NhatKyBoNao.dc.html">Xem nhật ký bộ não ›</a></div>
+    </sc-if>
   </main>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"state":{"editor":"enum","options":["co-muc","trong"],"default":"co-muc"},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
-    const theme = (this.state && this.state.theme) || this.props.theme || 'dark';
-    return { themeClass: 't-' + theme, toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const has = (this.props.state || 'co-muc') === 'co-muc';
+    const pick = s.pick || 1;
+    const off = s.off || {};
+    const ck = (k) => !off[k];
+    const flip = (k) => () => this.setState({ off: Object.assign({}, off, { [k]: !off[k] }) });
+    const more = s.more !== false;
+    const chosen = ['A', 'B', 'C', 'D', 'E'].filter(ck).length;
+    const v = {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      has: has,
+      empty: !has,
+      listSub: has ? '2 cần duyệt · 2 đang xử lý · 2 đã tự nạp' : 'chưa có gì',
+      adding: !!s.adding,
+      toggleAdd: () => this.setState({ adding: !s.adding }),
+      sel1: pick === 1 ? 'sel' : '',
+      sel2: pick === 2 ? 'sel' : '',
+      pick1: () => this.setState({ pick: 1 }),
+      pick2: () => this.setState({ pick: 2 }),
+      show1: has && pick === 1,
+      show2: has && pick === 2,
+      moreShow: more,
+      moreOpen: more ? 'true' : 'false',
+      moreHint: more ? 'thu gọn' : 'mở xem',
+      toggleMore: () => this.setState({ more: !more }),
+      asking: !!s.asking,
+      toggleAsk: () => this.setState({ asking: !s.asking }),
+      chosen: String(chosen)
+    };
+    for (const k of ['A', 'B', 'C', 'D', 'E']) {
+      v['ck' + k] = ck(k) ? 'on' : '';
+      v['ck' + k + 'm'] = ck(k) ? '✓' : '';
+      v['t' + k] = flip(k);
+    }
+    return v;
   }
 }
 </script>
