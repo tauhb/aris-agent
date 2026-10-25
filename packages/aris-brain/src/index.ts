@@ -44,7 +44,9 @@ import {
 } from './ask.js'
 import { Catalog, type Entry } from './catalog.js'
 import { fold, keyTerms, snippetOf } from './page.js'
-import { brainMap, MEMBER_GUIDE, mentioned, nudge, referenced } from './hints.js'
+import { brainMap, MEMBER_GUIDE, mentioned, nudge, referenced, STRONG_LINE } from './hints.js'
+import { findingRecord, runRecord, type Finding, type SoatRun } from './soat.js'
+import { SoatError, startSoat } from './soat-run.js'
 import { sweepMessage, VaultGit } from './git.js'
 import { batchRecord, isOpen, LIBRARIAN_DAILY_USD, type Batch } from './ingest.js'
 import { sttNotReady, transcribe, type SpeechToText } from '@aris/channels'
@@ -102,6 +104,8 @@ const SKIP_DIRS = new Set(['.git', '.obsidian', '.trash', 'node_modules'])
 const settingsRecord = z.object({
   /** Bot được đọc không gian Cá nhân, ngoài Aris và Thủ thư. */
   personal: z.array(z.string()),
+  /** Bot được "nhắc mạnh hơn" (soát bộ não: hay bỏ qua lời nhắc). */
+  strong: z.array(z.string()).optional(),
   /** Đã tạo Thủ thư một lần (người dùng xoá thì không tạo lại). */
   librarian: z.boolean().optional(),
 })
@@ -111,12 +115,24 @@ const ingestState = z.object({
   spendDay: z.string().optional(),
   spendUsd: z.number().optional(),
   diaryDone: z.record(z.string(), z.string()).optional(),
+  /** Ngày máy soát, tuần Thủ thư soát sâu gần nhất. */
+  soatDay: z.string().optional(),
+  soatWeek: z.string().optional(),
 })
 
 /** Lượt tra bộ não trong một ngày, theo bot (tầng 3 của chỉ dẫn). */
 const lookupRecord = z.object({
   day: z.string(),
-  bots: z.record(z.string(), z.object({ search: z.number(), read: z.number() })),
+  bots: z.record(
+    z.string(),
+    z.object({
+      search: z.number(),
+      read: z.number(),
+      /** Lượt có dòng nhắc trang (tầng 2) và trong đó bot có tra. */
+      nudged: z.number().optional(),
+      followed: z.number().optional(),
+    }),
+  ),
 })
 type Lookups = z.infer<typeof lookupRecord>
 
@@ -130,6 +146,8 @@ const brainDomain = defineDomain({
     asks: domainTable<string, Ask>(askRecord),
     ingest: domainTable<string, IngestState>(ingestState),
     lookups: domainTable<string, Lookups>(lookupRecord),
+    findings: domainTable<string, Finding>(findingRecord),
+    soat_runs: domainTable<string, SoatRun>(runRecord),
   },
 })
 
@@ -553,14 +571,51 @@ export async function apply(ctx: Context): Promise<void> {
     }
     return next()
   })
+  /** Phiên có tra bộ não trong lượt đang chạy (đếm bot bỏ qua lời nhắc). */
+  const turnLooked = new Set<string>()
   ctx.on('session/event', (session, event) => {
-    if (event.type === 'turn/end') turnHints.delete(session.id)
+    if (event.type !== 'turn/end') return
+    const h = turnHints.get(session.id)
+    if (h) countNudge(session.id, turnLooked.has(session.id))
+    turnHints.delete(session.id)
+    turnLooked.delete(session.id)
   })
 
   // Tầng 3: đếm lượt tra theo bot và ngày (giữ 60 ngày).
   const lookupsT = domain.table('lookups') as unknown as Table<Lookups>
   let lookupChain: Promise<unknown> = Promise.resolve()
+  const countNudge = (sessionId: string, followed: boolean) => {
+    const bot = readerOf(sessionId).id
+    lookupChain = lookupChain
+      .then(async () => {
+        const day = dayKey(new Date())
+        const cur = lookupsT.get(day) ?? { day, bots: {} }
+        const b = cur.bots[bot] ?? { search: 0, read: 0 }
+        await lookupsT.put(day, {
+          ...cur,
+          bots: {
+            ...cur.bots,
+            [bot]: { ...b, nudged: (b.nudged ?? 0) + 1, followed: (b.followed ?? 0) + (followed ? 1 : 0) },
+          },
+        })
+      })
+      .catch(() => undefined)
+  }
+  /** Lượt được nhắc / có tra trong 7 ngày theo bot. */
+  const lookups7d = () => {
+    const since = dayKey(new Date(Date.now() - 7 * 86_400_000))
+    const out: Record<string, { nudged: number; followed: number }> = {}
+    for (const [, v] of lookupsT.entries())
+      if (v.day >= since)
+        for (const [bot, b] of Object.entries(v.bots)) {
+          const o = (out[bot] ??= { nudged: 0, followed: 0 })
+          o.nudged += b.nudged ?? 0
+          o.followed += b.followed ?? 0
+        }
+    return out
+  }
   const countLookup = (sessionId: string | undefined, kind: 'search' | 'read') => {
+    if (sessionId) turnLooked.add(sessionId)
     const bot = readerOf(sessionId).id
     lookupChain = lookupChain
       .then(async () => {
@@ -576,6 +631,41 @@ export async function apply(ctx: Context): Promise<void> {
     for (const [k] of [...lookupsT.entries()]) if (k < cutoff) void lookupsT.delete(k)
     return () => undefined
   }, 'aris-brain: dọn lượt tra cũ')
+
+  // --- Soát bộ não (đợt 4a, bản vẽ 5.5) ------------------------------------------------------------
+  const soatT = domain.table('soat_runs') as unknown as Table<SoatRun>
+  const soat = startSoat({
+    ctx,
+    logger,
+    root,
+    git,
+    hasGit,
+    findings: domain.table('findings') as unknown as Table<Finding>,
+    runs: soatT,
+    state: () => ingestT.get('soat') ?? {},
+    saveState: (patch) => ingestT.put('soat', { ...(ingestT.get('soat') ?? {}), ...patch }),
+    catalog,
+    indexFile,
+    depts,
+    botName: (id) =>
+      bots()
+        ?.store.list()
+        .find((b) => b.id === id)?.name ?? id,
+    lookups: lookups7d,
+    open: async (bot) => {
+      const b = bots()
+      if (!b) throw new SoatError('Chưa có dịch vụ đội bot.')
+      return b.open(bot)
+    },
+    librarian: LIBRARIAN,
+    who,
+    ingest,
+    notify: async (md) =>
+      (
+        ctx.get('arisChannels') as { sendHome?(bot: string, md: string): Promise<string> } | undefined
+      )?.sendHome?.('aris', md),
+    today: () => dayKey(new Date()),
+  })
 
   ctx.effect(
     () =>
@@ -594,7 +684,9 @@ export async function apply(ctx: Context): Promise<void> {
                   .filter(Boolean)
                   .join('\n')
           const h = sid ? turnHints.get(sid) : undefined
-          return [base, h ? nudge(h) : ''].filter(Boolean).join('\n')
+          // Soát bộ não: bot hay bỏ qua lời nhắc thì lời dặn của riêng bot đó có thêm một câu.
+          const strong = settings().strong?.includes(r.id) ? STRONG_LINE : ''
+          return [base, strong, h ? nudge(h) : ''].filter(Boolean).join('\n')
         },
         interpolate: false,
       }),
@@ -864,6 +956,43 @@ export async function apply(ctx: Context): Promise<void> {
     turns: a.turns.map((t) => ({ ...t, sources: sourcesOf(t) })),
   })
 
+  async function soatOp(b: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const id = typeof b.id === 'string' ? b.id : ''
+    switch (b.op) {
+      case 'soat-run':
+        // Soát ngay: Thủ thư soát sâu rồi máy soát lại; chạy nền, màn 5.5 hỏi lại trạng thái.
+        if (soat.running()) throw new SoatError('Thủ thư đang soát, chờ xong đã.')
+        void soat
+          .deep()
+          .catch((e: unknown) => logger.warn('soát sâu: %s', String(e)))
+          .finally(() => void soat.machine())
+        await soat.machine()
+        return {}
+      case 'soat-dismiss':
+        await soat.dismiss(id)
+        return {}
+      case 'soat-restore':
+        await soat.restore(id)
+        return {}
+      case 'soat-fix':
+        return { batch: await soat.fix(id) }
+      case 'soat-relink':
+        return { changed: await soat.relinkTo(id, typeof b.to === 'string' ? b.to : '') }
+      case 'soat-move':
+        return { moved: await soat.move(id, typeof b.to === 'string' ? b.to : 'chung') }
+      case 'soat-strong': {
+        const bot = typeof b.bot === 'string' ? b.bot : ''
+        if (!bot) throw new SoatError('Thiếu bot.')
+        const cur = settings().strong ?? []
+        const next = b.on === true ? [...new Set([...cur, bot])] : cur.filter((x) => x !== bot)
+        await settingsT.put('main', { ...settings(), strong: next })
+        return { strong: next }
+      }
+      default:
+        throw new SoatError('op không hợp lệ')
+    }
+  }
+
   async function askOp(b: Record<string, unknown>): Promise<Record<string, unknown>> {
     const id = typeof b.id === 'string' ? b.id : ''
     const text = typeof b.q === 'string' ? b.q : ''
@@ -1068,6 +1197,41 @@ export async function apply(ctx: Context): Promise<void> {
                 pages: list.map((e) => ({ ...view(e), readable: can(e) })),
               })
             }
+            // Soát bộ não (5.5): phát hiện, các lần soát, lịch; `soat=summary` cho thẻ trong Hộp duyệt.
+            const soatQ = q.get('soat')
+            if (soatQ !== null) {
+              const list = soat.list()
+              const open = list.filter((f) => f.status !== 'bo-qua')
+              if (soatQ === 'summary') {
+                const counts: Record<string, number> = {}
+                for (const f of open.filter((x) => x.status === 'mo'))
+                  counts[f.kind] = (counts[f.kind] ?? 0) + 1
+                return json({
+                  open: open.filter((x) => x.status === 'mo').length,
+                  counts,
+                  runs: soat.recentRuns().slice(0, 1),
+                })
+              }
+              const titleOf = (p: string) => catalog.get(p)?.title ?? p.split('/').pop()!.replace(/\.md$/, '')
+              return json({
+                findings: list.map((f) => ({
+                  ...f,
+                  pageInfo: f.pages.map((p) => ({ path: p, title: titleOf(p), exists: !!catalog.get(p) })),
+                  batchStatus: f.batch ? (ingest.all().find((b) => b.id === f.batch)?.status ?? null) : null,
+                })),
+                dismissed: list.length - open.length,
+                runs: soat.recentRuns(),
+                running: soat.running(),
+                schedule: { machineHour: 6, deepDay: 0, deepHour: 21, capUsd: 0.3 },
+                strong: settings().strong ?? [],
+                departments: depts().map((d) => ({ id: d.id, name: d.name })),
+                bots: (bots()?.store.list() ?? []).map((b) => ({
+                  id: b.id,
+                  name: b.name,
+                  mascot: (b as { mascot?: string }).mascot,
+                })),
+              })
+            }
             if (q.get('asks') !== null)
               return json({
                 asks: asks.list().map((a) => {
@@ -1231,6 +1395,19 @@ export async function apply(ctx: Context): Promise<void> {
                 return json({ ok: true, ...(await ingestOp(b)) })
               } catch (e) {
                 if (e instanceof IngestError) return json({ error: e.message }, 409)
+                throw e
+              }
+            case 'soat-run':
+            case 'soat-dismiss':
+            case 'soat-restore':
+            case 'soat-fix':
+            case 'soat-relink':
+            case 'soat-move':
+            case 'soat-strong':
+              try {
+                return json({ ok: true, ...(await soatOp(b)) })
+              } catch (e) {
+                if (e instanceof SoatError || e instanceof IngestError) return json({ error: e.message }, 409)
                 throw e
               }
             case 'ask':

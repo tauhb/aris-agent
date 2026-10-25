@@ -60,9 +60,19 @@ interface SkillItem {
   at: string
 }
 
-type Kind = 'action' | 'memory' | 'skill'
+/** Tóm tắt soát bộ não (`@aris/brain`, `?soat=summary`): một thẻ khi còn phát hiện chưa xử lý. */
+interface SoatSummary {
+  open: number
+  counts: Record<string, number>
+  runs: { at: string; by: string }[]
+}
+
+type Kind = 'action' | 'memory' | 'skill' | 'soat'
 type Row =
-  { type: 'action'; a: ActionItem } | { type: 'memory'; m: MemoryItem } | { type: 'skill'; s: SkillItem }
+  | { type: 'action'; a: ActionItem }
+  | { type: 'memory'; m: MemoryItem }
+  | { type: 'skill'; s: SkillItem }
+  | { type: 'soat'; b: SoatSummary }
 
 /** Yêu cầu quyền tự từ chối sau 15 phút (như thẻ Telegram). */
 const ACTION_MINUTES = 15
@@ -85,9 +95,10 @@ function useInbox() {
   const [actions, setActions] = useState<ActionItem[] | null>(null)
   const [memories, setMemories] = useState<MemoryItem[] | null>(null)
   const [skills, setSkills] = useState<SkillItem[] | null>(null)
+  const [soat, setSoat] = useState<SoatSummary | null>(null)
   const [done, setDone] = useState({ actions: 0, memories: 0, skills: 0 })
   const load = useCallback(async () => {
-    const [a, m, s] = await Promise.all([
+    const [a, m, s, b] = await Promise.all([
       fetch(url('api/aris/commander?approvals=all'), { credentials: 'same-origin' })
         .then((r) => (r.ok ? (r.json() as Promise<{ approvals: ActionItem[]; doneToday?: number }>) : null))
         .catch(() => null),
@@ -97,7 +108,11 @@ function useInbox() {
       fetch(url('api/aris/skills?pending=all'), { credentials: 'same-origin' })
         .then((r) => (r.ok ? (r.json() as Promise<{ pending: SkillItem[]; doneToday: number }>) : null))
         .catch(() => null),
+      fetch(url('api/aris/brain?soat=summary'), { credentials: 'same-origin' })
+        .then((r) => (r.ok ? (r.json() as Promise<SoatSummary>) : null))
+        .catch(() => null),
     ])
+    setSoat(b && b.open > 0 ? b : null)
     if (a) setActions(a.approvals)
     if (m) setMemories(m.pending)
     if (s) setSkills(s.pending)
@@ -112,7 +127,7 @@ function useInbox() {
     const timer = setInterval(() => void load(), 4000)
     return () => clearInterval(timer)
   }, [load])
-  return { actions, memories, skills, done: done.actions + done.memories + done.skills, reload: load }
+  return { actions, memories, skills, soat, done: done.actions + done.memories + done.skills, reload: load }
 }
 
 const hhmm = (iso: string) => {
@@ -126,12 +141,29 @@ const daysLeft = (m: MemoryItem) =>
 /** Đề xuất skill tự bỏ sau 7 ngày (như ký ức). */
 const skillDaysLeft = (s: SkillItem) =>
   Math.max(0, Math.ceil((Date.parse(s.at) + 7 * 86_400_000 - Date.now()) / 86_400_000))
+/** "2 mâu thuẫn, 5 liên kết gãy…" từ số phát hiện theo loại. */
+const SOAT_ORDER = [
+  'mau-thuan',
+  'nhan-dinh-cu',
+  'lien-ket-gay',
+  'chua-co-trang',
+  'phong-da-xoa',
+  'bot-bo-qua',
+  'mo-coi',
+  'thieu-tom-tat',
+  'trung-ten',
+  'lau-chua-cap-nhat',
+]
+const soatLine = (t: T, b: SoatSummary) =>
+  SOAT_ORDER.filter((k) => b.counts[k])
+    .map((k) => t(`ap.soatKind.${k}`, { n: b.counts[k] }))
+    .join(', ')
 const actionLabel = (t: T, a: ActionItem) =>
   KINDS.includes(a.kind) ? t(`ap.do.${a.kind}`) : t('ap.do.other', { tool: a.tool ?? a.kind })
 
 export function Approvals({ t, nav }: PageProps) {
   const team = useTeamData()
-  const { actions, memories, skills, done, reload } = useInbox()
+  const { actions, memories, skills, soat, done, reload } = useInbox()
   const [filter, setFilter] = useState<'all' | Kind>('all')
   const [selected, setSelected] = useState<string | null>(null)
   const botOf = (id: string): BotData | undefined => team?.bots.find((b) => b.id === id)
@@ -139,23 +171,30 @@ export function Approvals({ t, nav }: PageProps) {
     ...(actions ?? []).map((a) => ({ type: 'action' as const, a })),
     ...(memories ?? []).map((m) => ({ type: 'memory' as const, m })),
     ...(skills ?? []).map((s) => ({ type: 'skill' as const, s })),
+    ...(soat ? [{ type: 'soat' as const, b: soat }] : []),
   ]
-  const idOf = (r: Row) => (r.type === 'action' ? r.a.id : r.type === 'memory' ? r.m.id : r.s.id)
-  const botIdOf = (r: Row) => (r.type === 'action' ? r.a.bot : r.type === 'memory' ? r.m.bot : r.s.bot)
+  const idOf = (r: Row) =>
+    r.type === 'action' ? r.a.id : r.type === 'memory' ? r.m.id : r.type === 'skill' ? r.s.id : 'soat'
+  const botIdOf = (r: Row) =>
+    r.type === 'action' ? r.a.bot : r.type === 'memory' ? r.m.bot : r.type === 'skill' ? r.s.bot : 'b-thu-thu'
   const titleOf = (r: Row) =>
     r.type === 'action'
       ? actionLabel(t, r.a)
       : r.type === 'memory'
         ? t('ap.memTitle')
-        : t('ap.skillTitle', { name: r.s.name, v: r.s.version })
+        : r.type === 'skill'
+          ? t('ap.skillTitle', { name: r.s.name, v: r.s.version })
+          : t('ap.soatTitle')
   const subOf = (r: Row) =>
     r.type === 'action'
       ? (r.a.target ?? r.a.tool ?? '')
       : r.type === 'memory'
         ? `“${r.m.text}”`
-        : r.s.base
-          ? t('ap.skillPatch', { add: r.s.stat.add, del: r.s.stat.del })
-          : t('ap.skillNew')
+        : r.type === 'soat'
+          ? soatLine(t, r.b)
+          : r.s.base
+            ? t('ap.skillPatch', { add: r.s.stat.add, del: r.s.stat.del })
+            : t('ap.skillNew')
   const shown = rows.filter((r) => filter === 'all' || r.type === filter)
   const current = shown.find((r) => idOf(r) === selected) ?? shown[0]
   const chips: ['all' | Kind, string][] = [
@@ -163,6 +202,7 @@ export function Approvals({ t, nav }: PageProps) {
     ['action', t('ap.action', { n: actions?.length ?? 0 })],
     ['memory', t('ap.memory', { n: memories?.length ?? 0 })],
     ['skill', t('ap.skill', { n: skills?.length ?? 0 })],
+    ...(soat ? [['soat', t('ap.soat')] as ['soat', string]] : []),
   ]
   return (
     <div className="ap-split">
@@ -213,7 +253,9 @@ export function Approvals({ t, nav }: PageProps) {
                   <span className={r.type === 'action' ? 'ap-due warn' : 'ap-due'}>
                     {r.type === 'action'
                       ? t('ap.minutesLeft', { n: minutesLeft(r.a) })
-                      : t('ap.daysLeft', { n: r.type === 'memory' ? daysLeft(r.m) : skillDaysLeft(r.s) })}
+                      : r.type === 'soat'
+                        ? t('ap.soatOpen', { n: r.b.open })
+                        : t('ap.daysLeft', { n: r.type === 'memory' ? daysLeft(r.m) : skillDaysLeft(r.s) })}
                   </span>
                 </span>
                 <span className="a-muted ap-li-sub">
@@ -253,6 +295,21 @@ export function Approvals({ t, nav }: PageProps) {
             nav={nav}
             onDone={reload}
           />
+        )}
+        {current?.type === 'soat' && (
+          <div className="ap-soatcard">
+            <Mascot id="trang-giay" size={44} />
+            <h2>{t('ap.soatTitle')}</h2>
+            <div>{soatLine(t, current.b)}</div>
+            <div className="a-muted" style={{ fontSize: 13 }}>
+              {t('ap.soatHint')}
+            </div>
+            <div>
+              <Button variant="primary" onClick={() => nav.go('brain', { view: 'soat' })}>
+                {t('ap.soatOpenBtn')}
+              </Button>
+            </div>
+          </div>
         )}
         {current?.type === 'skill' && (
           <SkillDetail

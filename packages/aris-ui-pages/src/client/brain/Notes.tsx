@@ -679,6 +679,14 @@ export function Notes({ t, nav, params }: PageProps) {
       >
         {t('nb.toLog')}
       </button>
+      <button
+        type="button"
+        className="ap-link"
+        style={{ alignSelf: 'flex-start' }}
+        onClick={() => nav.go('brain', { view: 'soat' })}
+      >
+        {t('nb.toSoat')}
+      </button>
     </aside>
   )
 

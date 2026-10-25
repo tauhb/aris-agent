@@ -35,6 +35,7 @@ import {
   type OpKind,
 } from './ingest.js'
 import { parsePage } from './page.js'
+import { soatPrompt } from './soat.js'
 import { dayKey, SPACES, type Space } from './vault.js'
 
 /** Tệp gửi vào lớn hơn chừng này thì từ chối. */
@@ -56,6 +57,9 @@ export interface IngestState {
   spendUsd?: number | undefined
   /** Ngày đã tự nạp nhật ký, theo không gian. */
   diaryDone?: Record<string, string> | undefined
+  /** Ngày máy soát, tuần Thủ thư soát sâu gần nhất (đợt 4a). */
+  soatDay?: string | undefined
+  soatWeek?: string | undefined
 }
 
 export interface IngestDeps {
@@ -386,6 +390,29 @@ export function startIngest(d: IngestDeps) {
     return b
   }
 
+  /** Bản nạp loại "soát" (đợt 4a): Thủ thư sửa wiki theo một phát hiện; duyệt, ghép, hoàn tác như mọi bản nạp. */
+  async function addSoat(input: { space: Space; title: string; task: string }) {
+    const at = now()
+    const title = `Soát: ${input.title}`.slice(0, 120)
+    const rel = `hop-thu-vao/soat-${inboxName(at, input.title)}`
+    await mkdir(join(root, 'hop-thu-vao'), { recursive: true })
+    await writeFile(join(root, rel), `# ${title}\n\n${input.task.trim()}\n`)
+    const id = newId()
+    const b: Batch = {
+      id,
+      createdAt: at.toISOString(),
+      updatedAt: at.toISOString(),
+      status: 'moi',
+      source: { path: rel, title, kind: 'soat', from: 'tu-dong' },
+      space: input.space,
+      ops: [],
+      cost: 0,
+    }
+    await batches.put(id, b)
+    void tick()
+    return b
+  }
+
   // --- Lập bản nạp ---------------------------------------------------------------------------------
   let busy = false
   async function tick() {
@@ -466,16 +493,28 @@ export function startIngest(d: IngestDeps) {
         content: [
           {
             type: 'text',
-            text: librarianPrompt({
-              rules: await readText('AGENTS.md'),
-              spaceRules: await readText(`${space}/AGENTS.md`),
-              index: await readText(`${space}/index.md`),
-              space,
-              dept: b.dept,
-              source: { path: b.source.path, title: b.source.title, text, kind: b.source.kind },
-              revise: b.revise,
-              today: today(),
-            }),
+            text:
+              b.source.kind === 'soat'
+                ? soatPrompt({
+                    rules: await readText('AGENTS.md'),
+                    spaceRules: await readText(`${space}/AGENTS.md`),
+                    index: await readText(`${space}/index.md`),
+                    space,
+                    root: `${space}/wiki/`,
+                    task: text,
+                    revise: b.revise,
+                    today: today(),
+                  })
+                : librarianPrompt({
+                    rules: await readText('AGENTS.md'),
+                    spaceRules: await readText(`${space}/AGENTS.md`),
+                    index: await readText(`${space}/index.md`),
+                    space,
+                    dept: b.dept,
+                    source: { path: b.source.path, title: b.source.title, text, kind: b.source.kind },
+                    revise: b.revise,
+                    today: today(),
+                  }),
           },
         ],
       },
@@ -651,6 +690,12 @@ export function startIngest(d: IngestDeps) {
   /** Dời nguồn từ Hộp thư vào sang `nguon/<tháng>/` của không gian; commit riêng. */
   async function storeSource(b: Batch): Promise<Batch> {
     if (!b.source.path.startsWith('hop-thu-vao/') || !b.space) return b
+    // Yêu cầu soát không phải nguồn: xoá khỏi Hộp thư vào, không lưu.
+    if (b.source.kind === 'soat') {
+      await rm(join(root, b.source.path), { force: true })
+      await d.indexFile(b.source.path)
+      return b
+    }
     const month = dayKey(now()).slice(0, 7)
     const file = basename(b.source.path)
     let dest = `${b.space}/nguon/${month}/${file}`
@@ -728,8 +773,8 @@ export function startIngest(d: IngestDeps) {
     const name = basename(b.source.path, extname(b.source.path))
     const log = await appendLog(
       space,
-      auto ? 'tự nạp' : 'nạp',
-      `[[${name}]] → ${written.length} trang${conflicts.length ? `, ${conflicts.length} trang chưa ghép` : ''}`,
+      b.source.kind === 'soat' ? 'soát' : auto ? 'tự nạp' : 'nạp',
+      `${b.source.kind === 'soat' ? b.source.title.replace(/^Soát: /, '') : `[[${name}]]`} → ${written.length} trang${conflicts.length ? `, ${conflicts.length} trang chưa ghép` : ''}`,
     )
     const sha = await commit(`${auto ? 'Tự nạp' : 'Nạp'}: ${b.source.title}`, [...written, index, log])
     return put({
@@ -906,6 +951,9 @@ export function startIngest(d: IngestDeps) {
     on,
     add,
     addFile,
+    addSoat,
+    rebuildIndex,
+    appendLog,
     approve,
     keep,
     drop,

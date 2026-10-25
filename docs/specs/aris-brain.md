@@ -332,6 +332,35 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
 - Lỗi tìm ra khi chạy thử: quy tắc chữ trả `null` khi không khớp (dsh cần `undefined`) làm hỏng nhãn trong tin của
   người dùng.
 
+## Đợt 4a — Soát bộ não (bản vẽ 5.5, xong 25/10)
+
+- Máy soát (không gọi model) mỗi ngày từ 06:00: liên kết gãy, tên nhắc từ 3 lần hay ở nhiều trang mà chưa có
+  trang, trang mồ côi (trừ trang tóm tắt nguồn), tên tệp trùng trong một không gian (trừ tên bắt đầu `_`), trang
+  wiki thiếu nhãn `tom-tat` hay chú thích nguồn, trang lâu chưa cập nhật (trang tóm tắt nguồn mới hơn 7 ngày trỏ tới),
+  phòng đã xoá còn trang, bot bỏ qua lời nhắc (từ 5 lượt được nhắc trong 7 ngày mà tra dưới một nửa). Đọc toàn văn
+  tệp trên đĩa (chỉ mục bỏ nhãn đầu trang). Liên kết trong nguồn không xét (nguồn bất biến). So tên không dấu, khoảng
+  trắng như gạch ngang ("Nhà in" = `nha-in`).
+- Thủ thư soát sâu Chủ nhật từ 21:00: đọc trang wiki đổi trong 7 ngày và trang nối với chúng (tối đa 30), ghi mâu
+  thuẫn hay nhận định cũ bằng công cụ `brain_finding` (kèm trích nguyên văn); trần 0,30 USD mỗi lần (vượt thì dừng),
+  tính riêng với trần nạp; tối đa 15 phút. Sau lần soát tuần, Aris gửi một tin Telegram tóm tắt.
+- Mỗi phát hiện có mã ổn định theo loại và đối tượng: Bỏ qua thì không báo lại (xem lại và Đưa lại được); máy không
+  còn thấy thì gỡ; phát hiện của Thủ thư chỉ gỡ khi Thủ thư soát lại.
+- Nút xử lý: Nhờ Thủ thư sửa / tạo trang / nối ⇒ bản nạp loại `soat` (lời nhờ riêng, không viết trang tóm tắt; khi
+  ghép hay chỉ lưu thì xoá tệp yêu cầu, không lưu thành nguồn; `log.md` ghi "soát"). Sửa liên kết gãy thành một trang
+  có sẵn (sửa ngay, commit "<tên> sửa liên kết"). Dời trang của phòng đã xoá sang phần chung hay một phòng (một commit,
+  xoá `_phong-ban.md` cũ, viết lại mục lục Công ty). "Nhắc mạnh hơn" thêm một câu vào lời dặn bộ não của riêng bot.
+- Đếm lượt được nhắc / có tra theo bot và ngày trong bảng `lookups` (tầng 3 của đợt 3b).
+- Màn 5.5 dữ liệu thật theo bản vẽ (lối vào "Soát bộ não ›" ở 5.1); loại "Soát bộ não" trong Hộp duyệt khi còn phát
+  hiện chưa xử lý.
+- Chạy thử thật: máy soát ra 12 phát hiện, trong đó 8 "thiếu tóm tắt" là báo sai vì đọc thân trang từ chỉ mục (đã bỏ
+  nhãn đầu trang); sửa xong còn 4 (1 liên kết gãy `nhat-ky-mau`, 1 trang mồ côi, 1 thiếu nguồn, 1 tên trùng giữa nguồn
+  PDF và trang tóm tắt cũ). Thủ thư soát sâu: kho khớp nhau, 0,029 USD, tự nêu ngân sách tháng 11 thiếu 1 triệu nhưng
+  không coi là mâu thuẫn. Sửa thử trang In ấn thành "1.000 tờ" ⇒ Thủ thư ghi mâu thuẫn với báo giá (2.000 tờ) kèm trích
+  dẫn, 0,01 USD; Nhờ Thủ thư sửa ⇒ bản nạp soát một thay đổi "sửa ý cũ", duyệt kỹ; Đồng ý ⇒ trang về 2.000 tờ, commit
+  "Nạp: Soát: …". Hộp duyệt hiện thẻ Soát bộ não. Bật, tắt "Nhắc mạnh hơn" đúng.
+- Chưa thử thật: sửa liên kết, dời trang phòng đã xoá (chưa có phòng nào bị xoá), bot bỏ qua lời nhắc (chưa đủ 5 lượt),
+  tin Telegram tuần (lần soát tuần tự chạy tối Chủ nhật).
+
 ## Đã chốt (25/10)
 
 - Duyệt khi nạp: mặc định {you} duyệt ở Hộp thư vào; `/note` và nhật ký của {you} tự nạp.

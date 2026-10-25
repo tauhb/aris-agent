@@ -8,6 +8,15 @@ import { Catalog } from './catalog.js'
 import { sweepMessage, VaultGit } from './git.js'
 import { askPrompt, citations, scopeLabel } from './ask.js'
 import { brainMap, GUEST_MARK, mentioned, nudge, referenced, type PageRef } from './hints.js'
+import {
+  fixTask,
+  machineFindings,
+  mergeFindings,
+  relink,
+  weekKey,
+  type Finding,
+  type SoatPage,
+} from './soat.js'
 import { fold, keyTerms, linksOf, parsePage, snippetOf } from './page.js'
 import { ensureVault, placeOf, slugOf } from './vault.js'
 
@@ -281,5 +290,106 @@ describe('chỉ dẫn tra bộ não', () => {
     const n = nudge({ granted: [pages[1]!], named: [pages[0]!] })
     expect(n).toContain('được đọc trong lượt này (brain_read): [[kenh-youtube-q4]]')
     expect(n).toContain('nhắc tới trang có trong bộ não: [[chi-ha]] Chị Hà')
+  })
+})
+
+describe('soát bộ não', () => {
+  const day = 86_400_000
+  const pg = (path: string, body: string, extra: Partial<SoatPage> = {}): SoatPage => {
+    const place = placeOf(path)
+    const name = path.split('/').pop()!.replace(/\.md$/, '')
+    return {
+      path,
+      name,
+      title: /^# (.+)$/m.exec(body)?.[1] ?? name,
+      space: place.space,
+      layer: place.layer,
+      dept: place.dept,
+      group: place.group,
+      mtime: 100 * day,
+      body,
+      ...extra,
+    }
+  }
+  const pages = [
+    pg(
+      'ca-nhan/wiki/nguoi/chi-ha.md',
+      '---\ntom-tat: Editor\n---\n# Chị Hà\n\nDựng cho [[kenh-youtube-q4]].[^1] Xem [[nhat-ky-mau]].\n\n[^1]: [[goi-25-10]]',
+    ),
+    pg(
+      'ca-nhan/wiki/du-an/kenh-youtube-q4.md',
+      '---\ntom-tat: Kênh\n---\n# Kênh YouTube Q4\n\n[[chi-ha]] dựng, in ở [[nha-in]] và [[nha-in]], [[Nhà in]].[^1]',
+      {
+        mtime: 10 * day,
+      },
+    ),
+    pg('ca-nhan/wiki/chu-de/lich-tap.md', '# Lịch tập\n\nChạy bộ.'),
+    pg(
+      'ca-nhan/wiki/tom-tat/tom-tat-goi.md',
+      '---\ntom-tat: Gọi\n---\n# Tóm tắt\n\n[[kenh-youtube-q4]] [^1]',
+      { mtime: 50 * day },
+    ),
+    pg('ca-nhan/nguon/2026-10/goi-25-10.md', '# Gọi 25/10\n\n[[khong-sua-duoc]]'),
+    pg('cong-ty/wiki/phong-ban/su-kien/_phong-ban.md', '# Sự kiện'),
+    pg('cong-ty/wiki/phong-ban/su-kien/quy-trinh/webinar.md', '---\ntom-tat: W\n---\n# Webinar\n\n[^1]'),
+  ]
+  const found = machineFindings({
+    pages,
+    depts: ['tang-truong'],
+    lookups: { 'b-minh': { nudged: 10, followed: 3 }, aris: { nudged: 12, followed: 11 } },
+    botName: (id) => (id === 'b-minh' ? 'Minh' : id),
+  })
+  const of = (k: string) => found.filter((f) => f.kind === k)
+  it('liên kết gãy, tên nhắc nhiều chưa có trang; bỏ qua liên kết trong nguồn (bất biến)', () => {
+    expect(of('lien-ket-gay').map((f) => f.target)).toEqual(['nhat-ky-mau'])
+    expect(of('chua-co-trang').map((f) => [f.target, f.count])).toEqual([['nha-in', 3]])
+    expect(found.some((f) => f.target === 'khong-sua-duoc')).toBe(false)
+  })
+  it('mồ côi, thiếu tóm tắt hay nguồn, lâu chưa cập nhật, phòng đã xoá, bot bỏ qua lời nhắc', () => {
+    expect(of('mo-coi').map((f) => f.title)).toEqual(['Lịch tập', 'Webinar'])
+    expect(of('thieu-tom-tat').map((f) => [f.title, f.detail])).toEqual([['Lịch tập', 'tom-tat,nguon']])
+    expect(of('lau-chua-cap-nhat').map((f) => f.title)).toEqual(['Kênh YouTube Q4'])
+    expect(of('phong-da-xoa').map((f) => [f.target, f.pages])).toEqual([
+      ['su-kien', ['cong-ty/wiki/phong-ban/su-kien/quy-trinh/webinar.md']],
+    ])
+    expect(of('bot-bo-qua').map((f) => [f.title, f.stats])).toEqual([['Minh', { nudged: 10, followed: 3 }]])
+  })
+  it('gộp lần soát: giữ bỏ qua và ngày thấy đầu; máy không còn thấy thì gỡ, phát hiện Thủ thư giữ', () => {
+    const prev: Finding[] = [
+      { ...found[0]!, status: 'bo-qua', firstSeen: 'a', lastSeen: 'a' },
+      {
+        id: 'cu',
+        kind: 'mo-coi',
+        by: 'may',
+        title: 'x',
+        pages: [],
+        status: 'mo',
+        firstSeen: 'a',
+        lastSeen: 'a',
+      },
+      {
+        id: 'tt',
+        kind: 'mau-thuan',
+        by: 'thu-thu',
+        title: 'y',
+        pages: [],
+        status: 'mo',
+        firstSeen: 'a',
+        lastSeen: 'a',
+      },
+    ]
+    const r = mergeFindings(prev, found, 'may', 'b')
+    expect(r.keep[0]).toMatchObject({ status: 'bo-qua', firstSeen: 'a', lastSeen: 'b' })
+    expect(r.drop).toEqual(['cu'])
+  })
+  it('sửa liên kết giữ chữ hiện và mục; tuần; lời nhờ sửa', () => {
+    expect(relink('a [[nha-in]] b [[Nhà In|nhà in]] c [[nha-in#gia]] [[khac]]', 'nha-in', 'in-an')).toEqual({
+      text: 'a [[in-an]] b [[in-an|nhà in]] c [[in-an#gia]] [[khac]]',
+      n: 3,
+    })
+    expect(weekKey(new Date(2026, 9, 25))).toBe('2026-W43')
+    expect(
+      fixTask(of('chua-co-trang')[0]! as Finding, (p) => p.split('/').pop()!.replace('.md', '')),
+    ).toContain('Trang [[nha-in]] được nhắc 3 lần')
   })
 })

@@ -59,7 +59,7 @@ export const batchRecord = z.object({
     /** Đường dẫn nguồn trong kho (trong `hop-thu-vao/`, hay nhật ký). */
     path: z.string(),
     title: z.string(),
-    kind: z.enum(['tai-lieu', 'link', 'ghi-chu', 'nhat-ky', 'anh', 'ghi-am']),
+    kind: z.enum(['tai-lieu', 'link', 'ghi-chu', 'nhat-ky', 'anh', 'ghi-am', 'soat']),
     from: z.enum(['thu-muc', 'web', 'note', 'telegram', 'bot', 'tu-dong']),
     url: z.string().optional(),
     /** Bot gửi nguồn (khi `from` là `bot`), hay bot Telegram nhận nguồn (khi `from` là `telegram`). */
