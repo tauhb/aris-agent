@@ -397,7 +397,7 @@ export function Ask({ t, nav, params }: PageProps) {
 
       <main className="ap-askmain">
         <div className="ap-askbar">
-          <span className="a-muted">{t('ask.scope')}</span>
+          <span className="a-muted ap-asklbl">{t('ask.scope')}</span>
           <div className="ap-seg" role="radiogroup" aria-label={t('ask.scope')}>
             {(['all', 'ca-nhan', 'cong-ty'] as const).map((s) => {
               const on = locked ? (full.scope.space ?? 'all') === s : space === s
@@ -419,6 +419,7 @@ export function Ask({ t, nav, params }: PageProps) {
           {(locked ? full.scope.space === 'cong-ty' : space === 'cong-ty') && (
             <select
               aria-label={t('ask.dept')}
+              title={t('ask.deptHint')}
               value={locked ? (full.scope.dept ?? '') : dept}
               disabled={locked}
               onChange={(e) => setDept(e.target.value)}
@@ -439,7 +440,8 @@ export function Ask({ t, nav, params }: PageProps) {
             disabled={locked}
             onClick={() => setMemory(!memory)}
           >
-            {t('ask.memory')}
+            <span className="full">{t('ask.memory')}</span>
+            <span className="short">{t('ask.memoryShort')}</span>
           </button>
           {locked && <span className="a-muted ap-asklock">{t('ask.locked')}</span>}
         </div>

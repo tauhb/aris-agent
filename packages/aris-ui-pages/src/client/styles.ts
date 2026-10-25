@@ -333,16 +333,17 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .aris .ap-hq.on{background:var(--a-panel);box-shadow:0 1px 2px rgba(0,0,0,.05),0 0 0 1px var(--a-line)}
 .ap-hq .s{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--a-muted)}
 .ap-askfoot{font-size:12px;padding:10px 8px 0;border-top:1px solid var(--a-line)}
-.ap-askmain{flex:999 1 520px;min-width:0;min-height:0;display:flex;flex-direction:column}
-.ap-askbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 24px 10px;border-bottom:1px solid var(--a-line);font-size:12.5px}
+.ap-askmain{flex:999 1 520px;min-width:0;min-height:0;display:flex;flex-direction:column;container-type:inline-size}
+.ap-askbar{display:flex;flex-wrap:nowrap;align-items:center;gap:10px;padding:14px 24px 10px;border-bottom:1px solid var(--a-line);font-size:12.5px;white-space:nowrap;min-width:0;overflow-x:auto;scrollbar-width:none}
 .ap-seg{display:flex;gap:3px;padding:3px;border-radius:11px;background:var(--a-panel2)}
 .aris .ap-seg button{border:0;border-radius:8px;padding:5px 12px;background:transparent;font:inherit;font-size:12.5px;color:var(--a-muted)}
 .aris .ap-seg button.on{background:var(--a-panel);color:var(--a-ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--a-line)}
 .aris .ap-seg button:disabled,.aris .ap-memtog:disabled{cursor:default}
-.aris .ap-askbar select{height:30px;border:1px solid var(--a-line);border-radius:8px;background:var(--a-panel);color:var(--a-ink);font:inherit;font-size:12.5px;padding:0 8px;width:auto}
+.aris .ap-askbar select{height:30px;border:1px solid var(--a-line);border-radius:8px;background:var(--a-panel);color:var(--a-ink);font:inherit;font-size:12.5px;padding:0 8px;width:auto;max-width:170px;flex:0 0 auto;min-width:120px}
+.aris .ap-askbox textarea:focus,.aris .ap-askbox textarea:focus-visible{outline:none;box-shadow:none}
 .aris .ap-memtog{border:1px solid var(--a-line);border-radius:999px;padding:4px 11px;font:inherit;font-size:12.5px;background:var(--a-panel);color:var(--a-muted)}
 .aris .ap-memtog.on{border-color:var(--ap-mem);color:var(--ap-mem);background:var(--ap-memSoft);font-weight:600}
-.ap-asklock{font-size:12px}
+.ap-asklock{font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .ap-askflow{flex:1;min-height:0;overflow-y:auto;padding:20px 28px;display:flex;flex-direction:column;gap:18px}
 .ap-turn{display:flex;flex-direction:column;gap:14px;max-width:780px}
 .ap-q .sc{display:block;font-size:11.5px;color:var(--a-muted);margin-top:3px;text-align:right}
@@ -380,6 +381,10 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-srcex mark{background:color-mix(in srgb,#FACC15 35%,transparent);color:var(--a-ink);border-radius:3px;padding:0 2px}
 .ap-asklegend{margin-top:auto;font-size:12px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--a-line);padding-top:12px}
 .ap-asklegend div{display:flex;flex-wrap:wrap;gap:5px}
+@container (max-width:760px){.ap-askbar .ap-asklock{display:none}}
+@container (max-width:600px){.ap-askbar .ap-asklbl,.ap-memtog .full{display:none}.ap-askbar{gap:8px;padding-left:16px;padding-right:16px}.aris .ap-seg button{padding:5px 9px}.aris .ap-askbar select{max-width:130px;min-width:100px}}
+.ap-memtog .short{display:none}
+@container (max-width:600px){.ap-memtog .short{display:inline}}
 .aris .ap-picker{display:inline-flex;align-items:center;gap:6px;font:inherit;color:inherit;border-radius:8px;padding:2px 6px;margin-left:-6px}
 .aris .ap-picker:hover{background:var(--a-hover)}
 .aris .ap-tn-inbox{background:var(--a-warnSoft)}
