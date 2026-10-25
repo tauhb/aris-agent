@@ -354,6 +354,8 @@ Code, Codex làm bot ngoài: cùng một lõi, một bộ dữ liệu.
 
 ## Giai đoạn 7 · Cứng cáp và lên server (tuần 19–20)
 
+> **Chốt 26/10: làm ở local trước, chưa lên server.** Mục 1 (container, `systemd`, chỉ cho gọi ra API cần thiết, proxy công cụ mạng) để tới khi lên server; các mục còn lại làm trên máy Mac. Nghiệm thu "chạy liên tục 14 ngày" tính trên máy local.
+
 **Việc cần làm**
 1. **Lên server**: container, `systemd`, egress allowlist (chỉ cho các API cần thiết), proxy có nhật ký cho tool mạng.
 2. **Ngân sách và an toàn**: trần chi phí ngày, ngưỡng báo, danh sách cấm cứng, luật cho phép, kho bí mật (1Password/Bitwarden), nút dừng khẩn cấp.
