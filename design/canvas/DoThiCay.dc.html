@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Đồ thị bộ não — cây thư mục</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--faint:#9A9EA6;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--lib:#C2620A;--me:#1D6FE0;--co:#0E8A7E;--coSoft:#DFF3F0;--link:#1D6FE0}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--faint:#6B7280;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--lib:#F5A35C;--me:#5AA5FF;--co:#3CC9B8;--coSoft:#13302C;--link:#5AA5FF}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.m{color:var(--muted)}
+.seg{display:flex;gap:3px;padding:3px;border-radius:11px;background:var(--panel2)}
+.seg button,.seg a{border:0;border-radius:8px;padding:5px 12px;background:transparent;font-size:12.5px;color:var(--muted);text-decoration:none}
+.seg .on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+.zoom{position:absolute;left:16px;top:14px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.zoom button{width:34px;height:34px;border:0;background:transparent;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.zoom button+button{border-top:1px solid var(--line)}
+.pill{position:absolute;right:16px;top:14px;font-size:12px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+.legend{position:absolute;left:16px;bottom:14px;right:16px;display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:7px 12px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend .note{flex-basis:100%;border-top:1px solid var(--line);padding-top:6px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.ring{fill:none;stroke:var(--line);stroke-dasharray:2 6}
+.ring2{fill:none;stroke:var(--line);stroke-opacity:.55;stroke-dasharray:1 7}
+.te{fill:none;stroke:var(--faint);stroke-width:1.3;opacity:.55}
+.lk{fill:none;stroke:var(--link);stroke-width:1.3;opacity:.38}
+.lk.dim{opacity:.1}
+.lk.hot{opacity:.95;stroke-width:2.2}
+.ll{font-size:11px;fill:var(--ink);opacity:.85}
+.ll.hot{font-weight:700;opacity:1}
+.lg1{font-size:13px;font-weight:700;fill:var(--ink);font-family:'Lexend',sans-serif}
+.lg{font-size:11px;font-weight:600;fill:var(--muted)}
+.cnt{font-size:11px;font-weight:700;fill:var(--co)}
+.fl{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0}
+.b2{height:30px;padding:0 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px;display:inline-flex;align-items:center}
+.opt{display:flex;flex-direction:column;gap:6px;width:100%;text-align:left;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:8px 10px;font-size:12.5px}
+.opt.on{border-color:var(--accent);background:var(--accentSoft)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; height: 900px; display: flex; overflow: hidden">
+  <dc-import name="Sidebar" active="brain" bot="none" hint-size="260px,900px"></dc-import>
+  <main style="flex: 1 1 860px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line); white-space: nowrap">
+      <span style="color: var(--muted); font-size: 18px">‹</span>
+      <span style="font-family: 'Lexend', sans-serif; font-weight: 600; font-size: 16px">Đồ thị bộ não</span>
+      <div class="seg" role="tablist" aria-label="Cách xem"><a href="DoThi.dc.html" role="tab">Liên kết</a><button type="button" role="tab" class="on">Cây thư mục</button></div>
+      <div class="seg" role="tablist" aria-label="Không gian"><button type="button" role="tab" class="on">Toàn bộ</button><button type="button" role="tab">Cá nhân</button><button type="button" role="tab">Công ty</button></div>
+      <label style="margin-left: auto; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 5px 10px; background: var(--panel); flex: 0 1 220px; min-width: 0"><input type="search" aria-label="Tìm trang" placeholder="Tìm trang…" style="flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 13px; outline: none"></label>
+      <button type="button" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="border: 0; background: transparent; color: var(--muted)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+    <div style="flex: 1; position: relative; min-height: 0">
+      <svg viewBox="-70 -40 1000 940" width="100%" height="calc(100% - 64px)" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Cây thư mục bộ não tỏa tròn: Brain ở giữa, Cá nhân và Công ty, rồi lớp, nhóm, trang; liên kết giữa trang uốn theo nhánh." style="position: absolute; inset: 0; font-family: 'Be Vietnam Pro', system-ui, sans-serif">
+        <sc-if value="{{isSel}}" hint-placeholder-val="{{ true }}"><g>
+<circle cx="430" cy="405" r="300" class="ring"/>
+<circle cx="430" cy="405" r="95" class="ring2"/>
+<circle cx="430" cy="405" r="175" class="ring2"/>
+<circle cx="430" cy="405" r="245" class="ring2"/>
+<path d="M430.0 405.0 Q470.1 430.5 510.1 456.0" class="te"/>
+<path d="M510.1 456.0 Q542.8 330.8 576.2 308.8" class="te"/>
+<path d="M576.2 308.8 Q477.1 200.3 484.9 166.2" class="te"/>
+<path d="M484.9 166.2 Q460.7 134.2 463.8 106.9" class="te"/>
+<path d="M484.9 166.2 Q520.6 148.0 529.8 122.1" class="te"/>
+<path d="M576.2 308.8 Q561.7 241.5 583.7 214.2" class="te"/>
+<path d="M583.7 214.2 Q575.9 174.9 590.6 151.6" class="te"/>
+<path d="M583.7 214.2 Q623.8 213.4 643.3 194.1" class="te"/>
+<path d="M576.2 308.8 Q628.8 337.4 662.0 326.1" class="te"/>
+<path d="M662.0 326.1 Q661.8 261.7 685.2 247.2" class="te"/>
+<path d="M662.0 326.1 Q688.0 317.3 714.0 308.4" class="te"/>
+<path d="M662.0 326.1 Q701.1 377.3 728.4 374.5" class="te"/>
+<path d="M576.2 308.8 Q634.1 454.4 668.1 462.6" class="te"/>
+<path d="M668.1 462.6 Q700.4 438.8 727.7 442.2" class="te"/>
+<path d="M668.1 462.6 Q685.9 498.5 711.8 508.0" class="te"/>
+<path d="M510.1 456.0 Q523.8 502.1 551.6 530.8" class="te"/>
+<path d="M551.6 530.8 Q629.1 534.4 681.5 568.5" class="te"/>
+<path d="M551.6 530.8 Q595.1 575.8 638.5 620.7" class="te"/>
+<path d="M551.6 530.8 Q552.6 608.4 584.9 661.9" class="te"/>
+<path d="M510.1 456.0 Q442.2 539.4 445.8 579.3" class="te"/>
+<path d="M445.8 579.3 Q503.9 630.7 523.3 690.1" class="te"/>
+<path d="M445.8 579.3 Q451.4 641.5 457.1 703.8" class="te"/>
+<path d="M445.8 579.3 Q397.9 640.3 389.4 702.2" class="te"/>
+<path d="M430.0 405.0 Q383.7 394.4 337.4 383.8" class="te"/>
+<path d="M337.4 383.8 Q323.9 488.5 292.5 513.2" class="te"/>
+<path d="M292.5 513.2 Q281.0 590.0 241.8 638.6" class="te"/>
+<path d="M292.5 513.2 Q243.4 551.9 194.2 590.5" class="te"/>
+<path d="M292.5 513.2 Q215.2 506.3 158.7 533.0" class="te"/>
+<path d="M337.4 383.8 Q301.5 363.5 263.5 351.2" class="te"/>
+<path d="M263.5 351.2 Q221.1 426.3 186.3 429.9" class="te"/>
+<path d="M186.3 429.9 Q163.8 463.1 136.9 468.9" class="te"/>
+<path d="M186.3 429.9 Q157.5 401.9 130.0 401.6" class="te"/>
+<path d="M263.5 351.2 Q232.8 332.9 199.9 320.9" class="te"/>
+<path d="M199.9 320.9 Q165.1 340.9 138.4 334.5" class="te"/>
+<path d="M199.9 320.9 Q186.2 283.2 161.6 270.9" class="te"/>
+<path d="M263.5 351.2 Q268.0 271.4 240.9 249.2" class="te"/>
+<path d="M240.9 249.2 Q219.7 231.7 198.5 214.2" class="te"/>
+<path d="M337.4 383.8 Q360.3 289.4 339.7 255.1" class="te"/>
+<path d="M339.7 255.1 Q285.2 216.7 247.1 167.2" class="te"/>
+<path d="M339.7 255.1 Q331.1 189.1 305.1 132.2" class="te"/>
+<path d="M590.6 151.6 C590.6 151.6 590.6 151.6 590.4 160.9 C590.2 170.2 589.7 188.7 589.1 211.6 C588.6 234.5 587.9 261.8 600.0 278.6 C612.2 295.3 637.0 301.5 653.3 294.5 C669.6 287.5 677.4 267.4 681.3 257.3 C685.2 247.2 685.2 247.2 685.2 247.2" class="lk dim"/>
+<path d="M727.7 442.2 C727.7 442.2 727.7 442.2 719.3 445.7 C710.9 449.3 694.0 456.4 672.8 439.7 C651.5 423.0 625.8 382.4 603.7 383.0 C581.5 383.7 562.9 425.4 559.0 457.3 C555.1 489.1 565.9 511.1 588.8 528.0 C611.6 544.9 646.6 556.7 664.1 562.6 C681.5 568.5 681.5 568.5 681.5 568.5" class="lk dim"/>
+<path d="M241.8 638.6 C241.8 638.6 241.8 638.6 247.5 619.9 C253.2 601.2 264.5 563.7 250.7 546.1 C236.8 528.5 197.7 530.7 178.2 531.9 C158.7 533.0 158.7 533.0 158.7 533.0" class="lk dim"/>
+<path d="M241.8 638.6 C241.8 638.6 241.8 638.6 248.0 620.8 C254.2 602.9 266.7 567.2 258.7 559.2 C250.8 551.2 222.5 570.8 208.4 580.7 C194.2 590.5 194.2 590.5 194.2 590.5" class="lk dim"/>
+<path d="M158.7 533.0 C158.7 533.0 158.7 533.0 177.6 527.5 C196.6 522.1 234.5 511.2 260.2 485.3 C286.0 459.5 299.6 418.6 307.4 377.8 C315.1 337.1 317.1 296.4 306.1 261.3 C295.1 226.2 271.1 196.7 259.1 181.9 C247.1 167.2 247.1 167.2 247.1 167.2" class="lk dim"/>
+<path d="M136.9 468.9 C136.9 468.9 136.9 468.9 145.3 462.4 C153.8 455.9 170.7 442.8 191.4 424.3 C212.1 405.9 236.6 382.0 260.7 373.3 C284.7 364.6 308.3 371.2 334.5 376.2 C360.6 381.1 389.4 384.5 416.4 392.0 C443.4 399.5 468.7 411.1 492.1 395.6 C515.5 380.0 536.9 337.4 550.4 302.0 C563.8 266.6 569.3 238.3 574.6 214.5 C580.0 190.6 585.3 171.1 588.0 161.4 C590.6 151.6 590.6 151.6 590.6 151.6" class="lk dim"/>
+<path d="M130.0 401.6 C130.0 401.6 130.0 401.6 138.8 403.9 C147.5 406.1 165.0 410.6 185.3 400.5 C205.7 390.3 228.9 365.6 251.6 356.1 C274.4 346.5 296.7 352.2 309.2 335.9 C321.7 319.5 324.4 281.1 322.1 243.5 C319.8 205.9 312.4 169.1 308.8 150.6 C305.1 132.2 305.1 132.2 305.1 132.2" class="lk dim"/>
+<path d="M590.6 151.6 C590.6 151.6 590.6 151.6 590.7 161.9 C590.8 172.1 591.0 192.5 591.1 217.3 C591.2 242.2 591.2 271.4 603.9 290.0 C616.7 308.7 642.2 316.7 665.1 329.1 C688.0 341.4 708.2 358.0 718.3 366.3 C728.4 374.5 728.4 374.5 728.4 374.5" class="lk dim"/>
+<path d="M138.4 334.5 C138.4 334.5 138.4 334.5 149.0 332.5 C159.5 330.6 180.6 326.7 202.1 328.8 C223.5 330.8 245.2 338.9 268.3 347.3 C291.4 355.7 315.9 364.5 343.0 371.6 C370.1 378.8 399.7 384.4 427.6 394.0 C455.5 403.7 481.8 417.5 506.1 404.1 C530.4 390.8 552.7 350.3 577.8 332.4 C602.9 314.5 630.6 319.0 653.8 318.7 C676.9 318.5 695.5 313.5 704.8 311.0 C714.0 308.4 714.0 308.4 714.0 308.4" class="lk dim"/>
+<path d="M161.6 270.9 C161.6 270.9 161.6 270.9 167.3 280.0 C173.0 289.0 184.5 307.1 199.3 322.5 C214.2 337.8 232.6 350.5 252.3 363.5 C272.1 376.5 293.2 389.9 298.2 416.4 C303.1 443.0 291.8 482.8 279.7 522.0 C267.6 561.3 254.7 599.9 248.3 619.3 C241.8 638.6 241.8 638.6 241.8 638.6" class="lk dim"/>
+<path d="M711.8 508.0 C711.8 508.0 711.8 508.0 705.4 502.4 C699.0 496.9 686.2 485.9 666.8 460.0 C647.3 434.1 621.3 393.5 598.9 393.9 C576.4 394.4 557.5 436.0 553.2 467.6 C549.0 499.3 559.4 521.1 576.1 545.0 C592.8 568.9 615.6 594.8 627.1 607.7 C638.5 620.7 638.5 620.7 638.5 620.7" class="lk dim"/>
+<path d="M643.3 194.1 C643.3 194.1 643.3 194.1 634.3 196.3 C625.3 198.5 607.3 202.9 596.4 217.5 C585.6 232.1 581.8 256.9 566.6 249.3 C551.4 241.6 524.7 201.6 516.7 175.0 C508.6 148.4 519.2 135.2 524.5 128.7 C529.8 122.1 529.8 122.1 529.8 122.1" class="lk dim"/>
+<path d="M728.4 374.5 C728.4 374.5 728.4 374.5 717.1 368.0 C705.8 361.5 683.1 348.5 657.8 339.7 C632.5 330.9 604.6 326.4 579.4 344.3 C554.1 362.3 531.6 402.7 507.1 416.1 C482.6 429.4 456.3 415.7 428.2 406.0 C400.1 396.4 370.3 390.8 343.0 383.6 C315.8 376.5 291.1 367.8 265.9 374.3 C240.8 380.7 215.2 402.5 192.5 409.6 C169.7 416.7 149.9 409.1 140.0 405.4 C130.0 401.6 130.0 401.6 130.0 401.6" class="lk dim"/>
+<path d="M711.8 508.0 C711.8 508.0 711.8 508.0 704.9 499.1 C698.0 490.2 684.3 472.5 663.9 439.9 C643.6 407.3 616.6 360.0 603.3 320.7 C589.9 281.4 590.2 250.2 590.3 223.3 C590.5 196.5 590.6 174.1 590.6 162.9 C590.6 151.6 590.6 151.6 590.6 151.6" class="lk dim"/>
+<path d="M463.8 106.9 C463.8 106.9 463.8 106.9 467.7 115.4 C471.5 123.8 479.2 140.7 496.4 168.9 C513.7 197.2 540.5 236.8 555.9 244.1 C571.3 251.3 575.3 226.1 579.2 205.3 C583.0 184.5 586.8 168.1 588.7 159.8 C590.6 151.6 590.6 151.6 590.6 151.6" class="lk hot"/>
+<path d="M463.8 106.9 C463.8 106.9 463.8 106.9 468.4 116.1 C472.9 125.2 482.0 143.6 500.7 173.2 C519.3 202.9 547.6 244.0 575.1 268.0 C602.7 291.9 629.4 298.8 647.6 292.5 C665.8 286.2 675.5 266.7 680.3 257.0 C685.2 247.2 685.2 247.2 685.2 247.2" class="lk hot"/>
+<path d="M727.7 442.2 C727.7 442.2 727.7 442.2 717.6 442.5 C707.4 442.7 687.2 443.3 662.6 420.0 C637.9 396.8 608.8 349.7 579.8 304.2 C550.8 258.6 521.9 214.6 502.6 182.0 C483.3 149.4 473.5 128.2 468.7 117.5 C463.8 106.9 463.8 106.9 463.8 106.9" class="lk hot"/>
+<path d="M523.3 690.1 C523.3 690.1 523.3 690.1 512.4 671.5 C501.4 652.8 479.5 615.5 477.0 576.5 C474.5 537.5 491.4 496.9 508.5 452.9 C525.6 408.9 542.9 361.7 538.7 315.1 C534.6 268.5 508.9 222.5 492.8 187.9 C476.8 153.3 470.3 130.1 467.1 118.5 C463.8 106.9 463.8 106.9 463.8 106.9" class="lk hot"/>
+<circle cx="430.0" cy="405.0" r="26" fill="var(--accent)" opacity=".18"/><circle cx="430.0" cy="405.0" r="17" fill="var(--accent)"/><path d="M424.0 400.0h12M424.0 405.0h12M424.0 410.0h8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+
+<circle cx="510.1" cy="456.0" r="9" fill="var(--bg)" stroke="var(--me)" stroke-width="2.4"/>
+<text x="510.1" y="443.0" text-anchor="middle" class="lg1">Cá nhân</text>
+<circle cx="576.2" cy="308.8" r="6.5" fill="var(--bg)" stroke="var(--lib)" stroke-width="2.4"/>
+<text x="576.2" y="297.8" text-anchor="middle" class="lg">Wiki</text>
+<circle cx="484.9" cy="166.2" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="484.9" y="155.2" text-anchor="middle" class="lg">Người</text>
+<circle cx="463.8" cy="106.9" r="10" fill="none" stroke="var(--ink)" stroke-width="2"/>
+<circle cx="463.8" cy="106.9" r="5" fill="#FF6700"/>
+<text x="465.0" y="97.0" transform="rotate(-83.5 465.0 97.0)" text-anchor="start" dominant-baseline="middle" class="ll hot">Chị Hà</text>
+<circle cx="529.8" cy="122.1" r="5" fill="#FF6700"/>
+<text x="533.1" y="112.6" transform="rotate(-70.6 533.1 112.6)" text-anchor="start" dominant-baseline="middle" class="ll">Anh Phúc</text>
+<circle cx="583.7" cy="214.2" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="583.7" y="203.2" text-anchor="middle" class="lg">Dự án</text>
+<circle cx="590.6" cy="151.6" r="5" fill="#00B5A5"/>
+<text x="596.0" y="143.2" transform="rotate(-57.6 596.0 143.2)" text-anchor="start" dominant-baseline="middle" class="ll">Kênh YouTube Q4</text>
+<circle cx="643.3" cy="194.1" r="5" fill="#00B5A5"/>
+<text x="650.4" y="187.0" transform="rotate(-44.7 650.4 187.0)" text-anchor="start" dominant-baseline="middle" class="ll">Khoá học AI</text>
+<circle cx="662.0" cy="326.1" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="662.0" y="315.1" text-anchor="middle" class="lg">Chủ đề</text>
+<circle cx="685.2" cy="247.2" r="5" fill="#FFAA00"/>
+<text x="693.7" y="242.0" transform="rotate(-31.7 693.7 242.0)" text-anchor="start" dominant-baseline="middle" class="ll">Lịch quay T11</text>
+<circle cx="714.0" cy="308.4" r="5" fill="#FFAA00"/>
+<text x="723.5" y="305.2" transform="rotate(-18.8 723.5 305.2)" text-anchor="start" dominant-baseline="middle" class="ll">Tài chính</text>
+<circle cx="728.4" cy="374.5" r="5" fill="#FFAA00"/>
+<text x="738.4" y="373.5" transform="rotate(-5.8 738.4 373.5)" text-anchor="start" dominant-baseline="middle" class="ll">Video ngắn</text>
+<circle cx="668.1" cy="462.6" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="668.1" y="451.6" text-anchor="middle" class="lg">Tóm tắt</text>
+<circle cx="727.7" cy="442.2" r="5" fill="#5B8DEF"/>
+<text x="737.6" y="443.4" transform="rotate(7.1 737.6 443.4)" text-anchor="start" dominant-baseline="middle" class="ll">Cuộc gọi 25/10</text>
+<circle cx="711.8" cy="508.0" r="5" fill="#5B8DEF"/>
+<text x="721.2" y="511.4" transform="rotate(20.1 721.2 511.4)" text-anchor="start" dominant-baseline="middle" class="ll">Báo cáo 90 ngày</text>
+<circle cx="551.6" cy="530.8" r="6.5" fill="var(--bg)" stroke="var(--muted)" stroke-width="2.4"/>
+<text x="551.6" y="519.8" text-anchor="middle" class="lg">Nguồn</text>
+<circle cx="681.5" cy="568.5" r="4.6" fill="var(--bg)" stroke="var(--muted)" stroke-width="1.8"/>
+<text x="689.9" y="573.9" transform="rotate(33.0 689.9 573.9)" text-anchor="start" dominant-baseline="middle" class="ll">Ghi chú gọi 25/10</text>
+<circle cx="638.5" cy="620.7" r="4.6" fill="var(--bg)" stroke="var(--muted)" stroke-width="1.8"/>
+<text x="645.5" y="627.9" transform="rotate(46.0 645.5 627.9)" text-anchor="start" dominant-baseline="middle" class="ll">bao-cao-q3.pdf</text>
+<circle cx="584.9" cy="661.9" r="4.6" fill="var(--bg)" stroke="var(--muted)" stroke-width="1.8"/>
+<text x="590.0" y="670.5" transform="rotate(58.9 590.0 670.5)" text-anchor="start" dominant-baseline="middle" class="ll">Zettelkasten</text>
+<circle cx="445.8" cy="579.3" r="6.5" fill="var(--bg)" stroke="var(--me)" stroke-width="2.4"/>
+<text x="445.8" y="568.3" text-anchor="middle" class="lg">Nhật ký</text>
+<circle cx="523.3" cy="690.1" r="5" fill="#5AA5FF"/>
+<text x="526.5" y="699.6" transform="rotate(71.9 526.5 699.6)" text-anchor="start" dominant-baseline="middle" class="ll">25/10</text>
+<circle cx="457.1" cy="703.8" r="5" fill="#5AA5FF"/>
+<text x="458.0" y="713.7" transform="rotate(84.8 458.0 713.7)" text-anchor="start" dominant-baseline="middle" class="ll">24/10</text>
+<circle cx="389.4" cy="702.2" r="5" fill="#5AA5FF"/>
+<text x="388.1" y="712.2" transform="rotate(277.8 388.1 712.2)" text-anchor="end" dominant-baseline="middle" class="ll">20/10</text>
+<circle cx="337.4" cy="383.8" r="9" fill="var(--bg)" stroke="var(--co)" stroke-width="2.4"/>
+<text x="337.4" y="370.8" text-anchor="middle" class="lg1">Công ty</text>
+<circle cx="292.5" cy="513.2" r="6.5" fill="var(--bg)" stroke="var(--lib)" stroke-width="2.4"/>
+<text x="292.5" y="502.2" text-anchor="middle" class="lg">Chung</text>
+<circle cx="241.8" cy="638.6" r="5" fill="#FFAA00"/>
+<text x="235.5" y="646.4" transform="rotate(308.8 235.5 646.4)" text-anchor="end" dominant-baseline="middle" class="ll">In ấn</text>
+<circle cx="194.2" cy="590.5" r="5" fill="#FF6700"/>
+<text x="186.4" y="596.7" transform="rotate(321.8 186.4 596.7)" text-anchor="end" dominant-baseline="middle" class="ll">Nhà in Minh Phát</text>
+<circle cx="158.7" cy="533.0" r="5" fill="#5B8DEF"/>
+<text x="149.6" y="537.2" transform="rotate(334.7 149.6 537.2)" text-anchor="end" dominant-baseline="middle" class="ll">Báo giá in T11</text>
+<circle cx="263.5" cy="351.2" r="6.5" fill="var(--bg)" stroke="var(--lib)" stroke-width="2.4"/>
+<text x="263.5" y="340.2" text-anchor="middle" class="lg">Phòng ban</text>
+<circle cx="186.3" cy="429.9" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="186.3" y="418.9" text-anchor="middle" class="lg">Tăng trưởng</text>
+<circle cx="136.9" cy="468.9" r="5" fill="#5B8DEF"/>
+<text x="127.1" y="471.1" transform="rotate(347.7 127.1 471.1)" text-anchor="end" dominant-baseline="middle" class="ll">Quy tắc đặt tên video</text>
+<circle cx="130.0" cy="401.6" r="5" fill="#FFAA00"/>
+<text x="120.0" y="401.5" transform="rotate(360.6 120.0 401.5)" text-anchor="end" dominant-baseline="middle" class="ll">Video ngắn (cty)</text>
+<circle cx="199.9" cy="320.9" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="199.9" y="309.9" text-anchor="middle" class="lg">Vận hành</text>
+<circle cx="138.4" cy="334.5" r="5" fill="#FFAA00"/>
+<text x="128.7" y="332.1" transform="rotate(373.6 128.7 332.1)" text-anchor="end" dominant-baseline="middle" class="ll">Duyệt chi tiêu</text>
+<circle cx="161.6" cy="270.9" r="5" fill="#FFAA00"/>
+<text x="152.7" y="266.5" transform="rotate(386.5 152.7 266.5)" text-anchor="end" dominant-baseline="middle" class="ll">Quy trình in</text>
+<circle cx="240.9" cy="249.2" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="240.9" y="238.2" text-anchor="middle" class="lg">Kỹ thuật</text>
+<circle cx="198.5" cy="214.2" r="5" fill="#5B8DEF"/>
+<text x="190.8" y="207.8" transform="rotate(399.5 190.8 207.8)" text-anchor="end" dominant-baseline="middle" class="ll">Hạ tầng</text>
+<circle cx="339.7" cy="255.1" r="6.5" fill="var(--bg)" stroke="var(--muted)" stroke-width="2.4"/>
+<text x="339.7" y="244.1" text-anchor="middle" class="lg">Nguồn</text>
+<circle cx="247.1" cy="167.2" r="4.6" fill="var(--bg)" stroke="var(--muted)" stroke-width="1.8"/>
+<text x="241.1" y="159.2" transform="rotate(412.4 241.1 159.2)" text-anchor="end" dominant-baseline="middle" class="ll">bao-gia-in-an.pdf</text>
+<circle cx="305.1" cy="132.2" r="4.6" fill="var(--bg)" stroke="var(--muted)" stroke-width="1.8"/>
+<text x="300.9" y="123.1" transform="rotate(425.4 300.9 123.1)" text-anchor="end" dominant-baseline="middle" class="ll">5 xu hướng video</text>
+</g></sc-if>
+        <sc-if value="{{isNone}}" hint-placeholder-val="{{ false }}"><g>
+<circle cx="430" cy="405" r="300" class="ring"/>
+<circle cx="430" cy="405" r="95" class="ring2"/>
+<circle cx="430" cy="405" r="175" class="ring2"/>
+<circle cx="430" cy="405" r="245" class="ring2"/>
+<path d="M430.0 405.0 Q470.1 430.5 510.1 456.0" class="te"/>
+<path d="M510.1 456.0 Q542.8 330.8 576.2 308.8" class="te"/>
+<path d="M576.2 308.8 Q477.1 200.3 484.9 166.2" class="te"/>
+<path d="M484.9 166.2 Q460.7 134.2 463.8 106.9" class="te"/>
+<path d="M484.9 166.2 Q520.6 148.0 529.8 122.1" class="te"/>
+<path d="M576.2 308.8 Q561.7 241.5 583.7 214.2" class="te"/>
+<path d="M583.7 214.2 Q575.9 174.9 590.6 151.6" class="te"/>
+<path d="M583.7 214.2 Q623.8 213.4 643.3 194.1" class="te"/>
+<path d="M576.2 308.8 Q628.8 337.4 662.0 326.1" class="te"/>
+<path d="M662.0 326.1 Q661.8 261.7 685.2 247.2" class="te"/>
+<path d="M662.0 326.1 Q688.0 317.3 714.0 308.4" class="te"/>
+<path d="M662.0 326.1 Q701.1 377.3 728.4 374.5" class="te"/>
+<path d="M576.2 308.8 Q634.1 454.4 668.1 462.6" class="te"/>
+<path d="M668.1 462.6 Q700.4 438.8 727.7 442.2" class="te"/>
+<path d="M668.1 462.6 Q685.9 498.5 711.8 508.0" class="te"/>
+<path d="M510.1 456.0 Q523.8 502.1 551.6 530.8" class="te"/>
+<path d="M551.6 530.8 Q629.1 534.4 681.5 568.5" class="te"/>
+<path d="M551.6 530.8 Q595.1 575.8 638.5 620.7" class="te"/>
+<path d="M551.6 530.8 Q552.6 608.4 584.9 661.9" class="te"/>
+<path d="M510.1 456.0 Q442.2 539.4 445.8 579.3" class="te"/>
+<path d="M445.8 579.3 Q503.9 630.7 523.3 690.1" class="te"/>
+<path d="M445.8 579.3 Q451.4 641.5 457.1 703.8" class="te"/>
+<path d="M445.8 579.3 Q397.9 640.3 389.4 702.2" class="te"/>
+<path d="M430.0 405.0 Q383.7 394.4 337.4 383.8" class="te"/>
+<path d="M337.4 383.8 Q323.9 488.5 292.5 513.2" class="te"/>
+<path d="M292.5 513.2 Q281.0 590.0 241.8 638.6" class="te"/>
+<path d="M292.5 513.2 Q243.4 551.9 194.2 590.5" class="te"/>
+<path d="M292.5 513.2 Q215.2 506.3 158.7 533.0" class="te"/>
+<path d="M337.4 383.8 Q301.5 363.5 263.5 351.2" class="te"/>
+<path d="M263.5 351.2 Q221.1 426.3 186.3 429.9" class="te"/>
+<path d="M186.3 429.9 Q163.8 463.1 136.9 468.9" class="te"/>
+<path d="M186.3 429.9 Q157.5 401.9 130.0 401.6" class="te"/>
+<path d="M263.5 351.2 Q232.8 332.9 199.9 320.9" class="te"/>
+<path d="M199.9 320.9 Q165.1 340.9 138.4 334.5" class="te"/>
+<path d="M199.9 320.9 Q186.2 283.2 161.6 270.9" class="te"/>
+<path d="M263.5 351.2 Q268.0 271.4 240.9 249.2" class="te"/>
+<path d="M240.9 249.2 Q219.7 231.7 198.5 214.2" class="te"/>
+<path d="M337.4 383.8 Q360.3 289.4 339.7 255.1" class="te"/>
+<path d="M339.7 255.1 Q285.2 216.7 247.1 167.2" class="te"/>
+<path d="M339.7 255.1 Q331.1 189.1 305.1 132.2" class="te"/>
+<path d="M463.8 106.9 C463.8 106.9 463.8 106.9 467.7 115.4 C471.5 123.8 479.2 140.7 496.4 168.9 C513.7 197.2 540.5 236.8 555.9 244.1 C571.3 251.3 575.3 226.1 579.2 205.3 C583.0 184.5 586.8 168.1 588.7 159.8 C590.6 151.6 590.6 151.6 590.6 151.6" class="lk"/>
+<path d="M463.8 106.9 C463.8 106.9 463.8 106.9 468.4 116.1 C472.9 125.2 482.0 143.6 500.7 173.2 C519.3 202.9 547.6 244.0 575.1 268.0 C602.7 291.9 629.4 298.8 647.6 292.5 C665.8 286.2 675.5 266.7 680.3 257.0 C685.2 247.2 685.2 247.2 685.2 247.2" class="lk"/>
+<path d="M590.6 151.6 C590.6 151.6 590.6 151.6 590.4 160.9 C590.2 170.2 589.7 188.7 589.1 211.6 C588.6 234.5 587.9 261.8 600.0 278.6 C612.2 295.3 637.0 301.5 653.3 294.5 C669.6 287.5 677.4 267.4 681.3 257.3 C685.2 247.2 685.2 247.2 685.2 247.2" class="lk"/>
+<path d="M727.7 442.2 C727.7 442.2 727.7 442.2 717.6 442.5 C707.4 442.7 687.2 443.3 662.6 420.0 C637.9 396.8 608.8 349.7 579.8 304.2 C550.8 258.6 521.9 214.6 502.6 182.0 C483.3 149.4 473.5 128.2 468.7 117.5 C463.8 106.9 463.8 106.9 463.8 106.9" class="lk"/>
+<path d="M727.7 442.2 C727.7 442.2 727.7 442.2 719.3 445.7 C710.9 449.3 694.0 456.4 672.8 439.7 C651.5 423.0 625.8 382.4 603.7 383.0 C581.5 383.7 562.9 425.4 559.0 457.3 C555.1 489.1 565.9 511.1 588.8 528.0 C611.6 544.9 646.6 556.7 664.1 562.6 C681.5 568.5 681.5 568.5 681.5 568.5" class="lk"/>
+<path d="M523.3 690.1 C523.3 690.1 523.3 690.1 512.4 671.5 C501.4 652.8 479.5 615.5 477.0 576.5 C474.5 537.5 491.4 496.9 508.5 452.9 C525.6 408.9 542.9 361.7 538.7 315.1 C534.6 268.5 508.9 222.5 492.8 187.9 C476.8 153.3 470.3 130.1 467.1 118.5 C463.8 106.9 463.8 106.9 463.8 106.9" class="lk"/>
+<path d="M241.8 638.6 C241.8 638.6 241.8 638.6 247.5 619.9 C253.2 601.2 264.5 563.7 250.7 546.1 C236.8 528.5 197.7 530.7 178.2 531.9 C158.7 533.0 158.7 533.0 158.7 533.0" class="lk"/>
+<path d="M241.8 638.6 C241.8 638.6 241.8 638.6 248.0 620.8 C254.2 602.9 266.7 567.2 258.7 559.2 C250.8 551.2 222.5 570.8 208.4 580.7 C194.2 590.5 194.2 590.5 194.2 590.5" class="lk"/>
+<path d="M158.7 533.0 C158.7 533.0 158.7 533.0 177.6 527.5 C196.6 522.1 234.5 511.2 260.2 485.3 C286.0 459.5 299.6 418.6 307.4 377.8 C315.1 337.1 317.1 296.4 306.1 261.3 C295.1 226.2 271.1 196.7 259.1 181.9 C247.1 167.2 247.1 167.2 247.1 167.2" class="lk"/>
+<path d="M136.9 468.9 C136.9 468.9 136.9 468.9 145.3 462.4 C153.8 455.9 170.7 442.8 191.4 424.3 C212.1 405.9 236.6 382.0 260.7 373.3 C284.7 364.6 308.3 371.2 334.5 376.2 C360.6 381.1 389.4 384.5 416.4 392.0 C443.4 399.5 468.7 411.1 492.1 395.6 C515.5 380.0 536.9 337.4 550.4 302.0 C563.8 266.6 569.3 238.3 574.6 214.5 C580.0 190.6 585.3 171.1 588.0 161.4 C590.6 151.6 590.6 151.6 590.6 151.6" class="lk"/>
+<path d="M130.0 401.6 C130.0 401.6 130.0 401.6 138.8 403.9 C147.5 406.1 165.0 410.6 185.3 400.5 C205.7 390.3 228.9 365.6 251.6 356.1 C274.4 346.5 296.7 352.2 309.2 335.9 C321.7 319.5 324.4 281.1 322.1 243.5 C319.8 205.9 312.4 169.1 308.8 150.6 C305.1 132.2 305.1 132.2 305.1 132.2" class="lk"/>
+<path d="M590.6 151.6 C590.6 151.6 590.6 151.6 590.7 161.9 C590.8 172.1 591.0 192.5 591.1 217.3 C591.2 242.2 591.2 271.4 603.9 290.0 C616.7 308.7 642.2 316.7 665.1 329.1 C688.0 341.4 708.2 358.0 718.3 366.3 C728.4 374.5 728.4 374.5 728.4 374.5" class="lk"/>
+<path d="M138.4 334.5 C138.4 334.5 138.4 334.5 149.0 332.5 C159.5 330.6 180.6 326.7 202.1 328.8 C223.5 330.8 245.2 338.9 268.3 347.3 C291.4 355.7 315.9 364.5 343.0 371.6 C370.1 378.8 399.7 384.4 427.6 394.0 C455.5 403.7 481.8 417.5 506.1 404.1 C530.4 390.8 552.7 350.3 577.8 332.4 C602.9 314.5 630.6 319.0 653.8 318.7 C676.9 318.5 695.5 313.5 704.8 311.0 C714.0 308.4 714.0 308.4 714.0 308.4" class="lk"/>
+<path d="M161.6 270.9 C161.6 270.9 161.6 270.9 167.3 280.0 C173.0 289.0 184.5 307.1 199.3 322.5 C214.2 337.8 232.6 350.5 252.3 363.5 C272.1 376.5 293.2 389.9 298.2 416.4 C303.1 443.0 291.8 482.8 279.7 522.0 C267.6 561.3 254.7 599.9 248.3 619.3 C241.8 638.6 241.8 638.6 241.8 638.6" class="lk"/>
+<path d="M711.8 508.0 C711.8 508.0 711.8 508.0 705.4 502.4 C699.0 496.9 686.2 485.9 666.8 460.0 C647.3 434.1 621.3 393.5 598.9 393.9 C576.4 394.4 557.5 436.0 553.2 467.6 C549.0 499.3 559.4 521.1 576.1 545.0 C592.8 568.9 615.6 594.8 627.1 607.7 C638.5 620.7 638.5 620.7 638.5 620.7" class="lk"/>
+<path d="M643.3 194.1 C643.3 194.1 643.3 194.1 634.3 196.3 C625.3 198.5 607.3 202.9 596.4 217.5 C585.6 232.1 581.8 256.9 566.6 249.3 C551.4 241.6 524.7 201.6 516.7 175.0 C508.6 148.4 519.2 135.2 524.5 128.7 C529.8 122.1 529.8 122.1 529.8 122.1" class="lk"/>
+<path d="M728.4 374.5 C728.4 374.5 728.4 374.5 717.1 368.0 C705.8 361.5 683.1 348.5 657.8 339.7 C632.5 330.9 604.6 326.4 579.4 344.3 C554.1 362.3 531.6 402.7 507.1 416.1 C482.6 429.4 456.3 415.7 428.2 406.0 C400.1 396.4 370.3 390.8 343.0 383.6 C315.8 376.5 291.1 367.8 265.9 374.3 C240.8 380.7 215.2 402.5 192.5 409.6 C169.7 416.7 149.9 409.1 140.0 405.4 C130.0 401.6 130.0 401.6 130.0 401.6" class="lk"/>
+<path d="M711.8 508.0 C711.8 508.0 711.8 508.0 704.9 499.1 C698.0 490.2 684.3 472.5 663.9 439.9 C643.6 407.3 616.6 360.0 603.3 320.7 C589.9 281.4 590.2 250.2 590.3 223.3 C590.5 196.5 590.6 174.1 590.6 162.9 C590.6 151.6 590.6 151.6 590.6 151.6" class="lk"/>
+<circle cx="430.0" cy="405.0" r="26" fill="var(--accent)" opacity=".18"/><circle cx="430.0" cy="405.0" r="17" fill="var(--accent)"/><path d="M424.0 400.0h12M424.0 405.0h12M424.0 410.0h8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+
+<circle cx="510.1" cy="456.0" r="9" fill="var(--bg)" stroke="var(--me)" stroke-width="2.4"/>
+<text x="510.1" y="443.0" text-anchor="middle" class="lg1">Cá nhân</text>
+<circle cx="576.2" cy="308.8" r="6.5" fill="var(--bg)" stroke="var(--lib)" stroke-width="2.4"/>
+<text x="576.2" y="297.8" text-anchor="middle" class="lg">Wiki</text>
+<circle cx="484.9" cy="166.2" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="484.9" y="155.2" text-anchor="middle" class="lg">Người</text>
+<circle cx="463.8" cy="106.9" r="5" fill="#FF6700"/>
+<text x="465.0" y="97.0" transform="rotate(-83.5 465.0 97.0)" text-anchor="start" dominant-baseline="middle" class="ll">Chị Hà</text>
+<circle cx="529.8" cy="122.1" r="5" fill="#FF6700"/>
+<text x="533.1" y="112.6" transform="rotate(-70.6 533.1 112.6)" text-anchor="start" dominant-baseline="middle" class="ll">Anh Phúc</text>
+<circle cx="583.7" cy="214.2" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="583.7" y="203.2" text-anchor="middle" class="lg">Dự án</text>
+<circle cx="590.6" cy="151.6" r="5" fill="#00B5A5"/>
+<text x="596.0" y="143.2" transform="rotate(-57.6 596.0 143.2)" text-anchor="start" dominant-baseline="middle" class="ll">Kênh YouTube Q4</text>
+<circle cx="643.3" cy="194.1" r="5" fill="#00B5A5"/>
+<text x="650.4" y="187.0" transform="rotate(-44.7 650.4 187.0)" text-anchor="start" dominant-baseline="middle" class="ll">Khoá học AI</text>
+<circle cx="662.0" cy="326.1" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="662.0" y="315.1" text-anchor="middle" class="lg">Chủ đề</text>
+<circle cx="685.2" cy="247.2" r="5" fill="#FFAA00"/>
+<text x="693.7" y="242.0" transform="rotate(-31.7 693.7 242.0)" text-anchor="start" dominant-baseline="middle" class="ll">Lịch quay T11</text>
+<circle cx="714.0" cy="308.4" r="5" fill="#FFAA00"/>
+<text x="723.5" y="305.2" transform="rotate(-18.8 723.5 305.2)" text-anchor="start" dominant-baseline="middle" class="ll">Tài chính</text>
+<circle cx="728.4" cy="374.5" r="5" fill="#FFAA00"/>
+<text x="738.4" y="373.5" transform="rotate(-5.8 738.4 373.5)" text-anchor="start" dominant-baseline="middle" class="ll">Video ngắn</text>
+<circle cx="668.1" cy="462.6" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="668.1" y="451.6" text-anchor="middle" class="lg">Tóm tắt</text>
+<circle cx="727.7" cy="442.2" r="5" fill="#5B8DEF"/>
+<text x="737.6" y="443.4" transform="rotate(7.1 737.6 443.4)" text-anchor="start" dominant-baseline="middle" class="ll">Cuộc gọi 25/10</text>
+<circle cx="711.8" cy="508.0" r="5" fill="#5B8DEF"/>
+<text x="721.2" y="511.4" transform="rotate(20.1 721.2 511.4)" text-anchor="start" dominant-baseline="middle" class="ll">Báo cáo 90 ngày</text>
+<circle cx="551.6" cy="530.8" r="6.5" fill="var(--bg)" stroke="var(--muted)" stroke-width="2.4"/>
+<text x="551.6" y="519.8" text-anchor="middle" class="lg">Nguồn</text>
+<circle cx="681.5" cy="568.5" r="4.6" fill="var(--bg)" stroke="var(--muted)" stroke-width="1.8"/>
+<text x="689.9" y="573.9" transform="rotate(33.0 689.9 573.9)" text-anchor="start" dominant-baseline="middle" class="ll">Ghi chú gọi 25/10</text>
+<circle cx="638.5" cy="620.7" r="4.6" fill="var(--bg)" stroke="var(--muted)" stroke-width="1.8"/>
+<text x="645.5" y="627.9" transform="rotate(46.0 645.5 627.9)" text-anchor="start" dominant-baseline="middle" class="ll">bao-cao-q3.pdf</text>
+<circle cx="584.9" cy="661.9" r="4.6" fill="var(--bg)" stroke="var(--muted)" stroke-width="1.8"/>
+<text x="590.0" y="670.5" transform="rotate(58.9 590.0 670.5)" text-anchor="start" dominant-baseline="middle" class="ll">Zettelkasten</text>
+<circle cx="445.8" cy="579.3" r="6.5" fill="var(--bg)" stroke="var(--me)" stroke-width="2.4"/>
+<text x="445.8" y="568.3" text-anchor="middle" class="lg">Nhật ký</text>
+<circle cx="523.3" cy="690.1" r="5" fill="#5AA5FF"/>
+<text x="526.5" y="699.6" transform="rotate(71.9 526.5 699.6)" text-anchor="start" dominant-baseline="middle" class="ll">25/10</text>
+<circle cx="457.1" cy="703.8" r="5" fill="#5AA5FF"/>
+<text x="458.0" y="713.7" transform="rotate(84.8 458.0 713.7)" text-anchor="start" dominant-baseline="middle" class="ll">24/10</text>
+<circle cx="389.4" cy="702.2" r="5" fill="#5AA5FF"/>
+<text x="388.1" y="712.2" transform="rotate(277.8 388.1 712.2)" text-anchor="end" dominant-baseline="middle" class="ll">20/10</text>
+<circle cx="337.4" cy="383.8" r="9" fill="var(--bg)" stroke="var(--co)" stroke-width="2.4"/>
+<text x="337.4" y="370.8" text-anchor="middle" class="lg1">Công ty</text>
+<circle cx="292.5" cy="513.2" r="6.5" fill="var(--bg)" stroke="var(--lib)" stroke-width="2.4"/>
+<text x="292.5" y="502.2" text-anchor="middle" class="lg">Chung</text>
+<circle cx="241.8" cy="638.6" r="5" fill="#FFAA00"/>
+<text x="235.5" y="646.4" transform="rotate(308.8 235.5 646.4)" text-anchor="end" dominant-baseline="middle" class="ll">In ấn</text>
+<circle cx="194.2" cy="590.5" r="5" fill="#FF6700"/>
+<text x="186.4" y="596.7" transform="rotate(321.8 186.4 596.7)" text-anchor="end" dominant-baseline="middle" class="ll">Nhà in Minh Phát</text>
+<circle cx="158.7" cy="533.0" r="5" fill="#5B8DEF"/>
+<text x="149.6" y="537.2" transform="rotate(334.7 149.6 537.2)" text-anchor="end" dominant-baseline="middle" class="ll">Báo giá in T11</text>
+<circle cx="263.5" cy="351.2" r="6.5" fill="var(--bg)" stroke="var(--lib)" stroke-width="2.4"/>
+<text x="263.5" y="340.2" text-anchor="middle" class="lg">Phòng ban</text>
+<circle cx="186.3" cy="429.9" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="186.3" y="418.9" text-anchor="middle" class="lg">Tăng trưởng</text>
+<circle cx="136.9" cy="468.9" r="5" fill="#5B8DEF"/>
+<text x="127.1" y="471.1" transform="rotate(347.7 127.1 471.1)" text-anchor="end" dominant-baseline="middle" class="ll">Quy tắc đặt tên video</text>
+<circle cx="130.0" cy="401.6" r="5" fill="#FFAA00"/>
+<text x="120.0" y="401.5" transform="rotate(360.6 120.0 401.5)" text-anchor="end" dominant-baseline="middle" class="ll">Video ngắn (cty)</text>
+<circle cx="199.9" cy="320.9" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="199.9" y="309.9" text-anchor="middle" class="lg">Vận hành</text>
+<circle cx="138.4" cy="334.5" r="5" fill="#FFAA00"/>
+<text x="128.7" y="332.1" transform="rotate(373.6 128.7 332.1)" text-anchor="end" dominant-baseline="middle" class="ll">Duyệt chi tiêu</text>
+<circle cx="161.6" cy="270.9" r="5" fill="#FFAA00"/>
+<text x="152.7" y="266.5" transform="rotate(386.5 152.7 266.5)" text-anchor="end" dominant-baseline="middle" class="ll">Quy trình in</text>
+<circle cx="240.9" cy="249.2" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="240.9" y="238.2" text-anchor="middle" class="lg">Kỹ thuật</text>
+<circle cx="198.5" cy="214.2" r="5" fill="#5B8DEF"/>
+<text x="190.8" y="207.8" transform="rotate(399.5 190.8 207.8)" text-anchor="end" dominant-baseline="middle" class="ll">Hạ tầng</text>
+<circle cx="339.7" cy="255.1" r="6.5" fill="var(--bg)" stroke="var(--muted)" stroke-width="2.4"/>
+<text x="339.7" y="244.1" text-anchor="middle" class="lg">Nguồn</text>
+<circle cx="247.1" cy="167.2" r="4.6" fill="var(--bg)" stroke="var(--muted)" stroke-width="1.8"/>
+<text x="241.1" y="159.2" transform="rotate(412.4 241.1 159.2)" text-anchor="end" dominant-baseline="middle" class="ll">bao-gia-in-an.pdf</text>
+<circle cx="305.1" cy="132.2" r="4.6" fill="var(--bg)" stroke="var(--muted)" stroke-width="1.8"/>
+<text x="300.9" y="123.1" transform="rotate(425.4 300.9 123.1)" text-anchor="end" dominant-baseline="middle" class="ll">5 xu hướng video</text>
+</g></sc-if>
+        <sc-if value="{{isCol}}" hint-placeholder-val="{{ false }}"><g>
+<circle cx="430" cy="405" r="300" class="ring"/>
+<circle cx="430" cy="405" r="95" class="ring2"/>
+<circle cx="430" cy="405" r="175" class="ring2"/>
+<circle cx="430" cy="405" r="245" class="ring2"/>
+<path d="M430.0 405.0 Q470.1 430.5 510.1 456.0" class="te"/>
+<path d="M510.1 456.0 Q542.8 330.8 576.2 308.8" class="te"/>
+<path d="M576.2 308.8 Q477.1 200.3 484.9 166.2" class="te"/>
+<path d="M484.9 166.2 Q460.7 134.2 463.8 106.9" class="te"/>
+<path d="M484.9 166.2 Q520.6 148.0 529.8 122.1" class="te"/>
+<path d="M576.2 308.8 Q561.7 241.5 583.7 214.2" class="te"/>
+<path d="M583.7 214.2 Q575.9 174.9 590.6 151.6" class="te"/>
+<path d="M583.7 214.2 Q623.8 213.4 643.3 194.1" class="te"/>
+<path d="M576.2 308.8 Q628.8 337.4 662.0 326.1" class="te"/>
+<path d="M662.0 326.1 Q661.8 261.7 685.2 247.2" class="te"/>
+<path d="M662.0 326.1 Q688.0 317.3 714.0 308.4" class="te"/>
+<path d="M662.0 326.1 Q701.1 377.3 728.4 374.5" class="te"/>
+<path d="M576.2 308.8 Q634.1 454.4 668.1 462.6" class="te"/>
+<path d="M668.1 462.6 Q700.4 438.8 727.7 442.2" class="te"/>
+<path d="M668.1 462.6 Q685.9 498.5 711.8 508.0" class="te"/>
+<path d="M510.1 456.0 Q523.8 502.1 551.6 530.8" class="te"/>
+<path d="M551.6 530.8 Q629.1 534.4 681.5 568.5" class="te"/>
+<path d="M551.6 530.8 Q595.1 575.8 638.5 620.7" class="te"/>
+<path d="M551.6 530.8 Q552.6 608.4 584.9 661.9" class="te"/>
+<path d="M510.1 456.0 Q442.2 539.4 445.8 579.3" class="te"/>
+<path d="M445.8 579.3 Q503.9 630.7 523.3 690.1" class="te"/>
+<path d="M445.8 579.3 Q451.4 641.5 457.1 703.8" class="te"/>
+<path d="M445.8 579.3 Q397.9 640.3 389.4 702.2" class="te"/>
+<path d="M430.0 405.0 Q383.7 394.4 337.4 383.8" class="te"/>
+<path d="M463.8 106.9 C463.8 106.9 463.8 106.9 467.7 115.4 C471.5 123.8 479.2 140.7 496.4 168.9 C513.7 197.2 540.5 236.8 555.9 244.1 C571.3 251.3 575.3 226.1 579.2 205.3 C583.0 184.5 586.8 168.1 588.7 159.8 C590.6 151.6 590.6 151.6 590.6 151.6" class="lk"/>
+<path d="M463.8 106.9 C463.8 106.9 463.8 106.9 468.4 116.1 C472.9 125.2 482.0 143.6 500.7 173.2 C519.3 202.9 547.6 244.0 575.1 268.0 C602.7 291.9 629.4 298.8 647.6 292.5 C665.8 286.2 675.5 266.7 680.3 257.0 C685.2 247.2 685.2 247.2 685.2 247.2" class="lk"/>
+<path d="M590.6 151.6 C590.6 151.6 590.6 151.6 590.4 160.9 C590.2 170.2 589.7 188.7 589.1 211.6 C588.6 234.5 587.9 261.8 600.0 278.6 C612.2 295.3 637.0 301.5 653.3 294.5 C669.6 287.5 677.4 267.4 681.3 257.3 C685.2 247.2 685.2 247.2 685.2 247.2" class="lk"/>
+<path d="M727.7 442.2 C727.7 442.2 727.7 442.2 717.6 442.5 C707.4 442.7 687.2 443.3 662.6 420.0 C637.9 396.8 608.8 349.7 579.8 304.2 C550.8 258.6 521.9 214.6 502.6 182.0 C483.3 149.4 473.5 128.2 468.7 117.5 C463.8 106.9 463.8 106.9 463.8 106.9" class="lk"/>
+<path d="M727.7 442.2 C727.7 442.2 727.7 442.2 719.3 445.7 C710.9 449.3 694.0 456.4 672.8 439.7 C651.5 423.0 625.8 382.4 603.7 383.0 C581.5 383.7 562.9 425.4 559.0 457.3 C555.1 489.1 565.9 511.1 588.8 528.0 C611.6 544.9 646.6 556.7 664.1 562.6 C681.5 568.5 681.5 568.5 681.5 568.5" class="lk"/>
+<path d="M523.3 690.1 C523.3 690.1 523.3 690.1 512.4 671.5 C501.4 652.8 479.5 615.5 477.0 576.5 C474.5 537.5 491.4 496.9 508.5 452.9 C525.6 408.9 542.9 361.7 538.7 315.1 C534.6 268.5 508.9 222.5 492.8 187.9 C476.8 153.3 470.3 130.1 467.1 118.5 C463.8 106.9 463.8 106.9 463.8 106.9" class="lk"/>
+<path d="M337.4 383.8 C337.4 383.8 337.4 383.8 351.6 385.3 C365.7 386.8 394.1 389.8 420.7 396.9 C447.4 404.0 472.3 415.1 495.4 399.2 C518.4 383.3 539.5 340.3 552.6 304.4 C565.6 268.6 570.7 239.9 575.7 215.7 C580.8 191.4 585.7 171.5 588.2 161.6 C590.6 151.6 590.6 151.6 590.6 151.6" class="lk"/>
+<path d="M590.6 151.6 C590.6 151.6 590.6 151.6 590.7 161.9 C590.8 172.1 591.0 192.5 591.1 217.3 C591.2 242.2 591.2 271.4 603.9 290.0 C616.7 308.7 642.2 316.7 665.1 329.1 C688.0 341.4 708.2 358.0 718.3 366.3 C728.4 374.5 728.4 374.5 728.4 374.5" class="lk"/>
+<path d="M337.4 383.8 C337.4 383.8 337.4 383.8 352.3 386.3 C367.2 388.7 397.1 393.6 425.2 402.6 C453.3 411.5 479.7 424.6 504.2 410.5 C528.7 396.5 551.3 355.3 576.6 336.7 C601.8 318.0 629.8 321.8 653.2 320.9 C676.5 319.9 695.3 314.2 704.7 311.3 C714.0 308.4 714.0 308.4 714.0 308.4" class="lk"/>
+<path d="M711.8 508.0 C711.8 508.0 711.8 508.0 705.4 502.4 C699.0 496.9 686.2 485.9 666.8 460.0 C647.3 434.1 621.3 393.5 598.9 393.9 C576.4 394.4 557.5 436.0 553.2 467.6 C549.0 499.3 559.4 521.1 576.1 545.0 C592.8 568.9 615.6 594.8 627.1 607.7 C638.5 620.7 638.5 620.7 638.5 620.7" class="lk"/>
+<path d="M643.3 194.1 C643.3 194.1 643.3 194.1 634.3 196.3 C625.3 198.5 607.3 202.9 596.4 217.5 C585.6 232.1 581.8 256.9 566.6 249.3 C551.4 241.6 524.7 201.6 516.7 175.0 C508.6 148.4 519.2 135.2 524.5 128.7 C529.8 122.1 529.8 122.1 529.8 122.1" class="lk"/>
+<path d="M728.4 374.5 C728.4 374.5 728.4 374.5 717.0 368.0 C705.6 361.4 682.7 348.3 657.2 339.4 C631.7 330.6 603.6 325.9 578.1 343.8 C552.7 361.7 529.9 402.0 505.3 415.3 C480.6 428.5 454.0 414.7 425.7 404.9 C397.4 395.2 367.4 389.5 352.4 386.7 C337.4 383.8 337.4 383.8 337.4 383.8" class="lk"/>
+<path d="M711.8 508.0 C711.8 508.0 711.8 508.0 704.9 499.1 C698.0 490.2 684.3 472.5 663.9 439.9 C643.6 407.3 616.6 360.0 603.3 320.7 C589.9 281.4 590.2 250.2 590.3 223.3 C590.5 196.5 590.6 174.1 590.6 162.9 C590.6 151.6 590.6 151.6 590.6 151.6" class="lk"/>
+<circle cx="430.0" cy="405.0" r="26" fill="var(--accent)" opacity=".18"/><circle cx="430.0" cy="405.0" r="17" fill="var(--accent)"/><path d="M424.0 400.0h12M424.0 405.0h12M424.0 410.0h8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+
+<circle cx="510.1" cy="456.0" r="9" fill="var(--bg)" stroke="var(--me)" stroke-width="2.4"/>
+<text x="510.1" y="443.0" text-anchor="middle" class="lg1">Cá nhân</text>
+<circle cx="576.2" cy="308.8" r="6.5" fill="var(--bg)" stroke="var(--lib)" stroke-width="2.4"/>
+<text x="576.2" y="297.8" text-anchor="middle" class="lg">Wiki</text>
+<circle cx="484.9" cy="166.2" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="484.9" y="155.2" text-anchor="middle" class="lg">Người</text>
+<circle cx="463.8" cy="106.9" r="5" fill="#FF6700"/>
+<text x="465.0" y="97.0" transform="rotate(-83.5 465.0 97.0)" text-anchor="start" dominant-baseline="middle" class="ll">Chị Hà</text>
+<circle cx="529.8" cy="122.1" r="5" fill="#FF6700"/>
+<text x="533.1" y="112.6" transform="rotate(-70.6 533.1 112.6)" text-anchor="start" dominant-baseline="middle" class="ll">Anh Phúc</text>
+<circle cx="583.7" cy="214.2" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="583.7" y="203.2" text-anchor="middle" class="lg">Dự án</text>
+<circle cx="590.6" cy="151.6" r="5" fill="#00B5A5"/>
+<text x="596.0" y="143.2" transform="rotate(-57.6 596.0 143.2)" text-anchor="start" dominant-baseline="middle" class="ll">Kênh YouTube Q4</text>
+<circle cx="643.3" cy="194.1" r="5" fill="#00B5A5"/>
+<text x="650.4" y="187.0" transform="rotate(-44.7 650.4 187.0)" text-anchor="start" dominant-baseline="middle" class="ll">Khoá học AI</text>
+<circle cx="662.0" cy="326.1" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="662.0" y="315.1" text-anchor="middle" class="lg">Chủ đề</text>
+<circle cx="685.2" cy="247.2" r="5" fill="#FFAA00"/>
+<text x="693.7" y="242.0" transform="rotate(-31.7 693.7 242.0)" text-anchor="start" dominant-baseline="middle" class="ll">Lịch quay T11</text>
+<circle cx="714.0" cy="308.4" r="5" fill="#FFAA00"/>
+<text x="723.5" y="305.2" transform="rotate(-18.8 723.5 305.2)" text-anchor="start" dominant-baseline="middle" class="ll">Tài chính</text>
+<circle cx="728.4" cy="374.5" r="5" fill="#FFAA00"/>
+<text x="738.4" y="373.5" transform="rotate(-5.8 738.4 373.5)" text-anchor="start" dominant-baseline="middle" class="ll">Video ngắn</text>
+<circle cx="668.1" cy="462.6" r="5" fill="var(--bg)" stroke="var(--faint)" stroke-width="2.4"/>
+<text x="668.1" y="451.6" text-anchor="middle" class="lg">Tóm tắt</text>
+<circle cx="727.7" cy="442.2" r="5" fill="#5B8DEF"/>
+<text x="737.6" y="443.4" transform="rotate(7.1 737.6 443.4)" text-anchor="start" dominant-baseline="middle" class="ll">Cuộc gọi 25/10</text>
+<circle cx="711.8" cy="508.0" r="5" fill="#5B8DEF"/>
+<text x="721.2" y="511.4" transform="rotate(20.1 721.2 511.4)" text-anchor="start" dominant-baseline="middle" class="ll">Báo cáo 90 ngày</text>
+<circle cx="551.6" cy="530.8" r="6.5" fill="var(--bg)" stroke="var(--muted)" stroke-width="2.4"/>
+<text x="551.6" y="519.8" text-anchor="middle" class="lg">Nguồn</text>
+<circle cx="681.5" cy="568.5" r="4.6" fill="var(--bg)" stroke="var(--muted)" stroke-width="1.8"/>
+<text x="689.9" y="573.9" transform="rotate(33.0 689.9 573.9)" text-anchor="start" dominant-baseline="middle" class="ll">Ghi chú gọi 25/10</text>
+<circle cx="638.5" cy="620.7" r="4.6" fill="var(--bg)" stroke="var(--muted)" stroke-width="1.8"/>
+<text x="645.5" y="627.9" transform="rotate(46.0 645.5 627.9)" text-anchor="start" dominant-baseline="middle" class="ll">bao-cao-q3.pdf</text>
+<circle cx="584.9" cy="661.9" r="4.6" fill="var(--bg)" stroke="var(--muted)" stroke-width="1.8"/>
+<text x="590.0" y="670.5" transform="rotate(58.9 590.0 670.5)" text-anchor="start" dominant-baseline="middle" class="ll">Zettelkasten</text>
+<circle cx="445.8" cy="579.3" r="6.5" fill="var(--bg)" stroke="var(--me)" stroke-width="2.4"/>
+<text x="445.8" y="568.3" text-anchor="middle" class="lg">Nhật ký</text>
+<circle cx="523.3" cy="690.1" r="5" fill="#5AA5FF"/>
+<text x="526.5" y="699.6" transform="rotate(71.9 526.5 699.6)" text-anchor="start" dominant-baseline="middle" class="ll">25/10</text>
+<circle cx="457.1" cy="703.8" r="5" fill="#5AA5FF"/>
+<text x="458.0" y="713.7" transform="rotate(84.8 458.0 713.7)" text-anchor="start" dominant-baseline="middle" class="ll">24/10</text>
+<circle cx="389.4" cy="702.2" r="5" fill="#5AA5FF"/>
+<text x="388.1" y="712.2" transform="rotate(277.8 388.1 712.2)" text-anchor="end" dominant-baseline="middle" class="ll">20/10</text>
+<circle cx="337.4" cy="383.8" r="14" fill="var(--coSoft)" stroke="var(--co)" stroke-width="2" stroke-dasharray="3 3"/><text x="337.4" y="387.8" text-anchor="middle" class="cnt">12</text>
+<text x="337.4" y="363.8" text-anchor="middle" class="lg1">Công ty · đã gộp</text>
+</g></sc-if>
+      </svg>
+      <div class="zoom" role="group" aria-label="Thu phóng"><button type="button" aria-label="Phóng to"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button><button type="button" aria-label="Thu nhỏ"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button><button type="button" aria-label="Về góc nhìn ban đầu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path></svg></button></div>
+      <div class="pill">Bấm một trang để tô liên kết · bấm một nhánh để gộp, mở</div>
+      <div class="legend">
+        <span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill="none" stroke="var(--faint)" stroke-width="2"></circle></svg>Thư mục</span>
+        <span><span class="dot" style="background: #5B8DEF"></span>Ghi chú</span>
+        <span><span class="dot" style="background: #00B5A5"></span>Dự án</span>
+        <span><span class="dot" style="background: #FFAA00"></span>Chủ đề</span>
+        <span><span class="dot" style="background: #FF6700"></span>Người</span>
+        <span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4" fill="none" stroke="var(--muted)" stroke-width="1.8"></circle></svg>Nguồn</span>
+        <span><svg width="22" height="10" aria-hidden="true"><path d="M1 8 Q11 -2 21 8" fill="none" stroke="var(--link)" stroke-width="1.8"></path></svg>Liên kết [[...]]</span>
+        <span class="note">Vòng trong là thư mục (Cá nhân, Công ty → Wiki, Nguồn, Nhật ký → nhóm, phòng ban), vòng ngoài là trang. Liên kết giữa hai trang uốn theo nhánh cây tới chỗ hai nhánh gặp nhau: nối trong cùng nhóm thì ngắn, nối chéo Cá nhân ↔ Công ty thì đi qua tâm.</span>
+      </div>
+    </div>
+  </main>
+  <aside aria-label="Bộ lọc và chi tiết" style="width: 300px; flex: none; border-left: 1px solid var(--line); background: var(--panel); padding: 16px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto">
+    <div>
+      <div style="font-weight: 600; font-size: 13.5px; padding-bottom: 4px">Hiển thị</div>
+      <label class="fl"><input type="checkbox" checked>Liên kết giữa trang</label>
+      <label class="fl"><input type="checkbox" checked>Nguồn</label>
+      <label class="fl"><input type="checkbox" checked>Nhật ký</label>
+      <label class="fl"><input type="checkbox">Ký ức bot (nhánh riêng)</label>
+    </div>
+    <div>
+      <div style="font-weight: 600; font-size: 13.5px; padding-bottom: 6px">Độ uốn liên kết</div>
+      <input type="range" min="0" max="100" value="82" aria-label="Độ uốn liên kết theo nhánh" style="width: 100%; accent-color: var(--accent)">
+      <div class="m" style="display: flex; justify-content: space-between; font-size: 11.5px"><span>thẳng</span><span>bó theo nhánh</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-weight: 600; font-size: 13.5px">Thử trạng thái</div>
+      <button type="button" class="{{oSel}}" onClick="{{toSel}}"><b>Đang chọn một trang</b><span class="m">Chị Hà: tô 4 liên kết, các liên kết khác mờ đi</span></button>
+      <button type="button" class="{{oNone}}" onClick="{{toNone}}"><b>Toàn cảnh</b><span class="m">mọi liên kết như nhau</span></button>
+      <button type="button" class="{{oCol}}" onClick="{{toCol}}"><b>Gộp nhánh Công ty</b><span class="m">12 trang gộp thành một nút; liên kết chéo nối vào nút gộp</span></button>
+    </div>
+    <sc-if value="{{isSel}}" hint-placeholder-val="{{ true }}">
+      <div style="border-top: 1px solid var(--line); padding-top: 12px; font-size: 13px; display: flex; flex-direction: column; gap: 6px">
+        <div class="m" style="font-size: 12px">Đang chọn</div>
+        <b style="font-family: 'Lexend', sans-serif; font-size: 15px">Chị Hà</b>
+        <div class="m">Người · Cá nhân / Wiki / Người</div>
+        <div>Nối với <b>4</b> trang: Kênh YouTube Q4, Lịch quay T11, Cuộc gọi 25/10, Nhật ký 25/10</div>
+        <div style="display: flex; gap: 6px; margin-top: 4px"><a href="GhiChu.dc.html" class="b2" style="text-decoration: none">Mở trang</a><a href="HoiBoNao.dc.html" class="b2" style="text-decoration: none">Hỏi về trang này</a></div>
+      </div>
+    </sc-if>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'dark';
+    const pick = s.pick || 'sel';
+    const o = (k) => 'opt' + (pick === k ? ' on' : '');
+    const go = (k) => () => this.setState({ pick: k });
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      isSel: pick === 'sel', isNone: pick === 'none', isCol: pick === 'col',
+      oSel: o('sel'), oNone: o('none'), oCol: o('col'),
+      toSel: go('sel'), toNone: go('none'), toCol: go('col')
+    };
+  }
+}
+</script>
+</body>
+</html>

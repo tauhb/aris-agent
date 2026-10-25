@@ -563,6 +563,16 @@
       "expand": "fill",
       "is_interactive": true,
       "page": "g5"
+    },
+    "DoThiCay.dc.html": {
+      "x": 0,
+      "y": 4380,
+      "w": 1440,
+      "h": 900,
+      "title": "5.3b · Đồ thị bộ não — cây thư mục tỏa tròn, liên kết uốn theo nhánh (đề xuất)",
+      "expand": "fill",
+      "is_interactive": true,
+      "page": "g5"
     }
   },
   "createdOnFiles": {
@@ -724,7 +734,8 @@
     "SecondBrain.dc.html",
     "CayBoNao.dc.html",
     "BoNaoChat.dc.html",
-    "SoatBoNao.dc.html"
+    "SoatBoNao.dc.html",
+    "DoThiCay.dc.html"
   ],
   "pages": [
     {
