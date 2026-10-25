@@ -199,12 +199,11 @@ export function BrainGraph({ t, nav }: PageProps) {
 
   return (
     <div className="ap-split ap-brain">
-      <main className="ap-note-main">
+      <main className="ap-note-main" aria-label={t('gr.title')}>
         <div className="ap-note-bar ap-gbar">
           <IconButton label={t('br.back')} onClick={() => nav.go('brain')}>
             ‹
           </IconButton>
-          <span style={{ fontWeight: 600, fontSize: 16 }}>{t('gr.title')}</span>
           <div className="ap-seg" role="tablist" aria-label={t('gr.mode')}>
             {MODES.map((m) => (
               <button
