@@ -112,10 +112,11 @@
       "expand": "fill",
       "h": 900,
       "page": "g5",
-      "title": "5.3 · Đồ thị toàn cục",
+      "title": "5.3 · Đồ thị bộ não — trang wiki theo loại, nguồn và ký ức bot bật thêm, lọc không gian",
       "w": 1440,
       "x": 0,
-      "y": 1320
+      "y": 1320,
+      "is_interactive": true
     },
     "GhiChu.dc.html": {
       "expand": "fill",
@@ -552,6 +553,16 @@
       "expand": "fill",
       "is_interactive": true,
       "page": "g5"
+    },
+    "SoatBoNao.dc.html": {
+      "x": 1520,
+      "y": 3360,
+      "w": 1440,
+      "h": 900,
+      "title": "5.5 · Soát bộ não — phát hiện theo nhóm, sửa qua bản nạp hay sửa nhanh, lịch soát, Hộp duyệt, Telegram",
+      "expand": "fill",
+      "is_interactive": true,
+      "page": "g5"
     }
   },
   "createdOnFiles": {
@@ -712,7 +723,8 @@
     "Phong.dc.html",
     "SecondBrain.dc.html",
     "CayBoNao.dc.html",
-    "BoNaoChat.dc.html"
+    "BoNaoChat.dc.html",
+    "SoatBoNao.dc.html"
   ],
   "pages": [
     {

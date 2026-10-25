@@ -342,6 +342,13 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
 - Đợt 3 (chốt 25/10, bản vẽ 5.4 vẽ lại và 5.7 mới): Thủ thư trả lời ở 5.4, mỗi câu hỏi một phiên; tìm cả trong
   ký ức các bot (phiên chat cũ để sau); trang {you} chọn bằng "Từ Second Brain" thì bot được đọc trong lượt đó dù
   ngoài quyền; nhắc theo tên bật cho mọi bot, lọc theo quyền, tối đa 5 trang; tầng 3 đợt này chỉ đếm lượt tra.
+- Đợt 4 (chốt 25/10, bản vẽ 5.5 mới và 5.3 sửa): máy tự soát mỗi ngày (không gọi model: liên kết gãy, tên nhắc
+  nhiều chưa có trang, trang mồ côi, tên tệp trùng, thiếu tóm tắt hay nguồn, lâu chưa cập nhật, phòng đã xoá còn
+  trang, bot bỏ qua lời nhắc); Thủ thư soát sâu Chủ nhật 21:00 (mâu thuẫn, nhận định cũ), trần 0,30 USD/lần tính
+  riêng, có nút Soát ngay. Báo ở màn 5.5, thẻ trong Hộp duyệt và tin Telegram tuần qua Aris. Sửa nội dung qua bản
+  nạp; sửa máy móc (nối, đổi liên kết, dời trang phòng đã xoá) làm ngay khi bấm, có commit, hoàn tác được. Đồ thị:
+  trang wiki theo loại (ghi chú, dự án, chủ đề, người), nguồn và ký ức bot bật thêm, bỏ skill và phiên chat. Bot hay
+  bỏ qua lời nhắc: số liệu ở 5.5 và nút "Nhắc mạnh hơn" (thêm một câu vào lời dặn bộ não của riêng bot đó).
 
 ## Còn bàn trước khi làm
 
