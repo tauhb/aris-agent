@@ -13,162 +13,441 @@
 <style>
 body{margin:0}
 h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
-.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--warn:#B45309;--warnSoft:#FCEFDF;--edge:#C9CCD3}
-.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--warn:#F5A35C;--warnSoft:#3A2614;--edge:#3A3E47}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--lib:#B45309;--libSoft:#FBF1E3;--edge:#C9CCD3}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--lib:#F5A35C;--libSoft:#33251A;--edge:#3A3E47}
 button{font-family:inherit;cursor:pointer;color:inherit}
-button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:32px;padding:0 13px;border:0;border-radius:9px;background:var(--ink);color:var(--panel);font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;text-decoration:none}
+.b2{height:32px;padding:0 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
 .m{color:var(--muted)}
-.tn{display:flex;justify-content:space-between;width:100%;border:0;background:transparent;border-radius:8px;padding:6px 10px;text-align:left;font-size:13px;color:var(--ink)}
-.th{font-size:11.5px;font-weight:600;color:var(--muted);padding:12px 10px 4px;text-transform:uppercase;letter-spacing:.05em}
+.lb{font-size:12px;font-weight:600;color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.tag{font-size:11.5px;border-radius:6px;padding:1px 7px;background:var(--panel2);color:var(--muted);white-space:nowrap}
+.pill{font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 9px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.tn{display:flex;justify-content:space-between;align-items:center;gap:6px;width:100%;border:0;background:transparent;border-radius:8px;padding:5px 10px;text-align:left;font-size:13px;color:var(--ink)}
+.tn:hover{background:var(--hover)}
+.tn .m{font-size:12px}
+.sub{padding-left:22px}
+.th{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:600;color:var(--muted);padding:12px 10px 3px;text-transform:uppercase;letter-spacing:.05em}
+.th .x{text-transform:none;letter-spacing:0;font-weight:500}
 .lk{color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent)}
-.bl{border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;background:var(--panel)}
-.b2{height:30px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:12px}
+.cite{font-size:10.5px;font-weight:700;color:var(--accent);vertical-align:super;margin-left:1px;text-decoration:none}
+.bl{border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:13px;background:var(--panel)}
+.seg{border:0;border-radius:8px;padding:5px 0;flex:1;background:transparent;font-size:12.5px;color:var(--muted);font-weight:500}
+.mine{border-left:3px solid var(--accent);padding:2px 0 2px 12px;margin-left:-15px}
+.ed{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.75;color:var(--ink)}
+.ed .fm{color:var(--muted)}
+.ed .h{color:var(--ink);font-weight:700}
+.ed .w{color:var(--accent)}
+.src{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;align-items:start;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.lg{display:inline-flex;align-items:center;gap:5px}
 .nd{cursor:pointer;transition:transform .2s ease;transform-box:fill-box;transform-origin:center}
 .nd:hover{transform:scale(1.14)}
 @keyframes flowg{to{stroke-dashoffset:-48}}
 .flowg{stroke-dasharray:3 21;animation:flowg 1.6s linear infinite}
 @keyframes halo{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.2;transform:scale(1.12)}}
 .halo{animation:halo 2.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
-.seg2{border:0;border-radius:7px;padding:2px 9px;background:transparent;font-size:11.5px;color:var(--muted)}
-.lg{display:inline-flex;align-items:center;gap:5px}
-a{color:var(--accent)}a:hover{color:var(--ink)}
+@media (prefers-reduced-motion:reduce){.flowg,.halo{animation:none}}
+a{color:var(--accent)}
 </style>
 </helmet>
 <div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.6; min-height: 900px; display: flex; flex-wrap: wrap">
   <dc-import name="Sidebar" active="brain" bot="none" hint-size="260px,900px"></dc-import>
-  <nav aria-label="Cây ghi chú" style="flex: 0 1 220px; min-width: 200px; border-right: 1px solid var(--line); padding: 12px 8px; display: flex; flex-direction: column; gap: 1px">
-    <div style="display: flex; gap: 6px; padding: 0 4px 8px"><a href="HopThuVao.dc.html" style="flex: 1; display: flex; justify-content: space-between; text-decoration: none; color: var(--ink); background: var(--warnSoft); border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 600"><span>Hộp thư vào</span><span style="color: var(--warn)">12</span></a></div>
-    <button type="button" class="tn">Ghi chú hằng ngày</button>
-    <div class="th">Dự án</div>
-    <button type="button" class="tn" style="background: var(--accentSoft); color: var(--accent); font-weight: 600">Kênh YouTube Q4</button>
-    <button type="button" class="tn">Ra mắt khoá học AI</button>
-    <div class="th">Lĩnh vực</div>
-    <button type="button" class="tn">Marketing</button>
-    <button type="button" class="tn">Tài chính cá nhân</button>
-    <button type="button" class="tn">Sức khoẻ</button>
-    <div class="th">Khác</div>
-    <button type="button" class="tn">Người <span class="m">24</span></button>
-    <button type="button" class="tn">Tài nguyên</button>
-    <button type="button" class="tn m">Lưu trữ</button>
-    <div class="m" style="margin-top: auto; font-size: 11.5px; padding: 8px 10px 0; border-top: 1px solid var(--line)">Thư mục Markdown · mở được bằng Obsidian</div>
+
+  <!-- ===== Cây: chuyển không gian, Nhật ký / Wiki / Nguồn ===== -->
+  <nav aria-label="Cây bộ não" style="flex: 0 1 236px; min-width: 216px; border-right: 1px solid var(--line); padding: 12px 8px; display: flex; flex-direction: column; gap: 1px">
+    <div role="tablist" aria-label="Không gian" style="display: flex; gap: 2px; padding: 3px; margin: 0 2px 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel)">
+      <button type="button" role="tab" aria-selected="{{selPersonal}}" class="seg" onClick="{{toPersonal}}" style="background: {{pBg}}; color: {{pFg}}">Cá nhân</button>
+      <button type="button" role="tab" aria-selected="{{selCompany}}" class="seg" onClick="{{toCompany}}" style="background: {{cBg}}; color: {{cFg}}">Công ty</button>
+    </div>
+    <label style="display: flex; align-items: center; gap: 6px; margin: 0 2px 8px; height: 32px; padding: 0 9px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--muted); font-size: 12.5px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <input type="search" placeholder="Tìm trong {{spaceName}}" aria-label="Tìm trong bộ não" style="border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; width: 100%">
+    </label>
+    <a href="HopThuVao.dc.html" style="display: flex; justify-content: space-between; margin: 0 2px 4px; text-decoration: none; color: var(--ink); background: {{inboxBg}}; border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 600"><span>Hộp thư vào</span><span style="color: {{inboxFg}}">{{inboxCount}}</span></a>
+
+    <!-- Cá nhân -->
+    <sc-if value="{{treePersonal}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 1px">
+        <div class="th"><span>Nhật ký</span><span class="x">Tầu viết</span></div>
+        <button type="button" class="tn">Hôm nay · 25/10 <span class="m">+ Viết</span></button>
+        <button type="button" class="tn">Các ngày trước <span class="m">38</span></button>
+        <div class="th"><span>Wiki</span><span class="x" style="color: var(--lib)">Thủ thư viết</span></div>
+        <button type="button" class="tn">Tổng quan</button>
+        <button type="button" class="tn">Người <span class="m">24</span></button>
+        <button type="button" class="tn">Dự án <span class="m">6</span></button>
+        <button type="button" class="tn sub" aria-current="page" style="background: var(--accentSoft); color: var(--accent); font-weight: 600">Kênh YouTube Q4</button>
+        <button type="button" class="tn sub">Ra mắt khoá học AI</button>
+        <button type="button" class="tn">Chủ đề <span class="m">18</span></button>
+        <button type="button" class="tn">Tóm tắt nguồn <span class="m">41</span></button>
+        <button type="button" class="tn">Tổng hợp <span class="m">7</span></button>
+        <div class="th"><span>Nguồn</span><span class="x">không sửa</span></div>
+        <button type="button" class="tn">Tháng 10/2026 <span class="m">41</span></button>
+        <button type="button" class="tn">Tháng 9/2026 <span class="m">63</span></button>
+        <div style="display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 10px 0"><span class="tag">tài liệu</span><span class="tag">ghi âm</span><span class="tag">link</span><span class="tag">ảnh</span><span class="tag">hội thoại</span></div>
+      </div>
+    </sc-if>
+
+    <!-- Công ty -->
+    <sc-if value="{{treeCompany}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 1px">
+        <div class="th"><span>Nhật ký</span><span class="x">Tầu viết</span></div>
+        <button type="button" class="tn">Hôm nay · 25/10 <span class="m">+ Viết</span></button>
+        <div class="th"><span>Wiki</span><span class="x" style="color: var(--lib)">Thủ thư viết</span></div>
+        <button type="button" class="tn">Tổng quan</button>
+        <div class="th" style="padding-top: 6px"><span>· Chung</span><span class="x">mọi bot đọc</span></div>
+        <button type="button" class="tn">Người <span class="m">31</span></button>
+        <button type="button" class="tn">Khách hàng <span class="m">12</span></button>
+        <button type="button" class="tn">Sản phẩm <span class="m">4</span></button>
+        <button type="button" class="tn">Dự án · Chủ đề <span class="m">14</span></button>
+        <button type="button" class="tn">Tóm tắt · Tổng hợp <span class="m">64</span></button>
+        <div class="th" style="padding-top: 6px"><span>· Phòng ban</span><span class="x">bot trong phòng đọc</span></div>
+        <button type="button" class="tn">Vận hành <span class="m">🔒 9</span></button>
+        <button type="button" class="tn sub">Quy trình <span class="m">3</span></button>
+        <button type="button" class="tn sub" aria-current="page" style="background: var(--accentSoft); color: var(--accent); font-weight: 600; padding-left: 34px">Duyệt chi tiêu</button>
+        <button type="button" class="tn sub">Số liệu <span class="m">6</span></button>
+        <button type="button" class="tn">Nghiên cứu <span class="m">🔒 14</span></button>
+        <button type="button" class="tn">Sáng tạo · Kỹ thuật <span class="m">🔒 5</span></button>
+        <div class="th"><span>Nguồn</span><span class="x">không sửa</span></div>
+        <button type="button" class="tn">Tháng 10/2026 <span class="m">58</span></button>
+        <button type="button" class="tn">Tháng 9/2026 <span class="m">90</span></button>
+      </div>
+    </sc-if>
+
+    <!-- Trống -->
+    <sc-if value="{{treeEmpty}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 1px">
+        <div class="th"><span>Nhật ký</span><span class="x">Tầu viết</span></div>
+        <button type="button" class="tn">Hôm nay · 25/10 <span class="m">+ Viết</span></button>
+        <div class="th"><span>Wiki</span><span class="x" style="color: var(--lib)">Thủ thư viết</span></div>
+        <span class="m" style="font-size: 12.5px; padding: 3px 10px">Chưa có trang nào</span>
+        <div class="th"><span>Nguồn</span><span class="x">không sửa</span></div>
+        <span class="m" style="font-size: 12.5px; padding: 3px 10px">Chưa có nguồn nào</span>
+      </div>
+    </sc-if>
+
+    <div style="margin-top: auto; padding: 10px 6px 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px">
+      <button type="button" class="b2" style="height: 30px; justify-content: center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l7 5-2 12-5 3-5-3-2-12z"></path></svg>Mở bằng Obsidian</button>
+      <span class="m" style="font-size: 11px"><span class="mono">~/aris/brain/{{spaceDir}}</span> · {{gitNote}}</span>
+    </div>
   </nav>
 
+  <!-- ===== Giữa ===== -->
   <main style="flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column">
-    <div style="display: flex; align-items: center; gap: 8px; padding: 10px 16px 10px 28px; border-bottom: 1px solid var(--line)">
-      <span class="m" style="font-size: 12.5px">Dự án / Kênh YouTube Q4 /</span><span style="font-size: 12.5px; font-weight: 600">Chiến lược nội dung</span>
-      <div style="margin-left: auto; display: flex; gap: 4px">
-        <a href="HoiBoNao.dc.html" class="b2" style="display: inline-flex; align-items: center; text-decoration: none">Hỏi bộ não</a>
-        <a href="DoThi.dc.html" class="b2" style="display: inline-flex; align-items: center; text-decoration: none">Đồ thị</a>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 16px 10px 28px; border-bottom: 1px solid var(--line); min-height: 33px">
+      <span class="m" style="font-size: 12.5px">{{crumb}}</span><span style="font-size: 12.5px; font-weight: 600">{{crumbLast}}</span>
+      <sc-if value="{{editing}}" hint-placeholder-val="{{ false }}"><span class="pill" style="background: var(--accentSoft); color: var(--accent)">Đang sửa</span></sc-if>
+      <div style="margin-left: auto; display: flex; gap: 6px; align-items: center">
+        <sc-if value="{{reading}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; gap: 6px">
+            <button type="button" class="b2" onClick="{{startEdit}}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>Sửa</button>
+            <a href="HoiBoNao.dc.html" class="b2">Hỏi bộ não</a>
+            <a href="DoThi.dc.html" class="b2">Đồ thị</a>
+          </div>
+        </sc-if>
+        <sc-if value="{{editing}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; gap: 6px">
+            <button type="button" class="b2" onClick="{{stopEdit}}">Huỷ</button>
+            <button type="button" class="b1" onClick="{{stopEdit}}">Lưu</button>
+          </div>
+        </sc-if>
         <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
       </div>
     </div>
-    <article style="padding: 26px 28px; max-width: 680px; width: 100%; box-sizing: border-box; margin: 0 auto; display: flex; flex-direction: column; gap: 14px">
-      <div class="m" style="font-size: 12.5px">#chiến-lược #youtube · từ ghi âm Telegram 21/10 · Lâm sửa lần cuối hôm nay</div>
-      <h1 style="margin: 0; font-size: 28px; line-height: 1.25; letter-spacing: -0.015em">Chiến lược nội dung YouTube quý 4</h1>
-      <div style="border-left: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 13.5px"><b style="color: var(--accent)">aris tóm tắt</b> · Tập trung video hướng dẫn, 2 video/tuần, ngân sách 50 triệu; chờ anh chọn ưu tiên.</div>
-      <p style="margin: 0">Rút ra từ phòng <a class="lk" href="Phong2.dc.html">Kế hoạch quý 4</a>. Dữ liệu trong <a class="lk" href="#">Báo cáo kênh 90 ngày</a> cho thấy video hướng dẫn giữ chân người xem tốt nhất.</p>
-      <h2 style="margin: 6px 0 0; font-size: 17px">Mục tiêu</h2>
-      <ul style="margin: 0; padding-left: 20px"><li>2 video hướng dẫn mỗi tuần</li><li>Thử định dạng dưới 60 giây — xem <a class="lk" href="#">Ghi chú: video ngắn</a></li><li>Ngân sách theo <a class="lk" href="#">Ngân sách marketing 2026</a></li></ul>
-      <div style="border-top: 1px solid var(--line); padding-top: 12px">
-        <div style="font-weight: 600; font-size: 13px; padding-bottom: 8px">Liên kết ngược · 4</div>
-        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px"><span class="bl">Ra mắt khoá học AI</span><span class="bl">Ghi chú hằng ngày 22/10</span><span class="bl">Phiên chat với Aris 21/10</span><span class="bl">Skill: bao-cao-kenh-youtube</span></div>
+
+    <!-- Đọc · Cá nhân -->
+    <sc-if value="{{readPersonal}}" hint-placeholder-val="{{ true }}">
+      <article style="padding: 24px 28px; max-width: 690px; width: 100%; box-sizing: border-box; margin: 0 auto; display: flex; flex-direction: column; gap: 13px">
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12.5px">
+          <span class="pill" style="background: var(--libSoft); color: var(--lib)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"></path></svg>Thủ thư viết</span>
+          <span class="m">nạp từ 3 nguồn · cập nhật 25/10 · Tầu sửa 1 đoạn</span>
+          <span class="tag">đang chạy</span><span class="tag">#youtube</span>
+        </div>
+        <h1 style="margin: 0; font-size: 28px; line-height: 1.25">Kênh YouTube Q4</h1>
+        <div class="card" style="padding: 10px 14px; font-size: 13.5px"><b style="color: var(--lib)">Tóm tắt</b> · Tập trung video hướng dẫn, 2 video/tuần, ngân sách 50 triệu; còn chờ chọn chủ đề ưu tiên cho tháng 11.</div>
+        <h2 style="margin: 4px 0 0; font-size: 17px">Mục tiêu</h2>
+        <ul style="margin: 0; padding-left: 20px">
+          <li>2 video hướng dẫn mỗi tuần<a class="cite" href="#nguon">1</a></li>
+          <li>Thử định dạng dưới 60 giây, xem <a class="lk" href="#">[[video-ngan]]</a><a class="cite" href="#nguon">2</a></li>
+          <li>Ngân sách theo <a class="lk" href="#">[[ngan-sach-2026]]</a><a class="cite" href="#nguon">3</a></li>
+        </ul>
+        <h2 style="margin: 4px 0 0; font-size: 17px">Quyết định</h2>
+        <p style="margin: 0">Video hướng dẫn giữ chân người xem tốt nhất trong 90 ngày qua<a class="cite" href="#nguon">2</a>, nên ưu tiên trước video phỏng vấn.</p>
+        <div class="mine">
+          <p style="margin: 0">Không làm series phỏng vấn trong quý này; để quý 1 khi có <a class="lk" href="#">[[chi-ha]]</a> phụ trách dựng.</p>
+          <span class="m" style="font-size: 11.5px">Tầu sửa 24/10 · Thủ thư giữ nguyên đoạn này</span>
+        </div>
+        <div id="nguon" style="padding-top: 6px">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 2px"><b style="font-size: 13px">Nguồn của trang · 3</b><a href="#" style="font-size: 12px">Nhật ký thay đổi ›</a></div>
+          <div class="src"><span class="cite" style="vertical-align: baseline">1</span><span>Ghi âm Telegram 21/10 · ý tưởng series<div class="m" style="font-size: 12px">bản chép lời · 1:42</div></span><a href="#" style="font-size: 12px">Mở</a></div>
+          <div class="src"><span class="cite" style="vertical-align: baseline">2</span><span>Báo cáo kênh 90 ngày.pdf<div class="m" style="font-size: 12px">tài liệu · 12 trang · nạp 22/10</div></span><a href="#" style="font-size: 12px">Mở</a></div>
+          <div class="src"><span class="cite" style="vertical-align: baseline">3</span><span>Phiên chat với Aris 21/10<div class="m" style="font-size: 12px">hội thoại · Tầu chọn lưu vào bộ não</div></span><a href="#" style="font-size: 12px">Mở</a></div>
+        </div>
+        <div style="border-top: 1px solid var(--line); padding-top: 12px">
+          <div style="font-weight: 600; font-size: 13px; padding-bottom: 8px">Liên kết ngược · 4</div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px"><span class="bl">Ra mắt khoá học AI</span><span class="bl">Nhật ký 22/10</span><span class="bl">Chị Hà</span><span class="bl">Tổng hợp: so sánh kênh</span></div>
+        </div>
+      </article>
+    </sc-if>
+
+    <!-- Đọc · Công ty (trang của phòng ban) -->
+    <sc-if value="{{readCompany}}" hint-placeholder-val="{{ false }}">
+      <article style="padding: 24px 28px; max-width: 690px; width: 100%; box-sizing: border-box; margin: 0 auto; display: flex; flex-direction: column; gap: 13px">
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12.5px">
+          <span class="pill" style="background: var(--libSoft); color: var(--lib)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"></path></svg>Thủ thư viết</span>
+          <span class="pill" style="background: var(--panel2); color: var(--ink)">🔒 Phòng Vận hành</span>
+          <span class="m">nạp từ 2 nguồn · cập nhật 23/10</span>
+        </div>
+        <h1 style="margin: 0; font-size: 28px; line-height: 1.25">Duyệt chi tiêu</h1>
+        <div class="card" style="padding: 10px 14px; font-size: 13.5px"><b style="color: var(--lib)">Tóm tắt</b> · Khoản dưới 2 triệu Mai tự duyệt; từ 2 đến 10 triệu cần Tín soát; trên 10 triệu chờ Tầu duyệt.</div>
+        <h2 style="margin: 4px 0 0; font-size: 17px">Các bước</h2>
+        <ol style="margin: 0; padding-left: 20px">
+          <li>Nhận hoá đơn qua thư hoặc Telegram, ghi vào <a class="lk" href="#">[[so-chi-tieu-2026]]</a></li>
+          <li>Đối chiếu với ngân sách phòng<a class="cite" href="#nguon2">1</a></li>
+          <li>Phân mức duyệt như phần tóm tắt<a class="cite" href="#nguon2">2</a></li>
+          <li>Lưu chứng từ, báo trong <a class="lk" href="#">[[bao-cao-chi-tieu-thang]]</a></li>
+        </ol>
+        <div id="nguon2" style="padding-top: 6px">
+          <b style="font-size: 13px">Nguồn của trang · 2</b>
+          <div class="src"><span class="cite" style="vertical-align: baseline">1</span><span>Chính sách ngân sách 2026.pdf<div class="m" style="font-size: 12px">tài liệu · phòng Vận hành · nạp 18/10</div></span><a href="#" style="font-size: 12px">Mở</a></div>
+          <div class="src"><span class="cite" style="vertical-align: baseline">2</span><span>Biên bản họp 22/10<div class="m" style="font-size: 12px">ghi chú · phòng Vận hành</div></span><a href="#" style="font-size: 12px">Mở</a></div>
+        </div>
+        <div style="border-top: 1px solid var(--line); padding-top: 12px">
+          <div style="font-weight: 600; font-size: 13px; padding-bottom: 8px">Liên kết ngược · 3</div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px"><span class="bl">Sổ chi tiêu 2026</span><span class="bl">Tín</span><span class="bl">Skill: gom-hoa-don</span></div>
+        </div>
+      </article>
+    </sc-if>
+
+    <!-- Sửa -->
+    <sc-if value="{{editing}}" hint-placeholder-val="{{ false }}">
+      <div style="padding: 18px 28px; max-width: 760px; width: 100%; box-sizing: border-box; margin: 0 auto; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); background: var(--libSoft); border-radius: 12px; padding: 10px 14px; font-size: 13px">
+          <span style="color: var(--lib); font-weight: 700">ⓘ</span>
+          <span>Trang này do Thủ thư viết. Phần Tầu sửa được giữ nguyên: Thủ thư coi là chỉ dẫn, ghi vào nhật ký và không ghi đè ở lần nạp sau.</span>
+        </div>
+        <div class="card" style="position: relative; padding: 16px 18px">
+          <sc-if value="{{editPersonal}}" hint-placeholder-val="{{ false }}">
+            <div style="position: relative">
+            <div class="ed">
+              <div><span class="fm">---</span></div>
+              <div><span class="fm">loai: du-an</span></div>
+              <div><span class="fm">trang-thai: dang-chay</span></div>
+              <div><span class="fm">the: [youtube]</span></div>
+              <div><span class="fm">nguon: 3 · cap-nhat: 2026-10-25</span></div>
+              <div><span class="fm">---</span></div>
+              <div><span class="h"># Kênh YouTube Q4</span></div>
+              <div style="height: 22px"></div>
+              <div><span class="h">## Quyết định</span></div>
+              <div>Video hướng dẫn giữ chân người xem tốt nhất trong 90 ngày qua, nên ưu tiên trước video phỏng vấn.</div>
+              <div style="height: 22px"></div>
+              <div>Không làm series phỏng vấn trong quý này; để quý 1 khi có <span class="w">[[chi-ha]]</span> phụ trách dựng.</div>
+              <div>Lịch quay xem <span class="w">[[lịch</span><span style="display: inline-block; width: 2px; height: 16px; background: var(--accent); vertical-align: -3px; margin-left: 1px"></span></div>
+            </div>
+          <div role="listbox" aria-label="Gợi ý liên kết" style="position: absolute; left: 150px; top: calc(100% + 4px); width: 300px; z-index: 2; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.14); padding: 6px; font-size: 13px">
+            <div class="lb" style="padding: 4px 8px">Liên kết tới trang</div>
+            <div role="option" aria-selected="true" style="display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px; border-radius: 8px; background: var(--accentSoft)"><span><b>lich-quay-thang-11</b></span><span class="m" style="font-size: 12px">Dự án</span></div>
+            <div role="option" style="display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px"><span>lich-hop-quy-4</span><span class="m" style="font-size: 12px">Tóm tắt nguồn</span></div>
+            <div role="option" style="display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px; border-top: 1px solid var(--line); margin-top: 2px; color: var(--accent)"><span>+ Trang mới “lịch…”</span><span class="m" style="font-size: 12px">Thủ thư viết sau</span></div>
+          </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{editCompany}}" hint-placeholder-val="{{ false }}">
+            <div style="position: relative">
+            <div class="ed">
+              <div><span class="fm">---</span></div>
+              <div><span class="fm">loai: quy-trinh</span></div>
+              <div><span class="fm">phong-ban: van-hanh</span></div>
+              <div><span class="fm">nguon: 2 · cap-nhat: 2026-10-23</span></div>
+              <div><span class="fm">---</span></div>
+              <div><span class="h"># Duyệt chi tiêu</span></div>
+              <div style="height: 22px"></div>
+              <div><span class="h">## Các bước</span></div>
+              <div>1. Nhận hoá đơn qua thư hoặc Telegram, ghi vào <span class="w">[[so-chi-tieu-2026]]</span></div>
+              <div>2. Đối chiếu với ngân sách phòng</div>
+              <div>3. Khoản trên 10 triệu: đính kèm <span class="w">[[bao-cao</span><span style="display: inline-block; width: 2px; height: 16px; background: var(--accent); vertical-align: -3px; margin-left: 1px"></span></div>
+            </div>
+          <div role="listbox" aria-label="Gợi ý liên kết" style="position: absolute; left: 150px; top: calc(100% + 4px); width: 300px; z-index: 2; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.14); padding: 6px; font-size: 13px">
+            <div class="lb" style="padding: 4px 8px">Liên kết tới trang</div>
+            <div role="option" aria-selected="true" style="display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px; border-radius: 8px; background: var(--accentSoft)"><span><b>bao-cao-chi-tieu-thang</b></span><span class="m" style="font-size: 12px">Quy trình · Vận hành</span></div>
+            <div role="option" style="display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px"><span>bao-cao-quy-3</span><span class="m" style="font-size: 12px">Tóm tắt nguồn</span></div>
+            <div role="option" style="display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px; border-top: 1px solid var(--line); margin-top: 2px; color: var(--accent)"><span>+ Trang mới “báo cáo…”</span><span class="m" style="font-size: 12px">Thủ thư viết sau</span></div>
+          </div>
+            </div>
+          </sc-if>
+        </div>
+        <div style="height: 104px"></div>
+        <div class="m" style="font-size: 12px">Markdown · gõ <span class="mono">[[</span> để nối trang · nhãn ở đầu trang do Thủ thư giữ · Lưu là một commit git, hoàn tác được ở nhật ký</div>
       </div>
-    </article>
+    </sc-if>
+
+    <!-- Trống -->
+    <sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+      <div style="padding: 32px 28px; max-width: 720px; width: 100%; box-sizing: border-box; margin: 0 auto; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <h1 style="margin: 0; font-size: 26px">Bộ não {{spaceName}} còn trống</h1>
+          <span class="m">Tầu đưa nguồn vào, Thủ thư đọc rồi viết thành wiki có liên kết. Càng nhiều nguồn, wiki càng dày và các bot trả lời càng đúng.</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+          <div class="card" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 4px"><b style="font-size: 13.5px">Nguồn</b><span class="m" style="font-size: 12.5px">Tài liệu, link, ảnh, ghi âm, phiên chat. Giữ nguyên, không ai sửa.</span></div>
+          <div class="card" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 4px"><b style="font-size: 13.5px">Nhật ký</b><span class="m" style="font-size: 12.5px">Tầu viết mỗi ngày. Cũng là nguồn, tự nạp.</span></div>
+          <div class="card" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; border-color: var(--lib)"><b style="font-size: 13.5px; color: var(--lib)">Wiki</b><span class="m" style="font-size: 12.5px">Thủ thư viết: người, dự án, chủ đề, tóm tắt. Tầu đọc và sửa được.</span></div>
+        </div>
+        <div class="card" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+          <b style="font-size: 14px">Bắt đầu bằng một trong ba cách</b>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <button type="button" class="b1">Viết nhật ký hôm nay</button>
+            <a href="HopThuVao.dc.html" class="b2">Thả tệp vào Hộp thư vào</a>
+            <button type="button" class="b2">Mở thư mục bằng Obsidian</button>
+          </div>
+          <span class="m" style="font-size: 12.5px">Trên Telegram: chuyển tiếp tin, link, ảnh hay ghi âm cho Aris kèm chữ “lưu”, hoặc gõ <span class="mono">/note</span>.</span>
+        </div>
+        <div class="card" style="padding: 12px 14px; display: flex; gap: 12px; align-items: center">
+          <svg width="40" height="40" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><rect x="14" y="14" width="72" height="72" rx="22" fill="#D97706"></rect><path d="M32 34h36M32 50h36M32 66h22" stroke="#fff" stroke-width="7" stroke-linecap="round"></path></svg>
+          <span style="flex: 1; font-size: 13px"><b>Thủ thư đã sẵn sàng</b><span class="m"> · đọc nguồn, viết wiki, soát mỗi tuần. Chỉ ghi vào bộ não, không chạy lệnh, không gửi tin.</span></span>
+          <a href="HoSoBot.dc.html" style="font-size: 12.5px; white-space: nowrap">Hồ sơ Thủ thư ›</a>
+        </div>
+      </div>
+    </sc-if>
   </main>
 
-  <aside aria-label="Đồ thị quanh ghi chú" style="flex: 1 1 280px; max-width: 300px; min-width: 250px; border-left: 1px solid var(--line); background: var(--panel); padding: 14px; display: flex; flex-direction: column; gap: 12px">
-    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
-      <b style="font-family: 'Lexend', sans-serif; font-size: 14px">Quanh ghi chú này</b>
-      <span role="group" aria-label="Độ sâu liên kết" style="display: inline-flex; border: 1px solid var(--line); border-radius: 9px; padding: 2px">
-        <button type="button" class="seg2" onClick="{{depth1}}" style="background: {{d1bg}}; color: {{d1fg}}">Độ sâu 1</button>
-        <button type="button" class="seg2" onClick="{{depth2}}" style="background: {{d2bg}}; color: {{d2fg}}">2</button>
-      </span>
-    </div>
-    <div style="border: 1px solid var(--line); border-radius: 16px; background: var(--bg); overflow: hidden">
-      <svg viewBox="0 0 272 256" width="100%" role="img" aria-label="Ghi chú Chiến lược YouTube Q4 ở giữa, nối với Báo cáo 90 ngày, Dự án YouTube, Ký ức của Tín, Phiên chat 21/10, Chị Hà; aris gợi ý nối thêm Lịch quay tháng 11" style="display: block">
-        <defs>
-          <radialGradient id="gc-bg" cx="50%" cy="48%" r="60%"><stop offset="0%" stop-color="var(--accent)" stop-opacity="0.10"></stop><stop offset="100%" stop-color="var(--accent)" stop-opacity="0"></stop></radialGradient>
-          <radialGradient id="gc-core" cx="38%" cy="32%" r="75%"><stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.55"></stop><stop offset="45%" stop-color="var(--accent)" stop-opacity="1"></stop><stop offset="100%" stop-color="var(--accent)" stop-opacity="1"></stop></radialGradient>
-        </defs>
-        <rect x="0" y="0" width="272" height="256" fill="url(#gc-bg)"></rect>
-        <circle cx="136" cy="124" r="54" fill="none" stroke="var(--edge)" stroke-width="1" stroke-dasharray="2 5" opacity="0.7"></circle>
-        <circle cx="136" cy="124" r="90" fill="none" stroke="var(--edge)" stroke-width="1" stroke-dasharray="2 6" opacity="0.5"></circle>
-
-        <g opacity="{{d2op}}">
-          <path d="M91 46 Q62 44 43 54" fill="none" stroke="#5B8DEF" stroke-width="1.2" opacity="0.45"></path><circle cx="40" cy="56" r="4.5" fill="#5B8DEF" opacity="0.6"></circle>
-          <path d="M181 46 Q205 34 226 30" fill="none" stroke="#00B5A5" stroke-width="1.2" opacity="0.45"></path><circle cx="228" cy="29" r="4.5" fill="#5B8DEF" opacity="0.6"></circle>
-          <path d="M181 46 Q206 58 222 70" fill="none" stroke="#00B5A5" stroke-width="1.2" opacity="0.45"></path><path d="M224 66l4.5 8h-9z" fill="#FF309C" opacity="0.6"></path>
-          <path d="M91 202 Q66 214 50 228" fill="none" stroke="#FF6700" stroke-width="1.2" opacity="0.45"></path><circle cx="48" cy="229" r="4.5" fill="#5B8DEF" opacity="0.6"></circle>
-          <path d="M226 124 Q248 150 252 168" fill="none" stroke="#9259FE" stroke-width="1.2" opacity="0.45"></path><circle cx="252" cy="171" r="4.5" fill="#5B8DEF" opacity="0.6"></circle>
-        </g>
-
-        <path d="M136 124 Q124 79 91 46" fill="none" stroke="#5B8DEF" stroke-width="2.2" stroke-linecap="round" opacity="0.7"></path>
-        <path d="M136 124 Q169 91 181 46" fill="none" stroke="#00B5A5" stroke-width="2.2" stroke-linecap="round" opacity="0.7"></path>
-        <path d="M136 124 Q181 136 226 124" fill="none" stroke="#9259FE" stroke-width="2.2" stroke-linecap="round" opacity="0.7"></path>
-        <path d="M136 124 Q148 169 181 202" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" opacity="0.55"></path>
-        <path d="M136 124 Q103 157 91 202" fill="none" stroke="#FF6700" stroke-width="2.2" stroke-linecap="round" opacity="0.7"></path>
-        <path d="M136 124 Q91 112 46 124" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="4 5" opacity="0.8"></path>
-        <path class="flowg" d="M136 124 Q169 91 181 46" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" opacity="0.9"></path>
-        <path class="flowg" d="M136 124 Q181 136 226 124" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" opacity="0.9"></path>
-
-        <g class="nd"><circle cx="91" cy="46" r="13" fill="#5B8DEF"></circle><circle cx="87" cy="42" r="5" fill="#FFFFFF" opacity="0.25"></circle><path d="M86.5 41.5h9M86.5 45.5h9M86.5 49.5h6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path></g>
-        <g class="nd"><rect x="168" y="33" width="26" height="26" rx="8" fill="#00B5A5"></rect><rect x="175.5" y="40.5" width="11" height="11" rx="3" fill="none" stroke="#fff" stroke-width="1.8"></rect></g>
-        <g class="nd"><path d="M226 109.5C228 109.5 229.4 110.6 230.4 112.3L239.2 128.2C241 131.4 238.8 135 235.2 135H216.8C213.2 135 211 131.4 212.8 128.2L221.6 112.3C222.6 110.6 224 109.5 226 109.5Z" fill="#9259FE"></path><circle cx="226" cy="126" r="2.6" fill="#fff"></circle></g>
-        <g class="nd"><circle cx="181" cy="202" r="12" fill="var(--panel)" stroke="var(--muted)" stroke-width="2.4"></circle><path d="M176 198.5h10a1.8 1.8 0 0 1 1.8 1.8v4.2a1.8 1.8 0 0 1-1.8 1.8h-5.5l-3 2.4v-2.4h-1.5a1.8 1.8 0 0 1-1.8-1.8v-4.2a1.8 1.8 0 0 1 1.8-1.8z" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linejoin="round"></path></g>
-        <g class="nd"><circle cx="91" cy="202" r="13" fill="#FF6700"></circle><circle cx="87" cy="198" r="5" fill="#FFFFFF" opacity="0.25"></circle><circle cx="91" cy="198.5" r="3.2" fill="#fff"></circle><path d="M84.5 208.5c1.2-3.2 3.6-4.6 6.5-4.6s5.3 1.4 6.5 4.6" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round"></path></g>
-        <g class="nd"><circle cx="46" cy="124" r="12" fill="var(--panel)" stroke="var(--accent)" stroke-width="2" stroke-dasharray="3 3"></circle><path d="M46 119v10M41 124h10" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"></path></g>
-
-        <circle class="halo" cx="136" cy="124" r="32" fill="var(--accent)" opacity="0.18"></circle>
-        <circle cx="136" cy="124" r="22" fill="url(#gc-core)"></circle>
-        <path d="M129 117.5h14M129 123.5h14M129 129.5h9" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path>
-
-        <g font-family="'Be Vietnam Pro', system-ui, sans-serif" font-size="10.5" fill="var(--ink)">
-          <rect x="72" y="153" width="128" height="20" rx="10" fill="var(--panel)" stroke="var(--line)"></rect>
-          <text x="136" y="167" text-anchor="middle" font-weight="700" font-size="11">Chiến lược YouTube Q4</text>
-          <rect x="49" y="9" width="84" height="18" rx="9" fill="var(--panel)" stroke="var(--line)"></rect><text x="91" y="22" text-anchor="middle">Báo cáo 90 ngày</text>
-          <rect x="141" y="9" width="80" height="18" rx="9" fill="var(--panel)" stroke="var(--line)"></rect><text x="181" y="22" text-anchor="middle">Dự án YouTube</text>
-          <rect x="192" y="141" width="72" height="18" rx="9" fill="var(--panel)" stroke="var(--line)"></rect><text x="228" y="154" text-anchor="middle">Ký ức của Tín</text>
-          <rect x="149" y="221" width="64" height="18" rx="9" fill="var(--panel)" stroke="var(--line)"></rect><text x="181" y="234" text-anchor="middle">Phiên 21/10</text>
-          <rect x="60" y="221" width="62" height="18" rx="9" fill="var(--panel)" stroke="var(--line)"></rect><text x="91" y="234" text-anchor="middle">Chị Hà</text>
-          <rect x="8" y="141" width="76" height="18" rx="9" fill="var(--accentSoft)" stroke="var(--accent)" stroke-dasharray="3 3"></rect><text x="46" y="154" text-anchor="middle" fill="var(--accent)">Lịch quay T11?</text>
-        </g>
-      </svg>
-    </div>
-    <div style="display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 11.5px; color: var(--muted)">
-      <span class="lg"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#5B8DEF"></circle></svg>Ghi chú</span>
-      <span class="lg"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect width="10" height="10" rx="3" fill="#00B5A5"></rect></svg>Dự án</span>
-      <span class="lg"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#FF6700"></circle></svg>Người</span>
-      <span class="lg"><svg width="11" height="10" viewBox="0 0 11 10" aria-hidden="true"><path d="M5.5 0L11 10H0z" fill="#9259FE"></path></svg>Ký ức bot</span>
-      <span class="lg"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="var(--muted)" stroke-width="2"></circle></svg>Phiên chat</span>
-      <span class="lg"><svg width="14" height="6" viewBox="0 0 14 6" aria-hidden="true"><path d="M0 3h14" stroke="var(--accent)" stroke-width="2" stroke-dasharray="3 3"></path></svg>Gợi ý</span>
-    </div>
-    <a href="DoThi.dc.html" style="align-self: flex-start; font-size: 12.5px; text-decoration: none">Mở đồ thị toàn cục 3D ›</a>
-    <div style="border-top: 1px solid var(--line); padding-top: 10px">
-      <b style="font-size: 13px">aris gợi ý nối</b>
-      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px; font-size: 13px">
-        <div>“Lịch quay tháng 11” — cùng nói về 2 video/tuần<div style="display: flex; gap: 6px; margin-top: 4px"><button type="button" class="b2" style="background: var(--accent); color: var(--panel); border: 0">Nối</button><button type="button" class="b2">Bỏ qua</button></div></div>
-        <div>Người “Chị Hà — editor” — nhắc trong 3 ghi chú sản xuất<div style="display: flex; gap: 6px; margin-top: 4px"><button type="button" class="b2" style="background: var(--accent); color: var(--panel); border: 0">Nối</button><button type="button" class="b2">Bỏ qua</button></div></div>
+  <!-- ===== Phải ===== -->
+  <aside aria-label="Quanh trang này" style="flex: 1 1 280px; max-width: 300px; min-width: 250px; border-left: 1px solid var(--line); background: var(--panel); padding: 14px; display: flex; flex-direction: column; gap: 12px">
+    <sc-if value="{{hasGraph}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <b style="font-family: 'Lexend', sans-serif; font-size: 14px">Quanh trang này</b>
+          <a href="DoThi.dc.html" style="font-size: 12px; text-decoration: none">Đồ thị 3D ›</a>
+        </div>
+        <div style="border: 1px solid var(--line); border-radius: 16px; background: var(--bg); overflow: hidden">
+          <svg viewBox="0 0 272 240" width="100%" role="img" aria-label="{{graphLabel}}" style="display: block">
+            <defs>
+              <radialGradient id="gc-bg" cx="50%" cy="48%" r="60%"><stop offset="0%" stop-color="var(--accent)" stop-opacity="0.10"></stop><stop offset="100%" stop-color="var(--accent)" stop-opacity="0"></stop></radialGradient>
+              <radialGradient id="gc-core" cx="38%" cy="32%" r="75%"><stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.55"></stop><stop offset="45%" stop-color="var(--accent)" stop-opacity="1"></stop><stop offset="100%" stop-color="var(--accent)" stop-opacity="1"></stop></radialGradient>
+            </defs>
+            <rect x="0" y="0" width="272" height="240" fill="url(#gc-bg)"></rect>
+            <circle cx="136" cy="118" r="54" fill="none" stroke="var(--edge)" stroke-width="1" stroke-dasharray="2 5" opacity="0.7"></circle>
+            <path d="M136 118 Q124 73 91 42" fill="none" stroke="#D97706" stroke-width="2.2" stroke-linecap="round" opacity="0.7"></path>
+            <path d="M136 118 Q169 85 181 42" fill="none" stroke="#00B5A5" stroke-width="2.2" stroke-linecap="round" opacity="0.7"></path>
+            <path d="M136 118 Q181 130 226 118" fill="none" stroke="#D97706" stroke-width="2.2" stroke-linecap="round" opacity="0.7"></path>
+            <path d="M136 118 Q148 163 181 192" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" opacity="0.55"></path>
+            <path d="M136 118 Q103 151 91 192" fill="none" stroke="#FF6700" stroke-width="2.2" stroke-linecap="round" opacity="0.7"></path>
+            <path d="M136 118 Q91 106 46 118" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="4 5" opacity="0.8"></path>
+            <path class="flowg" d="M136 118 Q124 73 91 42" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" opacity="0.9"></path>
+            <g class="nd"><rect x="79" y="30" width="24" height="24" rx="6" fill="#D97706"></rect><path d="M85 38h12M85 42.5h12M85 47h8" stroke="#fff" stroke-width="1.7" stroke-linecap="round"></path></g>
+            <g class="nd"><rect x="168" y="29" width="26" height="26" rx="8" fill="#00B5A5"></rect><rect x="175.5" y="36.5" width="11" height="11" rx="3" fill="none" stroke="#fff" stroke-width="1.8"></rect></g>
+            <g class="nd"><rect x="214" y="106" width="24" height="24" rx="6" fill="#D97706"></rect><path d="M220 114h12M220 118.5h12M220 123h8" stroke="#fff" stroke-width="1.7" stroke-linecap="round"></path></g>
+            <g class="nd"><circle cx="181" cy="192" r="12" fill="var(--panel)" stroke="var(--muted)" stroke-width="2.4"></circle><path d="M176 188.5h10a1.8 1.8 0 0 1 1.8 1.8v4.2a1.8 1.8 0 0 1-1.8 1.8h-5.5l-3 2.4v-2.4h-1.5a1.8 1.8 0 0 1-1.8-1.8v-4.2a1.8 1.8 0 0 1 1.8-1.8z" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linejoin="round"></path></g>
+            <g class="nd"><circle cx="91" cy="192" r="13" fill="#FF6700"></circle><circle cx="91" cy="188.5" r="3.2" fill="#fff"></circle><path d="M84.5 198.5c1.2-3.2 3.6-4.6 6.5-4.6s5.3 1.4 6.5 4.6" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round"></path></g>
+            <g class="nd"><circle cx="46" cy="118" r="12" fill="var(--panel)" stroke="var(--accent)" stroke-width="2" stroke-dasharray="3 3"></circle><path d="M46 113v10M41 118h10" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"></path></g>
+            <circle class="halo" cx="136" cy="118" r="32" fill="var(--accent)" opacity="0.18"></circle>
+            <circle cx="136" cy="118" r="22" fill="url(#gc-core)"></circle>
+            <path d="M129 111.5h14M129 117.5h14M129 123.5h9" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path>
+            <g font-family="'Be Vietnam Pro', system-ui, sans-serif" font-size="10.5" fill="var(--ink)">
+              <g opacity="{{pOp}}">
+              <rect x="72" y="147" width="128" height="20" rx="10" fill="var(--panel)" stroke="var(--line)"></rect>
+              <text x="136" y="161" text-anchor="middle" font-weight="700" font-size="11">Kênh YouTube Q4</text>
+              <rect x="45" y="6" width="92" height="18" rx="9" fill="var(--panel)" stroke="var(--line)"></rect><text x="91" y="19" text-anchor="middle">Ghi âm 21/10</text>
+              <rect x="137" y="6" width="88" height="18" rx="9" fill="var(--panel)" stroke="var(--line)"></rect><text x="181" y="19" text-anchor="middle">Khoá học AI</text>
+              <rect x="186" y="135" width="84" height="18" rx="9" fill="var(--panel)" stroke="var(--line)"></rect><text x="228" y="148" text-anchor="middle">Báo cáo 90 ngày</text>
+              <rect x="145" y="211" width="72" height="18" rx="9" fill="var(--panel)" stroke="var(--line)"></rect><text x="181" y="224" text-anchor="middle">Phiên 21/10</text>
+              <rect x="56" y="211" width="70" height="18" rx="9" fill="var(--panel)" stroke="var(--line)"></rect><text x="91" y="224" text-anchor="middle">Chị Hà</text>
+              <rect x="6" y="135" width="80" height="18" rx="9" fill="var(--accentSoft)" stroke="var(--accent)" stroke-dasharray="3 3"></rect><text x="46" y="148" text-anchor="middle" fill="var(--accent)">Lịch quay T11?</text>
+              </g>
+              <g opacity="{{cOp}}">
+              <rect x="72" y="147" width="128" height="20" rx="10" fill="var(--panel)" stroke="var(--line)"></rect>
+              <text x="136" y="161" text-anchor="middle" font-weight="700" font-size="11">Duyệt chi tiêu</text>
+              <rect x="45" y="6" width="92" height="18" rx="9" fill="var(--panel)" stroke="var(--line)"></rect><text x="91" y="19" text-anchor="middle">Chính sách 2026</text>
+              <rect x="137" y="6" width="88" height="18" rx="9" fill="var(--panel)" stroke="var(--line)"></rect><text x="181" y="19" text-anchor="middle">Sổ chi tiêu</text>
+              <rect x="186" y="135" width="84" height="18" rx="9" fill="var(--panel)" stroke="var(--line)"></rect><text x="228" y="148" text-anchor="middle">Biên bản 22/10</text>
+              <rect x="145" y="211" width="72" height="18" rx="9" fill="var(--panel)" stroke="var(--line)"></rect><text x="181" y="224" text-anchor="middle">Phiên 23/10</text>
+              <rect x="56" y="211" width="70" height="18" rx="9" fill="var(--panel)" stroke="var(--line)"></rect><text x="91" y="224" text-anchor="middle">Tín</text>
+              <rect x="6" y="135" width="80" height="18" rx="9" fill="var(--accentSoft)" stroke="var(--accent)" stroke-dasharray="3 3"></rect><text x="46" y="148" text-anchor="middle" fill="var(--accent)">Báo cáo Q3?</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 11.5px; color: var(--muted)">
+          <span class="lg"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect width="10" height="10" rx="3" fill="#D97706"></rect></svg>Nguồn</span>
+          <span class="lg"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect width="10" height="10" rx="3" fill="#00B5A5"></rect></svg>Dự án</span>
+          <span class="lg"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#FF6700"></circle></svg>Người</span>
+          <span class="lg"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="var(--muted)" stroke-width="2"></circle></svg>Phiên chat</span>
+          <span class="lg"><svg width="14" height="6" viewBox="0 0 14 6" aria-hidden="true"><path d="M0 3h14" stroke="var(--accent)" stroke-width="2" stroke-dasharray="3 3"></path></svg>Gợi ý</span>
+        </div>
+        <div style="border-top: 1px solid var(--line); padding-top: 10px; font-size: 13px">
+          <b>Thủ thư gợi ý nối</b>
+          <div style="margin-top: 6px">{{suggest}}<div style="display: flex; gap: 6px; margin-top: 6px"><button type="button" class="b2" style="height: 28px; background: var(--accent); color: var(--panel); border: 0">Nối</button><button type="button" class="b2" style="height: 28px">Bỏ qua</button></div></div>
+        </div>
       </div>
+    </sc-if>
+
+    <div style="border-top: {{accessTop}}; padding-top: {{accessPad}}; display: flex; flex-direction: column; gap: 6px; font-size: 13px">
+      <b>Ai đọc được {{accessWhat}}</b>
+      <span>{{accessTags}}</span>
+      <span class="m" style="font-size: 12px">{{accessNote}}</span>
+      <a href="#" style="font-size: 12px">Cài đặt bộ não ›</a>
     </div>
   </aside>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"space":{"editor":"enum","options":["ca-nhan","cong-ty"],"default":"ca-nhan"},"state":{"editor":"enum","options":["doc","sua","trong"],"default":"doc"},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
-    const theme = (this.state && this.state.theme) || this.props.theme || 'light';
-    const deep = !this.state || this.state.deep === undefined ? true : this.state.deep;
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const space = s.space || this.props.space || 'ca-nhan';
+    const mode = s.mode || this.props.state || 'doc';
+    const personal = space === 'ca-nhan';
+    const empty = mode === 'trong';
+    const editing = mode === 'sua';
+    const reading = mode === 'doc';
+    const on = 'var(--ink)', off = 'var(--muted)';
+    const tags = (list) => list.join(' · ');
     return {
       themeClass: 't-' + theme,
+      selPersonal: personal ? 'true' : 'false',
+      selCompany: personal ? 'false' : 'true',
+      pBg: personal ? 'var(--hover)' : 'transparent', pFg: personal ? on : off,
+      cBg: personal ? 'transparent' : 'var(--hover)', cFg: personal ? off : on,
+      toPersonal: () => this.setState({ space: 'ca-nhan' }),
+      toCompany: () => this.setState({ space: 'cong-ty' }),
+      startEdit: () => this.setState({ mode: 'sua' }),
+      stopEdit: () => this.setState({ mode: 'doc' }),
       toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
-      d2op: deep ? '1' : '0',
-      d1bg: deep ? 'transparent' : 'var(--hover)',
-      d1fg: deep ? 'var(--muted)' : 'var(--ink)',
-      d2bg: deep ? 'var(--hover)' : 'transparent',
-      d2fg: deep ? 'var(--ink)' : 'var(--muted)',
-      depth1: () => this.setState({ deep: false }),
-      depth2: () => this.setState({ deep: true })
+      spaceName: personal ? 'Cá nhân' : 'Công ty',
+      spaceDir: personal ? 'ca-nhan' : 'cong-ty',
+      gitNote: empty ? 'git đã bật' : 'đã lưu 2 phút trước',
+      inboxCount: empty ? '0' : personal ? '5' : '3',
+      inboxBg: empty ? 'var(--panel2)' : 'var(--warnSoft)',
+      inboxFg: empty ? 'var(--muted)' : 'var(--warn)',
+      treePersonal: !empty && personal,
+      treeCompany: !empty && !personal,
+      treeEmpty: empty,
+      crumb: empty ? (personal ? 'Cá nhân /' : 'Công ty /') : personal ? 'Cá nhân / Wiki / Dự án /' : 'Công ty / Wiki / Phòng ban / Vận hành / Quy trình /',
+      crumbLast: empty ? 'Bắt đầu' : personal ? 'Kênh YouTube Q4' : 'Duyệt chi tiêu',
+      reading: reading,
+      editing: editing,
+      readPersonal: reading && personal,
+      readCompany: reading && !personal,
+      editPersonal: editing && personal,
+      editCompany: editing && !personal,
+      empty: empty,
+      hasGraph: !empty,
+      graphLabel: personal
+        ? 'Trang Kênh YouTube Q4 ở giữa, nối với 2 nguồn, dự án Ra mắt khoá học AI, phiên chat 21/10, Chị Hà; Thủ thư gợi ý nối Lịch quay tháng 11'
+        : 'Trang Duyệt chi tiêu ở giữa, nối với 2 nguồn, Sổ chi tiêu 2026, phiên chat, Tín; Thủ thư gợi ý nối Báo cáo quý 3',
+      pOp: personal ? '1' : '0',
+      cOp: personal ? '0' : '1',
+      suggest: personal ? '“Lịch quay tháng 11” cùng nói về 2 video/tuần' : '“Báo cáo chi tiêu quý 3” dùng cùng mức duyệt',
+      accessTop: empty ? '0' : '1px solid var(--line)',
+      accessPad: empty ? '0' : '10px',
+      accessWhat: personal ? 'không gian Cá nhân' : (empty ? 'không gian Công ty' : 'trang này'),
+      accessTags: personal ? tags(['Tầu', 'Aris', 'Thủ thư']) : (empty ? tags(['Tầu', 'Aris', 'Thủ thư', 'mọi bot: phần Chung']) : tags(['Tầu', 'Aris', 'Thủ thư', 'Mai', 'Tín'])),
+      accessNote: personal
+        ? 'Bot khác chỉ đọc được khi Tầu cho phép từng bot.'
+        : (empty ? 'Thư mục của mỗi phòng ban chỉ bot trong phòng đọc được.' : 'Trang của phòng Vận hành: chỉ bot trong phòng đọc được, bot phòng khác không thấy.')
     };
   }
 }
