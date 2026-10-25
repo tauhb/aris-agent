@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent }
 import type { PageProps, Translate } from '../page.js'
 import { Later } from '../team/BotTools.js'
 import { frontValue, Inline, Markdown, parseMarkdown, type LinkTarget } from './markdown.js'
+import { GROUP_ICON, Group, Ico, Layer, Row, type Depth } from './tree.js'
 
 type Space = 'ca-nhan' | 'cong-ty'
 
@@ -60,54 +61,6 @@ const DEPT_GROUPS = ['quy-trinh', 'du-an', 'chu-de', 'tom-tat', 'so-lieu']
 const dmy = (key: string) => {
   const [y, m, d] = key.split('-')
   return d && m ? `${d}/${m}${y ? `/${y}` : ''}` : key
-}
-
-/** Một nhóm có thể mở ra trong cây. */
-function Group({
-  id,
-  label,
-  pages,
-  open,
-  toggle,
-  current,
-  select,
-  sub,
-}: {
-  id: string
-  label: string
-  pages: Entry[]
-  open: boolean
-  toggle: (id: string) => void
-  current: string | undefined
-  select: (p: string) => void
-  sub?: boolean
-}) {
-  return (
-    <>
-      <button
-        type="button"
-        className={`ap-tn${sub ? ' sub' : ''}`}
-        aria-expanded={open}
-        onClick={() => toggle(id)}
-        disabled={!pages.length}
-      >
-        <span>{label}</span>
-        <span className="a-muted">{pages.length || ''}</span>
-      </button>
-      {open &&
-        pages.map((p) => (
-          <button
-            type="button"
-            key={p.path}
-            className={`ap-tn ${sub ? 'sub2' : 'sub'}`}
-            aria-current={p.path === current ? 'page' : undefined}
-            onClick={() => select(p.path)}
-          >
-            <span className="ap-ell">{p.title}</span>
-          </button>
-        ))}
-    </>
-  )
 }
 
 function groupLabel(t: Translate, g: string) {
@@ -262,6 +215,60 @@ export function Notes({ t, nav, params }: PageProps) {
   const wikiOf = (f: (e: Entry) => boolean) => by((e) => e.layer === 'wiki' && e.name !== 'tong-quan' && f(e))
   const isEmpty = state !== null && !entries.some((e) => e.layer !== 'he-thong')
 
+  const ME = 'var(--a-accent)'
+  const LIB = 'var(--a-warn)'
+  const SRC = 'var(--a-muted)'
+  const today = state?.today ?? ''
+  const todayEntry = diary.find((d) => d.name === today)
+  const weekday = (() => {
+    const [y, m, d] = today.split('-').map(Number)
+    return y && m && d ? t(`nb.wd.${new Date(y, m - 1, d).getDay()}`) : ''
+  })()
+  const wikiCount = wikiOf(() => true).length + (overview ? 1 : 0)
+
+  /** Các nhóm của một chỗ trong wiki: nhóm có trang trước, nhóm trống gom vào một dòng. */
+  const groups = (
+    prefix: string,
+    ids: string[],
+    pagesOf: (g: string) => Entry[],
+    depth: Depth = 0,
+    showEmpty = true,
+  ) => {
+    const full = ids.filter((g) => pagesOf(g).length)
+    const empty = ids.filter((g) => g !== 'khac' && !pagesOf(g).length)
+    const more = `${prefix}:trong`
+    return (
+      <>
+        {full.map((g) => (
+          <Group
+            key={g}
+            id={`${prefix}:${g}`}
+            label={groupLabel(t, g)}
+            icon={GROUP_ICON[g]}
+            color={LIB}
+            pages={pagesOf(g)}
+            open={open.has(`${prefix}:${g}`)}
+            toggle={toggle}
+            current={current}
+            select={select}
+            depth={depth}
+          />
+        ))}
+        {showEmpty &&
+          empty.length > 0 &&
+          (open.has(more) ? (
+            empty.map((g) => (
+              <Row key={g} label={groupLabel(t, g)} icon={GROUP_ICON[g]} depth={depth} muted />
+            ))
+          ) : (
+            <button type="button" className="ap-more" onClick={() => toggle(more)}>
+              {t('nb.emptyGroups', { n: empty.length })}
+            </button>
+          ))}
+      </>
+    )
+  }
+
   const tree = (
     <nav className="ap-tree ap-btree" aria-label={t('br.tree')}>
       <div role="tablist" aria-label={t('nb.space')} className="ap-spaces">
@@ -274,184 +281,167 @@ export function Notes({ t, nav, params }: PageProps) {
             className={space === s ? 'on' : undefined}
             onClick={() => switchSpace(s)}
           >
+            <Ico
+              name={s === 'ca-nhan' ? 'user' : 'building'}
+              color={space === s ? (s === 'ca-nhan' ? ME : 'var(--ap-co)') : undefined}
+            />
             {t(`nb.space.${s}`)}
           </button>
         ))}
       </div>
-      <input
-        type="search"
-        className="a-inp ap-bsearch"
-        placeholder={t('nb.search', { space: t(`nb.space.${space}`) })}
-        aria-label={t('nb.searchLabel')}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-      <button type="button" className="ap-tn ap-tn-inbox" onClick={() => nav.go('brain', { view: 'inbox' })}>
-        <span>{t('br.inbox')}</span>
-        <span className="a-muted">{state?.inbox ?? 0}</span>
+      <label className="ap-bsearch">
+        <Ico name="search" />
+        <input
+          type="search"
+          placeholder={t('nb.search', { space: t(`nb.space.${space}`) })}
+          aria-label={t('nb.searchLabel')}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </label>
+      <button
+        type="button"
+        className={`ap-row d0 ap-binbox${state?.inbox ? ' has' : ''}`}
+        onClick={() => nav.go('brain', { view: 'inbox' })}
+      >
+        <span className="ap-ico" />
+        <Ico name="inbox" />
+        <span className="lbl">{t('br.inbox')}</span>
+        <span className="n">{state?.inbox ?? 0}</span>
       </button>
 
       {hits ? (
         <div className="ap-bhits" aria-live="polite">
-          <div className="ap-th">{t('nb.results', { n: hits.length })}</div>
+          <div className="ap-sec">
+            <span>{t('nb.results', { n: hits.length })}</span>
+          </div>
           {hits.map((h) => (
-            <button type="button" key={h.path} className="ap-tn ap-hit" onClick={() => select(h.path)}>
+            <button type="button" key={h.path} className="ap-hit" onClick={() => select(h.path)}>
               <b className="ap-ell">{h.title}</b>
               <span className="a-muted">{h.snippet}</span>
             </button>
           ))}
-          {!hits.length && <div className="a-muted ap-bnone">{t('nb.noResult')}</div>}
+          {!hits.length && <div className="ap-lempty">{t('nb.noResult')}</div>}
         </div>
       ) : (
-        <>
-          <div className="ap-th ap-th2">
-            <span>{t('nb.diary')}</span>
-            <span className="x">{t('nb.youWrite')}</span>
-          </div>
-          <button type="button" className="ap-tn" onClick={() => void writeToday()}>
-            <span>{t('nb.today', { d: dmy(state?.today ?? '').slice(0, 5) })}</span>
-            <span className="a-muted">{diary.some((d) => d.name === state?.today) ? '' : t('nb.write')}</span>
-          </button>
-          <Group
-            id="diary"
-            label={t('nb.diaryPast')}
-            pages={diary.filter((d) => d.name !== state?.today)}
-            open={open.has('diary')}
-            toggle={toggle}
-            current={current}
-            select={select}
-          />
-
-          <div className="ap-th ap-th2">
-            <span>{t('nb.wiki')}</span>
-            <span className="x lib">{t('nb.libWrites')}</span>
-          </div>
-          {overview && (
-            <button
-              type="button"
-              className="ap-tn"
-              aria-current={overview.path === current ? 'page' : undefined}
-              onClick={() => select(overview.path)}
-            >
-              {overview.title}
-            </button>
-          )}
-          {space === 'ca-nhan' ? (
-            <>
-              {PERSONAL_GROUPS.map((g) => (
-                <Group
-                  key={g}
-                  id={`w:${g}`}
-                  label={groupLabel(t, g)}
-                  pages={wikiOf((e) => e.group === g)}
-                  open={open.has(`w:${g}`)}
-                  toggle={toggle}
-                  current={current}
-                  select={select}
-                />
-              ))}
-              <Group
-                id="w:khac"
-                label={t('nb.g.khac')}
-                pages={wikiOf((e) => !e.group || !PERSONAL_GROUPS.includes(e.group))}
-                open={open.has('w:khac')}
-                toggle={toggle}
-                current={current}
-                select={select}
-              />
-            </>
-          ) : (
-            <>
-              <div className="ap-th ap-th2 ap-th3">
-                <span>· {t('nb.common')}</span>
-                <span className="x">{t('nb.allBots')}</span>
-              </div>
-              {COMPANY_GROUPS.map((g) => (
-                <Group
-                  key={g}
-                  id={`c:${g}`}
-                  label={groupLabel(t, g)}
-                  pages={wikiOf((e) => !e.dept && e.group === `chung/${g}`)}
-                  open={open.has(`c:${g}`)}
-                  toggle={toggle}
-                  current={current}
-                  select={select}
-                />
-              ))}
-              <Group
-                id="c:khac"
-                label={t('nb.g.khac')}
-                pages={wikiOf((e) => !e.dept && !COMPANY_GROUPS.some((g) => e.group === `chung/${g}`))}
-                open={open.has('c:khac')}
-                toggle={toggle}
-                current={current}
-                select={select}
-              />
-              <div className="ap-th ap-th2 ap-th3">
-                <span>· {t('nb.depts')}</span>
-                <span className="x">{t('nb.deptBots')}</span>
-              </div>
-              {(state?.departments ?? []).map((d) => {
-                const pages = wikiOf((e) => e.dept === d.id && !e.name.startsWith('_'))
-                const key = `d:${d.id}`
-                return (
-                  <div key={d.id}>
-                    <button
-                      type="button"
-                      className="ap-tn"
-                      aria-expanded={open.has(key)}
-                      onClick={() => toggle(key)}
-                    >
-                      <span>{d.name}</span>
-                      <span className="a-muted">🔒 {pages.length || ''}</span>
-                    </button>
-                    {open.has(key) &&
-                      [...DEPT_GROUPS, 'khac'].map((g) => {
-                        const list = pages.filter((e) =>
-                          g === 'khac' ? !e.group || !DEPT_GROUPS.includes(e.group) : e.group === g,
-                        )
-                        return list.length ? (
-                          <Group
-                            key={g}
-                            id={`${key}:${g}`}
-                            label={groupLabel(t, g)}
-                            pages={list}
-                            open={open.has(`${key}:${g}`)}
-                            toggle={toggle}
-                            current={current}
-                            select={select}
-                            sub
-                          />
-                        ) : null
-                      })}
-                  </div>
-                )
-              })}
-            </>
-          )}
-
-          <div className="ap-th ap-th2">
-            <span>{t('nb.sources')}</span>
-            <span className="x">{t('nb.immutable')}</span>
-          </div>
-          {months.map((m) => (
-            <Group
-              key={m}
-              id={`n:${m}`}
-              label={t('nb.month', { m: m.split('-').reverse().join('/') })}
-              pages={sources.filter((e) => e.path.split('/')[2] === m)}
-              open={open.has(`n:${m}`)}
-              toggle={toggle}
-              current={current}
-              select={select}
+        <div className="ap-layers">
+          <Layer kind="me" icon="pen" title={t('nb.diary')} sub={t('nb.l.diary')}>
+            <Row
+              label={t('nb.today', { w: weekday, d: dmy(today).slice(0, 5) })}
+              icon="cal"
+              color={ME}
+              note={todayEntry ? undefined : t('nb.write')}
+              current={!!todayEntry && todayEntry.path === current}
+              onClick={() => void writeToday()}
             />
-          ))}
-          {!months.length && <div className="a-muted ap-bnone">{t('nb.noSources')}</div>}
-        </>
+            {diary.some((d) => d.name !== today) && (
+              <Group
+                id="diary"
+                label={t('nb.diaryPast')}
+                pages={diary.filter((d) => d.name !== today)}
+                open={open.has('diary')}
+                toggle={toggle}
+                current={current}
+                select={select}
+              />
+            )}
+          </Layer>
+
+          <Layer
+            kind="lib"
+            icon="book"
+            title={t('nb.wiki')}
+            sub={wikiCount ? t('nb.l.wiki', { n: wikiCount }) : t('nb.l.wikiNone')}
+          >
+            {overview && (
+              <Row
+                label={overview.title}
+                icon="home"
+                color={LIB}
+                current={overview.path === current}
+                onClick={() => select(overview.path)}
+              />
+            )}
+            {space === 'ca-nhan' ? (
+              groups('w', [...PERSONAL_GROUPS, 'khac'], (g) =>
+                g === 'khac'
+                  ? wikiOf((e) => !e.group || !PERSONAL_GROUPS.includes(e.group))
+                  : wikiOf((e) => e.group === g),
+              )
+            ) : (
+              <>
+                <div className="ap-sec">
+                  <span>{t('nb.common')}</span>
+                  <i>{t('nb.allBots')}</i>
+                </div>
+                {groups('c', [...COMPANY_GROUPS, 'khac'], (g) =>
+                  g === 'khac'
+                    ? wikiOf((e) => !e.dept && !COMPANY_GROUPS.some((x) => e.group === `chung/${x}`))
+                    : wikiOf((e) => !e.dept && e.group === `chung/${g}`),
+                )}
+                <div className="ap-sec">
+                  <span>{t('nb.depts')}</span>
+                  <i>{t('nb.deptBots')}</i>
+                </div>
+                {(state?.departments ?? []).map((d) => {
+                  const pages = wikiOf((e) => e.dept === d.id && !e.name.startsWith('_'))
+                  const key = `d:${d.id}`
+                  return (
+                    <div key={d.id}>
+                      <Row
+                        label={d.name}
+                        icon="lock"
+                        color={LIB}
+                        count={pages.length}
+                        open={open.has(key)}
+                        onClick={() => toggle(key)}
+                      />
+                      {open.has(key) &&
+                        (pages.length ? (
+                          groups(
+                            key,
+                            [...DEPT_GROUPS, 'khac'],
+                            (g) =>
+                              pages.filter((e) =>
+                                g === 'khac' ? !e.group || !DEPT_GROUPS.includes(e.group) : e.group === g,
+                              ),
+                            1,
+                            false,
+                          )
+                        ) : (
+                          <div className="ap-lempty d1">{t('nb.deptEmpty')}</div>
+                        ))}
+                    </div>
+                  )
+                })}
+              </>
+            )}
+            {!wikiCount && space === 'ca-nhan' && <div className="ap-lempty">{t('nb.wikiEmpty')}</div>}
+          </Layer>
+
+          <Layer kind="src" icon="lock" title={t('nb.sources')} sub={t('nb.l.src')}>
+            {months.map((m) => (
+              <Group
+                key={m}
+                id={`n:${m}`}
+                label={t('nb.month', { m: m.split('-').reverse().join('/') })}
+                icon="box"
+                color={SRC}
+                pages={sources.filter((e) => e.path.split('/')[2] === m)}
+                open={open.has(`n:${m}`)}
+                toggle={toggle}
+                current={current}
+                select={select}
+              />
+            ))}
+            {!months.length && <div className="ap-lempty">{t('nb.srcEmpty')}</div>}
+          </Layer>
+        </div>
       )}
 
       <div className="ap-bfoot">
         <Button size="sm" onClick={() => openExternal()}>
+          <Ico name="gem" />
           {state?.obsidian === false ? t('nb.openFinder') : t('nb.openObsidian')}
         </Button>
         <span className="a-muted">
