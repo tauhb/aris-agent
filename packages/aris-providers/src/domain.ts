@@ -61,6 +61,30 @@ export type SpendRecord = z.infer<typeof spendRecord>
 export const switchRecord = z.object({ from: link, to: link, turn: z.number().int() })
 export type SwitchRecord = z.infer<typeof switchRecord>
 
+/** Thứ tự model tạo ảnh, tạo video và trần chung (một bản ghi, khoá `main`; đợt 5c). */
+export const mediaRecord = z.object({
+  image: z.array(link),
+  video: z.array(link),
+  caps: z.object({ image: z.number().nonnegative(), video: z.number().nonnegative() }),
+})
+export type MediaRecord = z.infer<typeof mediaRecord>
+
+/** Một tệp ảnh hay video bot đã tạo (để màn chat và Telegram lấy lại theo mã). */
+export const mediaFileRecord = z.object({
+  id: z.string(),
+  kind: z.enum(['image', 'video']),
+  path: z.string(),
+  mime: z.string(),
+  bot: z.string(),
+  sessionId: z.string(),
+  at: z.string(),
+  prompt: z.string(),
+  provider: z.string(),
+  model: z.string(),
+  usd: z.number(),
+})
+export type MediaFileRecord = z.infer<typeof mediaFileRecord>
+
 export const providersDomain = defineDomain({
   name: 'aris_providers',
   version: 1,
@@ -71,6 +95,8 @@ export const providersDomain = defineDomain({
     ledger: domainTable<string, LedgerRecord>(ledgerRecord),
     spend: domainTable<string, SpendRecord>(spendRecord),
     switches: domainTable<string, SwitchRecord>(switchRecord),
+    media: domainTable<string, MediaRecord>(mediaRecord),
+    media_files: domainTable<string, MediaFileRecord>(mediaFileRecord),
   },
 })
 

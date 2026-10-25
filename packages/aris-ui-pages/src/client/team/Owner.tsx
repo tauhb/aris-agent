@@ -379,7 +379,7 @@ function ProfileAside({ t, bot, info }: { t: T; bot: string; info: ProfileInfo |
             <span className="a-muted">{t('own.noRun', { n: info?.every ?? 6 })}</span>
           ) : (
             <>
-              <div className="ap-steps">
+              <div className="ap-psteps">
                 <div>
                   <b>{t('own.step1')}</b>
                   <span className="a-muted">{t('own.step1n', { n: run.observed })}</span>

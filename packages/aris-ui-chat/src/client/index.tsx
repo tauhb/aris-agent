@@ -15,6 +15,7 @@ import { botTriggerSource } from './bot-source.js'
 import { botReportDefinition, findMention, handoffDefinition, turnHeadDefinition } from './who-data.js'
 import { CSS } from './styles.js'
 import { BrainPicker, BrainReadCall, BrainSearchCall, UserPage, brainTriggerSource } from './Brain.js'
+import { MediaCall } from './Media.js'
 import { brainPages, cachedPages, LINK } from './brain-data.js'
 import { openPeek, watchPageLinks } from './brain-dom.js'
 
@@ -316,6 +317,15 @@ export function apply(ctx: ClientContext): void {
       { name: 'tool.call.toolview', key: 'brain_read', priority: -1, locale: NS },
       BrainReadCall,
     ),
+  )
+  // Ảnh, video bot tạo (đợt 5c, bản vẽ 1.9).
+  const ImageCall = (p: Parameters<typeof MediaCall>[0]) => <MediaCall {...p} kind="image" />
+  const VideoCall = (p: Parameters<typeof MediaCall>[0]) => <MediaCall {...p} kind="video" />
+  ctx.slots.inject('tool.call.toolview', () =>
+    ctx.slots.register({ name: 'tool.call.toolview', key: 'tao_anh', priority: -1, locale: NS }, ImageCall),
+  )
+  ctx.slots.inject('tool.call.toolview', () =>
+    ctx.slots.register({ name: 'tool.call.toolview', key: 'tao_video', priority: -1, locale: NS }, VideoCall),
   )
   // Nút "Từ Second Brain" ở ô nhập; nhóm "Trang bộ não" trong menu `@`.
   ctx.slots.inject('conversation.input.left', () =>

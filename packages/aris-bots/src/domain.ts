@@ -10,6 +10,13 @@ import { soulRecord, type SoulRecord } from './soul.js'
 
 export const modelRef = z.object({ provider: z.string(), model: z.string() })
 
+const mediaPolicy = z.object({
+  mode: z.enum(['off', 'shared', 'own']),
+  list: z.array(modelRef).optional(),
+  fallback: z.boolean().optional(),
+  capUsd: z.number().nonnegative().optional(),
+})
+
 export const botRecord = z.object({
   /** Mã nội bộ cố định: `aris` cho Commander, `b-xxxxxx` cho bot khác. */
   id: z.string(),
@@ -43,6 +50,11 @@ export const botRecord = z.object({
    * chuỗi dự phòng chung khi model lỗi. Không có là theo model chat / chuỗi chung.
    */
   models: z.object({ goal: modelRef, fallback: modelRef }).partial().optional(),
+  /**
+   * Tạo ảnh, tạo video (bản vẽ 2.2f, 6.2c): tắt, theo thứ tự chung, hay danh sách riêng (nhiều model, theo thứ
+   * tự); hết danh sách riêng có rơi về thứ tự chung không; trần riêng mỗi ngày. Không có là theo thứ tự chung.
+   */
+  media: z.object({ image: mediaPolicy, video: mediaPolicy }).partial().optional(),
   /** Commander được giao việc cho bot (bot thường); bot ngoài dùng `external.assignable`. Mặc định có. */
   assignable: z.boolean().optional(),
   createdAt: z.string(),

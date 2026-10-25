@@ -11,6 +11,7 @@ import { Channels } from './Channels.js'
 import { Commander } from './Commander.js'
 import { Guard } from './Guard.js'
 import { Integrations } from './Integrations.js'
+import { MediaSettings } from './Media.js'
 import { Plugin } from './Plugin.js'
 import { Presets } from './Presets.js'
 import { Provider } from './Provider.js'
@@ -19,6 +20,7 @@ import { Stats } from './Stats.js'
 
 export const SECTIONS: Record<string, ComponentType<PageProps>> = {
   provider: Provider,
+  media: MediaSettings,
   channels: Channels,
   integrations: Integrations,
   guard: Guard,
@@ -31,6 +33,7 @@ export const SECTIONS: Record<string, ComponentType<PageProps>> = {
 
 const ORDER = [
   'provider',
+  'media',
   'channels',
   'integrations',
   'guard',

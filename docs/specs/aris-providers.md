@@ -90,6 +90,32 @@ Plugin máy chủ `@aris/providers` thêm ba phần. Dữ liệu ở storage dom
 | `key-remove` `{ provider, slot }` | Bỏ một khoá thêm |
 | `prices` `{ items: [{ provider, model }] }` | Giá của các model đang hiện |
 
+## Nhúng, ảnh và video (giai đoạn 5, đợt 5a và 5c)
+
+- **Nhúng** (`arisEmbed`, cho tìm theo nghĩa của bộ não): Gemini `gemini-embedding-2`, 768 chiều, một model duy nhất;
+  xem đặc tả bộ não, đợt 5a.
+- **Ảnh và video** (bản vẽ 6.2c, 2.2f, 1.9): danh mục model có giá ước tính (Gemini ảnh 0,0336–0,067 USD/ảnh, không có
+  gói miễn phí; OpenRouter `openai/gpt-image-2` tính theo hoá đơn; Gemini Omni Flash video khoảng 0,10 USD/giây, tính 8
+  giây mỗi lần). Gemini gọi `POST /v1beta/interactions` (`response_format` ảnh hay video, đọc khối `image`/`video` có
+  `data` hay `uri` ở bất kỳ đâu trong câu trả lời); OpenRouter gọi `POST /api/v1/images` (`data[i].b64_json`,
+  `usage.cost`). Khoá: `GOOGLE_API_KEY`/`GEMINI_API_KEY`, `OPENROUTER_API_KEY`.
+- **Thứ tự ưu tiên**: chung cho cả đội (bảng `media`, mặc định ảnh Gemini → OpenRouter, video Gemini) và theo bot (bản
+  ghi bot `media.image`/`media.video`: `off`, `shared`, `own` + danh sách nhiều model + `fallback` rơi về chung + trần
+  riêng). Model lỗi thì thử model kế: thiếu khoá, khoá hỏng, chưa bật thanh toán, hết tiền, giới hạn tốc độ, không làm
+  được yêu cầu, không có model, lỗi mạng. Hết danh sách thì dừng, tin trả lời ghi từng lý do.
+- **Công cụ** `tao_anh` (mô tả, tỉ lệ, 1–4 phương án) và `tao_video` (mô tả, 16:9 hay 9:16) đăng ký cho mọi bot; bot để
+  Tắt thì công cụ trả lời "chưa được bật" (dsh không ẩn công cụ theo từng agent). Trần mỗi ngày: chung ảnh 1 USD, video
+  2 USD; riêng theo bot nếu đặt; tiền cộng vào sổ chi phí (`media-<loại>`, `bot:<mã>`, phòng ban).
+- Tệp lưu ở `<thư mục làm việc của phiên>/anh|video/<ngày>/`, ghi bảng `media_files`; giao diện lấy qua
+  `GET /api/aris/media?file=<mã>`. Kết quả công cụ có dòng `[aris-media] {…}` để khung chat vẽ ảnh, video (Mở lớn, Tải
+  về, Lưu vào bộ não qua Hộp thư vào). Telegram: tệp vừa tạo của phiên gửi bằng `sendPhoto`/`sendVideo` trước câu trả
+  lời, chú thích là tên model.
+- Giao diện: Cài đặt › Ảnh và video (hai thứ tự, trần, cách chọn, bảng gán theo bot có ô sửa), tab Model của hồ sơ
+  bot (dòng Tạo ảnh, Tạo video). API `GET/POST /api/aris/media` (`chain`, `caps`, `bot`).
+- Đã chạy trên máy: nhờ Aris tạo một ảnh ⇒ thử Gemini (chưa có khoá) rồi OpenRouter (hết số dư), khung chat và tin trả
+  lời ghi đúng hai lý do; gán danh sách riêng cho Thơ hiện đúng ở tab Model. Chưa tạo được ảnh, video thật (chưa có
+  khoá Gemini bật thanh toán, OpenRouter hết số dư); Telegram gửi ảnh chưa thử.
+
 ## Để sau
 
 - Giá cho provider tự thêm (nhập tay).

@@ -282,6 +282,15 @@ export interface HubDeps {
   now?: () => number
   /** Bot trong đội: `@tên_gọi` trong tin gửi ra đổi thành chấm màu + tên. */
   team?: () => readonly TeamName[]
+  /** Ảnh, video bot vừa tạo trong phiên (@aris/providers, đợt 5c): gửi kèm câu trả lời. */
+  media?: () => MediaPort | undefined
+}
+
+export interface MediaPort {
+  takeFresh(sessionId: string): { id: string; kind: 'image' | 'video'; model: string }[]
+  read(
+    id: string,
+  ): Promise<{ rec: { kind: 'image' | 'video'; mime: string; path: string }; data: Uint8Array } | undefined>
 }
 
 interface BotRuntime {
@@ -942,6 +951,7 @@ export class ChannelHub {
       else if (!ok) segments.push({ text: T.failedTurn(r.reason.error?.message ?? r.reason.kind) })
       else return
     }
+    await this.sendMedia(r.sessionId, last)
     for (const seg of segments) {
       if (!seg.from) {
         if (last.group && isSilent(seg.text)) continue
@@ -967,6 +977,24 @@ export class ChannelHub {
           last.bot,
           own ? [[{ text: T.continueWith(seg.from.name), url: `https://t.me/${own.username}` }]] : undefined,
         )
+    }
+  }
+
+  /** Ảnh, video bot tạo trong lượt: gửi trước câu trả lời (chú thích là tên model). */
+  private async sendMedia(sessionId: string, last: Pending) {
+    const port = this.d.media?.()
+    const rt = this.runtimes.get(last.bot)
+    if (!port || !rt) return
+    for (const m of port.takeFresh(sessionId)) {
+      const f = await port.read(m.id).catch(() => undefined)
+      if (!f) continue
+      const name = f.rec.path.split('/').pop() ?? 'tep'
+      await rt.api
+        .sendMedia(last.chatId, f.rec.kind, f.data, f.rec.mime, name, {
+          threadId: last.threadId,
+          caption: m.model,
+        })
+        .catch((e: unknown) => this.d.logger.warn('aris-channels: gửi %s: %s', f.rec.kind, String(e)))
     }
   }
 

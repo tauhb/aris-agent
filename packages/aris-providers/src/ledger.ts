@@ -73,6 +73,18 @@ export class Ledger {
     })
   }
 
+  /** Cộng một khoản tiền tính sẵn (ảnh, video) vào chi phí ngày của các phạm vi. */
+  async addUsd(usd: number, scope: readonly (string | undefined)[], at = Date.now()): Promise<void> {
+    if (!this.spend || !(usd > 0)) return
+    const day = dayOf(at)
+    for (const sc of scope) {
+      if (!sc) continue
+      const sk = `${day}-${sc}`.replace(/[^A-Za-z0-9-]/g, '-')
+      const prev = this.spend.get(sk)
+      await this.spend.put(sk, { day, scope: sc, usd: (prev?.usd ?? 0) + usd })
+    }
+  }
+
   /** Chi phí hôm nay theo phạm vi. */
   spentToday(now = Date.now()): Record<string, number> {
     const day = dayOf(now)

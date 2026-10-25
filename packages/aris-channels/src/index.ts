@@ -35,6 +35,7 @@ import {
   type SessionPort,
 } from './hub.js'
 import type { SpeechToText } from './media.js'
+import type { MediaPort } from './hub.js'
 import { ChannelStore, type Tables } from './store.js'
 
 export { ChannelHub } from './hub.js'
@@ -128,6 +129,7 @@ export async function apply(ctx: Context): Promise<void> {
   const attachments = ctx.get('attachments') as AttachmentPort | undefined
   const hub = new ChannelHub({
     store,
+    media: () => ctx.get('arisMedia') as MediaPort | undefined,
     // Đội của aris (gói @aris/bots, nếu có): tên và màu linh vật để gửi tên thành viên ra Telegram.
     team: () =>
       (

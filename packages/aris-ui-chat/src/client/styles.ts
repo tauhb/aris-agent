@@ -107,6 +107,28 @@ export const CSS = `
 .aris-peek .hd{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .aris-peek .hd b{font-size:14px}
 .aris-peek .sum{color:var(--a-ink,CanvasText)}
+.aris-media{border:1px solid var(--a-line,#E4E2DC);border-radius:12px;background:var(--a-panel,#fff);font-size:13px;overflow:hidden;max-width:720px}
+.aris-media .h{display:flex;align-items:center;gap:8px;padding:8px 12px;flex-wrap:wrap}
+.aris-media .mut{color:var(--a-muted,#5C616C);font-size:12.5px}
+.aris-media .st{margin-left:auto;font-size:12px;font-weight:600;border-radius:999px;padding:1px 9px;background:var(--a-accentSoft,#E6F0FE);color:var(--a-accent,#1D6FE0)}
+.aris-media .st.ok{background:var(--a-okSoft,#E2F3E9);color:var(--a-ok,#15803D)}
+.aris-media .st.warn{background:var(--a-warnSoft,#FCEFDF);color:var(--a-warn,#B45309)}
+.aris-media .p{padding:8px 12px;border-top:1px solid var(--a-line,#E4E2DC);font-size:12.5px;color:var(--a-muted,#5C616C)}
+.aris-media .grid{display:grid;gap:10px;padding:10px 12px;border-top:1px solid var(--a-line,#E4E2DC)}
+.aris-media .grid.two{grid-template-columns:1fr 1fr}
+.aris-media .sk{aspect-ratio:16/9;border-radius:10px;background:linear-gradient(90deg,var(--a-panel2,#F0EFEB) 0%,var(--a-hover,#EAE9E4) 50%,var(--a-panel2,#F0EFEB) 100%);background-size:200% 100%;animation:aris-sh 1.4s linear infinite}
+.aris-media .sk.tall{aspect-ratio:9/16;max-height:360px}
+@keyframes aris-sh{from{background-position:200% 0}to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.aris-media .sk{animation:none}}
+.aris-media-item{margin:0;display:flex;flex-direction:column;gap:6px}
+.aris-media-item img,.aris-media-item video{width:100%;border-radius:10px;border:1px solid var(--a-line,#E4E2DC);display:block;background:var(--a-panel2,#F0EFEB)}
+.aris-media-item figcaption{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px}
+.aris-media-item a,.aris-media-item button{color:var(--a-accent,#1D6FE0);text-decoration:none;border:0;background:transparent;padding:0;font:inherit;font-size:12.5px;cursor:pointer}
+.aris-media-item button:disabled{color:var(--a-muted,#5C616C);cursor:default}
+.aris-media .foot{padding:0 12px 10px}
+.aris-media .warnbox{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 12px 12px;padding:8px 10px;border-radius:9px;background:var(--a-warnSoft,#FCEFDF);font-size:12.5px}
+.aris-media .warnbox span{flex:1;min-width:200px}
+.aris-media .warnbox button{border:1px solid var(--a-line,#E4E2DC);border-radius:8px;background:var(--a-panel,#fff);padding:3px 10px;font:inherit;font-size:12.5px;cursor:pointer;color:inherit}
 .aris-peek .mut,.aris-bcall .mut,.aris-bpick .mut{color:var(--a-muted,#5C616C);font-size:12.5px}
 .aris-peek .go{align-self:flex-start;border:0;background:none;padding:0;font:inherit;font-size:12.5px;font-weight:600;color:var(--a-accent,#1D6FE0);cursor:pointer}
 .aris-peek .lay,.aris-bcall .lay,.aris-bpick .lay{--pg:#C2620A;font-size:11px;font-weight:600;border-radius:6px;padding:1px 7px;white-space:nowrap;background:color-mix(in srgb,var(--pg) 13%,transparent);color:color-mix(in srgb,var(--pg) 88%,#000)}

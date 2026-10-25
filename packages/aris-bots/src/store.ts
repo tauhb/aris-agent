@@ -35,6 +35,8 @@ export interface BotInput {
   assignable?: boolean
   /** Model theo việc; `null` là bỏ (về mặc định). */
   models?: { goal?: ModelRef | null; fallback?: ModelRef | null }
+  /** Tạo ảnh, tạo video; `null` ở một loại là về theo thứ tự chung. */
+  media?: { image?: unknown; video?: unknown }
 }
 
 type ModelRef = { provider: string; model: string }
@@ -52,6 +54,35 @@ function cleanModels(v: BotInput['models'], prev: BotRecord['models'] = {}): Bot
     const x = v?.[k]
     if (x === null) delete out[k]
     else if (isRef(x)) out[k] = { provider: x.provider, model: x.model }
+  }
+  return out
+}
+
+type MediaPolicy = NonNullable<NonNullable<BotRecord['media']>['image']>
+
+function cleanMediaPolicy(v: unknown): MediaPolicy | undefined {
+  const p = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>
+  if (p.mode !== 'off' && p.mode !== 'shared' && p.mode !== 'own') return undefined
+  const list = Array.isArray(p.list)
+    ? p.list.filter(isRef).map((x) => ({ provider: x.provider, model: x.model }))
+    : []
+  return {
+    mode: p.mode,
+    ...(p.mode === 'own' ? { list: list.slice(0, 8) } : {}),
+    ...(p.mode === 'own' && p.fallback === true ? { fallback: true } : {}),
+    ...(typeof p.capUsd === 'number' && p.capUsd >= 0 && p.capUsd <= 100 ? { capUsd: p.capUsd } : {}),
+  }
+}
+
+function cleanMedia(v: BotInput['media'], prev: BotRecord['media'] = {}): BotRecord['media'] {
+  const out = { ...prev }
+  for (const k of ['image', 'video'] as const) {
+    const x = v?.[k]
+    if (x === null) delete out[k]
+    else if (x !== undefined) {
+      const p = cleanMediaPolicy(x)
+      if (p) out[k] = p
+    }
   }
   return out
 }
@@ -250,6 +281,7 @@ export class BotStore {
       ...(input.tools ? { tools: cleanTools(input.tools) } : {}),
       ...(input.perms ? { perms: cleanPerms(input.perms) } : {}),
       ...(input.models ? { models: cleanModels(input.models) } : {}),
+      ...(input.media ? { media: cleanMedia(input.media) } : {}),
       ...(input.assignable === false ? { assignable: false } : {}),
       createdAt: this.now().toISOString(),
     }
@@ -278,6 +310,7 @@ export class BotStore {
     if (patch.tools) rec.tools = cleanTools(patch.tools, prev.tools)
     if (patch.perms) rec.perms = cleanPerms(patch.perms, prev.perms)
     if (patch.models) rec.models = cleanModels(patch.models, prev.models)
+    if (patch.media) rec.media = cleanMedia(patch.media, prev.media)
     if (typeof patch.assignable === 'boolean') rec.assignable = patch.assignable
     if (patch.external === null) delete rec.external
     else if (patch.external !== undefined) rec.external = this.external(patch.external, prev.external)

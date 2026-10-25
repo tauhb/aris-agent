@@ -18,6 +18,7 @@ import {
 } from '@aris/ui-kit/react'
 import { useEffect, useState, type ReactNode } from 'react'
 import type { PageProps } from '../page.js'
+import { BotMediaRows } from '../settings/Media.js'
 import { departmentOptions, modelOptions } from '../options.js'
 import { useChannels } from '../settings/channels-api.js'
 
@@ -284,6 +285,9 @@ function ModelCard({ t, bot, team, nav }: { t: T; bot: BotData; team: TeamView; 
           (v) => void save({ models: { fallback: ref(v) } }),
           bot.models?.fallback,
         ),
+      )}
+      {!bot.external && (
+        <BotMediaRows t={t} botId={bot.id} onManage={() => nav.go('settings', { section: 'media' })} />
       )}
       {error && (
         <div className="a-row" style={{ fontSize: 12.5, color: 'var(--a-danger)' }}>

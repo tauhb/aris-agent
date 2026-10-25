@@ -173,6 +173,24 @@ export class TelegramApi {
     return { data: new Uint8Array(await res.arrayBuffer()), path: file.file_path }
   }
 
+  /** Gửi ảnh (`sendPhoto`) hay video (`sendVideo`) dạng tệp tải lên. */
+  sendMedia(
+    chatId: number,
+    kind: 'image' | 'video',
+    data: Uint8Array,
+    mime: string,
+    name: string,
+    o: Pick<SendOptions, 'threadId'> & { caption?: string } = {},
+  ) {
+    const form = new FormData()
+    form.set('chat_id', String(chatId))
+    if (o.threadId) form.set('message_thread_id', String(o.threadId))
+    if (o.caption) form.set('caption', o.caption.slice(0, 1000))
+    const field = kind === 'image' ? 'photo' : 'video'
+    form.set(field, new Blob([Uint8Array.from(data)], { type: mime }), name)
+    return this.call<TgMessage>(kind === 'image' ? 'sendPhoto' : 'sendVideo', {}, undefined, form)
+  }
+
   sendVoice(chatId: number, ogg: Uint8Array, o: Pick<SendOptions, 'threadId' | 'replyTo'> = {}) {
     const form = new FormData()
     form.set('chat_id', String(chatId))
