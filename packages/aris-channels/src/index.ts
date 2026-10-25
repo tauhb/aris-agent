@@ -27,6 +27,7 @@ import {
   ChannelHub,
   type ApprovalsPort,
   type AttachmentPort,
+  type BrainPort,
   type ProposalsPort,
   type RoutinePort,
   type SkillsPort,
@@ -211,6 +212,20 @@ export async function apply(ctx: Context): Promise<void> {
       off?.()
     }
   }, 'aris-channels: thẻ báo cáo routine')
+  // Bộ não (@aris/brain): gửi vào Hộp thư vào, thẻ "BẢN NẠP", nhắc chờ duyệt.
+  ctx.effect(() => {
+    let off: (() => void) | undefined
+    const hook = () => {
+      const port = ctx.get('arisBrain') as BrainPort | undefined
+      if (port && !off) off = hub.watchBrain(port)
+    }
+    hook()
+    const timer = setInterval(hook, 5000)
+    return () => {
+      clearInterval(timer)
+      off?.()
+    }
+  }, 'aris-channels: bộ não')
   ctx.on('session/event', (session, event) => hub.onSessionEvent(session.id, event as never))
   ctx.on('agent/assistant-stream', ({ agent, frame }) => hub.onStream(agent.session.id, frame as never))
   // Phiên của kênh: duyệt và câu hỏi đi qua Telegram trước; phiên khác để người trả lời sau lo.

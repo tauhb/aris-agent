@@ -365,6 +365,59 @@ export async function apply(ctx: Context): Promise<void> {
     )
   })
 
+  // Kênh Telegram (@aris/channels): gửi vào bộ não, thẻ bản nạp, nhắc chờ duyệt (bản vẽ 7.5).
+  const cardOf = (b: Batch) => ({
+    id: b.id,
+    status: b.status,
+    title: b.source.title,
+    kind: b.source.kind,
+    from: b.source.from,
+    by: b.source.by,
+    place:
+      b.space === 'cong-ty'
+        ? ['Công ty', depts().find((x) => x.id === b.dept)?.name].filter(Boolean).join(' · ')
+        : 'Cá nhân',
+    summary: b.summary,
+    level: b.level,
+    note: b.note,
+    ops: b.ops.map((o) => ({ title: o.title, kind: o.kind, flag: o.flag })),
+    conflicts: b.conflicts?.length ?? 0,
+  })
+  ctx.provide('arisBrain', {
+    on: (fn: (e: unknown) => void) =>
+      ingest.on((e) =>
+        fn(
+          e.type === 'status'
+            ? { type: 'status', batch: cardOf(e.batch), prev: e.prev }
+            : { type: 'remind', batches: e.batches.map(cardOf) },
+        ),
+      ),
+    add: async (i: { text?: string; title?: string; by: string }) =>
+      cardOf(await ingest.add({ ...i, from: 'telegram' })),
+    addFile: async (i: { name: string; data: Uint8Array; by: string }) =>
+      cardOf(await ingest.addFile({ ...i, from: 'telegram' })),
+    note: (text: string) => ingest.note(text),
+    approve: async (id: string) => {
+      const b = ingest.all().find((x) => x.id === id)
+      return cardOf(
+        await ingest.approve(
+          id,
+          (b?.ops ?? []).map((_, i) => i),
+        ),
+      )
+    },
+    keep: async (id: string) => cardOf(await ingest.keep(id)),
+    get: (id: string) => {
+      const b = ingest.all().find((x) => x.id === id)
+      return b ? cardOf(b) : undefined
+    },
+    waiting: () =>
+      ingest
+        .all()
+        .filter((b) => b.status === 'cho-duyet')
+        .map(cardOf),
+  })
+
   // --- Quyền ----------------------------------------------------------------------------------
   const readerOf = (sessionId: string | undefined): Reader => {
     const b = bots()?.botOf(sessionId)

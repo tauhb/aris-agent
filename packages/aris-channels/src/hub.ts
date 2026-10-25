@@ -152,11 +152,123 @@ export interface SkillsPort {
   pending(): string[]
 }
 
+/** Một bản nạp của bộ não (`@aris/brain`, `arisBrain`), dạng thẻ Telegram cần. */
+export interface BrainCard {
+  id: string
+  status: string
+  title: string
+  kind: string
+  from: string
+  /** Bot Telegram nhận nguồn (khi `from` là `telegram`). */
+  by?: string | undefined
+  /** "Cá nhân" hay "Công ty · <phòng>". */
+  place: string
+  summary?: string | undefined
+  level?: string | undefined
+  note?: string | undefined
+  ops: { title: string; kind: string; flag?: string | undefined }[]
+  conflicts: number
+}
+
+/** Bộ não: gửi nguồn vào Hộp thư vào, ghi nhanh, duyệt; nghe bản nạp đổi trạng thái và lời nhắc. */
+export interface BrainPort {
+  on(
+    fn: (
+      e:
+        | { type: 'status'; batch: BrainCard; prev?: string | undefined }
+        | { type: 'remind'; batches: BrainCard[] },
+    ) => void,
+  ): () => void
+  add(i: { text: string; by: string }): Promise<BrainCard>
+  addFile(i: { name: string; data: Uint8Array; by: string }): Promise<BrainCard>
+  note(text: string): Promise<string>
+  approve(id: string): Promise<BrainCard>
+  keep(id: string): Promise<BrainCard>
+  get(id: string): BrainCard | undefined
+  waiting(): BrainCard[]
+}
+
 /** Mã ngắn của một bản skill cho `callback_data` (Telegram giới hạn 64 byte). */
 export function shortKey(id: string): string {
   let h = 2166136261
   for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619)
   return (h >>> 0).toString(36)
+}
+
+const two = (n: number) => String(n).padStart(2, '0')
+/** Giờ:phút theo giờ máy. */
+export const clock = (d: Date) => `${two(d.getHours())}:${two(d.getMinutes())}`
+/** Độ dài ghi âm, dạng 1:42. */
+export const minSec = (s: number) => `${Math.floor(s / 60)}:${two(Math.round(s % 60))}`
+
+/** Chữ "lưu" đầu chú thích tệp (cả "luu", "Lưu vào bộ não"…). */
+export const SAVE_WORD = /^\s*(lưu|luu)(\s|$|[.,:!])/iu
+/** Tin trả lời chỉ gồm chữ "lưu" (hay "lưu vào bộ não"). */
+export const SAVE_ONLY = /^\s*(lưu|luu)(\s+(vào|vao)\s+(bộ|bo)\s+(não|nao))?\s*[.!]?\s*$/iu
+
+export const isForward = (m: TgMessage) =>
+  !!(m.forward_origin ?? m.forward_date ?? m.forward_from ?? m.forward_from_chat)
+export const hasFile = (m: TgMessage) => !!(m.voice ?? m.audio ?? m.document ?? m.photo?.length)
+
+/** Nguồn của tin chuyển tiếp: người hay kênh gửi gốc. */
+export function forwardOrigin(m: TgMessage): string | undefined {
+  const o = m.forward_origin
+  const user = o?.sender_user ?? m.forward_from
+  const chat = o?.chat ?? o?.sender_chat ?? m.forward_from_chat
+  return (
+    (user ? fullName(user) : undefined) ??
+    o?.sender_user_name ??
+    m.forward_sender_name ??
+    chat?.title ??
+    chat?.username
+  )
+}
+
+/** Chữ gửi vào bộ não: tin chuyển tiếp ghi thêm nguồn gốc (trừ khi chỉ là một link, để bộ não tải trang). */
+export function withOrigin(text: string, m: TgMessage): string {
+  const origin = isForward(m) ? forwardOrigin(m) : undefined
+  if (!origin || /^https?:\/\/\S+$/.test(text)) return text
+  return `${text}\n\n(Chuyển tiếp từ ${origin})`
+}
+
+/** Thẻ "BẢN NẠP" (bản vẽ 7.5): mức duyệt, tiêu đề, nơi và loại, các thay đổi, chỗ cần xem kỹ. */
+export function brainCardHtml(c: BrainCard): string {
+  const meta = [c.place, T.brainKind[c.kind] ?? c.kind, c.summary].filter(Boolean).join(' · ')
+  const ops = c.ops.slice(0, 8).map((o) => `${T.brainOp[o.kind] ?? '✎'}: ${escapeHtml(o.title)}`)
+  if (c.ops.length > 8) ops.push(`… và ${c.ops.length - 8} thay đổi khác`)
+  const flags = c.ops
+    .filter((o) => o.flag)
+    .slice(0, 6)
+    .map((o) => `⚠ ${escapeHtml(o.title)}: ${escapeHtml(o.flag!)}`)
+  return [
+    `📥 <b>BẢN NẠP · ${T.brainLevel[c.level ?? 'nhanh'] ?? ''}</b>`,
+    `<b>${escapeHtml(c.title)}</b>`,
+    escapeHtml(meta),
+    ...(ops.length ? ['', ...ops] : ['', `<i>${T.brainEmpty}</i>`]),
+    ...(flags.length ? ['', ...flags] : []),
+    ...(c.level === 'ky' ? ['', `<i>${T.brainCareful}</i>`] : []),
+  ].join('\n')
+}
+
+/** Câu báo khi bản nạp rời trạng thái chờ duyệt (sửa thẻ), hay báo tự nạp, lỗi, chờ mai. */
+export function brainDone(c: BrainCard): string | undefined {
+  switch (c.status) {
+    case 'da-nap':
+      return T.brainNapped(c.title, Math.max(0, c.ops.length - c.conflicts), c.place, c.conflicts)
+    case 'chi-luu':
+      return T.brainKept(c.title, c.place)
+    case 'bo':
+      return T.brainDropped(c.title)
+    case 'moi':
+    case 'dang-lap':
+      return T.brainReplan(c.title)
+    case 'loi':
+      return T.brainError(c.title, c.note)
+    case 'cho-mai':
+      return T.brainTomorrow(c.title)
+    default:
+      return undefined
+  }
 }
 
 export interface HubDeps {
@@ -206,6 +318,11 @@ export class ChannelHub {
   private proposalsPort: ProposalsPort | undefined
   private skillsPort: SkillsPort | undefined
   private routinePort: RoutinePort | undefined
+  private brainPort: BrainPort | undefined
+  /** Thẻ "BẢN NẠP" đang mở theo mã bản nạp. */
+  private readonly brainCards = new Map<string, { bot: string; chatId: number; messageId: number }>()
+  /** Tin chuyển tiếp đang chờ trả lời "Lưu vào bộ não?" theo mã tin. */
+  private readonly forwards = new Map<number, TgMessage>()
   /** Thẻ "ĐỀ XUẤT SKILL" đang mở theo mã bản. */
   private readonly skillCards = new Map<
     string,
@@ -508,6 +625,32 @@ export class ChannelHub {
       }
       await this.command(rt, m, key, topic, d.trust, d.command.name, d.command.args)
       return false
+    }
+
+    // Gửi vào bộ não (bản vẽ 7.5), chỉ người dùng chính trong chat riêng: chuyển tiếp thì hỏi lại;
+    // tệp, ảnh, ghi âm kèm chữ "lưu", hay trả lời "lưu" vào một tin, thì lưu luôn.
+    if (d.trust === 'owner' && m.chat.type === 'private' && this.brainPort) {
+      if (isForward(m)) {
+        this.forwards.set(m.message_id, m)
+        if (this.forwards.size > 50) this.forwards.delete(this.forwards.keys().next().value!)
+        await api.sendMessage(m.chat.id, T.fwdAsk, {
+          html: true,
+          replyTo: m.message_id,
+          buttons: [
+            [
+              { text: T.fwdSave, callback_data: `bf:${m.message_id}:y` },
+              { text: T.fwdChat, callback_data: `bf:${m.message_id}:n` },
+            ],
+          ],
+        })
+        return false
+      }
+      const saveMedia = hasFile(m) && SAVE_WORD.test((m.caption ?? '').normalize('NFC'))
+      const saveReply = !!m.reply_to_message && SAVE_ONLY.test(text.normalize('NFC'))
+      if (saveMedia || saveReply) {
+        await this.reply(api, m, await this.toBrain(rt, saveReply ? m.reply_to_message! : m))
+        return false
+      }
     }
     return this.submit(rt, inbox, m, key, topic, d.trust, d.text, resumed)
   }
@@ -996,6 +1139,17 @@ export class ChannelHub {
         await this.store.patchBot(rt.rec.bot, { voice: on === 'on' })
         return this.reply(api, m, T.voice(on === 'on'))
       }
+      case 'note': {
+        if (!this.brainPort) return this.reply(api, m, T.brainOff)
+        const text = args.trim()
+        if (!text) return this.reply(api, m, T.noteUsage)
+        try {
+          await this.brainPort.note(text)
+        } catch (e) {
+          return this.reply(api, m, T.brainFail(e instanceof Error ? e.message : String(e)))
+        }
+        return this.reply(api, m, T.noteDone(clock(new Date(this.now()))))
+      }
       default:
         return this.reply(api, m, T.help(trust))
     }
@@ -1113,6 +1267,48 @@ export class ChannelHub {
           ...(topic ? { threadId: topic } : {}),
         })
         return done()
+      }
+      case 'bf': {
+        // "Lưu vào bộ não?" của tin chuyển tiếp: y = lưu, n = gửi cho bot như tin thường.
+        const fm = this.forwards.get(Number(a))
+        if (!fm) {
+          await edit(T.fwdGone)
+          return done()
+        }
+        this.forwards.delete(Number(a))
+        await done()
+        if (b === 'y') return edit(await this.toBrain(rt, fm))
+        await edit(T.fwdAsked)
+        const topic = fm.is_topic_message ? fm.message_thread_id : undefined
+        const key = threadKey(rt.rec.tgId, fm.chat.id, topic)
+        return this.submit(rt, inbox, fm, key, topic, 'owner', (fm.text ?? fm.caption ?? '').trim(), false)
+      }
+      case 'bn': {
+        // Thẻ bản nạp: y = Đồng ý, k = Chỉ lưu, w = Xem trên web; "bn:list" = gửi lại các thẻ đang chờ.
+        const port = this.brainPort
+        if (!port) return done(T.brainOff)
+        if (a === 'list') {
+          await done()
+          return this.sendWaitingCards()
+        }
+        if (b === 'w') return done(T.brainWebHint)
+        // Thẻ bấm sau khi aris khởi động lại: ghi lại để sự kiện trạng thái sửa đúng thẻ này.
+        if (msg && !this.brainCards.has(a ?? ''))
+          this.brainCards.set(a ?? '', { bot: rt.rec.bot, chatId: msg.chat.id, messageId: msg.message_id })
+        try {
+          if (b === 'y') await port.approve(a ?? '')
+          else if (b === 'k') await port.keep(a ?? '')
+          return done()
+        } catch (e) {
+          // Đã xử lý nơi khác (trên web): thẻ báo trạng thái hiện tại, bỏ nút.
+          const cur = port.get(a ?? '')
+          const html = cur && cur.status !== 'cho-duyet' ? brainDone(cur) : undefined
+          if (html) {
+            this.brainCards.delete(a ?? '')
+            await edit(html)
+          }
+          return done((e instanceof Error ? e.message : String(e)).slice(0, 190))
+        }
       }
       case 'ax': {
         // Thẻ duyệt tập trung: trả lời về hộp chung; thẻ được sửa khi hộp báo yêu cầu đã xong.
@@ -1477,6 +1673,121 @@ export class ChannelHub {
         },
       )
       .catch(() => undefined)
+  }
+
+  /**
+   * Bộ não (giai đoạn 5, bản vẽ 7.5): thẻ "BẢN NẠP" cho nguồn gửi từ Telegram khi Thủ thư lập xong,
+   * sửa thẻ khi bản nạp xong ở đâu cũng vậy, báo tự nạp và lỗi, nhắc bản chờ quá 7 ngày. Trả hàm gỡ.
+   */
+  watchBrain(port: BrainPort): () => void {
+    this.brainPort = port
+    const off = port.on((e) => {
+      void this.onBrain(e).catch((err: unknown) =>
+        this.d.logger.warn('aris-channels: thẻ bản nạp: %s', String(err)),
+      )
+    })
+    return () => {
+      off()
+      this.brainPort = undefined
+    }
+  }
+
+  private async onBrain(
+    e:
+      | { type: 'status'; batch: BrainCard; prev?: string | undefined }
+      | { type: 'remind'; batches: BrainCard[] },
+  ) {
+    if (e.type === 'remind') {
+      const to = this.brainTarget()
+      if (!to) return
+      await to.rt.api.sendMessage(to.chatId, T.brainRemind(e.batches.length), {
+        html: true,
+        buttons: [[{ text: T.brainList, callback_data: 'bn:list' }]],
+      })
+      return
+    }
+    const c = e.batch
+    const open = this.brainCards.get(c.id)
+    if (open && c.status !== 'cho-duyet') {
+      this.brainCards.delete(c.id)
+      await this.runtimes
+        .get(open.bot)
+        ?.api.editMessageText(open.chatId, open.messageId, brainDone(c) ?? brainCardHtml(c), { html: true })
+        .catch(() => undefined)
+      return
+    }
+    if (c.from !== 'telegram') return
+    // Tự nạp thì ghép ngay sau đó: không gửi thẻ, chỉ báo đã nạp.
+    if (c.status === 'cho-duyet' && !(c.level === 'tu-nap' && c.ops.length)) return this.sendBrainCard(c)
+    if (c.status === 'da-nap' || c.status === 'loi' || c.status === 'cho-mai') {
+      const to = this.brainTarget(c)
+      const html = brainDone(c)
+      if (to && html) await to.rt.api.sendMessage(to.chatId, html, { html: true })
+    }
+  }
+
+  /** Nơi gửi thẻ bộ não: bot nhận nguồn (hay Aris), chat riêng với người dùng chính. */
+  private brainTarget(c?: BrainCard): { bot: string; rt: BotRuntime; chatId: number } | undefined {
+    const bot =
+      c?.by && this.runtimes.has(c.by) ? c.by : this.store.bot('aris') ? 'aris' : [...this.runtimes.keys()][0]
+    const rt = bot ? this.runtimes.get(bot) : undefined
+    const chatId = this.store.owners()[0]?.userId ?? (bot ? this.store.bot(bot)?.home?.chatId : undefined)
+    return rt && bot && chatId !== undefined ? { bot, rt, chatId } : undefined
+  }
+
+  private async sendBrainCard(c: BrainCard) {
+    const to = this.brainTarget(c)
+    if (!to) return
+    const web = { text: T.brainWeb, callback_data: `bn:${c.id}:w` }
+    const keep = { text: T.brainKeep, callback_data: `bn:${c.id}:k` }
+    const row =
+      c.level === 'ky' || !c.ops.length
+        ? [web, keep]
+        : [{ text: T.brainApprove, callback_data: `bn:${c.id}:y` }, web, keep]
+    const msg = await to.rt.api.sendMessage(to.chatId, brainCardHtml(c), { html: true, buttons: [row] })
+    this.brainCards.set(c.id, { bot: to.bot, chatId: to.chatId, messageId: msg.message_id })
+  }
+
+  private async sendWaitingCards() {
+    const list = this.brainPort?.waiting() ?? []
+    if (!list.length) {
+      const to = this.brainTarget()
+      if (to) await to.rt.api.sendMessage(to.chatId, T.brainNone, { html: true })
+      return
+    }
+    for (const c of list.slice(0, 10)) await this.sendBrainCard(c)
+  }
+
+  /** Gửi một tin (chữ, link, ghi âm, ảnh, tệp) vào Hộp thư vào của bộ não; trả câu báo (HTML). */
+  private async toBrain(rt: BotRuntime, m: TgMessage): Promise<string> {
+    const port = this.brainPort
+    if (!port) return T.brainOff
+    const at = new Date(m.date * 1000)
+    const stamp = clock(at).replace(':', '')
+    const file = m.voice ?? m.audio ?? m.document ?? m.photo?.at(-1)
+    try {
+      if (!file) {
+        const card = await port.add({
+          text: withOrigin((m.text ?? m.caption ?? '').trim(), m),
+          by: rt.rec.bot,
+        })
+        return T.brainQueued(card.title)
+      }
+      if ((file.file_size ?? 0) > MAX_FILE) return T.fileTooBig
+      const { data, path } = await rt.api.download(file.file_id)
+      const ext = /\.[a-z0-9]+$/i.exec(path)?.[0] ?? ''
+      const named = (file as { file_name?: string }).file_name
+      const name = m.voice
+        ? `ghi-am-${stamp}${ext || '.ogg'}`
+        : m.photo
+          ? `anh-${stamp}${ext || '.jpg'}`
+          : (named ?? `tep-${stamp}${ext}`)
+      const label = m.voice ? `ghi âm ${minSec(m.voice.duration)}` : m.photo ? `ảnh ${clock(at)}` : name
+      const card = await port.addFile({ name, data, by: rt.rec.bot })
+      return card.status === 'chua-doc' ? T.brainUnreadable(label) : T.brainQueued(label)
+    } catch (e) {
+      return T.brainFail(e instanceof Error ? e.message : String(e))
+    }
   }
 
   private memoryButtons(id: string, full = false): InlineButton[][] {

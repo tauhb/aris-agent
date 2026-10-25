@@ -15,6 +15,7 @@ export const COMMANDS: { command: string; description: string; owner?: true }[] 
   { command: 'resume', description: 'Quay lại một phiên: /resume <số>', owner: true },
   { command: 'sethome', description: 'Nhận báo cáo và tin bot chủ động gửi ở đây', owner: true },
   { command: 'voice', description: 'Trả lời kèm giọng nói: /voice on|off', owner: true },
+  { command: 'note', description: 'Ghi nhanh vào nhật ký của bộ não: /note <nội dung>', owner: true },
   { command: 'whoami', description: 'Vai và quyền của bạn' },
   { command: 'help', description: 'Danh sách lệnh' },
 ]
@@ -171,4 +172,58 @@ export const T = {
   fileTooBig: 'Tệp lớn hơn 20 MB, Telegram không cho bot tải. Gửi qua web nhé.',
   fileFail: (e: string) => `Chưa nhận được tệp: ${h(e)}`,
   voiceNote: '🎙️ (ghi âm)',
+  // --- Bộ não (bản vẽ 7.5) ---
+  noteUsage: 'Dùng: /note <nội dung>',
+  noteDone: (time: string) =>
+    `📝 Đã ghi vào nhật ký hôm nay (Ghi nhanh · ${time}). Nhật ký tự nạp vào wiki lúc 23:00.`,
+  brainOff: 'Bộ não chưa bật trên máy này.',
+  fwdAsk: 'Tin chuyển tiếp. Lưu vào bộ não để Thủ thư nạp vào wiki?',
+  fwdSave: 'Lưu vào bộ não',
+  fwdChat: 'Không, chỉ hỏi',
+  fwdSaved: '✓ Đã lưu',
+  fwdAsked: 'Tin chuyển tiếp: gửi cho bot như tin thường.',
+  fwdGone: 'Tin này không còn trong bộ nhớ tạm (aris vừa khởi động lại). Chuyển tiếp lại nhé.',
+  brainQueued: (label: string) =>
+    `📥 Đã vào Hộp thư vào: <b>${h(label)}</b>. Thủ thư đang lập bản nạp, xong sẽ gửi thẻ duyệt ở đây.`,
+  brainUnreadable: (label: string) =>
+    `📥 Đã vào Hộp thư vào: <b>${h(label)}</b>. Loại tệp này chưa đọc được; mở Hộp thư vào trên web để Chỉ lưu tệp gốc.`,
+  brainFail: (e: string) => `Chưa lưu được vào bộ não: ${h(e)}`,
+  brainLevel: { nhanh: 'duyệt nhanh', ky: '⚠ duyệt kỹ', 'tu-nap': 'tự nạp' } as Record<string, string>,
+  brainKind: {
+    'tai-lieu': 'tài liệu',
+    link: 'link',
+    'ghi-chu': 'ghi chú',
+    'nhat-ky': 'nhật ký',
+    anh: 'ảnh',
+    'ghi-am': 'ghi âm',
+  } as Record<string, string>,
+  brainOp: {
+    moi: '＋ Trang mới',
+    'bo-sung': '✎ Bổ sung',
+    'lien-ket': '🔗 Thêm liên kết',
+    'sua-y': '✎ Sửa ý cũ',
+  } as Record<string, string>,
+  brainCareful: 'Có chỗ cần xem kỹ nên duyệt trên web.',
+  brainEmpty: 'Thủ thư không thấy gì cần ghi thêm vào wiki. Có thể Chỉ lưu nguồn.',
+  brainApprove: 'Đồng ý',
+  brainWeb: 'Xem trên web',
+  brainKeep: 'Chỉ lưu',
+  brainWebHint: 'Mở aris trên máy: Second Brain › Hộp thư vào.',
+  brainNapped: (title: string, pages: number, place: string, conflicts: number) =>
+    [
+      '✅ <b>ĐÃ NẠP</b>',
+      `<b>${h(title)}</b>`,
+      `Ghép ${pages} trang vào wiki ${h(place)}.${conflicts ? ` ${conflicts} trang đổi trong lúc chờ nên chưa ghép, mở web để Lập lại.` : ''} Muốn hoàn tác thì mở Nhật ký bộ não trên web.`,
+    ].join('\n'),
+  brainKept: (title: string, place: string) =>
+    `📦 <b>CHỈ LƯU NGUỒN</b>\n<b>${h(title)}</b>\nNguồn đã lưu vào ${h(place)}, không ghép vào wiki.`,
+  brainDropped: (title: string) => `🗑 Đã bỏ «${h(title)}».`,
+  brainReplan: (title: string) => `↻ Thủ thư đang lập lại «${h(title)}», xong sẽ gửi thẻ mới.`,
+  brainError: (title: string, note?: string) =>
+    `⚠️ Chưa lập được bản nạp «${h(title)}»${note ? `: ${h(note)}` : ''}\nMở Hộp thư vào trên web để Lập lại hay Bỏ.`,
+  brainTomorrow: (title: string) => `⏳ Thủ thư đã dùng hết tiền hôm nay; «${h(title)}» lập tiếp ngày mai.`,
+  brainRemind: (n: number) =>
+    `📥 Hộp thư vào còn ${n} bản nạp chờ duyệt hơn 7 ngày. Quá 30 ngày chỉ lưu nguồn, không ghép vào wiki.`,
+  brainList: 'Xem các bản chờ',
+  brainNone: 'Hộp thư vào không còn bản nạp nào chờ duyệt.',
 }

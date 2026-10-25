@@ -310,7 +310,7 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 > **Đợt 2a xong 25/10 — Nạp** ([đặc tả](specs/aris-brain.md#đợt-2a--nạp-hộp-thư-vào-thủ-thư-lập-bản-nạp-duyệt-ghép-nhật-ký-xong-2510)): Hộp thư vào (thả tệp, nút Thêm chữ/link, `/note` vào nhật ký), phân loại, Thủ thư lập bản nạp trên bản nháp bằng `brain_draft`, ba mức duyệt, ghép có gộp ba chiều, mục lục và `log.md` do aris giữ, hoàn tác ở màn 5.6, tự nạp nhật ký 23:00, trần 0,5 USD/ngày. Màn 5.2, 5.6 dữ liệu thật (bản vẽ duyệt 25/10); cây 5.1 làm lại theo phương án A. Chạy thử thật: Thủ thư tự phát hiện mâu thuẫn giá và thiếu ngân sách. Đợt 2b còn: PDF, Word, ảnh, ghi âm, Telegram (thẻ 7.5), `brain_capture` cho bot.
 
-> **Đợt 2b phần 1 xong 25/10** ([đặc tả](specs/aris-brain.md#đợt-2b--đọc-tệp-bot-gửi-vào-bộ-não-telegram-phần-1-xong-2510)): đọc PDF, Word, ảnh bằng công cụ có sẵn của macOS (PDFKit, Vision, `textutil`), ghi âm qua ffmpeg và chép lời của dsh, công cụ `brain_capture` cho mọi bot. Còn phần 2: Telegram theo bản vẽ 7.5 (chờ duyệt).
+> **Đợt 2b phần 1 xong 25/10** ([đặc tả](specs/aris-brain.md#đợt-2b--đọc-tệp-bot-gửi-vào-bộ-não-telegram-phần-1-xong-2510)): đọc PDF, Word, ảnh bằng công cụ có sẵn của macOS (PDFKit, Vision, `textutil`), ghi âm qua ffmpeg và chép lời của dsh, công cụ `brain_capture` cho mọi bot. Phần 2 xong 25/10: Telegram theo bản vẽ 7.5 — `/note`, chuyển tiếp thì hỏi lưu, tệp kèm "lưu" và trả lời "lưu", thẻ bản nạp có Đồng ý, nhắc chờ quá 7 ngày.
 
 **Giao diện**: 5.1 Ghi chú (đồ thị 2D quanh ghi chú), 5.2 Hộp thư vào, 5.3 Đồ thị toàn cục 3D, 5.4 Hỏi bộ não; phần "Từ Second Brain" trong menu đính kèm.
 

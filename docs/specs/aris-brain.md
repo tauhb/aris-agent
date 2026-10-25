@@ -254,10 +254,28 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
   kèm đi theo. Ảnh chụp báo giá ⇒ nhận dạng đủ chữ. Ghi âm ⇒ báo đúng lỗi chưa chuẩn bị mô hình chép lời.
   Nhờ Aris "lưu vào bộ não" một quy tắc ⇒ Aris gọi `brain_capture`, bản nạp đến từ bot aris, Thủ thư xếp
   Công ty · Tăng trưởng.
-- Còn (phần 2, chờ duyệt bản vẽ 7.5): Telegram — `/note`, chuyển tiếp tin thì hỏi "Lưu vào bộ não?", ghi âm,
-  ảnh, tệp kèm chữ "lưu"; thẻ bản nạp (duyệt nhanh: Đồng ý, Xem trên web, Chỉ lưu; duyệt kỹ: chỉ Xem trên web,
-  Chỉ lưu); thẻ nhắc chờ quá 7 ngày.
 - Chưa thử thật: chép lời ghi âm (chờ chuẩn bị mô hình), PDF scan nhiều trang.
+
+### Phần 2 — Telegram (bản vẽ 7.5, xong 25/10)
+
+- Chỉ người dùng chính, trong chat riêng với bot. `/note <nội dung>` ghi nhanh vào nhật ký hôm nay. Tin chuyển
+  tiếp thì bot hỏi "Lưu vào bộ não?" (Lưu vào bộ não / Không, chỉ hỏi); lưu thì ghi thêm nguồn gốc (người hay
+  kênh gửi gốc), trừ khi tin chỉ là một link (để bộ não tải trang). Ảnh, tệp, ghi âm kèm chú thích bắt đầu bằng
+  "lưu" thì lưu luôn. Trả lời "lưu" (hay "lưu vào bộ não") vào một tin bất kỳ thì lưu tin đó: cách này dành cho
+  ghi âm, vì ứng dụng Telegram không cho ghi chú thích vào ghi âm. Tin thường vẫn là trò chuyện.
+- Nguồn gửi từ Telegram ghi `from: telegram`, `by: <bot nhận>`. Khi Thủ thư lập xong, bot gửi thẻ "BẢN NẠP": mức
+  duyệt, tiêu đề, nơi, loại, tóm tắt, các thay đổi, dòng ⚠. Duyệt nhanh có Đồng ý / Xem trên web / Chỉ lưu;
+  duyệt kỹ hay không có thay đổi chỉ có Xem trên web / Chỉ lưu. "Xem trên web" hiện lời chỉ đường (điện thoại
+  không mở được web chạy trên máy). Bản nạp xong ở đâu (Telegram hay web) thì thẻ được sửa thành Đã nạp / Chỉ
+  lưu / Đã bỏ / Đang lập lại. Tự nạp thì không gửi thẻ, chỉ báo đã nạp; lỗi và hết tiền trong ngày cũng báo.
+- Nhắc bản chờ quá 7 ngày (mọi nguồn) gửi qua bot, có nút "Xem các bản chờ" gửi lại thẻ của từng bản (tối đa 10).
+- Nối hai gói: `@aris/brain` cung cấp dịch vụ `arisBrain` (sự kiện bản nạp đổi trạng thái, nhắc; thêm nguồn, ghi
+  nhanh, duyệt, chỉ lưu); `@aris/channels` dò dịch vụ này như các thẻ khác.
+- Khác bản vẽ (bản vẽ đã sửa theo, v94): tin hệ thống không dùng đại từ ("xong sẽ gửi thẻ duyệt", không "em
+  gửi"); ghi âm lưu bằng cách trả lời "lưu"; lưu tin chuyển tiếp thì câu hỏi đổi thành câu báo đã vào Hộp thư
+  vào; báo nhận ghi âm không nói "đã chép lời" vì chép lời chạy lúc Thủ thư lập bản nạp; nút nhắc là "Xem các bản
+  chờ".
+- Thử tự động: hai bài thử ở `hub.test.ts` (gửi vào bộ não; thẻ, Đồng ý, sửa thẻ, tự nạp, nhắc).
 
 ## Đã chốt (25/10)
 

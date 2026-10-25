@@ -95,15 +95,30 @@ const SPACE_TITLE: Record<Space, string> = { 'ca-nhan': 'Cá nhân', 'cong-ty': 
 
 export class IngestError extends Error {}
 
+/** Sự kiện cho kênh Telegram: bản nạp đổi trạng thái; nhắc các bản chờ duyệt quá 7 ngày. */
+export type IngestEvent =
+  { type: 'status'; batch: Batch; prev?: Batch['status'] | undefined } | { type: 'remind'; batches: Batch[] }
+
 export function startIngest(d: IngestDeps) {
   const { ctx, logger, root, git, batches } = d
   const sessions = () => ctx.get('sessionController') as SessionPort | undefined
   const now = () => new Date()
   const iso = () => now().toISOString()
   const all = () => [...batches.entries()].map(([, b]) => b)
+  const listeners = new Set<(e: IngestEvent) => void>()
+  const emit = (e: IngestEvent) => {
+    for (const fn of listeners)
+      try {
+        fn(e)
+      } catch (err) {
+        logger.warn('báo sự kiện nạp: %s', String(err))
+      }
+  }
   const put = async (b: Batch) => {
+    const prev = batches.get(b.id)?.status
     const next = { ...b, updatedAt: iso() }
     await batches.put(next.id, next)
+    if (prev !== next.status) emit({ type: 'status', batch: next, prev })
     return next
   }
   const newId = () => `n-${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`
@@ -847,12 +862,7 @@ export function startIngest(d: IngestDeps) {
     for (const b of waiting.filter((x) => staleAction(x, t) === 'expire'))
       await keep(b.id).catch((e: unknown) => logger.warn('tự chỉ lưu %s: %s', b.id, String(e)))
     if (remind.length) {
-      await (ctx.get('arisChannels') as { sendHome?(bot: string, md: string): Promise<string> } | undefined)
-        ?.sendHome?.(
-          'aris',
-          `📥 Hộp thư vào của bộ não có ${remind.length} bản nạp chờ duyệt hơn 7 ngày. Quá 30 ngày aris sẽ chỉ lưu nguồn, không ghép vào wiki.`,
-        )
-        .catch(() => undefined)
+      emit({ type: 'remind', batches: remind })
       for (const b of remind) await put({ ...b, remindedAt: t.toISOString() })
     }
   }
@@ -886,7 +896,14 @@ export function startIngest(d: IngestDeps) {
   /** Số bản nạp chờ người dùng duyệt. */
   const waiting = () => all().filter((b) => b.status === 'cho-duyet').length
 
+  /** Nghe sự kiện nạp; trả hàm gỡ. */
+  function on(fn: (e: IngestEvent) => void) {
+    listeners.add(fn)
+    return () => void listeners.delete(fn)
+  }
+
   return {
+    on,
     add,
     addFile,
     approve,

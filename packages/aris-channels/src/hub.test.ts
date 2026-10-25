@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 import {
   ChannelHub,
   type ApprovalsPort,
+  type BrainCard,
+  type BrainPort,
   type ProposalsPort,
   type SkillsPort,
   type LiveAgent,
@@ -70,6 +72,8 @@ class FakeTelegram {
         this.queue = []
         return ok(out)
       }
+      case 'getFile':
+        return ok({ file_path: `files/${String(body.file_id)}` })
       case 'sendMessage':
         if (this.slowSend) await new Promise((r) => setTimeout(r, this.slowSend))
         return ok({ message_id: this.msgId++, chat: { id: body.chat_id }, date: 0, text: body.text })
@@ -593,6 +597,200 @@ describe('trung tâm kênh', () => {
     expect(s.tg.sent('answerCallbackQuery').at(-1)).toMatchObject({
       text: 'Lần chạy này không còn để xem lại.',
     })
+  })
+
+  it('bộ não: /note, chuyển tiếp thì hỏi, tệp kèm "lưu" và trả lời "lưu" thì lưu luôn', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    const added: unknown[] = []
+    const notes: string[] = []
+    const card = (id: string, title: string): BrainCard => ({
+      id,
+      status: 'moi',
+      title,
+      kind: 'ghi-chu',
+      from: 'telegram',
+      by: 'aris',
+      place: 'Cá nhân',
+      ops: [],
+      conflicts: 0,
+    })
+    s.hub.watchBrain({
+      on: () => () => undefined,
+      add: async (i) => (added.push(i), card('n-1', i.text.split('\n')[0]!)),
+      addFile: async (i) => (added.push({ name: i.name, by: i.by }), card('n-2', i.name)),
+      note: async (t) => (notes.push(t), 'ca-nhan/nhat-ky/x.md'),
+      approve: async () => card('n-1', ''),
+      keep: async () => card('n-1', ''),
+      get: () => undefined,
+      waiting: () => [],
+    })
+    const last = () => String(s.tg.sent().at(-1)!.text)
+
+    s.tg.push(
+      dm(OWNER, '/note mai gọi chị Hà chốt giá', {
+        entities: [{ type: 'bot_command', offset: 0, length: 5 }],
+      }),
+    )
+    await settle()
+    expect(notes).toEqual(['mai gọi chị Hà chốt giá'])
+    expect(last()).toContain('Đã ghi vào nhật ký hôm nay')
+
+    // Chuyển tiếp: hỏi lại, chưa vào phiên; bấm Lưu thì vào Hộp thư vào kèm nguồn gốc.
+    s.tg.push(
+      dm(OWNER, '5 xu hướng video ngắn 2026', {
+        message_id: 70,
+        forward_origin: { type: 'channel', date: 0, chat: { id: -5, type: 'channel', title: 'Kênh tin' } },
+      }),
+    )
+    await settle()
+    expect(last()).toContain('Lưu vào bộ não')
+    expect(s.sessions.agents.size).toBe(0)
+    s.tg.push({
+      callback_query: {
+        id: 'c1',
+        from: { id: OWNER, is_bot: false, first_name: 'O' },
+        message: { message_id: 101, chat: { id: OWNER, type: 'private' }, date: 0 },
+        data: 'bf:70:y',
+      },
+    })
+    await settle()
+    expect(added.at(-1)).toEqual({
+      text: '5 xu hướng video ngắn 2026\n\n(Chuyển tiếp từ Kênh tin)',
+      by: 'aris',
+    })
+    expect(String(s.tg.sent('editMessageText').at(-1)!.text)).toContain('Đã vào Hộp thư vào')
+
+    // Ghi âm kèm chữ "lưu": tải tệp, gửi vào bộ não, không vào phiên.
+    s.tg.push(
+      dm(OWNER, '', {
+        text: undefined,
+        caption: 'Lưu',
+        voice: { file_id: 'v1.oga', file_unique_id: 'v1', duration: 102 },
+      }),
+    )
+    await settle()
+    expect((added.at(-1) as { name: string }).name).toMatch(/^ghi-am-\d{4}\.oga$/)
+    expect(last()).toContain('ghi âm 1:42')
+    expect(s.sessions.agents.size).toBe(0)
+
+    // Trả lời "lưu" vào một tin cũ: lưu tin đó.
+    s.tg.push(
+      dm(OWNER, 'lưu vào bộ não', {
+        reply_to_message: {
+          message_id: 40,
+          chat: { id: OWNER, type: 'private' },
+          date: 0,
+          text: 'Quy tắc đặt tên video',
+        },
+      }),
+    )
+    await settle()
+    expect(added.at(-1)).toEqual({ text: 'Quy tắc đặt tên video', by: 'aris' })
+
+    // Tin thường vẫn là trò chuyện.
+    s.tg.push(dm(OWNER, 'lưu ý giúp tôi lịch mai'))
+    await settle()
+    expect(s.sessions.agents.size).toBe(1)
+  })
+
+  it('bộ não: thẻ bản nạp theo mức duyệt, Đồng ý trên Telegram, xong ở web thì sửa thẻ, nhắc chờ lâu', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    type Ev = Parameters<Parameters<BrainPort['on']>[0]>[0]
+    let emit: (e: Ev) => void = () => undefined
+    const approved: string[] = []
+    const base: BrainCard = {
+      id: 'n-1',
+      status: 'cho-duyet',
+      title: 'Xu hướng video ngắn 2026',
+      kind: 'link',
+      from: 'telegram',
+      by: 'aris',
+      place: 'Cá nhân',
+      summary: '5 xu hướng',
+      level: 'nhanh',
+      ops: [
+        { title: 'Tóm tắt · Xu hướng video ngắn 2026', kind: 'moi' },
+        { title: 'Video ngắn', kind: 'bo-sung' },
+      ],
+      conflicts: 0,
+    }
+    s.hub.watchBrain({
+      on: (fn) => ((emit = fn), () => undefined),
+      add: async () => base,
+      addFile: async () => base,
+      note: async () => '',
+      approve: async (id) => (approved.push(id), base),
+      keep: async () => base,
+      get: () => base,
+      waiting: () => [base],
+    })
+    const buttons = () =>
+      (s.tg.sent().at(-1)!.reply_markup as { inline_keyboard: { text: string; callback_data: string }[][] })
+        .inline_keyboard[0]!
+    const tap = async (data: string, messageId: number) => {
+      s.tg.push({
+        callback_query: {
+          id: `c-${data}`,
+          from: { id: OWNER, is_bot: false, first_name: 'O' },
+          message: { message_id: messageId, chat: { id: OWNER, type: 'private' }, date: 0 },
+          data,
+        },
+      })
+      await settle()
+    }
+
+    // Nguồn từ web: không gửi thẻ.
+    emit({ type: 'status', batch: { ...base, id: 'n-0', from: 'web' }, prev: 'dang-lap' })
+    await settle()
+    const before = s.tg.sent().length
+
+    emit({ type: 'status', batch: base, prev: 'dang-lap' })
+    await settle()
+    expect(s.tg.sent()).toHaveLength(before + 1)
+    const sent = s.tg.sent().at(-1)!
+    expect(String(sent.text)).toContain('BẢN NẠP · duyệt nhanh')
+    expect(String(sent.text)).toContain('＋ Trang mới: Tóm tắt · Xu hướng video ngắn 2026')
+    expect(buttons().map((b) => b.text)).toEqual(['Đồng ý', 'Xem trên web', 'Chỉ lưu'])
+    await tap(buttons()[0]!.callback_data, 102)
+    expect(approved).toEqual(['n-1'])
+    emit({ type: 'status', batch: { ...base, status: 'da-nap' }, prev: 'cho-duyet' })
+    await settle()
+    expect(String(s.tg.sent('editMessageText').at(-1)!.text)).toContain('ĐÃ NẠP')
+    expect(String(s.tg.sent('editMessageText').at(-1)!.text)).toContain('Ghép 2 trang')
+
+    // Duyệt kỹ: không có nút Đồng ý, có dòng ⚠.
+    const careful: BrainCard = {
+      ...base,
+      id: 'n-2',
+      level: 'ky',
+      ops: [{ title: 'Chị Hà', kind: 'sua-y', flag: 'giá cũ 1,5 triệu, nguồn mới 2 triệu' }],
+    }
+    emit({ type: 'status', batch: careful, prev: 'dang-lap' })
+    await settle()
+    expect(String(s.tg.sent().at(-1)!.text)).toContain('⚠ Chị Hà: giá cũ 1,5 triệu')
+    expect(buttons().map((b) => b.text)).toEqual(['Xem trên web', 'Chỉ lưu'])
+    // Chỉ lưu trên web: sửa thẻ.
+    emit({ type: 'status', batch: { ...careful, status: 'chi-luu' }, prev: 'cho-duyet' })
+    await settle()
+    expect(String(s.tg.sent('editMessageText').at(-1)!.text)).toContain('CHỈ LƯU NGUỒN')
+
+    // Tự nạp: không thẻ, chỉ báo đã nạp.
+    const auto: BrainCard = { ...base, id: 'n-3', level: 'tu-nap' }
+    const n = s.tg.sent().length
+    emit({ type: 'status', batch: { ...auto }, prev: 'dang-lap' })
+    emit({ type: 'status', batch: { ...auto, status: 'da-nap' }, prev: 'cho-duyet' })
+    await settle()
+    expect(s.tg.sent()).toHaveLength(n + 1)
+    expect(String(s.tg.sent().at(-1)!.text)).toContain('ĐÃ NẠP')
+
+    // Nhắc chờ lâu: nút gửi lại các thẻ đang chờ.
+    emit({ type: 'remind', batches: [base, careful] })
+    await settle()
+    expect(String(s.tg.sent().at(-1)!.text)).toContain('2 bản nạp chờ duyệt hơn 7 ngày')
+    await tap('bn:list', 200)
+    expect(String(s.tg.sent().at(-1)!.text)).toContain('BẢN NẠP')
   })
 
   it('khởi động lại giữa lúc gửi: gửi lại phần dở kèm ghi chú có thể trùng', async () => {

@@ -62,6 +62,21 @@ export interface TgMessage {
   voice?: TgVoice
   audio?: TgDocument & { duration?: number }
   video_note?: TgVoice
+  /** Tin chuyển tiếp (Bot API 7.0); bản cũ hơn chỉ có `forward_date`, `forward_from`… */
+  forward_origin?: TgForwardOrigin
+  forward_date?: number
+  forward_from?: TgUser
+  forward_from_chat?: TgChat
+  forward_sender_name?: string
+}
+
+export interface TgForwardOrigin {
+  type: 'user' | 'hidden_user' | 'chat' | 'channel'
+  date: number
+  sender_user?: TgUser
+  sender_user_name?: string
+  sender_chat?: TgChat
+  chat?: TgChat
 }
 
 export interface TgCallbackQuery {

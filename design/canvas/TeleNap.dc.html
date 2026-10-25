@@ -35,7 +35,7 @@ body{margin:0}
 
   <!-- ===== Bên trái: gửi vào bộ não ===== -->
   <div style="display: flex; flex-direction: column; gap: 10px">
-    <div class="cap"><b>Gửi vào bộ não</b> · chuyển tiếp tin cho Aris thì Aris hỏi lại; ghi âm, ảnh, tệp kèm chữ “lưu” hay lệnh /note thì lưu luôn. Tin thường vẫn là trò chuyện.</div>
+    <div class="cap"><b>Gửi vào bộ não</b> · chuyển tiếp tin cho Aris thì Aris hỏi lại; ảnh, tệp kèm chữ “lưu”, trả lời “lưu” vào một tin (cả ghi âm), hay lệnh /note thì lưu luôn. Tin thường vẫn là trò chuyện.</div>
     <div class="ph">
       <div class="top">
         <span style="font-size: 22px; color: #6AB2F2">‹</span>
@@ -51,32 +51,43 @@ body{margin:0}
           <div class="tm">09:41</div>
         </div>
         <div class="bot">
-          <div class="bub">
-            <div class="sm">Tin chuyển tiếp. Lưu vào bộ não để Thủ thư nạp vào wiki?</div>
-            <div class="tm">09:41</div>
-          </div>
-          <div class="btns" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
-            <button type="button" class="tb" onClick="{{saveFwd}}">{{fwdLabel}}</button>
-            <button type="button" class="tb">Không, chỉ hỏi</button>
-          </div>
+          <sc-if value="{{fwdOpen}}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <div class="bub">
+                <div class="sm">Tin chuyển tiếp. Lưu vào bộ não để Thủ thư nạp vào wiki?</div>
+                <div class="tm">09:41</div>
+              </div>
+              <div class="btns" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+                <button type="button" class="tb" onClick="{{saveFwd}}">Lưu vào bộ não</button>
+                <button type="button" class="tb">Không, chỉ hỏi</button>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{fwdDone}}" hint-placeholder-val="{{ false }}">
+            <div class="bub">
+              <div class="sm">📥 Đã vào Hộp thư vào: <b style="color: #fff">5 xu hướng video ngắn 2026</b>. Thủ thư đang lập bản nạp, xong sẽ gửi thẻ duyệt ở đây.</div>
+              <div class="tm">09:41</div>
+            </div>
+          </sc-if>
         </div>
 
         <div class="me" style="display: flex; align-items: center; gap: 10px">
           <span style="width: 34px; height: 34px; border-radius: 50%; background: #6AB2F2; display: inline-flex; align-items: center; justify-content: center; flex: none">▶</span>
-          <span style="display: flex; flex-direction: column"><span style="font-size: 13px">▂▃▅▇▅▃▂▃▅▆▃▂ 1:42</span><span style="font-size: 13px">lưu</span></span>
+          <span style="font-size: 13px">▂▃▅▇▅▃▂▃▅▆▃▂ 1:42</span>
           <span class="tm" style="align-self: flex-end">09:44</span>
         </div>
+        <div class="me"><div style="font-size: 12px; color: #9FC4EA; border-left: 2px solid #9FC4EA; padding-left: 6px; margin-bottom: 3px">Trả lời ghi âm 1:42</div><div style="font-size: 14px">lưu</div><div class="tm">09:45</div></div>
         <div class="bot">
           <div class="bub">
-            <div class="sm">📥 Đã vào Hộp thư vào: <b style="color: #fff">ghi âm 1:42</b>, đã chép lời. Thủ thư đang lập bản nạp, xong em gửi thẻ duyệt.</div>
-            <div class="tm">09:44</div>
+            <div class="sm">📥 Đã vào Hộp thư vào: <b style="color: #fff">ghi âm 1:42</b>. Thủ thư đang lập bản nạp, xong sẽ gửi thẻ duyệt ở đây.</div>
+            <div class="tm">09:45</div>
           </div>
         </div>
 
         <div class="me"><div style="font-size: 14px">/note mai gọi chị Hà chốt giá thumbnail</div><div class="tm">09:50</div></div>
         <div class="bot">
           <div class="bub">
-            <div class="sm">📝 Đã ghi vào nhật ký hôm nay (Ghi nhanh · 09:50). Nhật ký tự nạp lúc 23:00.</div>
+            <div class="sm">📝 Đã ghi vào nhật ký hôm nay (Ghi nhanh · 09:50). Nhật ký tự nạp vào wiki lúc 23:00.</div>
             <div class="tm">09:50</div>
           </div>
         </div>
@@ -86,7 +97,7 @@ body{margin:0}
 
   <!-- ===== Bên phải: thẻ bản nạp ===== -->
   <div style="display: flex; flex-direction: column; gap: 10px">
-    <div class="cap"><b>Thẻ bản nạp</b> · duyệt nhanh thì bấm Đồng ý ngay trên Telegram; duyệt kỹ (có ⚠) thì chỉ báo và mở web để xem khác biệt.</div>
+    <div class="cap"><b>Thẻ bản nạp</b> · duyệt nhanh thì bấm Đồng ý ngay trên Telegram; duyệt kỹ (có ⚠) thì chỉ báo và mở web để xem khác biệt. “Xem trên web” hiện lời chỉ đường (điện thoại không mở được web chạy trên máy).</div>
     <div class="ph">
       <div class="top">
         <span style="font-size: 22px; color: #6AB2F2">‹</span>
@@ -98,7 +109,7 @@ body{margin:0}
           <sc-if value="{{open}}" hint-placeholder-val="{{ true }}">
             <div style="display: flex; flex-direction: column; gap: 6px">
               <div class="bub">
-                <div class="lab" style="color: #F5A35C">BẢN NẠP · duyệt nhanh</div>
+                <div class="lab" style="color: #F5A35C">📥 BẢN NẠP · duyệt nhanh</div>
                 <div style="font-weight: 600; margin: 3px 0 6px">Xu hướng video ngắn 2026</div>
                 <div class="sm">Cá nhân · link · Thủ thư tóm tắt: 5 xu hướng, 2 số liệu kèm nguồn.</div>
                 <div style="margin-top: 6px">
@@ -127,14 +138,14 @@ body{margin:0}
 
         <div class="bot">
           <div class="bub">
-            <div class="lab" style="color: #F5A35C">BẢN NẠP · ⚠ duyệt kỹ</div>
+            <div class="lab" style="color: #F5A35C">📥 BẢN NẠP · ⚠ duyệt kỹ</div>
             <div style="font-weight: 600; margin: 3px 0 6px">Ghi âm 09:44 · gọi chị Hà</div>
             <div class="sm">Cá nhân · ghi âm 1:42 · sửa 3 trang, 1 trang mới.</div>
             <div style="margin-top: 6px; background: rgba(245,163,92,.12); border-radius: 8px; padding: 6px 8px">
               <div class="li" style="color: #F5A35C">⚠ Chị Hà: giá cũ 1,5 triệu, nguồn mới 2 triệu từ tháng 11</div>
               <div class="li" style="color: #F5A35C">⚠ Kênh YouTube Q4: ngân sách tháng 11 có thể thiếu</div>
             </div>
-            <div class="sm" style="margin-top: 6px">Có chỗ cần Tầu xem kỹ nên duyệt trên web.</div>
+            <div class="sm" style="margin-top: 6px">Có chỗ cần xem kỹ nên duyệt trên web.</div>
             <div class="tm">10:05</div>
           </div>
           <div class="btns" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
@@ -145,10 +156,10 @@ body{margin:0}
 
         <div class="bot">
           <div class="bub">
-            <div class="sm">📥 Hộp thư vào còn 2 bản nạp chờ hơn 7 ngày. Quá 30 ngày em chỉ lưu nguồn, không ghép vào wiki.</div>
+            <div class="sm">📥 Hộp thư vào còn 2 bản nạp chờ duyệt hơn 7 ngày. Quá 30 ngày chỉ lưu nguồn, không ghép vào wiki.</div>
             <div class="tm">08:00</div>
           </div>
-          <div class="btns"><button type="button" class="tb">Mở Hộp thư vào</button></div>
+          <div class="btns"><button type="button" class="tb">Xem các bản chờ</button></div>
         </div>
       </div>
     </div>
@@ -164,7 +175,8 @@ class Component extends DCLogic {
       done: !!s.done,
       approve: () => this.setState({ done: true }),
       saveFwd: () => this.setState({ fwd: true }),
-      fwdLabel: s.fwd ? '✓ Đã lưu' : 'Lưu vào bộ não'
+      fwdOpen: !s.fwd,
+      fwdDone: !!s.fwd
     };
   }
 }
