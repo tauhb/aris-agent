@@ -1,7 +1,7 @@
 /**
  * 2.5 · Commander: bot được giao việc (cờ `assignable` của từng bot, duyệt mỗi lần giao), giới hạn
  * điều phối và trần tiền mỗi việc (cấu hình của `@aris/commander`), quyết định định tuyến gần đây.
- * "Commander đã học" (giai đoạn 3) và Driver (giai đoạn 4) còn là bản vẽ, để mờ.
+ * Driver bật theo từng dự án ở Kanban (4.3).
  */
 import {
   Card,
@@ -15,7 +15,6 @@ import {
 } from '@aris/ui-kit/react'
 import { useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
-import { Later } from '../team/BotTools.js'
 import { Col } from '../ui.js'
 
 const KIND_TONE = { delegate: 'accent', self: 'muted', handoff: 'ok', helpers: 'muted' } as const
@@ -282,12 +281,12 @@ export function Commander({ t, nav }: PageProps) {
               />
               <span className="a-muted">USD</span>
             </div>
-            <Later t={t} stage={4} row>
-              <label className="a-row">
-                <span className="grow">{t('cmd.driver')}</span>
-                <input type="checkbox" disabled aria-label={t('cmd.driver')} style={check} />
-              </label>
-            </Later>
+            <div className="a-row">
+              <span className="grow">{t('cmd.driver')}</span>
+              <a className="ap-link" style={{ fontSize: 13 }} onClick={() => nav.go('kanban')}>
+                {t('cmd.driverWhere')}
+              </a>
+            </div>
           </Card>
         </Col>
         <Col grow={1.4} basis={500}>

@@ -54,6 +54,26 @@ describe('bảng việc dự án', () => {
     expect(board.find((c) => c.id === 'c-1')).toMatchObject({ kind: 'draft', bot: 'b-tho' })
   })
 
+  it('Driver: thẻ chưa giao hiện bot dự kiến; thẻ vấp, kẹt mang cờ; thẻ xong thì bỏ cờ', () => {
+    const b = buildBoard({
+      team,
+      drafts: [],
+      botOfHandle: (h) => `b-${h}`,
+      sessionState: () => 'idle',
+      planned: new Map([
+        ['task-4', 'b-lam'],
+        ['task-1', 'b-lam'],
+      ]),
+      driver: { gaveUp: ['task-2', 'task-5'], stuck: ['task-3'] },
+    })
+    expect(b.find((c) => c.id === 'task-4')).toMatchObject({ bot: 'b-lam', planned: true })
+    expect(b.find((c) => c.id === 'task-1')).toMatchObject({ bot: 'b-minh' })
+    expect(b.find((c) => c.id === 'task-1')!.planned).toBeUndefined()
+    expect(b.find((c) => c.id === 'task-2')!.failed).toBe(true)
+    expect(b.find((c) => c.id === 'task-3')!.stuck).toBe(true)
+    expect(b.find((c) => c.id === 'task-5')!.failed).toBeUndefined()
+  })
+
   it('bot rảnh mà còn giữ thẻ: thẻ ở Sẵn sàng (đã giao, chưa chạy)', () => {
     const b = buildBoard({ team, drafts: [], botOfHandle: () => undefined, sessionState: () => 'idle' })
     expect(b.find((c) => c.id === 'task-1')!.column).toBe('ready')

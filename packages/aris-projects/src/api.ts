@@ -58,7 +58,8 @@ async function ensureMain(d: ApiDeps, w: WorkspaceLike): Promise<string> {
 }
 
 async function boardOf(d: ApiDeps, workspace: string) {
-  return { workspace, cards: await d.board(workspace), split: d.store.get(workspace)?.split ?? 'auto' }
+  const p = d.store.get(workspace)
+  return { workspace, cards: await d.board(workspace), split: p?.split ?? 'auto', driver: p?.driver ?? false }
 }
 
 /** Lời nhắn Aris khi người dùng bấm "Giao ngay" trên một thẻ chờ. */

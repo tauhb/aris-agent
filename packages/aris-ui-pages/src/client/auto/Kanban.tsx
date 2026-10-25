@@ -118,9 +118,13 @@ function Card({
         : t(`kb.foot.${c.column}`)
       : c.kind === 'draft'
         ? t('kb.foot.draft')
-        : c.column === 'unassigned'
-          ? t('kb.foot.unassigned')
-          : t(`kb.foot.${c.column}`)
+        : c.failed
+          ? t('kb.foot.driverFailed')
+          : c.stuck
+            ? t('kb.foot.stuck')
+            : c.column === 'unassigned'
+              ? t(c.planned ? 'kb.foot.planned' : 'kb.foot.unassigned')
+              : t(`kb.foot.${c.column}`)
   const color = bot ? (getMascot(bot.mascot)?.color ?? 'var(--a-accent)') : 'var(--a-line)'
   const type =
     c.kind === 'job' ? (
@@ -159,7 +163,7 @@ function Card({
       <div className="ft">
         {bot && <Mascot id={bot.mascot} size={18} />}
         {bot && <b>{bot.name}</b>}
-        <span className={c.failed ? 'st bad' : 'st'}>{status}</span>
+        <span className={c.failed || c.stuck ? 'st bad' : 'st'}>{status}</span>
         {c.session && (
           <button
             type="button"
@@ -326,6 +330,11 @@ export function Kanban({ t, nav, params }: PageProps) {
   const members = current.project?.members ?? []
   const cards = board?.cards ?? []
   const split = board?.split ?? current.project?.split ?? 'auto'
+  const driver = board?.driver ?? current.project?.driver ?? false
+  const setDriver = (on: boolean) =>
+    void projectAction({ op: 'update', workspace: current.workspace, patch: { driver: on } }).catch(
+      (e: unknown) => setError(e instanceof Error ? e.message : String(e)),
+    )
   const setSplit = (v: 'auto' | 'manual') =>
     void projectAction({ op: 'update', workspace: current.workspace, patch: { split: v } }).catch(
       (e: unknown) => setError(e instanceof Error ? e.message : String(e)),
@@ -359,6 +368,15 @@ export function Kanban({ t, nav, params }: PageProps) {
               ]}
             />
           </span>
+          <Button
+            size="sm"
+            aria-pressed={driver}
+            title={t('kb.driverTip')}
+            onClick={() => setDriver(!driver)}
+            style={driver ? { borderColor: 'var(--a-ok)', color: 'var(--a-ok)', fontWeight: 600 } : undefined}
+          >
+            {t(driver ? 'kb.driverOn' : 'kb.driverOff')}
+          </Button>
           <Button variant="primary" onClick={() => setAdding(true)}>
             {t('kb.new')}
           </Button>
@@ -367,6 +385,7 @@ export function Kanban({ t, nav, params }: PageProps) {
     >
       <div className="a-muted" style={{ fontSize: 12.5 }}>
         {t(split === 'auto' ? 'kb.autoHint' : 'kb.manualHint')}
+        {driver && ` ${t('kb.driverHint')}`}
       </div>
       {error && <div style={{ color: 'var(--a-danger)', fontSize: 13 }}>{error}</div>}
       {!board && <div className="a-muted">{t('kb.loading')}</div>}

@@ -72,4 +72,4 @@ Dữ liệu thật: tên và lời việc, lịch đọc được ("Thứ 2–6,
 
 ## Để sau
 
-Webhook, Driver Kanban (đợt 4); gắn skill cho routine, miễn dọn skill được routine dùng.
+Driver Kanban (đợt 4, xem aris-projects.md); webhook (giai đoạn 7); gắn skill cho routine, miễn dọn skill được routine dùng.

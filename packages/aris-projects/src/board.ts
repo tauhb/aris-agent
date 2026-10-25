@@ -47,8 +47,10 @@ export interface CardView {
   title: string
   description?: string
   column: Column
-  /** Bot nhận thẻ, hoặc bot người dùng gợi ý (thẻ chờ). */
+  /** Bot nhận thẻ, hoặc bot người dùng gợi ý (thẻ chờ), hoặc bot dự kiến (thẻ Aris chia, chưa giao). */
   bot?: string
+  /** `bot` là bot dự kiến (Driver giao khi thẻ sẵn sàng), chưa nhận thẻ. */
+  planned?: boolean
   /** Phiên của bot nhận thẻ (mở nhánh việc). */
   session?: string
   /** Thẻ đang chặn thẻ này (chưa xong). */
@@ -57,6 +59,8 @@ export interface CardView {
   department?: string
   progress?: { done: number; total: number }
   failed?: boolean
+  /** Driver: thẻ đã giao lâu mà chưa có kết quả. */
+  stuck?: boolean
 }
 
 /** Việc lớn của phòng ban (`@aris/commander`) trong dự án. */
@@ -80,6 +84,10 @@ export interface BoardInput {
   /** Trạng thái phiên của bot nhận thẻ. */
   sessionState: (sessionId: string) => 'waiting' | 'running' | 'idle'
   jobs?: readonly JobLike[]
+  /** Thẻ của Team → bot dự kiến (mã nội bộ). */
+  planned?: ReadonlyMap<string, string>
+  /** Cờ của Driver: thẻ đã ngừng tự đẩy vì vấp, thẻ kẹt. */
+  driver?: { gaveUp: readonly string[]; stuck: readonly string[] }
 }
 
 /**
@@ -99,7 +107,9 @@ export function buildBoard(b: BoardInput): CardView[] {
   const out: CardView[] = []
   for (const t of tasks) {
     const handle = t.ownerId ? b.team.members.get(t.ownerId) : undefined
-    const bot = handle ? b.botOfHandle(handle) : undefined
+    const owner = handle ? b.botOfHandle(handle) : undefined
+    const plan = !owner && t.status !== 'completed' ? b.planned?.get(t.id) : undefined
+    const bot = owner ?? plan
     let column: Column
     if (t.status === 'completed') column = 'done'
     else if (t.status === 'pending' || !t.ownerId) column = 'unassigned'
@@ -115,6 +125,9 @@ export function buildBoard(b: BoardInput): CardView[] {
       ...(t.description ? { description: t.description } : {}),
       column,
       ...(bot ? { bot } : {}),
+      ...(plan ? { planned: true } : {}),
+      ...(t.status !== 'completed' && b.driver?.gaveUp.includes(t.id) ? { failed: true } : {}),
+      ...(t.status !== 'completed' && b.driver?.stuck.includes(t.id) ? { stuck: true } : {}),
       ...(t.ownerId ? { session: t.ownerId } : {}),
       waitingFor: t.blockedBy.flatMap((id) => {
         const dep = byId.get(id)

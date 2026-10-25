@@ -1,5 +1,5 @@
 /** Kho dự án: tạo, sửa (tên, mục tiêu, thành viên, luật), phiên chính. */
-import type { CardRecord, ProjectRecord, Rules, Table } from './domain.js'
+import type { CardRecord, PlanRecord, ProjectRecord, Rules, Table } from './domain.js'
 
 export const DEFAULT_RULES: Rules = { maxRounds: 3, maxMessages: 10, stopCommand: true, arisSummarizes: true }
 
@@ -28,6 +28,7 @@ export interface ProjectInput {
   rules?: unknown
   mainSession?: string
   split?: 'auto' | 'manual'
+  driver?: boolean
 }
 
 export class ProjectStore {
@@ -69,8 +70,43 @@ export class ProjectStore {
     if (main) rec.mainSession = main
     const split = input.split === 'auto' || input.split === 'manual' ? input.split : prev?.split
     if (split) rec.split = split
+    const driver = typeof input.driver === 'boolean' ? input.driver : prev?.driver
+    if (driver) rec.driver = true
     await this.table.put(keyOf(workspace), rec)
     return rec
+  }
+}
+
+/** Bot dự kiến cho thẻ của Team, theo dự án. */
+export class PlanStore {
+  constructor(
+    private table: Table<PlanRecord>,
+    private now = () => new Date(),
+  ) {}
+
+  private key = (workspace: string, taskId: string) =>
+    `${keyOf(workspace)}-${taskId.replace(/[^A-Za-z0-9-]/g, '-')}`
+
+  get(workspace: string, taskId: string): string | undefined {
+    return this.table.get(this.key(workspace, taskId))?.bot
+  }
+
+  /** Thẻ → bot dự kiến của một dự án. */
+  forWorkspace(workspace: string): Map<string, string> {
+    return new Map(
+      [...this.table.entries()]
+        .filter(([, p]) => p.workspace === workspace)
+        .map(([, p]) => [p.taskId, p.bot]),
+    )
+  }
+
+  async set(workspace: string, taskId: string, bot: string): Promise<void> {
+    await this.table.put(this.key(workspace, taskId), {
+      workspace,
+      taskId,
+      bot,
+      at: this.now().toISOString(),
+    })
   }
 }
 

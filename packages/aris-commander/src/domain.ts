@@ -19,8 +19,20 @@ export const dispatchRecord = z.object({
   /** Kết quả lượt của bot: xong, vấp, bị dừng. */
   outcome: z.enum(['done', 'failed', 'stopped']).optional(),
   finishedAt: z.string().optional(),
+  /** Câu trả lời cuối của bot (cắt ngắn): thẻ sau đọc làm đầu vào (Driver). */
+  answer: z.string().optional(),
 })
 export type DispatchRecord = z.infer<typeof dispatchRecord>
+
+/** Trạng thái Driver của một dự án (khoá: mã workspace). */
+export const driverRecord = z.object({
+  woken: z.array(z.string()),
+  failures: z.record(z.string(), z.number()),
+  counted: z.record(z.string(), z.string()),
+  gaveUp: z.array(z.string()),
+  stuck: z.array(z.string()),
+  allDone: z.boolean().optional(),
+})
 
 /**
  * Việc lớn giao cho cả phòng ban (bước 3d): trưởng nhóm làm trưởng Team ở một phiên gốc riêng
@@ -152,6 +164,7 @@ export const commanderDomain = defineDomain({
     externals: domainTable<string, ExternalRunRecord>(externalRunRecord),
     /** Cấu hình Commander (trang 2.5), một bản ghi khoá `commander`. */
     settings: domainTable<string, CommanderSettings>(commanderSettings),
+    driver: domainTable<string, z.infer<typeof driverRecord>>(driverRecord),
   },
 })
 

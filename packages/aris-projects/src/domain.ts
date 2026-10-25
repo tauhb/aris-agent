@@ -30,6 +30,8 @@ export const projectRecord = z.object({
   mainSession: z.string().optional(),
   /** Chia việc (Kanban 4.3): Aris tự chia thẻ chờ ở lượt sau, hay chỉ khi người dùng bảo. */
   split: z.enum(['auto', 'manual']).optional(),
+  /** Driver (Kanban, giai đoạn 4 đợt 4): tự giao thẻ đủ phụ thuộc cho bot dự kiến; mặc định tắt. */
+  driver: z.boolean().optional(),
   createdAt: z.string(),
 })
 export type ProjectRecord = z.infer<typeof projectRecord>
@@ -51,6 +53,15 @@ export const cardRecord = z.object({
 })
 export type CardRecord = z.infer<typeof cardRecord>
 
+/** Bot dự kiến cho một thẻ của Team (`tao_the` ghi lúc chia thẻ); Driver giao cho bot này khi thẻ sẵn sàng. */
+export const planRecord = z.object({
+  workspace: z.string(),
+  taskId: z.string(),
+  bot: z.string(),
+  at: z.string(),
+})
+export type PlanRecord = z.infer<typeof planRecord>
+
 export const projectsDomain = defineDomain({
   name: 'aris_projects',
   version: 1,
@@ -58,6 +69,7 @@ export const projectsDomain = defineDomain({
   tables: {
     projects: domainTable<string, ProjectRecord>(projectRecord),
     cards: domainTable<string, CardRecord>(cardRecord),
+    plans: domainTable<string, PlanRecord>(planRecord),
   },
 })
 

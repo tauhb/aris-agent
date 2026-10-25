@@ -21,6 +21,8 @@ export interface ProjectData {
   mainSession?: string
   /** Chia việc trên Kanban: tự động (mặc định) hay thủ công. */
   split?: 'auto' | 'manual'
+  /** Driver: tự giao thẻ đủ phụ thuộc cho bot dự kiến. */
+  driver?: boolean
   createdAt: string
 }
 
@@ -112,12 +114,17 @@ export interface BoardCard {
   department?: string
   progress?: { done: number; total: number }
   failed?: boolean
+  /** `bot` là bot dự kiến (Driver giao khi thẻ sẵn sàng). */
+  planned?: boolean
+  /** Driver: thẻ đã giao lâu mà chưa có kết quả. */
+  stuck?: boolean
 }
 
 export interface BoardData {
   workspace: string
   cards: BoardCard[]
   split: 'auto' | 'manual'
+  driver?: boolean
 }
 
 const boards = new Map<string, BoardData>()

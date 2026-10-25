@@ -15,7 +15,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { ArisBots } from '@aris/bots'
-import { foldTeam } from '@aris/projects'
+import { foldTeam, type ArisProjects } from '@aris/projects'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-client-connection'
@@ -51,6 +51,15 @@ import {
 } from './external.js'
 import { ApprovalHub } from './approval.js'
 import { learnedContext, learnedFrom } from './learned.js'
+import {
+  DRIVER_TICK_MS,
+  driverTask,
+  emptyDriverState,
+  planDriver,
+  type CardRun,
+  type DriverState,
+  type DriverTask,
+} from './driver.js'
 import { ApprovalCenter, callInput, toolAlias, type ApprovalEvent } from './approvals.js'
 import { childEnv, runClaude, stepOf, type DriverHooks } from './claude-driver.js'
 import { runCodex } from './codex-driver.js'
@@ -166,7 +175,7 @@ Luật xếp mức:
 
 Cách giao:
 - Việc vừa: chọn bot theo mô tả việc của bot, ghi lý do. Nhiều phần độc lập thì giao song song trong một lần gọi; phần sau cần kết quả phần trước thì giao phần trước, đợi, rồi giao tiếp kèm kết quả đó.
-- Việc nhiều bước có thứ tự: chia thành thẻ bằng tao_the (thẻ nào chờ thẻ nào), rồi giao từng thẻ sẵn sàng bằng giao_viec với tham số the.
+- Việc nhiều bước có thứ tự: chia thành thẻ bằng tao_the (thẻ nào chờ thẻ nào, ghi bot dự kiến cho từng thẻ), rồi giao thẻ đang sẵn sàng bằng giao_viec với tham số the. Dự án bật Driver thì thẻ sau tự tới bot dự kiến khi thẻ trước xong; không cần giao lại.
 - Sau khi giao_viec: dùng wait_agent đợi kết quả, rồi tổng hợp trả lời người dùng. Nói rõ ai đã làm phần nào.
 - Chuyển giao (chuyen_giao) thay cho giao_viec khi việc vừa thuộc hẳn chuyên môn một bot và người dùng chỉ cần đúng kết quả của bot đó, không cần bạn tổng hợp hay làm tiếp (ví dụ: viết một bài cho bot nội dung, trả lời một câu hỏi chuyên môn). Câu trả lời của bot hiện thẳng cho người dùng như lời của bot; sau đó bạn kết thúc lượt, không viết thêm. Cần gom nhiều bot, sửa lại, hay dùng kết quả cho bước sau thì dùng giao_viec.
 - Bot đã làm việc trong cuộc này thì giao tiếp cho chính bot đó (nó nhớ việc trước).
@@ -181,6 +190,9 @@ interface AgentLike {
 }
 
 /** Phần bộ điều khiển phiên của dsh dùng cho việc lớn. */
+/** Phần dự án Driver và `tao_the` dùng. */
+type DriverProjects = Pick<ArisProjects, 'store' | 'plans' | 'team' | 'ofSession'>
+
 interface SessionPort {
   create(req: { workspaceId?: string }): Promise<{ sessionId: string }>
   /** Agent của phiên, mở lại phiên nguội khi cần. */
@@ -507,6 +519,11 @@ export async function apply(ctx: Context): Promise<void> {
             properties: {
               tieu_de: { type: 'string', required: true, description: 'Tên ngắn của thẻ.' },
               noi_dung: { type: 'string', description: 'Việc cần làm, đủ ngữ cảnh.' },
+              bot: {
+                type: 'string',
+                description:
+                  'Tên gọi của bot dự kiến làm thẻ này khi thẻ sẵn sàng (Driver của dự án tự giao cho bot này).',
+              },
               sau: {
                 type: 'array',
                 items: { type: 'string' },
@@ -521,13 +538,29 @@ export async function apply(ctx: Context): Promise<void> {
         const agent = exec.agent as unknown as AgentLike | undefined
         if (!agent || (!isCommander(agent.session.id) && !jobOf(agent.session.id)))
           return 'Chỉ Commander, hoặc trưởng nhóm đang nhận việc lớn của phòng, được chia việc thành thẻ.'
-        const list = (args.the ?? []) as { tieu_de: string; noi_dung?: string; sau?: string[] }[]
+        const list = (args.the ?? []) as {
+          tieu_de: string
+          noi_dung?: string
+          sau?: string[]
+          bot?: string
+        }[]
         try {
           const made = await planCards(
             team(),
             agent,
             list.map((c) => ({ title: c.tieu_de, description: c.noi_dung, after: c.sau })),
           )
+          // Bot dự kiến cho từng thẻ (Driver giao khi thẻ sẵn sàng).
+          const projects = ctx.get('arisProjects') as DriverProjects | undefined
+          const ws = projects?.ofSession(agent.session.id)?.project.workspace
+          const store = (ctx.get('arisBots') as ArisBots | undefined)?.store
+          if (ws && projects)
+            for (const [i, m] of made.entries()) {
+              const h = list[i]?.bot?.trim().replace(/^@/, '').toLowerCase()
+              const bot = h ? store?.byHandle(h) : undefined
+              if (bot && bot.kind === 'member' && !bot.external)
+                await projects.plans.set(ws, m.id, bot.id).catch(() => undefined)
+            }
           return [
             ...made.map(
               (m) => `- ${m.id} «${m.title}»${m.after.length ? ` (chờ ${m.after.join(', ')})` : ''}`,
@@ -544,21 +577,177 @@ export async function apply(ctx: Context): Promise<void> {
 
   // Commander tự học (giai đoạn 3, đợt 4): lượt của bot vừa nhận việc kết thúc thì ghi kết quả vào
   // bản ghi giao việc; thống kê bot × loại việc hiện ở trang 2.5 và vào ngữ cảnh của Commander.
+  /** Câu trả lời cuối của bot đang làm việc được giao (ghi vào nhật ký khi lượt xong). */
+  const lastAnswer = new Map<string, string>()
+  ctx.on('session/event', (session, event) => {
+    if (event.type !== 'assistant/message' || !awaiting.has(session.id)) return
+    const text = textOf((event.data as unknown as { message: unknown }).message).trim()
+    if (text) lastAnswer.set(session.id, text)
+  })
   ctx.on('session/event', (session, event) => {
     if (event.type !== 'turn/end') return
     const key = awaiting.get(session.id)
     if (!key) return
     awaiting.delete(session.id)
+    const answer = lastAnswer.get(session.id)
+    lastAnswer.delete(session.id)
     const kind = (event.data as unknown as { reason?: { kind?: string } }).reason?.kind
     const outcome =
       kind === 'completed' ? 'done' : /cancel|abort|interrupt|stop/.test(kind ?? '') ? 'stopped' : 'failed'
     const rec = log.get(key)
     if (rec)
       void log
-        .put(key, { ...rec, outcome, finishedAt: new Date().toISOString() })
+        .put(key, {
+          ...rec,
+          outcome,
+          finishedAt: new Date().toISOString(),
+          ...(answer ? { answer: answer.slice(0, 2000) } : {}),
+        })
         .catch((e: unknown) => logger.warn('ghi kết quả giao việc: %s', String(e)))
   })
   const learned = () => learnedFrom([...log.entries()].map(([, r]) => r))
+
+  // --- Driver (giai đoạn 4, đợt 4): tự đẩy việc trên bảng của dự án bật Driver ----------------
+  const driverTable = domain.table('driver') as unknown as Table<DriverState>
+  const driverKey = (ws: string) => ws.replace(/[^A-Za-z0-9-]/g, '-')
+  ctx.provide('arisDriver', {
+    /** Thẻ Driver đã ngừng tự đẩy (vấp) và thẻ kẹt của một dự án: Kanban hiện cờ. */
+    flags: (ws: string) => {
+      const st = driverTable.get(driverKey(ws))
+      return { gaveUp: st?.gaveUp ?? [], stuck: st?.stuck ?? [] }
+    },
+  })
+  const notify = (text: string) =>
+    (ctx.get('arisChannels') as { sendHome?(bot: string, md: string): Promise<string> } | undefined)
+      ?.sendHome?.('aris', text)
+      .catch((e: unknown) => logger.warn('Driver báo Telegram: %s', String(e)))
+
+  async function driveProject(
+    p: { workspace: string; name: string; mainSession: string },
+    projects: DriverProjects,
+  ) {
+    const b = bots()
+    const team = await projects.team(p.workspace)
+    const handleOf = (id: string) => b.store.get(id)?.handle
+    const tasks: DriverTask[] = [...team.tasks.values()].map((t) => ({
+      id: t.id,
+      subject: t.subject,
+      description: t.description,
+      status: t.status,
+      owner: t.ownerId ? team.members.get(t.ownerId) : undefined,
+      blockedBy: t.blockedBy,
+    }))
+    if (!tasks.length) return
+    const planned = new Map<string, string>()
+    for (const [taskId, bot] of projects.plans.forWorkspace(p.workspace)) {
+      const h = handleOf(bot)
+      if (h) planned.set(taskId, h)
+    }
+    // Lần giao gần nhất của từng thẻ trong phiên chính của dự án.
+    const runs = new Map<string, CardRun & { bot: string }>()
+    for (const [, r] of log.entries())
+      if (r.sessionId === p.mainSession && r.taskId && (runs.get(r.taskId)?.at ?? '') < r.at)
+        runs.set(r.taskId, {
+          at: r.at,
+          member: r.member,
+          bot: r.bot,
+          ...(r.outcome ? { outcome: r.outcome } : {}),
+          ...(r.answer ? { answer: r.answer } : {}),
+        })
+    const prev = driverTable.get(driverKey(p.workspace)) ?? emptyDriverState()
+    const { actions, state } = planDriver({
+      tasks,
+      planned,
+      runs,
+      running: (member) => b.live.sessionState(member) !== 'idle',
+      slots: Math.max(0, settings().parallel - b.live.busyBots('aris')),
+      state: prev,
+      now: new Date(),
+    })
+    let lead: AgentLike | undefined
+    const leadAgent = async () => {
+      if (lead) return lead
+      const sc = ctx.get('sessionController') as SessionPort | undefined
+      const opened = await sc?.resolveAgent?.(SessionId(p.mainSession)).catch(() => undefined)
+      lead = opened && 'agent' in opened ? (opened.agent as AgentLike) : undefined
+      return lead
+    }
+    for (const a of actions) {
+      if (a.kind === 'dispatch') {
+        const agent = await leadAgent()
+        if (!agent) break
+        const byId = new Map(tasks.map((t) => [t.id, t]))
+        const parents = a.task.blockedBy.map((id) => {
+          const run = runs.get(id)
+          return {
+            id,
+            subject: byId.get(id)?.subject ?? id,
+            by: run ? b.store.get(run.bot)?.name : undefined,
+            answer: run?.answer,
+          }
+        })
+        const [r] = await dispatch(
+          dispatchDeps(agent, { agent }),
+          agent,
+          [
+            {
+              bot: a.bot,
+              title: a.task.subject,
+              task: driverTask(a.task, parents, a.retry),
+              reason: a.retry
+                ? 'Driver giao lại thẻ của bạn.'
+                : 'Driver: thẻ đã đủ điều kiện, bạn là người dự kiến làm khi chia thẻ.',
+              card: a.task.id,
+            },
+          ],
+          AbortSignal.timeout(60_000),
+        ).catch((e: unknown) => [{ ok: false, handle: a.bot, error: String(e) } as const])
+        if (r && !r.ok) {
+          // Không giao được (bot không còn, thẻ đổi…): ngừng tự đẩy thẻ này, để Aris xử lý.
+          state.gaveUp.push(a.task.id)
+          await prompt(
+            p.mainSession,
+            `[Driver] Không giao được thẻ ${a.task.id} «${a.task.subject}» cho @${a.bot}: ${r.error ?? 'lỗi'}. Xem lại và giao bằng giao_viec với the=${a.task.id}.`,
+          ).catch(() => undefined)
+        } else logger.info('Driver %s: giao %s cho @%s', p.name, a.task.id, a.bot)
+      } else if (a.kind === 'wake') {
+        await prompt(
+          p.mainSession,
+          `[Driver] Thẻ ${a.task.id} «${a.task.subject}» đã sẵn sàng (các thẻ trước đã xong) nhưng chưa có bot dự kiến. Chọn bot và giao bằng giao_viec với the=${a.task.id}.`,
+        ).catch((e: unknown) => logger.warn('Driver đánh thức Aris: %s', String(e)))
+      } else if (a.kind === 'give-up')
+        void notify(
+          `⚠️ Dự án «${p.name}»: thẻ ${a.task.id} «${a.task.subject}» ${a.reason}, Driver ngừng tự đẩy thẻ này. Mở Kanban để xem.`,
+        )
+      else if (a.kind === 'stuck')
+        void notify(
+          `⏳ Dự án «${p.name}»: thẻ ${a.task.id} «${a.task.subject}» đã giao cho @${a.task.owner} hơn 30 phút mà chưa có kết quả.`,
+        )
+      else if (a.kind === 'all-done')
+        void notify(`✅ Dự án «${p.name}»: xong hết ${a.count} thẻ trên bảng việc.`)
+    }
+    await driverTable.put(driverKey(p.workspace), state)
+  }
+
+  ctx.effect(() => {
+    let busy = false
+    const tick = async () => {
+      const projects = ctx.get('arisProjects') as DriverProjects | undefined
+      if (!projects || !ctx.get('arisBots') || !ctx.get('agentTeams')) return
+      for (const p of projects.store.list())
+        if (p.driver && p.mainSession)
+          await driveProject(
+            { workspace: p.workspace, name: p.name, mainSession: p.mainSession },
+            projects,
+          ).catch((e: unknown) => logger.warn('Driver %s: %s', p.name, String(e)))
+    }
+    const timer = setInterval(() => {
+      if (busy) return
+      busy = true
+      void tick().finally(() => (busy = false))
+    }, DRIVER_TICK_MS)
+    return () => clearInterval(timer)
+  }, 'aris-commander: Driver')
 
   // Bot làm xong một lượt bình thường: đánh dấu xong thẻ cũ nhất bot đang giữ (chính bot là chủ thẻ
   // nên có quyền), để bảng việc và Kanban đi đúng tiến độ.

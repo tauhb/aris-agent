@@ -24,12 +24,21 @@ import { WorkspaceId } from '@deepseek-ai/dsh-workspace'
 import { handleApi, type WorkspaceLike } from './api.js'
 import { buildBoard, foldTeam, type CardView, type JobLike, type TeamState } from './board.js'
 import { renderProject } from './context.js'
-import { projectsDomain, type CardRecord, type ProjectRecord, type Table } from './domain.js'
-import { CardStore, ProjectError, ProjectStore } from './store.js'
+import { projectsDomain, type CardRecord, type PlanRecord, type ProjectRecord, type Table } from './domain.js'
+import { CardStore, PlanStore, ProjectError, ProjectStore } from './store.js'
 
 export * from './domain.js'
-export { CardStore, DEFAULT_RULES, ProjectStore, cleanRules } from './store.js'
-export { buildBoard, foldTeam, COLUMNS, type CardView, type Column, type JobLike } from './board.js'
+export { CardStore, DEFAULT_RULES, PlanStore, ProjectStore, cleanRules } from './store.js'
+export {
+  buildBoard,
+  foldTeam,
+  COLUMNS,
+  type CardView,
+  type Column,
+  type JobLike,
+  type TaskLike,
+  type TeamState,
+} from './board.js'
 export { renderProject } from './context.js'
 
 export const name = 'aris-projects'
@@ -52,6 +61,10 @@ export interface ArisProjects {
   ofSession(sessionId: string): { project: ProjectRecord; path: string } | undefined
   /** Bảng việc của dự án (Kanban, cột phải). */
   board(workspaceId: string): Promise<CardView[]>
+  /** Bot dự kiến cho thẻ của Team (`tao_the`, Driver). */
+  plans: PlanStore
+  /** Bảng việc của Team trong phiên chính, đọc log (không đánh thức phiên): Driver. */
+  team(workspaceId: string): Promise<TeamState>
 }
 
 /** Chỗ chat riêng của aris và workspace mặc định của dsh không phải dự án (giống `isProjectWorkspace` của giao diện). */
@@ -80,6 +93,7 @@ export async function apply(ctx: Context): Promise<void> {
   )
 
   const cards = new CardStore(domain.table('cards') as unknown as Table<CardRecord>)
+  const plans = new PlanStore(domain.table('plans') as unknown as Table<PlanRecord>)
 
   /** Bảng việc của Team trong phiên chính (đọc log, không đánh thức phiên). */
   async function teamOf(project: ProjectRecord | undefined): Promise<TeamState> {
@@ -114,10 +128,14 @@ export async function apply(ctx: Context): Promise<void> {
         progress: await jobsService!.progressOf(j),
       })),
     )
+    const driverFlags = ctx.get('arisDriver') as
+      { flags(ws: string): { gaveUp: string[]; stuck: string[] } } | undefined
     return buildBoard({
       jobs,
       team: await teamOf(store.get(workspaceId)),
       drafts: cards.list(workspaceId),
+      planned: plans.forWorkspace(workspaceId),
+      ...(driverFlags ? { driver: driverFlags.flags(workspaceId) } : {}),
       botOfHandle: (h) => b?.store.byHandle(h)?.id,
       sessionState: (sid) => b?.live.sessionState(sid) ?? 'idle',
     })
@@ -134,6 +152,8 @@ export async function apply(ctx: Context): Promise<void> {
     store,
     cards,
     board,
+    plans,
+    team: (workspaceId) => teamOf(store.get(workspaceId)),
     ofSession(sessionId) {
       const w = workspaceOf(sessionId)
       const project = w ? store.get(w.id) : undefined
