@@ -322,6 +322,24 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .aris .ap-cit{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:6px;background:var(--a-accentSoft);color:var(--a-accent);font-size:11px;font-weight:700;text-decoration:none;vertical-align:1px;flex:none}
 .ap-askbox{display:flex;align-items:flex-end;gap:10px;padding:10px 12px;margin-top:auto}
 .ap-src{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;padding:10px 0;border-top:1px solid var(--a-line)}
+.ap-around{display:flex;flex-direction:column;gap:10px}
+.ap-around-h{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px}
+.ap-around-h .ap-link{font-size:12px}
+.ap-around-svg{border:1px solid var(--a-line);border-radius:16px;background:var(--a-bg);overflow:hidden;position:relative}
+.ap-around-svg svg{display:block}
+.ap-around-node{cursor:pointer}
+.ap-around-node:hover rect:last-of-type{stroke:var(--a-accent)}
+.ap-around-node:focus-visible{outline:2px solid var(--a-accent)}
+.ap-around-empty{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:12px}
+.ap-around-lg{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11.5px;color:var(--a-muted)}
+.ap-around-lg span{display:inline-flex;align-items:center;gap:5px}
+.ap-around-lg i{width:9px;height:9px;border-radius:3px;border:1.5px solid transparent;box-sizing:border-box}
+.ap-around-lg i.hint{border:1.5px dashed var(--a-accent)}
+.ap-around-sug{border-top:1px solid var(--a-line);padding-top:10px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.ap-around-row{display:flex;flex-direction:column;gap:6px}
+.ap-around-acts{display:flex;gap:6px}
+.ap-gnote{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 0}
+.ap-gempty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px}
 .ap-soat{--ap-mem:#8B5CF6;--ap-memSoft:color-mix(in srgb,#8B5CF6 15%,transparent)}
 .ap-soatmain{flex:999 1 620px;min-width:0;min-height:0;display:flex;flex-direction:column}
 .ap-soathead{display:flex;align-items:center;gap:12px;padding:14px 24px 12px;border-bottom:1px solid var(--a-line);white-space:nowrap}

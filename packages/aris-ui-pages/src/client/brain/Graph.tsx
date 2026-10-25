@@ -1,42 +1,112 @@
-/** 5.3 · Đồ thị bộ não 3D: lọc theo loại nút, theo thời gian, phóng to/thu nhỏ, xem nút đang chọn. */
+/**
+ * 5.3 · Đồ thị bộ não 3D (giai đoạn 5, đợt 4b; bản vẽ DoThi.dc.html): trang wiki theo loại (ghi chú, dự án, chủ
+ * đề, người), nguồn và ký ức bot bật thêm; cạnh là liên kết, cụm quanh trang dự án và chủ đề; lọc theo không
+ * gian và thời gian, tìm nút, xem nút đang chọn. Dữ liệu từ `/api/aris/brain?graph`.
+ */
 import {
   Button,
   Checkbox,
   IconButton,
   KnowledgeGraph,
   NODE_COLORS,
-  Segmented,
   ZOOM_MAX,
   ZOOM_MIN,
   degrees,
+  type Graph,
   type GraphFilter,
   type GraphNodeType,
 } from '@aris/ui-kit/react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Dot } from '../ui.js'
-import { demoGraph } from './demo.js'
 
-const FILTERS: GraphNodeType[] = ['note', 'person', 'memory', 'skill', 'session']
-const LEGEND: GraphNodeType[] = ['note', 'project', 'area', 'person', 'memory', 'skill', 'session']
+type Space = '' | 'ca-nhan' | 'cong-ty'
+
+interface ServerNode {
+  id: string
+  name: string
+  title: string
+  type: GraphNodeType
+  space?: string
+  x: number
+  y: number
+  z: number
+  hub: boolean
+  cl: number
+  t: number
+}
+
+interface ServerGraph {
+  nodes: ServerNode[]
+  edges: { a: number; b: number; off: number }[]
+  clusters: string[]
+}
+
+const FILTERS: GraphNodeType[] = ['note', 'person', 'session', 'memory']
+const LEGEND: GraphNodeType[] = ['note', 'project', 'area', 'person', 'session', 'memory']
 const color = (type: GraphNodeType) => (type === 'session' ? 'var(--a-muted)' : NODE_COLORS[type])
+const label = (type: GraphNodeType) => `nb.type.${type}`
+const endpoint = (q = '') => new URL(`api/aris/brain${q}`, document.baseURI)
+const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase()
 
 export function BrainGraph({ t, nav }: PageProps) {
-  const graph = useMemo(demoGraph, [])
-  const deg = useMemo(() => degrees(graph), [graph])
-  const [show, setShow] = useState<GraphFilter>({
-    note: true,
-    person: true,
-    memory: true,
-    skill: true,
-    session: false,
-  })
+  const [space, setSpace] = useState<Space>('')
+  const [show, setShow] = useState<GraphFilter>({ note: true, person: true, session: false, memory: false })
+  const [data, setData] = useState<ServerGraph | null>(null)
   const [timeCut, setTimeCut] = useState(1)
   const [zoom, setZoom] = useState(1)
   const [reset, setReset] = useState(0)
-  const [selected, setSelected] = useState(0)
-  const node = graph.nodes[selected]
-  const typeName = node ? t(`type.${node.type}`) : ''
+  const [selected, setSelected] = useState(-1)
+  const [q, setQ] = useState('')
+
+  useEffect(() => {
+    let live = true
+    const p = new URLSearchParams({
+      graph: '1',
+      ...(space ? { space } : {}),
+      sources: show.session ? '1' : '0',
+      memory: show.memory ? '1' : '0',
+    })
+    void fetch(endpoint(`?${p.toString()}`))
+      .then((r) => (r.ok ? (r.json() as Promise<ServerGraph>) : null))
+      .then((g) => live && g && setData(g))
+      .catch(() => undefined)
+    return () => {
+      live = false
+    }
+  }, [space, show.session, show.memory])
+
+  const graph: Graph = useMemo(
+    () => ({
+      nodes: (data?.nodes ?? []).map((n) => ({
+        name: n.title,
+        type: n.type,
+        x: n.x,
+        y: n.y,
+        z: n.z,
+        hub: n.hub,
+        cl: n.cl,
+        t: n.t,
+      })),
+      edges: data?.edges ?? [],
+      clusters: data?.clusters ?? [],
+    }),
+    [data],
+  )
+  const deg = useMemo(() => degrees(graph), [graph])
+  // Chưa chọn: nút nối nhiều nhất.
+  const sel = selected >= 0 && selected < graph.nodes.length ? selected : deg.indexOf(Math.max(...deg, 0))
+  const node = data?.nodes[sel]
+  const page = node && !node.id.startsWith('ky-uc:') ? node.id : undefined
+
+  const find = (text: string) => {
+    setQ(text)
+    const f = fold(text.trim())
+    if (f.length < 2) return
+    const i = (data?.nodes ?? []).findIndex((n) => fold(n.title).includes(f))
+    if (i >= 0) setSelected(i)
+  }
+
   return (
     <div className="ap-split ap-brain">
       <main className="ap-note-main">
@@ -45,36 +115,50 @@ export function BrainGraph({ t, nav }: PageProps) {
             ‹
           </IconButton>
           <span style={{ fontWeight: 600, fontSize: 16 }}>{t('gr.title')}</span>
-          <Segmented
-            label={t('gr.kind')}
-            value="knowledge"
-            onChange={(v) => v === 'team' && nav.go('map')}
-            options={[
-              { value: 'knowledge', label: t('gr.knowledge') },
-              { value: 'learning', label: t('gr.learning') },
-              { value: 'team', label: t('gr.team') },
-            ]}
-          />
+          <div className="ap-seg" role="tablist" aria-label={t('gr.space')}>
+            {(['', 'ca-nhan', 'cong-ty'] as const).map((s) => (
+              <button
+                type="button"
+                role="tab"
+                key={s}
+                aria-selected={space === s}
+                className={space === s ? 'on' : ''}
+                onClick={() => {
+                  setSpace(s)
+                  setSelected(-1)
+                }}
+              >
+                {t(s ? `nb.space.${s}` : 'gr.all')}
+              </button>
+            ))}
+          </div>
+          <span className="a-muted ap-gnote">{t('gr.note')}</span>
           <input
             className="a-inp"
             type="search"
+            value={q}
+            onChange={(e) => find(e.target.value)}
             placeholder={t('gr.search')}
             aria-label={t('gr.search')}
-            style={{ marginLeft: 'auto', flex: '0 1 260px', width: 'auto', minWidth: 180, height: 32 }}
+            style={{ flex: '0 1 220px', width: 'auto', minWidth: 140, height: 32 }}
           />
         </div>
         <div className="ap-gstage">
-          <KnowledgeGraph
-            graph={graph}
-            show={show}
-            timeCut={timeCut}
-            selected={selected}
-            onSelect={setSelected}
-            zoom={zoom}
-            onZoom={setZoom}
-            resetKey={reset}
-            label={t('gr.alt', { clusters: graph.clusters.join(', ') })}
-          />
+          {data && !graph.nodes.length ? (
+            <div className="a-muted ap-gempty">{t('gr.empty')}</div>
+          ) : (
+            <KnowledgeGraph
+              graph={graph}
+              show={show}
+              timeCut={timeCut}
+              selected={sel}
+              onSelect={setSelected}
+              zoom={zoom}
+              onZoom={setZoom}
+              resetKey={reset}
+              label={t('gr.alt', { n: graph.clusters.length, clusters: graph.clusters.join(', ') })}
+            />
+          )}
           <div className="zoom">
             <button
               type="button"
@@ -105,7 +189,7 @@ export function BrainGraph({ t, nav }: PageProps) {
             {LEGEND.map((k) => (
               <span key={k}>
                 <Dot color={color(k)} />
-                {t(`type.${k}`)}
+                {t(label(k))}
               </span>
             ))}
           </div>
@@ -123,11 +207,14 @@ export function BrainGraph({ t, nav }: PageProps) {
               label={
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                   <Dot color={color(k)} />
-                  {t(`type.${k}`)}
+                  {t(label(k))}
                 </span>
               }
             />
           ))}
+          <span className="a-muted" style={{ fontSize: 11.5, paddingLeft: 26 }}>
+            {t('gr.hubs')}
+          </span>
         </div>
         <div>
           <div className="ap-h">{t('gr.time')}</div>
@@ -152,16 +239,23 @@ export function BrainGraph({ t, nav }: PageProps) {
             </span>
             <b style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Dot color={color(node.type)} />
-              {node.name || t('gr.untitled', { type: typeName })}
+              {node.title}
             </b>
             <span className="a-muted" style={{ fontSize: 12.5 }}>
-              {t('gr.cluster', { type: typeName, cluster: graph.clusters[node.cl] ?? '' })}
+              {t('gr.cluster', { type: t(label(node.type)), cluster: graph.clusters[node.cl] ?? '' })}
             </span>
-            <span style={{ fontSize: 12.5 }}>{t('gr.degree', { n: deg[selected] ?? 0 })}</span>
+            <span style={{ fontSize: 12.5 }}>{t('gr.degree', { n: deg[sel] ?? 0 })}</span>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <Button size="sm" onClick={() => nav.go('brain')}>
-                {t('gr.open')}
-              </Button>
+              {page && (
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    nav.go('brain', { view: 'notes', space: page.split('/')[0] ?? 'ca-nhan', path: page })
+                  }
+                >
+                  {t('gr.open')}
+                </Button>
+              )}
               <Button size="sm" onClick={() => nav.go('brain', { view: 'ask' })}>
                 {t('gr.askAbout')}
               </Button>

@@ -17,6 +17,7 @@ import {
   type Finding,
   type SoatPage,
 } from './soat.js'
+import { buildGraph, linkMention, unlinkedMention, type GraphPage } from './graph.js'
 import { fold, keyTerms, linksOf, parsePage, snippetOf } from './page.js'
 import { ensureVault, placeOf, slugOf } from './vault.js'
 
@@ -391,5 +392,60 @@ describe('soát bộ não', () => {
     expect(
       fixTask(of('chua-co-trang')[0]! as Finding, (p) => p.split('/').pop()!.replace('.md', '')),
     ).toContain('Trang [[nha-in]] được nhắc 3 lần')
+  })
+})
+
+describe('đồ thị bộ não', () => {
+  const gp = (path: string, title: string, links: string[], mtime = 1): GraphPage => {
+    const pl = placeOf(path)
+    return {
+      path,
+      name: path.split('/').pop()!.replace('.md', ''),
+      title,
+      layer: pl.layer,
+      group: pl.group,
+      space: pl.space,
+      mtime,
+      links,
+    }
+  }
+  it('nút theo loại, cụm quanh dự án và chủ đề, ký ức nối theo tên, nút lẻ vào cụm Khác', () => {
+    const g = buildGraph({
+      pages: [
+        gp('ca-nhan/wiki/du-an/kenh-youtube-q4.md', 'Kênh YouTube Q4', ['chi-ha'], 3),
+        gp('ca-nhan/wiki/nguoi/chi-ha.md', 'Chị Hà', ['kenh-youtube-q4'], 2),
+        gp('ca-nhan/wiki/chu-de/in-an.md', 'In ấn', [], 1),
+        gp('ca-nhan/wiki/tong-hop/le.md', 'Trang lẻ', [], 1),
+      ],
+      memories: [{ id: 'm1', bot: 'b-tin', text: 'Chị Hà giao bản dựng tối thứ 5', at: '2026-10-20' }],
+      other: 'Khác',
+    })
+    expect(g.nodes.map((n) => [n.title, n.type, n.hub])).toEqual([
+      ['Kênh YouTube Q4', 'project', true],
+      ['Chị Hà', 'person', false],
+      ['In ấn', 'area', true],
+      ['Trang lẻ', 'note', false],
+      ['Chị Hà giao bản dựng tối thứ 5', 'memory', false],
+    ])
+    expect(g.clusters).toEqual(['Kênh YouTube Q4', 'In ấn', 'Khác'])
+    expect(g.nodes.map((n) => n.cl)).toEqual([0, 0, 1, 2, 0])
+    expect(g.edges.map((e) => [e.a, e.b])).toEqual([
+      [0, 1],
+      [4, 1],
+    ])
+    // Vị trí ổn định giữa hai lần dựng.
+    expect(
+      buildGraph({ pages: [gp('ca-nhan/wiki/nguoi/a.md', 'Anh A', [])], other: 'Khác' }).nodes[0]!.x,
+    ).toBe(buildGraph({ pages: [gp('ca-nhan/wiki/nguoi/a.md', 'Anh A', [])], other: 'Khác' }).nodes[0]!.x)
+  })
+  it('gợi ý nối: chỗ nhắc tên chưa nối, trọn từ, bỏ qua liên kết, mã, tiêu đề mục; nối giữ chữ gốc', () => {
+    const body =
+      '---\ntieu-de: In ấn\n---\n# In ấn\n\nĐã hỏi [[in-an]] rồi. Giá `in ấn` và in ấnh? Rồi bàn In Ấn tháng 11.'
+    const at = unlinkedMention(body, 'In ấn')
+    expect(body.slice(at!.start, at!.end)).toBe('In Ấn')
+    expect(linkMention(body, 'In ấn', 'in-an')).toContain('Rồi bàn [[in-an|In Ấn]] tháng 11.')
+    expect(unlinkedMention('Không nhắc gì', 'In ấn')).toBeUndefined()
+    expect(unlinkedMention('ab ab', 'ab')).toBeUndefined()
+    expect(linkMention('gặp chi-ha hôm qua', 'chi-ha', 'chi-ha')).toBe('gặp [[chi-ha]] hôm qua')
   })
 })

@@ -373,6 +373,13 @@ export class MemoryStore {
     }
   }
 
+  /** Ký ức đang hiệu lực của mọi bot, mới nhất trước. */
+  activeAll(): MemoryItem[] {
+    const out: MemoryItem[] = []
+    for (const [, item] of this.table.entries()) if (item.status === 'active') out.push(item)
+    return out.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  }
+
   /**
    * Tìm trong ký ức đang hiệu lực của mọi bot (Hỏi bộ não, giai đoạn 5): cả hai cuốn, lõi và lưu trữ.
    * Chỉ đọc: không tính là bot đã dùng ký ức.

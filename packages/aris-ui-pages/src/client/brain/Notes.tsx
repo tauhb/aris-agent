@@ -7,6 +7,7 @@ import { Button, Pill } from '@aris/ui-kit/react'
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import type { PageProps, Translate } from '../page.js'
 import { Later } from '../team/BotTools.js'
+import { AroundPanel } from './Around.js'
 import { frontValue, Inline, Markdown, parseMarkdown, type LinkTarget } from './markdown.js'
 import { GROUP_ICON, Group, Ico, Layer, Row, type Depth } from './tree.js'
 
@@ -660,12 +661,17 @@ export function Notes({ t, nav, params }: PageProps) {
   const readers = page?.readers ?? state?.readers[space] ?? []
   const aside = (
     <aside className="ap-aside" aria-label={t('nb.aside')}>
-      <Later t={t} stage={5} label={t('nb.wave4')}>
-        <div className="ap-bgraph">
-          <b>{t('nb.around')}</b>
-          <span className="a-muted">{t('nb.graphLater')}</span>
-        </div>
-      </Later>
+      {p && (
+        <AroundPanel
+          path={p.path}
+          t={t}
+          nav={nav}
+          onLinked={(from) => {
+            void load()
+            if (from === p.path) void loadPage(p.path)
+          }}
+        />
+      )}
       <div className="ap-breaders">
         <b>{p ? t('nb.whoPage') : t('nb.whoSpace', { space: t(`nb.space.${space}`) })}</b>
         <span>{readers.join(' · ')}</span>

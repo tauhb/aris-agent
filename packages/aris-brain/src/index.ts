@@ -43,7 +43,8 @@ import {
   type MemHit,
 } from './ask.js'
 import { Catalog, type Entry } from './catalog.js'
-import { fold, keyTerms, snippetOf } from './page.js'
+import { fold, keyTerms, linksOf, snippetOf } from './page.js'
+import { buildGraph, linkMention, nodeType, unlinkedMention } from './graph.js'
 import { brainMap, MEMBER_GUIDE, mentioned, nudge, referenced, STRONG_LINE } from './hints.js'
 import { findingRecord, runRecord, type Finding, type SoatRun } from './soat.js'
 import { SoatError, startSoat } from './soat-run.js'
@@ -106,6 +107,8 @@ const settingsRecord = z.object({
   personal: z.array(z.string()),
   /** Bot được "nhắc mạnh hơn" (soát bộ não: hay bỏ qua lời nhắc). */
   strong: z.array(z.string()).optional(),
+  /** Gợi ý nối người dùng đã bỏ qua (`từ>tới`). */
+  dismissedLinks: z.array(z.string()).optional(),
   /** Đã tạo Thủ thư một lần (người dùng xoá thì không tạo lại). */
   librarian: z.boolean().optional(),
 })
@@ -956,6 +959,89 @@ export async function apply(ctx: Context): Promise<void> {
     turns: a.turns.map((t) => ({ ...t, sources: sourcesOf(t) })),
   })
 
+  // --- Quanh trang này, gợi ý nối (đợt 4b) ---------------------------------------------------------
+  const linkable = (e: Entry) =>
+    !!e.space &&
+    !e.binary &&
+    e.path.endsWith('.md') &&
+    !e.name.startsWith('_') &&
+    (e.layer === 'wiki' || e.layer === 'nhat-ky')
+  const topicLike = (e: Entry) =>
+    e.layer === 'wiki' && !/(^|\/)tom-tat$/.test(e.group ?? '') && !e.name.startsWith('_')
+  /** Trang của người dùng (không mục lục, nhật ký kho, mẫu trang). */
+  const userLayer = (e: Entry) =>
+    !!e.space &&
+    !e.binary &&
+    !e.name.startsWith('_') &&
+    (e.layer === 'wiki' || e.layer === 'nguon' || e.layer === 'nhat-ky')
+  const readBody = (path: string) => readFile(join(root, path), 'utf8').catch(() => '')
+
+  async function aroundOf(center: Entry) {
+    const body = await readBody(center.path)
+    const out = linksOf(body)
+      .map((n) => [center.space, ...SPACES].map((s) => catalog.byName(s, n)).find(Boolean))
+      .filter((x): x is Entry => !!x && x.path !== center.path && userLayer(x))
+    const back = catalog.backlinks(center.name).filter((x) => x.path !== center.path && userLayer(x))
+    const nodes = new Map<string, { entry: Entry; dir: 'out' | 'in' | 'both' }>()
+    for (const x of out) nodes.set(x.path, { entry: x, dir: 'out' })
+    for (const x of back) nodes.set(x.path, { entry: x, dir: nodes.has(x.path) ? 'both' : 'in' })
+    const linkedNames = new Set([...nodes.values()].map((n) => n.entry.name))
+    const dismissed = new Set(settings().dismissedLinks ?? [])
+    const suggestions: { from: string; fromTitle: string; to: string; toTitle: string }[] = []
+    // Trang khác nhắc tên trang này mà chưa nối.
+    if (linkable(center) || center.layer === 'wiki')
+      for (const x of catalog.all()) {
+        if (suggestions.length >= 3) break
+        if (x.path === center.path || !linkable(x) || x.space !== center.space || linkedNames.has(x.name))
+          continue
+        if (dismissed.has(`${x.path}>${center.path}`)) continue
+        if (unlinkedMention(await readBody(x.path), center.title))
+          suggestions.push({ from: x.path, fromTitle: x.title, to: center.path, toTitle: center.title })
+      }
+    // Trang này nhắc tên trang khác mà chưa nối.
+    if (linkable(center))
+      for (const x of catalog.all()) {
+        if (suggestions.length >= 3) break
+        if (x.path === center.path || !topicLike(x) || x.space !== center.space || linkedNames.has(x.name))
+          continue
+        if (dismissed.has(`${center.path}>${x.path}`)) continue
+        if (unlinkedMention(body, x.title))
+          suggestions.push({ from: center.path, fromTitle: center.title, to: x.path, toTitle: x.title })
+      }
+    return {
+      center: view(center),
+      nodes: [...nodes.values()]
+        .slice(0, 8)
+        .map((n) => ({ ...view(n.entry), dir: n.dir, type: nodeType(n.entry) })),
+      more: Math.max(0, nodes.size - 8),
+      suggestions,
+    }
+  }
+
+  async function linkOp(b: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const from = inVault(b.from)
+    const to = inVault(b.to)
+    const fe = from ? catalog.get(from) : undefined
+    const te = to ? catalog.get(to) : undefined
+    if (!fe || !te) throw new SoatError('Không có trang này.')
+    if (b.op === 'link-dismiss') {
+      const cur = settings().dismissedLinks ?? []
+      await settingsT.put('main', {
+        ...settings(),
+        dismissedLinks: [...new Set([...cur, `${fe.path}>${te.path}`])].slice(-500),
+      })
+      return {}
+    }
+    if (!linkable(fe)) throw new SoatError('Nguồn giữ nguyên, không nối được.')
+    const text = linkMention(await readBody(fe.path), te.title, te.name)
+    if (text === undefined) throw new SoatError('Không còn chỗ nhắc tên chưa nối.')
+    await writeFile(join(root, fe.path), text)
+    await indexFile(fe.path)
+    if (hasGit)
+      await git.commit(`${who()} nối ${fe.title} → [[${te.name}]]`, [fe.path]).catch(() => undefined)
+    return { page: view(catalog.get(fe.path) ?? fe) }
+  }
+
   async function soatOp(b: Record<string, unknown>): Promise<Record<string, unknown>> {
     const id = typeof b.id === 'string' ? b.id : ''
     switch (b.op) {
@@ -1172,6 +1258,56 @@ export async function apply(ctx: Context): Promise<void> {
                   .filter((v) => v.day >= dayKey(new Date(Date.now() - 7 * 86_400_000)))
                   .sort((a, b) => b.day.localeCompare(a.day)),
               })
+            // Đồ thị toàn cục (5.3): trang wiki, nguồn và ký ức bot bật thêm.
+            if (q.get('graph') !== null) {
+              const gSpace = SPACES.find((x) => x === q.get('space'))
+              const withSources = q.get('sources') === '1'
+              const pages = catalog
+                .all()
+                .filter(
+                  (e) =>
+                    e.space &&
+                    !e.binary &&
+                    e.path.endsWith('.md') &&
+                    !e.name.startsWith('_') &&
+                    (e.layer === 'wiki' || (withSources && e.layer === 'nguon')) &&
+                    (!gSpace || e.space === gSpace),
+                )
+                .map((e) => ({
+                  path: e.path,
+                  name: e.name,
+                  title: e.title,
+                  layer: e.layer,
+                  group: e.group,
+                  kind: e.kind,
+                  space: e.space,
+                  mtime: e.mtime,
+                  links: linksOf(catalog.get(e.path)?.body ?? ''),
+                }))
+              const mem =
+                q.get('memory') === '1'
+                  ? ((
+                      ctx.get('arisMemory') as
+                        { activeAll?(): { id: string; bot: string; text: string; at: string }[] } | undefined
+                    )?.activeAll?.() ?? [])
+                  : []
+              const botNames = new Map((bots()?.store.list() ?? []).map((x) => [x.id, x.name]))
+              return json(
+                buildGraph({
+                  pages,
+                  memories: mem.map((m) => ({ ...m, label: `Ký ức của ${botNames.get(m.bot) ?? m.bot}` })),
+                  other: 'Khác',
+                }),
+              )
+            }
+            // Quanh trang này (5.1): trang trỏ đi, trỏ về, gợi ý nối.
+            const around = q.get('around')
+            if (around !== null) {
+              const rel = inVault(around)
+              const e = rel ? catalog.get(rel) : undefined
+              if (!e) return json({ error: 'Không có trang này.' }, 404)
+              return json(await aroundOf(e))
+            }
             const pick = q.get('pick')
             if (pick !== null) {
               const sid = q.get('session') ?? undefined
@@ -1395,6 +1531,14 @@ export async function apply(ctx: Context): Promise<void> {
                 return json({ ok: true, ...(await ingestOp(b)) })
               } catch (e) {
                 if (e instanceof IngestError) return json({ error: e.message }, 409)
+                throw e
+              }
+            case 'link':
+            case 'link-dismiss':
+              try {
+                return json({ ok: true, ...(await linkOp(b)) })
+              } catch (e) {
+                if (e instanceof SoatError) return json({ error: e.message }, 409)
                 throw e
               }
             case 'soat-run':

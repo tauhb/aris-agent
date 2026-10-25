@@ -100,6 +100,8 @@ export async function apply(ctx: Context): Promise<void> {
     statsOf: (bot: string) => store.statsOf(bot),
     importNotes: (bot: string, items: readonly { text: string; kind: string; tier: string }[]) =>
       store.importNotes(bot, items),
+    /** Đồ thị bộ não (@aris/brain): ký ức đang hiệu lực của mọi bot, chỉ đọc. */
+    activeAll: () => store.activeAll().map((m) => ({ id: m.id, bot: m.bot, text: m.text, at: m.updatedAt })),
     /** Hỏi bộ não (@aris/brain): tìm trong ký ức đang hiệu lực của mọi bot, chỉ đọc. */
     searchAll: (query: string, limit?: number) =>
       store.searchAll(query, limit).map((m) => ({

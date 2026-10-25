@@ -361,6 +361,25 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
 - Chưa thử thật: sửa liên kết, dời trang phòng đã xoá (chưa có phòng nào bị xoá), bot bỏ qua lời nhắc (chưa đủ 5 lượt),
   tin Telegram tuần (lần soát tuần tự chạy tối Chủ nhật).
 
+## Đợt 4b — Đồ thị và gợi ý nối (bản vẽ 5.1, 5.3, xong 25/10)
+
+- 5.1 "Quanh trang này": đồ thị 2D trang đang xem với các trang nó trỏ tới và trỏ về nó (tối đa 8, chỉ trang của
+  người dùng: wiki, nguồn, nhật ký), hình nút theo loại; nút gợi ý viền chấm; bấm nút mở trang; "Đồ thị 3D ›".
+- Gợi ý nối (không gọi model, như "unlinked mentions" của Obsidian): trang khác (wiki, nhật ký) nhắc tiêu đề trang
+  này mà chưa nối, hay trang này nhắc tiêu đề một trang wiki khác (không phải trang tóm tắt) mà chưa nối; khớp không
+  dấu, trọn từ, bỏ qua nhãn đầu trang, mã, liên kết, tiêu đề mục; tiêu đề từ 4 chữ cái; tối đa 3. "Nối" thay chỗ nhắc
+  đầu tiên bằng `[[tên|chữ gốc]]`, commit "<tên> nối <trang> → [[tên]]" (hoàn tác ở 5.6); nguồn bất biến nên không
+  nối từ nguồn. "Bỏ qua" ghi vào cài đặt, không gợi ý lại.
+- 5.3 đồ thị toàn cục dữ liệu thật: nút là trang wiki theo loại (nhãn `loai` trước, rồi thư mục: người, dự án, chủ đề,
+  còn lại ghi chú); nguồn và ký ức bot bật thêm (ký ức nối tới trang có tiêu đề được nhắc trong ký ức, tên nút "Ký ức
+  của <bot>"); cạnh là liên kết; cụm quanh trang dự án và chủ đề (nút về cụm gần nhất theo liên kết, nút lẻ vào cụm
+  Khác); vị trí tính ở máy, ổn định giữa hai lần tải; lọc không gian, thời gian (theo thứ tự sửa); ô tìm chọn nút đầu
+  tiên khớp. Bỏ dữ liệu mẫu đồ thị.
+- Chạy thử thật: trang Chị Hà có 7 trang quanh và gợi ý "Nhật ký 25/10/2026 nhắc Chị Hà mà chưa nối"; Nối ⇒ nhật ký có
+  `[[chi-ha|chị Hà]]`, commit, nút nhật ký vào đồ thị. Đồ thị toàn cục 5 cụm; bật nguồn và ký ức bot ⇒ 45 nút, 22 cạnh.
+- Lỗi tìm ra khi chạy thử: mục lục hiện trong "Quanh trang này"; trang ở `chung/` không có thư mục loại nên hiện là
+  ghi chú (nay đọc nhãn `loai`); tên nút ký ức là cả câu nên chữ đè nhau.
+
 ## Đã chốt (25/10)
 
 - Duyệt khi nạp: mặc định {you} duyệt ở Hộp thư vào; `/note` và nhật ký của {you} tự nạp.
