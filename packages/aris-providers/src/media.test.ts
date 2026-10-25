@@ -38,6 +38,11 @@ describe('ảnh và video', () => {
     ).toBe('billing')
     expect(classifyMedia(402, {}).kind).toBe('money')
     expect(classifyMedia(429, {}).kind).toBe('rate')
+    expect(
+      classifyMedia(429, {
+        error: { message: 'Quota exceeded for metric generate_content_free_tier_requests, limit: 0' },
+      }).kind,
+    ).toBe('billing')
     expect(classifyMedia(403, { error: { message: 'API key not valid' } }).kind).toBe('key')
     expect(classifyMedia(400, { error: { message: 'aspect ratio 21:9 unsupported' } }).kind).toBe(
       'unsupported',
@@ -47,7 +52,7 @@ describe('ảnh và video', () => {
   it('dựng yêu cầu Gemini, đọc khối ảnh và ảnh OpenRouter', () => {
     expect(geminiBody('m', { kind: 'image', prompt: 'p', ratio: '16:9' }).response_format).toEqual({
       type: 'image',
-      mime_type: 'image/png',
+      mime_type: 'image/jpeg',
       aspect_ratio: '16:9',
     })
     expect(geminiBody('m', { kind: 'video', prompt: 'p' }).response_format).toMatchObject({

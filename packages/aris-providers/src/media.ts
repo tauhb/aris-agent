@@ -177,6 +177,8 @@ export function classifyMedia(status: number, body: unknown): MediaError {
   const err = (body as { error?: { message?: unknown; status?: unknown } } | undefined)?.error
   const text = String(err?.message ?? (typeof body === 'string' ? body : `HTTP ${status}`)).slice(0, 300)
   const all = `${text} ${String(err?.status ?? '')}`
+  // Gói miễn phí có hạn mức 0 cho model trả phí: Google trả 429, nhưng thật ra là chưa bật thanh toán.
+  if (status === 429 && /free[_ ]?tier/i.test(all)) return new MediaError('billing', text)
   if (status === 429) return new MediaError('rate', text)
   if (status === 402 || /insufficient (credits|balance|funds)/i.test(all))
     return new MediaError('money', text)
@@ -190,7 +192,7 @@ export function classifyMedia(status: number, body: unknown): MediaError {
 
 const b64 = (s: string) => Uint8Array.from(Buffer.from(s, 'base64'))
 
-/** Thân yêu cầu `interactions` của Gemini. */
+/** Thân yêu cầu `interactions` của Gemini. Ảnh xin JPEG: model ảnh Gemini báo lỗi khi xin PNG. */
 export function geminiBody(model: string, r: MediaRequest) {
   const input = r.image
     ? [
@@ -203,7 +205,7 @@ export function geminiBody(model: string, r: MediaRequest) {
     input,
     response_format:
       r.kind === 'image'
-        ? { type: 'image', mime_type: 'image/png', ...(r.ratio ? { aspect_ratio: r.ratio } : {}) }
+        ? { type: 'image', mime_type: 'image/jpeg', ...(r.ratio ? { aspect_ratio: r.ratio } : {}) }
         : { type: 'video', aspect_ratio: r.ratio === '9:16' ? '9:16' : '16:9', resolution: '720p' },
     background: false,
     stream: false,
@@ -219,7 +221,7 @@ export function mediaBlocks(body: unknown, kind: MediaKind): { mime: string; dat
     if (!v || typeof v !== 'object') return
     const o = v as Record<string, unknown>
     if (o.type === kind && (typeof o.data === 'string' || typeof o.uri === 'string')) {
-      const mime = String(o.mime_type ?? o.mimeType ?? (kind === 'image' ? 'image/png' : 'video/mp4'))
+      const mime = String(o.mime_type ?? o.mimeType ?? (kind === 'image' ? 'image/jpeg' : 'video/mp4'))
       out.push({
         mime,
         ...(typeof o.data === 'string' ? { data: o.data } : {}),

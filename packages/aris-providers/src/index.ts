@@ -469,13 +469,15 @@ export async function apply(ctx: Context): Promise<void> {
     const prompt = args.prompt.trim()
     if (!prompt) return `Cần mô tả ${word} muốn tạo.`
     const out = await generate(mediaDeps, chain, { kind, prompt, ratio: args.ratio, count: args.count })
-    const failed = out.tried.map((a) => `${a.link.model}: ${FAIL_TEXT[a.kind]}`)
+    const failed = out.tried.map((a) => `${a.link.model}: ${FAIL_TEXT[a.kind]} (${a.message.slice(0, 160)})`)
+    for (const a of out.tried)
+      logger.warn('tạo %s: %s/%s %s: %s', kind, a.link.provider, a.link.model, a.kind, a.message)
     if (!out.ok)
       return [
         `Chưa tạo được ${word}: đã thử ${out.tried.length} model theo thứ tự.`,
         ...failed.map((f) => `- ${f}`),
         `Báo người dùng lý do; họ bật thanh toán, nạp tiền hay thêm model ở Cài đặt › Ảnh và video.`,
-        `[aris-media] ${JSON.stringify({ kind, ids: [], tried: out.tried.map((a) => ({ model: a.link.model, kind: a.kind })) })}`,
+        `[aris-media] ${JSON.stringify({ kind, ids: [], tried: out.tried.map((a) => ({ model: a.link.model, kind: a.kind, message: a.message.slice(0, 160) })) })}`,
       ].join('\n')
     const day = dayOf(Date.now())
     const dir = join(
@@ -517,7 +519,7 @@ export async function apply(ctx: Context): Promise<void> {
       `Đã tạo ${made.length} ${word} bằng ${out.link.model} (khoảng ${usdText(out.usd)} USD). Người dùng đã thấy ${word} trong khung chat; đừng chép lại đường dẫn hay mô tả lại từng ${word}, chỉ nói ngắn khác nhau ở đâu nếu có nhiều.`,
       ...(failed.length ? [`Trước đó đã thử: ${failed.join('; ')}.`] : []),
       `Tệp: ${made.map((m) => m.path).join(', ')}`,
-      `[aris-media] ${JSON.stringify({ kind, ids: made.map((m) => m.id), model: out.link.model, usd: out.usd, tried: out.tried.map((a) => ({ model: a.link.model, kind: a.kind })) })}`,
+      `[aris-media] ${JSON.stringify({ kind, ids: made.map((m) => m.id), model: out.link.model, usd: out.usd, tried: out.tried.map((a) => ({ model: a.link.model, kind: a.kind, message: a.message.slice(0, 160) })) })}`,
     ].join('\n')
   }
 
