@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<title>aris · Mặt tích hợp</title>
+<title>aris · Ứng dụng khác</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -12,19 +12,28 @@
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 <style>
 body{margin:0}
-h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em;margin:0}
 .t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FCEBE9}
 .t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18}
 button{font-family:inherit;cursor:pointer;color:inherit}
-button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:30px;padding:0 12px;border:0;border-radius:8px;background:var(--ink);color:var(--panel);font-size:12.5px;font-weight:600;flex:none;white-space:nowrap}
 .b2{height:30px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:12.5px;flex:none;white-space:nowrap}
+.b2.danger{color:var(--danger)}
 .m{color:var(--muted)}
 .mono{font-family:'JetBrains Mono',monospace}
 .card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.ch{padding:12px 14px;display:flex;align-items:center;gap:8px}
 .sn{display:block;border-radius:8px;padding:7px 10px;font-size:13.5px;color:var(--ink);text-decoration:none}
 .r{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px}
-.chip{font-size:12px;border-radius:6px;padding:2px 8px;background:var(--panel2)}
+.chip{font-size:12px;border-radius:6px;padding:2px 8px;background:var(--panel2);white-space:nowrap}
+.pill{font-size:12px;font-weight:600;border-radius:999px;padding:1px 9px;white-space:nowrap;flex:none}
+.tile{width:28px;height:28px;border-radius:8px;background:var(--panel2);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none}
+.arrow{color:var(--muted);flex:none}
+.tab{border:0;background:transparent;padding:6px 10px;border-radius:8px;font-size:12.5px;color:var(--muted)}
+.tab.on{background:var(--panel2);color:var(--ink);font-weight:600}
+select{height:30px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit;font-size:12.5px;padding:0 8px}
 </style>
 </helmet>
 <div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
@@ -34,7 +43,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
     <a class="sn" href="DieuKhien.dc.html">Bảng điều khiển</a>
     <a class="sn" href="Provider.dc.html">Provider và model</a>
     <a class="sn" href="Kenh.dc.html">Kênh và ghép đôi</a>
-    <a class="sn" href="MatTichHop.dc.html" aria-current="page" style="background: var(--hover); font-weight: 600">Mặt tích hợp</a>
+    <a class="sn" href="MatTichHop.dc.html" aria-current="page" style="background: var(--hover); font-weight: 600">Ứng dụng khác</a>
     <a class="sn" href="BaoMat.dc.html">Ngân sách, duyệt, mạng</a>
     <a class="sn" href="ThongKe.dc.html">Thống kê và nhật ký</a>
     <a class="sn" href="Commander.dc.html">Commander</a>
@@ -43,82 +52,208 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
   </nav>
   <main style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column">
     <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
-      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Mặt tích hợp</span><span class="m" style="font-size: 12px">Ứng dụng và agent khác dùng aris · đang chạy nền, 4 ứng dụng đang nối · chỉ trên máy này</span></div>
-      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="margin-left: auto"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+      <div style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 600">Ứng dụng khác</span><span class="m" style="font-size: 12px">Buzz Desktop, IDE mời bot của {{you}} vào làm việc qua ACP · chỉ trên máy này, không mở cổng mạng</span></div>
+      <span class="pill" style="margin-left: auto; color: {{masterColor}}; background: {{masterBg}}">{{masterPill}}</span>
+      <button type="button" class="b2" onClick="{{toggleAll}}" aria-pressed="{{onAttr}}">{{masterBtn}}</button>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
     </div>
-    <div style="padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
-      <div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
-        <div class="card">
-          <div style="padding: 12px 14px; display: flex; align-items: center; gap: 8px"><b style="white-space: nowrap">ACP</b><span class="m" style="font-size: 12.5px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">IDE, Buzz Desktop</span><span style="margin-left: auto; font-size: 12px; font-weight: 600; color: {{pc.acp}}; background: {{pg.acp}}; border-radius: 999px; padding: 1px 9px; white-space: nowrap">{{pt.acp}}</span><button type="button" class="b2" onClick="{{tg.acp}}" aria-pressed="{{on.acp}}">{{bt.acp}}</button></div>
-          <sc-if value="{{show.acp}}" hint-placeholder-val="{{ true }}">
-            <div class="r"><span class="m" style="width: 104px; flex: none">Lệnh</span><span style="flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center"><span class="chip mono">aris-acp --bot &lt;tên&gt;</span></span><button type="button" class="b2">Sao chép</button></div><div class="r"><span class="m" style="width: 104px; flex: none">Bot mở ra</span><span style="flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center"><span class="chip" style="display: inline-flex; align-items: center; gap: 5px"><svg width="13" height="13" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Aris</span><span class="chip" style="display: inline-flex; align-items: center; gap: 5px"><svg width="13" height="13" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg>Lâm</span><span class="chip" style="display: inline-flex; align-items: center; gap: 5px"><svg width="13" height="13" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M39 50h9M55 49h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg>Tín</span></span><button type="button" class="b2">Sửa</button></div><div class="r m" style="font-size: 13px">Buzz Desktop tự duyệt mọi quyền; aris vẫn chặn theo danh sách cấm.</div>
-          </sc-if>
-          <sc-if value="{{hide.acp}}" hint-placeholder-val="{{ false }}">
-            <div class="r m" style="font-size: 13px">{{offText.acp}}</div>
-          </sc-if>
+
+    <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 16px">
+      <sc-if value="{{isOn}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; border: 1px solid var(--danger); background: var(--dangerSoft); border-radius: 12px; padding: 10px 14px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="color: var(--danger); flex: none"><circle cx="12" cy="12" r="9"></circle><path d="M5.6 5.6l12.8 12.8"></path></svg>
+          <span style="flex: 1; min-width: 240px; font-size: 13.5px"><b>14:20 · Buzz Desktop xin xoá 3 tệp</b> trong <span class="mono" style="font-size: 12.5px">~/Projects/kenh-youtube</span>. aris đã chặn dù Buzz tự duyệt mọi quyền.</span>
+          <button type="button" class="b2" onClick="{{showBlocked}}">Xem trong nhật ký</button>
         </div>
-        <div class="card">
-          <div style="padding: 12px 14px; display: flex; align-items: center; gap: 8px"><b style="white-space: nowrap">API kiểu OpenAI</b><span class="m" style="font-size: 12.5px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Open WebUI, LobeChat</span><span style="margin-left: auto; font-size: 12px; font-weight: 600; color: {{pc.api}}; background: {{pg.api}}; border-radius: 999px; padding: 1px 9px; white-space: nowrap">{{pt.api}}</span><button type="button" class="b2" onClick="{{tg.api}}" aria-pressed="{{on.api}}">{{bt.api}}</button></div>
-          <sc-if value="{{show.api}}" hint-placeholder-val="{{ true }}">
-            <div class="r"><span class="m" style="width: 104px; flex: none">Địa chỉ</span><span style="flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center"><span class="chip mono">http://127.0.0.1:8642/v1</span></span><button type="button" class="b2">Sao chép</button></div><div class="r"><span class="m" style="width: 104px; flex: none">Khoá</span><span style="flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center"><span class="chip mono">aris_sk_••••3f9a</span></span><button type="button" class="b2">Tạo lại</button></div><div class="r"><span class="m" style="width: 104px; flex: none">Bot mở ra</span><span style="flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center"><span class="chip" style="display: inline-flex; align-items: center; gap: 5px"><svg width="13" height="13" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Aris</span><span class="chip" style="display: inline-flex; align-items: center; gap: 5px"><svg width="13" height="13" viewBox="0 0 100 100" aria-hidden="true"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path></svg>Mai</span><span class="chip" style="display: inline-flex; align-items: center; gap: 5px"><svg width="13" height="13" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg>Lâm</span></span><button type="button" class="b2">Sửa</button></div>
-          </sc-if>
-          <sc-if value="{{hide.api}}" hint-placeholder-val="{{ false }}">
-            <div class="r m" style="font-size: 13px">{{offText.api}}</div>
-          </sc-if>
-        </div>
+      </sc-if>
+      <sc-if value="{{isOff}}" hint-placeholder-val="{{ false }}">
+        <div style="border: 1px solid var(--line); background: var(--panel2); border-radius: 12px; padding: 10px 14px; font-size: 13.5px">Đang tắt: lệnh <span class="mono" style="font-size: 12.5px">aris-acp</span> trả lời “aris đang tắt cho ứng dụng khác”. Phiên dở vẫn giữ trong log.</div>
+      </sc-if>
+
+      <div class="card">
+        <div class="ch"><b>Đang nối</b><span class="m" style="font-size: 12.5px">mỗi ứng dụng làm việc với một bot, trong thư mục nó đưa sang</span></div>
+        <sc-for list="{{lanes}}" as="l" hint-placeholder-count="2">
+          <div class="r" style="{{l.dim}}">
+            <span class="tile" aria-hidden="true">{{l.letter}}</span>
+            <span style="flex: 0 1 150px; min-width: 0"><b style="font-weight: 600">{{l.app}}</b><span class="m" style="display: block; font-size: 12px">{{l.appSub}}</span></span>
+            <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+            <svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="{{l.botPath}}" fill="{{l.botColor}}"></path></svg>
+            <span style="flex: 0 1 170px; min-width: 0"><b style="font-weight: 600">{{l.bot}}</b><span style="display: block; font-size: 12px; color: {{l.stateColor}}">{{l.botSub}}</span></span>
+            <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+            <span class="chip mono" style="min-width: 0; overflow: hidden; text-overflow: ellipsis">{{l.dir}}</span>
+            <button type="button" class="b2" style="margin-left: auto">Mở phiên</button>
+          </div>
+        </sc-for>
+        <div class="r m" style="font-size: 13px">Phiên từ ứng dụng khác chạy trong aris, hiện trên Bản đồ đội và trong log như mọi phiên, có ghi “từ Buzz Desktop”.</div>
       </div>
-      <div style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
-        <div class="card">
-          <div style="padding: 12px 14px; display: flex; align-items: center; gap: 8px"><b style="white-space: nowrap">MCP server</b><span class="m" style="font-size: 12.5px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Claude Desktop, Cursor</span><span style="margin-left: auto; font-size: 12px; font-weight: 600; color: {{pc.mcp}}; background: {{pg.mcp}}; border-radius: 999px; padding: 1px 9px; white-space: nowrap">{{pt.mcp}}</span><button type="button" class="b2" onClick="{{tg.mcp}}" aria-pressed="{{on.mcp}}">{{bt.mcp}}</button></div>
-          <sc-if value="{{show.mcp}}" hint-placeholder-val="{{ true }}">
-            <div class="r"><span class="m" style="width: 104px; flex: none">Tool mở ra</span><span style="flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center"><span class="chip mono">brain_search</span><span class="chip mono">brain_capture</span><span class="chip mono">memory_search</span></span><button type="button" class="b2">Sửa</button></div>
-          </sc-if>
-          <sc-if value="{{hide.mcp}}" hint-placeholder-val="{{ false }}">
-            <div class="r m" style="font-size: 13px">{{offText.mcp}}</div>
-          </sc-if>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+        <div style="flex: 1 1 470px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+          <div class="card">
+            <div class="ch"><b>Nhật ký hôm nay</b>
+              <span role="tablist" aria-label="Lọc nhật ký" style="margin-left: auto; display: flex; gap: 2px">
+                <sc-for list="{{filters}}" as="f" hint-placeholder-count="3"><button type="button" role="tab" class="{{f.cls}}" aria-selected="{{f.sel}}" onClick="{{f.pick}}">{{f.label}}</button></sc-for>
+              </span>
+            </div>
+            <sc-for list="{{rows}}" as="x" hint-placeholder-count="5">
+              <div class="r" style="{{x.style}}">
+                <span class="m mono" style="font-size: 12px; width: 40px; flex: none">{{x.t}}</span>
+                <span style="flex: 1; min-width: 0"><span style="display: block">{{x.what}}</span><span class="m" style="font-size: 12px">{{x.app}} · {{x.bot}}</span></span>
+                <span class="pill" style="color: {{x.color}}; background: {{x.bg}}">{{x.res}}</span>
+              </div>
+            </sc-for>
+            <div class="r m" style="font-size: 12.5px"><span style="flex: 1">{{shownText}}</span><a class="m" href="ThongKe.dc.html">Thống kê và nhật ký ›</a></div>
+          </div>
+
+          <div class="card">
+            <div class="ch"><b>Nối thêm ứng dụng</b></div>
+            <div class="r"><span class="m" style="width: 104px; flex: none">Lệnh</span>
+              <span style="flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center">
+                <select aria-label="Bot cho lệnh" onChange="{{pickBot}}">
+                  <sc-for list="{{openBots}}" as="o" hint-placeholder-count="2"><option value="{{o.id}}">{{o.name}}</option></sc-for>
+                </select>
+                <span class="chip mono">{{cmdText}}</span>
+              </span>
+              <button type="button" class="b2" onClick="{{copy}}">{{copyLabel}}</button>
+            </div>
+            <div class="r"><span class="m" style="width: 104px; flex: none">Trên máy</span><span style="flex: 1; min-width: 0"><span class="pill" style="color: var(--ok); background: var(--okSoft)">có trong PATH</span> <span class="mono m" style="font-size: 12px">/usr/local/bin/aris-acp</span></span></div>
+            <div class="r"><span class="m" style="width: 104px; flex: none">Cách nối</span><span style="flex: 1; min-width: 0; font-size: 13px">Buzz Desktop tự thấy aris ở Settings › Runtimes. IDE (Zed, VS Code): thêm agent ACP với lệnh trên.</span></div>
+          </div>
         </div>
-        <div class="card">
-          <div style="padding: 12px 14px; display: flex; align-items: center; gap: 8px"><b style="white-space: nowrap">A2A</b><span class="m" style="font-size: 12.5px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">agent gọi agent</span><span style="margin-left: auto; font-size: 12px; font-weight: 600; color: {{pc.a2a}}; background: {{pg.a2a}}; border-radius: 999px; padding: 1px 9px; white-space: nowrap">{{pt.a2a}}</span><button type="button" class="b2" onClick="{{tg.a2a}}" aria-pressed="{{on.a2a}}">{{bt.a2a}}</button></div>
-          <sc-if value="{{show.a2a}}" hint-placeholder-val="{{ false }}">
-            <div class="r"><span class="m" style="width: 104px; flex: none">Peer tin cậy</span><span style="flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center"><span class="chip mono">hermes-vps</span><span class="chip mono">tako-office</span></span><button type="button" class="b2">Thêm</button></div><div class="r"><span class="m" style="width: 104px; flex: none">Bot mở ra</span><span style="flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center"><span class="chip" style="display: inline-flex; align-items: center; gap: 5px"><svg width="13" height="13" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg>Aris</span><span class="chip" style="display: inline-flex; align-items: center; gap: 5px"><svg width="13" height="13" viewBox="0 0 100 100" aria-hidden="true"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path></svg>Mai</span><span class="chip" style="display: inline-flex; align-items: center; gap: 5px"><svg width="13" height="13" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg>Lâm</span></span><button type="button" class="b2">Sửa</button></div>
-          </sc-if>
-          <sc-if value="{{hide.a2a}}" hint-placeholder-val="{{ true }}">
-            <div class="r m" style="font-size: 13px">{{offText.a2a}}</div>
-          </sc-if>
-        </div>
-        <div class="card">
-          <div class="r" style="border-top: 0"><b style="flex: 1">Bộ quyền khi làm thành viên</b><span class="m" style="font-size: 13px">Thành viên</span><button type="button" class="b2">Xem</button></div>
-          <div class="r"><span style="flex: 1" class="m">Hôm nay 23 lượt truy cập · 1 bị chặn</span><button type="button" class="b2">Nhật ký</button></div>
+
+        <div style="flex: 1 1 370px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+          <div class="card">
+            <div class="ch"><b>Bộ quyền khi làm khách</b><span class="m" style="font-size: 12.5px">áp cho mọi phiên qua aris-acp</span></div>
+            <div class="r" style="flex-wrap: wrap">
+              <span style="flex: 1; min-width: 200px"><b style="font-weight: 600">Danh sách cấm</b><span class="m" style="display: block; font-size: 12.5px">Áp cả khi ứng dụng tự duyệt mọi quyền (Buzz Desktop làm vậy)</span></span>
+              <span class="pill" style="color: var(--ok); background: var(--okSoft)">luôn bật</span>
+              <span style="flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px"><span class="chip">Xoá tệp, thư mục</span><span class="chip mono">git push --force</span><span class="chip">Sửa ngoài thư mục được đưa</span><span class="chip">Đọc khoá, mật khẩu</span><span class="chip">Gửi tin thay {{you}}</span><a class="m" href="BaoMat.dc.html" style="font-size: 12.5px">Sửa ở Ngân sách, duyệt, mạng ›</a></span>
+            </div>
+            <sc-for list="{{rules}}" as="u" hint-placeholder-count="4">
+              <div class="r">
+                <span style="flex: 1; min-width: 0"><b style="font-weight: 600">{{u.title}}</b><span class="m" style="display: block; font-size: 12.5px">{{u.desc}}</span></span>
+                <span class="pill" style="color: {{u.color}}; background: {{u.bg}}">{{u.state}}</span>
+                <button type="button" class="b2" onClick="{{u.toggle}}" aria-pressed="{{u.on}}">{{u.btn}}</button>
+              </div>
+            </sc-for>
+            <div class="r" style="flex-direction: column; align-items: stretch; gap: 6px"><span class="m" style="font-size: 12px">Buzz nhận được khi việc bị chặn</span><span class="mono" style="font-size: 12px; background: var(--panel2); border-radius: 8px; padding: 8px 10px">aris từ chối: xoá tệp nằm trong danh sách cấm của người dùng. Việc này không hỏi lại ứng dụng.</span></div>
+          </div>
+
+          <div class="card">
+            <div class="ch"><b>Bot mở cho ứng dụng khác</b><span class="m" style="font-size: 12.5px">{{openSummary}}</span></div>
+            <div class="r" style="flex-wrap: wrap; gap: 8px">
+              <sc-for list="{{botChips}}" as="b" hint-placeholder-count="6">
+                <button type="button" class="b2" aria-pressed="{{b.on}}" onClick="{{b.toggle}}" style="{{b.style}}"><svg width="14" height="14" viewBox="0 0 100 100" aria-hidden="true" style="vertical-align: -2px; margin-right: 5px"><path d="{{b.path}}" fill="{{b.color}}"></path></svg>{{b.name}} · {{b.state}}</button>
+              </sc-for>
+            </div>
+            <div class="r m" style="font-size: 13px; display: block">Bot đóng thì lệnh <span class="mono" style="font-size: 12px">aris-acp --bot &lt;tên&gt;</span> báo không có bot này. Aris (chỉ huy) nên giữ trong aris.</div>
+          </div>
+
+          <div class="card">
+            <div class="r" style="border-top: 0"><span style="flex: 1; min-width: 0"><b style="font-weight: 600">Ngắt các ứng dụng đang nối</b><span class="m" style="display: block; font-size: 12.5px">Dừng mọi phiên qua aris-acp; ứng dụng phải nối lại, log vẫn giữ</span></span><button type="button" class="b2 danger">Ngắt 2 ứng dụng</button></div>
+          </div>
         </div>
       </div>
     </div>
   </main>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     const s = this.state || {};
-    const theme = s.theme || this.props.theme || 'dark';
-    const onv = Object.assign({ acp: true, api: true, a2a: false, mcp: true }, s.on || {});
-    const live = { acp: '2 đang nối', api: '1 đang nối', a2a: 'đang bật', mcp: '1 đang nối' };
-    const off = { acp: 'IDE và Buzz Desktop chưa dùng được aris.', api: 'Ứng dụng ngoài chưa gọi được aris.', a2a: 'Agent khác chưa gọi được aris; aris vẫn gọi được peer đã thêm.', mcp: 'Tool của aris chưa mở cho ứng dụng khác.' };
-    const on = {}, tg = {}, show = {}, hide = {}, pt = {}, pc = {}, pg = {}, bt = {}, offText = {};
-    Object.keys(onv).forEach((k) => {
-      const v = onv[k];
-      on[k] = v ? 'true' : 'false';
-      show[k] = v; hide[k] = !v;
-      pt[k] = v ? live[k] : 'tắt';
-      pc[k] = v ? 'var(--ok)' : 'var(--muted)';
-      pg[k] = v ? 'var(--okSoft)' : 'var(--panel2)';
-      bt[k] = v ? 'Tắt' : 'Bật';
-      offText[k] = off[k];
-      tg[k] = () => this.setState({ on: Object.assign({}, onv, { [k]: !v }) });
-    });
+    const theme = s.theme || this.props.theme || 'light';
+    const on = s.on !== false;
+    const BOTS = {
+      aris: { name: 'Aris', color: '#1084FE', path: 'M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z' },
+      lam: { name: 'Lâm', color: '#00B5A5', path: 'M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z' },
+      ha: { name: 'Hạ', color: '#FF309C', path: 'M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z' },
+      mai: { name: 'Mai', color: '#FF6700', path: 'M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z' },
+      tin: { name: 'Tín', color: '#FFAA00', path: 'M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z' },
+      dev: { name: 'Dev', color: '#00C972', path: 'M50 12C80 12 88 20 88 50C88 80 80 88 50 88C20 88 12 80 12 50C12 20 20 12 50 12Z' },
+    };
+    const order = ['aris', 'lam', 'mai', 'tin', 'ha', 'dev'];
+    const open = Object.assign({ aris: false, lam: true, mai: false, tin: false, ha: false, dev: true }, s.open || {});
+    const openIds = order.filter((id) => open[id]);
+    const cmdBot = openIds.indexOf(s.cmdBot) >= 0 ? s.cmdBot : openIds[0] || 'lam';
+
+    // Nhật ký hôm nay: số trên bộ lọc đếm từ chính các dòng này.
+    const LOG = [
+      { t: '14:20', app: 'Buzz Desktop', bot: 'Lâm', what: 'Xoá 3 tệp: rm -r drafts/cu', res: 'no' },
+      { t: '14:18', app: 'Buzz Desktop', bot: 'Lâm', what: 'Sửa kich-ban-video-3.md', res: 'ok' },
+      { t: '14:02', app: 'Buzz Desktop', bot: 'Lâm', what: 'Tải trang youtube.com/@kenh/videos', res: 'ask' },
+      { t: '13:47', app: 'Buzz Desktop', bot: 'Lâm', what: 'Đọc ghi-chu-y-tuong.md', res: 'ok' },
+      { t: '13:45', app: 'Buzz Desktop', bot: 'Lâm', what: 'Tìm trong bộ não: kênh YouTube Q4', res: 'ok' },
+      { t: '11:05', app: 'Zed', bot: 'Dev', what: 'Chạy pnpm test', res: 'ask' },
+      { t: '10:58', app: 'Zed', bot: 'Dev', what: 'Sửa src/acp/bridge.ts', res: 'ok' },
+      { t: '10:41', app: 'Zed', bot: 'Dev', what: 'Đọc packages/aris-daemon', res: 'ok' },
+      { t: '10:40', app: 'Zed', bot: 'Dev', what: 'Mở phiên trong ~/code/aris-agent', res: 'ok' },
+    ];
+    const RES = {
+      ok: ['cho phép', 'var(--muted)', 'var(--panel2)'],
+      ask: ['ứng dụng duyệt', 'var(--warn)', 'var(--warnSoft)'],
+      no: ['chặn · danh sách cấm', 'var(--danger)', 'var(--dangerSoft)'],
+    };
+    const n = (k) => LOG.filter((r) => r.res === k).length;
+    const filter = s.filter || 'all';
+    const list = LOG.filter((r) => filter === 'all' || r.res === filter);
+    const shown = list.slice(0, 5);
+
+    const lanes = [
+      { letter: 'B', app: 'Buzz Desktop', appSub: '1.4.2 · 5 phiên hôm nay', bot: 'Lâm', botSub: on ? 'đang viết kịch bản video 3' : 'đã ngắt', stateColor: on ? 'var(--accent)' : 'var(--muted)', dir: '~/Projects/kenh-youtube', botPath: BOTS.lam.path, botColor: BOTS.lam.color },
+      { letter: 'Z', app: 'Zed', appSub: '0.162 · lần cuối 11:05', bot: 'Dev', botSub: on ? 'rảnh' : 'đã ngắt', stateColor: 'var(--muted)', dir: '~/code/aris-agent', botPath: BOTS.dev.path, botColor: BOTS.dev.color },
+    ].map((l) => Object.assign(l, { dim: on ? '' : 'opacity: .55' }));
+
+    const ruleOn = Object.assign({ ask: true, untrusted: true, nomem: true, notools: true }, s.rules || {});
+    const rule = (k, title, desc) => {
+      const v = ruleOn[k];
+      return {
+        title, desc, on: v ? 'true' : 'false', state: v ? 'bật' : 'tắt', btn: v ? 'Tắt' : 'Bật',
+        color: v ? 'var(--ok)' : 'var(--muted)', bg: v ? 'var(--okSoft)' : 'var(--panel2)',
+        toggle: () => this.setState({ rules: Object.assign({}, ruleOn, { [k]: !v }) }),
+      };
+    };
+
     return {
       themeClass: 't-' + theme,
-      on, tg, show, hide, pt, pc, pg, bt, offText,
-      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' })
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      you: 'anh Tầu',
+      isOn: on, isOff: !on, onAttr: on ? 'true' : 'false',
+      masterPill: on ? '2 đang nối' : 'tắt',
+      masterColor: on ? 'var(--ok)' : 'var(--muted)',
+      masterBg: on ? 'var(--okSoft)' : 'var(--panel2)',
+      masterBtn: on ? 'Tắt' : 'Bật',
+      toggleAll: () => this.setState({ on: !on }),
+      showBlocked: () => this.setState({ filter: 'no' }),
+      lanes,
+      openBots: openIds.map((id) => ({ id, name: BOTS[id].name })),
+      cmdText: 'aris-acp --bot ' + cmdBot,
+      pickBot: (e) => this.setState({ cmdBot: e && e.target ? e.target.value : cmdBot, copied: false }),
+      copy: () => this.setState({ copied: true }),
+      copyLabel: s.copied ? 'Đã chép' : 'Sao chép',
+      openSummary: openIds.length + ' trong ' + order.length + ' bot đang mở',
+      botChips: order.map((id) => ({
+        name: BOTS[id].name, path: BOTS[id].path, color: BOTS[id].color,
+        on: open[id] ? 'true' : 'false', state: open[id] ? 'mở' : 'đóng',
+        style: open[id] ? 'border-color: var(--ok); background: var(--okSoft)' : '',
+        toggle: () => this.setState({ open: Object.assign({}, open, { [id]: !open[id] }) }),
+      })),
+      rules: [
+        rule('ask', 'Quyền khác: hỏi lại ứng dụng', 'Mạng, chạy lệnh… do ứng dụng quyết; Buzz tự duyệt nên luôn cho'),
+        rule('untrusted', 'Nội dung gửi đến không tin cậy', 'Tệp, trang web, tin ứng dụng đưa sang là dữ liệu, không phải mệnh lệnh'),
+        rule('nomem', 'Không tự ghi ký ức, hồ sơ, bộ não', 'Bot vẫn đọc bộ não theo quyền của nó'),
+        rule('notools', 'Bỏ công cụ của đội', 'Không giao việc cho bot khác, không gửi Telegram, không đổi cài đặt aris'),
+      ],
+      filters: [['all', 'Tất cả ' + LOG.length], ['ask', 'Ứng dụng duyệt ' + n('ask')], ['no', 'Bị chặn ' + n('no')]].map(([k, label]) => ({
+        label, sel: filter === k ? 'true' : 'false', cls: filter === k ? 'tab on' : 'tab',
+        pick: () => this.setState({ filter: k }),
+      })),
+      rows: shown.map((r) => ({
+        t: r.t, what: r.what, app: r.app, bot: r.bot,
+        res: RES[r.res][0], color: RES[r.res][1], bg: RES[r.res][2],
+        style: r.res === 'no' ? 'background: var(--dangerSoft)' : '',
+      })),
+      shownText: 'Hiện ' + shown.length + ' trong ' + list.length + ' việc',
     };
   }
 }

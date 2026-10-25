@@ -324,31 +324,29 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 ---
 
-## Giai đoạn 6 · Mở cửa: aris trong nền tảng khác (tuần 17–18)
+## Giai đoạn 6 · Mở cửa: aris làm agent cho nền tảng khác qua ACP (tuần 17–18)
 
-**Mục tiêu**: aris làm được mọi điều Hermes làm khi được nhúng vào hệ thống khác, cùng một lõi và một bộ dữ liệu.
+**Mục tiêu**: nền tảng khác (Buzz Desktop, IDE) mời được bot của aris vào làm việc như aris đang dùng Claude
+Code, Codex làm bot ngoài: cùng một lõi, một bộ dữ liệu.
 
-**Việc cần làm**
+> **Chốt 26/10: chỉ ACP.** aris không làm nhà cung cấp API: bỏ API kiểu OpenAI, MCP server, A2A và cổng mạng
+> riêng. Ứng dụng kia chạy lệnh `aris-acp`, nói qua stdio; lệnh nối vào daemon qua socket nội bộ (chỉ tài
+> khoản người dùng mở được). Phiên chạy trong daemon, là chủ duy nhất của bot, ký ức, bộ não, kênh.
 
-| Package / mặt | Nội dung |
+**Đợt**
+
+| Đợt | Nội dung |
 |---|---|
-| Preset "thành viên" | Bộ quyền dùng khi aris chạy trong nền tảng khác: chỉ chủ nhân, bỏ tool nguy hiểm, nội dung đến là không tin cậy, không tự ghi ký ức, **tự áp danh sách cấm kể cả khi host tự duyệt mọi quyền** (Buzz Desktop làm vậy) |
-| `aris-acp` (M6) | Profile = acp của dsh + aris-bundle + preset thành viên; `aris acp --bot <tên>`; tên lệnh `aris-acp` trên PATH để **Buzz Desktop tự phát hiện** như runtime; chạy được sau `buzz-acp` trên server |
-| `aris-api` (M7) | HTTP + SSE tương thích OpenAI: `/v1/chat/completions`, `/v1/responses`, `/v1/models` (mỗi bot là một model `aris/<bot>`); khoá chống gửi lặp; sự kiện tool trong luồng; bearer token; mặc định chỉ nghe `127.0.0.1` |
-| `aris-a2a` (M5, M8) | Client: `a2a_discover`, `a2a_call`, chia việc cho mọi peer cùng năng lực; Server: Agent Card (mỗi bot một kỹ năng), JSON-RPC, SSE, push webhook có ký HMAC, token theo peer, giới hạn tốc độ, trần số lượt qua lại, nhật ký kiểm toán |
-| `aris-mcp-server` (M9) | Mở `brain_search`, `brain_capture`, `memory_search`, `giao_viec` cho Claude Desktop, Cursor…; từng tool bật/tắt riêng |
-| Giao diện | 6.3b Mặt tích hợp: mỗi mặt một thẻ có trạng thái, Bật/Tắt, địa chỉ hoặc lệnh, khoá, peer, bot được mở ra; dẫn sang bộ quyền "Thành viên" và nhật ký truy cập |
+| 6a · aris làm agent ACP | `aris-acp --bot <tên>` (khách mỏng qua stdio ↔ socket của daemon); phiên làm trong thư mục ứng dụng kia đưa sang, hiện trên bản đồ đội và log, ghi nguồn ("từ Buzz Desktop"); bộ quyền "Thành viên": bỏ tool nguy hiểm, nội dung đến không tin cậy, không tự ghi ký ức, **danh sách cấm áp cả khi ứng dụng kia tự duyệt mọi quyền**, quyền khác hỏi ngược lại ứng dụng kia; đặt `aris-acp` vào PATH (hỏi trước) để Buzz tự phát hiện |
+| 6b · Màn 6.3b | "Dùng aris từ ứng dụng khác": bật/tắt, lệnh, bot mở ra, ứng dụng đang nối, bộ quyền Thành viên, nhật ký truy cập |
 
 **Nghiệm thu**
-- Buzz Desktop tìm thấy aris trong Settings → Runtimes và chat được với Lâm; lệnh xoá tệp bị chặn dù Buzz tự duyệt.
-- Open WebUI nối vào `aris-api`, chọn được model `aris/mai`.
-- Một Hermes khác gọi aris qua A2A và ngược lại; hai bên không chat qua lại quá trần đã đặt.
-- Claude Desktop tìm được ghi chú trong Second Brain qua MCP.
-- Mọi việc làm qua các mặt này đều hiện trên bản đồ đội và trong log phiên.
+- Buzz Desktop tìm thấy aris trong Runtimes và chat được với một bot; lệnh xoá tệp bị chặn dù Buzz tự duyệt.
+- Phiên từ Buzz hiện trên bản đồ đội và trong log phiên, đúng thư mục làm việc.
 
-**Rủi ro**: mở cổng mạng ⇒ mặc định chỉ localhost, mở ra ngoài phải có token và cấu hình rõ ràng. Hai tiến trình cùng ghi một bot ⇒ daemon là chủ duy nhất, các mặt khác là khách mỏng.
+**Rủi ro**: hai tiến trình cùng ghi một bot ⇒ daemon là chủ duy nhất, `aris-acp` chỉ là khách mỏng.
 
-**Anh cần chuẩn bị**: (tuỳ chọn) cài Buzz Desktop hoặc một relay Buzz; Open WebUI nếu muốn dùng.
+**Anh cần chuẩn bị**: Buzz Desktop (đã cài).
 
 ---
 
@@ -398,7 +396,7 @@ Câu hỏi: người dùng chỉ dùng Aris, không tạo bot khác, thì có m�
 | Lịch tự động (routine) | Có | Giai đoạn 4 (đã có) |
 | Đọc văn bản thành giọng, chế độ thoại, tạo ảnh | 10 provider giọng, 11 model ảnh | Giai đoạn 5 |
 | Hiểu người dùng sâu (kiểu Honcho) | Biện chứng nhiều vòng, làm nóng đầu phiên | Giai đoạn 5 |
-| API tương thích OpenAI, A2A | Có | Giai đoạn 6 (đã có) |
+| API tương thích OpenAI, A2A | Có | Không làm (chốt 26/10: aris chỉ mở qua ACP) |
 | Kênh nhắn tin | ~35 nền tảng | Giai đoạn 7 (Lark, Zalo), giai đoạn 8 (Discord, Slack, WhatsApp…) |
 | Computer-use, kho skill cộng đồng, phán quyết "chờ", gộp skill trùng | Có | Giai đoạn 8 |
 | Độ trưởng thành, hàng trăm skill dựng sẵn | Nhiều năm dùng thật | Đo đối đầu ở giai đoạn 7; skill tích luỹ qua dùng thật |
@@ -424,5 +422,5 @@ Câu hỏi: người dùng chỉ dùng Aris, không tạo bot khác, thì có m�
 | Giai đoạn 1 | Bot Telegram cho Aris (BotFather); máy Mac để chạy nền; tuỳ chọn khoá Anthropic |
 | Giai đoạn 2 | Bot Telegram riêng cho các bot muốn có kênh riêng |
 | Giai đoạn 2 | Agent ngoài muốn đưa vào đội (Claude Code, Codex, Hermes…) đã cài và đăng nhập |
-| Giai đoạn 6 | (Tuỳ chọn) Buzz Desktop hoặc relay Buzz; Open WebUI |
+| Giai đoạn 6 | Buzz Desktop (đã cài) |
 | Giai đoạn 7 | Server; ứng dụng Lark; Zalo OA đã xác thực; chốt trần ngân sách ngày |
