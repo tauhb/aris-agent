@@ -27,22 +27,6 @@ export const DEMO_DASHBOARD = {
   warning: 'routine “Tin đối thủ trong tuần” lỗi 2 lần · ký ức hồ sơ của Aris đã dùng 88%',
 }
 
-/** 6.3b · GĐ6 (mặt tích hợp ACP, API, MCP, A2A). */
-export const DEMO_INTEGRATIONS = {
-  summary: 'đang chạy nền, 4 ứng dụng đang nối · chỉ trên máy này',
-  acp: { on: true, live: '2 đang nối', cmd: 'aris-acp --bot <tên>', bots: ['aris', 'lam', 'tin'] },
-  api: {
-    on: true,
-    live: '1 đang nối',
-    url: 'http://127.0.0.1:8642/v1',
-    key: 'aris_sk_••••3f9a',
-    bots: ['aris', 'mai', 'lam'],
-  },
-  mcp: { on: true, live: '1 đang nối', tools: ['brain_search', 'brain_capture', 'memory_search'] },
-  a2a: { on: false, live: 'đang bật', peers: ['hermes-vps', 'tako-office'], bots: ['aris', 'mai', 'lam'] },
-  access: 'Hôm nay 23 lượt truy cập · 1 bị chặn',
-}
-
 /** 6.4 · GĐ3 (duyệt), GĐ7 (ngân sách, mạng). */
 export const DEMO_GUARD = {
   dailyCap: '5',

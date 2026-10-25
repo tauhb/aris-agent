@@ -90,7 +90,8 @@ export type DepartmentRecord = z.infer<typeof departmentRecord>
 /** Phiên → bot. Phiên không có ở đây là phiên của Commander. */
 export const sessionRecord = z.object({
   bot: z.string(),
-  via: z.enum(['open', 'team', 'dispatch']),
+  /** `acp`: phiên do ứng dụng khác mở qua aris-acp (giai đoạn 6). */
+  via: z.enum(['open', 'team', 'dispatch', 'acp']),
   at: z.string(),
   /** Mã phiên gốc (khoá bản ghi đã thay ký tự lạ). */
   session: z.string().optional(),

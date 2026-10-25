@@ -386,6 +386,8 @@ export async function apply(ctx: Context): Promise<void> {
   /** Suy luận hồ sơ ba vòng trên các lượt vừa qua của một phiên. */
   async function profileRun(session: Session, turns: TurnLog[]) {
     if ((ctx.get('arisSkills') as SkillsPort | undefined)?.isEval?.(session.id)) return
+    // Phiên khách của ứng dụng khác (@aris/acp): không tự ghi ký ức, hồ sơ.
+    if ((ctx.get('arisAcp') as { isGuest?(id: string): boolean } | undefined)?.isGuest?.(session.id)) return
     if ((ctx.get('arisRoutine') as { isRoutine?(id: string): boolean } | undefined)?.isRoutine?.(session.id))
       return
     if (
@@ -476,6 +478,8 @@ export async function apply(ctx: Context): Promise<void> {
   let budgetNoted = ''
   async function reflect(session: Session, turns: TurnLog[], reasons: Reason[]) {
     if ((ctx.get('arisSkills') as SkillsPort | undefined)?.isEval?.(session.id)) return
+    // Phiên khách của ứng dụng khác (@aris/acp): không tự ghi ký ức, hồ sơ.
+    if ((ctx.get('arisAcp') as { isGuest?(id: string): boolean } | undefined)?.isGuest?.(session.id)) return
     // Routine chạy không người trông: không có gì người dùng dạy để học.
     if ((ctx.get('arisRoutine') as { isRoutine?(id: string): boolean } | undefined)?.isRoutine?.(session.id))
       return

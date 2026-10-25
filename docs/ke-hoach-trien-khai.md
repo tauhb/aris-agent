@@ -344,6 +344,8 @@ Code, Codex làm bot ngoài: cùng một lõi, một bộ dữ liệu.
 - Buzz Desktop tìm thấy aris trong Runtimes và chat được với một bot; lệnh xoá tệp bị chặn dù Buzz tự duyệt.
 - Phiên từ Buzz hiện trên bản đồ đội và trong log phiên, đúng thư mục làm việc.
 
+> **Đợt 6a và màn 6.3b làm 26/10** ([đặc tả](specs/aris-acp.md)): gói mới `@aris/acp`: daemon nghe socket `~/.aris/acp.sock`, mỗi kết nối là một nhánh `dsh-acp` với model của bot, phiên được chọn preset, gắn bot, vào workspace của thư mục; bộ quyền khi làm khách (danh sách cấm áp cả khi ứng dụng tự duyệt, chặn giao cho bot ngoài, không ghi ký ức, không công cụ đội); nhật ký 7 ngày; màn 6.3b dữ liệu thật. Chạy thật bằng ứng dụng ACP giả lập; chờ thử với Buzz Desktop.
+
 **Rủi ro**: hai tiến trình cùng ghi một bot ⇒ daemon là chủ duy nhất, `aris-acp` chỉ là khách mỏng.
 
 **Anh cần chuẩn bị**: Buzz Desktop (đã cài).

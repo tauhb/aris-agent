@@ -129,6 +129,9 @@ export function watchConversation(
       )
     )
       return
+    // Phiên khách của ứng dụng khác (@aris/acp): không tự ghi ký ức, nên không nhắc lưu.
+    if ((ctx.get('arisAcp') as { isGuest?(id: string): boolean } | undefined)?.isGuest?.(agent.session.id))
+      return
     const reason = nudgeReason(s, lastNudge.get(agent))
     if (!reason) return
     lastNudge.set(agent, turn)
@@ -146,6 +149,7 @@ export function watchConversation(
   const transcripts = new Map<string, TranscriptLine[]>()
 
   async function reflect(session: Session, event: SessionEvent<'compaction/summary'>) {
+    if ((ctx.get('arisAcp') as { isGuest?(id: string): boolean } | undefined)?.isGuest?.(session.id)) return
     const shadowed = new Set<number>(event.data.shadowedSeqs)
     const lines = (transcripts.get(session.id) ?? []).filter((l) => shadowed.has(l.seq))
     const text = transcriptText(lines)

@@ -17,6 +17,7 @@
     }
   },
   "dependencies": {
+    "@aris/acp": "workspace:*",
     "@aris/autonomy": "workspace:*",
     "@aris/bots": "workspace:*",
     "@aris/brain": "workspace:*",

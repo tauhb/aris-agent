@@ -61,7 +61,7 @@ export interface ArisBots {
     name: string
     kind: 'commander' | 'member'
   }
-  tag(sessionId: string, bot: string, via: 'open' | 'team' | 'dispatch'): Promise<void>
+  tag(sessionId: string, bot: string, via: 'open' | 'team' | 'dispatch' | 'acp'): Promise<void>
   /** Phiên mới trong chat riêng gắn với bot (model riêng của bot), như bấm bot trên thanh bên. */
   open(botId: string): Promise<string>
   store: BotStore

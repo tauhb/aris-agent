@@ -451,6 +451,26 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-sbin{font-size:12.5px;min-width:0}
 .ap-sbpages{font-size:13px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .ap-sbhint{font-size:12.5px}
+.ap-intnote{border:1px solid var(--a-line);background:var(--a-panel2);border-radius:12px;padding:10px 14px;font-size:13.5px}
+.ap-intalert{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid var(--a-danger);background:var(--a-dangerSoft);border-radius:12px;padding:10px 14px;font-size:13.5px}
+.ap-inthint{font-weight:400;font-size:12.5px}
+.ap-inttile{width:28px;height:28px;border-radius:8px;background:var(--a-panel2);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none}
+.ap-intwho{display:flex;flex-direction:column;min-width:0;max-width:170px;font-size:13.5px;line-height:1.35}
+.ap-intwho b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-intwho span{font-size:12px}
+.ap-intbusy{color:var(--a-accent)}
+.ap-intarrow{color:var(--a-muted);flex:none}
+.ap-inttabs{display:flex;gap:2px}
+.aris .ap-inttabs button{border:0;background:transparent;padding:4px 9px;border-radius:8px;font:inherit;font-size:12.5px;color:var(--a-muted)}
+.aris .ap-inttabs button.on{background:var(--a-panel2);color:var(--a-ink);font-weight:600}
+.ap-inttime{font-variant-numeric:tabular-nums;font-size:12px;width:40px;flex:none}
+.ap-intwhat{display:flex;flex-direction:column;min-width:0;font-size:13.5px}
+.ap-intwhat > span{overflow-wrap:anywhere}
+.ap-intwhat .a-muted{font-size:12.5px}
+.ap-intlab{width:96px;flex:none}
+.ap-intmsg{font-family:var(--a-mono,ui-monospace,monospace);font-size:12px;background:var(--a-panel2);border-radius:8px;padding:8px 10px;margin-top:4px}
+.aris .ap-intbot{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 10px;border:1px solid var(--a-line);border-radius:8px;background:var(--a-panel);font:inherit;font-size:12.5px;color:var(--a-ink)}
+.aris .ap-intbot.on{border-color:var(--a-ok);background:var(--a-okSoft)}
 .ap-npboard{padding:12px 14px;display:flex;flex-direction:column;gap:9px;margin:4px 0 14px}
 .ap-npbh{display:flex;align-items:center;gap:8px}
 .ap-npbh .a-btn{margin-left:auto}
