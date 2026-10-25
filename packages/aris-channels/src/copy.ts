@@ -51,6 +51,7 @@ export const T = {
   whoami: (trust: Trust, userId: number, chatId: number) =>
     `Vai: <b>${ROLE_LABEL[trust]}</b>.\nMã Telegram: <code>${userId}</code>\nMã cuộc trò chuyện: <code>${chatId}</code>`,
   ownerOnly: 'Lệnh này chỉ người dùng chính dùng được.',
+  guardStopped: 'aris đang dừng khẩn cấp. Bấm Chạy lại ở Cài đặt › Ngân sách, duyệt, an toàn trên web.',
   newSession: 'Đã mở phiên mới: bắt đầu lại từ đầu, ký ức lâu dài vẫn giữ nguyên.',
   stopped: 'Đã dừng.',
   nothingRunning: 'Không có việc nào đang chạy.',

@@ -153,6 +153,20 @@ export class LiveTracker {
     return 'idle'
   }
 
+  /** Mọi phiên đang chạy (dừng khẩn cấp, @aris/guard). */
+  runningSessions(): string[] {
+    const out = new Set<string>()
+    for (const set of this.running.values()) for (const id of set) out.add(id)
+    return [...out]
+  }
+
+  /** Số phiên đang đợi người dùng duyệt hoặc trả lời. */
+  waitingCount(): number {
+    let n = 0
+    for (const v of this.waitingSessions.values()) if (v > 0) n++
+    return n
+  }
+
   /** Số bot (trừ Commander) đang có phiên chạy. */
   busyBots(except?: string): number {
     let n = 0

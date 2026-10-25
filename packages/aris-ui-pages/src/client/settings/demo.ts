@@ -27,26 +27,6 @@ export const DEMO_DASHBOARD = {
   warning: 'routine “Tin đối thủ trong tuần” lỗi 2 lần · ký ức hồ sơ của Aris đã dùng 88%',
 }
 
-/** 6.4 · GĐ3 (duyệt), GĐ7 (ngân sách, mạng). */
-export const DEMO_GUARD = {
-  dailyCap: '5',
-  alertAt: '80',
-  learningCap: '1',
-  denied: ['xoá toàn bộ ổ đĩa', 'chuyển tiền', 'đổi mật khẩu', 'đọc khoá SSH, .env', 'tắt hàng rào này'],
-  allowed: ['git status, ls trong thư mục dự án', 'Mai gửi lời mời họp cho người trong công ty'],
-  approvalTimeout: '30',
-  hosts: [
-    'api.deepseek.com',
-    'api.anthropic.com',
-    'api.telegram.org',
-    'open.larksuite.com',
-    '*.googleapis.com',
-  ],
-  moreHosts: 6,
-  blocked: { count: 3, host: 'pastebin.com', bot: 'Dev' },
-  vault: '1Password · đã kết nối',
-}
-
 /** 6.5 · GĐ7 (thống kê, nhật ký phiên). */
 export const DEMO_STATS = {
   total: '2,96 USD',

@@ -420,7 +420,8 @@ export async function apply(ctx: Context): Promise<void> {
 
   // --- Bộ hẹn giờ ----------------------------------------------------------------------
   async function tick() {
-    if (paused()) return
+    // Tạm dừng, hay aris đang dừng khẩn cấp (@aris/guard).
+    if (paused() || (ctx.get('arisGuard') as { stopped?(): boolean } | undefined)?.stopped?.()) return
     for (const [, r] of routines.entries()) {
       if (r.enabled && !r.nextAt) {
         await routines.put(r.id, { ...r, nextAt: next(r) })

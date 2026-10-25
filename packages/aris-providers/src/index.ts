@@ -175,6 +175,11 @@ export async function apply(ctx: Context): Promise<void> {
   const costListeners = new Set<(session: string, usd: number) => void>()
   ctx.provide('arisSpend', {
     today: () => ledger.spentToday(),
+    /** Tổng chi phí hôm nay của cả đội: mọi lần gọi model cộng ảnh, video (trần cả đội, @aris/guard). */
+    total: () => {
+      const scopes = ledger.spentToday()
+      return ledger.summary().today + (scopes['media-image'] ?? 0) + (scopes['media-video'] ?? 0)
+    },
     /** Chi phí 7 ngày của một bot (cột phải hồ sơ bot). */
     botWeek: (bot: string) => ledger.spentWeek(`bot:${bot}`),
     /** Tiền của từng lần gọi model theo phiên (Commander áp trần tiền mỗi việc); trả về hàm huỷ. */

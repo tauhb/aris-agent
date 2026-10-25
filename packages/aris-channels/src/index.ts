@@ -130,6 +130,7 @@ export async function apply(ctx: Context): Promise<void> {
   const hub = new ChannelHub({
     store,
     media: () => ctx.get('arisMedia') as MediaPort | undefined,
+    stopped: () => (ctx.get('arisGuard') as { stopped?(): boolean } | undefined)?.stopped?.() ?? false,
     // Đội của aris (gói @aris/bots, nếu có): tên và màu linh vật để gửi tên thành viên ra Telegram.
     team: () =>
       (

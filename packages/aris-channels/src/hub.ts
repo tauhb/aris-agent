@@ -284,6 +284,8 @@ export interface HubDeps {
   team?: () => readonly TeamName[]
   /** Ảnh, video bot vừa tạo trong phiên (@aris/providers, đợt 5c): gửi kèm câu trả lời. */
   media?: () => MediaPort | undefined
+  /** aris đang dừng khẩn cấp (@aris/guard): tin thường chỉ nhận câu báo, lệnh vẫn chạy. */
+  stopped?: () => boolean
 }
 
 export interface MediaPort {
@@ -633,6 +635,11 @@ export class ChannelHub {
         return false
       }
       await this.command(rt, m, key, topic, d.trust, d.command.name, d.command.args)
+      return false
+    }
+
+    if (this.d.stopped?.()) {
+      await this.reply(api, m, T.guardStopped)
       return false
     }
 

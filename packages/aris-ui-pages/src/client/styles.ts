@@ -451,6 +451,14 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-sbin{font-size:12.5px;min-width:0}
 .ap-sbpages{font-size:13px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .ap-sbhint{font-size:12.5px}
+.aris .ap-gdnum{width:72px;height:30px;box-sizing:border-box;border:1px solid var(--a-line);border-radius:8px;background:var(--a-panel);color:var(--a-ink);font:inherit;font-size:13px;text-align:center}
+.ap-gdbar{flex:0 1 120px;min-width:60px;height:8px;border-radius:999px;background:var(--a-panel2);overflow:hidden;display:inline-block}
+.ap-gdbar>span{display:block;height:100%;border-radius:999px;background:var(--a-accent)}
+.ap-gdbar>span.warn{background:var(--a-warn)}
+.ap-gdbig{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.ap-gdfig{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12.5px}
+.ap-gdwarn{border:1px solid var(--a-warn);background:var(--a-warnSoft);border-radius:12px;padding:10px 14px;font-size:13.5px}
+.ap-gdkey{font-size:12.5px;overflow:hidden;text-overflow:ellipsis}
 .ap-intnote{border:1px solid var(--a-line);background:var(--a-panel2);border-radius:12px;padding:10px 14px;font-size:13.5px}
 .ap-intalert{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid var(--a-danger);background:var(--a-dangerSoft);border-radius:12px;padding:10px 14px;font-size:13.5px}
 .ap-inthint{font-weight:400;font-size:12.5px}

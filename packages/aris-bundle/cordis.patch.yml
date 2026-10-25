@@ -1,6 +1,14 @@
 # Lớp aris: mọi năng lực của aris là một row ở đây. Lớp này xếp sau bundle của
 # dsh (dsh-base, rồi web/acp/headless), nên cùng một bộ row chạy được ở mọi mặt.
+# Kho khoá: aris giữ khoá API trong Keychain của macOS (@aris/keychain), kho dạng tệp của dsh làm lớp dưới.
+# dsh không cho đổi tên gói của row có sẵn nên tắt row gốc rồi chèn row aris cùng dịch vụ `credentials`.
+- id: credentials
+  name: '@deepseek-ai/dsh-credentials-local'
+  disabled: true
+
 - insert:
+    - id: aris-keychain
+      name: '@aris/keychain'
     - id: aris-bots
       name: '@aris/bots'
     - id: aris-commander
@@ -23,6 +31,8 @@
       name: '@aris/checkpoints'
     - id: aris-acp
       name: '@aris/acp'
+    - id: aris-guard
+      name: '@aris/guard'
     - id: aris-brain
       name: '@aris/brain'
     - id: aris-recall

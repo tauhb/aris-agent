@@ -737,6 +737,7 @@ export async function apply(ctx: Context): Promise<void> {
   ctx.effect(() => {
     let busy = false
     const tick = async () => {
+      if ((ctx.get('arisGuard') as { stopped?(): boolean } | undefined)?.stopped?.()) return
       const projects = ctx.get('arisProjects') as DriverProjects | undefined
       if (!projects || !ctx.get('arisBots') || !ctx.get('agentTeams')) return
       for (const p of projects.store.list())

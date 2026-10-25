@@ -19,6 +19,8 @@
   "dependencies": {
     "@aris/acp": "workspace:*",
     "@aris/autonomy": "workspace:*",
+    "@aris/guard": "workspace:*",
+    "@aris/keychain": "workspace:*",
     "@aris/bots": "workspace:*",
     "@aris/brain": "workspace:*",
     "@aris/channels": "workspace:*",

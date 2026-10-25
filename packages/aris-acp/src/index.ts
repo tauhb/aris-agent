@@ -48,6 +48,8 @@ const LOG_DAYS = 7
 /** Dịch vụ cho plugin khác: phiên này có phải phiên khách (ký ức, vòng học nền bỏ qua). */
 export interface ArisAcp {
   isGuest(sessionId: string | undefined): boolean
+  /** Ngắt mọi ứng dụng đang nối (dừng khẩn cấp); trả số kết nối đã ngắt. */
+  disconnectAll(): number
 }
 
 interface Conn {
@@ -148,7 +150,14 @@ export async function apply(ctx: Context): Promise<void> {
     if (inherited) guests.set(sid, inherited)
     return inherited
   }
-  ctx.provide('arisAcp', { isGuest: (sid: string | undefined) => !!guestOf(sid) } satisfies ArisAcp)
+  ctx.provide('arisAcp', {
+    isGuest: (sid: string | undefined) => !!guestOf(sid),
+    disconnectAll: () => {
+      const n = conns.size
+      for (const c of conns.values()) c.sock.destroy()
+      return n
+    },
+  } satisfies ArisAcp)
 
   // --- Bộ quyền khi làm khách ----------------------------------------------------------------------
   /** Lời gọi đã hỏi ứng dụng: callId → kết quả. */
@@ -260,6 +269,8 @@ export async function apply(ctx: Context): Promise<void> {
       const s = settings()
       if (!s.enabled)
         return void (reply({ ok: false, error: 'aris đang tắt cho ứng dụng khác.' }), sock.end())
+      if ((ctx.get('arisGuard') as { stopped?(): boolean } | undefined)?.stopped?.())
+        return void (reply({ ok: false, error: 'aris đang dừng khẩn cấp.' }), sock.end())
       const want = hello.bot.toLowerCase().replace(/^@/, '')
       const bot =
         b?.store.byHandle(want) ??
