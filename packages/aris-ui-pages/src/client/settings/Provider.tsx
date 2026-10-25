@@ -28,6 +28,7 @@ import type {
   ProviderEntry,
 } from '../page.js'
 import { modelOptions } from '../options.js'
+import { MediaProviderPanel, useMedia } from './Media.js'
 import { EmbedSelect, SemanticCard, useSemantic, type SemanticApi } from './Semantic.js'
 import { Box, Col, Dot } from '../ui.js'
 import {
@@ -1024,9 +1025,10 @@ function Fallback({
   )
 }
 
-export function Provider({ t, models }: PageProps) {
+export function Provider({ t, models, nav }: PageProps) {
   const ps = useProvidersState()
   const sem = useSemantic()
+  const media = useMedia()
   const [entries, setEntries] = useState<readonly ProviderEntry[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [groups, setGroups] = useState<readonly ModelGroup[]>([])
@@ -1078,7 +1080,26 @@ export function Provider({ t, models }: PageProps) {
     }
   }, [models, refsKey, rev]) // `refsKey` đại diện cho danh sách tên khoá
 
-  const rows = useMemo(() => (entries ? buildRows(entries, nsValue, creds) : []), [entries, nsValue, creds])
+  const chatRows = useMemo(
+    () => (entries ? buildRows(entries, nsValue, creds) : []),
+    [entries, nsValue, creds],
+  )
+  // Nhà cung cấp chỉ cho ảnh, video (fal.ai): đứng chung danh bạ, khoá nhập ở đây như các nhà khác.
+  const mediaRows = useMemo<ProviderRow[]>(
+    () =>
+      (media.data?.keys ?? []).map((k) => ({
+        entry: { id: `media:${k.provider}`, name: k.name, ns: '', path: [], nativeEnv: [], active: k.hasKey },
+        configured: k.hasKey,
+        profile: {},
+        keyRef: k.ref,
+        keyNamed: false,
+        key: undefined,
+        nativeKey: false,
+        status: k.hasKey ? 'ok' : 'nokey',
+      })),
+    [media.data],
+  )
+  const rows = useMemo(() => [...chatRows, ...mediaRows], [chatRows, mediaRows])
   const defaultProvider = str((nsValue(DEFAULT_NS) as Record<string, unknown> | undefined)?.provider)
   const row =
     rows.find((r) => r.entry.id === picked) ??
@@ -1096,16 +1117,18 @@ export function Provider({ t, models }: PageProps) {
   const api = row
     ? (str(row.profile.api) ?? (row.entry.ns === DEEPSEEK_NS ? 'anthropic-messages' : undefined))
     : undefined
-  const subtitle = row
-    ? [
-        api
-          ? t('pv.sdk', { api: PROTOCOLS.includes(api as never) ? t(`pv.api.${api}`) : api })
-          : t('pv.route', { id: row.entry.id }),
-        row.entry.id === defaultProvider ? t('pv.default') : null,
-      ]
-        .filter(Boolean)
-        .join(' · ')
-    : undefined
+  const subtitle = row?.entry.id.startsWith('media:')
+    ? t('pv.mediaOnly', { ref: row.keyRef ?? '' })
+    : row
+      ? [
+          api
+            ? t('pv.sdk', { api: PROTOCOLS.includes(api as never) ? t(`pv.api.${api}`) : api })
+            : t('pv.route', { id: row.entry.id }),
+          row.entry.id === defaultProvider ? t('pv.default') : null,
+        ]
+          .filter(Boolean)
+          .join(' · ')
+      : undefined
   const probed = probe && row && probe.id === row.entry.id ? probe : null
 
   if (!models)
@@ -1168,6 +1191,13 @@ export function Provider({ t, models }: PageProps) {
                   }
                 }}
               />
+            ) : row?.entry.id.startsWith('media:') ? (
+              <MediaProviderPanel
+                t={t}
+                provider={row.entry.id.slice('media:'.length)}
+                api={media}
+                onOpenMedia={() => nav.go('settings', { section: 'media' })}
+              />
             ) : row ? (
               <>
                 <Connection
@@ -1194,7 +1224,7 @@ export function Provider({ t, models }: PageProps) {
               t={t}
               chain={ps.data?.chain}
               groups={groups}
-              rows={rows}
+              rows={chatRows}
               busy={ps.busy}
               error={ps.error}
               onSave={(chain) => void ps.act({ op: 'chain', chain })}

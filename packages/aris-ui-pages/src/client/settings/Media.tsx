@@ -39,7 +39,7 @@ export interface MediaState {
   models: MediaModel[]
   today: Record<Kind, number>
   bots: BotRow[]
-  keys: { provider: string; name: string; site: string; hasKey: boolean }[]
+  keys: { provider: string; name: string; ref: string; site: string; hasKey: boolean }[]
 }
 
 const endpoint = () => new URL('api/aris/media', document.baseURI)
@@ -310,69 +310,88 @@ export function BotMediaRows({ t, botId, onManage }: { t: T; botId: string; onMa
   )
 }
 
-/** Khoá của nhà cung cấp chỉ dùng cho ảnh, video (fal.ai): chỉ ghi, không đọc lại được. */
-function KeysCard({ t, api }: { t: T; api: MediaApi }) {
-  const [values, setValues] = useState<Record<string, string>>({})
-  const keys = api.data?.keys ?? []
-  if (!keys.length) return null
-  const save = (provider: string) => {
-    const v = (values[provider] ?? '').trim()
-    if (v)
-      void api.act({ op: 'key', provider, value: v }).then(() => setValues({ ...values, [provider]: '' }))
+/**
+ * Nhà cung cấp chỉ dùng cho ảnh, video (fal.ai) ở trang Provider và model: khoá (chỉ ghi, không đọc lại được) và
+ * các model của nó. Sắp thứ tự ở mục Ảnh và video.
+ */
+export function MediaProviderPanel({
+  t,
+  provider,
+  api,
+  onOpenMedia,
+}: {
+  t: T
+  provider: string
+  api: MediaApi
+  onOpenMedia: () => void
+}) {
+  const [value, setValue] = useState('')
+  const k = api.data?.keys.find((x) => x.provider === provider)
+  if (!k) return null
+  const models = (api.data?.models ?? []).filter((m) => m.provider === provider)
+  const save = () => {
+    const v = value.trim()
+    if (v) void api.act({ op: 'key', provider, value: v }).then(() => setValue(''))
   }
   return (
-    <Card title={t('md.keys')} subtitle={t('md.keysHint')}>
-      <div style={{ padding: '0 14px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {keys.map((k) => (
-          <div key={k.provider} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-              <b>{k.name}</b>
-              <span className={`ap-pill2 ${k.hasKey ? 'ok' : ''}`}>
-                {k.hasKey ? t('md.keySet') : t('md.noKey')}
-              </span>
-              <span className="a-muted" style={{ fontSize: 12, marginLeft: 'auto' }}>
-                {t('md.keySite', { site: k.site })}
-              </span>
-            </div>
-            <form
-              style={{ display: 'flex', gap: 6 }}
-              onSubmit={(e) => {
-                e.preventDefault()
-                save(k.provider)
-              }}
-            >
-              <input
-                className="a-inp a-mono"
-                type="password"
-                autoComplete="off"
-                aria-label={t('md.keyInput', { name: k.name })}
-                placeholder={k.hasKey ? t('md.keyReplace') : t('md.keyPaste')}
-                value={values[k.provider] ?? ''}
-                onChange={(e) => setValues({ ...values, [k.provider]: e.target.value })}
-                style={{ flex: 1, minWidth: 0 }}
-              />
+    <>
+      <Card title={t('md.keyTitle')}>
+        <div style={{ padding: '0 14px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <form
+            style={{ display: 'flex', gap: 6 }}
+            onSubmit={(e) => {
+              e.preventDefault()
+              save()
+            }}
+          >
+            <input
+              className="a-inp a-mono"
+              type="password"
+              autoComplete="off"
+              aria-label={t('md.keyInput', { name: k.name })}
+              placeholder={k.hasKey ? t('md.keyReplace') : t('md.keyPaste')}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              style={{ flex: 1, minWidth: 0 }}
+            />
+            <Button size="sm" variant="primary" disabled={api.busy || !value.trim()} onClick={save}>
+              {t('md.keySave')}
+            </Button>
+            {k.hasKey && (
               <Button
                 size="sm"
-                variant="primary"
-                disabled={api.busy || !(values[k.provider] ?? '').trim()}
-                onClick={() => save(k.provider)}
+                disabled={api.busy}
+                onClick={() => void api.act({ op: 'key', provider, value: '' })}
               >
-                {t('md.keySave')}
+                {t('md.keyRemove')}
               </Button>
-              {k.hasKey && (
-                <Button
-                  size="sm"
-                  disabled={api.busy}
-                  onClick={() => void api.act({ op: 'key', provider: k.provider, value: '' })}
-                >
-                  {t('md.keyRemove')}
-                </Button>
-              )}
-            </form>
+            )}
+          </form>
+          <span className="a-muted" style={{ fontSize: 12 }}>
+            {t('md.keyNote', { ref: k.ref, site: k.site })}
+          </span>
+          <span className={`ap-pill2 ${k.hasKey ? 'ok' : ''}`} style={{ alignSelf: 'flex-start' }}>
+            {k.hasKey ? t('md.keySet') : t('md.noKey')}
+          </span>
+          {api.error && <span style={{ color: 'var(--a-danger)', fontSize: 12.5 }}>{api.error}</span>}
+        </div>
+      </Card>
+      <Card title={t('md.providerModels', { n: models.length })}>
+        <div style={{ padding: '0 14px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="ap-mchain">
+            {models.map((m) => (
+              <div className="ap-mchain-row" key={m.model}>
+                <span className="ap-pill2">{t(m.kind === 'image' ? 'md.kindImage' : 'md.kindVideo')}</span>
+                <LinkLabel t={t} m={m} link={m} />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-    </Card>
+          <a className="ap-link" style={{ alignSelf: 'flex-end', fontSize: 12.5 }} onClick={onOpenMedia}>
+            {t('md.orderThere')}
+          </a>
+        </div>
+      </Card>
+    </>
   )
 }
 
@@ -399,7 +418,6 @@ export function MediaSettings({ t }: PageProps) {
     <PageShell title={t('md.title')} subtitle={t('md.subtitle')}>
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         <div style={{ flex: '1 1 420px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <KeysCard t={t} api={api} />
           {KINDS.map((kind) => (
             <Card
               key={kind}

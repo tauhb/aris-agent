@@ -99,8 +99,9 @@ Plugin máy chủ `@aris/providers` thêm ba phần. Dữ liệu ở storage dom
   giây mỗi lần). Gemini gọi `POST /v1beta/interactions` (`response_format` ảnh hay video, đọc khối `image`/`video` có
   `data` hay `uri` ở bất kỳ đâu trong câu trả lời); OpenRouter gọi `POST /api/v1/images` (`data[i].b64_json`,
   `usage.cost`). Khoá: `GOOGLE_API_KEY`/`GEMINI_API_KEY`, `OPENROUTER_API_KEY`.
-- **fal.ai** (thêm 25/10): không phải nhà cung cấp chat nên không có ở trang Provider của dsh; khoá `FAL_KEY` nhập ở
-  thẻ "Khoá nhà cung cấp ảnh, video" của mục Ảnh và video (chỉ ghi, có Xoá khoá). Gọi hàng đợi
+- **fal.ai** (thêm 25/10): không phải nhà cung cấp chat nên dsh không có route cho nó; trang Provider và model vẫn liệt
+  kê fal trong danh bạ như mọi nhà cung cấp (đã kết nối khi có khoá). Chọn fal: ô Khoá API (chỉ ghi, lưu thành
+  `FAL_KEY`, có Xoá khoá) và danh sách model ảnh, video của nó; sắp thứ tự ở mục Ảnh và video. Gọi hàng đợi
   `POST queue.fal.run/<model>` với `Authorization: Key …`, hỏi `status_url` tới `COMPLETED`, lấy `response_url`
   (`images[].url` hay `video.url`) rồi tải tệp. Model: `fal-ai/flux/schnell` (khoảng 0,006 USD/ảnh),
   `fal-ai/flux/dev` (khoảng 0,05), Kling 2.5 Turbo Pro video 5 giây (khoảng 0,07 USD/giây). Giá là ước tính theo
