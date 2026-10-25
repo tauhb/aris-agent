@@ -36,6 +36,8 @@ export interface GNode {
   id: string
   name: string
   title: string
+  /** Ký ức bot: nội dung ngắn (tiêu đề là tên ký ức theo bot). */
+  text?: string | undefined
   type: NodeType
   space?: string | undefined
   x: number
@@ -164,6 +166,7 @@ export function buildGraph(o: {
       id: page?.path ?? `ky-uc:${mem!.id}`,
       name: page?.name ?? mem!.id,
       title: page?.title ?? mem!.label ?? mem!.text.slice(0, 60),
+      ...(mem ? { text: mem.text.slice(0, 60) } : {}),
       type,
       space: page?.space,
       x: cx + rad * Math.sin(ph) * Math.cos(th),

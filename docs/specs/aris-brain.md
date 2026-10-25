@@ -380,6 +380,18 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
 - Lỗi tìm ra khi chạy thử: mục lục hiện trong "Quanh trang này"; trang ở `chung/` không có thư mục loại nên hiện là
   ghi chú (nay đọc nhãn `loai`); tên nút ký ức là cả câu nên chữ đè nhau.
 
+### 5.3b — Đồ thị theo cây thư mục (bản vẽ DoThiCay, xong 25/10)
+
+- Màn 5.3 có hai cách xem, **Liên kết | Cây thư mục**, nhớ lựa chọn theo trình duyệt. Cây tỏa tròn theo đường dẫn
+  trang: Brain ở tâm, rồi Cá nhân / Công ty, phòng ban (tên phòng), lớp (Wiki, Nguồn, Nhật ký), nhóm (Người, Dự án…),
+  trang ở vòng ngoài. Liên kết `[[...]]` uốn theo nhánh lên thư mục chung rồi xuống (hierarchical edge bundling, Holten
+  2006); thanh "Độ uốn liên kết" từ thẳng tới bó theo nhánh. Cây là khung, liên kết vẫn là thứ AI đi theo khi đọc.
+- Bấm thư mục để gộp (nút viền chấm ở vòng ngoài, số trang bên trong), bấm lại để mở; bấm trang để tô liên kết của nó
+  và trang nối tới. Kéo để dời, cuộn hay nút để phóng to; cây là 2D để nhãn luôn đọc được (không xoay như 3D).
+- Ký ức bot là nhánh riêng, mỗi bot một thư mục gộp sẵn; mở ra thì lá là nội dung ký ức. Lọc: liên kết giữa trang,
+  nguồn, nhật ký, ký ức bot. API `?graph` trả thêm danh sách phòng ban để đặt tên nhánh.
+- Tính toán ở `tree-layout.ts` (thuần, có kiểm thử), vẽ ở `TreeGraph.tsx`.
+
 ## Đã chốt (25/10)
 
 - Duyệt khi nạp: mặc định {you} duyệt ở Hộp thư vào; `/note` và nhật ký của {you} tự nạp.

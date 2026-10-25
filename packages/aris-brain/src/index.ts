@@ -1292,13 +1292,14 @@ export async function apply(ctx: Context): Promise<void> {
                     )?.activeAll?.() ?? [])
                   : []
               const botNames = new Map((bots()?.store.list() ?? []).map((x) => [x.id, x.name]))
-              return json(
-                buildGraph({
+              return json({
+                ...buildGraph({
                   pages,
                   memories: mem.map((m) => ({ ...m, label: `Ký ức của ${botNames.get(m.bot) ?? m.bot}` })),
                   other: 'Khác',
                 }),
-              )
+                departments: depts().map((d) => ({ id: d.id, name: d.name })),
+              })
             }
             // Quanh trang này (5.1): trang trỏ đi, trỏ về, gợi ý nối.
             const around = q.get('around')
