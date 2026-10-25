@@ -1,1 +1,726 @@
-{"v": 3, "createdOnFiles": {"v": 1, "at": "2026-10-23T10:00:00Z"}, "title": "aris — Phương án giao diện", "launch": {"view": "canvas", "page": "g1"}, "pages": [{"id": "rv", "name": "Revamp nhẹ · đã áp dụng"}, {"id": "g1", "name": "1 · Khung & Chat"}, {"id": "g2", "name": "2 · Đội bot & Commander"}, {"id": "g3", "name": "3 · Trí nhớ & tự tiến hoá"}, {"id": "g4", "name": "4 · Tự động"}, {"id": "g5", "name": "5 · Second Brain & đồ thị"}, {"id": "g6", "name": "6 · Cài đặt & vận hành"}, {"id": "g7", "name": "7 · Di động"}, {"id": "cp", "name": "Thành phần"}, {"id": "v1", "name": "Bản nháp đầu"}], "boards": {"RvNgonNgu.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 1240, "title": "R1 · Ngôn ngữ thiết kế mới — trước và sau", "is_interactive": true, "page": "rv"}, "RvLinhVat.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 1240, "title": "R2 · Linh vật và đội hình", "is_interactive": true, "page": "rv"}, "RvChat.dc.html": {"x": 0, "y": 1360, "w": 1440, "h": 900, "title": "R3 · Chat 1.1 sau revamp — cùng bố cục", "expand": "fill", "is_interactive": true, "page": "rv"}, "Main.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "title": "1.1 · Chat với Aris — mở danh sách phiên", "expand": "fill", "is_interactive": true, "page": "g1"}, "KhungChat.dc.html": {"x": 1520, "y": 0, "w": 1200, "h": 900, "title": "1.2 · Khung chat — lệnh, gọi bot, đính kèm", "is_interactive": true, "page": "g1"}, "BanDo2.dc.html": {"x": 0, "y": 1320, "w": 1440, "h": 900, "title": "1.3 · Bản đồ đội bot 3D (tab)", "expand": "fill", "is_interactive": true, "page": "g1"}, "Phong2.dc.html": {"x": 1520, "y": 1320, "w": 1440, "h": 900, "title": "1.4 · Phòng", "expand": "fill", "is_interactive": true, "page": "g1"}, "TaoBot.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "title": "2.1 · Tạo bot mới", "is_interactive": true, "page": "g2"}, "HoSoBot.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 900, "title": "2.2 · Hồ sơ bot", "expand": "fill", "is_interactive": true, "page": "g2"}, "HoSoChuNhan.dc.html": {"x": 0, "y": 1320, "w": 1440, "h": 900, "title": "2.3 · Hồ sơ chủ nhân (theo bot)", "expand": "fill", "page": "g2"}, "NhanBan.dc.html": {"x": 1520, "y": 1320, "w": 1440, "h": 900, "title": "2.4 · Nhân bản / xuất bot", "page": "g2"}, "Commander.dc.html": {"x": 0, "y": 2640, "w": 1440, "h": 900, "title": "2.5 · Commander — điều phối đội bot", "expand": "fill", "is_interactive": true, "page": "g2"}, "KyUc.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "title": "3.1 · Ký ức", "expand": "fill", "is_interactive": true, "page": "g3"}, "ThuVienSkill.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 900, "title": "3.2 · Thư viện skill", "expand": "fill", "page": "g3"}, "SkillChiTiet.dc.html": {"x": 0, "y": 1320, "w": 1440, "h": 900, "title": "3.3 · Chi tiết skill — diff và eval", "expand": "fill", "page": "g3"}, "HopDuyet.dc.html": {"x": 1520, "y": 1320, "w": 1440, "h": 900, "title": "3.4 · Hộp duyệt", "expand": "fill", "page": "g3"}, "DangChay.dc.html": {"x": 0, "y": 2640, "w": 1440, "h": 900, "title": "3.5 · Việc đang chạy", "expand": "fill", "page": "g3"}, "Routine.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "title": "4.1 · Routine", "expand": "fill", "page": "g4"}, "TaoRoutine.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 900, "title": "4.2 · Tạo routine bằng lời", "page": "g4"}, "Kanban.dc.html": {"x": 0, "y": 1320, "w": 1440, "h": 900, "title": "4.3 · Kanban", "expand": "fill", "page": "g4"}, "GhiChu.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "title": "5.1 · Ghi chú — Cá nhân/Công ty, Nhật ký · Wiki · Nguồn, sửa trang, trống", "expand": "fill", "page": "g5", "is_interactive": true}, "HopThuVao.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 900, "title": "5.2 · Hộp thư vào", "expand": "fill", "page": "g5"}, "DoThi.dc.html": {"x": 0, "y": 1320, "w": 1440, "h": 900, "title": "5.3 · Đồ thị toàn cục", "expand": "fill", "page": "g5"}, "HoiBoNao.dc.html": {"x": 1520, "y": 1320, "w": 1440, "h": 900, "title": "5.4 · Hỏi bộ não", "expand": "fill", "page": "g5"}, "DieuKhien.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "title": "6.1 · Bảng điều khiển", "expand": "fill", "page": "g6"}, "Provider.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 900, "title": "6.2 · Provider & model", "expand": "fill", "page": "g6"}, "Kenh.dc.html": {"x": 0, "y": 1320, "w": 1440, "h": 900, "title": "6.3 · Kênh & ghép đôi", "expand": "fill", "page": "g6"}, "BaoMat.dc.html": {"x": 1520, "y": 1320, "w": 1440, "h": 900, "title": "6.4 · Ngân sách, duyệt, mạng", "expand": "fill", "page": "g6"}, "ThongKe.dc.html": {"x": 0, "y": 2640, "w": 1440, "h": 900, "title": "6.5 · Thống kê & nhật ký", "expand": "fill", "page": "g6"}, "ManHinhBot.dc.html": {"x": 1520, "y": 2640, "w": 1440, "h": 900, "title": "6.6 · Màn hình của bot", "expand": "fill", "page": "g6"}, "TeleDuyet.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "7.1 · Telegram — thẻ duyệt", "page": "g7"}, "TeleRoutine.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "7.2 · Telegram — báo cáo routine", "page": "g7"}, "TeleDeXuat.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "7.3 · Telegram — đề xuất ký ức/skill", "page": "g7"}, "MobileChat.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "title": "7.4 · Chat web trên điện thoại", "page": "g7"}, "Sidebar.dc.html": {"x": 0, "y": 0, "w": 260, "h": 900, "title": "Thanh bên dùng chung · Đội hình và Phòng", "page": "cp"}, "ThuVienLinhVat.dc.html": {"x": 340, "y": 0, "w": 1440, "h": 1240, "title": "Thư viện linh vật · 50 dáng (6 đang dùng + 24 bộ đầu + 20 mới C1–C20)", "is_interactive": true, "page": "cp"}, "BanDo.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "title": "Nháp B · Bản đồ đội bot", "expand": "fill", "is_interactive": true, "page": "v1"}, "Phong.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 900, "title": "Nháp C · Phòng nhóm", "expand": "fill", "is_interactive": true, "page": "v1"}, "SecondBrain.dc.html": {"x": 3040, "y": 0, "w": 1440, "h": 900, "title": "Nháp D · Second Brain + đồ thị tri thức", "expand": "fill", "is_interactive": true, "page": "v1"}, "TaoBotNgoai.dc.html": {"x": 1520, "y": 2640, "w": 1440, "h": 900, "title": "2.1b · Thêm bot ngoài (Claude Code, Codex, ACP qua plugin của dsh)", "is_interactive": true, "page": "g2"}, "MatTichHop.dc.html": {"x": 0, "y": 3960, "w": 1440, "h": 900, "title": "6.3b · Mặt tích hợp (ACP, API, A2A, MCP)", "expand": "fill", "is_interactive": true, "page": "g6"}, "TaoPhong.dc.html": {"x": 0, "y": 2640, "w": 1440, "h": 900, "title": "1.5 · Tạo phòng", "is_interactive": true, "page": "g1"}, "TimPhien.dc.html": {"x": 1520, "y": 2640, "w": 1440, "h": 900, "title": "1.6 · Tìm trong mọi phiên (⌘K)", "is_interactive": true, "page": "g1"}, "Plugin.dc.html": {"x": 1520, "y": 3960, "w": 1440, "h": 900, "title": "6.7 · Plugin", "expand": "fill", "is_interactive": true, "page": "g6"}, "Plugin2.dc.html": {"x": 0, "y": 5280, "w": 1440, "h": 900, "title": "6.7b · Plugin — bản mới: Đã cài · Chợ plugin · Chi tiết", "expand": "fill", "is_interactive": true, "page": "g6"}, "PhongBan.dc.html": {"x": 0, "y": 3960, "w": 1440, "h": 900, "title": "2.6 · Phòng ban — thành viên và chính sách chung", "expand": "fill", "is_interactive": true, "page": "g2"}, "GiaoBotNgoai.dc.html": {"x": 1520, "y": 3960, "w": 1440, "h": 900, "title": "2.1c · Giao việc cho bot ngoài — nhánh trong chat", "expand": "fill", "is_interactive": true, "page": "g2"}, "AiDangNoi.dc.html": {"x": 0, "y": 3960, "w": 1440, "h": 900, "title": "1.7 · Ai đang nói — đầu tin và viên nhắc tên", "expand": "fill", "is_interactive": true, "page": "g1"}, "DauTinNoiBat.dc.html": {"x": 1520, "y": 3960, "w": 1440, "h": 1200, "title": "1.7b · Đầu tin nổi bật — A và B (đã chọn B)", "expand": "fill", "is_interactive": true, "page": "g1"}, "ChuyenGiao.dc.html": {"x": 0, "y": 5280, "w": 1440, "h": 1000, "title": "1.8 · Chuyển giao — bot đích trả lời thẳng, trên web và Telegram", "expand": "fill", "is_interactive": true, "page": "g1"}, "KetNoiMcp.dc.html": {"x": 0, "y": 5280, "w": 1440, "h": 1000, "title": "2.2c · Kết nối nền tảng (MCP) theo bot — tab Skill & tool và hộp Thêm kết nối", "expand": "fill", "is_interactive": true, "page": "g2"}, "CotPhaiBot.dc.html": {"x": 1520, "y": 5280, "w": 1440, "h": 900, "title": "2.2d · Cột phải hồ sơ bot — A và B", "expand": "fill", "is_interactive": true, "page": "g2"}, "LinhVatDong.dc.html": {"x": 1860, "y": 0, "w": 1440, "h": 1000, "title": "Linh vật chuyển động · 5 trạng thái (rảnh, đang làm, chờ duyệt, xong, vấp)", "expand": "fill", "is_interactive": true, "page": "cp"}, "MenuChinh.dc.html": {"x": 340, "y": 1340, "w": 1440, "h": 1000, "title": "Menu chính · A và B — Tổng quan, Hộp duyệt, Ký ức, Thư viện skill lên thanh bên", "is_interactive": true, "page": "cp"}, "HoSoBotRoutine.dc.html": {"x": 0, "y": 6600, "w": 1440, "h": 900, "title": "2.2e · Hồ sơ bot — tab Routine (có routine / chưa có)", "expand": "fill", "is_interactive": true, "page": "g2"}, "CayBoNao.dc.html": {"x": 0, "y": 2340, "w": 1440, "h": 900, "title": "5.1r · Cây bộ não — hiện tại, A, B (chọn phương án)", "is_interactive": true, "page": "g5"}}, "order": ["RvNgonNgu.dc.html", "RvLinhVat.dc.html", "RvChat.dc.html", "Main.dc.html", "KhungChat.dc.html", "BanDo2.dc.html", "Phong2.dc.html", "TaoPhong.dc.html", "TimPhien.dc.html", "AiDangNoi.dc.html", "DauTinNoiBat.dc.html", "ChuyenGiao.dc.html", "TaoBot.dc.html", "HoSoBot.dc.html", "HoSoChuNhan.dc.html", "NhanBan.dc.html", "Commander.dc.html", "TaoBotNgoai.dc.html", "GiaoBotNgoai.dc.html", "PhongBan.dc.html", "KetNoiMcp.dc.html", "CotPhaiBot.dc.html", "HoSoBotRoutine.dc.html", "KyUc.dc.html", "ThuVienSkill.dc.html", "SkillChiTiet.dc.html", "HopDuyet.dc.html", "DangChay.dc.html", "Routine.dc.html", "TaoRoutine.dc.html", "Kanban.dc.html", "GhiChu.dc.html", "HopThuVao.dc.html", "DoThi.dc.html", "HoiBoNao.dc.html", "DieuKhien.dc.html", "Provider.dc.html", "Kenh.dc.html", "BaoMat.dc.html", "ThongKe.dc.html", "ManHinhBot.dc.html", "MatTichHop.dc.html", "Plugin.dc.html", "Plugin2.dc.html", "TeleDuyet.dc.html", "TeleRoutine.dc.html", "TeleDeXuat.dc.html", "MobileChat.dc.html", "Sidebar.dc.html", "ThuVienLinhVat.dc.html", "LinhVatDong.dc.html", "MenuChinh.dc.html", "BanDo.dc.html", "Phong.dc.html", "SecondBrain.dc.html"], "notes": {"rv1": {"x": 0, "y": -300, "text": "Revamp nhẹ — giữ bố cục, đổi cảm giác", "kind": "title1", "maxW": 2960, "page": "rv"}, "t1": {"x": 0, "y": -300, "text": "Nhóm 1 · Khung ứng dụng và Chat", "kind": "title1", "maxW": 2720, "page": "g1"}, "t2": {"x": 0, "y": 1020, "text": "Các tab dùng chung khung", "kind": "title1", "maxW": 2960, "page": "g1"}, "t3": {"x": 0, "y": -300, "text": "Bản nháp đầu (đã thay bằng Nhóm 1)", "kind": "title1", "maxW": 4480, "page": "v1"}, "n2": {"x": 0, "y": -300, "text": "Nhóm 2 · Đội bot và Commander", "kind": "title1", "maxW": 2960, "page": "g2"}, "n3": {"x": 0, "y": -300, "text": "Nhóm 3 · Trí nhớ và tự tiến hoá", "kind": "title1", "maxW": 2960, "page": "g3"}, "n4": {"x": 0, "y": -300, "text": "Nhóm 4 · Tự động", "kind": "title1", "maxW": 2960, "page": "g4"}, "n5": {"x": 0, "y": -300, "text": "Nhóm 5 · Second Brain và đồ thị", "kind": "title1", "maxW": 2960, "page": "g5"}, "n6": {"x": 0, "y": -300, "text": "Nhóm 6 · Cài đặt và vận hành", "kind": "title1", "maxW": 2960, "page": "g6"}, "n7": {"x": 0, "y": -300, "text": "Nhóm 7 · Di động", "kind": "title1", "maxW": 1800, "page": "g7"}, "ncp": {"x": 0, "y": -300, "text": "Thành phần dùng chung và thư viện linh vật", "kind": "title1", "maxW": 1780, "page": "cp"}}, "designSystems": []}
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "AiDangNoi.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g1",
+      "title": "1.7 · Ai đang nói — đầu tin và viên nhắc tên",
+      "w": 1440,
+      "x": 0,
+      "y": 3960
+    },
+    "BanDo.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "v1",
+      "title": "Nháp B · Bản đồ đội bot",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "BanDo2.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g1",
+      "title": "1.3 · Bản đồ đội bot 3D (tab)",
+      "w": 1440,
+      "x": 0,
+      "y": 1320
+    },
+    "BaoMat.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "6.4 · Ngân sách, duyệt, mạng",
+      "w": 1440,
+      "x": 1520,
+      "y": 1320
+    },
+    "CayBoNao.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "g5",
+      "title": "5.1r · Cây bộ não — hiện tại, A, B (chọn phương án)",
+      "w": 1440,
+      "x": 0,
+      "y": 2340
+    },
+    "ChuyenGiao.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "is_interactive": true,
+      "page": "g1",
+      "title": "1.8 · Chuyển giao — bot đích trả lời thẳng, trên web và Telegram",
+      "w": 1440,
+      "x": 0,
+      "y": 5280
+    },
+    "Commander.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g2",
+      "title": "2.5 · Commander — điều phối đội bot",
+      "w": 1440,
+      "x": 0,
+      "y": 2640
+    },
+    "CotPhaiBot.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g2",
+      "title": "2.2d · Cột phải hồ sơ bot — A và B",
+      "w": 1440,
+      "x": 1520,
+      "y": 5280
+    },
+    "DangChay.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g3",
+      "title": "3.5 · Việc đang chạy",
+      "w": 1440,
+      "x": 0,
+      "y": 2640
+    },
+    "DauTinNoiBat.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "is_interactive": true,
+      "page": "g1",
+      "title": "1.7b · Đầu tin nổi bật — A và B (đã chọn B)",
+      "w": 1440,
+      "x": 1520,
+      "y": 3960
+    },
+    "DieuKhien.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "6.1 · Bảng điều khiển",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "DoThi.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g5",
+      "title": "5.3 · Đồ thị toàn cục",
+      "w": 1440,
+      "x": 0,
+      "y": 1320
+    },
+    "GhiChu.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g5",
+      "title": "5.1 · Ghi chú — Cá nhân/Công ty, Nhật ký · Wiki · Nguồn, sửa trang, trống",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "GiaoBotNgoai.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g2",
+      "title": "2.1c · Giao việc cho bot ngoài — nhánh trong chat",
+      "w": 1440,
+      "x": 1520,
+      "y": 3960
+    },
+    "HoSoBot.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g2",
+      "title": "2.2 · Hồ sơ bot",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "HoSoBotRoutine.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g2",
+      "title": "2.2e · Hồ sơ bot — tab Routine (có routine / chưa có)",
+      "w": 1440,
+      "x": 0,
+      "y": 6600
+    },
+    "HoSoChuNhan.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g2",
+      "title": "2.3 · Hồ sơ chủ nhân (theo bot)",
+      "w": 1440,
+      "x": 0,
+      "y": 1320
+    },
+    "HoiBoNao.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g5",
+      "title": "5.4 · Hỏi bộ não",
+      "w": 1440,
+      "x": 1520,
+      "y": 1320
+    },
+    "HopDuyet.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g3",
+      "title": "3.4 · Hộp duyệt",
+      "w": 1440,
+      "x": 1520,
+      "y": 1320
+    },
+    "HopThuVao.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g5",
+      "title": "5.2 · Hộp thư vào",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Kanban.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g4",
+      "title": "4.3 · Kanban",
+      "w": 1440,
+      "x": 0,
+      "y": 1320
+    },
+    "Kenh.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "6.3 · Kênh & ghép đôi",
+      "w": 1440,
+      "x": 0,
+      "y": 1320
+    },
+    "KetNoiMcp.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "is_interactive": true,
+      "page": "g2",
+      "title": "2.2c · Kết nối nền tảng (MCP) theo bot — tab Skill & tool và hộp Thêm kết nối",
+      "w": 1440,
+      "x": 0,
+      "y": 5280
+    },
+    "KhungChat.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "g1",
+      "title": "1.2 · Khung chat — lệnh, gọi bot, đính kèm",
+      "w": 1200,
+      "x": 1520,
+      "y": 0
+    },
+    "KyUc.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g3",
+      "title": "3.1 · Ký ức",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "LinhVatDong.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "is_interactive": true,
+      "page": "cp",
+      "title": "Linh vật chuyển động · 5 trạng thái (rảnh, đang làm, chờ duyệt, xong, vấp)",
+      "w": 1440,
+      "x": 1860,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g1",
+      "title": "1.1 · Chat với Aris — mở danh sách phiên",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "ManHinhBot.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "6.6 · Màn hình của bot",
+      "w": 1440,
+      "x": 1520,
+      "y": 2640
+    },
+    "MatTichHop.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g6",
+      "title": "6.3b · Mặt tích hợp (ACP, API, A2A, MCP)",
+      "w": 1440,
+      "x": 0,
+      "y": 3960
+    },
+    "MenuChinh.dc.html": {
+      "h": 1000,
+      "is_interactive": true,
+      "page": "cp",
+      "title": "Menu chính · A và B — Tổng quan, Hộp duyệt, Ký ức, Thư viện skill lên thanh bên",
+      "w": 1440,
+      "x": 340,
+      "y": 1340
+    },
+    "MobileChat.dc.html": {
+      "h": 844,
+      "page": "g7",
+      "title": "7.4 · Chat web trên điện thoại",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    },
+    "NhanBan.dc.html": {
+      "h": 900,
+      "page": "g2",
+      "title": "2.4 · Nhân bản / xuất bot",
+      "w": 1440,
+      "x": 1520,
+      "y": 1320
+    },
+    "Phong.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "v1",
+      "title": "Nháp C · Phòng nhóm",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Phong2.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g1",
+      "title": "1.4 · Phòng",
+      "w": 1440,
+      "x": 1520,
+      "y": 1320
+    },
+    "PhongBan.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g2",
+      "title": "2.6 · Phòng ban — thành viên và chính sách chung",
+      "w": 1440,
+      "x": 0,
+      "y": 3960
+    },
+    "Plugin.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g6",
+      "title": "6.7 · Plugin",
+      "w": 1440,
+      "x": 1520,
+      "y": 3960
+    },
+    "Plugin2.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g6",
+      "title": "6.7b · Plugin — bản mới: Đã cài · Chợ plugin · Chi tiết",
+      "w": 1440,
+      "x": 0,
+      "y": 5280
+    },
+    "Provider.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "6.2 · Provider & model",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Routine.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g4",
+      "title": "4.1 · Routine",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "RvChat.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "rv",
+      "title": "R3 · Chat 1.1 sau revamp — cùng bố cục",
+      "w": 1440,
+      "x": 0,
+      "y": 1360
+    },
+    "RvLinhVat.dc.html": {
+      "h": 1240,
+      "is_interactive": true,
+      "page": "rv",
+      "title": "R2 · Linh vật và đội hình",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "RvNgonNgu.dc.html": {
+      "h": 1240,
+      "is_interactive": true,
+      "page": "rv",
+      "title": "R1 · Ngôn ngữ thiết kế mới — trước và sau",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "SecondBrain.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "v1",
+      "title": "Nháp D · Second Brain + đồ thị tri thức",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "Sidebar.dc.html": {
+      "h": 900,
+      "page": "cp",
+      "title": "Thanh bên dùng chung · Đội hình và Phòng",
+      "w": 260,
+      "x": 0,
+      "y": 0
+    },
+    "SkillChiTiet.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g3",
+      "title": "3.3 · Chi tiết skill — diff và eval",
+      "w": 1440,
+      "x": 0,
+      "y": 1320
+    },
+    "TaoBot.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "g2",
+      "title": "2.1 · Tạo bot mới",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "TaoBotNgoai.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "g2",
+      "title": "2.1b · Thêm bot ngoài (Claude Code, Codex, ACP qua plugin của dsh)",
+      "w": 1440,
+      "x": 1520,
+      "y": 2640
+    },
+    "TaoPhong.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "g1",
+      "title": "1.5 · Tạo phòng",
+      "w": 1440,
+      "x": 0,
+      "y": 2640
+    },
+    "TaoRoutine.dc.html": {
+      "h": 900,
+      "page": "g4",
+      "title": "4.2 · Tạo routine bằng lời",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "TeleDeXuat.dc.html": {
+      "h": 844,
+      "page": "g7",
+      "title": "7.3 · Telegram — đề xuất ký ức/skill",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "TeleDuyet.dc.html": {
+      "h": 844,
+      "page": "g7",
+      "title": "7.1 · Telegram — thẻ duyệt",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "TeleRoutine.dc.html": {
+      "h": 844,
+      "page": "g7",
+      "title": "7.2 · Telegram — báo cáo routine",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "ThongKe.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "6.5 · Thống kê & nhật ký",
+      "w": 1440,
+      "x": 0,
+      "y": 2640
+    },
+    "ThuVienLinhVat.dc.html": {
+      "h": 1240,
+      "is_interactive": true,
+      "page": "cp",
+      "title": "Thư viện linh vật · 50 dáng (6 đang dùng + 24 bộ đầu + 20 mới C1–C20)",
+      "w": 1440,
+      "x": 340,
+      "y": 0
+    },
+    "ThuVienSkill.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g3",
+      "title": "3.2 · Thư viện skill",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "TimPhien.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "g1",
+      "title": "1.6 · Tìm trong mọi phiên (⌘K)",
+      "w": 1440,
+      "x": 1520,
+      "y": 2640
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-23T10:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "page": "g1",
+    "view": "canvas"
+  },
+  "notes": {
+    "n2": {
+      "kind": "title1",
+      "maxW": 2960,
+      "page": "g2",
+      "text": "Nhóm 2 · Đội bot và Commander",
+      "x": 0,
+      "y": -300
+    },
+    "n3": {
+      "kind": "title1",
+      "maxW": 2960,
+      "page": "g3",
+      "text": "Nhóm 3 · Trí nhớ và tự tiến hoá",
+      "x": 0,
+      "y": -300
+    },
+    "n4": {
+      "kind": "title1",
+      "maxW": 2960,
+      "page": "g4",
+      "text": "Nhóm 4 · Tự động",
+      "x": 0,
+      "y": -300
+    },
+    "n5": {
+      "kind": "title1",
+      "maxW": 2960,
+      "page": "g5",
+      "text": "Nhóm 5 · Second Brain và đồ thị",
+      "x": 0,
+      "y": -300
+    },
+    "n6": {
+      "kind": "title1",
+      "maxW": 2960,
+      "page": "g6",
+      "text": "Nhóm 6 · Cài đặt và vận hành",
+      "x": 0,
+      "y": -300
+    },
+    "n7": {
+      "kind": "title1",
+      "maxW": 1800,
+      "page": "g7",
+      "text": "Nhóm 7 · Di động",
+      "x": 0,
+      "y": -300
+    },
+    "ncp": {
+      "kind": "title1",
+      "maxW": 1780,
+      "page": "cp",
+      "text": "Thành phần dùng chung và thư viện linh vật",
+      "x": 0,
+      "y": -300
+    },
+    "rv1": {
+      "kind": "title1",
+      "maxW": 2960,
+      "page": "rv",
+      "text": "Revamp nhẹ — giữ bố cục, đổi cảm giác",
+      "x": 0,
+      "y": -300
+    },
+    "t1": {
+      "kind": "title1",
+      "maxW": 2720,
+      "page": "g1",
+      "text": "Nhóm 1 · Khung ứng dụng và Chat",
+      "x": 0,
+      "y": -300
+    },
+    "t2": {
+      "kind": "title1",
+      "maxW": 2960,
+      "page": "g1",
+      "text": "Các tab dùng chung khung",
+      "x": 0,
+      "y": 1020
+    },
+    "t3": {
+      "kind": "title1",
+      "maxW": 4480,
+      "page": "v1",
+      "text": "Bản nháp đầu (đã thay bằng Nhóm 1)",
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "RvNgonNgu.dc.html",
+    "RvLinhVat.dc.html",
+    "RvChat.dc.html",
+    "Main.dc.html",
+    "KhungChat.dc.html",
+    "BanDo2.dc.html",
+    "Phong2.dc.html",
+    "TaoPhong.dc.html",
+    "TimPhien.dc.html",
+    "AiDangNoi.dc.html",
+    "DauTinNoiBat.dc.html",
+    "ChuyenGiao.dc.html",
+    "TaoBot.dc.html",
+    "HoSoBot.dc.html",
+    "HoSoChuNhan.dc.html",
+    "NhanBan.dc.html",
+    "Commander.dc.html",
+    "TaoBotNgoai.dc.html",
+    "GiaoBotNgoai.dc.html",
+    "PhongBan.dc.html",
+    "KetNoiMcp.dc.html",
+    "CotPhaiBot.dc.html",
+    "HoSoBotRoutine.dc.html",
+    "KyUc.dc.html",
+    "ThuVienSkill.dc.html",
+    "SkillChiTiet.dc.html",
+    "HopDuyet.dc.html",
+    "DangChay.dc.html",
+    "Routine.dc.html",
+    "TaoRoutine.dc.html",
+    "Kanban.dc.html",
+    "GhiChu.dc.html",
+    "HopThuVao.dc.html",
+    "DoThi.dc.html",
+    "HoiBoNao.dc.html",
+    "DieuKhien.dc.html",
+    "Provider.dc.html",
+    "Kenh.dc.html",
+    "BaoMat.dc.html",
+    "ThongKe.dc.html",
+    "ManHinhBot.dc.html",
+    "MatTichHop.dc.html",
+    "Plugin.dc.html",
+    "Plugin2.dc.html",
+    "TeleDuyet.dc.html",
+    "TeleRoutine.dc.html",
+    "TeleDeXuat.dc.html",
+    "MobileChat.dc.html",
+    "Sidebar.dc.html",
+    "ThuVienLinhVat.dc.html",
+    "LinhVatDong.dc.html",
+    "MenuChinh.dc.html",
+    "BanDo.dc.html",
+    "Phong.dc.html",
+    "SecondBrain.dc.html",
+    "CayBoNao.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "rv",
+      "name": "Revamp nhẹ · đã áp dụng"
+    },
+    {
+      "id": "g1",
+      "name": "1 · Khung & Chat"
+    },
+    {
+      "id": "g2",
+      "name": "2 · Đội bot & Commander"
+    },
+    {
+      "id": "g3",
+      "name": "3 · Trí nhớ & tự tiến hoá"
+    },
+    {
+      "id": "g4",
+      "name": "4 · Tự động"
+    },
+    {
+      "id": "g5",
+      "name": "5 · Second Brain & đồ thị"
+    },
+    {
+      "id": "g6",
+      "name": "6 · Cài đặt & vận hành"
+    },
+    {
+      "id": "g7",
+      "name": "7 · Di động"
+    },
+    {
+      "id": "cp",
+      "name": "Thành phần"
+    },
+    {
+      "id": "v1",
+      "name": "Bản nháp đầu"
+    }
+  ],
+  "title": "aris — Phương án giao diện"
+}
