@@ -320,26 +320,26 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-gstage .legend .note{flex-basis:100%;border-top:1px solid var(--a-line);padding-top:6px}
 .ap-gstage .hint{position:absolute;right:16px;top:14px;font-size:12px;color:var(--a-muted);background:var(--a-panel);border:1px solid var(--a-line);border-radius:999px;padding:4px 12px}
 .ap-gaside{flex:1 1 260px;max-width:290px;min-width:240px}
-.ap-tree{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
-.ap-tree:active{cursor:grabbing}
-.ap-tree .ring{fill:none;stroke:var(--a-line);stroke-dasharray:2 6}
-.ap-tree .te path{fill:none;stroke:var(--a-line);stroke-width:1.6}
-.ap-tree .lk{fill:none;stroke:var(--a-accent);stroke-width:1.3;opacity:.38}
-.ap-tree .lk.hot{stroke-width:2.4;opacity:.95}
-.ap-tree .lk.dim{opacity:.14}
-.ap-tree text{font-family:inherit;user-select:none}
-.ap-tree .ll{font-size:11.5px;fill:var(--a-ink)}
-.ap-tree .ll.hot{font-weight:700;font-size:12.5px}
-.ap-tree .ll.near{fill:var(--a-accent);font-weight:600}
-.ap-tree .ll.fold{font-weight:600;fill:var(--a-muted)}
-.ap-tree .ll.dim{fill:var(--a-muted);opacity:.85}
-.ap-tree .lg1{font-size:13px;font-weight:700;fill:var(--a-ink);paint-order:stroke;stroke:var(--a-bg);stroke-width:4px}
-.ap-tree .lg{font-size:11px;font-weight:600;fill:var(--a-muted);paint-order:stroke;stroke:var(--a-bg);stroke-width:4px}
-.ap-tree .cnt{font-size:10px;font-weight:700;fill:var(--a-ink)}
-.ap-tree .fd,.ap-tree .pg{cursor:pointer;outline:none}
-.ap-tree .fd:hover circle{stroke-width:3}
-.ap-tree .pg:hover .ll{fill:var(--a-accent)}
-.ap-tree .fd:focus-visible circle,.ap-tree .pg:focus-visible circle{stroke:var(--a-accent);stroke-width:3}
+.ap-ftree{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+.ap-ftree:active{cursor:grabbing}
+.ap-ftree .ring{fill:none;stroke:var(--a-line);stroke-dasharray:2 6}
+.ap-ftree .te path{fill:none;stroke:var(--a-line);stroke-width:1.6}
+.ap-ftree .lk{fill:none;stroke:var(--a-accent);stroke-width:1.3;opacity:.38}
+.ap-ftree .lk.hot{stroke-width:2.4;opacity:.95}
+.ap-ftree .lk.dim{opacity:.14}
+.ap-ftree text{font-family:inherit;user-select:none}
+.ap-ftree .ll{font-size:11.5px;fill:var(--a-ink)}
+.ap-ftree .ll.hot{font-weight:700;font-size:12.5px}
+.ap-ftree .ll.near{fill:var(--a-accent);font-weight:600}
+.ap-ftree .ll.fold{font-weight:600;fill:var(--a-muted)}
+.ap-ftree .ll.dim{fill:var(--a-muted);opacity:.85}
+.ap-ftree .lg1{font-size:13px;font-weight:700;fill:var(--a-ink);paint-order:stroke;stroke:var(--a-bg);stroke-width:4px}
+.ap-ftree .lg{font-size:11px;font-weight:600;fill:var(--a-muted);paint-order:stroke;stroke:var(--a-bg);stroke-width:4px}
+.ap-ftree .cnt{font-size:10px;font-weight:700;fill:var(--a-ink)}
+.ap-ftree .fd,.ap-ftree .pg{cursor:pointer;outline:none}
+.ap-ftree .fd:hover circle{stroke-width:3}
+.ap-ftree .pg:hover .ll{fill:var(--a-accent)}
+.ap-ftree .fd:focus-visible circle,.ap-ftree .pg:focus-visible circle{stroke:var(--a-accent);stroke-width:3}
 .ap-gaside .ap-h{padding:0 0 6px}
 .ap-ask{flex:1;max-width:760px;width:100%;margin:0 auto;padding:22px 24px;display:flex;flex-direction:column;gap:16px}
 .ap-q{align-self:flex-end;background:var(--a-panel2);border-radius:14px;padding:10px 14px;font-size:14.5px;max-width:80%}

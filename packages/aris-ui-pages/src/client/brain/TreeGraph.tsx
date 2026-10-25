@@ -149,7 +149,7 @@ export function TreeGraph({
   return (
     <svg
       ref={svg}
-      className="ap-tree"
+      className="ap-ftree"
       viewBox={`${pan.x - view / 2} ${pan.y - view / 2 - 10} ${view} ${view}`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
