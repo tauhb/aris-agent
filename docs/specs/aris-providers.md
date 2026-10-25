@@ -120,13 +120,13 @@ Plugin máy chủ `@aris/providers` thêm ba phần. Dữ liệu ở storage dom
   dòng riêng ở mức lượt (`groupTree: 'turn'`), nên ảnh, video hiện ngay chứ không nằm trong phần "Đã gọi công cụ" đang
   gập (Mở lớn, Tải về, Lưu vào bộ não qua Hộp thư vào). Dòng `[aris-media] {…}` cuối kết quả công cụ vẫn giữ cho phần
   công cụ và các phiên cũ chưa có bản ghi. Kết quả công cụ chỉ đưa đường dẫn tương đối: đường dẫn tuyệt đối bot chép vào
-  câu trả lời bị dsh vẽ thành ảnh lần nữa. Mô tả gửi model viết bằng tiếng Anh (flux đọc tiếng Việt sai chủ thể). Telegram: tệp vừa tạo của phiên gửi bằng `sendPhoto`/`sendVideo` trước câu trả
+  câu trả lời bị dsh vẽ thành ảnh lần nữa. Riêng tham số mô tả viết bằng tiếng Anh (flux đọc tiếng Việt sai chủ thể); bot vẫn trả lời bằng ngôn ngữ của người dùng. Video mỗi model một độ dài cố định (Gemini 8 giây, Kling 5 giây), kết quả công cụ ghi đúng độ dài. Telegram: tệp vừa tạo của phiên gửi bằng `sendPhoto`/`sendVideo` trước câu trả
   lời, chú thích là tên model.
 - Giao diện: Cài đặt › Ảnh và video (hai thứ tự, trần, cách chọn, bảng gán theo bot có ô sửa), tab Model của hồ sơ
   bot (dòng Tạo ảnh, Tạo video). API `GET/POST /api/aris/media` (`chain`, `caps`, `bot`).
 - Đã chạy trên máy: nhờ Aris tạo một ảnh ⇒ thử Gemini (chưa có khoá) rồi OpenRouter (hết số dư), khung chat và tin trả
   lời ghi đúng hai lý do; gán danh sách riêng cho Thơ hiện đúng ở tab Model. Sau khi có khoá fal: tạo ảnh thật bằng
-  fal-ai/flux/dev (khoảng 0,05 USD), ảnh hiện một lần ngay trong lượt. Video và Telegram gửi ảnh chưa thử.
+  fal-ai/flux/dev (khoảng 0,05 USD), ảnh hiện một lần ngay trong lượt. Video thật: Gemini báo hạn mức 0 của gói miễn phí (project của khoá chưa bật thanh toán) nên chuyển sang fal Kling, 5 giây, khoảng 0,35 USD, phát được ngay trong lượt. Telegram gửi ảnh chưa thử.
 
 ## Để sau
 
