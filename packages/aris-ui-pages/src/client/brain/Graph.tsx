@@ -46,6 +46,8 @@ const FILTERS: GraphNodeType[] = ['note', 'person', 'session', 'memory']
 const LEGEND: GraphNodeType[] = ['note', 'project', 'area', 'person', 'session', 'memory']
 const color = (type: GraphNodeType) => (type === 'session' ? 'var(--a-muted)' : NODE_COLORS[type])
 const label = (type: GraphNodeType) => `nb.type.${type}`
+/** Nhãn trên đồ thị: tên dài (nguồn thường lấy dòng đầu) cắt còn ~28 ký tự; tên đầy đủ ở ô Đang chọn. */
+const shortLabel = (s: string, n = 28) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s)
 const endpoint = (q = '') => new URL(`api/aris/brain${q}`, document.baseURI)
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase()
 
@@ -79,7 +81,7 @@ export function BrainGraph({ t, nav }: PageProps) {
   const graph: Graph = useMemo(
     () => ({
       nodes: (data?.nodes ?? []).map((n) => ({
-        name: n.title,
+        name: shortLabel(n.title),
         type: n.type,
         x: n.x,
         y: n.y,
@@ -110,7 +112,7 @@ export function BrainGraph({ t, nav }: PageProps) {
   return (
     <div className="ap-split ap-brain">
       <main className="ap-note-main">
-        <div className="ap-note-bar">
+        <div className="ap-note-bar ap-gbar">
           <IconButton label={t('br.back')} onClick={() => nav.go('brain')}>
             ‹
           </IconButton>
@@ -139,7 +141,7 @@ export function BrainGraph({ t, nav }: PageProps) {
             onChange={(e) => find(e.target.value)}
             placeholder={t('gr.search')}
             aria-label={t('gr.search')}
-            style={{ marginLeft: 'auto', flex: '0 1 240px', width: 'auto', minWidth: 140, height: 32 }}
+            style={{ marginLeft: 'auto', flex: '0 1 240px', width: 'auto', minWidth: 0, height: 32 }}
           />
         </div>
         <div className="ap-gstage">

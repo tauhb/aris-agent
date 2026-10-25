@@ -307,6 +307,8 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-inbox-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:14px}
 .ap-inc{display:flex;flex-direction:column;gap:8px;font-size:13.5px}
 .ap-gstage{position:relative;flex:1;min-height:560px}
+.ap-gbar{flex-wrap:nowrap;white-space:nowrap}
+.ap-gbar .ap-seg{flex:none}
 .ap-gstage>canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .ap-gstage .zoom{position:absolute;left:16px;top:14px;display:flex;flex-direction:column;background:var(--a-panel);border:1px solid var(--a-line);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .aris .ap-gstage .zoom button{width:34px;height:34px;padding:0;margin:0;border:0;border-radius:0;background:transparent;display:flex;align-items:center;justify-content:center;color:var(--a-muted)}
