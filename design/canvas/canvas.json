@@ -532,6 +532,15 @@
       "expand": "fill",
       "is_interactive": true,
       "page": "g5"
+    },
+    "TeleNap.dc.html": {
+      "x": 1880,
+      "y": 0,
+      "w": 900,
+      "h": 920,
+      "title": "7.5 · Telegram — gửi vào bộ não, thẻ bản nạp",
+      "is_interactive": true,
+      "page": "g7"
     }
   },
   "createdOnFiles": {
@@ -683,6 +692,7 @@
     "TeleRoutine.dc.html",
     "TeleDeXuat.dc.html",
     "MobileChat.dc.html",
+    "TeleNap.dc.html",
     "Sidebar.dc.html",
     "ThuVienLinhVat.dc.html",
     "LinhVatDong.dc.html",
