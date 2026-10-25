@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Hồ sơ chủ nhân — chung và theo bot</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b2{height:30px;padding:0 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px;white-space:nowrap}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.m{color:var(--muted)}
+a{color:var(--accent);text-decoration:none;font-size:12.5px}
+.seg{display:flex;gap:3px;padding:3px;border-radius:11px;background:var(--panel2)}
+.seg button{border:0;border-radius:8px;padding:5px 12px;background:transparent;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.seg .on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 0 0 1px var(--line)}
+.cl{display:grid;grid-template-columns:minmax(0,1fr) 96px 92px 64px 118px;gap:12px;align-items:center;padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.cl.hd{border-top:0;font-size:12px;color:var(--muted);font-weight:600}
+.bar{height:6px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.av{width:20px;height:20px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#fff;margin-right:-4px;border:2px solid var(--panel)}
+.step{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:9px 11px;display:flex;flex-direction:column;gap:3px;font-size:12.5px;background:var(--bg)}
+.step b{font-size:13px}
+.arrow{align-self:center;color:var(--muted)}
+.pill{font-size:11px;font-weight:600;border-radius:6px;padding:1px 7px;white-space:nowrap}
+.p-new{background:var(--okSoft);color:var(--ok)}
+.p-fix{background:var(--accentSoft);color:var(--accent)}
+.p-drop{background:var(--panel2);color:var(--muted)}
+.p-ask{background:var(--warnSoft);color:var(--warn)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; height: 900px; display: flex; overflow: hidden">
+  <dc-import name="Sidebar" active="none" bot="none" hint-size="260px,900px"></dc-import>
+  <main style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; overflow-y: auto">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">{{title}}</span><span class="m" style="font-size: 12px">{{subtitle}}</span></div>
+      <div class="seg" role="tablist" aria-label="Hồ sơ" style="margin-left: auto">
+        <button type="button" role="tab" class="{{oChung}}" onClick="{{toChung}}">Chung · mọi bot</button>
+        <button type="button" role="tab">Aris</button>
+        <button type="button" role="tab" class="{{oMinh}}" onClick="{{toMinh}}">Minh</button>
+        <button type="button" role="tab">Thơ</button>
+        <button type="button" role="tab">An</button>
+        <button type="button" role="tab">Ngân</button>
+      </div>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+
+    <div style="padding: 16px 24px; display: flex; gap: 16px; align-items: flex-start">
+      <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <sc-if value="{{isChung}}" hint-placeholder-val="{{ true }}">
+          <div class="card" style="padding: 10px 14px; display: flex; gap: 12px; align-items: center; border-color: var(--warn); background: var(--warnSoft); font-size: 13.5px">
+            <div style="flex: 1"><b>Đội chưa chắc 1 điều:</b> Tầu muốn báo cáo sáng thứ Hai hay cuối ngày thứ Sáu? Minh thấy sáng thứ Hai, An thấy thứ Sáu.</div>
+            <button type="button" class="b2">Sáng thứ Hai</button><button type="button" class="b2">Cuối thứ Sáu</button><button type="button" class="b2">Tuỳ việc</button>
+          </div>
+          <div class="card">
+            <div class="cl hd"><span>Cách giao tiếp · mọi bot đọc</span><span>Độ tin cậy</span><span>Thấy ở bot</span><span>Bằng chứng</span><span></span></div>
+            <div class="cl"><span>Trả lời tiếng Việt có dấu, ngắn, ưu tiên bảng; không mở đầu bằng lời khen</span><div class="bar"><div style="width: 95%; height: 100%; background: var(--ok)"></div></div><span><span class="av" style="background: #1D6FE0">A</span><span class="av" style="background: #0E8A7E">M</span><span class="av" style="background: #D9468F">T</span></span><a href="#">21 lần</a><span style="display: flex; gap: 6px"><button type="button" class="b2">Đúng</button><button type="button" class="b2">Sửa</button></span></div>
+            <div class="cl"><span>Đọc trên điện thoại là chính: mỗi mục một dòng, không giải thích dài</span><div class="bar"><div style="width: 86%; height: 100%; background: var(--ok)"></div></div><span><span class="av" style="background: #1D6FE0">A</span><span class="av" style="background: #E46F1F">An</span></span><a href="#">8 lần</a><span style="display: flex; gap: 6px"><button type="button" class="b2">Đúng</button><button type="button" class="b2">Sửa</button></span></div>
+            <div class="cl"><span class="m">Có thể muốn được hỏi lại trước khi bot tự gửi tin ra ngoài</span><div class="bar"><div style="width: 48%; height: 100%; background: var(--warn)"></div></div><span><span class="av" style="background: #E46F1F">An</span></span><a href="#">2 lần</a><span style="display: flex; gap: 6px"><button type="button" class="b2">Đúng</button><button type="button" class="b2">Sai</button></span></div>
+          </div>
+          <div class="card">
+            <div class="cl hd"><span>Nhịp làm việc và mục tiêu · mọi bot đọc</span><span>Độ tin cậy</span><span>Thấy ở bot</span><span>Bằng chứng</span><span></span></div>
+            <div class="cl"><span>Quý 4 tập trung kênh YouTube và khoá học AI cho chủ shop nhỏ</span><div class="bar"><div style="width: 88%; height: 100%; background: var(--ok)"></div></div><span><span class="av" style="background: #1D6FE0">A</span><span class="av" style="background: #0E8A7E">M</span><span class="av" style="background: #D9468F">T</span></span><a href="#">14 lần</a><span style="display: flex; gap: 6px"><button type="button" class="b2">Đúng</button><button type="button" class="b2">Sửa</button></span></div>
+            <div class="cl"><span>Làm việc sâu buổi sáng; chiều mới duyệt, trả lời tin</span><div class="bar"><div style="width: 72%; height: 100%; background: var(--accent)"></div></div><span><span class="av" style="background: #1D6FE0">A</span></span><a href="#">5 lần</a><span style="display: flex; gap: 6px"><button type="button" class="b2">Đúng</button><button type="button" class="b2">Sửa</button></span></div>
+          </div>
+          <p class="m" style="margin: 0; font-size: 12.5px">Cách giao tiếp, nhịp làm việc, mục tiêu lớn đưa vào hồ sơ chung khi từ hai bot trở lên cùng thấy. Chuyên môn của từng việc (cách viết kịch bản, cách tra số liệu) giữ trong hồ sơ riêng của bot.</p>
+        </sc-if>
+        <sc-if value="{{isMinh}}" hint-placeholder-val="{{ false }}">
+          <div class="card" style="padding: 10px 14px; font-size: 13px; display: flex; gap: 10px; align-items: center">
+            <span class="m">Minh cũng đọc <b style="color: var(--ink)">5 nhận định chung</b> của đội.</span><button type="button" class="b2" style="margin-left: auto" onClick="{{toChung}}">Xem hồ sơ chung</button>
+          </div>
+          <div class="card">
+            <div class="cl hd"><span>Riêng của Minh · nghiên cứu</span><span>Độ tin cậy</span><span>Nguồn</span><span>Bằng chứng</span><span></span></div>
+            <div class="cl"><span>Bảng so sánh phải có cột "nguồn" và ngày lấy số liệu</span><div class="bar"><div style="width: 90%; height: 100%; background: var(--ok)"></div></div><span class="m" style="font-size: 12px">Minh</span><a href="#">6 lần</a><span style="display: flex; gap: 6px"><button type="button" class="b2">Đúng</button><button type="button" class="b2">Sửa</button></span></div>
+            <div class="cl"><span>Theo dõi 3 kênh đối thủ; báo khi họ ra video về AI bán hàng</span><div class="bar"><div style="width: 74%; height: 100%; background: var(--accent)"></div></div><span class="m" style="font-size: 12px">Minh</span><a href="#">3 lần</a><span style="display: flex; gap: 6px"><button type="button" class="b2">Đúng</button><button type="button" class="b2">Sửa</button></span></div>
+            <div class="cl"><span>Báo cáo nghiên cứu một trang, chi tiết để ở phụ lục</span><div class="bar"><div style="width: 82%; height: 100%; background: var(--ok)"></div></div><span class="m" style="font-size: 12px">Minh</span><a href="#">4 lần</a><span style="display: flex; gap: 6px"><button type="button" class="b2">Đúng</button><button type="button" class="b2">Đưa vào chung</button></span></div>
+          </div>
+          <p class="m" style="margin: 0; font-size: 12.5px">"Đưa vào chung" khi một điều Minh học được cũng đúng với các bot khác.</p>
+        </sc-if>
+      </div>
+
+      <aside style="flex: 0 0 380px; display: flex; flex-direction: column; gap: 14px">
+        <div class="card" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; align-items: center"><b>Lần suy luận gần nhất</b><span class="m" style="margin-left: auto; font-size: 12px">14:20 · sau 6 lượt với Minh</span></div>
+          <div style="display: flex; gap: 6px">
+            <div class="step"><b>1 · Suy</b><span class="m">đọc 6 lượt mới, rút 5 quan sát</span></div>
+            <span class="arrow">›</span>
+            <div class="step"><b>2 · Tự soát</b><span class="m">bỏ 2: chỉ thấy một lần, không có câu của Tầu</span></div>
+            <span class="arrow">›</span>
+            <div class="step"><b>3 · Hoà giải</b><span class="m">so với hồ sơ hiện có</span></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 5px; font-size: 12.5px">
+            <span><span class="pill p-new">mới</span> Minh: báo cáo một trang, chi tiết ở phụ lục</span>
+            <span><span class="pill p-fix">nâng</span> Chung: đọc trên điện thoại là chính (78% → 86%)</span>
+            <span><span class="pill p-ask">hỏi lại</span> Chung: ngày nhận báo cáo, hai bot thấy khác nhau</span>
+            <span><span class="pill p-drop">bỏ</span> "thích màu xanh" — chỉ một lần, không rõ ngữ cảnh</span>
+          </div>
+        </div>
+        <div class="card" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; font-size: 13px">
+          <b>Đầu phiên mới</b>
+          <span class="m" style="font-size: 12.5px">Tầu mở phiên với Minh: "tìm giúp số liệu khoá học AI của đối thủ". Trước lượt đầu, Minh được nạp:</span>
+          <div style="border-left: 3px solid var(--accent); padding: 4px 10px; display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; background: var(--bg); border-radius: 0 8px 8px 0">
+            <span>· 3 nhận định chung chắc nhất (giao tiếp, mục tiêu quý 4)</span>
+            <span>· 2 của Minh gần câu hỏi nhất: cột "nguồn", 3 kênh đối thủ</span>
+            <span class="m">tìm theo nghĩa trên hồ sơ, tối đa 6 điều</span>
+          </div>
+        </div>
+        <div class="card" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 13px">
+          <b>Nhịp và chi phí</b>
+          <div style="display: flex; justify-content: space-between"><span>Suy luận sau mỗi</span><span><b>6 lượt</b> <span class="m">hay cuối phiên</span></span></div>
+          <div style="display: flex; justify-content: space-between"><span>Trần mỗi ngày</span><span><b>0,20 USD</b> <span class="m">· hôm nay 0,04</span></span></div>
+          <div style="display: flex; justify-content: space-between"><span>Model</span><span class="m">theo "Vòng học nền"</span></div>
+          <span class="m" style="font-size: 12px">Nhận định từ 80% trở lên mới nạp vào bot. Không nhận định nào tự thành ký ức; Tầu bấm Sai là bỏ hẳn.</span>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'dark';
+    const pick = s.pick || 'chung';
+    const chung = pick === 'chung';
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      isChung: chung, isMinh: !chung,
+      oChung: chung ? 'on' : '', oMinh: chung ? '' : 'on',
+      toChung: () => this.setState({ pick: 'chung' }), toMinh: () => this.setState({ pick: 'minh' }),
+      title: chung ? 'Đội hiểu gì về Tầu' : 'Minh hiểu gì về Tầu',
+      subtitle: chung ? 'Hồ sơ chung · mọi bot đọc · 5 nhận định · suy luận 3 vòng mỗi vài lượt' : 'Hồ sơ riêng của Minh · 3 nhận định · cộng thêm hồ sơ chung'
+    };
+  }
+}
+</script>
+</body>
+</html>

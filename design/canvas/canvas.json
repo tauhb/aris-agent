@@ -583,6 +583,36 @@
       "expand": "fill",
       "is_interactive": true,
       "page": "g5"
+    },
+    "TimTheoNghia.dc.html": {
+      "x": 1520,
+      "y": 5280,
+      "w": 1440,
+      "h": 900,
+      "title": "6.2b · Provider — Gemini: tìm theo nghĩa (nhúng) và tạo ảnh; tiến độ lập chỉ mục, phần gửi đi nhúng, thử tìm",
+      "expand": "fill",
+      "is_interactive": true,
+      "page": "g6"
+    },
+    "HoSoChung.dc.html": {
+      "x": 1520,
+      "y": 6600,
+      "w": 1440,
+      "h": 900,
+      "title": "2.3b · Hồ sơ chủ nhân — hồ sơ chung mọi bot đọc, hồ sơ riêng theo bot, suy luận 3 vòng, đầu phiên",
+      "expand": "fill",
+      "is_interactive": true,
+      "page": "g2"
+    },
+    "TaoAnh.dc.html": {
+      "x": 1520,
+      "y": 5280,
+      "w": 1440,
+      "h": 900,
+      "title": "1.9 · Tạo ảnh trong chat — công cụ tạo ảnh bật theo bot, lưu vào bộ não, Telegram",
+      "expand": "fill",
+      "is_interactive": true,
+      "page": "g1"
     }
   },
   "createdOnFiles": {
@@ -746,7 +776,10 @@
     "BoNaoChat.dc.html",
     "SoatBoNao.dc.html",
     "DoThiCay.dc.html",
-    "DoThiCay3D.dc.html"
+    "DoThiCay3D.dc.html",
+    "TimTheoNghia.dc.html",
+    "HoSoChung.dc.html",
+    "TaoAnh.dc.html"
   ],
   "pages": [
     {

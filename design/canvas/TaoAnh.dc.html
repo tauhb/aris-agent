@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Tạo ảnh trong chat</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&amp;family=Lexend:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--lib:#C2620A;--libSoft:#FBEEDD;--tg:#EFEAE2;--tgb:#FFFFFF}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--lib:#F5A35C;--libSoft:#33251A;--tg:#0E1621;--tgb:#182533}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b2{height:30px;padding:0 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.m{color:var(--muted)}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.me{align-self:flex-end;max-width:78%;background:var(--panel2);padding:9px 13px;border-radius:16px 16px 4px 16px}
+.who{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.who b{color:var(--ink)}
+.call{border:1px solid var(--line);border-radius:12px;background:var(--panel);font-size:13px;overflow:hidden}
+.call .h{display:flex;align-items:center;gap:8px;padding:8px 12px}
+.call .p{padding:8px 12px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.img{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.img .acts{position:absolute;right:8px;bottom:8px;display:flex;gap:6px}
+.img .acts button{height:28px;border:0;border-radius:8px;padding:0 9px;background:rgba(15,16,19,.72);color:#fff;font-size:12px}
+.sk{border-radius:10px;background:linear-gradient(90deg,var(--panel2) 0%,var(--hover) 50%,var(--panel2) 100%);background-size:200% 100%;animation:sh 1.4s linear infinite}
+@keyframes sh{from{background-position:200% 0}to{background-position:-200% 0}}
+.opt{border:1px solid var(--line);border-radius:999px;background:var(--panel);padding:3px 10px;font-size:12px;color:var(--muted)}
+.opt.on{border-color:var(--accent);background:var(--accentSoft);color:var(--accent);font-weight:600}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;padding:6px 0;border-top:1px solid var(--line)}
+.sw{width:34px;height:20px;border-radius:99px;background:var(--accent);position:relative;flex:none}
+.sw::after{content:'';position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+.tag{font-size:11.5px;border-radius:6px;padding:1px 7px;background:var(--panel2);color:var(--muted);white-space:nowrap}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; height: 900px; display: flex; overflow: hidden">
+  <dc-import name="Sidebar" active="none" bot="ha" hint-size="260px,900px"></dc-import>
+  <main style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <span style="width: 28px; height: 28px; border-radius: 9px; background: #D9468F; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px">H</span>
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Hạ · Nội dung</span><span class="m" style="font-size: 12px">Ảnh bìa video tháng 11</span></div>
+      <span style="margin-left: auto; display: flex; gap: 4px" role="group" aria-label="Thử trạng thái">
+        <button type="button" class="{{oDang}}" onClick="{{toDang}}">Đang tạo</button>
+        <button type="button" class="{{oXong}}" onClick="{{toXong}}">Đã xong</button>
+        <button type="button" class="{{oLoi}}" onClick="{{toLoi}}">Chưa bật thanh toán</button>
+      </span>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+    <div style="flex: 1; min-height: 0; overflow-y: auto; display: flex; justify-content: center">
+      <div style="width: 100%; max-width: 760px; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px">
+        <div class="me">Hạ vẽ giúp ảnh bìa cho video "AI cho chủ shop nhỏ", tỉ lệ 16:9, có chữ tiếng Việt, tông cam như kênh. Cho 2 phương án.</div>
+        <div class="who"><b>Hạ</b> · 14:32</div>
+        <div class="call">
+          <div class="h">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="9" cy="10" r="2"></circle><path d="M21 16l-5-5-8 9"></path></svg>
+            <b>Tạo ảnh</b><span class="m">· 2 ảnh · 16:9 · gemini-3.1-flash-lite-image</span>
+            <span style="{{stStyle}}">{{stLabel}}</span>
+          </div>
+          <div class="p">Mô tả gửi đi: ảnh bìa YouTube 16:9, nền cam ấm chuyển đỏ, một chủ shop nhỏ đứng sau quầy với điện thoại, biểu tượng AI phát sáng; chữ lớn "AI CHO CHỦ SHOP NHỎ", chữ nhỏ "Tập 1 · bắt đầu từ 0đ"; phong cách phẳng, rõ khi thu nhỏ.</div>
+        </div>
+
+        <sc-if value="{{isDang}}" hint-placeholder-val="{{ true }}">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+            <div class="sk" style="aspect-ratio: 16/9"></div>
+            <div class="sk" style="aspect-ratio: 16/9"></div>
+          </div>
+          <span class="m" style="font-size: 12.5px">Đang tạo 2 ảnh… thường mất 10–20 giây.</span>
+        </sc-if>
+
+        <sc-if value="{{isXong}}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+            <div class="img">
+              <svg viewBox="0 0 320 180" width="100%" style="display: block" role="img" aria-label="Phương án 1: nền cam, chủ shop sau quầy, chữ AI cho chủ shop nhỏ">
+                <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF8A3D"></stop><stop offset="1" stop-color="#E5484D"></stop></linearGradient></defs>
+                <rect width="320" height="180" fill="url(#g1)"></rect>
+                <circle cx="252" cy="70" r="34" fill="#FFF3E0" opacity=".25"></circle>
+                <rect x="196" y="118" width="110" height="40" rx="6" fill="#7A2E12" opacity=".55"></rect>
+                <circle cx="250" cy="86" r="16" fill="#FFE0C2"></circle>
+                <path d="M226 124c4-18 16-24 24-24s20 6 24 24z" fill="#2B2D42"></path>
+                <rect x="262" y="104" width="12" height="20" rx="2" fill="#FFFFFF"></rect>
+                <text x="252" y="56" text-anchor="middle" font-family="Lexend" font-weight="800" font-size="13" fill="#FFF">AI</text>
+                <text x="20" y="70" font-family="Lexend" font-weight="800" font-size="22" fill="#FFF">AI CHO</text>
+                <text x="20" y="96" font-family="Lexend" font-weight="800" font-size="22" fill="#FFF">CHỦ SHOP NHỎ</text>
+                <rect x="20" y="110" width="128" height="22" rx="11" fill="#FFF"></rect>
+                <text x="84" y="125" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700" font-size="10" fill="#C2410C">Tập 1 · bắt đầu từ 0đ</text>
+              </svg>
+              <div class="acts"><button type="button">Mở lớn</button><button type="button">Sửa ảnh này</button></div>
+            </div>
+            <div class="img">
+              <svg viewBox="0 0 320 180" width="100%" style="display: block" role="img" aria-label="Phương án 2: nền tối, điện thoại phát sáng, chữ cam">
+                <defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1F1A17"></stop><stop offset="1" stop-color="#5A2A12"></stop></linearGradient></defs>
+                <rect width="320" height="180" fill="url(#g2)"></rect>
+                <circle cx="78" cy="92" r="58" fill="#FF8A3D" opacity=".18"></circle>
+                <rect x="56" y="44" width="46" height="88" rx="8" fill="#0F1013" stroke="#FF8A3D" stroke-width="3"></rect>
+                <text x="79" y="94" text-anchor="middle" font-family="Lexend" font-weight="800" font-size="16" fill="#FF8A3D">AI</text>
+                <text x="132" y="74" font-family="Lexend" font-weight="800" font-size="20" fill="#FF8A3D">AI CHO</text>
+                <text x="132" y="98" font-family="Lexend" font-weight="800" font-size="20" fill="#FFFFFF">CHỦ SHOP NHỎ</text>
+                <text x="132" y="122" font-family="Be Vietnam Pro" font-weight="600" font-size="11" fill="#F3D2BC">Tập 1 · bắt đầu từ 0đ</text>
+              </svg>
+              <div class="acts"><button type="button">Mở lớn</button><button type="button">Sửa ảnh này</button></div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap">
+            <button type="button" class="b2">Tạo thêm 2 ảnh</button>
+            <button type="button" class="b2">Tải về</button>
+            <button type="button" class="b2">Lưu vào bộ não</button>
+            <span class="m" style="font-size: 12px; margin-left: auto; align-self: center">2 ảnh · 0,07 USD · lưu ở anh/2026-10-25/ trong thư mục của Hạ</span>
+          </div>
+          <div>Hai phương án: (1) nền cam sáng, chủ shop sau quầy, hợp ảnh thu nhỏ; (2) nền tối, điện thoại phát sáng, chữ cam nổi hơn. Tầu chọn một, Hạ chỉnh tiếp chữ hay bố cục. Ảnh có thể sai chữ tiếng Việt nhỏ, Tầu xem kỹ trước khi đăng.</div>
+        </sc-if>
+
+        <sc-if value="{{isLoi}}" hint-placeholder-val="{{ false }}">
+          <div class="card" style="padding: 10px 12px; border-color: var(--warn); background: var(--warnSoft); font-size: 13px; display: flex; gap: 10px; align-items: center">
+            <span style="flex: 1">Gemini báo chưa bật thanh toán: tạo ảnh không có gói miễn phí. Bật thanh toán cho dự án ở Google AI Studio (khoảng 0,034 USD một ảnh), hoặc chọn model ảnh khác ở trang Model.</span>
+            <a href="TimTheoNghia.dc.html" class="b2" style="text-decoration: none">Mở trang Model</a>
+          </div>
+          <div>Hạ chưa tạo được ảnh vì Gemini cần bật thanh toán. Trong lúc chờ, Hạ viết sẵn mô tả ở trên, bật xong là tạo lại được ngay.</div>
+        </sc-if>
+      </div>
+    </div>
+    <div style="padding: 10px 24px 16px; display: flex; justify-content: center">
+      <div style="width: 100%; max-width: 760px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); padding: 10px 14px; color: var(--muted); font-size: 13.5px">Nhắn cho Hạ… <span style="float: right" class="tag">/anh để tạo ảnh nhanh</span></div>
+    </div>
+  </main>
+
+  <aside style="flex: 0 0 320px; border-left: 1px solid var(--line); background: var(--panel); padding: 16px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto">
+    <div>
+      <div style="font-weight: 600; font-size: 13.5px">Tạo ảnh · trong Hồ sơ bot</div>
+      <div class="m" style="font-size: 12px">Bật theo từng bot ở tab Skill &amp; tool</div>
+    </div>
+    <div>
+      <div class="row" style="border-top: 0"><span><b>Hạ</b> được tạo ảnh</span><span class="sw" aria-label="Đang bật"></span></div>
+      <div class="row"><span>Model</span><span class="m">theo "Tạo ảnh" ở trang Model</span></div>
+      <div class="row"><span>Trần mỗi ngày</span><span><b>0,50 USD</b> <span class="m">· hôm nay 0,07</span></span></div>
+      <div class="row"><span>Hỏi trước khi tạo</span><span class="m">quá 4 ảnh một lần</span></div>
+      <div class="row"><span>Lưu ảnh</span><span class="m">thư mục làm việc của bot</span></div>
+    </div>
+    <div class="m" style="font-size: 12px">Bot nào không bật thì không thấy công cụ tạo ảnh. Ảnh gửi vào chat, Telegram, và lưu vào bộ não khi Tầu bấm "Lưu vào bộ não" (vào Hộp thư vào như một nguồn).</div>
+
+    <div>
+      <div style="font-weight: 600; font-size: 13.5px; padding-bottom: 6px">Trên Telegram</div>
+      <div style="border-radius: 14px; background: var(--tg); padding: 12px; display: flex; flex-direction: column; gap: 8px">
+        <div style="align-self: flex-end; max-width: 85%; background: #2B5278; color: #fff; border-radius: 12px 12px 4px 12px; padding: 6px 10px; font-size: 12.5px">/anh bìa video AI cho chủ shop nhỏ, 16:9</div>
+        <div style="max-width: 92%; background: var(--tgb); border-radius: 12px 12px 12px 4px; overflow: hidden; font-size: 12.5px">
+          <svg viewBox="0 0 320 180" width="100%" style="display: block" aria-hidden="true"><defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF8A3D"></stop><stop offset="1" stop-color="#E5484D"></stop></linearGradient></defs><rect width="320" height="180" fill="url(#g3)"></rect><text x="20" y="80" font-family="Lexend" font-weight="800" font-size="22" fill="#FFF">AI CHO</text><text x="20" y="106" font-family="Lexend" font-weight="800" font-size="22" fill="#FFF">CHỦ SHOP NHỎ</text></svg>
+          <div style="padding: 6px 10px">Hạ · phương án 1/2. Trả lời "sửa: …" để chỉnh, "lưu" để đưa vào bộ não.</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'dark';
+    const pick = s.pick || 'xong';
+    const o = (k) => 'opt' + (pick === k ? ' on' : '');
+    const go = (k) => () => this.setState({ pick: k });
+    const st = { dang: ['đang tạo', 'var(--accent)', 'var(--accentSoft)'], xong: ['xong · 14 giây', 'var(--ok)', 'var(--okSoft)'], loi: ['chưa tạo được', 'var(--warn)', 'var(--warnSoft)'] }[pick];
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      isDang: pick === 'dang', isXong: pick === 'xong', isLoi: pick === 'loi',
+      oDang: o('dang'), oXong: o('xong'), oLoi: o('loi'),
+      toDang: go('dang'), toXong: go('xong'), toLoi: go('loi'),
+      stLabel: st[0],
+      stStyle: 'margin-left: auto; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 1px 9px; color: ' + st[1] + '; background: ' + st[2]
+    };
+  }
+}
+</script>
+</body>
+</html>
