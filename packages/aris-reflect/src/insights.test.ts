@@ -76,15 +76,15 @@ describe('hồ sơ chủ nhân', () => {
     expect(renderInsights(store.list('lam'))).toContain('6 đến 9 giờ')
   })
 
-  it('chép sang bot khác, gộp nhận định trùng ý', async () => {
+  it('chép sang bot khác; điều hai bot cùng thấy đã lên hồ sơ chung', async () => {
     const { store } = setup()
     await store.observe('lam', short)
     await store.observe('lam', { text: 'Người dùng tập trung kênh YouTube quý 4', area: 'work' })
+    // Mai thấy cùng điều Lâm đã thấy: cả hai lên hồ sơ chung.
     await store.observe('mai', { text: 'Người dùng thích câu trả lời ngắn có bảng', area: 'communication' })
-    expect(await store.copy('lam', 'mai')).toBe(2)
-    const mai = store.list('mai')
-    expect(mai).toHaveLength(2)
-    expect(mai.find((i) => i.area === 'communication')?.hits).toBe(2)
+    expect(store.list('chung')[0]?.hits).toBe(2)
+    expect(await store.copy('lam', 'mai')).toBe(1)
+    expect(store.list('mai').map((i) => i.area)).toEqual(['work'])
     await expect(store.copy('lam', 'lam')).rejects.toThrow()
   })
 

@@ -6,6 +6,8 @@
 import { fold } from './signals.js'
 
 export const AREAS = ['communication', 'work'] as const
+/** Mã "bot" của hồ sơ chung: mọi bot đọc (giai đoạn 5, đợt 5b). */
+export const SHARED = 'chung'
 export type Area = (typeof AREAS)[number]
 
 export interface Evidence {
@@ -35,7 +37,11 @@ export interface Insight {
   confirmed?: boolean | undefined
   /** Có bằng chứng ngược: hỏi người dùng. */
   question?: { text: string; options: InsightOption[]; at: string } | undefined
-  status: 'active' | 'rejected'
+  /** `merged`: đã gộp lên hồ sơ chung (`mergedInto`), không hiện và không nạp riêng nữa. */
+  status: 'active' | 'rejected' | 'merged'
+  /** Hồ sơ chung: các bot đã thấy điều này. */
+  bots?: string[] | undefined
+  mergedInto?: string | undefined
   createdAt: string
   updatedAt: string
 }
@@ -89,6 +95,9 @@ export function similarity(a: string, b: string): number {
   return common / (x.size + y.size - common)
 }
 
+/** Kết quả ghi một quan sát: nhận định mới, được nâng, cần hỏi lại, hay đã lên hồ sơ chung. */
+export type ObserveKind = 'new' | 'raise' | 'ask' | 'share'
+
 const newId = (now: number) => `i-${now.toString(36)}-${Math.floor(Math.random() * 36 ** 5).toString(36)}`
 
 export class InsightStore {
@@ -109,56 +118,136 @@ export class InsightStore {
     return this.table.get(id)
   }
 
+  /** Bot đọc gì: hồ sơ chung rồi hồ sơ riêng (đang có). */
+  forBot(bot: string): Insight[] {
+    return bot === SHARED ? this.list(SHARED) : [...this.list(SHARED), ...this.list(bot)]
+  }
+
   /**
    * Ghi một quan sát của vòng học vào hồ sơ bot. Trả nhận định đã đổi, hoặc undefined khi bỏ qua
    * (trùng nhận định người dùng đã bác, câu rỗng).
    */
   async observe(bot: string, o: Observation, sessionId?: string): Promise<Insight | undefined> {
+    return (await this.observeDetailed(bot, o, sessionId))?.insight
+  }
+
+  /**
+   * Như `observe`, kèm loại kết quả. Quan sát khớp hồ sơ chung thì nâng hồ sơ chung (ghi thêm bot đã thấy);
+   * nhận định riêng mà một bot khác cũng đang có thì gộp cả hai lên hồ sơ chung.
+   */
+  async observeDetailed(
+    bot: string,
+    o: Observation,
+    sessionId?: string,
+  ): Promise<{ insight: Insight; kind: ObserveKind } | undefined> {
     const text = o.text.trim()
     if (!text) return undefined
     const at = this.now().toISOString()
     const ev: Evidence = { at, ...(sessionId ? { sessionId } : {}), ...(o.quote ? { quote: o.quote } : {}) }
-    const mine = this.list(bot, true)
-    const byId = (id?: string) => (id ? mine.find((i) => i.id === id && i.status === 'active') : undefined)
+    const pool = [...this.list(SHARED, true), ...this.list(bot, true)].filter((i) => i.status !== 'merged')
+    const byId = (id?: string) => (id ? pool.find((i) => i.id === id && i.status === 'active') : undefined)
+    const seen = (i: Insight) => (i.bot === SHARED ? { bots: [...new Set([...(i.bots ?? []), bot])] } : {})
     const against = byId(o.contradicts)
     if (against) {
       const options = (o.options ?? []).filter((x) => x.label.trim() && x.text.trim()).slice(0, 4)
-      return this.put({
+      const insight = await this.put({
         ...against,
+        ...seen(against),
         confidence: against.confirmed ? against.confidence : round(against.confidence * 0.5),
         // Đã xác nhận thì vẫn hỏi lại khi thấy ngược, nhưng không tự hạ.
         ...(o.question && options.length >= 2 ? { question: { text: o.question, options, at } } : {}),
         evidence: [...against.evidence, ev].slice(-KEEP_EVIDENCE),
         updatedAt: at,
       })
+      return { insight, kind: 'ask' }
     }
     const same =
       byId(o.supports) ??
-      mine
+      pool
         .map((i) => ({ i, s: similarity(i.text, text) }))
         .filter((x) => x.s >= 0.6)
         .sort((a, b) => b.s - a.s)[0]?.i
     if (same?.status === 'rejected') return undefined
-    if (same)
-      return this.put({
+    let mine: Insight
+    let kind: ObserveKind
+    if (same) {
+      mine = await this.put({
         ...same,
+        ...seen(same),
         confidence: same.confirmed ? same.confidence : reinforce(same.confidence),
         hits: same.hits + 1,
         evidence: [...same.evidence, ev].slice(-KEEP_EVIDENCE),
         updatedAt: at,
       })
-    return this.put({
-      id: newId(this.now().getTime()),
-      bot,
-      area: o.area,
-      text,
-      confidence: START_CONFIDENCE,
-      evidence: [ev],
-      hits: 1,
-      status: 'active',
-      createdAt: at,
-      updatedAt: at,
-    })
+      kind = 'raise'
+      if (mine.bot === SHARED) return { insight: mine, kind }
+    } else {
+      mine = await this.put({
+        id: newId(this.now().getTime()),
+        bot,
+        area: o.area,
+        text,
+        confidence: START_CONFIDENCE,
+        evidence: [ev],
+        hits: 1,
+        status: 'active',
+        createdAt: at,
+        updatedAt: at,
+      })
+      kind = 'new'
+    }
+    // Bot khác cũng thấy điều này: lên hồ sơ chung.
+    const others = [...this.table.entries()]
+      .map(([, i]) => i)
+      .filter(
+        (i) =>
+          i.bot !== bot && i.bot !== SHARED && i.status === 'active' && similarity(i.text, mine.text) >= 0.6,
+      )
+    if (!others.length) return { insight: mine, kind }
+    return { insight: await this.promote([mine, ...others]), kind: 'share' }
+  }
+
+  /** Người dùng bấm "Đưa vào chung" ở hồ sơ riêng của một bot. */
+  async share(id: string): Promise<Insight> {
+    const item = this.get(id)
+    if (!item || item.status !== 'active') throw new InsightError('Không thấy nhận định này.')
+    if (item.bot === SHARED) throw new InsightError('Nhận định này đã ở hồ sơ chung.')
+    return this.promote([item])
+  }
+
+  /** Gộp các nhận định riêng lên hồ sơ chung (vào nhận định chung cùng ý nếu có); nhận định riêng thành `merged`. */
+  private async promote(items: readonly Insight[]): Promise<Insight> {
+    const at = this.now().toISOString()
+    const best = [...items].sort((a, b) => effective(b) - effective(a))[0]!
+    const twin = this.list(SHARED, true).find(
+      (x) => x.status !== 'merged' && similarity(x.text, best.text) >= 0.6,
+    )
+    const bots = [...new Set([...(twin?.bots ?? []), ...items.map((i) => i.bot)])]
+    const evidence = [...(twin?.evidence ?? []), ...items.flatMap((i) => i.evidence)]
+      .sort((a, b) => a.at.localeCompare(b.at))
+      .slice(-KEEP_EVIDENCE)
+    const confirmed = !!twin?.confirmed || items.some((i) => i.confirmed)
+    const shared: Insight =
+      twin && twin.status === 'rejected'
+        ? twin
+        : await this.put({
+            ...(twin ?? {
+              id: newId(this.now().getTime()),
+              bot: SHARED,
+              area: best.area,
+              text: best.text,
+              status: 'active' as const,
+              createdAt: at,
+            }),
+            confidence: confirmed ? 1 : Math.max(twin?.confidence ?? 0, ...items.map((i) => i.confidence)),
+            hits: (twin?.hits ?? 0) + items.reduce((n, i) => n + i.hits, 0),
+            evidence,
+            bots,
+            ...(confirmed ? { confirmed: true } : {}),
+            updatedAt: at,
+          })
+    for (const i of items) await this.put({ ...i, status: 'merged', mergedInto: shared.id, updatedAt: at })
+    return shared
   }
 
   /** Người dùng bấm Đúng. */

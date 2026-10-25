@@ -90,6 +90,27 @@ Mỗi bot giữ một hồ sơ riêng về người dùng: các **nhận định
 
 **API:** `GET /api/aris/insights?bot=<mã>`; `POST` với `op` = `confirm`, `edit` (`text`), `reject`, `answer` (`option`), `copy` (`to`).
 
+## Hiểu chủ nhân sâu (giai đoạn 5, đợt 5b; bản vẽ 2.3b, làm 25/10)
+
+- **Hồ sơ chung** (mã `chung`, mọi bot đọc): quan sát của một bot khớp nhận định đang có của bot khác (cùng ý từ 0,6)
+  thì cả hai gộp lên hồ sơ chung, ghi các bot đã thấy; bản riêng thành `merged`. Quan sát khớp hồ sơ chung thì nâng
+  hồ sơ chung. Nút "Đưa vào chung" làm tay. Ngược ý một nhận định chung thì hỏi lại như cũ. Bot đọc hồ sơ chung
+  rồi hồ sơ riêng (vòng học, đầu phiên, prompt).
+- **Suy luận ba vòng** sau mỗi 6 lượt của một phiên (và khi phiên đóng, nếu còn từ 2 lượt), model rẻ của vòng học:
+  (1) suy tối đa 5 quan sát kèm trích lời người dùng; (2) tự soát, bỏ điều thiếu bằng chứng, chỉ đúng một lần, nói
+  về bot; (3) hoà giải với hồ sơ (cùng ý, ngược ý kèm câu hỏi, mới) rồi ghi qua kho nhận định. Bỏ qua phiên kiểm
+  thử skill, routine, Thủ thư, trợ lý ẩn danh. Trần 0,20 USD/ngày (phạm vi `profile`). Mỗi lần ghi vào bảng
+  `profile_runs` (200 lần gần nhất).
+- **Đầu phiên**: ở câu đầu của phiên, nếu có hơn 6 nhận định đủ tin thì chọn 6 điều gần câu đầu nhất (0,6 × gần +
+  0,4 × tin cậy; gần theo nghĩa qua `arisEmbed` khi có khoá Gemini, không thì theo từ trùng), chờ tối đa 1,5 giây.
+- Màn 2.3: chọn "Chung · mọi bot" hay từng bot; hồ sơ chung ghi "Thấy ở"; hồ sơ riêng có "Đưa vào chung" và dòng
+  "cũng đọc N nhận định chung"; cột phải: lần suy luận gần nhất (3 vòng, kết quả mới / nâng / hỏi lại / lên chung /
+  bỏ), đầu phiên gần nhất, nhịp và chi phí. API: `GET /api/aris/insights?profile`, POST `share`.
+- Đã chạy trên máy: 6 lượt với Aris ⇒ một lần suy luận rút 5 quan sát, giữ cả 5, 0,0066 USD; "Đưa vào chung" nhận
+  định "đọc trên điện thoại" ⇒ hồ sơ chung có 1 nhận định, thấy ở Aris. Lỗi tìm ra: vòng hoà giải không khớp được
+  nhận định cũ (model chép cả ngoặc vuông của mã) ⇒ đọc mã bỏ ngoặc, nói rõ hơn trong lời nhắc. Chưa thử thật: hai
+  bot cùng thấy tự lên chung, đầu phiên khi có hơn 6 nhận định đủ tin, câu hỏi lại từ vòng hoà giải, trần ngày.
+
 ## Để sau
 
 - Đề xuất skill (đợt 3) dùng chung vòng học này.

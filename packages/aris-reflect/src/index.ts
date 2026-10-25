@@ -18,15 +18,36 @@ import { appendPluginRecord, type Session } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-storage-domain'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-tools'
-import { reflectDomain, type RunRecord, type Table } from './domain.js'
-import { InsightError, InsightStore, renderInsights, type Insight, type InsightTable } from './insights.js'
+import { reflectDomain, type ProfileRun, type RunRecord, type Table } from './domain.js'
+import {
+  InsightError,
+  InsightStore,
+  renderInsights,
+  SHARED,
+  trusted,
+  type Insight,
+  type InsightTable,
+} from './insights.js'
+import {
+  critiquePrompt,
+  inferPrompt,
+  parseDrafts,
+  parseVerdicts,
+  PROFILE_DAILY_USD,
+  PROFILE_EVERY,
+  reconciled,
+  reconcilePrompt,
+  WARM_MAX,
+  warmPick,
+} from './profile.js'
 import { MAX_CHARS, parseReflection, reflectPrompt, transcriptOf, type MemoryProposal } from './prompt.js'
 import { decide, emptyTurn, type Reason, type TurnLog } from './signals.js'
 
 export * from './signals.js'
 export * from './prompt.js'
 export * from './insights.js'
-export type { RunRecord } from './domain.js'
+export * from './profile.js'
+export type { ProfileRun, RunRecord } from './domain.js'
 
 export const name = 'aris-reflect'
 export const inject = ['storageDomain', 'llm', 'sessionController', 'systemPrompt']
@@ -143,6 +164,8 @@ interface SessionState {
   pending: TurnLog[]
   /** Số lượt từ lần học trước (undefined khi phiên chưa học). */
   sinceLast?: number | undefined
+  /** Lượt chưa đem suy luận hồ sơ (đợt 5b). */
+  profile: TurnLog[]
 }
 
 /** Giữ tối đa ngần này lượt chưa học mỗi phiên. */
@@ -154,6 +177,7 @@ export async function apply(ctx: Context): Promise<void> {
   ctx.effect(() => () => void domain.close(), 'aris-reflect: domain')
   const runs = domain.table('runs') as unknown as Table<RunRecord>
   const insights = new InsightStore(domain.table('insights') as unknown as InsightTable)
+  const profileRuns = domain.table('profile_runs') as unknown as Table<ProfileRun>
 
   const bots = () => ctx.get('arisBots') as BotsPort | undefined
   const memory = () => ctx.get('arisMemory') as MemoryPort | undefined
@@ -166,17 +190,75 @@ export async function apply(ctx: Context): Promise<void> {
       ctx.systemPrompt.context({
         name: 'aris:owner-insights',
         order: INSIGHTS_ORDER,
-        text: (c) => renderInsights(insights.list(botIdOf(c?.agent?.session.id))),
+        text: (c) => {
+          const sid = c?.agent?.session.id
+          const warm = sid ? warmBySession.get(sid) : undefined
+          return renderInsights(warm ?? insights.forBot(botIdOf(sid)))
+        },
         interpolate: false,
       }),
     'aris-reflect: owner insights',
   )
 
+  // --- Đầu phiên (đợt 5b): nhận định gần câu đầu nhất --------------------------------
+  interface EmbedPort {
+    hasKey(provider: string): Promise<boolean>
+    embed(r: {
+      provider: string
+      model: string
+      texts: readonly string[]
+      mode: 'doc' | 'query'
+    }): Promise<Float32Array[]>
+  }
+  const EMBED = { provider: 'google', model: 'gemini-embedding-2' }
+  const warmBySession = new Map<string, Insight[]>()
+  /** Phiên đã chọn nhận định đầu phiên (mỗi phiên một lần, ở câu đầu). */
+  const warmed = new Set<string>()
+  const lastWarm = new Map<
+    string,
+    { at: string; bot: string; first: string; picked: { text: string; shared: boolean }[] }
+  >()
+  const insightVecs = new Map<string, Float32Array>()
+  async function relevanceOf(items: readonly Insight[], first: string) {
+    const port = ctx.get('arisEmbed') as EmbedPort | undefined
+    if (!port || !(await port.hasKey(EMBED.provider).catch(() => false))) return undefined
+    const keyOf = (i: Insight) => `${i.id}\u0000${i.text}`
+    const missing = items.filter((i) => !insightVecs.has(keyOf(i)))
+    if (missing.length) {
+      const vs = await port.embed({ ...EMBED, mode: 'doc', texts: missing.map((i) => i.text) })
+      missing.forEach((i, n) => vs[n] && insightVecs.set(keyOf(i), vs[n]))
+    }
+    const [q] = await port.embed({ ...EMBED, mode: 'query', texts: [first] })
+    if (!q) return undefined
+    return (i: Insight) => {
+      const v = insightVecs.get(keyOf(i))
+      if (!v || v.length !== q.length) return 0
+      let s = 0
+      for (let k = 0; k < q.length; k++) s += q[k]! * v[k]!
+      return Math.max(0, s)
+    }
+  }
+  async function warmStart(session: Session, first: string) {
+    const bot = botIdOf(session.id)
+    const pool = insights.forBot(bot).filter(trusted)
+    let rel: ((i: Insight) => number) | undefined
+    if (pool.length > WARM_MAX) rel = await relevanceOf(pool, first).catch(() => undefined)
+    const picked = warmPick(pool, first, WARM_MAX, rel)
+    // Hồ sơ còn ít thì cứ nạp đủ như cũ (renderInsights tự lọc điều đủ tin).
+    if (pool.length > WARM_MAX) warmBySession.set(session.id, picked)
+    lastWarm.set(bot, {
+      at: new Date().toISOString(),
+      bot,
+      first: first.length > 160 ? `${first.slice(0, 159)}…` : first,
+      picked: picked.map((i) => ({ text: i.text, shared: i.bot === SHARED })),
+    })
+  }
+
   // --- Theo dõi lượt -------------------------------------------------------------
   const states = new Map<string, SessionState>()
   const stateOf = (session: Session) => {
     let s = states.get(session.id)
-    if (!s) states.set(session.id, (s = { session, pending: [] }))
+    if (!s) states.set(session.id, (s = { session, pending: [], profile: [] }))
     return s
   }
   const turnOf = (agent: Agent, turn: number) => {
@@ -185,9 +267,18 @@ export async function apply(ctx: Context): Promise<void> {
     return s.current
   }
 
-  ctx.on('agent/pre-step', ({ agent, messages, turn }, next) => {
+  ctx.on('agent/pre-step', async ({ agent, messages, turn }, next) => {
     const t = turnOf(agent, turn)
     for (const m of messages) if (m.source.kind === 'user') t.user.push(textOf(m.content))
+    const first = t.user.join('\n').trim()
+    if (first && !warmed.has(agent.session.id)) {
+      warmed.add(agent.session.id)
+      // Chờ tối đa 1,5 giây; quá thì lượt này dùng hồ sơ đầy đủ, lượt sau dùng phần đã chọn.
+      await Promise.race([
+        warmStart(agent.session, first).catch((e: unknown) => logger.warn('đầu phiên: %s', String(e))),
+        new Promise((r) => setTimeout(r, 1500)),
+      ])
+    }
     return next()
   })
 
@@ -212,7 +303,9 @@ export async function apply(ctx: Context): Promise<void> {
     const s = states.get(agent.session.id)
     if (!s?.current || s.current.turn !== turn) return
     s.pending.push(s.current)
+    s.profile.push(s.current)
     s.current = undefined
+    if (s.profile.length >= PROFILE_EVERY) enqueueProfile(s.session, s.profile.splice(0))
     if (s.pending.length > KEEP_TURNS) s.pending.splice(0, s.pending.length - KEEP_TURNS)
     if (s.sinceLast !== undefined) s.sinceLast++
     const reasons = decide(s.pending, s.sinceLast)
@@ -222,7 +315,14 @@ export async function apply(ctx: Context): Promise<void> {
     s.sinceLast = 0
     enqueue(s.session, turns, reasons)
   })
-  ctx.on('session/disposed', (session) => void states.delete(session.id))
+  ctx.on('session/disposed', (session) => {
+    const s = states.get(session.id)
+    // Cuối phiên: suy luận nốt các lượt còn lại.
+    if (s && s.profile.length >= 2) enqueueProfile(session, s.profile.splice(0))
+    states.delete(session.id)
+    warmBySession.delete(session.id)
+    warmed.delete(session.id)
+  })
 
   // --- Chạy nền, mỗi lúc một lần ---------------------------------------------------
   let chain = Promise.resolve()
@@ -255,6 +355,122 @@ export async function apply(ctx: Context): Promise<void> {
       catalog = { at: Date.now(), model: c ? pickModel(c) : undefined }
     }
     return catalog.model
+  }
+
+  const enqueueProfile = (session: Session, turns: TurnLog[]) => {
+    chain = chain
+      .then(() => profileRun(session, turns))
+      .catch((e: unknown) => logger.warn('suy luận hồ sơ: %s', String(e)))
+  }
+
+  /** Gọi model một lần, cộng tiền vào phạm vi `profile`; trả chữ model viết. */
+  async function ask(m: { provider: string; model: string }, prompt: string, bot: string, run: ProfileRun) {
+    let raw = ''
+    let usage: Usage | undefined
+    for await (const chunk of ctx.llm.stream({
+      provider: m.provider,
+      model: m.model,
+      messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
+      maxTokens: 3000,
+    })) {
+      if (chunk.type === 'text-delta') raw += chunk.text
+      else if (chunk.type === 'usage') usage = chunk.usage
+    }
+    if (usage)
+      run.usd =
+        (run.usd ?? 0) + ((await spend()?.charge(m.provider, m.model, usage, ['profile', `bot:${bot}`])) ?? 0)
+    return raw
+  }
+
+  let profileBudgetNoted = ''
+  /** Suy luận hồ sơ ba vòng trên các lượt vừa qua của một phiên. */
+  async function profileRun(session: Session, turns: TurnLog[]) {
+    if ((ctx.get('arisSkills') as SkillsPort | undefined)?.isEval?.(session.id)) return
+    if ((ctx.get('arisRoutine') as { isRoutine?(id: string): boolean } | undefined)?.isRoutine?.(session.id))
+      return
+    if (
+      (ctx.get('arisBrain') as { isLibrarian?(id: string): boolean } | undefined)?.isLibrarian?.(session.id)
+    )
+      return
+    if (await isHelper(session.id)) return
+    const transcript = transcriptOf(turns, 20_000)
+    if (!turns.some((t) => t.user.join('').trim())) return
+    const bot = bots()?.botOf(session.id) ?? { id: 'aris', name: 'Aris', kind: 'commander' }
+    const run: ProfileRun = {
+      id: `p-${Date.now().toString(36)}-${Math.floor(Math.random() * 36 ** 4).toString(36)}`,
+      at: new Date().toISOString(),
+      bot: bot.id,
+      sessionId: session.id,
+      turns: turns.length,
+      observed: 0,
+      dropped: [],
+      results: [],
+    }
+    if ((spend()?.today().profile ?? 0) >= PROFILE_DAILY_USD) {
+      const day = run.at.slice(0, 10)
+      if (profileBudgetNoted !== day) {
+        profileBudgetNoted = day
+        await saveProfile({ ...run, skipped: 'budget' })
+      }
+      return
+    }
+    const m = await model()
+    if (!m) return void (await saveProfile({ ...run, skipped: 'no-model' }))
+    run.model = `${m.provider}/${m.model}`
+    try {
+      const drafts = parseDrafts(await ask(m, inferPrompt({ bot: bot.name, transcript }), bot.id, run))
+      run.observed = drafts.length
+      if (drafts.length) {
+        const verdicts = parseVerdicts(
+          await ask(m, critiquePrompt({ transcript, drafts }), bot.id, run),
+          drafts.length,
+        )
+        // Model không trả lời được vòng soát thì chỉ giữ quan sát có trích dẫn.
+        const keep = drafts.filter((d, i) => {
+          const v = verdicts.find((x) => x.i === i)
+          const ok = v ? v.keep : !!d.quote
+          if (!ok) run.dropped.push({ text: d.text, ...(v?.why ? { why: v.why } : {}) })
+          return ok
+        })
+        if (keep.length) {
+          const profile = insights.forBot(bot.id)
+          const raw = await ask(
+            m,
+            reconcilePrompt({
+              drafts: keep,
+              profile: profile.map((i) => ({
+                id: i.id,
+                area: i.area,
+                text: i.text,
+                shared: i.bot === SHARED,
+              })),
+            }),
+            bot.id,
+            run,
+          )
+          for (const o of reconciled(raw, keep, new Set(profile.map((i) => i.id)))) {
+            const r = await insights.observeDetailed(bot.id, o, session.id)
+            if (r)
+              run.results.push({
+                kind: r.kind,
+                text: r.insight.text,
+                scope: r.insight.bot,
+                confidence: r.insight.confirmed ? 1 : r.insight.confidence,
+              })
+          }
+        }
+      }
+    } catch (e) {
+      run.error = String(e).split('\n')[0]
+    }
+    await saveProfile(run)
+  }
+
+  /** Giữ 200 lần suy luận gần nhất. */
+  async function saveProfile(run: ProfileRun) {
+    await profileRuns.put(run.id, run)
+    const all = [...profileRuns.entries()].map(([, r]) => r).sort((a, b) => b.at.localeCompare(a.at))
+    for (const old of all.slice(200)) await profileRuns.delete(old.id)
   }
 
   let budgetNoted = ''
@@ -323,7 +539,7 @@ export async function apply(ctx: Context): Promise<void> {
                   transcript,
                   existing: mem.textsFor(bot.id),
                   reasons,
-                  insights: insights.list(bot.id).map((i) => ({ id: i.id, area: i.area, text: i.text })),
+                  insights: insights.forBot(bot.id).map((i) => ({ id: i.id, area: i.area, text: i.text })),
                   skills: { allowed: skillAllowed, active: activeSkills },
                 }),
               },
@@ -419,7 +635,18 @@ export async function apply(ctx: Context): Promise<void> {
         path: '/api/aris/insights',
         methods: ['GET', 'POST'],
         requestBody: 'buffered',
-        fetch: (request) => insightsApi(insights, request),
+        fetch: (request) =>
+          insightsApi(insights, request, async () => ({
+            runs: [...profileRuns.entries()]
+              .map(([, r]) => r)
+              .sort((a, b) => b.at.localeCompare(a.at))
+              .slice(0, 10),
+            today: spend()?.today().profile ?? 0,
+            cap: PROFILE_DAILY_USD,
+            every: PROFILE_EVERY,
+            model: await model(),
+            warm: [...lastWarm.values()],
+          })),
       })
       return () => void dispose()
     }, 'aris-reflect: /api/aris/insights')
@@ -438,10 +665,15 @@ const BOT_RE = /^[a-z0-9-]{1,40}$/
  *   GET  ?bot=<mã>                                   → nhận định đang có của bot
  *   POST { op: confirm | edit | reject | answer | copy, id?, text?, option?, bot?, to? }
  */
-export async function insightsApi(store: InsightStore, request: Request): Promise<Response> {
+export async function insightsApi(
+  store: InsightStore,
+  request: Request,
+  profile?: () => Promise<unknown>,
+): Promise<Response> {
   const url = new URL(request.url)
   const view = (bot: string) => ({ bot, insights: store.list(bot), threshold: 0.8 })
   if (request.method !== 'POST') {
+    if (url.searchParams.has('profile') && profile) return json(await profile())
     const bot = url.searchParams.get('bot') ?? 'aris'
     return BOT_RE.test(bot) ? json(view(bot)) : json({ error: 'bot không hợp lệ' }, 400)
   }
@@ -466,6 +698,11 @@ export async function insightsApi(store: InsightStore, request: Request): Promis
       case 'reject':
         item = await store.reject(id)
         break
+      case 'share': {
+        const from = store.get(id)?.bot
+        await store.share(id)
+        return json({ ok: true, ...view(from ?? SHARED) })
+      }
       case 'answer':
         item = await store.answer(id, typeof body.option === 'number' ? body.option : -1)
         break

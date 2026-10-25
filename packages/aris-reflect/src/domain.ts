@@ -45,10 +45,39 @@ export const insightRecord: z.ZodType<Insight> = z.object({
       at: z.string(),
     })
     .optional(),
-  status: z.enum(['active', 'rejected']),
+  status: z.enum(['active', 'rejected', 'merged']),
+  bots: z.array(z.string()).optional(),
+  mergedInto: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 })
+
+/** Một lần suy luận hồ sơ ba vòng (đợt 5b; màn 2.3 "Lần suy luận gần nhất"). */
+export const profileRunRecord = z.object({
+  id: z.string(),
+  at: z.string(),
+  bot: z.string(),
+  sessionId: z.string(),
+  turns: z.number().int(),
+  model: z.string().optional(),
+  usd: z.number().optional(),
+  /** Vòng 1: số quan sát rút ra. */
+  observed: z.number().int(),
+  /** Vòng 2: quan sát bị bỏ và lý do. */
+  dropped: z.array(z.object({ text: z.string(), why: z.string().optional() })),
+  /** Vòng 3: kết quả ghi vào hồ sơ. */
+  results: z.array(
+    z.object({
+      kind: z.enum(['new', 'raise', 'ask', 'share']),
+      text: z.string(),
+      scope: z.string(),
+      confidence: z.number(),
+    }),
+  ),
+  skipped: z.enum(['budget', 'no-model']).optional(),
+  error: z.string().optional(),
+})
+export type ProfileRun = z.infer<typeof profileRunRecord>
 
 export const reflectDomain = defineDomain({
   name: 'aris_reflect',
@@ -57,6 +86,7 @@ export const reflectDomain = defineDomain({
   tables: {
     runs: domainTable<string, RunRecord>(runRecord),
     insights: domainTable<string, Insight>(insightRecord),
+    profile_runs: domainTable<string, ProfileRun>(profileRunRecord),
   },
 })
 
