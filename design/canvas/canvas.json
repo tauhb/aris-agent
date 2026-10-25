@@ -633,6 +633,26 @@
       "expand": "fill",
       "is_interactive": true,
       "page": "g2"
+    },
+    "SoatRanhGioi.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g5",
+      "title": "5.5b · Soát bộ não — ký ức nên vào bộ não (ranh giới ba kho), số liệu chưa ghi ngày, mâu thuẫn có ngày",
+      "w": 1440,
+      "x": 0,
+      "y": 5400
+    },
+    "DuAnNoi.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g4",
+      "title": "4.3b · Dự án nối bộ não — nút trang bộ não ở đầu Kanban, thẻ Kanban ở đầu trang Dự án",
+      "w": 1440,
+      "x": 1520,
+      "y": 1320
     }
   },
   "createdOnFiles": {
@@ -801,7 +821,9 @@
     "HoSoChung.dc.html",
     "TaoAnh.dc.html",
     "ModelAnhVideo.dc.html",
-    "HoSoBotModel.dc.html"
+    "HoSoBotModel.dc.html",
+    "SoatRanhGioi.dc.html",
+    "DuAnNoi.dc.html"
   ],
   "pages": [
     {

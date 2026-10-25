@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Soát bộ não · ranh giới và ngày</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em;margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--faint:#9A9EA6;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FCEBE9;--lib:#C2620A;--libSoft:#FBEEDD;--src:#5C616C;--srcSoft:#ECEBE6;--mem:#7A4FD0;--memSoft:#EFE8FB;--me:#1D6FE0;--meSoft:#E6F0FE;--mark:#FFF1B8}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--faint:#6B7280;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18;--lib:#F5A35C;--libSoft:#33251A;--src:#9CA3B0;--srcSoft:#23262D;--mem:#B79BF5;--memSoft:#2A2140;--me:#5AA5FF;--meSoft:#16263F;--mark:#4A3F12}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:32px;padding:0 13px;border:0;border-radius:9px;background:var(--ink);color:var(--panel);font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.b2{height:30px;padding:0 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.b3{height:30px;padding:0 9px;border:0;border-radius:9px;background:transparent;color:var(--muted);font-size:12.5px}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12px}
+.spaces{display:flex;gap:3px;padding:3px;border-radius:11px;background:var(--panel2)}
+.spaces button{border:0;border-radius:8px;padding:5px 12px;background:transparent;font-size:12.5px;color:var(--muted)}
+.spaces button.on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+.grp{font-size:11.5px;font-weight:600;color:var(--faint);padding:14px 10px 4px;text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:6px}
+.it{display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:0;background:transparent;border-radius:10px;padding:8px 10px;font-size:13.5px;color:var(--ink)}
+.it:hover{background:var(--hover)}
+.it.on{background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,.05),0 0 0 1px var(--line)}
+.it .n{margin-left:auto;font-size:12px;font-weight:600;border-radius:999px;padding:0 8px;line-height:20px;background:var(--panel2);color:var(--muted)}
+.it .n.hot{background:var(--warnSoft);color:var(--warn)}
+.it .new{font-size:10px;font-weight:700;border-radius:5px;padding:0 5px;background:var(--accentSoft);color:var(--accent)}
+.bd{width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.card{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.pg{display:inline-flex;align-items:center;gap:4px;border-radius:6px;padding:0 6px;font-size:13px;font-weight:600;background:var(--libSoft);color:var(--lib)}
+.mm{display:inline-flex;align-items:center;gap:5px;border-radius:6px;padding:0 7px;font-size:12.5px;font-weight:600;background:var(--memSoft);color:var(--mem)}
+.quote{border-left:3px solid var(--line);padding:4px 10px;font-size:13px;color:var(--ink);background:var(--panel2);border-radius:0 8px 8px 0}
+.quote.mem{border-left-color:var(--mem)}
+.quote mark{background:var(--mark);color:var(--ink);border-radius:3px;padding:0 2px}
+.quote .dt{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ok);background:var(--okSoft);border-radius:4px;padding:0 4px}
+.row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:13px;flex-wrap:wrap}
+.lab{font-size:11px;font-weight:600;border-radius:6px;padding:1px 7px;white-space:nowrap}
+.kho{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kho > div{border-radius:11px;padding:9px 11px;font-size:12.5px;display:flex;flex-direction:column;gap:3px}
+.kho b{font-size:13px}
+.done{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-radius:10px;padding:8px 10px;background:var(--okSoft);color:var(--ok);font-size:12.5px}
+.done label{display:inline-flex;align-items:center;gap:6px;color:var(--ink)}
+.rule{font-size:12.5px;border:1px dashed var(--line);border-radius:10px;padding:8px 11px;background:var(--panel)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; height: 900px; display: flex; overflow: hidden">
+  <dc-import name="Sidebar" active="brain" bot="none" hint-size="260px,900px"></dc-import>
+
+  <main style="flex: 1 1 760px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; flex-wrap: nowrap; align-items: center; gap: 12px; padding: 14px 24px 12px; border-bottom: 1px solid var(--line); white-space: nowrap">
+      <a href="GhiChu.dc.html" class="ib" aria-label="Về bộ não" style="text-decoration: none; font-size: 18px">‹</a>
+      <div style="display: flex; flex-direction: column; line-height: 1.25">
+        <h1 style="font-size: 19px">Soát bộ não</h1>
+        <span class="m" style="font-size: 12.5px">Máy soát mỗi ngày · Thủ thư soát sâu Chủ nhật</span>
+      </div>
+      <div class="spaces" role="tablist" aria-label="Không gian" style="margin-left: auto"><button type="button" role="tab" class="on">Tất cả</button><button type="button" role="tab">Cá nhân</button><button type="button" role="tab">Công ty</button></div>
+      <button type="button" class="b1">Soát ngay</button>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+
+    <div style="flex: 1; min-height: 0; display: flex">
+      <nav aria-label="Phát hiện" style="width: 280px; flex: none; border-right: 1px solid var(--line); padding: 4px 10px 14px; overflow-y: auto">
+        <div class="grp">Thủ thư thấy</div>
+        <button type="button" class="{{cMt}}" onClick="{{toMt}}"><span class="bd" style="background: var(--warnSoft); color: var(--warn)">⚠</span>Mâu thuẫn giữa trang<span class="n hot">2</span></button>
+        <button type="button" class="it"><span class="bd" style="background: var(--warnSoft); color: var(--warn)">↻</span>Nhận định đã cũ<span class="n hot">1</span></button>
+        <div class="grp">Ranh giới</div>
+        <button type="button" class="{{cKy}}" onClick="{{toKy}}"><span class="bd" style="background: var(--memSoft); color: var(--mem)">⇢</span>Ký ức nên vào bộ não<span class="new">mới</span><span class="n hot">2</span></button>
+        <div class="grp">Sửa nhanh</div>
+        <button type="button" class="it"><span class="bd" style="background: var(--dangerSoft); color: var(--danger)">⛓</span>Liên kết gãy<span class="n">5</span></button>
+        <button type="button" class="{{cSl}}" onClick="{{toSl}}"><span class="bd" style="background: var(--okSoft); color: var(--ok)">📅</span>Số liệu chưa ghi ngày<span class="new">mới</span><span class="n">3</span></button>
+        <button type="button" class="it"><span class="bd" style="background: var(--accentSoft); color: var(--accent)">＋</span>Tên nhắc nhiều, chưa có trang<span class="n">2</span></button>
+        <button type="button" class="it"><span class="bd" style="background: var(--srcSoft); color: var(--src)">⌂</span>Phòng đã xoá còn trang<span class="n">1</span></button>
+        <div class="grp">Gọn kho</div>
+        <button type="button" class="it"><span class="bd" style="background: var(--panel2); color: var(--muted)">◌</span>Trang mồ côi<span class="n">4</span></button>
+        <button type="button" class="it"><span class="bd" style="background: var(--panel2); color: var(--muted)">≡</span>Thiếu tóm tắt hay nguồn<span class="n">3</span></button>
+        <button type="button" class="it"><span class="bd" style="background: var(--panel2); color: var(--muted)">⏱</span>Lâu chưa cập nhật<span class="n">2</span></button>
+        <div class="grp">Bot</div>
+        <button type="button" class="it"><span class="bd" style="background: var(--memSoft); color: var(--mem)">◉</span>Bot bỏ qua lời nhắc<span class="n hot">1</span></button>
+      </nav>
+
+      <section style="flex: 1; min-width: 0; overflow-y: auto; padding: 18px 24px; display: flex; flex-direction: column; gap: 12px">
+
+        <sc-if value="{{isKy}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; flex-direction: column; gap: 2px"><h2 style="font-size: 17px">Ký ức nên vào bộ não</h2><span class="m" style="font-size: 12.5px">Ký ức bot nói về người, dự án đã có trang · máy soát hôm nay 06:00, so tên trang với chữ trong ký ức</span></div>
+            <div class="kho" aria-label="Ba kho thông tin">
+              <div style="background: var(--memSoft)"><b style="color: var(--mem)">Ký ức bot</b><span>Cách làm việc, quy ước, bài học của từng bot</span></div>
+              <div style="background: var(--meSoft)"><b style="color: var(--me)">Hồ sơ Tầu</b><span>Thói quen, sở thích, mục tiêu, cách muốn được trả lời</span></div>
+              <div style="background: var(--libSoft)"><b style="color: var(--lib)">Bộ não</b><span>Người, dự án, khách hàng, sản phẩm, số liệu</span></div>
+            </div>
+
+            <div class="card">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><span class="mm">Ký ức của Minh</span><span class="m">→</span><span class="pg">Chị Hà</span><span class="m" style="font-size: 12.5px">Người · Cá nhân</span><span class="lab" style="background: var(--panel2); color: var(--muted); margin-left: auto">lưu 18/10 · Tầu nói</span></div>
+              <div class="quote mem"><b style="font-size: 12px" class="m">Ký ức</b><br><mark>Chị Hà</mark> là đối tác dựng video của kênh, nhận việc qua Zalo, thường giao trong 3 ngày.</div>
+              <div style="font-size: 13px"><b style="color: var(--lib)">Thủ thư:</b> trang Chị Hà chưa có ý “nhận việc qua Zalo, giao trong 3 ngày”. Nên ghi vào mục Ghi nhận.</div>
+              <sc-if value="{{movedNo}}" hint-placeholder-val="{{ true }}">
+                <div style="display: flex; gap: 6px; flex-wrap: wrap"><button type="button" class="b2" style="border-color: var(--ink)" onClick="{{move}}">Đưa vào bộ não</button><button type="button" class="b2">Mở trang Chị Hà</button><button type="button" class="b3">Bỏ qua</button></div>
+              </sc-if>
+              <sc-if value="{{movedYes}}" hint-placeholder-val="{{ false }}">
+                <div class="done">✓ Đã tạo bản nạp “soát” · chờ duyệt ở Hộp thư vào<label style="margin-left: auto"><input type="checkbox" checked aria-label="Xoá ký ức gốc sau khi nạp">Xoá ký ức của Minh sau khi nạp</label><button type="button" class="b3" onClick="{{move}}">Hoàn tác</button></div>
+              </sc-if>
+            </div>
+
+            <div class="card">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><span class="mm">Ký ức của Aris</span><span class="m">→</span><span class="pg">Kênh YouTube Q4</span><span class="m" style="font-size: 12.5px">Dự án · Cá nhân</span><span class="lab" style="background: var(--panel2); color: var(--muted); margin-left: auto">lưu 12/10 · Aris suy ra</span></div>
+              <div class="quote mem"><b style="font-size: 12px" class="m">Ký ức</b><br>Dự án <mark>Kênh YouTube Q4</mark> chốt 8 video mỗi tháng, đăng thứ Ba và thứ Sáu.</div>
+              <div style="font-size: 13px"><b style="color: var(--lib)">Thủ thư:</b> trang đã có đúng ý này (mục Quyết định, 14/10). Ký ức thành thừa.</div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap"><button type="button" class="b2" style="border-color: var(--ink)">Xoá ký ức, trang đã có</button><button type="button" class="b2">Mở trang</button><button type="button" class="b3">Bỏ qua</button></div>
+            </div>
+
+            <div class="rule"><b>Chặn từ gốc.</b> Lời dặn ký ức của mọi bot: chỉ giữ cách làm việc, quy ước, bài học. Sự thật về người, dự án, khách hàng, số liệu thì bot <b>ghi nhanh vào nhật ký hôm nay</b>; Thủ thư nạp lúc 23:00 vào đúng trang.</div>
+            <div class="m" style="font-size: 12.5px">Đưa vào bộ não ⇒ một bản nạp loại “soát” (nguồn: ký ức của bot, ngày lưu, lời gốc), duyệt và hoàn tác như mọi bản nạp. Ký ức gốc chỉ xoá khi bản nạp đã ghép.</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isSl}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; flex-direction: column; gap: 2px"><h2 style="font-size: 17px">Số liệu chưa ghi ngày</h2><span class="m" style="font-size: 12.5px">Dòng có con số kèm đ, triệu, USD, %, tờ… mà thiếu “tính đến” · máy soát hôm nay 06:00</span></div>
+            <div class="card" style="gap: 0; padding-top: 6px; padding-bottom: 6px">
+              <div class="row" style="border-top: 0"><span class="pg">Báo giá in ấn tháng 11</span><span class="quote" style="flex: 1; min-width: 240px">Đặt tối thiểu <mark>2.000 tờ</mark>, <mark>1.200 đ/tờ</mark>.</span><span style="display: flex; gap: 6px"><button type="button" class="b2" title="Ngày của nguồn: 21/10/2026">Ghi ngày nguồn · 21/10</button><button type="button" class="b3">Bỏ qua</button></span></div>
+              <div class="row"><span class="pg">Kênh YouTube Q4</span><span class="quote" style="flex: 1; min-width: 240px">Tháng 11: 8 video, ngân sách <mark>15 triệu</mark>.</span><span style="display: flex; gap: 6px"><button type="button" class="b2" title="Ngày sửa gần nhất của dòng này">Ghi ngày sửa · 14/10</button><button type="button" class="b3">Bỏ qua</button></span></div>
+              <div class="row"><span class="pg">Khoá học Video ngắn</span><span class="quote" style="flex: 1; min-width: 240px">Giá gói cơ bản <mark>3.990.000 đ</mark>, giảm <mark>20%</mark> tuần đầu.</span><span style="display: flex; gap: 6px"><button type="button" class="b2">Nhờ Thủ thư xem nguồn</button><button type="button" class="b3">Bỏ qua</button></span></div>
+            </div>
+            <div class="m" style="font-size: 12.5px">Ghi ngày ⇒ thêm <span class="mono">(tính đến 2026-10-21)</span> ngay sau con số, lấy ngày của nguồn hay ngày sửa dòng đó trong git; sửa ngay, hoàn tác ở Nhật ký bộ não. Không rõ nguồn thì nhờ Thủ thư xem.</div>
+
+            <div style="display: flex; flex-direction: column; gap: 2px; margin-top: 6px"><h2 style="font-size: 15px">Mâu thuẫn có ngày: số mới hơn thắng</h2><span class="m" style="font-size: 12.5px">Thủ thư soát sâu đọc ngày cạnh con số để đề xuất hướng sửa</span></div>
+            <div class="card">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><span class="pg">In ấn</span><span class="m">↔</span><span class="pg">Báo giá in ấn tháng 11</span><span class="lab" style="background: var(--srcSoft); color: var(--src); margin-left: auto">Công ty · chung</span></div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+                <div class="quote"><b style="font-size: 12px" class="m">In ấn</b><br>Đặt tối thiểu <mark>1.000 tờ</mark> <span class="dt">tính đến 2026-09-15</span></div>
+                <div class="quote" style="border-left-color: var(--ok)"><b style="font-size: 12px" class="m">Báo giá in ấn tháng 11 · mới hơn</b><br>Đặt tối thiểu <mark>2.000 tờ</mark> <span class="dt">tính đến 2026-10-21</span></div>
+              </div>
+              <div style="font-size: 13px"><b style="color: var(--lib)">Thủ thư:</b> số ngày 21/10 mới hơn. Đề xuất sửa trang In ấn thành 2.000 tờ, giữ số cũ ở mục Lịch sử.</div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap"><button type="button" class="b2" style="border-color: var(--ink)">Sửa theo số mới</button><button type="button" class="b2">Mở hai trang</button><button type="button" class="b3">Bỏ qua</button></div>
+            </div>
+            <div class="rule"><b>Quy ước</b> (AGENTS.md, mẫu Sản phẩm, thư mục số liệu): số hay đổi như giá, báo giá, chỉ tiêu, ngân sách ghi <span class="mono">(tính đến YYYY-MM-DD)</span> ngay sau con số. Thủ thư ghi khi nạp; bot đọc trang thì tin số có ngày mới nhất.</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isMt}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; flex-direction: column; gap: 2px"><h2 style="font-size: 17px">Mâu thuẫn giữa trang</h2><span class="m" style="font-size: 12.5px">Như 5.5; mâu thuẫn về số liệu có ngày thì xem ở “Số liệu chưa ghi ngày”.</span></div>
+            <div class="card"><div style="display: flex; align-items: center; gap: 8px"><span class="pg">Chị Hà</span><span class="m">↔</span><span class="pg">Kênh YouTube Q4</span></div><div class="m" style="font-size: 13px">Giữ nguyên bản vẽ 5.5.</div></div>
+          </div>
+        </sc-if>
+      </section>
+    </div>
+  </main>
+
+  <aside aria-label="Ghi chú thiết kế" style="width: 300px; flex: none; border-left: 1px solid var(--line); background: var(--panel); padding: 16px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; font-size: 13px">
+    <b>Hai loại phát hiện mới</b>
+    <div style="display: flex; flex-direction: column; gap: 6px"><span class="lab" style="background: var(--memSoft); color: var(--mem); align-self: flex-start">Ranh giới · máy</span><span>Ký ức đang hiệu lực của mọi bot có nhắc tên một trang Người hay Dự án (tên, tên gọi khác) ⇒ một phát hiện. Không gọi model.</span><span class="m">Thủ thư so ký ức với trang khi bấm “Đưa vào bộ não”: trang đã có ý ⇒ gợi ý xoá ký ức thừa.</span></div>
+    <div style="display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); padding-top: 12px"><span class="lab" style="background: var(--okSoft); color: var(--ok); align-self: flex-start">Sửa nhanh · máy</span><span>Trang Dự án, Sản phẩm, Khách hàng, Số liệu: dòng có số kèm đơn vị tiền, %, số lượng mà thiếu “tính đến”.</span><span class="m">Bỏ qua: nhật ký, tóm tắt nguồn (đã có ngày của nguồn).</span></div>
+    <div style="display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); padding-top: 12px"><b>Báo ở nơi khác</b><span class="m">Thẻ “Soát bộ não” trong Hộp duyệt và tin Telegram tuần thêm hai dòng: ký ức nên vào bộ não, số liệu chưa ghi ngày.</span></div>
+    <div class="tg" style="background: #0E1621; color: #fff; border-radius: 14px; padding: 10px 12px; font-size: 12.5px; line-height: 1.45">🧹 <b>SOÁT BỘ NÃO · tuần 43</b><br>2 mâu thuẫn, 2 ký ức nên vào bộ não (Chị Hà, Kênh YouTube Q4), 3 số liệu chưa ghi ngày.</div>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const pick = s.pick || 'ky';
+    const c = (k) => 'it' + (pick === k ? ' on' : '');
+    const go = (k) => () => this.setState({ pick: k });
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      isKy: pick === 'ky', isSl: pick === 'sl', isMt: pick === 'mt',
+      cKy: c('ky'), cSl: c('sl'), cMt: c('mt'),
+      toKy: go('ky'), toSl: go('sl'), toMt: go('mt'),
+      movedYes: !!s.moved, movedNo: !s.moved,
+      move: () => this.setState({ moved: !s.moved })
+    };
+  }
+}
+</script>
+</body>
+</html>
