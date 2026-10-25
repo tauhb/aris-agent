@@ -97,6 +97,45 @@ Bot mặc định thứ hai sau Aris (Thủ thư là tên vai trò; {you} đặt
 - Soát hằng tuần bằng routine.
 - {you} sửa thẳng trang wiki thì Thủ thư coi là chỉ dẫn: ghi `log.md`, không ghi đè phần đã sửa.
 
+## Nạp và duyệt
+
+Luồng một nguồn: **Vào** (`hop-thu-vao/`) → **Trích chữ** (PDF, Word, web ra chữ; ảnh nhận dạng chữ; ghi âm
+chép lời; không gọi model) → **Phân loại** (một lần gọi model rẻ: không gian, phòng ban, loại, một câu tóm
+tắt, cờ nhạy cảm) → **Lập bản nạp** (Thủ thư viết trên nhánh nháp, wiki thật chưa đổi) → **Duyệt** →
+**Ghép** (một commit; cập nhật `index.md`, ghi `log.md`; nguồn sang `nguon/<tháng>/` và từ đó bất biến).
+Hoàn tác cả bản nạp bằng một nút ở màn nhật ký.
+
+**Thẻ bản nạp (5.2)**: mỗi nguồn một thẻ; thao tác chia nhóm:
+
+| Nhóm | Ví dụ | Hiển thị |
+|---|---|---|
+| ⚠️ Cần mắt người | Mâu thuẫn số liệu, sửa nhận định cũ, sửa trang {you} từng sửa tay, trang Người có thông tin nhạy cảm | Mở sẵn, trên cùng |
+| Trang mới | Tóm tắt nguồn (luôn có), trang người mới | Một dòng mỗi trang |
+| Bổ sung | Thêm ý vào trang có sẵn, có trích nguồn | Một dòng mỗi trang |
+| Chỉ thêm liên kết | Gắn `[[nguồn]]` vào nhiều trang | Gom một dòng |
+
+Khác biệt hiện theo câu (thêm xanh, bỏ đỏ, câu thêm có số trích). Bỏ chọn được từng thao tác. Nút: Đồng ý
+(ghép phần đang chọn), Nhờ sửa ({you} gõ một câu, Thủ thư làm lại), Chỉ lưu (nguồn vào `nguon/`, wiki
+không đổi, nạp lại sau được), Bỏ (xoá khỏi Hộp thư vào, hỏi lại).
+
+**Ba mức duyệt** (chốt 25/10):
+
+| Mức | Áp cho | Cách chạy |
+|---|---|---|
+| Tự nạp | `/note`, nhật ký của {you}; bản nạp chỉ tạo tóm tắt và thêm liên kết, không sửa ý nào trên trang cũ | Ghép luôn; tổng kết cuối ngày trong nhật ký |
+| Duyệt nhanh (mặc định) | Có bổ sung hay trang mới, không có ⚠️ | Thẻ 5.2 và thẻ Telegram 7.4 (Đồng ý, Xem trên web, Chỉ lưu) |
+| Duyệt kỹ | Có ⚠️, hoặc nguồn Công ty đụng thư mục phòng ban | Không tự ghép; Telegram chỉ báo kèm "Xem trên web" |
+
+**Thứ tự và tranh chấp**
+
+- Thủ thư lập bản nạp lần lượt; nguồn của {you} trước nguồn bot gửi.
+- Các bản nạp lập trên wiki hiện tại, không chờ nhau. Khi ghép, hai bản sửa cùng trang thì git gộp; không
+  gộp được thì Thủ thư lập lại riêng các trang vướng ("đã cập nhật theo bản nạp trước"). Phần {you} sửa
+  tay luôn được giữ.
+- Nguồn lớn chia phần, mỗi bản nạp đụng tối đa khoảng 20 trang.
+- Chờ quá 7 ngày thì nhắc; quá 30 ngày tự thành "Chỉ lưu" (nạp lại sẽ lập theo wiki mới nhất).
+- Mỗi thẻ ghi tiền lập bản nạp; Thủ thư có trần ngân sách theo ngày, chạm trần thì nguồn chờ hôm sau.
+
 ## Bot khác truy xuất bộ não
 
 Công cụ (lọc theo quyền):
@@ -135,7 +174,6 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
 
 ## Còn bàn trước khi làm
 
-- Thứ tự nạp và duyệt chi tiết (một nguồn sửa nhiều trang thì duyệt thế nào ở 5.2).
 - Chia đợt cụ thể và bản vẽ cần thêm: 5.1 (chuyển không gian, nhánh Nguồn/Wiki, sửa ghi chú, trạng thái
   trống), 5.2 thành duyệt bản nạp, xem `log.md`, thẻ "Soát bộ não" trong Hộp duyệt, 7.4 Telegram báo đã
   lưu, 5.5 cài đặt (thư mục kho, quyền theo bot).
