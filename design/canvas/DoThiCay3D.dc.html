@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Đồ thị bộ não — cây thư mục 3D</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--faint:#9A9EA6;--line:#E4E2DC;--edge:#C3C7CF;--accent:#1D6FE0;--accentSoft:#E6F0FE;--lib:#C2620A;--me:#1D6FE0;--co:#0E8A7E;--coSoft:#DFF3F0;--link:#1D6FE0;--isdark:0}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--faint:#6B7280;--line:#2A2D35;--edge:#3A3E47;--accent:#5AA5FF;--accentSoft:#16263F;--lib:#F5A35C;--me:#5AA5FF;--co:#3CC9B8;--coSoft:#13302C;--link:#5AA5FF;--isdark:1}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.m{color:var(--muted)}
+.seg{display:flex;gap:3px;padding:3px;border-radius:11px;background:var(--panel2)}
+.seg button,.seg a{border:0;border-radius:8px;padding:5px 12px;background:transparent;font-size:12.5px;color:var(--muted);text-decoration:none}
+.seg .on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+.zoom{position:absolute;left:16px;top:14px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.zoom button{width:34px;height:34px;border:0;background:transparent;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.zoom button+button{border-top:1px solid var(--line)}
+.pill{position:absolute;right:16px;top:14px;font-size:12px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+.legend{position:absolute;left:16px;bottom:14px;right:16px;display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:7px 12px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend .note{flex-basis:100%;border-top:1px solid var(--line);padding-top:6px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.fl{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0}
+.b2{height:30px;padding:0 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px;display:inline-flex;align-items:center}
+.opt{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:8px 10px;font-size:12.5px}
+.opt.on{border-color:var(--accent);background:var(--accentSoft)}
+.cmp{font-size:12.5px;line-height:1.55;display:flex;flex-direction:column;gap:6px}
+.cmp b{font-weight:600}
+.cmp .ok::before{content:'+ ';color:var(--co);font-weight:700}
+.cmp .no::before{content:'− ';color:#E5484D;font-weight:700}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; height: 900px; display: flex; overflow: hidden">
+  <dc-import name="Sidebar" active="brain" bot="none" hint-size="260px,900px"></dc-import>
+  <main style="flex: 1 1 860px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line); white-space: nowrap">
+      <span style="color: var(--muted); font-size: 18px">‹</span>
+      <span style="font-family: 'Lexend', sans-serif; font-weight: 600; font-size: 16px">Đồ thị bộ não</span>
+      <div class="seg" role="tablist" aria-label="Cách xem"><a href="DoThi.dc.html" role="tab">Liên kết</a><a href="DoThiCay.dc.html" role="tab">Cây 2D</a><button type="button" role="tab" class="on">Cây 3D</button></div>
+      <div class="seg" role="tablist" aria-label="Không gian"><button type="button" role="tab" class="on">Toàn bộ</button><button type="button" role="tab">Cá nhân</button><button type="button" role="tab">Công ty</button></div>
+      <label style="margin-left: auto; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 5px 10px; background: var(--panel); flex: 0 1 220px; min-width: 0"><input type="search" aria-label="Tìm trang" placeholder="Tìm trang…" style="flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 13px; outline: none"></label>
+      <button type="button" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="border: 0; background: transparent; color: var(--muted)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+    <div style="flex: 1; position: relative; min-height: 0">
+      <canvas data-aris-tree3d="1" ref="{{setCv}}" onPointerDown="{{onDown}}" onPointerMove="{{onMove}}" onPointerUp="{{onUp}}" onPointerLeave="{{onLeave}}" onWheel="{{onWheel}}" role="img" aria-label="Cây thư mục bộ não 3D: Brain ở tâm, Cá nhân và Công ty, rồi lớp, nhóm, trang; liên kết giữa trang uốn theo nhánh. Kéo để xoay, cuộn để phóng to." style="position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none"></canvas>
+      <div class="zoom" role="group" aria-label="Thu phóng"><button type="button" onClick="{{zoomIn}}" aria-label="Phóng to"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button><button type="button" onClick="{{zoomOut}}" aria-label="Thu nhỏ"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button><button type="button" onClick="{{resetView}}" aria-label="Về góc nhìn ban đầu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path></svg></button></div>
+      <div class="pill">Kéo để xoay · cuộn để phóng to · bấm thư mục để gộp, bấm trang để tô liên kết</div>
+      <div class="legend">
+        <span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill="none" stroke="var(--faint)" stroke-width="2"></circle></svg>Thư mục</span>
+        <span><span class="dot" style="background: #5B8DEF"></span>Ghi chú</span>
+        <span><span class="dot" style="background: #00B5A5"></span>Dự án</span>
+        <span><span class="dot" style="background: #FFAA00"></span>Chủ đề</span>
+        <span><span class="dot" style="background: #FF6700"></span>Người</span>
+        <span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4" fill="none" stroke="var(--muted)" stroke-width="1.8"></circle></svg>Nguồn</span>
+        <span><svg width="22" height="10" aria-hidden="true"><path d="M1 8 Q11 -2 21 8" fill="none" stroke="var(--link)" stroke-width="1.8"></path></svg>Liên kết [[...]]</span>
+        <span class="note">{{legendNote}}</span>
+      </div>
+    </div>
+  </main>
+  <aside aria-label="Bộ lọc và chi tiết" style="width: 300px; flex: none; border-left: 1px solid var(--line); background: var(--panel); padding: 16px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-weight: 600; font-size: 13.5px">Kiểu cây 3D</div>
+      <button type="button" class="{{oCau}}" onClick="{{toCau}}"><b>Cầu</b><span class="m">Brain ở tâm, trang trên mặt cầu ngoài; Cá nhân nửa trên, Công ty nửa dưới</span></button>
+      <button type="button" class="{{oNon}}" onClick="{{toNon}}"><b>Nón</b><span class="m">Brain trên đỉnh, mỗi thư mục toả con thành một vòng bên dưới (cone tree)</span></button>
+    </div>
+    <div>
+      <div style="font-weight: 600; font-size: 13.5px; padding-bottom: 4px">Hiển thị</div>
+      <label class="fl"><input type="checkbox" checked="{{showLinks}}" onChange="{{togLinks}}">Liên kết giữa trang</label>
+      <label class="fl"><input type="checkbox" checked="{{spin}}" onChange="{{togSpin}}">Tự xoay chậm</label>
+    </div>
+    <div>
+      <div style="font-weight: 600; font-size: 13.5px; padding-bottom: 6px">Độ uốn liên kết</div>
+      <input type="range" min="0" max="100" value="{{bval}}" onInput="{{onBeta}}" onChange="{{onBeta}}" aria-label="Độ uốn liên kết theo nhánh" style="width: 100%; accent-color: var(--accent)">
+      <div class="m" style="display: flex; justify-content: space-between; font-size: 11.5px"><span>thẳng</span><span>bó theo nhánh</span></div>
+    </div>
+    <div style="border-top: 1px solid var(--line); padding-top: 12px; font-size: 13px; display: flex; flex-direction: column; gap: 6px">
+      <div class="m" style="font-size: 12px">Đang chọn</div>
+      <b style="font-family: 'Lexend', sans-serif; font-size: 15px">{{selName}}</b>
+      <div class="m">{{selPath}}</div>
+      <div>{{selLinks}}</div>
+      <div style="display: flex; gap: 6px; margin-top: 4px"><a href="GhiChu.dc.html" class="b2" style="text-decoration: none">Mở trang</a><a href="HoiBoNao.dc.html" class="b2" style="text-decoration: none">Hỏi về trang này</a></div>
+    </div>
+    <div class="cmp" style="border-top: 1px solid var(--line); padding-top: 12px">
+      <div style="font-weight: 600; font-size: 13.5px">So với cây 2D</div>
+      <span class="ok">Có chiều sâu, xoay nhìn nhánh từ nhiều phía, cảm giác "bộ não" hơn</span>
+      <span class="ok">Chỗ rộng hơn: nhiều trang không chen một vòng tròn</span>
+      <span class="no">Nhãn chỉ hiện ở phía trước; phía sau phải xoay mới đọc được</span>
+      <span class="no">Nhánh và liên kết chồng nhau theo góc nhìn; khó so hai nhánh cùng lúc</span>
+      <span class="no">Bấm trúng nút nhỏ phía sau khó hơn; không in hay chụp gọn được</span>
+    </div>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  componentDidMount() {
+    this.rotY = 0.6;
+    this.rotX = -0.32;
+    this.zoom = 1;
+    this.hover = -1;
+    this.dragging = false;
+    this.spin = true;
+    this.showLinks = true;
+    this.beta = 0.82;
+    this.kind = 'cau';
+    this.collapsed = new Set();
+    this.cssT = -1e9;
+    this.build();
+    this.layout();
+    this.sel = this.nodes.findIndex((n) => n.name === 'Chị Hà');
+    this.pushSel();
+    this.loop = (ts) => { this.draw(ts); this.raf = requestAnimationFrame(this.loop); };
+    this.raf = requestAnimationFrame(this.loop);
+  }
+
+  componentWillUnmount() {
+    cancelAnimationFrame(this.raf);
+  }
+
+  build() {
+    const T = ['Brain', 'root', [
+      ['Cá nhân', 'me', [
+        ['Wiki', 'wiki', [
+          ['Người', 'grp', [['Chị Hà', 'person'], ['Anh Phúc', 'person']]],
+          ['Dự án', 'grp', [['Kênh YouTube Q4', 'project'], ['Khoá học AI', 'project']]],
+          ['Chủ đề', 'grp', [['Lịch quay T11', 'area'], ['Tài chính', 'area'], ['Video ngắn', 'area']]],
+          ['Tóm tắt', 'grp', [['Cuộc gọi 25/10', 'note'], ['Báo cáo 90 ngày', 'note']]]
+        ]],
+        ['Nguồn', 'src', [['Ghi chú gọi 25/10', 'src'], ['bao-cao-q3.pdf', 'src'], ['Zettelkasten', 'src']]],
+        ['Nhật ký', 'jrl', [['Nhật ký 25/10', 'note'], ['Nhật ký 24/10', 'note'], ['Nhật ký 20/10', 'note']]]
+      ]],
+      ['Công ty', 'co', [
+        ['Chung', 'wiki', [['In ấn', 'area'], ['Nhà in Minh Phát', 'person'], ['Báo giá in T11', 'note']]],
+        ['Phòng ban', 'wiki', [
+          ['Tăng trưởng', 'grp', [['Quy tắc đặt tên video', 'note'], ['Video ngắn (cty)', 'area']]],
+          ['Vận hành', 'grp', [['Duyệt chi tiêu', 'area'], ['Quy trình in', 'area']]],
+          ['Kỹ thuật', 'grp', [['Hạ tầng', 'note']]]
+        ]],
+        ['Nguồn', 'src', [['bao-gia-in-an.pdf', 'src'], ['5 xu hướng video', 'src']]]
+      ]]
+    ]];
+    const nodes = [];
+    const walk = (t, depth, parent, key) => {
+      const n = { name: t[0], kind: t[1], depth: depth, parent: parent, kids: [], key: key, x: 0, y: 0, z: 0 };
+      n.i = nodes.length;
+      nodes.push(n);
+      (t[2] || []).forEach((k) => n.kids.push(walk(k, depth + 1, n, key + '/' + k[0])));
+      n.leaf = !t[2];
+      return n;
+    };
+    this.root = walk(T, 0, null, '');
+    this.nodes = nodes;
+    const by = (s) => nodes.find((n) => n.leaf && n.name === s);
+    this.links = [['Chị Hà', 'Kênh YouTube Q4'], ['Chị Hà', 'Lịch quay T11'], ['Kênh YouTube Q4', 'Lịch quay T11'], ['Cuộc gọi 25/10', 'Chị Hà'],
+      ['Cuộc gọi 25/10', 'Ghi chú gọi 25/10'], ['Nhật ký 25/10', 'Chị Hà'], ['In ấn', 'Báo giá in T11'], ['In ấn', 'Nhà in Minh Phát'],
+      ['Báo giá in T11', 'bao-gia-in-an.pdf'], ['Quy tắc đặt tên video', 'Kênh YouTube Q4'], ['Video ngắn (cty)', '5 xu hướng video'],
+      ['Kênh YouTube Q4', 'Video ngắn'], ['Duyệt chi tiêu', 'Tài chính'], ['Quy trình in', 'In ấn'], ['Báo cáo 90 ngày', 'bao-cao-q3.pdf'],
+      ['Khoá học AI', 'Anh Phúc'], ['Video ngắn', 'Video ngắn (cty)'], ['Báo cáo 90 ngày', 'Kênh YouTube Q4']].map((p) => [by(p[0]), by(p[1])]);
+  }
+
+  // Nút đang hiện thay cho n: chính nó, hay thư mục gộp gần gốc nhất chứa nó.
+  shown(n) {
+    let s = n;
+    for (let p = n; p; p = p.parent) if (this.collapsed.has(p.key)) s = p;
+    return s;
+  }
+
+  visible(n) {
+    for (let p = n.parent; p; p = p.parent) if (this.collapsed.has(p.key)) return false;
+    return true;
+  }
+
+  isOuter(n) {
+    return n.leaf || this.collapsed.has(n.key);
+  }
+
+  count(n) {
+    return n.leaf ? 1 : n.kids.reduce((s, k) => s + this.count(k), 0);
+  }
+
+  layout() {
+    const outer = [];
+    const collect = (n) => {
+      if (n !== this.root && this.isOuter(n)) { outer.push(n); return; }
+      n.kids.forEach(collect);
+    };
+    collect(this.root);
+    const top = (n) => { let t = n; while (t.parent && t.parent.parent) t = t.parent; return t; };
+    const sub = (n) => { let t = n; while (t.parent && t.parent.parent && t.parent.parent.parent) t = t.parent; return t; };
+    if (this.kind === 'cau') {
+      // Trang rải theo một đường xoắn trên mặt cầu (đỉnh xuống đáy), anh em liền nhau; khe giữa hai không gian, giữa các lớp.
+      let u = 0;
+      let pt = null;
+      let ps = null;
+      const units = outer.map((n) => {
+        const t = top(n);
+        const s = sub(n);
+        if (pt && t !== pt) u += 2.2;
+        else if (ps && s !== ps) u += 0.7;
+        pt = t;
+        ps = s;
+        return u++;
+      });
+      const total = u;
+      const turns = Math.max(1.5, Math.sqrt(outer.length) / 1.5);
+      outer.forEach((n, i) => {
+        const t = (units[i] + 0.5) / total;
+        const y = -0.96 + 1.92 * t;
+        const r = Math.sqrt(1 - y * y);
+        const th = t * turns * Math.PI * 2;
+        n.x = r * Math.cos(th);
+        n.y = y;
+        n.z = r * Math.sin(th);
+      });
+      let maxD = 1;
+      const dir = (n) => {
+        if (n !== this.root && this.isOuter(n)) return [n.x, n.y, n.z];
+        const v = [0, 0, 0];
+        n.kids.forEach((k) => { const d = dir(k); v[0] += d[0]; v[1] += d[1]; v[2] += d[2]; });
+        const l = Math.hypot(v[0], v[1], v[2]) || 1;
+        n.d = [v[0] / l, v[1] / l, v[2] / l];
+        if (n.depth > maxD) maxD = n.depth;
+        return n.d;
+      };
+      dir(this.root);
+      this.nodes.forEach((n) => {
+        if (n === this.root) { n.x = n.y = n.z = 0; return; }
+        if (this.isOuter(n) || !n.d) return;
+        const r = (0.78 * n.depth) / maxD;
+        n.x = n.d[0] * r; n.y = n.d[1] * r; n.z = n.d[2] * r;
+      });
+    } else {
+      // Cone tree: con toả thành vòng bên dưới cha, bán kính vòng đủ chỗ cho các nón con.
+      const leafR = 0.11;
+      const size = (n) => {
+        if (n !== this.root && this.isOuter(n)) { n.rad = leafR; return n.rad; }
+        const ks = n.kids.map(size);
+        const circ = ks.reduce((s, r) => s + 2 * r + 0.04, 0);
+        n.ring = Math.max(0.12, circ / (2 * Math.PI));
+        if (n.kids.length === 1) n.ring = 0;
+        n.rad = n.ring + Math.max(...ks);
+        return n.rad;
+      };
+      size(this.root);
+      const step = 0.43;
+      const place = (n, x, z, a0) => {
+        n.x = x; n.z = z; n.y = -0.9 + n.depth * step;
+        if (n !== this.root && this.isOuter(n)) return;
+        const ws = n.kids.map((k) => 2 * k.rad + 0.04);
+        const tot = ws.reduce((s, w) => s + w, 0);
+        let acc = 0;
+        n.kids.forEach((k, i) => {
+          const a = a0 + ((acc + ws[i] / 2) / tot) * Math.PI * 2;
+          acc += ws[i];
+          place(k, x + n.ring * Math.cos(a), z + n.ring * Math.sin(a), a + Math.PI);
+        });
+      };
+      place(this.root, 0, 0, 0.3);
+      const s = 1.25 / Math.max(0.6, this.root.rad);
+      this.nodes.forEach((n) => { n.x *= s; n.z *= s; });
+    }
+    this.bundles();
+  }
+
+  // Liên kết: lên tổ tiên chung rồi xuống, nắn thẳng theo beta, làm mượt bằng B-spline bậc 3 (lấy mẫu sẵn trong 3D).
+  bundles() {
+    const seen = new Set();
+    this.paths = [];
+    this.links.forEach((l) => {
+      const a = this.shown(l[0]);
+      const b = this.shown(l[1]);
+      if (a === b) return;
+      const k = a.i < b.i ? a.i + '|' + b.i : b.i + '|' + a.i;
+      if (seen.has(k)) return;
+      seen.add(k);
+      const up = [];
+      for (let n = a; n; n = n.parent) up.push(n);
+      const down = [];
+      let lca = null;
+      for (let n = b; n; n = n.parent) { if (up.includes(n)) { lca = n; break; } down.push(n); }
+      const chain = up.slice(0, up.indexOf(lca) + 1).concat(down.reverse());
+      const m = chain.length;
+      const A = chain[0];
+      const B = chain[m - 1];
+      const pts = chain.map((n, i) => {
+        const t = m > 1 ? i / (m - 1) : 0;
+        const lx = A.x + (B.x - A.x) * t;
+        const ly = A.y + (B.y - A.y) * t;
+        const lz = A.z + (B.z - A.z) * t;
+        return [this.beta * n.x + (1 - this.beta) * lx, this.beta * n.y + (1 - this.beta) * ly, this.beta * n.z + (1 - this.beta) * lz];
+      });
+      const P = [pts[0], pts[0]].concat(pts, [pts[m - 1], pts[m - 1]]);
+      const out = [];
+      for (let i = 0; i + 3 < P.length; i++) {
+        for (let s = 0; s < 8; s++) {
+          const t = s / 8;
+          const b0 = (1 - t) ** 3 / 6;
+          const b1 = (3 * t ** 3 - 6 * t ** 2 + 4) / 6;
+          const b2 = (-3 * t ** 3 + 3 * t ** 2 + 3 * t + 1) / 6;
+          const b3 = t ** 3 / 6;
+          out.push([0, 1, 2].map((c) => b0 * P[i][c] + b1 * P[i + 1][c] + b2 * P[i + 2][c] + b3 * P[i + 3][c]));
+        }
+      }
+      out.push(pts[m - 1]);
+      this.paths.push({ a: l[0], b: l[1], sa: a, sb: b, pts: out });
+    });
+  }
+
+  pushSel() {
+    const n = this.nodes[this.sel];
+    if (!n) return;
+    const path = [];
+    for (let p = n.parent; p && p.parent; p = p.parent) path.unshift(p.name);
+    const lab = { person: 'Người', project: 'Dự án', area: 'Chủ đề', note: 'Ghi chú', src: 'Nguồn' }[n.kind] || 'Thư mục';
+    const nb = this.links.filter((l) => l[0] === n || l[1] === n).map((l) => (l[0] === n ? l[1] : l[0]).name);
+    this.setState({ selName: n.name, selPath: lab + ' · ' + path.join(' / '), selLinks: nb.length ? 'Nối với ' + nb.length + ' trang: ' + nb.join(', ') : 'Chưa nối trang nào' });
+  }
+
+  draw(ts) {
+    if (!this.cv) this.cv = document.querySelector('canvas[data-aris-tree3d]');
+    const cv = this.cv;
+    if (!cv) return;
+    const w = cv.clientWidth;
+    const h = cv.clientHeight - 64;
+    if (!w || h <= 0) return;
+    const dpr = window.devicePixelRatio || 1;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(cv.clientHeight * dpr)) {
+      cv.width = Math.round(w * dpr);
+      cv.height = Math.round(cv.clientHeight * dpr);
+    }
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, cv.clientHeight);
+    if (ts - this.cssT > 400) {
+      const s = getComputedStyle(cv);
+      const v = (k, d) => (s.getPropertyValue(k).trim() || d);
+      this.C = { ink: v('--ink', '#16171B'), muted: v('--muted', '#5C616C'), faint: v('--faint', '#9A9EA6'), edge: v('--edge', '#C3C7CF'), accent: v('--accent', '#1D6FE0'), link: v('--link', '#1D6FE0'), panel: v('--panel', '#fff'), bg: v('--bg', '#F6F5F2'), me: v('--me', '#1D6FE0'), co: v('--co', '#0E8A7E'), lib: v('--lib', '#C2620A'), dark: v('--isdark', '0') === '1' };
+      this.cssT = ts;
+    }
+    const C = this.C;
+    if (this.spin && !this.dragging && this.hover < 0) this.rotY += 0.0018;
+
+    const bg = ctx.createRadialGradient(w / 2, h / 2, 10, w / 2, h / 2, Math.max(w, h) * 0.6);
+    bg.addColorStop(0, C.dark ? 'rgba(90,165,255,0.09)' : 'rgba(29,111,224,0.05)');
+    bg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+
+    const S = Math.min(w, h) * 0.37 * this.zoom;
+    const cyR = Math.cos(this.rotY);
+    const syR = Math.sin(this.rotY);
+    const cxR = Math.cos(this.rotX);
+    const sxR = Math.sin(this.rotX);
+    const D = 3.4;
+    const pr = (x, y, z) => {
+      const x1 = x * cyR - z * syR;
+      const z1 = x * syR + z * cyR;
+      const y2 = y * cxR - z1 * sxR;
+      const z2 = y * sxR + z1 * cxR;
+      const p = D / (D - z2);
+      return { x: w / 2 + x1 * S * p, y: h / 2 + y2 * S * p, z: z2, p: p };
+    };
+    const dn = (z) => Math.max(0, Math.min(1, (z + 1.1) / 2.2));
+    const vis = this.nodes.filter((n) => this.visible(n));
+    this.proj = new Map();
+    vis.forEach((n) => this.proj.set(n, pr(n.x, n.y, n.z)));
+    const P = (n) => this.proj.get(n);
+
+    if (this.kind === 'cau') {
+      [[1, 0], [0.62, 0]].forEach((rg, ri) => {
+        ctx.save();
+        ctx.strokeStyle = C.edge; ctx.lineWidth = 1; ctx.setLineDash([3, 7]); ctx.globalAlpha = ri ? 0.25 : 0.45;
+        ctx.beginPath();
+        for (let k = 0; k <= 72; k++) {
+          const a = (k / 72) * Math.PI * 2;
+          const q = pr(rg[0] * Math.cos(a), rg[1], rg[0] * Math.sin(a));
+          if (k === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
+    const focus = this.hover >= 0 ? this.hover : this.sel;
+    const fNode = this.nodes[focus];
+    const near = new Set();
+    this.links.forEach((l) => { if (l[0] === fNode) near.add(l[1]); if (l[1] === fNode) near.add(l[0]); });
+
+    // Cạnh cây.
+    ctx.lineCap = 'round';
+    vis.forEach((n) => {
+      if (!n.parent) return;
+      const a = P(n.parent);
+      const b = P(n);
+      const d = dn((a.z + b.z) / 2);
+      ctx.globalAlpha = 0.18 + 0.45 * d;
+      ctx.strokeStyle = C.faint;
+      ctx.lineWidth = (n.depth <= 2 ? 1.8 : 1.1) * ((a.p + b.p) / 2);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    });
+
+    // Liên kết uốn theo nhánh.
+    if (this.showLinks) {
+      const anyHot = !!fNode && fNode.leaf;
+      const ps = this.paths.slice().sort((x, y) => Number(x.a === fNode || x.b === fNode) - Number(y.a === fNode || y.b === fNode));
+      ps.forEach((l) => {
+        const hot = l.a === fNode || l.b === fNode;
+        const q = l.pts.map((p) => pr(p[0], p[1], p[2]));
+        const d = dn(q.reduce((s, p) => s + p.z, 0) / q.length);
+        ctx.globalAlpha = hot ? 0.95 : anyHot ? 0.08 + 0.12 * d : 0.15 + 0.35 * d;
+        ctx.strokeStyle = C.link;
+        ctx.lineWidth = hot ? 2.2 : 1.2;
+        ctx.beginPath();
+        q.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+        ctx.stroke();
+      });
+    }
+    ctx.globalAlpha = 1;
+
+    // Nút, xa vẽ trước.
+    const col = { note: '#5B8DEF', project: '#00B5A5', area: '#FFAA00', person: '#FF6700' };
+    const fold = { me: C.me, co: C.co, wiki: C.lib, src: C.muted, jrl: C.me, grp: C.faint };
+    const order = vis.slice().sort((a, b) => P(a).z - P(b).z);
+    const labels = [];
+    order.forEach((n) => {
+      const p = P(n);
+      const d = dn(p.z);
+      ctx.globalAlpha = 0.3 + 0.7 * d;
+      if (n === this.root) {
+        ctx.globalAlpha = 0.18; ctx.fillStyle = C.accent;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 26 * p.p, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 17 * p.p, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(p.x - 6, p.y - 5); ctx.lineTo(p.x + 6, p.y - 5); ctx.moveTo(p.x - 6, p.y); ctx.lineTo(p.x + 6, p.y); ctx.moveTo(p.x - 6, p.y + 5); ctx.lineTo(p.x + 2, p.y + 5); ctx.stroke();
+        return;
+      }
+      if (!n.leaf) {
+        const col2 = this.collapsed.has(n.key) ? C.co : fold[n.kind];
+        const r = (this.collapsed.has(n.key) ? 13 : n.depth === 1 ? 9 : n.depth === 2 ? 6.5 : 5) * p.p;
+        ctx.fillStyle = C.bg; ctx.strokeStyle = col2; ctx.lineWidth = 2.2;
+        if (this.collapsed.has(n.key)) ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.setLineDash([]);
+        if (this.collapsed.has(n.key)) {
+          ctx.fillStyle = C.co; ctx.font = '700 11px "Be Vietnam Pro", system-ui, sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText(String(this.count(n)), p.x, p.y + 4);
+        }
+        if (n.depth <= 2 || this.collapsed.has(n.key) || d > 0.5) labels.push({ n: n, p: p, d: d, big: n.depth === 1, dy: -r - 7 });
+        return;
+      }
+      const r = (n.kind === 'src' ? 4.6 : 5.2) * p.p * (n.i === focus ? 1.3 : 1);
+      if (n.kind === 'src') {
+        ctx.fillStyle = C.bg; ctx.strokeStyle = C.muted; ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      } else {
+        const c = col[n.kind];
+        const g = ctx.createRadialGradient(p.x - r * 0.35, p.y - r * 0.4, r * 0.1, p.x, p.y, r);
+        g.addColorStop(0, '#ffffff'); g.addColorStop(0.3, c); g.addColorStop(1, c);
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+      }
+      if (n.i === focus) {
+        ctx.globalAlpha = 1; ctx.strokeStyle = C.ink; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(p.x, p.y, r + 5, 0, Math.PI * 2); ctx.stroke();
+      }
+      // Nhãn trang: chỉ phía trước, hay trang đang chọn và trang nối với nó.
+      if (n.i === focus || near.has(n) || d > 0.58) labels.push({ n: n, p: p, d: d, hot: n.i === focus, near: near.has(n), dy: r + 12 });
+    });
+    labels.forEach((L) => {
+      const n = L.n;
+      ctx.globalAlpha = L.hot || L.near || L.big ? 1 : 0.55 + 0.45 * L.d;
+      ctx.font = (L.big ? '700 13px "Lexend", ' : L.hot ? '700 12px ' : n.leaf ? '500 11px ' : '600 11px ') + '"Be Vietnam Pro", system-ui, sans-serif';
+      const txt = n.name;
+      const tw = ctx.measureText(txt).width;
+      const lx = L.p.x - tw / 2;
+      const ly = L.p.y + L.dy;
+      ctx.fillStyle = C.panel;
+      const a0 = ctx.globalAlpha;
+      ctx.globalAlpha = a0 * 0.8;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(lx - 5, ly - 11, tw + 10, 16, 7); else ctx.rect(lx - 5, ly - 11, tw + 10, 16);
+      ctx.fill();
+      ctx.globalAlpha = a0;
+      ctx.fillStyle = L.near ? C.accent : n.leaf ? C.ink : L.big ? C.ink : C.muted;
+      ctx.textAlign = 'left';
+      ctx.fillText(txt, lx, ly + 1);
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  pick(e) {
+    const r = this.cv.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    let best = -1;
+    let bz = -1e9;
+    if (!this.proj) return -1;
+    this.proj.forEach((p, n) => {
+      if (n === this.root) return;
+      const lim = (this.collapsed.has(n.key) ? 15 : n.leaf ? 9 : 10) * p.p;
+      if (Math.hypot(p.x - x, p.y - y) < lim && p.z > bz) { bz = p.z; best = n.i; }
+    });
+    return best;
+  }
+
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'dark';
+    const kind = s.kind || 'cau';
+    const setKind = (k) => () => { this.kind = k; this.rotX = k === 'non' ? 0.42 : -0.32; this.layout(); this.setState({ kind: k }); };
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      oCau: 'opt' + (kind === 'cau' ? ' on' : ''),
+      oNon: 'opt' + (kind === 'non' ? ' on' : ''),
+      toCau: setKind('cau'),
+      toNon: setKind('non'),
+      legendNote: kind === 'cau'
+        ? 'Cây 3D kiểu cầu: Brain ở tâm, thư mục ở các lớp trong, trang trên mặt cầu ngoài (Cá nhân nửa trên, Công ty nửa dưới). Liên kết uốn theo nhánh như bản 2D. Nhãn chỉ hiện ở phía trước, trang đang chọn và trang nối với nó.'
+        : 'Cây 3D kiểu nón: Brain trên đỉnh, mỗi thư mục toả con thành một vòng bên dưới, tầng càng sâu càng thấp. Liên kết uốn theo nhánh như bản 2D. Nhãn chỉ hiện ở phía trước, trang đang chọn và trang nối với nó.',
+      showLinks: s.showLinks === undefined ? true : s.showLinks,
+      togLinks: () => { this.showLinks = !this.showLinks; this.setState({ showLinks: this.showLinks }); },
+      spin: s.spin === undefined ? true : s.spin,
+      togSpin: () => { this.spin = !this.spin; this.setState({ spin: this.spin }); },
+      bval: s.bval === undefined ? 82 : s.bval,
+      onBeta: (e) => { const v = Number(e.target.value); this.beta = v / 100; this.bundles(); this.setState({ bval: v }); },
+      selName: s.selName || '',
+      selPath: s.selPath || '',
+      selLinks: s.selLinks || '',
+      zoomIn: () => { this.zoom = Math.min(2.4, this.zoom * 1.2); },
+      zoomOut: () => { this.zoom = Math.max(0.6, this.zoom / 1.2); },
+      resetView: () => { this.rotX = -0.32; this.rotY = 0.6; this.zoom = 1; },
+      setCv: (el) => { this.cv = el; },
+      onDown: (e) => { this.dragging = true; this.moved = 0; this.lx = e.clientX; this.ly = e.clientY; },
+      onMove: (e) => {
+        if (!this.cv) return;
+        if (this.dragging) {
+          const dx = e.clientX - this.lx;
+          const dy = e.clientY - this.ly;
+          this.moved += Math.abs(dx) + Math.abs(dy);
+          this.rotY += dx * 0.008;
+          this.rotX = Math.max(-1.3, Math.min(1.3, this.rotX + dy * 0.008));
+          this.lx = e.clientX;
+          this.ly = e.clientY;
+          return;
+        }
+        this.hover = this.pick(e);
+        this.cv.style.cursor = this.hover >= 0 ? 'pointer' : 'grab';
+      },
+      onUp: (e) => {
+        this.dragging = false;
+        if (this.moved >= 4) return;
+        const i = this.pick(e);
+        if (i < 0) return;
+        const n = this.nodes[i];
+        if (n.leaf) { this.sel = i; this.pushSel(); return; }
+        if (this.collapsed.has(n.key)) this.collapsed.delete(n.key); else this.collapsed.add(n.key);
+        this.hover = -1;
+        this.layout();
+      },
+      onLeave: () => { this.dragging = false; this.hover = -1; },
+      onWheel: (e) => {
+        this.zoom = Math.max(0.6, Math.min(2.4, this.zoom * (e.deltaY < 0 ? 1.08 : 1 / 1.08)));
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
