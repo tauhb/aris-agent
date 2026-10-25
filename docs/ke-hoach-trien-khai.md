@@ -288,6 +288,8 @@ Tổng: khoảng **20 tuần** cho giai đoạn 0–7 (thêm 2 tuần của giai
 
 **Nghiệm thu**: 8h sáng thứ 2–6 Mai tự gửi tóm tắt email và lịch về Telegram; một dự án được chia thành thẻ, các bot làm lần lượt theo phụ thuộc.
 
+> **Nghiệm thu 25/10**: người dùng duyệt giai đoạn 4. Đạt: dự án chia thành thẻ, bot làm lần lượt theo phụ thuộc (đợt 4); routine gửi Telegram đúng giờ, chạy bù, báo lỗi liên tiếp (đợt 1–3, chạy thử nốt). Để sau: Mai đọc email và lịch qua Lark (người dùng tạo ứng dụng Lark và cấp quyền khi sẵn sàng; aris đã có mẫu kết nối Lark).
+
 ---
 
 ## Giai đoạn 5 · Second Brain và đồ thị (tuần 14–16)
