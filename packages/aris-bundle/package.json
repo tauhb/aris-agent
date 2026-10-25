@@ -20,6 +20,7 @@
     "@aris/autonomy": "workspace:*",
     "@aris/bots": "workspace:*",
     "@aris/channels": "workspace:*",
+    "@aris/checkpoints": "workspace:*",
     "@aris/commander": "workspace:*",
     "@aris/daemon": "workspace:*",
     "@aris/home": "workspace:*",

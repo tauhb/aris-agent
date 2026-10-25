@@ -1,14 +1,12 @@
 /**
  * 3.5 · Việc đang chạy: mục tiêu và lời giám khảo (`@aris/autonomy`), việc được giao trong 24 giờ
- * và yêu cầu quyền đang chờ (`@aris/commander`), vòng lặp và nhịp tim. Điểm khôi phục chưa có trong
- * kế hoạch giai đoạn 3, để mờ.
+ * và yêu cầu quyền đang chờ (`@aris/commander`), vòng lặp và nhịp tim, điểm khôi phục tệp
+ * (`@aris/checkpoints`, giai đoạn 4 đợt 5).
  */
 import { Button, Card, Mascot, PageShell, Pill, useTeamData, type BotData } from '@aris/ui-kit/react'
 import { useCallback, useEffect, useState } from 'react'
 import type { PageProps, Translate } from '../page.js'
-import { Later } from '../team/BotTools.js'
 import { Box, Col } from '../ui.js'
-import { DEMO_CHECKPOINTS } from './demo.js'
 
 /** Mục tiêu (bảng `goals` của `@aris/autonomy`). */
 interface Goal {
@@ -346,32 +344,136 @@ export function Runs({ t, nav }: PageProps) {
             ))}
           </Card>
           <div className="ap-cap">{t('run.checkpoints')}</div>
-          <Later t={t} stage={4} label={t('run.later')}>
-            <Card>
-              {DEMO_CHECKPOINTS.map((c) => (
-                <div className="ap-tr" key={c.at}>
-                  <span className="a-mono a-muted" style={{ fontSize: 12 }}>
-                    {c.at}
-                  </span>
-                  <span style={{ flex: 1 }}>
-                    {c.text}
-                    {c.path && (
-                      <>
-                        {' '}
-                        <span className="a-mono" style={{ fontSize: 12 }}>
-                          {c.path}
-                        </span>
-                      </>
-                    )}
-                  </span>
-                  {c.diff && <Button size="sm">{t('run.diff')}</Button>}
-                  <Button size="sm">{t('run.restore')}</Button>
-                </div>
-              ))}
-            </Card>
-          </Later>
+          <Checkpoints t={t} />
         </Col>
       </div>
     </PageShell>
+  )
+}
+
+/** Điểm khôi phục (`@aris/checkpoints`). */
+interface Point {
+  id: string
+  dir: string
+  at: string
+  bot: string
+  tool: string
+  detail: string
+  restore?: boolean
+  /** Số tệp lượt sau điểm đã đổi. */
+  files: number
+  paths: string[]
+}
+
+const tail = (dir: string) => `${dir.split('/').filter(Boolean).pop() ?? dir}/`
+
+/** Điểm khôi phục: chụp trước khi bot sửa tệp; xem khác biệt, khôi phục (hỏi lại). */
+function Checkpoints({ t }: { t: Translate }) {
+  const team = useTeamData()
+  const [points, setPoints] = useState<Point[] | null>(null)
+  const [open, setOpen] = useState<{ id: string; stat: string; patch: string; truncated: boolean } | null>(
+    null,
+  )
+  const [note, setNote] = useState<string | null>(null)
+  const load = useCallback(async () => {
+    const d = await getJson<{ points: Point[] }>('api/aris/checkpoints')
+    if (d) setPoints(d.points)
+  }, [])
+  useEffect(() => {
+    void load()
+    // Mỗi lần đọc phải so thư mục bằng git: tải lại thưa.
+    const timer = setInterval(() => void load(), 60_000)
+    return () => clearInterval(timer)
+  }, [load])
+  const nameOf = (id: string) => team?.bots.find((b) => b.id === id)?.name ?? id
+  const toggleDiff = async (p: Point) => {
+    if (open?.id === p.id) return setOpen(null)
+    const d = await getJson<{ stat: string; patch: string; truncated: boolean }>(
+      `api/aris/checkpoints?diff=${p.id}`,
+    )
+    if (d) setOpen({ id: p.id, ...d })
+  }
+  const restore = async (p: Point) => {
+    if (!window.confirm(t('run.cp.confirm', { at: clock(p.at), dir: tail(p.dir) }))) return
+    setNote(null)
+    const r = await fetch(api('api/aris/checkpoints'), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ op: 'restore', id: p.id }),
+    }).catch(() => null)
+    const j = (await r?.json().catch(() => null)) as { error?: string; count?: number } | null
+    setNote(r?.ok ? t('run.cp.restored', { n: j?.count ?? 0 }) : (j?.error ?? 'HTTP error'))
+    setOpen(null)
+    await load()
+  }
+  return (
+    <Card>
+      {note && (
+        <div className="ap-tr" role="status" style={{ fontSize: 13 }}>
+          {note}
+        </div>
+      )}
+      {points && !points.length && (
+        <div className="ap-tr a-muted" style={{ fontSize: 13 }}>
+          {t('run.cp.none')}
+        </div>
+      )}
+      {points?.map((p) => (
+        <div key={p.id}>
+          <div className="ap-tr">
+            <span className="a-mono a-muted" style={{ fontSize: 12 }}>
+              {clock(p.at)}
+            </span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              {p.restore
+                ? t('run.cp.beforeRestore')
+                : p.files
+                  ? t('run.cp.before', { bot: nameOf(p.bot), n: p.files })
+                  : t('run.cp.beforeNone', { bot: nameOf(p.bot) })}{' '}
+              <span className="a-mono" style={{ fontSize: 12 }} title={p.dir}>
+                {tail(p.dir)}
+              </span>
+              <div
+                className="a-muted"
+                style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                title={p.detail}
+              >
+                {p.paths.length ? p.paths.join(', ') : p.detail}
+              </div>
+            </span>
+            {p.files > 0 && (
+              <Button size="sm" onClick={() => void toggleDiff(p)}>
+                {open?.id === p.id ? t('run.cp.hide') : t('run.diff')}
+              </Button>
+            )}
+            {p.files > 0 && (
+              <Button size="sm" onClick={() => void restore(p)}>
+                {t('run.restore')}
+              </Button>
+            )}
+          </div>
+          {open?.id === p.id && (
+            <pre
+              className="a-mono"
+              style={{
+                margin: '0 14px 12px',
+                maxHeight: 320,
+                overflow: 'auto',
+                fontSize: 11.5,
+                background: 'var(--a-panel2)',
+                borderRadius: 8,
+                padding: 10,
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {open.stat}
+              {'\n'}
+              {open.patch}
+              {open.truncated ? `\n${t('run.cp.truncated')}` : ''}
+            </pre>
+          )}
+        </div>
+      ))}
+    </Card>
   )
 }

@@ -39,7 +39,7 @@ export interface McpData {
   bot: string
   name: string
   serverName: string
-  preset: 'github' | 'lark' | 'notion' | 'custom'
+  preset: 'github' | 'lark' | 'notion' | 'browser' | 'custom'
   transport: 'stdio' | 'streamable-http'
   command?: string
   args?: string[]

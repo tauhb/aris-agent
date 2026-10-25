@@ -70,6 +70,9 @@ interface SessionPort {
 interface BotsPort {
   open(botId: string): Promise<string>
   botOf(sessionId: string | undefined): { id: string; kind: 'commander' | 'member' }
+  mcp?: {
+    list(bot: string): { serverName: string; check?: { tools: { name: string; readOnly: boolean }[] } }[]
+  }
   store: {
     get(id: string): { id: string; name: string; external?: unknown } | undefined
     list(): { id: string; name: string; handle: string; role?: string; external?: unknown }[]
@@ -216,6 +219,15 @@ export async function apply(ctx: Context): Promise<void> {
       const decision = await next()
       if (!l?.readOnly || decision.kind !== 'allow') return decision
       if (READ_ONLY_TOOLS.has(exec.name) || WEB_READ.has(exec.name)) return decision
+      // Công cụ của kết nối MCP mà máy chủ khai báo chỉ đọc (ví dụ đọc trang của Trình duyệt).
+      if (exec.name.startsWith('mcp__')) {
+        const [, server, ...rest] = exec.name.split('__')
+        const raw = rest.join('__')
+        const conn = bots()
+          ?.mcp?.list(l.bot)
+          .find((c) => c.serverName === server)
+        if (conn?.check?.tools.some((t) => t.name === raw && t.readOnly)) return decision
+      }
       const command = (exec.arguments as { command?: unknown } | undefined)?.command
       if (exec.name === 'bash' && typeof command === 'string' && readOnlyBash(command)) return decision
       // Lệnh bash không chắc chỉ đọc: từ chối kèm hướng dẫn để bot viết lại ngay, không bắt routine

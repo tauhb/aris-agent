@@ -19,6 +19,8 @@
       name: '@aris/autonomy'
     - id: aris-routine
       name: '@aris/routine'
+    - id: aris-checkpoints
+      name: '@aris/checkpoints'
     - id: aris-recall
       name: '@aris/recall'
     - id: aris-home

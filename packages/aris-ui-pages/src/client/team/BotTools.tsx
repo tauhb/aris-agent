@@ -63,6 +63,7 @@ const LOGO: Record<Preset, { letter: string; color: string }> = {
   github: { letter: 'G', color: '#24292F' },
   lark: { letter: 'L', color: '#00B8A9' },
   notion: { letter: 'N', color: '#191919' },
+  browser: { letter: 'W', color: '#2E7D32' },
   custom: { letter: '+', color: 'var(--a-muted)' },
 }
 
@@ -337,7 +338,7 @@ export function SkillsTab({ t, nav, bot }: { t: T; nav: PageProps['nav']; bot: B
   )
 }
 
-const PRESETS: Preset[] = ['github', 'lark', 'notion', 'custom']
+const PRESETS: Preset[] = ['github', 'lark', 'notion', 'browser', 'custom']
 interface CheckResult {
   ok: boolean
   error?: string

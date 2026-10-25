@@ -7,7 +7,7 @@ import { z } from 'zod'
 import type { Table } from './domain.js'
 
 /** Mẫu điền sẵn; `custom` là tự thêm bằng lệnh hoặc URL. */
-export const MCP_PRESETS = ['github', 'lark', 'notion', 'custom'] as const
+export const MCP_PRESETS = ['github', 'lark', 'notion', 'browser', 'custom'] as const
 export type McpPreset = (typeof MCP_PRESETS)[number]
 
 /** Khi bot dùng công cụ của kết nối: hỏi trước khi ghi, hỏi mọi lần, tự dùng. */
@@ -83,6 +83,15 @@ export const PRESET_SPEC: Record<
     command: 'npx',
     args: ['-y', '@notionhq/notion-mcp-server'],
     keys: ['NOTION_TOKEN'],
+  },
+  // Trình duyệt tự động (giai đoạn 4, đợt 5): Playwright MCP bản ghim, chạy ẩn, hồ sơ trình duyệt
+  // riêng mỗi lần (không đụng hồ sơ Chrome của người dùng). Dùng Chrome đã cài trên máy.
+  browser: {
+    name: 'Trình duyệt',
+    transport: 'stdio',
+    command: 'npx',
+    args: ['-y', '@playwright/mcp@0.0.83', '--headless', '--isolated'],
+    keys: [],
   },
 }
 
