@@ -3,6 +3,8 @@
  * của phiên bot (`agent.ctx`), nên công cụ `mcp__<tên>__<công cụ>` chỉ bot đó thấy. Khoá (biến môi
  * trường, header) lưu trên máy, không bao giờ gửi lại giao diện.
  */
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { z } from 'zod'
 import type { Table } from './domain.js'
 
@@ -94,6 +96,24 @@ export const PRESET_SPEC: Record<
     keys: [],
   },
 }
+
+/**
+ * Công cụ "xem" của Trình duyệt coi như chỉ đọc (máy chủ không đánh dấu): mở trang có rủi ro như
+ * `web_fetch` bot đã được dùng. Bấm, gõ, điền, chạy mã trên trang vẫn hỏi.
+ */
+export const BROWSER_VIEW_TOOLS = new Set([
+  'browser_navigate',
+  'browser_navigate_back',
+  'browser_tabs',
+  'browser_close',
+  'browser_resize',
+  'browser_hover',
+])
+
+export const browserCheck = (c: McpCheck): McpCheck => ({
+  ...c,
+  tools: c.tools.map((t) => (BROWSER_VIEW_TOOLS.has(t.name) ? { ...t, readOnly: true } : t)),
+})
 
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase()
 
@@ -200,10 +220,13 @@ function headersOf(r: McpRecord): Record<string, string> {
   return { ...r.secrets }
 }
 
-/** Biến môi trường cho lệnh: mẫu Lark truyền App ID / Secret qua tham số dòng lệnh. */
+/** Lệnh chạy: mẫu Lark truyền App ID / Secret qua tham số dòng lệnh, mẫu Trình duyệt thêm thư mục ra. */
 function launchOf(r: McpRecord): { command: string; args: string[]; env: Record<string, string> } {
   const args = [...(r.args ?? [])]
   if (r.preset === 'lark') args.push('-a', r.secrets.APP_ID ?? '', '-s', r.secrets.APP_SECRET ?? '')
+  // Tệp chụp trang của Playwright ghi vào thư mục tạm, không rơi vào thư mục làm việc của bot.
+  if (r.preset === 'browser' && !args.includes('--output-dir'))
+    args.push('--output-dir', join(tmpdir(), 'aris-browser', r.serverName))
   return { command: r.command ?? '', args, env: r.preset === 'lark' ? {} : { ...r.secrets } }
 }
 
@@ -297,7 +320,7 @@ export class McpStore {
   async setCheck(id: string, check: McpCheck): Promise<McpRecord | undefined> {
     const prev = this.table.get(id)
     if (!prev) return undefined
-    const rec = { ...prev, check }
+    const rec = { ...prev, check: prev.preset === 'browser' ? browserCheck(check) : check }
     await this.table.put(id, rec)
     return rec
   }

@@ -1,3 +1,5 @@
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
@@ -100,5 +102,27 @@ describe('kết nối nền tảng theo bot', () => {
     const fail = await checkConnection(bad, process.cwd(), () => ({ PATH: process.env.PATH ?? '' }), 15_000)
     expect(fail.ok).toBe(false)
     expect(fail.error).toBeTruthy()
+  })
+
+  it('Trình duyệt: công cụ xem coi như chỉ đọc, bấm và chạy mã vẫn hỏi', async () => {
+    const s = new McpStore(memTable())
+    const r = await s.add('b-1', { preset: 'browser' })
+    expect(r.args).toEqual(['-y', '@playwright/mcp@0.0.83', '--headless', '--isolated'])
+    const args = pluginConfig(r, '/w').args as string[]
+    expect(args.slice(-2)).toEqual(['--output-dir', join(tmpdir(), 'aris-browser', r.serverName)])
+    const done = await s.setCheck(r.id, {
+      ok: true,
+      at: '',
+      tools: [
+        { name: 'browser_navigate', readOnly: false },
+        { name: 'browser_snapshot', readOnly: true },
+        { name: 'browser_click', readOnly: false },
+        { name: 'browser_evaluate', readOnly: false },
+      ],
+    })
+    expect(done!.check!.tools.filter((t) => t.readOnly).map((t) => t.name)).toEqual([
+      'browser_navigate',
+      'browser_snapshot',
+    ])
   })
 })
