@@ -110,17 +110,17 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(-
             <button type="button" class="b2">Tạo thêm 2 ảnh</button>
             <button type="button" class="b2">Tải về</button>
             <button type="button" class="b2">Lưu vào bộ não</button>
-            <span class="m" style="font-size: 12px; margin-left: auto; align-self: center">2 ảnh · 0,07 USD · lưu ở anh/2026-10-25/ trong thư mục của Hạ</span>
+            <span class="m" style="font-size: 12px; margin-left: auto; align-self: center">2 ảnh · gemini-3.1-flash-lite-image · 0,07 USD · lưu ở anh/2026-10-25/</span>
           </div>
           <div>Hai phương án: (1) nền cam sáng, chủ shop sau quầy, hợp ảnh thu nhỏ; (2) nền tối, điện thoại phát sáng, chữ cam nổi hơn. Tầu chọn một, Hạ chỉnh tiếp chữ hay bố cục. Ảnh có thể sai chữ tiếng Việt nhỏ, Tầu xem kỹ trước khi đăng.</div>
         </sc-if>
 
         <sc-if value="{{isLoi}}" hint-placeholder-val="{{ false }}">
           <div class="card" style="padding: 10px 12px; border-color: var(--warn); background: var(--warnSoft); font-size: 13px; display: flex; gap: 10px; align-items: center">
-            <span style="flex: 1">Gemini báo chưa bật thanh toán: tạo ảnh không có gói miễn phí. Bật thanh toán cho dự án ở Google AI Studio (khoảng 0,034 USD một ảnh), hoặc chọn model ảnh khác ở trang Model.</span>
-            <a href="TimTheoNghia.dc.html" class="b2" style="text-decoration: none">Mở trang Model</a>
+            <span style="flex: 1">Đã thử 2 model theo thứ tự chung: Gemini báo chưa bật thanh toán, OpenRouter báo hết tiền. Bật thanh toán ở Google AI Studio, nạp tiền OpenRouter, hoặc thêm model khác.</span>
+            <a href="ModelAnhVideo.dc.html" class="b2" style="text-decoration: none">Mở Ảnh và video</a>
           </div>
-          <div>Hạ chưa tạo được ảnh vì Gemini cần bật thanh toán. Trong lúc chờ, Hạ viết sẵn mô tả ở trên, bật xong là tạo lại được ngay.</div>
+          <div>Hạ chưa tạo được ảnh vì cả hai model trong danh sách đều chưa dùng được. Trong lúc chờ, Hạ viết sẵn mô tả ở trên, bật xong là tạo lại được ngay.</div>
         </sc-if>
       </div>
     </div>
@@ -132,11 +132,11 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(-
   <aside style="flex: 0 0 320px; border-left: 1px solid var(--line); background: var(--panel); padding: 16px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto">
     <div>
       <div style="font-weight: 600; font-size: 13.5px">Tạo ảnh · trong Hồ sơ bot</div>
-      <div class="m" style="font-size: 12px">Bật theo từng bot ở tab Skill &amp; tool</div>
+      <div class="m" style="font-size: 12px">Bật và gán model riêng ở tab Skill &amp; tool, hay ở <a href="ModelAnhVideo.dc.html" style="color: var(--accent); text-decoration: none">Ảnh và video</a></div>
     </div>
     <div>
       <div class="row" style="border-top: 0"><span><b>Hạ</b> được tạo ảnh</span><span class="sw" aria-label="Đang bật"></span></div>
-      <div class="row"><span>Model</span><span class="m">theo "Tạo ảnh" ở trang Model</span></div>
+      <div class="row"><span>Model</span><span class="m" style="text-align: right">theo thứ tự chung<br>Gemini → OpenRouter</span></div>
       <div class="row"><span>Trần mỗi ngày</span><span><b>0,50 USD</b> <span class="m">· hôm nay 0,07</span></span></div>
       <div class="row"><span>Hỏi trước khi tạo</span><span class="m">quá 4 ảnh một lần</span></div>
       <div class="row"><span>Lưu ảnh</span><span class="m">thư mục làm việc của bot</span></div>

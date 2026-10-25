@@ -609,10 +609,20 @@
       "y": 5280,
       "w": 1440,
       "h": 900,
-      "title": "1.9 · Tạo ảnh trong chat — công cụ tạo ảnh bật theo bot, lưu vào bộ não, Telegram",
+      "title": "1.9 · Tạo ảnh trong chat — dùng thứ tự model chung hay riêng của bot, lưu vào bộ não, Telegram",
       "expand": "fill",
       "is_interactive": true,
       "page": "g1"
+    },
+    "ModelAnhVideo.dc.html": {
+      "x": 0,
+      "y": 6600,
+      "w": 1440,
+      "h": 900,
+      "title": "6.2c · Ảnh và video — thứ tự ưu tiên model tạo ảnh, tạo video; gán riêng theo bot (nhiều model)",
+      "expand": "fill",
+      "is_interactive": true,
+      "page": "g6"
     }
   },
   "createdOnFiles": {
@@ -779,7 +789,8 @@
     "DoThiCay3D.dc.html",
     "TimTheoNghia.dc.html",
     "HoSoChung.dc.html",
-    "TaoAnh.dc.html"
+    "TaoAnh.dc.html",
+    "ModelAnhVideo.dc.html"
   ],
   "pages": [
     {
