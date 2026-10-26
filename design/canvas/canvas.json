@@ -708,6 +708,24 @@
       "x": 340,
       "y": 980,
       "is_interactive": true
+    },
+    "VanPhongPhongBan.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "vp",
+      "title": "Văn phòng · tab Phòng ban — thẻ từng phòng (linh vật thành viên, đang làm, chi tiêu so với trần, model), + Phòng ban mới, bot chưa vào phòng",
+      "w": 1440,
+      "x": 1860,
+      "y": 0
+    },
+    "VanPhongKanban.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "vp",
+      "title": "Văn phòng · tab Kanban — 5 cột, thẻ có linh vật người làm, duyệt ngay ở cột Chờ anh duyệt",
+      "w": 1440,
+      "x": 1860,
+      "y": 980
     }
   },
   "createdOnFiles": {
@@ -884,7 +902,9 @@
     "DuAnNoi.dc.html",
     "SidebarMoi.dc.html",
     "VanPhong2D.dc.html",
-    "VanPhong3D.dc.html"
+    "VanPhong3D.dc.html",
+    "VanPhongPhongBan.dc.html",
+    "VanPhongKanban.dc.html"
   ],
   "pages": [
     {
