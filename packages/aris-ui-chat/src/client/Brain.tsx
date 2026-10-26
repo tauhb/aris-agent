@@ -1,6 +1,6 @@
 /**
  * Bộ não trong khung chat (giai đoạn 5, đợt 3b; bản vẽ 5.7): nhãn trang trong tin của người dùng, dòng
- * công cụ "Tra bộ não" / "Đọc trang", nút "Từ Second Brain" ở ô nhập, nhóm "Trang bộ não" trong menu `@`.
+ * công cụ "Tra bộ não" / "Đọc trang", nút "Từ Brain" ở ô nhập, nhóm "Trang bộ não" trong menu `@`.
  */
 import { IconButton } from '@aris/ui-kit/react'
 import { useEffect, useRef, useState, type ComponentType } from 'react'
@@ -162,7 +162,7 @@ export function BrainReadCall(props: SubagentCall & { t: Translate }) {
   )
 }
 
-/** Nút "Từ Second Brain" ở ô nhập và ô chọn trang (bản vẽ 5.7 C). */
+/** Nút "Từ Brain" ở ô nhập và ô chọn trang (bản vẽ 5.7 C). */
 export function BrainPicker({
   insert,
   sessionId,

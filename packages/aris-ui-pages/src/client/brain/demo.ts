@@ -1,5 +1,5 @@
 /**
- * Dữ liệu mẫu Second Brain (canvas 5.1–5.4). Nội dung là dữ liệu nên để nguyên tiếng
+ * Dữ liệu mẫu Brain (canvas 5.1–5.4). Nội dung là dữ liệu nên để nguyên tiếng
  * Việt như canvas; kho ghi chú Markdown và đồ thị thật nối ở giai đoạn 5.
  */
 

@@ -211,7 +211,7 @@ export const T = {
   brainApprove: 'Đồng ý',
   brainWeb: 'Xem trên web',
   brainKeep: 'Chỉ lưu',
-  brainWebHint: 'Mở aris trên máy: Second Brain › Hộp thư vào.',
+  brainWebHint: 'Mở aris trên máy: Brain › Hộp thư vào.',
   brainNapped: (title: string, pages: number, place: string, conflicts: number) =>
     [
       '✅ <b>ĐÃ NẠP</b>',

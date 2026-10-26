@@ -113,7 +113,7 @@ export const DEMO_PROFILE = {
   tools: [
     { text: 'Tìm và đọc web', on: true },
     { text: 'Đọc tệp, PDF, Office', on: true },
-    { text: 'Second Brain · chỉ đọc', on: true },
+    { text: 'Brain · chỉ đọc', on: true },
     { text: 'Chạy lệnh terminal', on: false },
     { text: 'Gửi email / tin nhắn ra ngoài', on: false },
   ],

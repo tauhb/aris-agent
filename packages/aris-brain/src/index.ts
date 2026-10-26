@@ -1497,7 +1497,7 @@ export async function apply(ctx: Context): Promise<void> {
                   .map((e) => ({ ...view(e), linkedTo: linked.get(e.path) ?? null })),
               })
             }
-            // Khung chat (bản vẽ 5.7): tên các trang để dựng nhãn [[...]], trang cho ô "Từ Second Brain".
+            // Khung chat (bản vẽ 5.7): tên các trang để dựng nhãn [[...]], trang cho ô "Từ Brain".
             if (q.get('names') !== null)
               return json({
                 pages: catalog

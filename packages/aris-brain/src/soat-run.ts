@@ -368,7 +368,7 @@ export function startSoat(d: SoatDeps) {
     if (open.length)
       await d
         .notify(
-          `🧹 **SOÁT BỘ NÃO · tuần ${weekKey(new Date()).slice(-2)}**\n${parts.join(', ') || `${open.length} điều cần gọn`}${deepRun.cost ? ` · Thủ thư dùng ${deepRun.cost.toFixed(2)} USD` : ''}.\nXem ở Second Brain › Soát bộ não trên web.`,
+          `🧹 **SOÁT BỘ NÃO · tuần ${weekKey(new Date()).slice(-2)}**\n${parts.join(', ') || `${open.length} điều cần gọn`}${deepRun.cost ? ` · Thủ thư dùng ${deepRun.cost.toFixed(2)} USD` : ''}.\nXem ở Brain › Soát bộ não trên web.`,
         )
         .catch(() => undefined)
   }

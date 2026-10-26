@@ -282,7 +282,7 @@ export function apply(ctx: ClientContext): void {
   ctx.slots.inject('conversation.user.text.node', () =>
     ctx.slots.register({ name: 'conversation.user.text.node', key: 'aris-page', locale: NS }, UserPage),
   )
-  // …và trong câu trả lời của bot; bấm nhãn mở thẻ xem nhanh, "Mở ở Second Brain" mở trang ở 5.1.
+  // …và trong câu trả lời của bot; bấm nhãn mở thẻ xem nhanh, "Mở ở Brain" mở trang ở 5.1.
   ctx.effect(
     () =>
       watchPageLinks(cachedPages, brainPages, (el, page) =>
@@ -331,7 +331,7 @@ export function apply(ctx: ClientContext): void {
   ctx.slots.inject('tool.call.toolview', () =>
     ctx.slots.register({ name: 'tool.call.toolview', key: 'tao_video', priority: -1, locale: NS }, VideoCall),
   )
-  // Nút "Từ Second Brain" ở ô nhập; nhóm "Trang bộ não" trong menu `@`.
+  // Nút "Từ Brain" ở ô nhập; nhóm "Trang bộ não" trong menu `@`.
   ctx.slots.inject('conversation.input.left', () =>
     ctx.slots.register(
       {

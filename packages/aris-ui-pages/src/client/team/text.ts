@@ -60,7 +60,7 @@ export const TEAM_TEXT = text(
     'dep.perm.askHint':
       'Sending mail or messages out, deleting files, risky commands. Refused with a reason until the approval inbox exists.',
     'dep.denied': 'refused',
-    'dep.soon': 'Coming: shared skills and the department Second Brain area.',
+    'dep.soon': 'Coming: shared skills and the department Brain area.',
     'dep.soonTag': 'coming',
     'dep.dirty':
       'Policy changed, not saved. Saving applies to new work of every bot in the department; running work keeps the permissions it started with.',
@@ -595,7 +595,7 @@ export const TEAM_TEXT = text(
     'tools.web': 'Search and read the web',
     'tools.files': 'Read files, PDF, Office',
     'tools.shell': 'Run terminal commands',
-    'tools.brain': 'Second Brain · read only',
+    'tools.brain': 'Brain · read only',
     'tools.send': 'Send email / messages outside',
     'tools.blockedBy': '{dept} department does not allow it',
     'tools.blockedDefault': 'not allowed for bots without a department',
@@ -628,7 +628,7 @@ export const TEAM_TEXT = text(
     'clone.export': 'Export',
     'project.title': 'New project',
     'project.intro':
-      'A project is one piece of work: a few bots, a work folder, a shared chat, a task board and its notes in Second Brain.',
+      'A project is one piece of work: a few bots, a work folder, a shared chat, a task board and its notes in Brain.',
     'project.name': 'Project name',
     'project.members': 'Members',
     'project.count': '· {n} bots',
@@ -724,7 +724,7 @@ export const TEAM_TEXT = text(
     'dep.perm.askHint':
       'Gửi thư, tin ra ngoài, xoá tệp, lệnh nguy hiểm. Bị từ chối kèm lý do cho tới khi có Hộp duyệt.',
     'dep.denied': 'từ chối',
-    'dep.soon': 'Sắp có: skill dùng chung và vùng Second Brain của phòng.',
+    'dep.soon': 'Sắp có: skill dùng chung và vùng Brain của phòng.',
     'dep.soonTag': 'sắp có',
     'dep.dirty':
       'Chính sách đã đổi, chưa lưu. Lưu là áp cho việc mới của mọi bot trong phòng; việc đang chạy giữ quyền lúc bắt đầu.',
@@ -1248,7 +1248,7 @@ export const TEAM_TEXT = text(
     'tools.web': 'Tìm và đọc web',
     'tools.files': 'Đọc tệp, PDF, Office',
     'tools.shell': 'Chạy lệnh terminal',
-    'tools.brain': 'Second Brain · chỉ đọc',
+    'tools.brain': 'Brain · chỉ đọc',
     'tools.send': 'Gửi email / tin nhắn ra ngoài',
     'tools.blockedBy': 'Phòng {dept} không cho',
     'tools.blockedDefault': 'bot chưa vào phòng nào không được dùng',
@@ -1279,7 +1279,7 @@ export const TEAM_TEXT = text(
     'clone.export': 'Xuất tệp',
     'project.title': 'Tạo dự án',
     'project.intro':
-      'Dự án là một việc lớn: vài bot, một thư mục làm việc, cuộc chat chung, bảng việc và ghi chú riêng trong Second Brain.',
+      'Dự án là một việc lớn: vài bot, một thư mục làm việc, cuộc chat chung, bảng việc và ghi chú riêng trong Brain.',
     'project.name': 'Tên dự án',
     'project.members': 'Thành viên',
     'project.count': '· {n} bot',
