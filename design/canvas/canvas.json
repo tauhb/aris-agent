@@ -662,6 +662,15 @@
       "w": 1440,
       "x": 1520,
       "y": 6600
+    },
+    "PhatLai.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "6.5b · Phát lại phiên (GĐ7 đợt 7c) — từng bước của một phiên: tin nhắn, gọi công cụ, duyệt, bị chặn; token và chi phí mỗi bước; tua, phát tự động",
+      "w": 1440,
+      "x": 0,
+      "y": 7920
     }
   },
   "createdOnFiles": {
@@ -806,6 +815,7 @@
     "BaoMat.dc.html",
     "SaoLuu.dc.html",
     "ThongKe.dc.html",
+    "PhatLai.dc.html",
     "ManHinhBot.dc.html",
     "MatTichHop.dc.html",
     "Plugin.dc.html",

@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Phát lại phiên</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FCEBE9;--c1:#1084FE;--c2:#00B5A5;--c3:#FF6700;--c4:#FFAA00}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18;--c1:#5AA5FF;--c2:#2CC9BA;--c3:#FF8A3D;--c4:#FFC14D}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b2{height:30px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:12.5px;flex:none;white-space:nowrap}
+.pb{width:32px;height:32px;border:1px solid var(--line);border-radius:8px;background:var(--panel);display:inline-flex;align-items:center;justify-content:center;color:var(--ink);flex:none}
+.pb.main{background:var(--accent);border-color:var(--accent);color:#fff}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.sn{display:block;border-radius:8px;padding:7px 10px;font-size:13.5px;color:var(--ink);text-decoration:none}
+.seg{white-space:nowrap;border:0;border-radius:7px;padding:4px 10px;background:transparent;font-size:12.5px;color:var(--muted)}
+.seg.on{background:var(--hover);color:var(--ink);font-weight:600}
+.st{display:grid;grid-template-columns:28px 62px 10px minmax(0,1fr) 64px 52px;gap:8px;align-items:center;width:100%;box-sizing:border-box;padding:8px 12px;border:0;border-top:1px solid var(--line);background:transparent;text-align:left;font-size:13px}
+.st.on{background:var(--accentSoft)}
+.dot{width:9px;height:9px;border-radius:3px}
+.pill{font-size:12px;font-weight:600;border-radius:999px;padding:1px 9px;white-space:nowrap;flex:none}
+.blk{font-family:'JetBrains Mono',monospace;font-size:12.5px;background:var(--panel2);border-radius:8px;padding:10px 12px;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.kv{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px}
+.fig{font-variant-numeric:tabular-nums;white-space:nowrap}
+.tick{flex:1;height:10px;border-radius:2px;border:0;padding:0}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="settings" bot="none" hint-size="260px,900px"></dc-import>
+  <nav aria-label="Cài đặt" style="flex: 0 1 210px; min-width: 190px; border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px">
+    <div class="m" style="padding: 0 10px 8px; font-weight: 600; font-size: 12px">Cài đặt và vận hành</div>
+    <a class="sn" href="DieuKhien.dc.html">Bảng điều khiển</a>
+    <a class="sn" href="Provider.dc.html">Provider và model</a>
+    <a class="sn" href="Kenh.dc.html">Kênh và ghép đôi</a>
+    <a class="sn" href="MatTichHop.dc.html">Ứng dụng khác</a>
+    <a class="sn" href="BaoMat.dc.html">Ngân sách, duyệt, an toàn</a>
+    <a class="sn" href="SaoLuu.dc.html">Sao lưu</a>
+    <a class="sn" href="ThongKe.dc.html" aria-current="page" style="background: var(--hover); font-weight: 600">Thống kê và nhật ký</a>
+    <a class="sn" href="Commander.dc.html">Commander</a>
+    <a class="sn" href="ManHinhBot.dc.html">Màn hình của bot</a>
+    <a class="sn" href="Plugin.dc.html">Plugin</a>
+  </nav>
+  <main style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 10px 24px; border-bottom: 1px solid var(--line)">
+      <a class="b2" href="ThongKe.dc.html" style="display: inline-flex; align-items: center; text-decoration: none">‹ Nhật ký phiên</a>
+      <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle></svg>
+      <div style="display: flex; flex-direction: column; min-width: 0; flex: 1">
+        <span style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Nghiên cứu 3 đối thủ</span>
+        <span class="m" style="font-size: 12px">Lâm · do Aris giao · Commander · hôm nay 10:42–10:47 · 14 bước · 38,2K token · 0,11 USD</span>
+      </div>
+      <button type="button" class="b2">Mở phiên</button>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 8px; padding: 10px 24px; border-bottom: 1px solid var(--line); flex-wrap: wrap">
+      <button type="button" class="pb" aria-label="Bước đầu" onClick="{{first}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5v14L9 12z"></path></svg></button>
+      <button type="button" class="pb" aria-label="Bước trước" onClick="{{prev}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 5v14L7 12z"></path></svg></button>
+      <button type="button" class="pb main" aria-label="{{playLabel}}" onClick="{{togglePlay}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="{{playPath}}"></path></svg></button>
+      <button type="button" class="pb" aria-label="Bước sau" onClick="{{next}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5v14l11-7z"></path></svg></button>
+      <button type="button" class="pb" aria-label="Bước cuối" onClick="{{last}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 5h2v14h-2zM4 5v14l11-7z"></path></svg></button>
+      <span class="fig" style="font-size: 13px; margin: 0 6px">Bước {{pos}} / 14</span>
+      <span role="group" aria-label="Tốc độ" style="display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 2px"><button type="button" class="seg">1×</button><button type="button" class="seg on">2×</button><button type="button" class="seg">4×</button></span>
+      <div role="group" aria-label="Dòng thời gian các bước" style="flex: 1 1 260px; display: flex; gap: 3px; align-items: center; min-width: 200px">
+        <sc-for list="{{steps}}" as="s" hint-placeholder-count="14">
+          <button type="button" class="tick" aria-label="{{s.aria}}" style="{{s.tick}}" onClick="{{s.pick}}"></button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="padding: 16px 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+      <div class="card" style="flex: 1.3 1 480px; min-width: 0; overflow: hidden">
+        <div style="padding: 10px 12px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center">
+          <b style="font-size: 13.5px">Các bước</b>
+          <span class="m" style="font-size: 12px; display: inline-flex; gap: 10px; flex-wrap: wrap"><span><span class="dot" style="display: inline-block; background: var(--c1)"></span> tin nhắn</span><span><span class="dot" style="display: inline-block; background: var(--c2)"></span> gọi công cụ</span><span><span class="dot" style="display: inline-block; background: var(--c4)"></span> duyệt</span><span><span class="dot" style="display: inline-block; background: var(--danger)"></span> lỗi, bị chặn</span></span>
+        </div>
+        <sc-for list="{{steps}}" as="s" hint-placeholder-count="14">
+          <button type="button" class="{{s.cls}}" onClick="{{s.pick}}">
+            <span class="m fig" style="font-size: 12px">{{s.n}}</span>
+            <span class="mono m" style="font-size: 11.5px">{{s.at}}</span>
+            <span class="dot" style="{{s.dot}}"></span>
+            <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{s.text}}</span>
+            <span class="m fig" style="font-size: 12px; text-align: right">{{s.tok}}</span>
+            <span class="mono fig" style="font-size: 12px; text-align: right">{{s.usd}}</span>
+          </button>
+        </sc-for>
+      </div>
+
+      <div style="flex: 1 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div class="card">
+          <div style="padding: 12px 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+            <span class="pill" style="{{cur.pill}}">{{cur.kind}}</span>
+            <b style="flex: 1; min-width: 0">{{cur.title}}</b>
+            <span class="m mono" style="font-size: 12px">{{cur.at}}</span>
+          </div>
+          <div style="padding: 0 14px 12px">
+            <div class="kv m"><span>{{cur.model}}</span><span class="fig">{{cur.tokens}}</span><span class="fig">{{cur.cost}}</span><span class="fig">{{cur.took}}</span></div>
+          </div>
+          <div style="padding: 12px 14px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px">
+            <span class="m" style="font-size: 12.5px">{{cur.inLabel}}</span>
+            <pre class="blk">{{cur.input}}</pre>
+          </div>
+          <sc-if value="{{cur.hasOut}}" hint-placeholder-val="{{ true }}">
+            <div style="padding: 12px 14px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px">
+              <span style="display: flex; align-items: center; gap: 8px"><span class="m" style="font-size: 12.5px; flex: 1">{{cur.outLabel}}</span><button type="button" class="b2">Xem đủ</button></span>
+              <pre class="blk">{{cur.output}}</pre>
+            </div>
+          </sc-if>
+        </div>
+        <div class="card" style="padding: 12px 14px; font-size: 13px">
+          <span class="m">Phát lại chỉ đọc nhật ký đã ghi, không chạy lại công cụ hay gọi model. Phiên đang chạy thì bước mới hiện thêm ở cuối.</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const sel = s.sel === undefined ? 5 : s.sel;
+    const playing = !!s.playing;
+    const COLOR = { msg: 'var(--c1)', tool: 'var(--c2)', ok: 'var(--c4)', bad: 'var(--danger)' };
+    const S = [
+      ['10:42:03', 'msg', 'Aris giao: nghiên cứu 3 đối thủ (giá, kênh, điểm mạnh)', '', '', 'Việc được giao', 'Aris giao việc cho Lâm', '', '', '', 'Tin nhắn', 'Nghiên cứu 3 đối thủ của khoá học AI: Học viện A, B, C. Mỗi bên: bảng giá, kênh bán chính, điểm mạnh. Trả về bảng so sánh và 3 ý cho mình.', '', ''],
+      ['10:42:06', 'tool', 'brain_search “đối thủ khoá học AI”', '2,1K', '0,003', 'Gọi công cụ', 'brain_search', 'deepseek-v4-flash', 'vào 2.040 (cache 1.880) · ra 64', '0,003 USD · 1,2 giây', 'Tham số', '{\n  "query": "đối thủ khoá học AI"\n}', 'Kết quả · 3 trang', '[[hoc-vien-a]] Học viện A — giá 4,9 triệu, bán qua webinar\n[[doi-thu-q3]] Ghi chú đối thủ quý 3\n[[kenh-youtube-q4]] Kênh YouTube Q4'],
+      ['10:42:09', 'tool', 'web_search “Học viện B bảng giá 2026”', '2,6K', '0,004', 'Gọi công cụ', 'web_search', 'deepseek-v4-flash', 'vào 2.540 (cache 2.100) · ra 58', '0,004 USD · 2,8 giây', 'Tham số', '{\n  "query": "Học viện B bảng giá 2026"\n}', 'Kết quả · 8 trang', '1. hocvienb.vn/khoa-hoc — Khoá AI ứng dụng 6,5 triệu\n2. facebook.com/hocvienb — Ưu đãi tháng 10\n…'],
+      ['10:42:15', 'tool', 'web_fetch hocvienb.vn/khoa-hoc', '3,4K', '0,006', 'Gọi công cụ', 'web_fetch', 'deepseek-v4-flash', 'vào 3.310 (cache 2.540) · ra 72', '0,006 USD · 3,1 giây', 'Tham số', '{\n  "url": "https://hocvienb.vn/khoa-hoc"\n}', 'Kết quả · 12 KB, đã rút gọn', 'Khoá AI ứng dụng cho doanh nghiệp\nHọc phí: 6.500.000đ · 8 buổi · Zoom\nCam kết: hoàn tiền 7 ngày…'],
+      ['10:42:21', 'tool', 'web_search “Học viện C khoá AI”', '3,9K', '0,006', 'Gọi công cụ', 'web_search', 'deepseek-v4-flash', 'vào 3.880 (cache 3.310) · ra 51', '0,006 USD · 2,2 giây', 'Tham số', '{\n  "query": "Học viện C khoá AI"\n}', 'Kết quả · 6 trang', '1. hocvienc.edu.vn — AI cho người đi làm, 3,9 triệu\n…'],
+      ['10:42:27', 'tool', 'web_fetch hocvienc.edu.vn', '4,5K', '0,008', 'Gọi công cụ', 'web_fetch', 'deepseek-v4-flash', 'vào 4.420 (cache 3.880) · ra 66', '0,008 USD · 2,6 giây', 'Tham số', '{\n  "url": "https://hocvienc.edu.vn"\n}', 'Kết quả · 9 KB, đã rút gọn', 'AI cho người đi làm — 3.900.000đ\nLớp tối thứ 3, 5 · cộng đồng Zalo 2.000 người\nGiảng viên: …'],
+      ['10:43:02', 'bad', 'bash curl -s hocviena.vn | head (hàng rào chặn: mạng lạ)', '0,2K', '0,001', 'Bị chặn', 'bash', 'deepseek-v4-flash', 'vào 4.610 (cache 4.420) · ra 40', '0,001 USD', 'Lệnh', 'curl -s https://hocviena.vn | head -50', 'Hàng rào', 'Cần duyệt: gọi mạng ngoài công cụ web. Bot chuyển sang web_fetch.'],
+      ['10:43:05', 'tool', 'web_fetch hocviena.vn', '5,1K', '0,009', 'Gọi công cụ', 'web_fetch', 'deepseek-v4-flash', 'vào 5.020 (cache 4.610) · ra 61', '0,009 USD · 2,4 giây', 'Tham số', '{\n  "url": "https://hocviena.vn"\n}', 'Kết quả · 11 KB, đã rút gọn', 'Học viện A — Khoá AI thực chiến 4.900.000đ\nWebinar miễn phí mỗi thứ 4…'],
+      ['10:44:40', 'msg', 'Lâm nghĩ: so ba bên, thiếu số học viên của B', '1,2K', '0,004', 'Suy nghĩ', 'Lâm suy nghĩ', 'deepseek-v4-pro', 'vào 5.400 (cache 5.020) · ra 1.180', '0,004 USD · 18 giây', 'Nội dung', 'A rẻ nhất nhóm giữa, bán bằng webinar. B đắt nhất, có hoàn tiền. C rẻ nhất, mạnh cộng đồng Zalo. Thiếu số học viên của B — ghi là chưa rõ, không đoán.', '', ''],
+      ['10:45:10', 'tool', 'write doi-thu-khoa-ai.md', '6,3K', '0,010', 'Gọi công cụ', 'write', 'deepseek-v4-pro', 'vào 6.120 (cache 5.400) · ra 820', '0,010 USD · 0,1 giây', 'Tham số', '{\n  "file_path": "doi-thu-khoa-ai.md",\n  "content": "| | A | B | C |\\n|---|---|---|---|\\n…"\n}', 'Kết quả', 'Đã ghi 2,1 KB'],
+      ['10:45:12', 'tool', 'brain_note “Đối thủ khoá học AI”', '6,9K', '0,011', 'Gọi công cụ', 'brain_note', 'deepseek-v4-pro', 'vào 6.880 (cache 6.120) · ra 210', '0,011 USD · 0,4 giây', 'Tham số', '{\n  "title": "Đối thủ khoá học AI",\n  "space": "cong-ty"\n}', 'Kết quả', 'Đã thêm vào hộp thư vào của bộ não'],
+      ['10:46:30', 'ok', 'Xin duyệt: gửi bảng so sánh vào nhóm Telegram', '', '', 'Duyệt', 'Xin duyệt gửi tin', '', '', 'chờ 41 giây', 'Việc', 'channel_send → nhóm “Marketing” trên Telegram', 'Kết quả', 'Anh Tầu đã duyệt một lần lúc 10:47:11'],
+      ['10:47:12', 'tool', 'channel_send nhóm Marketing', '7,4K', '0,012', 'Gọi công cụ', 'channel_send', 'deepseek-v4-pro', 'vào 7.300 (cache 6.880) · ra 95', '0,012 USD · 0,9 giây', 'Tham số', '{\n  "channel": "telegram",\n  "to": "Marketing",\n  "text": "Bảng so sánh 3 đối thủ…"\n}', 'Kết quả', 'Đã gửi'],
+      ['10:47:20', 'msg', 'Lâm trả lời Aris: bảng so sánh và 3 ý', '7,8K', '0,026', 'Trả lời', 'Lâm trả lời', 'deepseek-v4-pro', 'vào 7.410 (cache 7.300) · ra 1.020', '0,026 USD · 21 giây', 'Nội dung', 'Đã xong. Bảng ở doi-thu-khoa-ai.md, đã gửi nhóm Marketing.\n1. C rẻ nhất nhưng mạnh cộng đồng — mình nên có nhóm Zalo.\n2. B có hoàn tiền 7 ngày…', '', ''],
+    ];
+    const pillOf = { msg: 'color:var(--accent);background:var(--accentSoft)', tool: 'color:var(--ok);background:var(--okSoft)', ok: 'color:var(--warn);background:var(--warnSoft)', bad: 'color:var(--danger);background:var(--dangerSoft)' };
+    const steps = S.map((x, i) => ({
+      n: String(i + 1), at: x[0].slice(0, 8), text: x[2], tok: x[3], usd: x[4],
+      cls: 'st' + (i === sel ? ' on' : ''),
+      dot: 'background:' + COLOR[x[1]],
+      tick: 'background:' + COLOR[x[1]] + ';opacity:' + (i <= sel ? '1' : '.3') + (i === sel ? ';height:16px' : ''),
+      aria: 'Bước ' + (i + 1) + ': ' + x[2],
+      pick: () => this.setState({ sel: i }),
+    }));
+    const c = S[sel];
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      steps,
+      pos: String(sel + 1),
+      first: () => this.setState({ sel: 0 }),
+      last: () => this.setState({ sel: S.length - 1 }),
+      prev: () => this.setState({ sel: Math.max(0, sel - 1) }),
+      next: () => this.setState({ sel: Math.min(S.length - 1, sel + 1) }),
+      togglePlay: () => this.setState({ playing: !playing }),
+      playLabel: playing ? 'Tạm dừng' : 'Phát',
+      playPath: playing ? 'M6 5h4v14H6zM14 5h4v14h-4z' : 'M7 5v14l11-7z',
+      cur: {
+        kind: c[5], title: c[6], at: c[0], model: c[7] || '—', tokens: c[8] || '', cost: c[9] ? c[9].split(' · ')[0] : '', took: c[9] && c[9].includes(' · ') ? c[9].split(' · ')[1] : (c[9] && !c[9].includes('USD') ? c[9] : ''),
+        pill: pillOf[c[1]], inLabel: c[10], input: c[11], hasOut: !!c[12], outLabel: c[12], output: c[13],
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>
