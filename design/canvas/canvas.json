@@ -735,6 +735,25 @@
       "w": 1440,
       "x": 0,
       "y": 9240
+    },
+    "PhuKienLinhVat.dc.html": {
+      "expand": "fill",
+      "h": 1800,
+      "page": "vp",
+      "title": "Phụ kiện linh vật (phương án A: hiện ở mọi nơi) — đội hiện tại 10 bot ở cỡ 16/24/40/96, trong thanh bên, chat, hồ sơ bot chọn phụ kiện; thư viện 50 dáng với phụ kiện mặc định",
+      "w": 1440,
+      "x": 340,
+      "y": 1960
+    },
+    "PhuKien3D.dc.html": {
+      "expand": "fill",
+      "h": 640,
+      "page": "vp",
+      "title": "Phụ kiện linh vật · 3D (three.js) — 10 bot đội hiện tại đeo phụ kiện, kéo để xoay; theo sáng tối của app",
+      "w": 1440,
+      "x": 1860,
+      "y": 1960,
+      "is_interactive": true
     }
   },
   "createdOnFiles": {
@@ -914,7 +933,9 @@
     "VanPhong3D.dc.html",
     "VanPhongPhongBan.dc.html",
     "VanPhongKanban.dc.html",
-    "KenhLark.dc.html"
+    "KenhLark.dc.html",
+    "PhuKienLinhVat.dc.html",
+    "PhuKien3D.dc.html"
   ],
   "pages": [
     {
