@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Nhập kết nối</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2,h3{font-family:'Lexend',sans-serif;letter-spacing:-.01em;margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FBE7E7}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A1A}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:36px;padding:0 14px;border:0;border-radius:10px;background:var(--ink);color:var(--panel);font-size:13px;font-weight:600}
+.b2{height:36px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font-size:13px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.m{color:var(--muted)}
+.lb{font-size:12px;font-weight:600;color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.tab{border:0;background:transparent;padding:10px 2px;margin-right:18px;font-size:13.5px;color:var(--muted);border-bottom:2px solid transparent}
+.row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.tag{font-size:11.5px;border-radius:6px;padding:1px 7px;background:var(--panel2);color:var(--muted)}
+.logo{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex:none}
+.st{font-size:12px;font-weight:600}
+.cap{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.inp{height:36px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);padding:0 10px;font-size:13px;width:100%;box-sizing:border-box;font-family:inherit}
+.preset{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:9px 10px;font-size:13px;text-align:left}
+.preset[aria-pressed="true"]{border-color:var(--accent);background:var(--accentSoft)}
+.sw{width:34px;height:20px;border-radius:999px;background:var(--ok);position:relative;flex:none;border:0}
+.sw::after{content:"";position:absolute;top:2px;left:16px;width:16px;height:16px;border-radius:50%;background:#fff}
+.sw.off{background:var(--line)}
+.sw.off::after{left:2px}
+.radio{display:flex;gap:10px;align-items:flex-start;padding:8px 0;font-size:13px}
+.note{display:flex;gap:10px;align-items:flex-start;border-radius:10px;padding:10px 12px;font-size:12.5px}
+
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:34px;padding:0 12px;border:0;border-radius:9px;background:var(--ink);color:var(--panel);font-size:13px;font-weight:600}
+.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.sn{display:block;border-radius:8px;padding:7px 10px;font-size:13.5px;color:var(--ink);text-decoration:none}
+.r{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.av{flex:none;width:22px;height:22px;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:600}
+.ok{font-size:12px;font-weight:600;color:var(--ok);background:var(--okSoft);border-radius:999px;padding:1px 9px}
+.seg{border:0;border-radius:7px;padding:4px 10px;background:transparent;font-size:12.5px;color:var(--muted)}
+.seg.on{background:var(--hover);color:var(--ink);font-weight:600}
+
+.pill{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:12px;font-weight:600;background:var(--panel2);color:var(--ink);white-space:nowrap}
+.pill.src{background:var(--accentSoft);color:var(--accent)}
+.stack{display:inline-flex}.stack>svg{margin-left:-6px;border-radius:50%;background:var(--panel)}.stack>svg:first-child{margin-left:0}
+.pop{position:absolute;z-index:5;width:400px;border:1px solid var(--line);border-radius:12px;background:var(--panel);box-shadow:0 16px 40px rgba(0,0,0,.14);padding:14px;display:flex;flex-direction:column;gap:10px}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px}
+.chk input{width:16px;height:16px;accent-color:var(--accent)}
+.dim{position:relative;background:rgba(15,16,19,.45);border-radius:12px;padding:40px 24px;display:flex;justify-content:center}
+.sel{height:32px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font:inherit;font-size:13px;padding:0 10px}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+  <div style="display: flex; align-items: center; gap: 12px"><h2 style="font-size: 20px; margin: 0">Nhập kết nối từ Claude Code và Codex</h2><button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="margin-left: auto"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button></div>
+  <div class="dim" style="flex: 1">
+    <div class="card" role="dialog" aria-label="Nhập từ Claude Code và Codex" style="width: 640px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 18px 50px rgba(0,0,0,.2); align-self: flex-start">
+      <div style="display: flex; align-items: center"><h3 style="font-size: 17px; margin: 0">Nhập từ Claude Code và Codex</h3><button type="button" class="ib" style="margin-left: auto" aria-label="Đóng">✕</button></div>
+      <span class="m" style="font-size: 12.5px">Đã đọc cấu hình trên máy. Khoá được chép vào aris, không hiện lại ở đây.</span>
+      <div class="card" style="overflow: hidden">
+        <label class="row" style="align-items: center"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--accent)">
+          <span class="logo" style="background: #00B8A9">L</span>
+          <div style="display: flex; flex-direction: column; flex: 1; min-width: 0"><span><b>lark-base</b> <span class="pill src">Codex</span> <span class="m" style="font-size: 12.5px">· lệnh trên máy</span></span>
+            <span class="m" style="font-size: 12.5px">Khoá: APP_ID, APP_SECRET, LARK_DOMAIN, LARK_TOOLS · đã có</span></div></label>
+        <label class="row" style="align-items: center"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--accent)">
+          <span class="logo" style="background: #7C3AED">H</span>
+          <div style="display: flex; flex-direction: column; flex: 1; min-width: 0"><span><b>heygen</b> <span class="pill src">Codex</span> <span class="m" style="font-size: 12.5px">· URL</span></span>
+            <span class="m" style="font-size: 12.5px">mcp.heygen.com · không cần khoá</span></div></label>
+        <div class="row m" style="font-size: 12.5px">Claude Code: chưa có máy chủ MCP nào.</div>
+      </div>
+      <details style="font-size: 12.5px"><summary class="m" style="cursor: pointer">Bỏ qua 2 máy chủ</summary>
+        <div class="m" style="padding: 8px 0 0 12px; display: flex; flex-direction: column; gap: 4px">
+          <span><b>computer-use</b> · đang tắt trong Codex</span>
+          <span><b>node_repl</b> · chỉ chạy được bên trong ứng dụng ChatGPT</span>
+        </div>
+      </details>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span class="lb">Ai dùng được</span>
+        <div style="display: flex; gap: 2px; background: var(--panel2); border-radius: 10px; padding: 3px; align-self: flex-start" role="tablist">
+          <button type="button" class="seg on" role="tab" aria-selected="true">Cả đội</button><button type="button" class="seg" role="tab" aria-selected="false">Phòng và bot…</button>
+        </div>
+      </div>
+      <label style="display: flex; flex-direction: column; gap: 4px"><span class="lb">Khi bot dùng công cụ</span>
+        <select class="sel" aria-label="Mức hỏi" style="align-self: flex-start"><option>Hỏi trước khi ghi</option><option>Hỏi mọi lần</option><option>Tự dùng</option></select></label>
+      <div style="display: flex; gap: 8px; justify-content: flex-end"><button type="button" class="b2">Huỷ</button><button type="button" class="b1">Nhập 2 kết nối</button></div>
+      <span class="m" style="font-size: 12px">Nhập xong aris kiểm tra từng kết nối ngay.</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'light';
+    return { themeClass: 't-' + theme, you: 'anh Tầu', toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

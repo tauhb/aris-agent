@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Kết nối của đội</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2,h3{font-family:'Lexend',sans-serif;letter-spacing:-.01em;margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FBE7E7}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A1A}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:36px;padding:0 14px;border:0;border-radius:10px;background:var(--ink);color:var(--panel);font-size:13px;font-weight:600}
+.b2{height:36px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font-size:13px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.m{color:var(--muted)}
+.lb{font-size:12px;font-weight:600;color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.tab{border:0;background:transparent;padding:10px 2px;margin-right:18px;font-size:13.5px;color:var(--muted);border-bottom:2px solid transparent}
+.row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.tag{font-size:11.5px;border-radius:6px;padding:1px 7px;background:var(--panel2);color:var(--muted)}
+.logo{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex:none}
+.st{font-size:12px;font-weight:600}
+.cap{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.inp{height:36px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);padding:0 10px;font-size:13px;width:100%;box-sizing:border-box;font-family:inherit}
+.preset{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:9px 10px;font-size:13px;text-align:left}
+.preset[aria-pressed="true"]{border-color:var(--accent);background:var(--accentSoft)}
+.sw{width:34px;height:20px;border-radius:999px;background:var(--ok);position:relative;flex:none;border:0}
+.sw::after{content:"";position:absolute;top:2px;left:16px;width:16px;height:16px;border-radius:50%;background:#fff}
+.sw.off{background:var(--line)}
+.sw.off::after{left:2px}
+.radio{display:flex;gap:10px;align-items:flex-start;padding:8px 0;font-size:13px}
+.note{display:flex;gap:10px;align-items:flex-start;border-radius:10px;padding:10px 12px;font-size:12.5px}
+
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:34px;padding:0 12px;border:0;border-radius:9px;background:var(--ink);color:var(--panel);font-size:13px;font-weight:600}
+.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.sn{display:block;border-radius:8px;padding:7px 10px;font-size:13.5px;color:var(--ink);text-decoration:none}
+.r{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.av{flex:none;width:22px;height:22px;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:600}
+.ok{font-size:12px;font-weight:600;color:var(--ok);background:var(--okSoft);border-radius:999px;padding:1px 9px}
+.seg{border:0;border-radius:7px;padding:4px 10px;background:transparent;font-size:12.5px;color:var(--muted)}
+.seg.on{background:var(--hover);color:var(--ink);font-weight:600}
+
+.pill{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:12px;font-weight:600;background:var(--panel2);color:var(--ink);white-space:nowrap}
+.pill.src{background:var(--accentSoft);color:var(--accent)}
+.stack{display:inline-flex}.stack>svg{margin-left:-6px;border-radius:50%;background:var(--panel)}.stack>svg:first-child{margin-left:0}
+.pop{position:absolute;z-index:5;width:400px;border:1px solid var(--line);border-radius:12px;background:var(--panel);box-shadow:0 16px 40px rgba(0,0,0,.14);padding:14px;display:flex;flex-direction:column;gap:10px}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px}
+.chk input{width:16px;height:16px;accent-color:var(--accent)}
+.dim{position:relative;background:rgba(15,16,19,.45);border-radius:12px;padding:40px 24px;display:flex;justify-content:center}
+.sel{height:32px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font:inherit;font-size:13px;padding:0 10px}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="settings" bot="none" hint-size="260px,900px"></dc-import>
+  <nav aria-label="Cài đặt" style="flex: 0 1 210px; min-width: 190px; border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px">
+    <a class="sn" href="#">Chung</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Model và kết nối</div>
+    <a class="sn" href="Provider.dc.html">Provider và khoá</a>
+    <a class="sn" href="ModelViec.dc.html">Model</a>
+    <a class="sn" href="TimTheoNghia.dc.html">Tìm theo nghĩa</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Kênh</div>
+    <a class="sn" href="Kenh.dc.html">Kênh và ghép đôi</a>
+    <a class="sn" href="MatTichHop.dc.html">Ứng dụng khác</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Vận hành an toàn</div>
+    <a class="sn" href="BaoMat.dc.html">Ngân sách, duyệt, an toàn</a>
+    <a class="sn" href="SaoLuu.dc.html">Sao lưu</a>
+    <a class="sn" href="ThongKe.dc.html">Thống kê và nhật ký</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Đội bot</div>
+    <a class="sn" href="Commander.dc.html">Commander</a>
+    <a class="sn" href="#">Mẫu bot</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Mở rộng</div>
+    <a class="sn" href="KetNoiDoi.dc.html" aria-current="page" style="background: var(--hover); font-weight: 600">Kết nối</a>
+    <a class="sn" href="Plugin.dc.html">Plugin</a>
+  </nav>
+  <main style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column; position: relative">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Kết nối</span><span class="m" style="font-size: 12px">Cấu hình một lần, chọn bot nào được dùng.</span></div>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="margin-left: auto"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+    </div>
+    <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; gap: 8px; align-items: center">
+        <h2 style="font-size: 17px; margin: 0">Kết nối của đội · 3</h2>
+        <button type="button" class="b2" style="margin-left: auto">Nhập từ Claude Code / Codex</button>
+        <button type="button" class="b1">+ Kết nối</button>
+      </div>
+      <div class="card" style="overflow: hidden">
+<div class="row" style="align-items: center">
+  <span class="logo" style="background: #24292F">G</span>
+  <div style="display: flex; flex-direction: column; min-width: 0; flex: 1">
+    <span><b>GitHub</b> <span class="m" style="font-size: 12.5px">· máy chủ chính thức qua URL</span> </span>
+    <span style="font-size: 12.5px; color: var(--muted)">12 công cụ · hỏi trước khi ghi</span>
+  </div>
+  <button type="button" class="pill" style="border: 1px solid var(--line); background: var(--panel); cursor: pointer" aria-label="Đổi phạm vi"><span class="stack"><svg width="24" height="24" viewBox="-10 -16 120 120" aria-hidden="true"><path d="M50 12C80 12 88 20 88 50C88 80 80 88 50 88C20 88 12 80 12 50C12 20 20 12 50 12Z" fill="#00C972"></path><circle cx="52" cy="52" r="8" fill="#fff"></circle><circle cx="66" cy="44" r="6" fill="#fff"></circle><path d="M37.8 17.5C37.8 -1.5 69.8 -1.5 69.8 17.5Z" fill="#1D4ED8"/><rect x="59.8" y="13.5" width="22" height="6" rx="3" fill="#1D4ED8"/><circle cx="53.8" cy="3.5" r="2.6" fill="#1D4ED8"/></svg><svg width="24" height="24" viewBox="-10 -16 120 120" aria-hidden="true"><g fill="#64748B"><circle cx="50" cy="50" r="32"></circle><rect x="40" y="6" width="20" height="22" rx="6"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(45 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(90 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(135 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(180 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(225 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(270 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(315 50 50)"></rect></g><circle cx="43" cy="51" r="7" fill="#fff"></circle><circle cx="59" cy="48" r="5" fill="#fff"></circle><path d="M34 11C34 -8 66 -8 66 11Z" fill="#FACC15"/><rect x="28" y="9" width="44" height="6.5" rx="3.2" fill="#EAB308"/><path d="M50 -6V8" stroke="#EAB308" stroke-width="3"/></svg><svg width="24" height="24" viewBox="-10 -16 120 120" aria-hidden="true"><path d="M50 6C70 6 84 22 84 42C84 62 68 78 54 82L58 92H42L46 82C32 78 16 62 16 42C16 22 30 6 50 6Z" fill="#EC4899"></path><circle cx="42" cy="40" r="7" fill="#fff"></circle><circle cx="58" cy="38" r="5.5" fill="#fff"></circle><path d="M33.4 10.5C33.4 -9.5 65.4 -9.5 65.4 10.5Z" fill="#2563EB"/><rect x="31.9" y="6.5" width="35" height="8" rx="4" fill="#2563EB" style="filter:brightness(.82)"/><circle cx="49.4" cy="-8.5" r="5" fill="#fff" stroke="#16171B" stroke-width="1.2"/></svg></span> <span>Kỹ thuật</span> ▾</button>
+  <span class="st" style="color: var(--ok)">● đã kết nối</span><button type="button" class="sw" aria-label="Tắt GitHub cho cả đội" aria-pressed="true"></button>
+  <button type="button" class="ib" aria-label="Sửa, kiểm tra lại hoặc gỡ GitHub">⋯</button>
+</div>
+<div class="row" style="align-items: center">
+  <span class="logo" style="background: #7C3AED">H</span>
+  <div style="display: flex; flex-direction: column; min-width: 0; flex: 1">
+    <span><b>HeyGen</b> <span class="m" style="font-size: 12.5px">· URL</span> <span class="pill src">từ Codex</span></span>
+    <span style="font-size: 12.5px; color: var(--muted)">5 công cụ · hỏi trước khi ghi</span>
+  </div>
+  <button type="button" class="pill" style="border: 1px solid var(--line); background: var(--panel); cursor: pointer" aria-label="Đổi phạm vi"><span>Cả đội</span> ▾</button>
+  <span class="st" style="color: var(--ok)">● đã kết nối</span><button type="button" class="sw" aria-label="Tắt HeyGen cho cả đội" aria-pressed="true"></button>
+  <button type="button" class="ib" aria-label="Sửa, kiểm tra lại hoặc gỡ HeyGen">⋯</button>
+</div>
+<div class="row" style="align-items: center">
+  <span class="logo" style="background: #00B8A9">L</span>
+  <div style="display: flex; flex-direction: column; min-width: 0; flex: 1">
+    <span><b>lark-base</b> <span class="m" style="font-size: 12.5px">· lệnh trên máy · npx</span> <span class="pill src">từ Codex</span></span>
+    <span style="font-size: 12.5px; color: var(--danger)">Không kết nối được: APP_SECRET sai hoặc đã hết hạn</span>
+  </div>
+  <button type="button" class="pill" style="border: 1px solid var(--line); background: var(--panel); cursor: pointer" aria-label="Đổi phạm vi"><span class="stack"><svg width="24" height="24" viewBox="-10 -16 120 120" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path><ellipse cx="42" cy="22" rx="20" ry="8.5" transform="rotate(-10 42 22)" fill="#6D28D9"/><path d="M42 14l2 -5" stroke="#6D28D9" stroke-width="3.5" stroke-linecap="round"/></svg><svg width="24" height="24" viewBox="-10 -16 120 120" aria-hidden="true"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path><path d="M23.5 58.8C23.5 -1 82 -1 82 58.8" fill="none" stroke="#16171B" stroke-width="4.5" stroke-linecap="round" style="paint-order:stroke"/><rect x="17.5" y="49.8" width="10" height="18" rx="4.5" fill="#16171B" stroke="var(--acc-edge)" stroke-width="1.2"/><rect x="78" y="49.8" width="10" height="18" rx="4.5" fill="#16171B" stroke="var(--acc-edge)" stroke-width="1.2"/><path d="M23.5 65.8C26.5 76.8 34.8 78.8 41.8 75.8" fill="none" stroke="#16171B" stroke-width="2.6" stroke-linecap="round"/><circle cx="42.8" cy="75.8" r="3.4" fill="#16171B"/></svg></span> <span>2 bot</span> ▾</button>
+  <span class="st" style="color: var(--danger)">● lỗi</span><button type="button" class="sw" aria-label="Tắt lark-base cho cả đội" aria-pressed="true"></button>
+  <button type="button" class="ib" aria-label="Sửa, kiểm tra lại hoặc gỡ lark-base">⋯</button>
+</div>
+      </div>
+      <div class="note" style="background: var(--panel2)">
+        <span class="m" style="font-size: 16px; line-height: 1">ⓘ</span>
+        <span class="m">Kết nối mới có hiệu lực ở phiên mới của bot. Mỗi bot vẫn tắt riêng hay chặt mức hỏi ở hồ sơ của mình.</span>
+      </div>
+    </div>
+<div class="pop" role="dialog" aria-label="Phạm vi của GitHub" style="right: 40px; top: 186px">
+  <div style="display: flex; align-items: center"><b>Ai dùng GitHub</b><button type="button" class="ib" style="margin-left: auto; width: 28px; height: 28px" aria-label="Đóng">✕</button></div>
+  <div style="display: flex; gap: 2px; background: var(--panel2); border-radius: 10px; padding: 3px" role="tablist">
+    <button type="button" class="seg" role="tab" aria-selected="false" style="flex: 1">Cả đội</button>
+    <button type="button" class="seg on" role="tab" aria-selected="true" style="flex: 1">Phòng và bot</button>
+  </div>
+  <div class="m" style="font-size: 12px; font-weight: 600">Phòng ban (cả bot tạo sau)</div>
+  <div style="display: flex; gap: 6px; flex-wrap: wrap">
+    <label class="pill" style="border: 1px solid var(--line); background: var(--panel)"><input type="checkbox" style="accent-color: var(--accent)">Tăng trưởng</label>
+    <label class="pill" style="border: 1px solid var(--line); background: var(--panel)"><input type="checkbox" style="accent-color: var(--accent)">Vận hành</label>
+    <label class="pill src"><input type="checkbox" checked style="accent-color: var(--accent)">Kỹ thuật</label>
+  </div>
+  <div class="m" style="font-size: 12px; font-weight: 600">Từng bot</div>
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 10px"><label class="chk"><input type="checkbox"><svg width="22" height="22" viewBox="-10 -16 120 120" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><circle cx="44" cy="48" r="7.5" fill="#fff"></circle><circle cx="59" cy="46" r="5.5" fill="#fff"></circle><g fill="none" stroke="#16171B" stroke-width="3.2"><circle cx="43.1" cy="47.8" r="9.5"/><circle cx="57.4" cy="47.8" r="9.5"/><path d="M52.6 46.8Q50.2 42.8 47.9 46.8"/></g></svg><span>Minh</span></label><label class="chk"><input type="checkbox"><svg width="22" height="22" viewBox="-10 -16 120 120" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M52 40L49 52M63 38L60 50" stroke="#fff" stroke-width="8" stroke-linecap="round"></path><ellipse cx="42" cy="22" rx="20" ry="8.5" transform="rotate(-10 42 22)" fill="#6D28D9"/><path d="M42 14l2 -5" stroke="#6D28D9" stroke-width="3.5" stroke-linecap="round"/></svg><span>Thơ</span></label><label class="chk"><input type="checkbox"><svg width="22" height="22" viewBox="-10 -16 120 120" aria-hidden="true"><path d="M30 16H70C76 16 80 19 82 25L94 74C96 82 91 88 83 88H17C9 88 4 82 6 74L18 25C20 19 24 16 30 16Z" fill="#FF4D5A"></path><path d="M44 44L40 54M56 44L60 54" stroke="#fff" stroke-width="8" stroke-linecap="round"></path><path d="M43.8 60.5H55.8L53.8 67.5H45.8Z" fill="#1E3A8A"/><path d="M45.8 67.5H53.8L58.3 76.5L49.8 84.5L41.3 76.5Z" fill="#1E3A8A"/><path d="M45.8 74.5L54.8 70.5M44.3 82.5L55.8 77.5" stroke="#FDE047" stroke-width="2.2"/></svg><span>Phát</span></label><label class="chk"><input type="checkbox"><svg width="22" height="22" viewBox="-10 -16 120 120" aria-hidden="true"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path><path d="M23.5 58.8C23.5 -1 82 -1 82 58.8" fill="none" stroke="#16171B" stroke-width="4.5" stroke-linecap="round" style="paint-order:stroke"/><rect x="17.5" y="49.8" width="10" height="18" rx="4.5" fill="#16171B" stroke="var(--acc-edge)" stroke-width="1.2"/><rect x="78" y="49.8" width="10" height="18" rx="4.5" fill="#16171B" stroke="var(--acc-edge)" stroke-width="1.2"/><path d="M23.5 65.8C26.5 76.8 34.8 78.8 41.8 75.8" fill="none" stroke="#16171B" stroke-width="2.6" stroke-linecap="round"/><circle cx="42.8" cy="75.8" r="3.4" fill="#16171B"/></svg><span>An</span></label><label class="chk"><input type="checkbox"><svg width="22" height="22" viewBox="-10 -16 120 120" aria-hidden="true"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M47 41L43 53M59 39L55 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path><g transform="rotate(8 85.5 71.8)"><rect x="76.5" y="57.8" width="19" height="28" rx="3.5" fill="#2A2D35" stroke="var(--acc-edge)" stroke-width="1.2"/><rect x="79.5" y="60.8" width="13" height="6.5" rx="1.5" fill="#9BE3B5"/><rect x="80" y="69.8" width="3.4" height="3.4" rx="1" fill="#C9CED6"/><rect x="80" y="74.8" width="3.4" height="3.4" rx="1" fill="#C9CED6"/><rect x="80" y="79.8" width="3.4" height="3.4" rx="1" fill="#C9CED6"/><rect x="85" y="69.8" width="3.4" height="3.4" rx="1" fill="#C9CED6"/><rect x="85" y="74.8" width="3.4" height="3.4" rx="1" fill="#C9CED6"/><rect x="85" y="79.8" width="3.4" height="3.4" rx="1" fill="#C9CED6"/><rect x="90" y="69.8" width="3.4" height="3.4" rx="1" fill="#C9CED6"/><rect x="90" y="74.8" width="3.4" height="3.4" rx="1" fill="#C9CED6"/><rect x="90" y="79.8" width="3.4" height="3.4" rx="1" fill="#C9CED6"/></g></svg><span>Ngân</span></label><label class="chk"><input type="checkbox" checked><svg width="22" height="22" viewBox="-10 -16 120 120" aria-hidden="true"><path d="M50 12C80 12 88 20 88 50C88 80 80 88 50 88C20 88 12 80 12 50C12 20 20 12 50 12Z" fill="#00C972"></path><circle cx="52" cy="52" r="8" fill="#fff"></circle><circle cx="66" cy="44" r="6" fill="#fff"></circle><path d="M37.8 17.5C37.8 -1.5 69.8 -1.5 69.8 17.5Z" fill="#1D4ED8"/><rect x="59.8" y="13.5" width="22" height="6" rx="3" fill="#1D4ED8"/><circle cx="53.8" cy="3.5" r="2.6" fill="#1D4ED8"/></svg><span>Khoa</span></label><label class="chk"><input type="checkbox" checked><svg width="22" height="22" viewBox="-10 -16 120 120" aria-hidden="true"><g fill="#64748B"><circle cx="50" cy="50" r="32"></circle><rect x="40" y="6" width="20" height="22" rx="6"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(45 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(90 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(135 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(180 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(225 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(270 50 50)"></rect><rect x="40" y="6" width="20" height="22" rx="6" transform="rotate(315 50 50)"></rect></g><circle cx="43" cy="51" r="7" fill="#fff"></circle><circle cx="59" cy="48" r="5" fill="#fff"></circle><path d="M34 11C34 -8 66 -8 66 11Z" fill="#FACC15"/><rect x="28" y="9" width="44" height="6.5" rx="3.2" fill="#EAB308"/><path d="M50 -6V8" stroke="#EAB308" stroke-width="3"/></svg><span>Kiệt</span></label><label class="chk"><input type="checkbox" checked><svg width="22" height="22" viewBox="-10 -16 120 120" aria-hidden="true"><path d="M50 6C70 6 84 22 84 42C84 62 68 78 54 82L58 92H42L46 82C32 78 16 62 16 42C16 22 30 6 50 6Z" fill="#EC4899"></path><circle cx="42" cy="40" r="7" fill="#fff"></circle><circle cx="58" cy="38" r="5.5" fill="#fff"></circle><path d="M33.4 10.5C33.4 -9.5 65.4 -9.5 65.4 10.5Z" fill="#2563EB"/><rect x="31.9" y="6.5" width="35" height="8" rx="4" fill="#2563EB" style="filter:brightness(.82)"/><circle cx="49.4" cy="-8.5" r="5" fill="#fff" stroke="#16171B" stroke-width="1.2"/></svg><span>Lan</span></label><label class="chk"><input type="checkbox"><svg width="22" height="22" viewBox="-10 -16 120 120" aria-hidden="true"><path d="M24 8H62L84 30V84C84 89 80 92 75 92H24C19 92 16 89 16 84V16C16 11 19 8 24 8Z" fill="#0891B2"></path><path d="M62 8V22C62 26 65 30 70 30H84Z" fill="#000" fill-opacity=".18"></path><path d="M42 50L40 62M57 50L55 62" stroke="#fff" stroke-width="8" stroke-linecap="round"></path><g fill="none" stroke="#B45309" stroke-width="3.2" stroke-linecap="round"><path d="M33.9 58.8H49.9A8 8 0 0 1 33.9 58.8Z"/><path d="M46.6 58.8H62.6A8 8 0 0 1 46.6 58.8Z"/><path d="M49.9 58.8H46.6"/></g></svg><span>Thủ thư</span></label></div>
+  <div style="display: flex; gap: 8px; justify-content: flex-end"><button type="button" class="b2">Huỷ</button><button type="button" class="b1">Lưu</button></div>
+</div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'light';
+    return { themeClass: 't-' + theme, you: 'anh Tầu', toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

@@ -68,6 +68,7 @@ import { joinProviders } from './settings/provider-data.js'
 import { BotProfile } from './team/Bot.js'
 import { CloneBot } from './team/CloneBot.js'
 import { McpDialog } from './team/BotTools.js'
+import { McpImportDialog } from './team/McpImport.js'
 import { CreateBot } from './team/CreateBot.js'
 import { CreateProject, type ProjectActions } from './team/CreateProject.js'
 import { Department } from './team/Department.js'
@@ -201,6 +202,7 @@ const DIALOGS: Partial<Record<RouteId, ComponentType<PageProps & { projects: Pro
   'create-bot': CreateBot,
   'clone-bot': CloneBot,
   'mcp-add': McpDialog,
+  'mcp-import': McpImportDialog,
   'create-project': CreateProject,
   search: Search,
 }

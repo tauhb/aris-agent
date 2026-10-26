@@ -10,10 +10,15 @@ import {
   Menu,
   MenuItem,
   Pill,
+  Select,
   Switch,
   Tag,
   TextInput,
+  TEAM_MCP_OWNER,
+  isTeamMcp,
+  stricterMcpAsk,
   teamAction,
+  teamMcpOf,
   useDismiss,
   useTeam,
   type BotData,
@@ -23,10 +28,14 @@ import {
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { PageProps } from '../page.js'
 import type { SkillRow } from '../mind/Skills.js'
+import { ALL_SCOPE, ScopePicker, type Scope } from './ScopePicker.js'
 
 type T = PageProps['t']
 type Preset = McpData['preset']
 type Ask = McpData['ask']
+
+/** Mã chủ của kết nối dùng chung (như `TEAM_OWNER` của `@aris/bots`). */
+const TEAM_OWNER_ID = TEAM_MCP_OWNER
 
 const check = { width: 18, height: 18, accentColor: 'var(--a-accent)', flex: 'none' }
 
@@ -67,7 +76,7 @@ const LOGO: Record<Preset, { letter: string; color: string }> = {
   custom: { letter: '+', color: 'var(--a-muted)' },
 }
 
-function Logo({ preset }: { preset: Preset }) {
+export function Logo({ preset }: { preset: Preset }) {
   const l = LOGO[preset]
   return (
     <span className="ap-mlogo" style={{ background: l.color }} aria-hidden="true">
@@ -77,13 +86,13 @@ function Logo({ preset }: { preset: Preset }) {
 }
 
 /** Mô tả cách chạy: "máy chủ chính thức qua URL" hoặc lệnh trên máy. */
-function howOf(t: T, c: McpData): string {
+export function howOf(t: T, c: McpData): string {
   if (c.preset === 'github') return t('mcp.howGithub')
   if (c.transport === 'streamable-http') return `URL · ${c.url ?? ''}`
   return `${t('mcp.howCommand')} · ${[c.command, ...(c.args ?? [])].join(' ')}`
 }
 
-function RowMenu({ t, c, onEdit }: { t: T; c: McpData; onEdit: () => void }) {
+export function RowMenu({ t, c, onEdit }: { t: T; c: McpData; onEdit: () => void }) {
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const ref = useRef<HTMLSpanElement>(null)
@@ -216,6 +225,108 @@ function McpCard({ t, nav, bot, team }: { t: T; nav: PageProps['nav']; bot: BotD
   )
 }
 
+/** Kết nối dùng chung của đội mà bot này được dùng (bản vẽ 2.2d): tắt riêng cho bot, hay đặt mức hỏi chặt hơn. */
+function TeamMcpCard({ t, nav, bot, team }: { t: T; nav: PageProps['nav']; bot: BotData; team: TeamView }) {
+  const list = teamMcpOf(team.mcp, bot)
+  const [error, setError] = useState<string | null>(null)
+  if (list.length === 0) return null
+  const pref = (c: McpData, patch: { off?: boolean; ask?: Ask | null }) => {
+    setError(null)
+    void teamAction({ op: 'mcp-team-bot', id: c.id, bot: bot.id, ...patch }).catch((e: unknown) =>
+      setError((e as Error).message),
+    )
+  }
+  const askOptions = (c: McpData): { id: string; name: string }[] => {
+    const chung = { id: 'team', name: t('conn.askTeam') }
+    // Chỉ liệt kê những mức chặt hơn mức của đội: bot không tự nới quyền.
+    return [
+      chung,
+      ...(['write', 'always'] as const)
+        .filter((a) => a !== c.ask && stricterMcpAsk(c.ask, a) === a)
+        .map((a) => ({ id: a, name: t(a === 'write' ? 'conn.askWriteStricter' : 'conn.askAlwaysStricter') })),
+    ]
+  }
+  return (
+    <Card
+      title={
+        <span style={{ display: 'flex', flexDirection: 'column' }}>
+          <b>{t('conn.botTitle', { n: list.length })}</b>
+          <span className="a-muted" style={{ fontSize: 12.5, fontWeight: 400 }}>
+            {t('conn.botHint', { name: bot.name })}
+          </span>
+        </span>
+      }
+      actions={
+        <Button size="sm" onClick={() => nav.go('settings', { section: 'connections' })}>
+          {t('conn.openSettings')}
+        </Button>
+      }
+    >
+      {list.map((c) => {
+        const off = c.off?.includes(bot.id) === true
+        const ok = c.check?.ok
+        const tools = c.check?.tools ?? []
+        const own = c.botAsk?.[bot.id]
+        return (
+          <div className="a-row" key={c.id} style={off ? { opacity: 0.75 } : undefined}>
+            <Logo preset={c.preset} />
+            <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+              <span>
+                <b>{c.name}</b> <Pill tone="muted">{scopeText(t, c, team)}</Pill>
+              </span>
+              <span className="a-muted" style={{ fontSize: 12.5 }}>
+                {off
+                  ? t('conn.offForBot', { name: bot.name })
+                  : c.check && !ok
+                    ? t('mcp.failed', { error: c.check.error ?? '' })
+                    : `${
+                        c.check
+                          ? t('mcp.tools', {
+                              n: tools.length,
+                              list: tools
+                                .slice(0, 2)
+                                .map((x) => x.name)
+                                .join(', '),
+                            })
+                          : t('mcp.unchecked')
+                      } · ${t('conn.teamAsk', { ask: t(`mcp.ask${c.ask === 'write' ? 'Write' : c.ask === 'always' ? 'Always' : 'Never'}Short`) })}`}
+              </span>
+            </span>
+            {!off && askOptions(c).length > 1 && (
+              <Select
+                variant="compact"
+                label={t('conn.askFor', { name: bot.name, conn: c.name })}
+                value={own && stricterMcpAsk(c.ask, own) === own && own !== c.ask ? own : 'team'}
+                options={askOptions(c)}
+                onChange={(v) => pref(c, { ask: v === 'team' ? null : (v as Ask) })}
+              />
+            )}
+            <Switch
+              checked={!off}
+              label={t(off ? 'conn.turnOnFor' : 'conn.turnOffFor', { name: c.name, bot: bot.name })}
+              onChange={(on) => pref(c, { off: !on })}
+            />
+          </div>
+        )
+      })}
+      {error && (
+        <div className="a-row" style={{ color: 'var(--a-danger)', fontSize: 13 }}>
+          {error}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+/** Phạm vi của kết nối dùng chung viết ngắn: "Cả đội", tên phòng, "2 bot". */
+export function scopeText(t: T, c: McpData, team: Pick<TeamView, 'departments'>): string {
+  const s = c.scope
+  if (!s || s.bots === 'all') return t('conn.scopeAll')
+  const deps = (s.departments ?? []).map((id) => team.departments.find((d) => d.id === id)?.name ?? id)
+  const n = s.bots.length
+  return [...deps, ...(n ? [t('conn.nBots', { n })] : [])].join(' + ') || t('conn.nBots', { n: 0 })
+}
+
 function Toolset({ t, bot, team }: { t: T; bot: BotData; team: TeamView }) {
   const dept = bot.kind === 'commander' ? undefined : team.departments.find((d) => d.id === bot.department)
   const policy = bot.kind === 'commander' ? undefined : (dept?.policy ?? NO_DEPARTMENT)
@@ -332,6 +443,7 @@ export function SkillsTab({ t, nav, bot }: { t: T; nav: PageProps['nav']; bot: B
     <>
       <BotSkills t={t} nav={nav} bot={bot} />
       <McpCard t={t} nav={nav} bot={bot} team={team} />
+      <TeamMcpCard t={t} nav={nav} bot={bot} team={team} />
       <Toolset t={t} bot={bot} team={team} />
       <div className="ap-hint a-muted">ⓘ {t('mcp.newSessions', { name: bot.name })}</div>
     </>
@@ -350,6 +462,10 @@ export function McpDialog({ t, nav, params }: PageProps) {
   const team = useTeam()
   const bot = team.bots.find((b) => b.id === params.bot)
   const prev = team.mcp.find((c) => c.id === params.id)
+  // Kết nối dùng chung của đội: không gắn với bot nào, chọn phạm vi thay vào đó.
+  const forTeam = params.team === '1' || (!!prev && isTeamMcp(prev))
+  const who = bot?.name ?? t('conn.theTeam')
+  const [scope, setScope] = useState<Scope>(prev?.scope ?? ALL_SCOPE)
   const [preset, setPreset] = useState<Preset>(prev?.preset ?? 'github')
   const [name, setName] = useState(prev?.preset === 'custom' ? prev.name : '')
   const [transport, setTransport] = useState<McpData['transport']>(prev?.transport ?? 'stdio')
@@ -365,7 +481,7 @@ export function McpDialog({ t, nav, params }: PageProps) {
   const [busy, setBusy] = useState<'test' | 'save' | null>(null)
   const [result, setResult] = useState<CheckResult | null>(null)
   const [error, setError] = useState<string | null>(null)
-  if (!bot) return null
+  if (!bot && !forTeam) return null
 
   function input() {
     if (preset !== 'custom') return { preset, secrets, ask }
@@ -385,7 +501,7 @@ export function McpDialog({ t, nav, params }: PageProps) {
     try {
       const r = await teamAction<{ check: CheckResult }>({
         op: 'mcp-test',
-        bot: bot!.id,
+        bot: bot?.id ?? TEAM_OWNER_ID,
         id: prev?.id,
         input: input(),
       })
@@ -400,11 +516,17 @@ export function McpDialog({ t, nav, params }: PageProps) {
     setBusy('save')
     setError(null)
     try {
-      await teamAction(
-        prev
-          ? { op: 'mcp-update', id: prev.id, input: input() }
-          : { op: 'mcp-add', bot: bot!.id, input: input() },
-      )
+      if (forTeam) {
+        if (prev) {
+          await teamAction({ op: 'mcp-team-scope', id: prev.id, scope })
+          await teamAction({ op: 'mcp-update', id: prev.id, input: input() })
+        } else await teamAction({ op: 'mcp-team-add', input: input(), scope })
+      } else
+        await teamAction(
+          prev
+            ? { op: 'mcp-update', id: prev.id, input: input() }
+            : { op: 'mcp-add', bot: bot!.id, input: input() },
+        )
       nav.close()
     } catch (e) {
       setError((e as Error).message)
@@ -439,7 +561,10 @@ export function McpDialog({ t, nav, params }: PageProps) {
     <Dialog
       open
       width={640}
-      title={t(prev ? 'mcp.editTitle' : 'mcp.addTitle', { name: bot.name, conn: prev?.name ?? '' })}
+      title={t(prev ? 'mcp.editTitle' : forTeam ? 'conn.addTitle' : 'mcp.addTitle', {
+        name: who,
+        conn: prev?.name ?? '',
+      })}
       closeLabel={t('cb.close')}
       onClose={nav.close}
     >
@@ -465,7 +590,7 @@ export function McpDialog({ t, nav, params }: PageProps) {
         ))}
       </div>
       {preset === 'github' &&
-        secretField('token', t('mcp.githubToken'), t('mcp.githubTokenHint', { name: bot.name }))}
+        secretField('token', t('mcp.githubToken'), t('mcp.githubTokenHint', { name: who }))}
       {preset === 'lark' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {secretField('APP_ID', 'App ID')}
@@ -528,9 +653,15 @@ export function McpDialog({ t, nav, params }: PageProps) {
           </label>
         </>
       )}
+      {forTeam && (
+        <div className="a-field">
+          <span className="l">{t('conn.whoUses')}</span>
+          <ScopePicker t={t} value={scope} onChange={setScope} />
+        </div>
+      )}
       <div>
         <div className="a-field">
-          <span className="l">{t('mcp.askTitle', { name: bot.name })}</span>
+          <span className="l">{t('mcp.askTitle', { name: who })}</span>
         </div>
         {asks.map(([v, label, hint]) => (
           <label className="ap-radio" key={v}>
@@ -577,7 +708,7 @@ export function McpDialog({ t, nav, params }: PageProps) {
           {t('cb.cancel')}
         </Button>
         <Button variant="primary" size="lg" disabled={!!busy} onClick={() => void save()}>
-          {busy === 'save' ? t('mcp.saving') : t(prev ? 'mcp.save' : 'mcp.addFor', { name: bot.name })}
+          {busy === 'save' ? t('mcp.saving') : t(prev ? 'mcp.save' : 'mcp.addFor', { name: who })}
         </Button>
       </div>
       <div className="a-muted" style={{ fontSize: 12.5 }}>

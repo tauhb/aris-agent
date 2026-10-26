@@ -50,8 +50,51 @@ export interface McpData {
   secretKeys: string[]
   ask: 'write' | 'always' | 'never'
   enabled: boolean
+  /** Kết nối dùng chung của đội (`bot` là `TEAM_MCP_OWNER`): bot nào được dùng. */
+  scope?: { bots: 'all' | string[]; departments?: string[] }
+  /** Máy chủ nhập từ Claude Code hay Codex (chỉ để hiện nhãn). */
+  from?: 'claude-code' | 'codex'
+  /** Bot tắt riêng kết nối dùng chung này. */
+  off?: string[]
+  /** Mức hỏi riêng của bot (chỉ chặt hơn mức chung). */
+  botAsk?: Record<string, 'write' | 'always' | 'never'>
   check?: { ok: boolean; at: string; error?: string; tools: { name: string; readOnly: boolean }[] }
   createdAt: string
+}
+
+/** Chủ của kết nối dùng chung (như `TEAM_OWNER` của `@aris/bots`). */
+export const TEAM_MCP_OWNER = '_doi'
+
+export const isTeamMcp = (c: Pick<McpData, 'bot'>) => c.bot === TEAM_MCP_OWNER
+
+/** Bot có nằm trong phạm vi của kết nối dùng chung không (chưa xét bot tự tắt). */
+export function mcpInScope(c: McpData, bot: Pick<BotData, 'id' | 'department'>): boolean {
+  if (!isTeamMcp(c) || !c.scope) return false
+  if (c.scope.bots === 'all' || c.scope.bots.includes(bot.id)) return true
+  return !!bot.department && !!c.scope.departments?.includes(bot.department)
+}
+
+/** Kết nối dùng chung của đội mà một bot được dùng (kể cả cái bot đã tắt riêng, để hiện công tắc). */
+export const teamMcpOf = (list: readonly McpData[], bot: Pick<BotData, 'id' | 'department'>): McpData[] =>
+  list.filter((c) => mcpInScope(c, bot))
+
+/** Mức hỏi chặt hơn trong hai mức. */
+export const stricterMcpAsk = (a: McpData['ask'], b: McpData['ask']): McpData['ask'] => {
+  const rank = { never: 0, write: 1, always: 2 }
+  return rank[a] >= rank[b] ? a : b
+}
+
+/** Phạm vi viết ngắn cho một dòng: "Cả đội", tên phòng, hay "N bot". */
+export function mcpScopeLabel(
+  c: McpData,
+  departments: readonly { id: string; name: string }[],
+  labels: { all: string; bots: (n: number) => string },
+): string {
+  const s = c.scope
+  if (!s || s.bots === 'all') return labels.all
+  const deps = (s.departments ?? []).map((id) => departments.find((d) => d.id === id)?.name ?? id)
+  if (s.bots.length === 0 && deps.length === 1) return deps[0]!
+  return [...deps, ...(s.bots.length ? [labels.bots(s.bots.length)] : [])].join(' + ')
 }
 
 export type ExternalAgent = 'claude-code' | 'codex' | 'acp'

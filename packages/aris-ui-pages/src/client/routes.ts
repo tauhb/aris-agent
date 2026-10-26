@@ -34,6 +34,7 @@ export const ROUTES = {
   'create-project': { kind: 'dialog' },
   'clone-bot': { kind: 'dialog' },
   'mcp-add': { kind: 'dialog' },
+  'mcp-import': { kind: 'dialog' },
   search: { kind: 'dialog' },
 } as const satisfies Record<string, Route>
 

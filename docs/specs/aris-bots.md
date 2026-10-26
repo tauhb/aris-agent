@@ -102,6 +102,19 @@ Màn hồ sơ bot làm đủ theo bản vẽ 2.2 qua 4 đợt; phần thuộc gi
 
 Chạy thử thật (24/10): thêm cho Khoa kết nối "Tự thêm" tới máy chủ thử `packages/aris-bots/test/echo-mcp.mjs` (công cụ `echo` chỉ đọc, `ghi_chu` ghi) → Kiểm tra kết nối báo 2 công cụ; trong phiên mới, Khoa gọi `mcp__echo_thu__echo` chạy luôn, `mcp__echo_thu__ghi_chu` hiện thanh duyệt "Khoa muốn dùng Echo thử · ghi_chu", cho phép thì chạy, biến môi trường tới được máy chủ; Minh (bot khác) không thấy công cụ `mcp__` nào; Aris giao việc cho Khoa thì phiên con của Khoa cũng dùng được kết nối.
 
+## Kết nối dùng chung của đội (giai đoạn 8, plan 8.1 phần B; bản vẽ 6.7, 6.7b, 2.2d)
+
+Kết nối MCP cấu hình một lần, nhiều bot dùng chung. Làm trên `mcp.ts` và `mcp-import.ts`.
+
+- **Bản ghi:** kết nối của đội là một `McpRecord` có `bot = '_doi'` (`TEAM_OWNER`) và `scope = { bots: 'all' | string[], departments?: string[] }`. Dữ liệu cũ không có `scope` vẫn là kết nối riêng của bot. Tên máy chủ có tiền tố `doi-` (kết nối riêng chỉ dùng `_`) nên công cụ `mcp__doi-<tên>__…` không đụng kết nối riêng cùng tên. Khoá lưu cùng bảng với kết nối riêng, giao diện chỉ thấy tên khoá.
+- **Bot nào dùng:** `McpStore.forBot(bot)` = kết nối riêng của bot + kết nối của đội trong phạm vi (đúng mã bot, thuộc phòng đã chọn kể cả bot tạo sau, hay `'all'`) mà bot chưa tắt (`off`). Dùng cho cả lúc gắn máy chủ vào agent của phiên (`attach`) và lúc hàng rào hỏi duyệt (`tools/pre-execute`). Có hiệu lực ở phiên mới.
+- **Mức hỏi:** mức chung `ask` của kết nối; mỗi bot đặt thêm được `botAsk[bot]` nhưng chỉ chặt hơn (`never` < `write` < `always`). Mức nới hơn bị bỏ. `needsAsk(rec, tool, bot)` dùng mức chặt hơn của hai mức.
+- **Đường máy chủ** (`POST /api/aris/bots`): `mcp-team-add { input, scope }`, `mcp-team-scope { id, scope }`, `mcp-team-bot { id, bot, off?, ask? }`; `mcp-update`, `mcp-check`, `mcp-delete` dùng chung với kết nối riêng.
+- **Nhập từ Claude Code và Codex:** `mcp-import-scan` đọc `~/.claude.json` (gốc và từng dự án), `~/.claude/settings.json` và `~/.codex/config.toml` (bảng `[mcp_servers.*]`, bộ đọc TOML tự viết). Bỏ máy chủ tắt (`enabled = false`, `disabled`), máy chủ chỉ chạy trong ứng dụng bên thứ ba (đường dẫn `/Applications/ChatGPT.app`, `Codex Computer Use.app`), kiểu SSE cũ và lệnh dùng đường dẫn tương đối. Kết quả giữ 15 phút trong bộ nhớ theo `scanId`; giá trị khoá không bao giờ gửi giao diện (chỉ `secretKeys`). `mcp-import { scanId, keys, scope, ask }` tạo kết nối của đội (kèm `from: 'codex' | 'claude-code'` để hiện nhãn) rồi kiểm tra từng cái. Tối đa 30 máy chủ mỗi lần.
+- **Chưa làm:** khoá MCP vẫn nằm trong bảng của aris, chưa vào Keychain (nút "Chuyển cả vào Keychain" của 7a chỉ chuyển khoá API của provider). Đăng nhập OAuth cho máy chủ hosted (HeyGen, Notion…) thuộc plan 8.5. Bot ngoài (Claude Code, Codex) không có phiên dsh nên không dùng kết nối của đội.
+- **Giao diện:** Cài đặt › Kết nối (`settings/Connections.tsx`, nhóm "Mở rộng"), hộp nhập (`team/McpImport.tsx`), chọn phạm vi (`team/ScopePicker.tsx`), hộp Thêm kết nối có chế độ đội (`McpDialog` với `team=1`), thẻ "Dùng chung từ đội" trong tab Skill & tool của hồ sơ bot (tắt riêng, mức hỏi chặt hơn).
+- **Chạy thử thật (26/10):** quét máy người dùng thấy 2 máy chủ dùng được (lark-base, heygen từ Codex), bỏ qua 2 (computer-use đang tắt, node_repl chỉ chạy trong ChatGPT); nhập heygen cho Minh và Khoa + phòng Kỹ thuật, kết nối báo lỗi đúng thực tế (HeyGen đòi token OAuth). Thêm máy chủ thử `echo` chỉ cho Khoa: Khoa gọi được `mcp__doi-echo_thu__echo`, Minh trả lời không có công cụ đó.
+
 ## Hồ sơ bot · Quyền & kênh, cột phải (đợt 2)
 
 **Quyền riêng của bot** (trường `perms`, `assignable` của bot; tab Quyền & kênh):

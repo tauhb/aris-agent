@@ -10,6 +10,7 @@ import type { PageProps } from '../page.js'
 import { Backup } from './Backup.js'
 import { Channels } from './Channels.js'
 import { Commander } from './Commander.js'
+import { Connections } from './Connections.js'
 import { Guard } from './Guard.js'
 import { Integrations } from './Integrations.js'
 import { ModelPage } from './Model.js'
@@ -26,6 +27,7 @@ export const SECTIONS: Record<string, ComponentType<PageProps>> = {
   semantic: SemanticPage,
   channels: Channels,
   integrations: Integrations,
+  connections: Connections,
   guard: Guard,
   backup: Backup,
   stats: Stats,
@@ -40,7 +42,7 @@ const GROUPS = [
   { group: 'grp.channels', ids: ['channels', 'integrations'] },
   { group: 'grp.safety', ids: ['guard', 'backup', 'stats'] },
   { group: 'grp.team', ids: ['commander', 'presets'] },
-  { group: 'grp.extend', ids: ['plugin'] },
+  { group: 'grp.extend', ids: ['connections', 'plugin'] },
 ] as const
 
 /** Mã mục cũ còn nơi gọi tới: "Ảnh và video" đã gộp vào Model. */

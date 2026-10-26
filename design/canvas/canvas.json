@@ -781,6 +781,36 @@
       "w": 1440,
       "x": 3380,
       "y": 3840
+    },
+    "KetNoiDoi.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "6.7 · Kết nối của đội (GĐ8 plan 8.1) — cấu hình một lần, chọn phạm vi cả đội, phòng hay từng bot; nhập từ Claude Code và Codex",
+      "w": 1440,
+      "x": 0,
+      "y": 10240,
+      "is_interactive": true
+    },
+    "NhapKetNoi.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "6.7b · Hộp nhập kết nối từ Claude Code và Codex — danh sách tìm được, khoá chỉ hiện tên, chọn phạm vi và mức hỏi",
+      "w": 1440,
+      "x": 1520,
+      "y": 10240,
+      "is_interactive": true
+    },
+    "KetNoiDoiBot.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g2",
+      "title": "2.2d · Hồ sơ bot › Skill & tool có kết nối dùng chung từ đội — tắt riêng cho bot, mức hỏi chỉ chặt hơn",
+      "w": 1440,
+      "x": 0,
+      "y": 8920,
+      "is_interactive": true
     }
   },
   "createdOnFiles": {
@@ -965,7 +995,10 @@
     "PhuKien3D.dc.html",
     "VanPhongNhatKy.dc.html",
     "VanPhongChatBot.dc.html",
-    "VanPhongChatAris.dc.html"
+    "VanPhongChatAris.dc.html",
+    "KetNoiDoi.dc.html",
+    "NhapKetNoi.dc.html",
+    "KetNoiDoiBot.dc.html"
   ],
   "pages": [
     {

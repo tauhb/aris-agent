@@ -6,6 +6,7 @@ import {
   checkConnection,
   cleanMcp,
   connectionOf,
+  effectiveAsk,
   McpStore,
   needsAsk,
   parseEnvLines,
@@ -124,5 +125,87 @@ describe('kết nối nền tảng theo bot', () => {
       'browser_navigate',
       'browser_snapshot',
     ])
+  })
+})
+
+describe('kết nối dùng chung của đội', () => {
+  const bot = (id: string, department?: string) => ({ id, ...(department ? { department } : {}) })
+
+  it('gắn đúng bot trong phạm vi, kể cả theo phòng và "cả đội"; bot ngoài phạm vi không thấy', async () => {
+    const s = new McpStore(memTable())
+    const own = await s.add('b-1', { preset: 'custom', name: 'Riêng', command: 'node a' })
+    const some = await s.addTeam(
+      { preset: 'custom', name: 'GitHub', command: 'node g' },
+      { bots: ['b-1'], departments: ['tt'] },
+    )
+    const all = await s.addTeam({ preset: 'custom', name: 'Lịch', command: 'node l' }, { bots: 'all' })
+    expect(some.bot).toBe('_doi')
+    expect(some.serverName).toBe('doi-github')
+    expect(all.serverName).toBe('doi-lich')
+    expect(s.forBot(bot('b-1')).map((r) => r.id)).toEqual([own.id, some.id, all.id])
+    expect(s.forBot(bot('b-2', 'tt')).map((r) => r.id)).toEqual([some.id, all.id])
+    expect(s.forBot(bot('b-3', 'kt')).map((r) => r.id)).toEqual([all.id])
+    // Xoá kết nối riêng của bot (xoá bot) không kéo theo kết nối của đội.
+    await s.removeBot('b-1')
+    expect(s.team()).toHaveLength(2)
+  })
+
+  it('tên máy chủ của đội có tiền tố riêng, không trùng kết nối riêng cùng tên và tự thêm số khi trùng', async () => {
+    const s = new McpStore(memTable())
+    const own = await s.add('b-1', { preset: 'custom', name: 'Echo', command: 'node a' })
+    const t1 = await s.addTeam({ preset: 'custom', name: 'Echo', command: 'node a' }, { bots: 'all' })
+    const t2 = await s.addTeam({ preset: 'custom', name: 'Echo', command: 'node a' }, { bots: 'all' })
+    expect([own.serverName, t1.serverName, t2.serverName]).toEqual(['echo', 'doi-echo', 'doi-echo_2'])
+    expect(connectionOf('mcp__doi-echo__x', s.forBot(bot('b-1')))?.rec.id).toBe(t1.id)
+  })
+
+  it('bot tắt riêng thì không còn thấy; đổi phạm vi có hiệu lực ngay; bot tạo sau vẫn nhận khi phạm vi là cả đội', async () => {
+    const s = new McpStore(memTable())
+    const r = await s.addTeam({ preset: 'custom', name: 'X', command: 'node x' }, { bots: 'all' })
+    await s.setBotPref(r.id, 'b-1', { off: true })
+    expect(s.forBot(bot('b-1'))).toHaveLength(0)
+    expect(s.forBot(bot('b-moi'))).toHaveLength(1)
+    await s.setBotPref(r.id, 'b-1', { off: false })
+    expect(s.forBot(bot('b-1'))).toHaveLength(1)
+    await s.setScope(r.id, { bots: ['b-2', 'b-2', ' '] })
+    expect(s.get(r.id)!.scope).toEqual({ bots: ['b-2'] })
+    expect(s.forBot(bot('b-1'))).toHaveLength(0)
+  })
+
+  it('mức hỏi riêng của bot chỉ được chặt hơn mức chung, không nới hơn', async () => {
+    const s = new McpStore(memTable())
+    const r0 = await s.addTeam(
+      { preset: 'custom', name: 'X', command: 'node x', ask: 'write' },
+      { bots: 'all' },
+    )
+    const r = (await s.setCheck(r0.id, { ok: true, at: '', tools: [{ name: 'doc', readOnly: true }] }))!
+    // Chặt hơn: được ghi nhận.
+    const strict = await s.setBotPref(r.id, 'b-1', { ask: 'always' })
+    expect(needsAsk(strict, 'doc', 'b-1')).toBe(true)
+    expect(needsAsk(strict, 'doc', 'b-2')).toBe(false)
+    // Nới hơn: bị bỏ, bot vẫn theo mức chung.
+    const loose = await s.setBotPref(r.id, 'b-1', { ask: 'never' })
+    expect(loose.botAsk).toBeUndefined()
+    expect(needsAsk(loose, 'ghi', 'b-1')).toBe(true)
+    // Mức chung chặt sẵn thì mức riêng không hạ được.
+    const always = { ...loose, ask: 'always' as const, botAsk: { 'b-1': 'never' as const } }
+    expect(effectiveAsk(always, 'b-1')).toBe('always')
+    expect(effectiveAsk(always)).toBe('always')
+  })
+
+  it('khoá của kết nối dùng chung không gửi lại giao diện', async () => {
+    const s = new McpStore(memTable())
+    const r = await s.addTeam(
+      {
+        preset: 'custom',
+        name: 'X',
+        transport: 'streamable-http',
+        url: 'https://x.test/mcp',
+        secrets: { Authorization: 'Bearer abc' },
+      },
+      { bots: 'all' },
+    )
+    expect(JSON.stringify(viewOf(r))).not.toContain('abc')
+    expect(viewOf(r).secretKeys).toEqual(['Authorization'])
   })
 })

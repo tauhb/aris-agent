@@ -299,6 +299,14 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .aris button.ap-preset{display:flex;align-items:center;gap:10px;border:1px solid var(--a-line);border-radius:10px;background:var(--a-panel);color:var(--a-ink);padding:8px 10px;font:inherit;font-size:13px;text-align:left;cursor:pointer;line-height:1.35}
 .aris button.ap-preset[aria-pressed="true"]{border-color:var(--a-accent);background:var(--a-accentSoft)}
 .aris button.ap-preset:disabled{opacity:.45;cursor:default}.aris button.ap-preset-sm{padding:5px 12px;font-size:12.5px}
+.ap-sc{display:flex;flex-direction:column;gap:10px}.ap-sc-group{display:flex;flex-direction:column;gap:6px}.ap-sc-h{font-size:12px;font-weight:600}
+.ap-sc-chips{display:flex;gap:6px;flex-wrap:wrap}.aris label.ap-sc-chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border:1px solid var(--a-line);border-radius:999px;background:var(--a-panel);font-size:12.5px;cursor:pointer}
+.aris label.ap-sc-chip.on{background:var(--a-accentSoft);border-color:transparent;color:var(--a-accent);font-weight:600}.ap-sc-chip input{accent-color:var(--a-accent);margin:0}
+.ap-sc-bots{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px 10px}.ap-sc-bot{display:inline-flex;align-items:center;gap:6px}
+.ap-sc-faces{display:inline-flex}.ap-sc-faces>svg{margin-left:-6px}.ap-sc-faces>svg:first-child{margin-left:0}
+.aris button.ap-sc-pill{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border:1px solid var(--a-line);border-radius:999px;background:var(--a-panel);color:var(--a-ink);font:inherit;font-size:12.5px;font-weight:600;white-space:nowrap;cursor:pointer}
+.ap-sc-panel{display:flex;flex-direction:column;gap:10px;padding:12px 14px 14px 56px;border-top:1px solid var(--a-line);background:var(--a-panel2)}
+.ap-sc-skipped{font-size:12.5px}.ap-sc-skipped summary{cursor:pointer}.ap-sc-skipped>div{padding:6px 0 0 12px}
 .ap-radio{display:flex;gap:10px;align-items:flex-start;padding:6px 0;font-size:13px;cursor:pointer}.ap-radio input{margin-top:3px;accent-color:var(--a-accent)}
 .ap-hint{border-radius:10px;padding:9px 12px;font-size:12.5px;background:var(--a-panel2)}
 .ap-hint-ok{background:var(--a-okSoft)}.ap-hint-err{background:var(--a-dangerSoft)}

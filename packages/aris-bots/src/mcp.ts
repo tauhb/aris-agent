@@ -38,6 +38,22 @@ export const mcpRecord = z.object({
   secrets: z.record(z.string(), z.string()),
   ask: z.enum(MCP_ASK),
   enabled: z.boolean(),
+  /**
+   * Kết nối dùng chung của đội (`bot` là `TEAM_OWNER`): bot nào được dùng. Không có là kết nối riêng của `bot`.
+   * `departments` thêm mọi bot đang thuộc các phòng đó, kể cả bot tạo sau.
+   */
+  scope: z
+    .object({
+      bots: z.union([z.literal('all'), z.array(z.string())]),
+      departments: z.array(z.string()).optional(),
+    })
+    .optional(),
+  /** Máy chủ nhập từ đâu (chỉ để hiện nhãn "từ Codex"). */
+  from: z.enum(['claude-code', 'codex']).optional(),
+  /** Bot tắt riêng kết nối dùng chung này (kết nối vẫn chạy với các bot khác). */
+  off: z.array(z.string()).optional(),
+  /** Mức hỏi riêng của từng bot với kết nối dùng chung: chỉ được chặt hơn mức chung. */
+  botAsk: z.record(z.string(), z.enum(MCP_ASK)).optional(),
   /** Lần kiểm tra gần nhất. */
   check: z
     .object({
@@ -56,6 +72,30 @@ export type McpCheck = NonNullable<McpRecord['check']>
 export type McpView = Omit<McpRecord, 'secrets'> & { secretKeys: string[] }
 
 export class McpError extends Error {}
+
+/** Chủ của kết nối dùng chung: không phải bot nào, nên xoá bot không kéo theo xoá kết nối của đội. */
+export const TEAM_OWNER = '_doi'
+/** Tiền tố tên máy chủ của kết nối dùng chung, để không bao giờ trùng kết nối riêng của bot (tên riêng chỉ có `_`). */
+export const TEAM_PREFIX = 'doi-'
+
+export const isTeam = (r: Pick<McpRecord, 'bot'>) => r.bot === TEAM_OWNER
+
+/** Bot (mã và phòng) có nằm trong phạm vi của kết nối dùng chung không; chưa xét bot tự tắt. */
+export function inScope(r: McpRecord, bot: { id: string; department?: string | undefined }): boolean {
+  if (!isTeam(r) || !r.scope) return false
+  if (r.scope.bots === 'all' || r.scope.bots.includes(bot.id)) return true
+  return !!bot.department && !!r.scope.departments?.includes(bot.department)
+}
+
+/** Mức hỏi chặt hơn trong hai mức (`never` < `write` < `always`). */
+const STRICT: Record<McpAsk, number> = { never: 0, write: 1, always: 2 }
+export const stricterAsk = (a: McpAsk, b: McpAsk): McpAsk => (STRICT[a] >= STRICT[b] ? a : b)
+
+/** Mức hỏi thật của một bot với kết nối: mức riêng của bot không bao giờ nới hơn mức chung. */
+export function effectiveAsk(r: McpRecord, bot?: string): McpAsk {
+  const own = bot ? r.botAsk?.[bot] : undefined
+  return own ? stricterAsk(r.ask, own) : r.ask
+}
 
 const GITHUB_URL = 'https://api.githubcopilot.com/mcp/'
 
@@ -256,10 +296,22 @@ export function connectionOf(
 }
 
 /** Có cần hỏi người dùng trước khi chạy công cụ này không. Công cụ chưa biết coi là công cụ ghi. */
-export function needsAsk(rec: McpRecord, raw: string): boolean {
-  if (rec.ask === 'never') return false
-  if (rec.ask === 'always') return true
+export function needsAsk(rec: McpRecord, raw: string, bot?: string): boolean {
+  const ask = effectiveAsk(rec, bot)
+  if (ask === 'never') return false
+  if (ask === 'always') return true
   return !rec.check?.tools.some((t) => t.readOnly && t.name === raw)
+}
+
+/** Phạm vi từ giao diện: `'all'` hoặc danh sách mã bot, bỏ trùng và giá trị lạ; phòng ban cũng vậy. */
+export function cleanScope(scope: NonNullable<McpRecord['scope']>): NonNullable<McpRecord['scope']> {
+  const uniq = (a: unknown) =>
+    Array.isArray(a) ? [...new Set(a.map((x) => String(x).trim()).filter(Boolean))] : []
+  const departments = uniq(scope?.departments)
+  return {
+    bots: scope?.bots === 'all' ? 'all' : uniq(scope?.bots),
+    ...(departments.length ? { departments } : {}),
+  }
 }
 
 /** Kho kết nối: một bảng của domain `aris_bots`, khoá là `id`. */
@@ -280,6 +332,16 @@ export class McpStore {
     return this.table.get(id)
   }
 
+  /** Kết nối dùng chung của đội. */
+  team(): McpRecord[] {
+    return this.list(TEAM_OWNER)
+  }
+
+  /** Mọi kết nối bot dùng được: của riêng bot, cộng kết nối của đội trong phạm vi mà bot chưa tắt. */
+  forBot(bot: { id: string; department?: string | undefined }): McpRecord[] {
+    return [...this.list(bot.id), ...this.team().filter((r) => inScope(r, bot) && !r.off?.includes(bot.id))]
+  }
+
   async add(bot: string, input: McpInput): Promise<McpRecord> {
     const clean = cleanMcp(input)
     const taken = new Set(this.list(bot).map((r) => r.serverName))
@@ -292,6 +354,69 @@ export class McpStore {
       bot,
       serverName: serverNameOf(clean.name, (n) => taken.has(n)),
       createdAt: this.now().toISOString(),
+    }
+    await this.table.put(id, rec)
+    return rec
+  }
+
+  /** Thêm kết nối dùng chung của đội; khoá lưu một lần ở đây, mọi bot trong phạm vi dùng chung. */
+  async addTeam(
+    input: McpInput,
+    scope: NonNullable<McpRecord['scope']>,
+    from?: McpRecord['from'],
+  ): Promise<McpRecord> {
+    const clean = cleanMcp(input)
+    const taken = new Set(this.team().map((r) => r.serverName))
+    let id: string
+    do id = `m-${Math.random().toString(16).slice(2, 8)}`
+    while (this.table.get(id))
+    const rec: McpRecord = {
+      ...clean,
+      id,
+      bot: TEAM_OWNER,
+      scope: cleanScope(scope),
+      ...(from ? { from } : {}),
+      serverName: TEAM_PREFIX + serverNameOf(clean.name, (n) => taken.has(TEAM_PREFIX + n)),
+      createdAt: this.now().toISOString(),
+    }
+    await this.table.put(id, rec)
+    return rec
+  }
+
+  /** Đổi phạm vi của kết nối dùng chung. */
+  async setScope(id: string, scope: NonNullable<McpRecord['scope']>): Promise<McpRecord> {
+    const prev = this.table.get(id)
+    if (!prev || !isTeam(prev)) throw new McpError('Không có kết nối dùng chung này.')
+    const rec: McpRecord = { ...prev, scope: cleanScope(scope) }
+    await this.table.put(id, rec)
+    return rec
+  }
+
+  /**
+   * Bot tắt hay bật riêng một kết nối dùng chung, và/hoặc đặt mức hỏi riêng. Mức hỏi nới hơn mức chung thì
+   * bị bỏ (giữ mức chung), nên bot không tự mở rộng quyền.
+   */
+  async setBotPref(
+    id: string,
+    bot: string,
+    pref: { off?: boolean; ask?: McpAsk | null },
+  ): Promise<McpRecord> {
+    const prev = this.table.get(id)
+    if (!prev || !isTeam(prev)) throw new McpError('Không có kết nối dùng chung này.')
+    const rec: McpRecord = { ...prev }
+    if (pref.off !== undefined) {
+      const off = new Set(prev.off ?? [])
+      if (pref.off) off.add(bot)
+      else off.delete(bot)
+      if (off.size) rec.off = [...off]
+      else delete rec.off
+    }
+    if (pref.ask !== undefined) {
+      const botAsk = { ...prev.botAsk }
+      if (pref.ask === null || STRICT[pref.ask] <= STRICT[prev.ask]) delete botAsk[bot]
+      else botAsk[bot] = pref.ask
+      if (Object.keys(botAsk).length) rec.botAsk = botAsk
+      else delete rec.botAsk
     }
     await this.table.put(id, rec)
     return rec

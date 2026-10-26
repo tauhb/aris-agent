@@ -2,10 +2,14 @@
  * `/api/aris/bots`: bot, phòng ban, đội mẫu; mở phiên chat thẳng với bot. dsh đã kiểm cookie và
  * quyền chủ nhân trước khi gọi tới đây.
  */
+import { candidateInput, candidateView, discoverMcp, sameServer, type ImportScan } from './mcp-import.js'
 import {
   cleanMcp,
+  cleanScope,
   McpError,
+  MCP_ASK,
   viewOf,
+  type McpAsk,
   type McpCheck,
   type McpInput,
   type McpRecord,
@@ -53,7 +57,14 @@ export interface ApiDeps {
   mcp?: McpStore
   /** Kết nối thử một máy chủ MCP. */
   checkMcp?: (r: McpRecord) => Promise<McpCheck>
+  /** Quét cấu hình MCP của Claude Code và Codex trên máy (thay được khi thử). */
+  scanMcp?: () => Promise<ImportScan>
 }
+
+/** Kết quả quét giữ trong bộ nhớ 15 phút để bước nhập không phải gửi lại khoá qua giao diện. */
+const SCAN_TTL_MS = 15 * 60_000
+const scans = new Map<string, { at: number; scan: ImportScan }>()
+const MAX_IMPORT = 30
 
 const partsOf = (v: unknown): CopyParts => {
   const p = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>
@@ -239,6 +250,73 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
       case 'mcp-delete':
         await d.mcp?.remove(String(body.id))
         break
+      case 'mcp-team-add': {
+        // Kết nối dùng chung của đội: khoá nhập một lần, mọi bot trong phạm vi cùng dùng.
+        if (!d.mcp || !d.checkMcp) return json({ error: 'Chưa bật kết nối nền tảng.' }, 400)
+        const rec = await d.mcp.addTeam(body.input as McpInput, body.scope as NonNullable<McpRecord['scope']>)
+        await d.mcp.setCheck(rec.id, await d.checkMcp(rec))
+        return json({ ...(await snapshot(d)), connection: rec.id })
+      }
+      case 'mcp-team-scope': {
+        if (!d.mcp) return json({ error: 'Chưa bật kết nối nền tảng.' }, 400)
+        await d.mcp.setScope(String(body.id), body.scope as NonNullable<McpRecord['scope']>)
+        break
+      }
+      case 'mcp-team-bot': {
+        // Một bot tắt riêng kết nối dùng chung, hay đặt mức hỏi chặt hơn mức chung.
+        if (!d.mcp) return json({ error: 'Chưa bật kết nối nền tảng.' }, 400)
+        const bot = d.store.get(String(body.bot))
+        if (!bot) return json({ error: 'Không có bot này.' }, 400)
+        const ask =
+          body.ask === null
+            ? null
+            : (MCP_ASK as readonly string[]).includes(String(body.ask))
+              ? (body.ask as McpAsk)
+              : undefined
+        await d.mcp.setBotPref(String(body.id), bot.id, {
+          ...(typeof body.off === 'boolean' ? { off: body.off } : {}),
+          ...(ask !== undefined ? { ask } : {}),
+        })
+        break
+      }
+      case 'mcp-import-scan': {
+        // Đọc cấu hình của Claude Code và Codex. Giá trị khoá ở lại trong bộ nhớ, giao diện chỉ thấy tên khoá.
+        if (!d.mcp) return json({ error: 'Chưa bật kết nối nền tảng.' }, 400)
+        for (const [k, v] of scans) if (Date.now() - v.at > SCAN_TTL_MS) scans.delete(k)
+        const scan = await (d.scanMcp ?? (() => discoverMcp()))()
+        const scanId = `scan-${Math.random().toString(16).slice(2, 10)}`
+        scans.set(scanId, { at: Date.now(), scan })
+        const have = d.mcp.list()
+        return json({
+          scanId,
+          candidates: scan.candidates.map((c) => ({
+            ...candidateView(c),
+            exists: have.some((r) => sameServer(c, r)),
+          })),
+          skipped: scan.skipped,
+        })
+      }
+      case 'mcp-import': {
+        if (!d.mcp || !d.checkMcp) return json({ error: 'Chưa bật kết nối nền tảng.' }, 400)
+        const hit = scans.get(String(body.scanId))
+        if (!hit || Date.now() - hit.at > SCAN_TTL_MS)
+          return json({ error: 'Kết quả quét đã hết hạn, quét lại.' }, 400)
+        const keys = new Set(Array.isArray(body.keys) ? body.keys.map(String) : [])
+        const picked = hit.scan.candidates.filter((c) => keys.has(c.key)).slice(0, MAX_IMPORT)
+        if (picked.length === 0) return json({ error: 'Chưa chọn máy chủ nào.' }, 400)
+        const scope = cleanScope(body.scope as NonNullable<McpRecord['scope']>)
+        const ask = (MCP_ASK as readonly string[]).includes(String(body.ask)) ? (body.ask as McpAsk) : 'write'
+        const made: McpRecord[] = []
+        for (const c of picked) made.push(await d.mcp.addTeam(candidateInput(c, ask), scope, c.source))
+        // Kiểm tra song song: máy chủ chạy bằng npx có thể mất vài chục giây lần đầu.
+        await Promise.all(
+          made.map(async (r) => {
+            await d.mcp!.setCheck(r.id, await d.checkMcp!(r))
+          }),
+        )
+        scans.delete(String(body.scanId))
+        return json({ ...(await snapshot(d)), imported: made.map((r) => r.id) })
+      }
       case 'commander-latest': {
         // Bấm Aris trên thanh bên: phiên gần nhất chưa gắn bot nào trong các ứng viên (mới nhất trước).
         const list = Array.isArray(body.candidates) ? body.candidates.map(String) : []

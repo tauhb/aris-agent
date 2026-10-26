@@ -46,6 +46,7 @@ export type { BotRecord, DepartmentRecord } from './domain.js'
 export * from './external.js'
 export * from './portable.js'
 export * from './mcp.js'
+export * from './mcp-import.js'
 export * from './soul.js'
 
 export const name = 'aris-bots'
@@ -202,11 +203,11 @@ export async function apply(ctx: Context): Promise<void> {
       const own = botToolOf(exec.name, exec.arguments)
       if (own && rec?.tools?.[own] === false) return { kind: 'deny', reason: botDenyReason(own, bot.name) }
       if (exec.name.startsWith('mcp__')) {
-        const hit = connectionOf(exec.name, mcp.list(bot.id))
+        const hit = connectionOf(exec.name, mcp.forBot(bot))
         // Kết nối đã tắt hoặc gỡ nhưng phiên cũ còn công cụ: chặn.
         if (hit && !hit.rec.enabled)
           return { kind: 'deny', reason: `Kết nối ${hit.rec.name} của ${bot.name} đang tắt.` }
-        if (hit && needsAsk(hit.rec, hit.raw))
+        if (hit && needsAsk(hit.rec, hit.raw, bot.id))
           return {
             kind: 'ask',
             reason: `${bot.name} dùng ${hit.rec.name} · ${hit.raw}`,
@@ -232,7 +233,7 @@ export async function apply(ctx: Context): Promise<void> {
       (await ensureHome(ctx.workspaceRegistry as never).catch(() => undefined))?.path ?? process.cwd())
   async function attach(agent: AgentLike) {
     const bot = store.botOf(agent.session.id)
-    const list = mcp.list(bot.id).filter((r) => r.enabled)
+    const list = mcp.forBot(bot).filter((r) => r.enabled)
     if (list.length === 0) return
     const have = mounted.get(agent) ?? new Map<string, () => void>()
     mounted.set(agent, have)
