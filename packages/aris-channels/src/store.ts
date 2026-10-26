@@ -6,6 +6,7 @@ import { randomInt } from 'node:crypto'
 import type { AccessState, GroupRule, Role } from './access.js'
 import type {
   BotRecord,
+  ChannelKind,
   CodeRecord,
   GroupRecord,
   InboxRecord,
@@ -101,15 +102,18 @@ export class ChannelStore implements AccessState {
   }
 
   // --- Mã ghép đôi ----------------------------------------------------------------------
-  async createCode(role: Role): Promise<CodeRecord> {
+  async createCode(role: Role, channel: ChannelKind = 'telegram'): Promise<CodeRecord> {
     await this.pruneCodes()
-    const rec = { code: newCode(), role, expiresAt: this.now() + CODE_TTL_MS }
+    const rec: CodeRecord = { code: newCode(), role, expiresAt: this.now() + CODE_TTL_MS, channel }
     await this.t.codes.put(rec.code.replace('-', ''), rec)
     return rec
   }
+  /** Mã đang hiệu lực; mã cũ chưa ghi kênh được điền `telegram`. */
   activeCodes(): CodeRecord[] {
     const now = this.now()
-    return [...this.t.codes.entries()].map(([, c]) => c).filter((c) => c.expiresAt > now)
+    return [...this.t.codes.entries()]
+      .map(([, c]): CodeRecord => ({ ...c, channel: c.channel ?? 'telegram' }))
+      .filter((c) => c.expiresAt > now)
   }
   private async pruneCodes() {
     const now = this.now()
@@ -130,11 +134,16 @@ export class ChannelStore implements AccessState {
     if (!w || this.now() - w.since >= CODE_LOCK_MS) this.wrongCodes.set(userId, { n: 1, since: this.now() })
     else w.n++
   }
-  /** Người nhắn đúng mã còn hạn thì thành chủ nhân/người được phép; mã dùng một lần. */
+  /**
+   * Người nhắn đúng mã còn hạn thì thành chủ nhân/người được phép; mã dùng một lần.
+   * `channel` là kênh của tin đến. Mã của kênh khác thì không ghép, không xoá mã, không tính là
+   * nhập sai (không dẫn tới khoá), trả `'other-channel'` để nơi gọi báo người nhắn.
+   */
   async redeem(
     text: string,
     user: { id: number; name: string; username?: string | undefined },
-  ): Promise<PersonRecord | undefined> {
+    channel: ChannelKind = 'telegram',
+  ): Promise<PersonRecord | 'other-channel' | undefined> {
     const code = normalizeCode(text)
     if (!code) return undefined
     // Thử sai nhiều lần thì khoá chat tới hết giờ, kể cả khi sau đó gõ đúng (chống dò mã).
@@ -145,6 +154,8 @@ export class ChannelStore implements AccessState {
       this.noteWrongCode(user.id)
       return undefined
     }
+    // Mã cũ chưa ghi kênh là mã Telegram.
+    if ((rec.channel ?? 'telegram') !== channel) return 'other-channel'
     this.wrongCodes.delete(user.id)
     await this.t.codes.delete(key)
     const person: PersonRecord = {

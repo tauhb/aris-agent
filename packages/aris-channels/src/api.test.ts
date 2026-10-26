@@ -35,6 +35,14 @@ describe('/api/aris/channels', () => {
       created: { code: string; role: string }
     }
     expect(code.created.role).toBe('member')
+    expect(code.created).toMatchObject({ channel: 'telegram' })
+    const lark = (await (
+      await handleApi(store, hub, post({ op: 'code', role: 'owner', channel: 'lark' }))
+    ).json()) as {
+      created: { channel: string }
+    }
+    expect(lark.created.channel).toBe('lark')
+    expect((await handleApi(store, hub, post({ op: 'code', channel: 'sms' }))).status).toBe(400)
     await handleApi(
       store,
       hub,
@@ -47,7 +55,7 @@ describe('/api/aris/channels', () => {
       codes: unknown[]
     }
     expect(snap.settings).toEqual({ busy: 'queue', guestMode: true })
-    expect(snap.codes).toHaveLength(1)
+    expect(snap.codes).toHaveLength(2)
     expect((await handleApi(store, hub, post({ op: 'nope' }))).status).toBe(400)
   })
 })

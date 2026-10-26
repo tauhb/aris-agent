@@ -607,11 +607,15 @@ export class ChannelHub {
 
     // Ghép đôi: nhắn đúng mã trong chat riêng.
     if (m.chat.type === 'private') {
-      const person = await this.store.redeem(text, {
-        id: from.id,
-        name: fullName(from),
-        username: from.username,
-      })
+      const person = await this.store.redeem(
+        text,
+        { id: from.id, name: fullName(from), username: from.username },
+        'telegram',
+      )
+      if (person === 'other-channel') {
+        await api.sendMessage(m.chat.id, T.codeOtherChannel)
+        return false
+      }
       if (person) {
         const owner = person.role === 'owner'
         if (owner && !this.store.bot(rt.rec.bot)?.home)

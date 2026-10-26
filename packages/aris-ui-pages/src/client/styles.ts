@@ -107,8 +107,17 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-logo{width:28px;height:28px;border-radius:8px;flex:none}
 .ap-mrow{display:grid;grid-template-columns:28px minmax(0,1.3fr) minmax(0,1.6fr) 90px;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--a-line);font-size:13px}
 .ap-tags{display:flex;flex-wrap:wrap;gap:4px}
-.ap-paircode{font-size:26px;font-weight:600;letter-spacing:.08em;text-align:center;padding:10px 0;background:var(--a-panel2);border-radius:10px}
-.ap-paircode.empty{font-size:13px;letter-spacing:0;font-weight:400}
+.ap-kn-cols{display:flex;flex-wrap:wrap;gap:1px;background:var(--a-line);border-top:1px solid var(--a-line)}
+.ap-kn-col{min-width:0;display:flex;flex-direction:column;background:var(--a-panel)}
+.ap-kn-accounts{flex:1.2 1 320px}
+.ap-kn-pair{flex:1 1 260px;gap:8px;padding:12px 14px;font-size:13.5px}
+.ap-kn-people{flex:1 1 260px}
+.ap-kn-pair>span,.ap-kn-pair .a-seg{align-self:flex-start}
+.ap-kn-code{font-size:24px;font-weight:600;letter-spacing:.12em;text-align:center;padding:8px;border:1px dashed var(--a-line);border-radius:10px;overflow-wrap:anywhere}
+.ap-kn-code.empty{font-size:13px;letter-spacing:0;font-weight:400}
+.a-row.ap-kn-first{border-top:0}
+.ap-kn-groups{flex-wrap:wrap}
+.ap-kn-groups .grow{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ap-grouprow{padding:10px 16px;border-top:1px solid var(--a-line);font-size:13px}
 .ap-error{color:var(--a-danger);font-size:13px;margin-bottom:10px}
 .ap-chain{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;font-size:13px}

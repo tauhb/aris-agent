@@ -231,6 +231,20 @@ describe('trung tâm kênh', () => {
     })
   })
 
+  it('mã ghép đôi của kênh khác: không ghép, bot báo "dành cho kênh khác", không bị khoá', async () => {
+    const s = await setup()
+    const lark = await s.store.createCode('owner', 'lark')
+    for (let i = 0; i < 6; i++) {
+      s.tg.push(dm(OWNER, lark.code))
+      await settle()
+    }
+    expect(s.store.roleOf(OWNER)).toBeUndefined()
+    expect(String(s.tg.sent().at(-1)!.text)).toBe('Mã này dành cho kênh khác.')
+    expect(s.store.pairLocked(OWNER)).toBe(false)
+    await pairOwner(s)
+    expect(s.store.roleOf(OWNER)).toBe('owner')
+  })
+
   it('ghép đôi rồi chat: tin vào phiên, lượt xong thì trả lời và dọn hàng đợi', async () => {
     const s = await setup()
     await pairOwner(s)

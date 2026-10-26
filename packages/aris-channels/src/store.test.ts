@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ChannelStore, normalizeCode, threadKey, type Table, type Tables } from './store.js'
+import { CODE_MAX_WRONG, ChannelStore, normalizeCode, threadKey, type Table, type Tables } from './store.js'
 
 export function memTable<V>(): Table<V> {
   const m = new Map<string, V>()
@@ -45,6 +45,41 @@ describe('kho kênh', () => {
     const late = await s.createCode('member')
     now += 11 * 60_000
     expect(await s.redeem(late.code, { id: 3, name: 'C' })).toBeUndefined()
+  })
+
+  it('mã gắn kênh: mã Telegram dùng được trên Telegram; mã kênh khác bị từ chối, không tính là nhập sai', async () => {
+    const s = memStore()
+    const tg = await s.createCode('owner', 'telegram')
+    expect(tg.channel).toBe('telegram')
+    expect((await s.createCode('member')).channel).toBe('telegram')
+    expect(await s.redeem(tg.code, { id: 1, name: 'A' }, 'telegram')).toMatchObject({
+      userId: 1,
+      role: 'owner',
+    })
+
+    const lark = await s.createCode('owner', 'lark')
+    // Nhắn mã Lark vào Telegram quá ngưỡng khoá vẫn không bị khoá và mã còn nguyên.
+    for (let i = 0; i < CODE_MAX_WRONG + 3; i++)
+      expect(await s.redeem(lark.code, { id: 2, name: 'B' }, 'telegram')).toBe('other-channel')
+    expect(s.pairLocked(2)).toBe(false)
+    expect(s.roleOf(2)).toBeUndefined()
+    expect(s.activeCodes().some((c) => c.code === lark.code)).toBe(true)
+    // Vẫn ghép được mã Telegram ngay sau đó.
+    const tg2 = await s.createCode('member')
+    expect(await s.redeem(tg2.code, { id: 2, name: 'B' }, 'telegram')).toMatchObject({
+      userId: 2,
+      role: 'member',
+    })
+    // Đúng kênh của mã thì dùng được.
+    expect(await s.redeem(lark.code, { id: 3, name: 'C' }, 'lark')).toMatchObject({ userId: 3 })
+  })
+
+  it('mã cũ không có trường channel vẫn dùng được trên Telegram, và coi là mã Telegram', async () => {
+    const s = memStore()
+    await s.t.codes.put('3333AAAA', { code: '3333-AAAA', role: 'owner', expiresAt: Date.now() + 60_000 })
+    expect(s.activeCodes()[0]).toMatchObject({ code: '3333-AAAA', channel: 'telegram' })
+    expect(await s.redeem('3333-AAAA', { id: 1, name: 'A' }, 'lark')).toBe('other-channel')
+    expect(await s.redeem('3333-AAAA', { id: 1, name: 'A' }, 'telegram')).toMatchObject({ role: 'owner' })
   })
 
   it('mã người được phép không hạ quyền chủ nhân', async () => {

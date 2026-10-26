@@ -31,10 +31,14 @@ export interface ChannelGroup {
   prompt?: string
 }
 
+/** Kênh của mã ghép đôi: mỗi mã chỉ dùng được trên đúng kênh đã tạo ra nó. */
+export type PairChannel = 'telegram' | 'lark' | 'zalo'
+
 export interface PairCode {
   code: string
   role: 'owner' | 'member'
   expiresAt: number
+  channel: PairChannel
 }
 
 export interface ChannelSnapshot {

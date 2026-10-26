@@ -41,6 +41,8 @@ export const T = {
     owner
       ? `Chào ${h(name)}! Đã ghép đôi: tài khoản này là <b>người dùng chính</b> của bot. Từ giờ cứ nhắn ở đây như trên web.\n\nGõ /help để xem lệnh.`
       : `Chào ${h(name)}! Tài khoản này đã là <b>người được phép</b>: hỏi đáp được với bot, nhưng bot không làm việc có tác động (gửi thư, chạy lệnh…) theo lời người được phép.`,
+  /** Người nhắn mã ghép đôi do kênh khác tạo (ví dụ mã của Lark gõ vào Telegram). */
+  codeOtherChannel: 'Mã này dành cho kênh khác.',
   help: (trust: Trust) =>
     [
       `<b>Lệnh</b> (vai: ${ROLE_LABEL[trust]})`,

@@ -45,10 +45,17 @@ export const groupRecord = z.object({
 })
 export type GroupRecord = z.infer<typeof groupRecord>
 
+/** Kênh mà một mã ghép đôi dùng được. Thêm kênh mới (Lark, Zalo cá nhân) chỉ cần thêm vào đây. */
+export const CHANNEL_KINDS = ['telegram', 'lark', 'zalo'] as const
+export const channelKind = z.enum(CHANNEL_KINDS)
+export type ChannelKind = z.infer<typeof channelKind>
+
 export const codeRecord = z.object({
   code: z.string(),
   role: z.enum(['owner', 'member']),
   expiresAt: z.number(),
+  /** Kênh của mã. Tuỳ chọn để mã cũ đang lưu (chưa có trường này) vẫn đọc được: coi là Telegram. */
+  channel: channelKind.optional(),
 })
 export type CodeRecord = z.infer<typeof codeRecord>
 

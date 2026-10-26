@@ -4,11 +4,12 @@
  *   GET                                   → bot, người đã ghép đôi, nhóm, mã đang hiệu lực, cài đặt
  *   POST { op: 'connect', bot, token }    → kiểm tra token bằng getMe, lưu vào kho khoá
  *   POST { op: 'disconnect', bot }
- *   POST { op: 'code', role }             → mã ghép đôi mới (một lần, 10 phút)
+ *   POST { op: 'code', role, channel? }   → mã ghép đôi mới của một kênh (mặc định telegram; một lần, 10 phút)
  *   POST { op: 'revoke', userId }
  *   POST { op: 'group', chatId, allowed?, who?, prompt? } | { op: 'group-remove', chatId }
  *   POST { op: 'settings', busy?, guestMode? } | { op: 'voice', bot, on }
  */
+import { CHANNEL_KINDS, type ChannelKind } from './domain.js'
 import type { ChannelHub } from './hub.js'
 import type { ChannelStore } from './store.js'
 
@@ -70,7 +71,9 @@ export async function handleApi(
         break
       case 'code': {
         const role = body.role === 'member' ? 'member' : 'owner'
-        const code = await store.createCode(role)
+        const channel = CHANNEL_KINDS.find((k) => k === body.channel) satisfies ChannelKind | undefined
+        if (body.channel !== undefined && !channel) return json({ error: 'kênh không hợp lệ' }, 400)
+        const code = await store.createCode(role, channel ?? 'telegram')
         return json({ ...snapshot(store, hub), created: code })
       }
       case 'revoke':
