@@ -364,7 +364,7 @@ Code, Codex làm bot ngoài: cùng một lõi, một bộ dữ liệu.
 >
 > **Đợt 7c làm 26/10** ([đặc tả](specs/aris-stats.md), [plan](plans/gd7-7c-quan-sat.md); Opus vẽ và lên plan, Sonnet viết mã, Opus soát): gói `@aris/stats` (ghi từng lần gọi model theo loại việc và nguồn, sự kiện duyệt, hỏi, bị chặn), màn 6.5 số thật (chi phí theo việc, trúng cache, việc xong không cần người dùng, skill, nhật ký phiên có token) và 6.5b Phát lại phiên từng bước. Số liệu tính từ 26/10; otel để tới khi lên server.
 >
-> **Đợt 7f làm 26/10** (phần A, B): rà soát bảo mật ([báo cáo](nghiem-thu/ra-soat-bao-mat-7f.md): 1 nặng, 10 vừa, 9 nhẹ; đã sửa S1–S11, S18–S20 qua gói mới `@aris/shell` dùng chung cho hàng rào, khách ACP, kiểm thử skill, ký ức, bộ não, Telegram; tắt in URL đăng nhập vào log; sao lưu có AAD) và build dsh từ mã nguồn ([spike](spikes/dsh-build-tu-nguon.md): build được, aris chạy trên bản tự build). Phần C đo đối đầu với Hermes chờ người dùng gắn khoá DeepSeek cho profile Hermes riêng.
+> **Đợt 7f làm 26/10** (phần A, B): rà soát bảo mật ([báo cáo](nghiem-thu/ra-soat-bao-mat-7f.md): 1 nặng, 10 vừa, 9 nhẹ; đã sửa S1–S11, S18–S20 qua gói mới `@aris/shell` dùng chung cho hàng rào, khách ACP, kiểm thử skill, ký ức, bộ não, Telegram; tắt in URL đăng nhập vào log; sao lưu có AAD) và build dsh từ mã nguồn ([spike](spikes/dsh-build-tu-nguon.md): build được, aris chạy trên bản tự build). Phần C đo đối đầu với Hermes: người dùng bỏ (26/10). Đợt 7f xong.
 
 **Việc cần làm**
 1. **Lên server**: container, `systemd`, egress allowlist (chỉ cho các API cần thiết), proxy có nhật ký cho tool mạng.
