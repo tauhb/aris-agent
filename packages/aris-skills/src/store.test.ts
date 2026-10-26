@@ -20,6 +20,7 @@ const setup = () => {
     get: (k: string) => m.get(k),
     entries: () => m.entries(),
     put: async (k: string, v: never) => void m.set(k, v),
+    delete: async (k: string) => m.delete(k),
   })
   const store = new SkillStore(t(a), t(b), () => clock)
   const events: string[] = []

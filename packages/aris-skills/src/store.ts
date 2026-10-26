@@ -4,6 +4,25 @@
  */
 import { lintSkill, NAME_RE } from './lint.js'
 
+/** Chủ của skill dùng chung trong kho của đội: không phải bot nào; `SkillRecord.assigned` nói bot nào được dùng. */
+export const TEAM_OWNER = '_doi'
+
+/** Nguồn một skill nhập từ ngoài (giai đoạn 8, plan 8.1). */
+export interface ImportSource {
+  kind: 'github' | 'claude-code' | 'codex' | 'folder'
+  /** `chủ/repo` (GitHub). */
+  repo?: string | undefined
+  ref?: string | undefined
+  /** Mã commit đã tải (GitHub), để kiểm tra bản mới. */
+  sha?: string | undefined
+  /** Đường dẫn của thư mục skill trong repo hay trên máy. */
+  path: string
+  importedAt: string
+}
+
+/** Bot nào được dùng skill của đội: danh sách mã bot hay cả đội. */
+export type Assigned = 'all' | string[]
+
 export interface SkillRecord {
   /** `<bot>--<tên>`. */
   id: string
@@ -28,6 +47,10 @@ export interface SkillRecord {
   archivedBy?: 'user' | 'curator' | undefined
   /** Ca thử: yêu cầu thật của người dùng dẫn tới skill (5 ca gần nhất). */
   cases?: Case[] | undefined
+  /** Skill của đội (`bot` là `TEAM_OWNER`): bot nào được dùng. Chưa gán bot nào là chưa ai dùng được. */
+  assigned?: Assigned | undefined
+  /** Số lượt dùng theo từng bot (skill của đội). */
+  usesBy?: Record<string, number> | undefined
   createdAt: string
   updatedAt: string
 }
@@ -60,13 +83,21 @@ export interface VersionRecord {
   description: string
   whenToUse?: string | undefined
   status: 'proposed' | 'active' | 'superseded' | 'rejected'
-  by: 'reflect' | 'user' | 'restore'
+  by: 'reflect' | 'user' | 'restore' | 'import'
   why?: string | undefined
   quote?: string | undefined
   sessionId?: string | undefined
   /** Từ bản nào (khôi phục). */
   from?: number | undefined
   warnings: string[]
+  /** Dấu hiệu nguy hiểm của skill nhập từ ngoài (bộ quét `scanImported`), hiện đỏ ở thẻ duyệt. */
+  risks?: string[] | undefined
+  /** Nhập từ đâu (chỉ có ở bản nhập từ ngoài). */
+  source?: ImportSource | undefined
+  /** Tệp kèm đã chép cùng bản này (đường dẫn tương đối). */
+  files?: string[] | undefined
+  /** Bot được gán khi bản này được duyệt (skill của đội). */
+  assignOnApprove?: Assigned | undefined
   at: string
   review?: Review | undefined
 }
@@ -75,6 +106,7 @@ export interface Table<V> {
   get(key: string): V | undefined
   entries(): IterableIterator<[string, V]>
   put(key: string, value: V): Promise<void>
+  delete(key: string): Promise<unknown>
 }
 
 export class SkillError extends Error {}
@@ -84,6 +116,16 @@ export const PROPOSAL_DAYS = 7
 
 export const skillId = (bot: string, name: string) => `${bot}--${name}`
 export const versionId = (bot: string, name: string, v: number) => `${bot}--${name}--v${v}`
+
+/** Skill của đội được gán cho bot này không. */
+export const assignedTo = (s: Pick<SkillRecord, 'assigned'>, bot: string): boolean =>
+  s.assigned === 'all' || (Array.isArray(s.assigned) && s.assigned.includes(bot))
+
+/** Gộp hai danh sách bot được gán (không trùng; một bên là cả đội thì cả đội). */
+export function mergeAssigned(a: Assigned | undefined, b: Assigned): Assigned {
+  if (a === 'all' || b === 'all') return 'all'
+  return [...new Set([...(a ?? []), ...b])]
+}
 
 /** Một skill trong kế hoạch / báo cáo của người dọn kho. */
 export interface CuratorItem {
@@ -105,12 +147,17 @@ export interface ProposeInput {
   description: string
   whenToUse?: string | undefined
   body: string
-  by: 'reflect' | 'user'
+  by: 'reflect' | 'user' | 'import'
   why?: string | undefined
   quote?: string | undefined
   sessionId?: string | undefined
   /** Yêu cầu của người dùng trong đoạn vòng học đọc: thành ca thử. */
   cases?: readonly string[] | undefined
+  /** Skill nhập từ ngoài: nguồn, dấu hiệu nguy hiểm, tệp kèm, bot gán sẵn (chỉ có hiệu lực khi được duyệt). */
+  source?: ImportSource | undefined
+  risks?: readonly string[] | undefined
+  files?: readonly string[] | undefined
+  assignOnApprove?: Assigned | undefined
 }
 
 export type SkillEvent =
@@ -164,12 +211,29 @@ export class SkillStore {
     return s && s.version ? this.versions.get(versionId(s.bot, s.name, s.version)) : undefined
   }
 
-  /** Skill đang dùng của một bot (nguồn skill của agent, lời nhắc vòng học). */
+  /**
+   * Skill đang dùng của một bot (nguồn skill của agent, lời nhắc vòng học): skill riêng của bot, cộng skill của đội
+   * đã gán cho bot. Trùng tên thì skill riêng thắng.
+   */
   activeFor(bot: string): { skill: SkillRecord; version: VersionRecord }[] {
-    return this.list(bot).flatMap((skill) => {
+    const live = (skill: SkillRecord) => {
       const version = skill.status === 'active' ? this.active(skill.id) : undefined
       return version ? [{ skill, version }] : []
-    })
+    }
+    const own = bot === TEAM_OWNER ? [] : this.list(bot).flatMap(live)
+    const names = new Set(own.map((x) => x.skill.name))
+    const team = this.list(TEAM_OWNER)
+      .filter((s) => assignedTo(s, bot) && !names.has(s.name))
+      .flatMap(live)
+    return [...own, ...team]
+  }
+
+  /** Skill mà bot dùng khi gọi tên này: skill riêng nếu có, không thì skill của đội đã gán cho bot. */
+  resolveFor(bot: string, name: string): SkillRecord | undefined {
+    const own = this.get(skillId(bot, name))
+    if (own && own.status === 'active') return own
+    const team = this.get(skillId(TEAM_OWNER, name))
+    return team && team.status === 'active' && assignedTo(team, bot) ? team : undefined
   }
 
   /**
@@ -178,7 +242,10 @@ export class SkillStore {
    */
   async propose(input: ProposeInput): Promise<VersionRecord | undefined> {
     const body = input.body.trim()
-    const lint = lintSkill({ name: input.name, description: input.description, body })
+    const lint = lintSkill(
+      { name: input.name, description: input.description, body },
+      { imported: input.by === 'import' },
+    )
     if (lint.errors.length) throw new SkillError(lint.errors.join(' '))
     const id = skillId(input.bot, input.name)
     const at = this.now().toISOString()
@@ -217,6 +284,10 @@ export class SkillStore {
       ...(input.quote ? { quote: input.quote } : {}),
       ...(input.sessionId ? { sessionId: input.sessionId } : {}),
       warnings: lint.warnings,
+      ...(input.risks?.length ? { risks: [...input.risks] } : {}),
+      ...(input.source ? { source: input.source } : {}),
+      ...(input.files?.length ? { files: [...input.files] } : {}),
+      ...(input.assignOnApprove ? { assignOnApprove: input.assignOnApprove } : {}),
       at,
     }
     await this.versions.put(v.id, v)
@@ -262,6 +333,87 @@ export class SkillStore {
         lastUsedAt: undefined,
       }
     })
+  }
+
+  // --- Kho skill của đội (giai đoạn 8, plan 8.1) ------------------------------------------------------
+
+  /** Skill của đội: kho chung, bot nào dùng được do `assigned`. */
+  teamList(): SkillRecord[] {
+    return this.list(TEAM_OWNER)
+  }
+
+  private teamSkill(id: string): SkillRecord {
+    const s = this.get(id)
+    if (!s || s.bot !== TEAM_OWNER) throw new SkillError('Đây không phải skill của đội.')
+    return s
+  }
+
+  /** Đặt đúng danh sách bot được dùng skill của đội (`'all'` là cả đội, kể cả bot tạo sau). */
+  async setAssigned(id: string, assigned: Assigned): Promise<SkillRecord> {
+    this.teamSkill(id)
+    const clean: Assigned =
+      assigned === 'all' ? 'all' : [...new Set(assigned.map((b) => b.trim()).filter(Boolean))]
+    return this.patch(id, () => ({ assigned: clean }))
+  }
+
+  /** Gán thêm bot cho skill của đội (giữ các bot đã gán). */
+  async assign(id: string, bots: Assigned): Promise<SkillRecord> {
+    const s = this.teamSkill(id)
+    return this.setAssigned(id, mergeAssigned(s.assigned, bots))
+  }
+
+  /**
+   * Bỏ gán cho một bot. Skill đang gán cho cả đội thì cần `allBots` (mọi bot hiện có) để đổi thành danh sách trừ bot này.
+   */
+  async unassign(id: string, bot: string, allBots: readonly string[] = []): Promise<SkillRecord> {
+    const s = this.teamSkill(id)
+    if (s.assigned === 'all' && allBots.length === 0)
+      throw new SkillError('Skill đang gán cho cả đội; cần danh sách bot để bỏ riêng một bot.')
+    const base = s.assigned === 'all' ? allBots : (s.assigned ?? [])
+    return this.setAssigned(
+      id,
+      base.filter((b) => b !== bot),
+    )
+  }
+
+  /**
+   * Chia sẻ skill riêng của một bot cho đội: chuyển vào kho của đội, giữ các bản cũ, gán sẵn cho bot gốc. Mã skill
+   * đổi (`<bot>--<tên>` thành `_doi--<tên>`), nên các bản được ghi lại dưới mã mới rồi xoá bản cũ.
+   */
+  async share(id: string): Promise<SkillRecord> {
+    const s = this.get(id)
+    if (!s || s.bot === TEAM_OWNER) throw new SkillError('Skill này đã ở kho của đội hoặc không còn.')
+    if (this.get(skillId(TEAM_OWNER, s.name))) throw new SkillError('Kho của đội đã có skill tên này.')
+    return this.rekey(s, TEAM_OWNER, { assigned: [s.bot] })
+  }
+
+  /** Trả skill của đội về làm skill riêng; chỉ được khi skill gán đúng cho một bot. */
+  async unshare(id: string): Promise<SkillRecord> {
+    const s = this.teamSkill(id)
+    if (!Array.isArray(s.assigned) || s.assigned.length !== 1)
+      throw new SkillError('Chỉ trả về làm skill riêng được khi skill gán đúng cho một bot.')
+    const bot = s.assigned[0]!
+    if (this.get(skillId(bot, s.name))) throw new SkillError('Bot này đã có skill riêng cùng tên.')
+    return this.rekey(s, bot, { assigned: undefined, usesBy: undefined })
+  }
+
+  /** Chuyển skill và các bản sang chủ khác (mã đổi theo). */
+  private async rekey(s: SkillRecord, bot: string, extra: Partial<SkillRecord>): Promise<SkillRecord> {
+    const nextId = skillId(bot, s.name)
+    const old = this.versionsOf(s.id)
+    for (const v of old)
+      await this.versions.put(versionId(bot, s.name, v.version), {
+        ...v,
+        id: versionId(bot, s.name, v.version),
+        skill: nextId,
+        bot,
+      })
+    const next: SkillRecord = { ...s, ...extra, id: nextId, bot, updatedAt: this.now().toISOString() }
+    for (const k of Object.keys(next) as (keyof SkillRecord)[]) if (next[k] === undefined) delete next[k]
+    await this.skills.put(nextId, next)
+    for (const v of old) await this.versions.delete(v.id)
+    await this.skills.delete(s.id)
+    return next
   }
 
   /** Số ngày từ lần dùng cuối (chưa dùng thì từ lúc bật). */
@@ -324,7 +476,10 @@ export class SkillStore {
     if (!v || v.status !== 'proposed') throw new SkillError('Bản này đã được trả lời hoặc không còn.')
     let next = v
     if (body !== undefined && body.trim() !== v.body) {
-      const lint = lintSkill({ name: v.name, description: v.description, body: body.trim() })
+      const lint = lintSkill(
+        { name: v.name, description: v.description, body: body.trim() },
+        { imported: v.by === 'import' },
+      )
       if (lint.errors.length) throw new SkillError(lint.errors.join(' '))
       next = { ...v, body: body.trim(), warnings: lint.warnings }
     }
@@ -392,10 +547,15 @@ export class SkillStore {
   /** Công cụ `skill` của dsh vừa nạp skill này của bot. */
   async recordUse(bot: string, name: string): Promise<void> {
     if (!NAME_RE.test(name)) return
-    const s = this.get(skillId(bot, name))
-    if (!s || s.status !== 'active') return
+    const s = this.resolveFor(bot, name)
+    if (!s) return
     const at = this.now().toISOString()
-    await this.skills.put(s.id, { ...s, uses: s.uses + 1, lastUsedAt: at })
+    await this.skills.put(s.id, {
+      ...s,
+      uses: s.uses + 1,
+      lastUsedAt: at,
+      ...(s.bot === TEAM_OWNER ? { usesBy: { ...s.usesBy, [bot]: (s.usesBy?.[bot] ?? 0) + 1 } } : {}),
+    })
   }
 
   /** Số bản người dùng đã trả lời hôm nay (Hộp duyệt). */
@@ -425,6 +585,9 @@ export class SkillStore {
     if (current && current.id !== v.id)
       await this.versions.put(current.id, { ...current, status: 'superseded' })
     await this.versions.put(v.id, { ...v, status: 'active' })
+    // Skill của đội: bot chọn lúc nhập được gán ngay khi bản đầu được duyệt (gộp vào bot đã gán trước).
+    const assigned =
+      s.bot === TEAM_OWNER && v.assignOnApprove ? mergeAssigned(s.assigned, v.assignOnApprove) : s.assigned
     await this.skills.put(s.id, {
       ...s,
       status: 'active',
@@ -432,6 +595,7 @@ export class SkillStore {
       version: v.version,
       description: v.description,
       ...(v.whenToUse ? { whenToUse: v.whenToUse } : {}),
+      ...(assigned ? { assigned } : {}),
       updatedAt: this.now().toISOString(),
     })
   }

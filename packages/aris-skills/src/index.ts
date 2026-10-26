@@ -16,6 +16,17 @@ import type {} from '@deepseek-ai/dsh-storage-domain'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { randomUUID } from 'node:crypto'
 import { diffStat, lineDiff } from './diff.js'
+import {
+  ImportError,
+  checkSourceUpdate,
+  disposeScan,
+  importItems,
+  scanClaudeCode,
+  scanCodex,
+  scanFolder,
+  scanGithub,
+  type ScanResult,
+} from './import-io.js'
 import { LEARN_TOOL, LEARN_WINDOW_MS, MAX_LEARN_CASES, learnPrompt } from './learn.js'
 import { skillsDomain, type CuratorRun } from './domain.js'
 import {
@@ -39,6 +50,7 @@ import {
   SkillError,
   SkillStore,
   skillId,
+  type Assigned,
   type CuratorPlan,
   type ProposeInput,
   type SkillEvent,
@@ -343,7 +355,8 @@ export async function apply(ctx: Context): Promise<void> {
         const bot = botOf(sid)
         await store.recordUse(bot, n).catch((e: unknown) => logger.warn('đếm lượt dùng: %s', String(e)))
         const ask = lastAsk.get(sid)
-        if (ask) await store.addCase(skillId(bot, n), { request: ask, sessionId: sid }).catch(() => undefined)
+        const used = store.resolveFor(bot, n)
+        if (ask && used) await store.addCase(used.id, { request: ask, sessionId: sid }).catch(() => undefined)
       }
     }
     return next()
@@ -655,6 +668,62 @@ export async function apply(ctx: Context): Promise<void> {
     return () => clearInterval(timer)
   }, 'aris-skills: người dọn kho')
 
+  // Mọi bot có phiên dsh (không kể bot ngoài): để bỏ gán riêng một bot khi skill đang gán cho cả đội.
+  const allBots = () =>
+    (ctx.get('arisBots') as { store?: { list(): { id: string; external?: unknown }[] } } | undefined)?.store
+      ?.list()
+      .filter((b) => !b.external)
+      .map((b) => b.id) ?? []
+
+  // Kết quả quét nhập skill giữ 15 phút (GitHub giữ cả thư mục tạm); hết hạn hay khi tắt aris thì dọn.
+  const SCAN_TTL_MS = 15 * 60_000
+  const scans = new Map<string, ScanResult>()
+  const sweepScans = async () => {
+    for (const [k, v] of scans)
+      if (Date.now() - v.at > SCAN_TTL_MS) {
+        scans.delete(k)
+        await disposeScan(v)
+      }
+  }
+  ctx.effect(() => {
+    const timer = setInterval(() => void sweepScans(), 60_000)
+    return () => {
+      clearInterval(timer)
+      for (const v of scans.values()) void disposeScan(v)
+      scans.clear()
+    }
+  }, 'aris-skills: kết quả quét nhập skill')
+  const scanSource = async (src: { kind: string; url?: string; path?: string }): Promise<ScanResult> => {
+    await sweepScans()
+    let r: ScanResult
+    if (src.kind === 'github') r = await scanGithub(String(src.url ?? ''))
+    else {
+      const [items, label, kind] =
+        src.kind === 'claude-code'
+          ? ([await scanClaudeCode(), 'Claude Code', 'claude-code'] as const)
+          : src.kind === 'codex'
+            ? ([await scanCodex(), 'Codex', 'codex'] as const)
+            : src.kind === 'folder'
+              ? ([await scanFolder(String(src.path ?? '')), String(src.path ?? ''), 'folder'] as const)
+              : (undefined as never)
+      if (!items) throw new ImportError('Nguồn không hợp lệ.')
+      r = { id: '', at: Date.now(), kind, label, root: '', items }
+    }
+    r.id = `scan-${randomUUID().slice(0, 8)}`
+    scans.set(r.id, r)
+    return r
+  }
+  const takeScan = (id: string) => {
+    const r = scans.get(id)
+    if (!r || Date.now() - r.at > SCAN_TTL_MS) throw new ImportError('Kết quả quét đã hết hạn, quét lại.')
+    return r
+  }
+  const dropScan = async (id: string) => {
+    const r = scans.get(id)
+    scans.delete(id)
+    if (r) await disposeScan(r)
+  }
+
   ctx.inject(['connection'], (ctx) => {
     ctx.effect(() => {
       const dispose = ctx.connection.fetch.register({
@@ -665,6 +734,11 @@ export async function apply(ctx: Context): Promise<void> {
           const res = await skillsApi(store, request, {
             startEval,
             latestEval,
+            allBots,
+            scan: scanSource,
+            takeScan,
+            dropScan,
+            checkUpdate: (id) => checkSourceUpdate(store, id),
             curator: () => ({
               ...curator,
               report: lastRun() ?? null,
@@ -710,6 +784,14 @@ export interface SkillsApiExtras {
   startEval(skill: string): Promise<EvalRecord>
   latestEval(skill: string, version?: number): EvalRecord | undefined
   curator(): CuratorView
+  /** Mã mọi bot có phiên dsh (không kể bot ngoài). */
+  allBots(): string[]
+  /** Quét một nguồn nhập skill (GitHub, Claude Code, Codex, thư mục) và giữ kết quả để nhập. */
+  scan(src: { kind: string; url?: string; path?: string }): Promise<ScanResult>
+  takeScan(id: string): ScanResult
+  dropScan(id: string): Promise<void>
+  /** Kiểm tra bản mới của skill nhập từ GitHub. */
+  checkUpdate(skill: string): ReturnType<typeof checkSourceUpdate>
 }
 
 /** Người dọn kho cho màn 3.2: lần chạy gần nhất / kế, báo cáo gần nhất, các mốc. */
@@ -786,7 +868,14 @@ export async function skillsApi(
     version?: unknown
     body?: unknown
     on?: unknown
+    source?: unknown
+    scanId?: unknown
+    keys?: unknown
+    bots?: unknown
+    bot?: unknown
   }
+  const assignedOf = (v: unknown): Assigned | undefined =>
+    v === 'all' ? 'all' : Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : undefined
   const skill = typeof body.skill === 'string' ? body.skill : ''
   const id = typeof body.id === 'string' ? body.id : ''
   try {
@@ -812,11 +901,76 @@ export async function skillsApi(
       case 'eval':
         if (!ext) return json({ error: 'Chưa bật kiểm thử.' }, 400)
         return json({ ok: true, eval: evalView(await ext.startEval(skill)) })
+      case 'assign': {
+        const bots = assignedOf(body.bots)
+        if (!bots) return json({ error: 'Thiếu danh sách bot.' }, 400)
+        return json({ ok: true, skill: await store.setAssigned(skill, bots) })
+      }
+      case 'unassign':
+        return json({
+          ok: true,
+          skill: await store.unassign(
+            skill,
+            typeof body.bot === 'string' ? body.bot : '',
+            ext?.allBots() ?? [],
+          ),
+        })
+      case 'share':
+        return json({ ok: true, skill: await store.share(skill) })
+      case 'unshare':
+        return json({ ok: true, skill: await store.unshare(skill) })
+      case 'import-scan': {
+        if (!ext) return json({ error: 'Chưa bật nhập skill.' }, 400)
+        const src = (body.source ?? {}) as { kind?: unknown; url?: unknown; path?: unknown }
+        const r = await ext.scan({
+          kind: String(src.kind ?? ''),
+          ...(typeof src.url === 'string' ? { url: src.url } : {}),
+          ...(typeof src.path === 'string' ? { path: src.path } : {}),
+        })
+        return json({
+          scanId: r.id,
+          kind: r.kind,
+          label: r.label,
+          ...(r.github ? { github: r.github } : {}),
+          items: r.items.map((i) => ({
+            key: i.key,
+            name: i.name,
+            description: i.description,
+            files: i.files,
+            dropped: i.dropped,
+            risks: i.risks,
+            ...(i.error ? { error: i.error } : {}),
+            // Skill đang có cùng tên: của đội hay của bot nào.
+            exists: [
+              ...new Set(
+                store
+                  .list()
+                  .filter((x) => x.name === i.name && x.status !== 'archived')
+                  .map((x) => x.bot),
+              ),
+            ],
+          })),
+        })
+      }
+      case 'import': {
+        if (!ext) return json({ error: 'Chưa bật nhập skill.' }, 400)
+        const scan = ext.takeScan(String(body.scanId ?? ''))
+        const keys = Array.isArray(body.keys) ? body.keys.map(String) : []
+        if (keys.length === 0) return json({ error: 'Chưa chọn skill nào.' }, 400)
+        const bots = assignedOf(body.bots)
+        const outcomes = await importItems(store, scan, keys, { ...(bots ? { bots } : {}) })
+        await ext.dropScan(scan.id)
+        return json({ ok: true, outcomes })
+      }
+      case 'import-check':
+        if (!ext) return json({ error: 'Chưa bật nhập skill.' }, 400)
+        return json({ ok: true, ...(await ext.checkUpdate(skill)) })
       default:
         return json({ error: 'op không hợp lệ' }, 400)
     }
   } catch (e) {
     if (e instanceof SkillError) return json({ error: e.message }, 409)
+    if (e instanceof ImportError) return json({ error: e.message }, 400)
     throw e
   }
 }

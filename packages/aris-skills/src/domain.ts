@@ -21,6 +21,10 @@ const skill: z.ZodType<SkillRecord> = z.object({
   cases: z
     .array(z.object({ request: z.string(), sessionId: z.string().optional(), at: z.string() }))
     .optional(),
+  /** Skill của đội (`bot` là `TEAM_OWNER`): bot nào được dùng. */
+  assigned: z.union([z.literal('all'), z.array(z.string())]).optional(),
+  /** Số lượt dùng theo từng bot (skill của đội). */
+  usesBy: z.record(z.string(), z.number().int()).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 })
@@ -35,12 +39,29 @@ const version: z.ZodType<VersionRecord> = z.object({
   description: z.string(),
   whenToUse: z.string().optional(),
   status: z.enum(['proposed', 'active', 'superseded', 'rejected']),
-  by: z.enum(['reflect', 'user', 'restore']),
+  by: z.enum(['reflect', 'user', 'restore', 'import']),
   why: z.string().optional(),
   quote: z.string().optional(),
   sessionId: z.string().optional(),
   from: z.number().int().optional(),
   warnings: z.array(z.string()),
+  /** Dấu hiệu nguy hiểm của skill nhập từ ngoài (bộ quét `scanImported`), hiện đỏ ở thẻ duyệt. */
+  risks: z.array(z.string()).optional(),
+  /** Nơi nhập từ đâu (chỉ có ở bản nhập từ ngoài). */
+  source: z
+    .object({
+      kind: z.enum(['github', 'claude-code', 'codex', 'folder']),
+      repo: z.string().optional(),
+      ref: z.string().optional(),
+      sha: z.string().optional(),
+      path: z.string(),
+      importedAt: z.string(),
+    })
+    .optional(),
+  /** Tệp kèm đã chép (đường dẫn tương đối trong thư mục tệp kèm của bản). */
+  files: z.array(z.string()).optional(),
+  /** Bot được gán khi bản này được duyệt (skill của đội). */
+  assignOnApprove: z.union([z.literal('all'), z.array(z.string())]).optional(),
   at: z.string(),
   review: z
     .object({

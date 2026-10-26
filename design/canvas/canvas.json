@@ -811,6 +811,36 @@
       "x": 0,
       "y": 8920,
       "is_interactive": true
+    },
+    "NhapSkill.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g3",
+      "title": "3.6 · Nhập skill từ ngoài (GĐ8 plan 8.1) — GitHub, Claude Code, Codex, thư mục; chọn skill, cảnh báo, chọn bot được dùng sau khi duyệt",
+      "w": 1440,
+      "x": 0,
+      "y": 3640,
+      "is_interactive": true
+    },
+    "ThuVienSkillDoi.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g3",
+      "title": "3.2b · Thư viện skill có Kho đội — nguồn, dải bot được dùng, gán, Có bản mới, chia sẻ skill riêng cho đội",
+      "w": 1440,
+      "x": 1520,
+      "y": 3640,
+      "is_interactive": true
+    },
+    "SkillDoiChiTiet.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "page": "g3",
+      "title": "3.2c · Skill của đội: chi tiết (bot được dùng, lượt dùng theo bot), thẻ duyệt một lần nhập, hồ sơ bot có nhóm Từ kho đội",
+      "w": 1440,
+      "x": 3040,
+      "y": 3640,
+      "is_interactive": true
     }
   },
   "createdOnFiles": {
@@ -998,7 +1028,10 @@
     "VanPhongChatAris.dc.html",
     "KetNoiDoi.dc.html",
     "NhapKetNoi.dc.html",
-    "KetNoiDoiBot.dc.html"
+    "KetNoiDoiBot.dc.html",
+    "NhapSkill.dc.html",
+    "ThuVienSkillDoi.dc.html",
+    "SkillDoiChiTiet.dc.html"
   ],
   "pages": [
     {

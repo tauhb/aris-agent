@@ -742,6 +742,9 @@ importers:
       '@aris/shell':
         specifier: workspace:*
         version: link:../aris-shell
+      yaml:
+        specifier: 2.9.1
+        version: 2.9.1
       zod:
         specifier: 4.4.3
         version: 4.4.3

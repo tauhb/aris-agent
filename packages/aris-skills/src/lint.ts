@@ -6,6 +6,9 @@
 /** Thân skill tối đa ngần này ký tự. */
 export const MAX_BODY = 6000
 export const MAX_DESCRIPTION = 300
+/** Skill nhập từ ngoài (GitHub, Claude Code, Codex) thường dài hơn skill tự học: nới giới hạn, báo cảnh báo khi dài. */
+export const IMPORT_MAX_BODY = 24_000
+export const IMPORT_MAX_DESCRIPTION = 1000
 
 /** Tên skill: chữ thường không dấu, số, nối bằng `-` (như danh mục skill của dsh). */
 export const NAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -30,21 +33,30 @@ export interface SkillDraft {
   body: string
 }
 
+export interface LintOptions {
+  /** Skill nhập từ ngoài: giới hạn thân và mô tả rộng hơn, thân dài hơn `MAX_BODY` chỉ cảnh báo. */
+  imported?: boolean
+}
+
 export interface LintResult {
   errors: string[]
   warnings: string[]
 }
 
-export function lintSkill(d: SkillDraft): LintResult {
+export function lintSkill(d: SkillDraft, o: LintOptions = {}): LintResult {
+  const maxBody = o.imported ? IMPORT_MAX_BODY : MAX_BODY
+  const maxDescription = o.imported ? IMPORT_MAX_DESCRIPTION : MAX_DESCRIPTION
   const errors: string[] = []
   const warnings: string[] = []
   const body = d.body.trim()
   if (!NAME_RE.test(d.name) || d.name.length > 60)
     errors.push('Tên skill chỉ gồm chữ thường không dấu, số và dấu gạch ngang, tối đa 60 ký tự.')
   if (!d.description.trim()) errors.push('Thiếu mô tả: skill dùng khi nào.')
-  else if (d.description.length > MAX_DESCRIPTION) errors.push(`Mô tả dài quá ${MAX_DESCRIPTION} ký tự.`)
+  else if (d.description.length > maxDescription) errors.push(`Mô tả dài quá ${maxDescription} ký tự.`)
   if (!body) errors.push('Thân skill rỗng.')
-  else if (body.length > MAX_BODY) errors.push(`Thân skill dài quá ${MAX_BODY} ký tự; tách bớt hoặc rút gọn.`)
+  else if (body.length > maxBody) errors.push(`Thân skill dài quá ${maxBody} ký tự; tách bớt hoặc rút gọn.`)
+  else if (o.imported && body.length > MAX_BODY)
+    warnings.push(`Skill dài ${body.length} ký tự: mỗi lần bot nạp skill này tốn nhiều token.`)
   const f = fold(body)
   if (
     /\b\d{1,2}\/\d{1,2}(\/\d{2,4})?\b/.test(body) ||

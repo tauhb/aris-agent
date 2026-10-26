@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@aris/shell": "workspace:*",
+    "yaml": "2.9.1",
     "zod": "4.4.3"
   },
   "devDependencies": {
