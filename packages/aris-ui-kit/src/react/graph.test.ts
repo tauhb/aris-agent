@@ -37,8 +37,9 @@ describe('đồ thị tri thức 3D', () => {
     expect(depth(0)).toBeCloseTo(0.5)
   })
 
-  it('dự án và lĩnh vực luôn hiện; loại khác theo bộ lọc; ẩn nút tạo sau mốc thời gian', () => {
+  it('dự án, lĩnh vực và phòng ban luôn hiện; loại khác theo bộ lọc; ẩn nút tạo sau mốc thời gian', () => {
     expect(isVisible(node({ type: 'project' }), {}, 1)).toBe(true)
+    expect(isVisible(node({ type: 'department' }), {}, 1)).toBe(true)
     expect(isVisible(node({ type: 'skill' }), { skill: false }, 1)).toBe(false)
     expect(isVisible(node({ type: 'note' }), { note: true }, 1)).toBe(true)
     expect(isVisible(node({ type: 'note', t: 0.8 }), { note: true }, 0.5)).toBe(false)

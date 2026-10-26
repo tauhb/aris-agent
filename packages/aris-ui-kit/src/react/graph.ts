@@ -3,7 +3,8 @@
  * sau khi xoay quanh hai trục, lọc nút theo loại và mốc thời gian, tìm nút dưới con trỏ.
  */
 
-export type GraphNodeType = 'note' | 'project' | 'area' | 'person' | 'memory' | 'skill' | 'session'
+export type GraphNodeType =
+  'note' | 'project' | 'area' | 'person' | 'memory' | 'skill' | 'session' | 'department'
 
 export interface GraphNode {
   name: string
@@ -11,7 +12,7 @@ export interface GraphNode {
   x: number
   y: number
   z: number
-  /** Nút trung tâm của một cụm (dự án, lĩnh vực). */
+  /** Nút trung tâm của một cụm (dự án, lĩnh vực, phòng ban). */
   hub: boolean
   /** Chỉ số cụm. */
   cl: number
@@ -41,6 +42,7 @@ export const NODE_COLORS: Record<Exclude<GraphNodeType, 'session'>, string> = {
   person: '#FF6700',
   memory: '#9259FE',
   skill: '#FF309C',
+  department: '#3FA34D',
 }
 
 /** Bán kính gốc theo loại nút. */
@@ -52,6 +54,7 @@ export const NODE_SIZE: Record<GraphNodeType, number> = {
   memory: 6.4,
   skill: 6,
   session: 4.2,
+  department: 13,
 }
 
 export interface Projected {
@@ -89,9 +92,10 @@ export const depth = (z: number) => Math.max(0, Math.min(1, (z + 1.4) / 2.8))
 
 export type GraphFilter = Partial<Record<GraphNodeType, boolean>>
 
-/** Nút có hiện không: loại được bật (dự án, lĩnh vực luôn hiện) và tạo trước mốc thời gian. */
+/** Nút có hiện không: loại được bật (dự án, lĩnh vực, phòng ban luôn hiện) và tạo trước mốc thời gian. */
 export function isVisible(n: GraphNode, show: GraphFilter, timeCut: number): boolean {
-  const on = n.type === 'project' || n.type === 'area' ? true : show[n.type] === true
+  const on =
+    n.type === 'project' || n.type === 'area' || n.type === 'department' ? true : show[n.type] === true
   return on && n.t <= timeCut + 0.0001
 }
 

@@ -21,7 +21,7 @@ import {
   type Finding,
   type SoatPage,
 } from './soat.js'
-import { buildGraph, linkMention, unlinkedMention, type GraphPage } from './graph.js'
+import { buildGraph, linkMention, nodeType, unlinkedMention, type GraphPage } from './graph.js'
 import { fold, keyTerms, linksOf, parsePage, snippetOf } from './page.js'
 import { kanbanOf, projectPageText, withKanban } from './project-page.js'
 import { ensureVault, placeOf, slugOf } from './vault.js'
@@ -539,6 +539,65 @@ describe('đồ thị bộ não', () => {
     expect(
       buildGraph({ pages: [gp('ca-nhan/wiki/nguoi/a.md', 'Anh A', [])], other: 'Khác' }).nodes[0]!.x,
     ).toBe(buildGraph({ pages: [gp('ca-nhan/wiki/nguoi/a.md', 'Anh A', [])], other: 'Khác' }).nodes[0]!.x)
+  })
+  it('nodeType: nhãn loại trước thư mục; trang phòng ban và nguồn', () => {
+    expect(nodeType({ layer: 'wiki', kind: 'phong-ban' })).toBe('department')
+    expect(nodeType({ layer: 'wiki', group: 'du-an' })).toBe('project')
+    expect(nodeType({ layer: 'wiki', group: 'chung/nguoi' })).toBe('person')
+    expect(nodeType({ layer: 'wiki', group: 'quy-trinh' })).toBe('area')
+    // Nhãn `loai` thắng thư mục.
+    expect(nodeType({ layer: 'wiki', group: 'tom-tat', kind: 'khach-hang' })).toBe('person')
+    expect(nodeType({ layer: 'wiki', group: 'so-lieu' })).toBe('note')
+    expect(nodeType({ layer: 'nguon', kind: 'phong-ban' })).toBe('session')
+  })
+  it('phòng ban là nút trung tâm: trang của phòng xếp quanh, dự án giữ cụm dự án, trang lẻ ở Khác', () => {
+    const dept = (path: string, title: string, links: string[], d: string | undefined = 'kinh-doanh') => ({
+      ...gp(path, title, links),
+      dept: d,
+    })
+    const g = buildGraph({
+      pages: [
+        // 0: dự án của công ty (không thuộc phòng) nối tới trang 1.
+        gp('cong-ty/wiki/chung/du-an/ra-mat.md', 'Ra mắt', ['bao-gia']),
+        // 1: trang phòng nối thẳng tới dự án: theo dự án.
+        dept('cong-ty/wiki/phong-ban/kinh-doanh/tom-tat/bao-gia.md', 'Báo giá', []),
+        // 2: trang phòng, chỉ nối qua trang 1 (xa dự án hai cạnh): về cụm phòng.
+        dept('cong-ty/wiki/phong-ban/kinh-doanh/so-lieu/doanh-so.md', 'Doanh số', ['bao-gia']),
+        // 3: trang Chung ghi phong-ban một mã (dept lấy từ nhãn).
+        dept('cong-ty/wiki/chung/tong-hop/loi-nhuan.md', 'Lợi nhuận', [], 'ke-toan'),
+        // 4: tâm chủ đề nằm trong phòng: vẫn là cụm riêng, nối vào nút phòng bằng một cạnh.
+        dept('cong-ty/wiki/phong-ban/ke-toan/chu-de/thue.md', 'Thuế', [], 'ke-toan'),
+        // 5: phòng không có trong danh sách: xếp như trang thường (Khác).
+        dept('cong-ty/wiki/phong-ban/cu/tom-tat/x.md', 'Trang cũ', [], 'cu'),
+        // 6: trang lẻ không phòng.
+        gp('cong-ty/wiki/chung/tong-hop/le.md', 'Trang lẻ', []),
+      ],
+      departments: [
+        { id: 'kinh-doanh', name: 'Kinh doanh' },
+        { id: 'ke-toan', name: 'Kế toán' },
+        { id: 'rong', name: 'Rỗng' },
+      ],
+      other: 'Khác',
+    })
+    // Nút phòng nằm sau các trang, kiểu `department`, là tâm cụm.
+    expect(g.nodes.slice(7).map((n) => [n.id, n.title, n.type, n.hub, n.t])).toEqual([
+      ['phong-ban:kinh-doanh', 'Kinh doanh', 'department', true, 1],
+      ['phong-ban:ke-toan', 'Kế toán', 'department', true, 1],
+      ['phong-ban:rong', 'Rỗng', 'department', true, 1],
+    ])
+    // Cụm: dự án, chủ đề trước (Ra mắt, Thuế), rồi ba phòng, rồi Khác.
+    expect(g.clusters).toEqual(['Ra mắt', 'Thuế', 'Kinh doanh', 'Kế toán', 'Rỗng', 'Khác'])
+    expect(g.nodes.map((n) => n.cl)).toEqual([0, 0, 2, 3, 1, 5, 5, 2, 3, 4])
+    // Cạnh: liên kết thật, cộng cạnh từ nút phòng tới tâm chủ đề nằm trong phòng.
+    expect(g.edges.map((e) => [e.a, e.b])).toEqual([
+      [0, 1],
+      [2, 1],
+      [8, 4],
+    ])
+    // Không có phòng nào thì không thêm nút.
+    expect(
+      buildGraph({ pages: [gp('ca-nhan/wiki/nguoi/a.md', 'Anh A', [])], other: 'Khác' }).nodes,
+    ).toHaveLength(1)
   })
   it('gợi ý nối: chỗ nhắc tên chưa nối, trọn từ, bỏ qua liên kết, mã, tiêu đề mục; nối giữ chữ gốc', () => {
     const body =

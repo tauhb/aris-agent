@@ -130,7 +130,17 @@ function groupLabel(t: Translate, g: string) {
   return t(`nb.g.${g}`)
 }
 
-export function Notes({ t, nav, params }: PageProps) {
+export function Notes({
+  t,
+  nav,
+  params,
+  q: query,
+  setQ: setQuery,
+}: PageProps & {
+  /** Từ khoá của ô tìm chung ở thanh tab Brain. */
+  q: string
+  setQ: (q: string) => void
+}) {
   // Không gian do thanh tab của trang Brain chọn (`params.space`); đổi không gian thì trang được dựng lại.
   const space: Space = params.space === 'cong-ty' ? 'cong-ty' : 'ca-nhan'
   const [state, setState] = useState<State | null>(null)
@@ -139,7 +149,6 @@ export function Notes({ t, nav, params }: PageProps) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [query, setQuery] = useState('')
   const [hits, setHits] = useState<(Entry & { snippet: string })[] | null>(null)
   const [open, setOpen] = useState<Set<string>>(new Set())
   const [saving, setSaving] = useState(false)
@@ -330,16 +339,6 @@ export function Notes({ t, nav, params }: PageProps) {
 
   const tree = (
     <nav className="ap-tree ap-btree" aria-label={t('br.tree')}>
-      <label className="ap-bsearch">
-        <Ico name="search" />
-        <input
-          type="search"
-          placeholder={t('nb.search', { space: t(`nb.space.${space}`) })}
-          aria-label={t('nb.searchLabel')}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      </label>
       <button
         type="button"
         className={`ap-row d0 ap-binbox${state?.inbox ? ' has' : ''}`}

@@ -1533,7 +1533,13 @@ export async function apply(ctx: Context): Promise<void> {
             // Đồ thị toàn cục (5.3): trang wiki, nguồn và ký ức bot bật thêm.
             if (q.get('graph') !== null) {
               const gSpace = SPACES.find((x) => x === q.get('space'))
+              const gDept = q.get('dept') || undefined
               const withSources = q.get('sources') === '1'
+              // Phòng ban của trang: thư mục của phòng, hay nhãn `phong-ban` chỉ một mã (nhiều mã là dùng chung).
+              const deptOf = (e: Entry) =>
+                e.space === 'cong-ty'
+                  ? (e.dept ?? (e.depts.length === 1 ? e.depts[0] : undefined))
+                  : undefined
               const pages = catalog
                 .all()
                 .filter(
@@ -1543,7 +1549,8 @@ export async function apply(ctx: Context): Promise<void> {
                     e.path.endsWith('.md') &&
                     !e.name.startsWith('_') &&
                     (e.layer === 'wiki' || (withSources && e.layer === 'nguon')) &&
-                    (!gSpace || e.space === gSpace),
+                    (!gSpace || e.space === gSpace) &&
+                    (!gDept || deptOf(e) === gDept),
                 )
                 .map((e) => ({
                   path: e.path,
@@ -1553,6 +1560,7 @@ export async function apply(ctx: Context): Promise<void> {
                   group: e.group,
                   kind: e.kind,
                   space: e.space,
+                  dept: deptOf(e),
                   mtime: e.mtime,
                   links: linksOf(catalog.get(e.path)?.body ?? ''),
                 }))
@@ -1568,6 +1576,13 @@ export async function apply(ctx: Context): Promise<void> {
                 ...buildGraph({
                   pages,
                   memories: mem.map((m) => ({ ...m, label: `Ký ức của ${botNames.get(m.bot) ?? m.bot}` })),
+                  // Mỗi phòng một nút trung tâm; lọc không gian Cá nhân thì không có, lọc một phòng thì chỉ phòng đó.
+                  departments:
+                    gSpace === 'ca-nhan'
+                      ? []
+                      : depts()
+                          .filter((d) => !gDept || d.id === gDept)
+                          .map((d) => ({ id: d.id, name: d.name })),
                   other: 'Khác',
                 }),
                 departments: depts().map((d) => ({ id: d.id, name: d.name })),

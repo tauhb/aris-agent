@@ -1,12 +1,14 @@
 /**
  * 5.3 · Đồ thị bộ não 3D (giai đoạn 5, đợt 4b; bản vẽ DoThi.dc.html): trang wiki theo loại (ghi chú, dự án, chủ
- * đề, người), nguồn và ký ức bot bật thêm; cạnh là liên kết, cụm quanh trang dự án và chủ đề; lọc theo không
- * gian và thời gian, tìm nút, xem nút đang chọn. Dữ liệu từ `/api/aris/brain?graph`.
+ * đề, người), nguồn và ký ức bot bật thêm; cạnh là liên kết, cụm quanh trang dự án, chủ đề và nút phòng ban; lọc
+ * theo không gian, phòng ban và thời gian, tìm nút (từ khoá của ô tìm chung ở thanh tab Brain), xem nút đang
+ * chọn. Dữ liệu từ `/api/aris/brain?graph`.
  */
 import {
   Button,
   Checkbox,
   KnowledgeGraph,
+  Select,
   NODE_COLORS,
   ZOOM_MAX,
   ZOOM_MIN,
@@ -46,7 +48,7 @@ interface ServerGraph {
 }
 
 const FILTERS: GraphNodeType[] = ['note', 'person', 'session', 'memory']
-const LEGEND: GraphNodeType[] = ['note', 'project', 'area', 'person', 'session', 'memory']
+const LEGEND: GraphNodeType[] = ['note', 'project', 'area', 'department', 'person', 'session', 'memory']
 const color = (type: GraphNodeType) => (type === 'session' ? 'var(--a-muted)' : NODE_COLORS[type])
 const label = (type: GraphNodeType) => `nb.type.${type}`
 /** Nhãn trên đồ thị: tên dài (nguồn thường lấy dòng đầu) cắt còn ~28 ký tự; tên đầy đủ ở ô Đang chọn. */
@@ -75,6 +77,8 @@ const FOLDER: Record<string, string> = {
 }
 const shortLabel = (s: string, n = 28) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s)
 const endpoint = (q = '') => new URL(`api/aris/brain${q}`, document.baseURI)
+/** Cây không vẽ nút phòng ban: phòng đã là nhánh thư mục. */
+const inTree = (n: { type: string }) => n.type !== 'department'
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase()
 
 /** Cách xem mặc định khi người dùng chưa chọn lần nào: cây 3D. */
@@ -90,7 +94,7 @@ const savedMode = (): Mode => {
   }
 }
 
-export function BrainGraph({ t, nav }: PageProps) {
+export function BrainGraph({ t, nav, q }: PageProps & { q: string }) {
   const [mode, setModeState] = useState<Mode>(savedMode)
   const setMode = (m: Mode) => {
     setModeState(m)
@@ -105,19 +109,20 @@ export function BrainGraph({ t, nav }: PageProps) {
   const [showJournal, setShowJournal] = useState(true)
   const [beta, setBeta] = useState(0.82)
   const [space, setSpace] = useState<Space>('')
+  const [dept, setDept] = useState('')
   const [show, setShow] = useState<GraphFilter>({ note: true, person: true, session: false, memory: false })
   const [data, setData] = useState<ServerGraph | null>(null)
   const [timeCut, setTimeCut] = useState(1)
   const [zoom, setZoom] = useState(1)
   const [reset, setReset] = useState(0)
   const [selected, setSelected] = useState(-1)
-  const [q, setQ] = useState('')
 
   useEffect(() => {
     let live = true
     const p = new URLSearchParams({
       graph: '1',
       ...(space ? { space } : {}),
+      ...(space === 'cong-ty' && dept ? { dept } : {}),
       sources: show.session ? '1' : '0',
       memory: show.memory ? '1' : '0',
     })
@@ -128,7 +133,7 @@ export function BrainGraph({ t, nav }: PageProps) {
     return () => {
       live = false
     }
-  }, [space, show.session, show.memory])
+  }, [space, dept, show.session, show.memory])
 
   const graph: Graph = useMemo(
     () => ({
@@ -148,10 +153,14 @@ export function BrainGraph({ t, nav }: PageProps) {
     [data],
   )
   const deg = useMemo(() => degrees(graph), [graph])
-  // Chưa chọn: nút nối nhiều nhất.
-  const sel = selected >= 0 && selected < graph.nodes.length ? selected : deg.indexOf(Math.max(...deg, 0))
+  const tree = mode !== 'links'
+  // Chưa chọn: nút nối nhiều nhất (cây không có nút phòng ban nên bỏ qua chúng).
+  const usable = (i: number) => selected >= 0 && i < graph.nodes.length && !(tree && !inTree(graph.nodes[i]!))
+  const best = deg.map((d, i) => (tree && !inTree(graph.nodes[i]!) ? -1 : d))
+  const sel = usable(selected) ? selected : best.indexOf(Math.max(...best, 0))
   const node = data?.nodes[sel]
-  const page = node && !node.id.startsWith('ky-uc:') ? node.id : undefined
+  const page =
+    node && !node.id.startsWith('ky-uc:') && !node.id.startsWith('phong-ban:') ? node.id : undefined
 
   const depts = data?.departments
   const folderLabel = useCallback(
@@ -171,12 +180,17 @@ export function BrainGraph({ t, nav }: PageProps) {
     else next.add(key)
     setCollapsed(next)
   }
-  const tree = mode !== 'links'
+  // Nút phòng ban nằm cuối danh sách, bỏ đi thì chỉ số các nút khác không đổi; cạnh nối phòng bị bỏ theo.
+  const treeNodes = useMemo(() => (data?.nodes ?? []).filter(inTree), [data])
+  const treeEdges = useMemo(
+    () => (data?.edges ?? []).filter((e) => e.a < treeNodes.length && e.b < treeNodes.length),
+    [data, treeNodes],
+  )
 
   const treeProps = {
     t,
-    nodes: data?.nodes ?? [],
-    edges: data?.edges ?? [],
+    nodes: treeNodes,
+    edges: treeEdges,
     label: folderLabel,
     collapsed,
     onToggle: toggle,
@@ -191,13 +205,13 @@ export function BrainGraph({ t, nav }: PageProps) {
     folded,
   }
 
-  const find = (text: string) => {
-    setQ(text)
-    const f = fold(text.trim())
+  // Từ khoá của ô tìm chung: chọn nút đầu tiên có tên khớp (áp cho cả liên kết, cây 2D và cây 3D).
+  useEffect(() => {
+    const f = fold(q.trim())
     if (f.length < 2) return
-    const i = (data?.nodes ?? []).findIndex((n) => fold(n.title).includes(f))
+    const i = (data?.nodes ?? []).findIndex((n) => fold(n.title).includes(f) && !(tree && !inTree(n)))
     if (i >= 0) setSelected(i)
-  }
+  }, [q, data, tree])
 
   return (
     <div className="ap-split ap-brain">
@@ -227,6 +241,7 @@ export function BrainGraph({ t, nav }: PageProps) {
                 className={space === s ? 'on' : ''}
                 onClick={() => {
                   setSpace(s)
+                  setDept('')
                   setSelected(-1)
                 }}
               >
@@ -234,15 +249,22 @@ export function BrainGraph({ t, nav }: PageProps) {
               </button>
             ))}
           </div>
-          <input
-            className="a-inp"
-            type="search"
-            value={q}
-            onChange={(e) => find(e.target.value)}
-            placeholder={t('gr.search')}
-            aria-label={t('gr.search')}
-            style={{ marginLeft: 'auto', flex: '0 1 240px', width: 'auto', minWidth: 0, height: 32 }}
-          />
+          {space === 'cong-ty' && depts && depts.length > 0 && (
+            <Select
+              variant="compact"
+              align="start"
+              label={t('gr.dept')}
+              value={dept}
+              options={[
+                { id: '', name: t('gr.allDepts') },
+                ...depts.map((d) => ({ id: d.id, name: d.name })),
+              ]}
+              onChange={(id) => {
+                setDept(id)
+                setSelected(-1)
+              }}
+            />
+          )}
         </div>
         <div className="ap-gstage">
           {data && !graph.nodes.length ? (
@@ -336,7 +358,10 @@ export function BrainGraph({ t, nav }: PageProps) {
                 {t('gr.folder')}
               </span>
             )}
-            {(tree ? LEGEND.filter((k) => k !== 'memory' || show.memory) : LEGEND).map((k) => (
+            {(tree
+              ? LEGEND.filter((k) => (k !== 'memory' || show.memory) && k !== 'department')
+              : LEGEND
+            ).map((k) => (
               <span key={k}>
                 <Dot color={color(k)} />
                 {t(label(k))}

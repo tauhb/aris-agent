@@ -365,9 +365,9 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-brain{height:100%;min-height:0}
 .ap-brainpage{display:flex;flex-direction:column;flex:1;height:100%;min-height:0}
 .ap-brainbody{display:flex;flex:1;min-height:0}
-.ap-btabs{flex:none;display:flex;align-items:center;padding:10px 24px;border-bottom:1px solid var(--a-line);background:var(--a-bg)}
+.ap-btabs{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 24px;border-bottom:1px solid var(--a-line);background:var(--a-bg)}
 .aris .ap-btabs .ap-seg button{display:inline-flex;align-items:center;gap:6px;padding:5px 14px}
-.aris .ap-btabs .ap-seg button.ap-btab-graph{padding:5px 11px}
+.ap-bsearch-top{flex:0 1 280px;min-width:0;margin:0;height:32px}
 .ap-tree{flex:0 0 220px;border-right:1px solid var(--a-line);background:var(--a-panel);padding:12px 8px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
 .aris .ap-tn{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;border-radius:8px;padding:6px 10px;font-size:13.5px;color:var(--a-ink)}
 .aris .ap-tn:hover{background:var(--a-hover)}
