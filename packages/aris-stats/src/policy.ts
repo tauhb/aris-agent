@@ -71,13 +71,15 @@ export interface Facts {
   via?: string | undefined
   /** Phiên có phiên cha (tách ra từ phiên khác). */
   parent?: boolean
-  /** Phiên của một cuộc trò chuyện Telegram. */
+  /** Phiên của một cuộc trò chuyện trên kênh (Telegram hay Lark). */
   channel?: boolean
+  /** Phiên của một cuộc trò chuyện Lark. */
+  lark?: boolean
 }
 
 /**
  * Loại việc và nguồn của một phiên. Thứ tự: routine, vòng học và kiểm thử, ứng dụng khác, việc Commander giao,
- * việc bot khác giao (đội hay phiên cha), Telegram, còn lại là chat ở web.
+ * việc bot khác giao (đội hay phiên cha), Lark, Telegram, còn lại là chat ở web.
  */
 export function classify(f: Facts): { kind: Kind; source: Source } {
   if (f.routine) return { kind: 'routine', source: 'lich' }
@@ -85,6 +87,7 @@ export function classify(f: Facts): { kind: Kind; source: Source } {
   if (f.guest) return { kind: 'giao', source: 'app' }
   if (f.via === 'dispatch') return { kind: 'giao', source: 'commander' }
   if (f.via === 'team' || f.parent) return { kind: 'giao', source: 'giao' }
+  if (f.lark) return { kind: 'chat', source: 'lark' }
   if (f.channel) return { kind: 'chat', source: 'telegram' }
   return { kind: 'chat', source: 'web' }
 }

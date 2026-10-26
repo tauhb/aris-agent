@@ -138,6 +138,7 @@ export async function apply(ctx: Context): Promise<void> {
     via: bots()?.store.tagOf(sid)?.via,
     parent: !!parent,
     channel: has('arisChannels', 'isChannelSession', sid),
+    lark: has('arisChannels', 'isLarkSession', sid),
   })
   const botName = (sid: string | undefined) => bots()?.botOf(sid).name ?? ''
   /** Tên bot giao việc: bot của phiên cha, hay bot của phiên Commander đã giao việc lớn này. */

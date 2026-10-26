@@ -30,7 +30,12 @@ function setup(extra: Record<string, unknown> = {}) {
   let route: { fetch(r: Request): Promise<Response> } | undefined
   let emit: ((c: unknown) => void) | undefined
   const tags: Record<string, { bot: string; via: string }> = {}
-  const flags = { routine: new Set<string>(), librarian: new Set<string>(), channel: new Set<string>() }
+  const flags = {
+    routine: new Set<string>(),
+    librarian: new Set<string>(),
+    channel: new Set<string>(),
+    lark: new Set<string>(),
+  }
   const services: Record<string, unknown> = {
     arisSpend: {
       onCall: (fn: (c: unknown) => void) => {
@@ -61,7 +66,10 @@ function setup(extra: Record<string, unknown> = {}) {
       recentRuns: () => [{ at: Date.now() - 3000, bot: 'lam', title: 'Báo cáo tuần', status: 'done' }],
     },
     arisBrain: { isLibrarian: (s: string) => flags.librarian.has(s) },
-    arisChannels: { isChannelSession: (s: string) => flags.channel.has(s) },
+    arisChannels: {
+      isChannelSession: (s: string) => flags.channel.has(s),
+      isLarkSession: (s: string) => flags.lark.has(s),
+    },
     arisJobs: { list: () => [{ session: 's-job', parentSession: 's-chat' }] },
     arisSkills: { skillEvents: () => ({ enabled: 3, rolledBack: 1 }) },
     arisGuard: {
@@ -165,7 +173,10 @@ describe('ghi từng lần gọi', () => {
     s.call({ session: 's-rt' })
     s.flags.channel.add('s-tg')
     s.call({ session: 's-tg' })
-    await vi.waitFor(() => expect(s.tables.calls!.size).toBe(5))
+    s.flags.channel.add('s-lk')
+    s.flags.lark.add('s-lk')
+    s.call({ session: 's-lk' })
+    await vi.waitFor(() => expect(s.tables.calls!.size).toBe(6))
     const rows = Object.fromEntries([...s.tables.sessions!.values()].map((r: Rec) => [r.session, r]))
     expect(rows['s-chat']).toMatchObject({
       kind: 'chat',
@@ -178,6 +189,7 @@ describe('ghi từng lần gọi', () => {
     expect(rows['s-job']).toMatchObject({ kind: 'giao', source: 'commander', bot: 'lam', by: 'Aris' })
     expect(rows['s-rt']).toMatchObject({ kind: 'routine', source: 'lich' })
     expect(rows['s-tg']).toMatchObject({ kind: 'chat', source: 'telegram' })
+    expect(rows['s-lk']).toMatchObject({ kind: 'chat', source: 'lark' })
     // 9.000 token đọc cache ở giá 0,028 thay vì 0,28 USD cho 1 triệu token.
     expect(rows['s-chat'].saveUsd).toBeCloseTo(2 * ((9000 * 0.252) / 1e6), 9)
     expect(rows['s-chat'].asked).toBe(false)

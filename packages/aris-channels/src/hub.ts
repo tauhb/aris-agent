@@ -428,13 +428,24 @@ export class ChannelHub {
     this.typing.clear()
   }
 
-  /** Tóm tắt cho `aris status`. */
-  /** Phiên là (hoặc từng là) phiên của một cuộc trò chuyện Telegram. */
+  /** Phiên là (hoặc từng là) phiên của một cuộc trò chuyện trên kênh (Telegram hay Lark). */
   isChannelSession(sessionId: string): boolean {
-    if (this.store.threadOfSession(sessionId)) return true
-    for (const [, t] of this.store.threads()) if (t.history.includes(sessionId)) return true
-    return false
+    return !!this.threadFor(sessionId)
   }
+
+  /** Phiên là (hoặc từng là) phiên của một cuộc trò chuyện Lark: luồng Lark có khoá `lk-…`. */
+  isLarkSession(sessionId: string): boolean {
+    return this.threadFor(sessionId)?.key.startsWith('lk-') === true
+  }
+
+  private threadFor(sessionId: string) {
+    const now = this.store.threadOfSession(sessionId)
+    if (now) return now
+    for (const [, t] of this.store.threads()) if (t.history.includes(sessionId)) return t
+    return undefined
+  }
+
+  /** Tóm tắt cho `aris status`. */
 
   status() {
     return this.store.bots().map((b) => ({
