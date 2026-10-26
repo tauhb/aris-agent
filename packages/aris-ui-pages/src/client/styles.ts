@@ -451,6 +451,8 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-ftree .pg:hover .ll{fill:var(--a-accent)}
 .ap-ftree .fd:focus-visible circle,.ap-ftree .pg:focus-visible circle{stroke:var(--a-accent);stroke-width:3}
 .ap-gaside .ap-h{padding:0 0 6px}
+.ap-gfilter{gap:6px}.ap-gfilter .ap-h{padding:0}.ap-gfilter .ap-h:not(:first-child){margin-top:6px}
+.aris .ap-gfilter .ap-seg button{flex:1;white-space:nowrap;padding:5px 6px}
 .ap-ask{flex:1;max-width:760px;width:100%;margin:0 auto;padding:22px 24px;display:flex;flex-direction:column;gap:16px}
 .ap-q{align-self:flex-end;background:var(--a-panel2);border-radius:14px;padding:10px 14px;font-size:14.5px;max-width:80%}
 .ap-ans{display:flex;flex-direction:column;gap:10px;font-size:14.5px;line-height:1.65}

@@ -216,56 +216,6 @@ export function BrainGraph({ t, nav, q }: PageProps & { q: string }) {
   return (
     <div className="ap-split ap-brain">
       <main className="ap-note-main" aria-label={t('gr.title')}>
-        <div className="ap-note-bar ap-gbar">
-          <div className="ap-seg" role="tablist" aria-label={t('gr.mode')}>
-            {MODES.map((m) => (
-              <button
-                type="button"
-                role="tab"
-                key={m}
-                aria-selected={mode === m}
-                className={mode === m ? 'on' : ''}
-                onClick={() => setMode(m)}
-              >
-                {t(`gr.mode.${m}`)}
-              </button>
-            ))}
-          </div>
-          <div className="ap-seg" role="tablist" aria-label={t('gr.space')}>
-            {(['', 'ca-nhan', 'cong-ty'] as const).map((s) => (
-              <button
-                type="button"
-                role="tab"
-                key={s}
-                aria-selected={space === s}
-                className={space === s ? 'on' : ''}
-                onClick={() => {
-                  setSpace(s)
-                  setDept('')
-                  setSelected(-1)
-                }}
-              >
-                {t(s ? `nb.space.${s}` : 'gr.all')}
-              </button>
-            ))}
-          </div>
-          {space === 'cong-ty' && depts && depts.length > 0 && (
-            <Select
-              variant="compact"
-              align="start"
-              label={t('gr.dept')}
-              value={dept}
-              options={[
-                { id: '', name: t('gr.allDepts') },
-                ...depts.map((d) => ({ id: d.id, name: d.name })),
-              ]}
-              onChange={(id) => {
-                setDept(id)
-                setSelected(-1)
-              }}
-            />
-          )}
-        </div>
         <div className="ap-gstage">
           {data && !graph.nodes.length ? (
             <div className="a-muted ap-gempty">{t('gr.empty')}</div>
@@ -380,6 +330,59 @@ export function BrainGraph({ t, nav, q }: PageProps & { q: string }) {
         </div>
       </main>
       <aside className="ap-aside ap-gaside" aria-label={t('gr.panel')}>
+        {/* Cách xem và không gian là bộ lọc của đồ thị nên đặt ở cột phải, trên mục Hiển thị. */}
+        <div className="ap-col ap-gfilter">
+          <div className="ap-h">{t('gr.mode')}</div>
+          <div className="ap-seg" role="tablist" aria-label={t('gr.mode')}>
+            {MODES.map((m) => (
+              <button
+                type="button"
+                role="tab"
+                key={m}
+                aria-selected={mode === m}
+                className={mode === m ? 'on' : ''}
+                onClick={() => setMode(m)}
+              >
+                {t(`gr.mode.${m}`)}
+              </button>
+            ))}
+          </div>
+          <div className="ap-h">{t('gr.space')}</div>
+          <div className="ap-seg" role="tablist" aria-label={t('gr.space')}>
+            {(['', 'ca-nhan', 'cong-ty'] as const).map((s) => (
+              <button
+                type="button"
+                role="tab"
+                key={s}
+                aria-selected={space === s}
+                className={space === s ? 'on' : ''}
+                onClick={() => {
+                  setSpace(s)
+                  setDept('')
+                  setSelected(-1)
+                }}
+              >
+                {t(s ? `nb.space.${s}` : 'gr.all')}
+              </button>
+            ))}
+          </div>
+          {space === 'cong-ty' && depts && depts.length > 0 && (
+            <Select
+              variant="compact"
+              align="start"
+              label={t('gr.dept')}
+              value={dept}
+              options={[
+                { id: '', name: t('gr.allDepts') },
+                ...depts.map((d) => ({ id: d.id, name: d.name })),
+              ]}
+              onChange={(id) => {
+                setDept(id)
+                setSelected(-1)
+              }}
+            />
+          )}
+        </div>
         {tree ? (
           <>
             <div className="ap-col" style={{ gap: 4 }}>
