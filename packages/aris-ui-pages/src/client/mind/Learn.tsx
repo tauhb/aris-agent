@@ -2,7 +2,7 @@
  * Trang Tự học (`learn`): ba tab Hộp duyệt, Ký ức, Thư viện skill, mỗi tab dùng lại trang hiện có. Các trang đó vẫn mở
  * được riêng (`approvals`, `memory`, `skills`) từ nơi khác.
  */
-import { Tabs, usePendingApprovals } from '@aris/ui-kit/react'
+import { Tabs, useInboxCount } from '@aris/ui-kit/react'
 import { useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Approvals } from './Approvals.js'
@@ -17,10 +17,10 @@ export function Learn(props: PageProps) {
   const { t, params } = props
   const [tab, setTab] = useState<Tab>(tabOf(params.tab))
   useEffect(() => setTab(tabOf(params.tab)), [params])
-  // Số việc chờ duyệt: cùng nguồn với dòng "việc đợi duyệt" ở chân thanh bên.
-  const [pending] = usePendingApprovals('all')
+  // Số việc chờ duyệt: mọi thứ trong Hộp duyệt, cùng số với mục Tự học ở thanh bên.
+  const pending = useInboxCount()
   const label = (id: Tab) =>
-    id === 'inbox' && pending.length > 0 ? `${t('lr.tab.inbox')} · ${pending.length}` : t(`lr.tab.${id}`)
+    id === 'inbox' && pending > 0 ? `${t('lr.tab.inbox')} · ${pending}` : t(`lr.tab.${id}`)
   return (
     <div className="ap-lr">
       <header className="ap-lr-head">

@@ -29,6 +29,7 @@ import {
   openBotSession,
   teamAction,
   useDismiss,
+  useInboxCount,
   usePendingApprovals,
   useTeam,
   useTeamLive,
@@ -414,6 +415,8 @@ export function SidebarRoot(props: SidebarProps) {
   // Yêu cầu quyền của bot đang chờ (duyệt tập trung): bấm thì mở phiên có thanh duyệt của yêu cầu đầu.
   const [pending] = usePendingApprovals('all')
   const waiting = t('approvals.waiting', { count: pending.length })
+  // Mục Tự học đếm mọi thứ chờ duyệt trong Hộp duyệt (yêu cầu quyền, ký ức, skill, soát bộ não), không chỉ yêu cầu quyền.
+  const inbox = useInboxCount()
   const toggleLabel = t(wide ? 'toggle.collapse' : 'toggle.open')
   const money = (n: number) =>
     n.toLocaleString(t('number.locale'), {
@@ -477,8 +480,8 @@ export function SidebarRoot(props: SidebarProps) {
             meta={
               panel.id === 'aris-office' && working > 0 ? (
                 <span className="as-working">{t('office.working', { n: working })}</span>
-              ) : panel.id === 'aris-learn' && pending.length > 0 ? (
-                <span className="as-count">{pending.length}</span>
+              ) : panel.id === 'aris-learn' && inbox > 0 ? (
+                <span className="as-count">{inbox}</span>
               ) : undefined
             }
           />

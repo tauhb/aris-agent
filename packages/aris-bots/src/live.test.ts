@@ -36,6 +36,32 @@ describe('trạng thái trực tiếp', () => {
     ])
   })
 
+  it('phiên giao qua /ask: có việc gắn với phiên thì lên feed nhận việc, bắt đầu, xong (hoặc vấp)', () => {
+    let now = 10
+    const live = new LiveTracker(
+      () => 'aris',
+      () => now++,
+    )
+    // Trước khi ghi việc, lượt chạy không để lại dấu vết (lỗi cũ: cột "Vừa làm gì" trống).
+    live.turnStart('quiet')
+    live.turnEnd('quiet', 'completed')
+    expect(live.activity).toHaveLength(0)
+    live.assigned('aris', 'Làm báo cáo tuần', 'ask-1')
+    live.turnStart('ask-1')
+    live.turnEnd('ask-1', 'completed')
+    live.assigned('aris', 'Việc hỏng', 'ask-2')
+    live.turnStart('ask-2')
+    live.turnEnd('ask-2', 'error')
+    expect(live.activity.map((a) => `${a.kind}:${a.task}`)).toEqual([
+      'failed:Việc hỏng',
+      'started:Việc hỏng',
+      'assigned:Việc hỏng',
+      'done:Làm báo cáo tuần',
+      'started:Làm báo cáo tuần',
+      'assigned:Làm báo cáo tuần',
+    ])
+  })
+
   it('bot đã chạy trước lúc được ghi việc vẫn có mục bắt đầu', () => {
     const live = new LiveTracker(
       () => 'minh',

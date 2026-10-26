@@ -1,6 +1,7 @@
 /**
- * Tab Tổng quan của Văn phòng, chế độ 2D (bản vẽ `VanPhong2D`): Aris và bong bóng thoại, bốn con số lớn, tab phòng ban,
- * bàn làm việc của từng bot, cột "Vừa làm gì" và ngăn kéo của bot đang chọn. Mọi số liệu lấy từ API thật.
+ * Tab Tổng quan của Văn phòng. Chế độ 2D (bản vẽ `VanPhong2D`): Aris và bong bóng thoại, bốn con số lớn, tab phòng ban,
+ * bàn làm việc của từng bot, cột "Vừa làm gì" và ngăn kéo của bot đang chọn. Chế độ 3D (`Office3D`) dùng chung dữ liệu và
+ * chính ngăn kéo đó. Mọi số liệu lấy từ API thật.
  */
 import { Mascot, type TeamLive, type TeamView } from '@aris/ui-kit/react'
 import { useMemo, useState } from 'react'
@@ -8,38 +9,16 @@ import type { PageProps } from '../page.js'
 import { fmtTokens, fmtUsd } from '../settings/stats-format.js'
 import { DeskCard } from './Desk.js'
 import { Drawer } from './Drawer.js'
+import { FeedRow } from './FeedRow.js'
+import { Office3D } from './Office3D.js'
 import { useFeed, useGuardNow, useTodayTokens } from './data.js'
-import {
-  commanderDesk,
-  deskGroups,
-  feedFor,
-  hhmm,
-  officeSummary,
-  type Desk,
-  type DeskGroup,
-  type FeedItem,
-} from './model.js'
+import { commanderDesk, deskGroups, feedFor, officeSummary, type Desk, type DeskGroup } from './model.js'
 
 type T = PageProps['t']
-
-const FEED_DOT = { ok: 'var(--a-ok)', warn: 'var(--a-warn)', bad: 'var(--a-danger)' } as const
 
 /** Chọn "Tất cả" hoặc một phòng ban; phòng chưa có mã (bot chưa vào phòng) dùng mã riêng này. */
 const NONE = '\u0000none'
 const keyOf = (g: DeskGroup) => g.id || NONE
-
-function FeedRow({ item, t, mascot }: { item: FeedItem; t: T; mascot: string }) {
-  const head = t(`of.feed.k.${item.kind}`)
-  const line = item.what ? `${head}: ${item.what}` : head
-  return (
-    <div className="ap-of-lg" title={line}>
-      <span className="at">{hhmm(item.at)}</span>
-      <i style={{ background: FEED_DOT[item.tone] }} />
-      <Mascot id={mascot} size={18} />
-      <span>{line}</span>
-    </div>
-  )
-}
 
 export function Overview({
   t,
@@ -47,6 +26,8 @@ export function Overview({
   team,
   live,
   need,
+  mode,
+  onUnsupported,
 }: {
   t: T
   nav: PageProps['nav']
@@ -54,6 +35,9 @@ export function Overview({
   live: TeamLive | null
   /** Số việc đang chờ người dùng. */
   need: number
+  mode: '2d' | '3d'
+  /** Máy không dựng được WebGL: quay về 2D. */
+  onUnsupported: () => void
 }) {
   const tokens = useTodayTokens()
   const guard = useGuardNow()
@@ -81,6 +65,39 @@ export function Overview({
   const cap = guard?.settings.teamCapUsd ?? 0
   const spent = guard ? `${fmtUsd(guard.spent, dec)} $` : '–'
   const pick = (d: Desk) => setSel((cur) => (cur === d.id ? null : d.id))
+  const drawer = chosen && (
+    <Drawer
+      key={chosen.id}
+      desk={chosen}
+      sessions={live?.status[chosen.id]?.sessions ?? []}
+      t={t}
+      nav={nav}
+      onClose={() => setSel(null)}
+    />
+  )
+
+  if (mode === '3d') {
+    return (
+      <>
+        <Office3D
+          t={t}
+          groups={groups}
+          aris={aris}
+          live={live}
+          tokens={tokens ? fmtTokens(tokens.tokens, dec) : '–'}
+          cost={spent}
+          costNote={cap > 0 ? t('of.num.cost', { cap: fmtUsd(cap, dec) }) : t('of.num.costFree')}
+          need={need}
+          lines={feed}
+          mascotOf={mascotOf}
+          selected={sel}
+          onPick={setSel}
+          onUnsupported={onUnsupported}
+        />
+        {drawer}
+      </>
+    )
+  }
 
   return (
     <>
@@ -179,16 +196,7 @@ export function Overview({
           </div>
         )}
       </div>
-      {chosen && (
-        <Drawer
-          key={chosen.id}
-          desk={chosen}
-          sessions={live?.status[chosen.id]?.sessions ?? []}
-          t={t}
-          nav={nav}
-          onClose={() => setSel(null)}
-        />
-      )}
+      {drawer}
     </>
   )
 }

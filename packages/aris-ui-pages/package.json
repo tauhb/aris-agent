@@ -33,6 +33,10 @@
     }
   },
   "dependencies": {
-    "@aris/ui-kit": "workspace:*"
+    "@aris/ui-kit": "workspace:*",
+    "three": "0.160.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.160.0"
   }
 }

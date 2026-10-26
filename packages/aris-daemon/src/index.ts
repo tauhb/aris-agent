@@ -15,8 +15,10 @@ import type {} from '@deepseek-ai/dsh-client-connection'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-workspace'
+import { trackAsk, type ActivitySink } from './activity.js'
 import { close, listen, type AskResult, type DaemonPort } from './server.js'
 
+export * from './activity.js'
 export * from './server.js'
 
 export const name = 'aris-daemon'
@@ -59,6 +61,8 @@ export function apply(ctx: Context): void {
     if ('error' in r) throw new Error(`không mở được phiên ${sessionId}`)
     const agent = r.agent as unknown as AgentLike
     const message = createUserMessage({ content: [{ type: 'text', text }], source: { kind: 'user' } })
+    // Việc gần đây của bot (cột "Vừa làm gì" ở Văn phòng): nhận việc, và gắn việc để bắt đầu và xong cũng được ghi.
+    trackAsk(ctx.get('arisBots') as ActivitySink | undefined, sessionId, text)
     return new Promise<AskResult>((resolve) => {
       let ours = false
       let last = ''

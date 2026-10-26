@@ -84,6 +84,7 @@ export {
   type ProjectRules,
 } from './projects.js'
 export * from './external.js'
+export { fetchInboxCount, inboxTotal, useInboxCount, type InboxCount } from './inbox.js'
 export {
   fetchRoomStatus,
   roomRole,
