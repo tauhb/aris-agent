@@ -44,6 +44,9 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-mchain-row+.ap-mchain-row{border-top:1px solid var(--a-line)}
 .ap-mchain-row .n{flex:none;width:20px;height:20px;border-radius:6px;background:var(--a-panel2);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
 .ap-mchain-row>span:nth-child(2){flex:1;min-width:0}
+.ap-mchain-row.main .n{background:var(--a-accent);color:#fff}
+.ap-mchain-add{flex:1 1 180px;min-width:0}
+.ap-mchain-row>span.ap-mchain-hint{flex:0 1 auto;margin-left:auto;font-size:12px;text-align:right}
 .ap-mchain-row .acts{display:flex;gap:2px;flex:none}
 .aris .ap-mchain-row .acts button{width:24px;height:24px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--a-muted);font-size:13px}
 .aris .ap-mchain-row .acts button:hover:not(:disabled){background:var(--a-hover);color:var(--a-ink)}
@@ -811,20 +814,8 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-sxm{display:grid;grid-template-columns:minmax(0,1.6fr) 90px 90px 90px 90px;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--a-line);font-size:13px;min-width:560px}
 .ap-mv-task{display:grid;grid-template-columns:130px minmax(0,1fr);gap:12px;align-items:start;padding:10px 14px;border-top:1px solid var(--a-line);font-size:13.5px}
 .ap-mv-task .sub{display:block;font-size:12px}
-.ap-mv-col{display:flex;flex-direction:column;gap:6px;min-width:0}
 .ap-mv-chain{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
-.ap-mv-step{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:100%}
 .ap-mv-lk{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--a-line);border-radius:999px;background:var(--a-panel);padding:3px 10px 3px 6px;font-size:12.5px;min-width:0;max-width:100%}
-.ap-mv-lk .txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.ap-mv-lk.main{border-color:var(--a-accent);background:var(--a-accentSoft);padding-right:6px}
-.ap-mv-lk .n{width:18px;height:18px;border-radius:999px;background:var(--a-panel2);color:var(--a-muted);font-size:11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex:none}
-.ap-mv-lk.main .n{background:var(--a-accent);color:#fff}
-.ap-mv-lk.main .a-bp-btn{height:24px;padding:0 4px 0 0;border:0;background:transparent;font-size:12.5px;font-weight:500}
-.ap-mv-lk .acts{display:inline-flex;flex:none}
-.aris .ap-mv-lk .acts button{width:20px;height:20px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--a-muted);font-size:13px;line-height:1;text-align:center}
-.aris .ap-mv-lk .acts button:hover:not(:disabled){background:var(--a-hover);color:var(--a-ink)}
-.ap-mv-lk .acts button:disabled{opacity:.35}
-.ap-mv-add .a-bp-btn{height:28px;padding:0 10px;border:1px dashed var(--a-line);border-radius:999px;background:transparent;color:var(--a-muted);font-size:12.5px;font-weight:400}
 .ap-mv-foot{padding:10px 14px;border-top:1px solid var(--a-line);font-size:12.5px}
 .aris .ap-mv-br{display:grid;grid-template-columns:minmax(90px,1fr) repeat(3,minmax(0,1fr)) 36px;gap:10px;align-items:center;width:100%;padding:9px 14px;border:0;border-top:1px solid var(--a-line);background:transparent;text-align:left;font-size:12.5px;color:var(--a-ink);border-radius:0}
 .aris button.ap-mv-br:hover{background:var(--a-hover)}

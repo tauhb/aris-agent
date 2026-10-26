@@ -7,7 +7,9 @@
 import { Button, Card, Checkbox, Select } from '@aris/ui-kit/react'
 import { useCallback, useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
-import { providerName } from './provider-data.js'
+import { moveLink } from './chain-list.js'
+import { ChainList, RowLabel, type ChainRow } from './ChainList.js'
+import { providerColor, providerName } from './provider-data.js'
 
 type T = PageProps['t']
 export type MediaKind = 'image' | 'video'
@@ -80,34 +82,39 @@ export function useMedia() {
 }
 export type MediaApi = ReturnType<typeof useMedia>
 
-/** Một mắt xích: model, rồi nhà cung cấp và giá. */
-function LinkLabel({ t, m, link }: { t: T; m: MediaModel | undefined; link: MediaLink }) {
+/** Trạng thái một model ảnh, video: chưa có khoá, trả phí, hay sẵn sàng. */
+const mediaStatus = (t: T, m: MediaModel): ChainRow['status'] =>
+  !m.hasKey
+    ? { label: t('md.noKey') }
+    : m.paid
+      ? { label: t('md.paid'), tone: 'warn' }
+      : { label: t('md.ready'), tone: 'ok' }
+
+/** Dòng của một mắt xích ảnh, video: model, nhà cung cấp và giá. */
+function linkRow(t: T, m: MediaModel | undefined, link: MediaLink): ChainRow {
   const price =
     m?.usd !== undefined
       ? t(m.kind === 'image' ? 'md.perImage' : 'md.perSecond', { usd: usd(m.usd) })
       : t('md.byProvider')
-  return (
-    <span
-      style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}
-      title={`${link.provider}/${link.model}`}
-    >
-      <span
-        className="a-mono"
-        style={{ fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-      >
-        {link.model}
-      </span>
-      <span
-        className="a-muted"
-        style={{ fontSize: 11.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-      >
-        {PROVIDER[link.provider] ?? link.provider} · {price}
-      </span>
-    </span>
-  )
+  return {
+    key: `${link.provider}/${link.model}`,
+    title: link.model,
+    sub: `${PROVIDER[link.provider] ?? link.provider} · ${price}`,
+    tip: `${link.provider}/${link.model}`,
+    dot: providerColor(link.provider),
+    status: m ? mediaStatus(t, m) : { label: t('md.noKey') },
+  }
 }
 
-/** Danh sách model theo thứ tự: lên, xuống, bỏ, thêm. */
+/** Một mắt xích: model, rồi nhà cung cấp và giá. */
+function LinkLabel({ t, m, link }: { t: T; m: MediaModel | undefined; link: MediaLink }) {
+  return <RowLabel row={linkRow(t, m, link)} />
+}
+
+/**
+ * Danh sách model theo thứ tự (dòng 1 thử trước): lên, xuống, bỏ, thêm. `hint` là dòng gợi ý cuối danh sách,
+ * bỏ trống ở chỗ hẹp.
+ */
 export function ChainEditor({
   t,
   kind,
@@ -115,6 +122,7 @@ export function ChainEditor({
   models,
   busy,
   onChange,
+  hint,
 }: {
   t: T
   kind: Kind
@@ -122,76 +130,36 @@ export function ChainEditor({
   models: readonly MediaModel[]
   busy: boolean
   onChange: (next: MediaLink[]) => void
+  hint?: string | undefined
 }) {
   const ofKind = models.filter((m) => m.kind === kind)
   const missing = ofKind.filter((m) => !links.some((l) => same(l, m)))
-  const move = (i: number, d: number) => {
-    const next = [...links]
-    const [x] = next.splice(i, 1)
-    next.splice(i + d, 0, x!)
-    onChange(next)
-  }
+  const move = (i: number, d: -1 | 1) => onChange(moveLink(links, i, d))
   return (
-    <div className="ap-mchain">
-      {links.length === 0 && <div className="ap-mchain-row a-muted">{t('md.empty')}</div>}
-      {links.map((l, i) => {
-        const m = ofKind.find((x) => same(x, l))
-        return (
-          <div className="ap-mchain-row" key={`${l.provider}/${l.model}`}>
-            <span className="n">{i + 1}</span>
-            <LinkLabel t={t} m={m} link={l} />
-            <span className={`ap-pill2 ${m?.hasKey ? (m.paid ? 'warn' : 'ok') : ''}`}>
-              {!m?.hasKey ? t('md.noKey') : m.paid ? t('md.paid') : t('md.ready')}
-            </span>
-            <span className="acts">
-              <button
-                type="button"
-                disabled={busy || i === 0}
-                aria-label={t('md.up')}
-                onClick={() => move(i, -1)}
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                disabled={busy || i === links.length - 1}
-                aria-label={t('md.down')}
-                onClick={() => move(i, 1)}
-              >
-                ↓
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                aria-label={t('md.remove')}
-                onClick={() => onChange(links.filter((_, j) => j !== i))}
-              >
-                ×
-              </button>
-            </span>
-          </div>
-        )
-      })}
-      {missing.length > 0 && (
-        <div className="ap-mchain-row">
-          <Select
-            label={t('md.add')}
-            value=""
-            placeholder={t('md.add')}
-            disabled={busy}
-            options={missing.map((m) => ({
-              id: `${m.provider}/${m.model}`,
-              name: m.model,
-              note: `${PROVIDER[m.provider] ?? m.provider}${m.hasKey ? '' : ` · ${t('md.noKey')}`}`,
-            }))}
-            onChange={(id) => {
-              const m = missing.find((x) => `${x.provider}/${x.model}` === id)
-              if (m) onChange([...links, { provider: m.provider, model: m.model }])
-            }}
-          />
-        </div>
+    <ChainList
+      t={t}
+      rows={links.map((l) =>
+        linkRow(
+          t,
+          ofKind.find((x) => same(x, l)),
+          l,
+        ),
       )}
-    </div>
+      busy={busy}
+      onMove={move}
+      onRemove={(i) => onChange(links.filter((_, j) => j !== i))}
+      addLabel={t('md.add')}
+      options={missing.map((m) => ({
+        id: `${m.provider}/${m.model}`,
+        name: m.model,
+        note: `${PROVIDER[m.provider] ?? m.provider}${m.hasKey ? '' : ` · ${t('md.noKey')}`}`,
+      }))}
+      onAdd={(id) => {
+        const m = missing.find((x) => `${x.provider}/${x.model}` === id)
+        if (m) onChange([...links, { provider: m.provider, model: m.model }])
+      }}
+      hint={hint}
+    />
   )
 }
 

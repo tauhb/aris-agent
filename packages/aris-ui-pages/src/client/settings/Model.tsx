@@ -1,15 +1,26 @@
 /**
  * 6.2b · Model (bản vẽ `ModelViec.dc.html`): việc nào dùng model nào và model lỗi thì chuyển sang model kế
- * tiếp. Cột trái: Chat và việc nền (model chính, chuỗi dự phòng), thứ tự tạo ảnh và tạo video cho cả đội.
- * Cột phải: gán riêng theo bot, cách aris chọn model. Chuỗi dự phòng chat qua `/api/aris/providers/state`,
- * model chat chính ghi thẳng vào `agent-default-model` của dsh, ảnh và video qua `/api/aris/media`; model chat
- * riêng của bot đọc từ đội bot. Khoá và danh bạ provider ở mục Provider và khoá.
+ * tiếp. Cột trái: Chat và việc nền (một danh sách dọc: dòng 1 là model chính, các dòng sau là dự phòng), thứ
+ * tự tạo ảnh và tạo video cho cả đội, cả ba cùng kiểu `ChainList`. Cột phải: gán riêng theo bot, cách aris
+ * chọn model. Chuỗi dự phòng chat qua `/api/aris/providers/state`, model chat chính ghi thẳng vào
+ * `agent-default-model` của dsh, ảnh và video qua `/api/aris/media`; model chat riêng của bot đọc từ đội bot.
+ * Khoá và danh bạ provider ở mục Provider và khoá.
  */
-import { Button, Card, PageShell, Select, useTeam } from '@aris/ui-kit/react'
-import { useState } from 'react'
-import type { ModelGroup, ModelSettings, PageProps } from '../page.js'
+import { Button, Card, PageShell, useTeam } from '@aris/ui-kit/react'
+import { useEffect, useMemo, useState } from 'react'
+import type { CredentialState, ModelGroup, ModelSettings, PageProps, ProviderEntry } from '../page.js'
 import { modelOptions } from '../options.js'
-import { Bot, Dot } from '../ui.js'
+import { Bot } from '../ui.js'
+import {
+  joinChain,
+  linkKey,
+  linkStatus,
+  moveLink,
+  planChain,
+  removeLink,
+  type LinkStatus,
+} from './chain-list.js'
+import { ChainList, type ChainRow } from './ChainList.js'
 import { FIXED_CAPS } from './Guard.js'
 import {
   ChainEditor,
@@ -21,9 +32,17 @@ import {
   type MediaKind,
   type Policy,
 } from './Media.js'
-import { DEFAULT_NS, pairKey, str, useCatalog, useForm } from './model-common.js'
-import { isChatModel, providerColor, providerName } from './provider-data.js'
-import { usd, useProvidersState, type Link } from './providers-api.js'
+import { DEFAULT_NS, pairKey, str, useCatalog, useForm, useNamespaces } from './model-common.js'
+import {
+  buildRows,
+  credentialRefs,
+  isChatModel,
+  modelLines,
+  profileModels,
+  providerColor,
+  providerName,
+} from './provider-data.js'
+import { fetchPrices, usd, useProvidersState, type Link, type Price } from './providers-api.js'
 
 type T = PageProps['t']
 
@@ -32,11 +51,62 @@ const REFLECT_CAP = FIXED_CAPS.find(([k]) => k === 'guard.cap.reflect')?.[1]
 
 const splitPair = (v: string) => v.split('\u0000') as [string, string]
 
-/** Chat: model chính (số 1) và chuỗi dự phòng 2, 3… dạng viên thuốc, thêm, bỏ, đổi thứ tự. */
+const toLink = (k: string): Link => {
+  const [provider, model] = splitPair(k)
+  return { provider, model }
+}
+
+/** Bảng giá của các model đang có trong chuỗi chat; `null` khi chưa tải được (không kết luận "chưa có giá"). */
+function usePrices(links: readonly Link[]) {
+  const [prices, setPrices] = useState<Map<string, Price | null> | null>(null)
+  const key = links.map(linkKey).join('\n')
+  useEffect(() => {
+    let live = true
+    if (!key) {
+      setPrices(null)
+      return
+    }
+    fetchPrices(key.split('\n').map(toLink)).then(
+      (m) => live && setPrices(m),
+      () => live && setPrices(null),
+    )
+    return () => {
+      live = false
+    }
+  }, [key])
+  return prices
+}
+
+/** Provider theo mã: có chạy và có khoá không (cùng cách tính với mục Provider và khoá). */
+function useProviderRows(models: ModelSettings, entries: readonly ProviderEntry[]) {
+  const namespaces = useMemo(
+    () => [...new Set([DEFAULT_NS, ...entries.map((e) => e.ns).filter(Boolean)])],
+    [entries],
+  )
+  const nsValue = useNamespaces(models, namespaces)
+  const refs = useMemo(() => credentialRefs(entries, nsValue), [entries, nsValue])
+  const refsKey = refs.join('|')
+  const [creds, setCreds] = useState<Readonly<Record<string, CredentialState>>>({})
+  useEffect(() => {
+    if (refs.length === 0) return
+    let live = true
+    void models.credentials(refs).then((res) => live && res.ok && setCreds(res.value))
+    return () => {
+      live = false
+    }
+  }, [models, refsKey]) // `refsKey` đại diện cho danh sách tên khoá
+  return useMemo(
+    () => new Map(buildRows(entries, nsValue, creds).map((r) => [r.entry.id, r])),
+    [entries, nsValue, creds],
+  )
+}
+
+/** Chuỗi chat: dòng 1 là model chính (`agent-default-model`), dòng 2, 3… là dự phòng (API chuỗi), đổi thứ tự được. */
 function ChatRow({
   t,
   models,
   groups,
+  entries,
   nameOf,
   chain,
   busy,
@@ -47,150 +117,127 @@ function ChatRow({
   t: T
   models: ModelSettings
   groups: readonly ModelGroup[]
+  entries: readonly ProviderEntry[]
   nameOf: (id: string) => string
   chain: readonly Link[] | undefined
   busy: boolean
   error: string | null
   catalogError: string | null
-  onSave: (chain: Link[]) => void
+  onSave: (chain: Link[]) => Promise<boolean>
 }) {
   const form = models.form(DEFAULT_NS)
   const snap = useForm(form)
+  const providers = useProviderRows(models, entries)
   const [saving, setSaving] = useState(false)
   const [failed, setFailed] = useState(false)
-  const [adding, setAdding] = useState('')
   const value = (snap?.value ?? {}) as Record<string, unknown>
   const provider = str(value.provider) ?? ''
   const model = str(value.model) ?? ''
-  const current = provider && model ? pairKey(provider, model) : ''
-  const links = chain ?? []
-  const has = new Set([current, ...links.map((l) => pairKey(l.provider, l.model))])
+  const main = provider && model ? { provider, model } : undefined
+  const fallback = chain ?? []
+  const list = joinChain(main, fallback)
+  const prices = usePrices(list)
+  const loc = t('pv.locale')
+  const has = new Set(list.map(linkKey))
+  const locked = saving || busy || chain === undefined || snap?.status !== 'ready' || !snap.writable
 
-  async function change(next: string) {
+  /** Ghi danh sách mới: chuỗi dự phòng trước (dễ bị từ chối hơn), rồi model chính; model chính lỗi thì trả chuỗi về. */
+  async function apply(next: readonly Link[]) {
+    const plan = planChain({ main, fallback }, next)
+    if (!plan.mainChanged && !plan.fallbackChanged) return
     setSaving(true)
     setFailed(false)
-    const [p, m] = splitPair(next)
-    const ok = await form.mutate([
-      { op: 'set', path: ['provider'], value: p },
-      { op: 'set', path: ['model'], value: m },
-    ])
+    let ok = true
+    if (plan.fallbackChanged) ok = await onSave(plan.fallback)
+    if (ok && plan.mainChanged && plan.main) {
+      const set = await form.mutate([
+        { op: 'set', path: ['provider'], value: plan.main.provider },
+        { op: 'set', path: ['model'], value: plan.main.model },
+      ])
+      if (!set) {
+        setFailed(true)
+        if (plan.fallbackChanged) await onSave([...fallback])
+      }
+    }
     setSaving(false)
-    setFailed(!ok)
-  }
-  const move = (i: number, d: -1 | 1) => {
-    const next = [...links]
-    ;[next[i], next[i + d]] = [next[i + d]!, next[i]!]
-    onSave(next)
   }
 
+  const rows = list.map((l): ChainRow => {
+    const row = providers.get(l.provider)
+    const line = row
+      ? modelLines(
+          groups.find((g) => g.id === l.provider),
+          profileModels(row.profile),
+          [],
+        ).find((x) => x.id === l.model)
+      : undefined
+    const price = prices ? (prices.get(linkKey(l)) ?? null) : undefined
+    const status = linkStatus(row?.status, price)
+    const sub = [
+      nameOf(l.provider),
+      price ? t('mv.priceLine', { input: usd(price.input, loc), output: usd(price.output, loc) }) : undefined,
+      line?.reasoning ? t('pv.cap.reasoning') : undefined,
+      line?.image ? t('pv.cap.image') : undefined,
+      line?.contextWindow !== undefined
+        ? t('pv.cap.ctx', { k: Math.round(line.contextWindow / 1000) })
+        : undefined,
+    ].filter(Boolean)
+    return {
+      key: linkKey(l),
+      title: l.model,
+      sub: sub.join(' · '),
+      tip: `${l.provider}/${l.model}`,
+      dot: providerColor(l.provider),
+      status: status && STATUS[status](t),
+    }
+  })
+
   return (
-    <div className="ap-mv-task">
-      <span>
-        <b>{t('mv.chat')}</b>
-        <span className="a-muted sub">{t('mv.chatSub')}</span>
-      </span>
-      <span className="ap-mv-col">
-        {snap?.status === 'unavailable' ? (
-          <span className="a-muted">{t('pv.notServed')}</span>
-        ) : (
-          <span className="ap-mv-chain">
-            <span className="ap-mv-lk main">
-              <span className="n">1</span>
-              <Select
-                variant="compact"
-                align="start"
-                label={t('mv.chat')}
-                value={current}
-                disabled={saving || snap?.status !== 'ready' || !snap.writable}
-                onChange={(v) => void change(v)}
-                options={modelOptions(groups, undefined, current ? { provider, model } : undefined, (_p, m) =>
-                  isChatModel(m),
-                )}
-                searchPlaceholder={t('sel.search')}
-                emptyLabel={t('sel.empty')}
-              />
-            </span>
-            {links.map((l, i) => (
-              <span className="ap-mv-step" key={pairKey(l.provider, l.model)}>
-                <span className="a-muted">→</span>
-                <span className="ap-mv-lk" title={`${l.provider}/${l.model}`}>
-                  <span className="n">{i + 2}</span>
-                  <Dot color={providerColor(l.provider)} size={8} />
-                  <span className="txt">
-                    {nameOf(l.provider)} · {l.model}
-                  </span>
-                  <span className="acts">
-                    <button
-                      type="button"
-                      disabled={busy || i === 0}
-                      aria-label={t('mv.earlier')}
-                      onClick={() => move(i, -1)}
-                    >
-                      ‹
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy || i === links.length - 1}
-                      aria-label={t('mv.later')}
-                      onClick={() => move(i, 1)}
-                    >
-                      ›
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      aria-label={t('pv.remove')}
-                      onClick={() => onSave(links.filter((_, j) => j !== i))}
-                    >
-                      ×
-                    </button>
-                  </span>
-                </span>
-              </span>
-            ))}
-            <Select
-              variant="compact"
-              align="start"
-              className="ap-mv-add"
-              label={t('pv.fallbackAdd')}
-              value={adding}
-              disabled={busy}
-              placeholder={t('mv.add')}
-              onChange={(v) => {
-                setAdding('')
-                if (!v) return
-                const [p, m] = splitPair(v)
-                onSave([...links, { provider: p, model: m }])
-              }}
-              options={modelOptions(
-                groups,
-                undefined,
-                undefined,
-                (p, m) => isChatModel(m) && !has.has(pairKey(p, m)),
-              )}
-              searchPlaceholder={t('sel.search')}
-              emptyLabel={t('sel.empty')}
-            />
-          </span>
-        )}
-        {failed && <span style={{ color: 'var(--a-danger)', fontSize: 12 }}>{t('pv.saveFailed')}</span>}
-        {catalogError && (
-          <span style={{ color: 'var(--a-danger)', fontSize: 12 }}>
-            {t('pv.catalogError', { error: catalogError })}
-          </span>
-        )}
-        <span className="a-muted" style={{ fontSize: 12 }}>
-          {error ? (
-            <span style={{ color: 'var(--a-danger)' }}>{error}</span>
-          ) : links.length === 0 ? (
-            t('pv.fallbackEmpty')
-          ) : (
-            t('pv.fallbackHint')
+    <div style={{ padding: '0 14px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div className="a-muted" style={{ fontSize: 12.5 }}>
+        <b style={{ color: 'var(--a-ink)', fontSize: 13.5 }}>{t('mv.chat')}</b> {t('mv.chatSub')}
+      </div>
+      {snap?.status === 'unavailable' ? (
+        <span className="a-muted">{t('pv.notServed')}</span>
+      ) : (
+        <ChainList
+          t={t}
+          rows={rows}
+          busy={locked}
+          canRemove={(i) => i > 0 || list.length > 1}
+          onMove={(i, d) => void apply(moveLink(list, i, d))}
+          onRemove={(i) => void apply(removeLink(list, i))}
+          addLabel={t('mv.addChat')}
+          options={modelOptions(
+            groups,
+            undefined,
+            undefined,
+            (p, m) => isChatModel(m) && !has.has(pairKey(p, m)),
           )}
+          onAdd={(id) => void apply([...list, toLink(id)])}
+          hint={t('mv.hintFirst')}
+          searchPlaceholder={t('sel.search')}
+          emptyLabel={t('sel.empty')}
+        />
+      )}
+      {failed && <span style={{ color: 'var(--a-danger)', fontSize: 12 }}>{t('pv.saveFailed')}</span>}
+      {catalogError && (
+        <span style={{ color: 'var(--a-danger)', fontSize: 12 }}>
+          {t('pv.catalogError', { error: catalogError })}
         </span>
-      </span>
+      )}
+      {error && <span style={{ color: 'var(--a-danger)', fontSize: 12 }}>{error}</span>}
     </div>
   )
+}
+
+/** Nhãn trạng thái của một dòng chuỗi chat. */
+const STATUS: Record<LinkStatus, (t: T) => NonNullable<ChainRow['status']>> = {
+  ready: (t) => ({ label: t('md.ready'), tone: 'ok' }),
+  nokey: (t) => ({ label: t('md.noKey') }),
+  off: (t) => ({ label: t('pv.st.off') }),
+  error: (t) => ({ label: t('pv.st.error'), tone: 'warn' }),
+  noprice: (t) => ({ label: t('mv.noPrice'), tone: 'warn' }),
 }
 
 /** Việc nền: hiện model nó dùng (đọc từ mã nguồn của từng gói), không chọn được ở đây. */
@@ -251,6 +298,7 @@ function MediaChain({ t, kind, api, nav }: { t: T; kind: MediaKind; api: MediaAp
             models={d.models}
             busy={api.busy}
             onChange={(links) => void api.act({ op: 'chain', kind, links })}
+            hint={t('mv.hintFirst')}
           />
         ) : (
           <span className="a-muted">…</span>
@@ -380,12 +428,13 @@ export function ModelPage({ t, nav, models }: PageProps) {
               t={t}
               models={models}
               groups={groups}
+              entries={entries}
               nameOf={nameOf}
               chain={ps.data?.chain}
               busy={ps.busy}
               error={ps.error}
               catalogError={error}
-              onSave={(chain) => void ps.act({ op: 'chain', chain })}
+              onSave={(chain) => ps.act({ op: 'chain', chain })}
             />
             <BackgroundRow
               label={t('pv.task.reflect')}
