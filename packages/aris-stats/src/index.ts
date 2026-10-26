@@ -30,6 +30,7 @@ import {
 import {
   addCall,
   buildSteps,
+  byModel,
   cacheSavings,
   CALL_DAYS,
   classify,
@@ -374,6 +375,14 @@ export async function apply(ctx: Context): Promise<void> {
     return {
       ...ov,
       skills,
+      // Chi phí theo model trong cùng khoảng, từ từng lần gọi (giữ 30 ngày, đủ cho mọi khoảng).
+      byModel: byModel(
+        (function* () {
+          for (const [, r] of callsT.entries()) yield r
+        })(),
+        range,
+        now,
+      ),
       log: ov.log.map((r) => ({
         ...r,
         ...botView(r.bot),

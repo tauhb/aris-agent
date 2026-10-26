@@ -1,33 +1,36 @@
 /**
- * 6.2c · Ảnh và video (giai đoạn 5, đợt 5c; bản vẽ 6.2c, 2.2f): thứ tự ưu tiên model tạo ảnh, tạo video cho cả đội,
- * trần chi phí mỗi ngày, gán riêng theo bot (tắt, theo thứ tự chung, danh sách riêng nhiều model). Bảng "Gán theo
- * bot" ở đây và dòng Tạo ảnh / Tạo video ở tab Model của hồ sơ bot cùng một dữ liệu (`/api/aris/media`).
+ * Ảnh và video (giai đoạn 5, đợt 5c; bản vẽ 6.2b, 2.2f): dữ liệu và các mảnh dùng chung của mục Model (thứ tự
+ * model tạo ảnh, tạo video cho cả đội, trần chi phí mỗi ngày, gán riêng theo bot: tắt, theo thứ tự chung, danh
+ * sách riêng nhiều model), dòng Tạo ảnh / Tạo video ở tab Model của hồ sơ bot và khoá fal.ai ở mục Provider và
+ * khoá. Tất cả cùng một dữ liệu (`/api/aris/media`). Mục "Ảnh và video" riêng đã gộp vào Model.
  */
-import { Button, Card, Checkbox, PageShell, Select } from '@aris/ui-kit/react'
+import { Button, Card, Checkbox, Select } from '@aris/ui-kit/react'
 import { useCallback, useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
+import { providerName } from './provider-data.js'
 
 type T = PageProps['t']
-type Kind = 'image' | 'video'
-const KINDS: readonly Kind[] = ['image', 'video']
+export type MediaKind = 'image' | 'video'
+type Kind = MediaKind
+export const KINDS: readonly MediaKind[] = ['image', 'video']
 
-interface Link {
+export interface MediaLink {
   provider: string
   model: string
 }
-interface MediaModel extends Link {
+export interface MediaModel extends MediaLink {
   kind: Kind
   usd?: number
   paid: boolean
   hasKey: boolean
 }
-interface Policy {
+export interface Policy {
   mode: 'off' | 'shared' | 'own'
-  list?: Link[]
+  list?: MediaLink[]
   fallback?: boolean
   capUsd?: number
 }
-interface BotRow {
+export interface BotRow {
   id: string
   name: string
   kind: string
@@ -35,7 +38,7 @@ interface BotRow {
   today: Record<Kind, number>
 }
 export interface MediaState {
-  settings: { image: Link[]; video: Link[]; caps: Record<Kind, number> }
+  settings: { image: MediaLink[]; video: MediaLink[]; caps: Record<Kind, number> }
   models: MediaModel[]
   today: Record<Kind, number>
   bots: BotRow[]
@@ -43,8 +46,10 @@ export interface MediaState {
 }
 
 const endpoint = () => new URL('api/aris/media', document.baseURI)
-const same = (a: Link, b: Link) => a.provider === b.provider && a.model === b.model
+const same = (a: MediaLink, b: MediaLink) => a.provider === b.provider && a.model === b.model
 const PROVIDER: Record<string, string> = { google: 'Google Gemini', openrouter: 'OpenRouter', fal: 'fal.ai' }
+/** Tên hiển thị của provider ảnh, video, nhúng. */
+export const providerLabel = (id: string) => PROVIDER[id] ?? providerName(id, id)
 const usd = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 3 })
 
 export function useMedia() {
@@ -76,7 +81,7 @@ export function useMedia() {
 export type MediaApi = ReturnType<typeof useMedia>
 
 /** Một mắt xích: model, rồi nhà cung cấp và giá. */
-function LinkLabel({ t, m, link }: { t: T; m: MediaModel | undefined; link: Link }) {
+function LinkLabel({ t, m, link }: { t: T; m: MediaModel | undefined; link: MediaLink }) {
   const price =
     m?.usd !== undefined
       ? t(m.kind === 'image' ? 'md.perImage' : 'md.perSecond', { usd: usd(m.usd) })
@@ -113,10 +118,10 @@ export function ChainEditor({
 }: {
   t: T
   kind: Kind
-  links: readonly Link[]
+  links: readonly MediaLink[]
   models: readonly MediaModel[]
   busy: boolean
-  onChange: (next: Link[]) => void
+  onChange: (next: MediaLink[]) => void
 }) {
   const ofKind = models.filter((m) => m.kind === kind)
   const missing = ofKind.filter((m) => !links.some((l) => same(l, m)))
@@ -311,8 +316,8 @@ export function BotMediaRows({ t, botId, onManage }: { t: T; botId: string; onMa
 }
 
 /**
- * Nhà cung cấp chỉ dùng cho ảnh, video (fal.ai) ở trang Provider và model: khoá (chỉ ghi, không đọc lại được) và
- * các model của nó. Sắp thứ tự ở mục Ảnh và video.
+ * Nhà cung cấp chỉ dùng cho ảnh, video (fal.ai) ở mục Provider và khoá: khoá (chỉ ghi, không đọc lại được) và
+ * các model của nó. Sắp thứ tự ở mục Model.
  */
 export function MediaProviderPanel({
   t,
@@ -392,127 +397,5 @@ export function MediaProviderPanel({
         </div>
       </Card>
     </>
-  )
-}
-
-/** Mục Cài đặt › Ảnh và video. */
-export function MediaSettings({ t }: PageProps) {
-  const api = useMedia()
-  const [editing, setEditing] = useState<string | null>(null)
-  const d = api.data
-  if (!d)
-    return (
-      <PageShell title={t('md.title')}>
-        <span className="a-muted">…</span>
-      </PageShell>
-    )
-  const summary = (p: Policy | undefined, kind: Kind) =>
-    !p || p.mode === 'shared'
-      ? t('md.mode.sharedShort')
-      : p.mode === 'off'
-        ? t('md.mode.offShort')
-        : (p.list ?? []).map((l, i) => `${i + 1} · ${l.model}`).join('  ') ||
-          t(kind === 'image' ? 'md.empty' : 'md.empty')
-  const editBot = d.bots.find((b) => b.id === editing)
-  return (
-    <PageShell title={t('md.title')} subtitle={t('md.subtitle')}>
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        <div style={{ flex: '1 1 420px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {KINDS.map((kind) => (
-            <Card
-              key={kind}
-              title={t(kind === 'image' ? 'md.chainImage' : 'md.chainVideo')}
-              subtitle={t('md.chainHint')}
-            >
-              <div style={{ padding: '0 14px 12px' }}>
-                <ChainEditor
-                  t={t}
-                  kind={kind}
-                  links={d.settings[kind]}
-                  models={d.models}
-                  busy={api.busy}
-                  onChange={(links) => void api.act({ op: 'chain', kind, links })}
-                />
-              </div>
-            </Card>
-          ))}
-          <Card title={t('md.caps')}>
-            <div style={{ padding: '0 14px 12px', display: 'flex', gap: 18, flexWrap: 'wrap', fontSize: 13 }}>
-              {KINDS.map((kind) => (
-                <label key={kind} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {t(kind === 'image' ? 'md.image' : 'md.video')}
-                  <input
-                    className="a-inp"
-                    type="number"
-                    min={0}
-                    step={0.1}
-                    style={{ width: 90 }}
-                    defaultValue={d.settings.caps[kind]}
-                    onBlur={(e) => {
-                      const n = Number(e.target.value.replace(',', '.'))
-                      if (n >= 0 && n !== d.settings.caps[kind])
-                        void api.act({ op: 'caps', caps: { [kind]: n } })
-                    }}
-                  />
-                  <span className="a-muted">USD · {t('md.todaySpent', { usd: usd(d.today[kind]) })}</span>
-                </label>
-              ))}
-              <span className="a-muted" style={{ flexBasis: '100%', fontSize: 12 }}>
-                {t('md.capsHint')}
-              </span>
-            </div>
-          </Card>
-          <Card title={t('md.rules')}>
-            <ol className="ap-rules">
-              <li>{t('md.rule1')}</li>
-              <li>{t('md.rule2')}</li>
-              <li>{t('md.rule3')}</li>
-              <li>{t('md.rule4')}</li>
-            </ol>
-          </Card>
-        </div>
-        <div style={{ flex: '1.15 1 440px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <Card title={t('md.byBot')} subtitle={t('md.byBotHint')}>
-            <div className="ap-mbot hd">
-              <span>{t('md.bot')}</span>
-              <span>{t('md.image')}</span>
-              <span>{t('md.video')}</span>
-            </div>
-            {d.bots.map((b) => (
-              <button
-                type="button"
-                key={b.id}
-                className={`ap-mbot${editing === b.id ? ' on' : ''}`}
-                onClick={() => setEditing(editing === b.id ? null : b.id)}
-              >
-                <b>{b.name}</b>
-                <span className={b.media.image?.mode === 'own' ? undefined : 'a-muted'}>
-                  {summary(b.media.image, 'image')}
-                </span>
-                <span className={b.media.video?.mode === 'own' ? undefined : 'a-muted'}>
-                  {summary(b.media.video, 'video')}
-                </span>
-              </button>
-            ))}
-          </Card>
-          {editBot && (
-            <Card title={t('md.editing', { name: editBot.name })}>
-              <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {KINDS.map((kind) => (
-                  <div key={kind} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <b style={{ fontSize: 13 }}>{t(kind === 'image' ? 'md.image' : 'md.video')}</b>
-                    <PolicyEditor t={t} kind={kind} bot={editBot} api={api} />
-                  </div>
-                ))}
-                <Button size="sm" onClick={() => setEditing(null)}>
-                  {t('md.close')}
-                </Button>
-              </div>
-            </Card>
-          )}
-          {api.error && <div style={{ color: 'var(--a-danger)', fontSize: 12.5 }}>{api.error}</div>}
-        </div>
-      </div>
-    </PageShell>
   )
 }

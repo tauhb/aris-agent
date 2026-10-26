@@ -111,7 +111,7 @@ export function MediaCall(props: SubagentCall & { t: Translate; kind: Meta['kind
   const failed = done && (!meta || !meta.ids.length)
   const go = () =>
     document.dispatchEvent(
-      new CustomEvent('aris:navigate', { detail: { to: 'settings', params: { section: 'media' } } }),
+      new CustomEvent('aris:navigate', { detail: { to: 'settings', params: { section: 'model' } } }),
     )
   return (
     <div className="aris aris-media">

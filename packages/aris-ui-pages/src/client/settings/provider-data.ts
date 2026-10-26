@@ -132,6 +132,69 @@ export function splitDirectory(rows: readonly ProviderRow[], query = '') {
   }
 }
 
+/** Mã dòng của nhà cung cấp chỉ cho ảnh, video (fal.ai) trong danh bạ: `media:<mã>`. */
+export const MEDIA_PREFIX = 'media:'
+
+/**
+ * Chia danh bạ theo việc provider làm được, cho cột trái của mục Provider và khoá:
+ * - `chat`: đã kết nối, trừ nhà cung cấp chỉ cho ảnh, video;
+ * - `media`: nhà cung cấp chỉ cho ảnh, video và provider đã kết nối có model ảnh hay video (`media`);
+ * - `embed`: provider đã kết nối có model nhúng (`embed`);
+ * - `available`: chưa kết nối.
+ * Một provider có thể nằm ở nhiều nhóm (Google ở Chat, Ảnh và video, Nhúng).
+ */
+export function groupDirectory(
+  rows: readonly ProviderRow[],
+  query: string,
+  has: { media: ReadonlySet<string>; embed: ReadonlySet<string> },
+) {
+  const { connected, available } = splitDirectory(rows, query)
+  const mediaOnly = (r: ProviderRow) => r.entry.id.startsWith(MEDIA_PREFIX)
+  return {
+    chat: connected.filter((r) => !mediaOnly(r)),
+    media: connected.filter((r) => mediaOnly(r) || has.media.has(r.entry.id)),
+    embed: connected.filter((r) => has.embed.has(r.entry.id)),
+    available,
+  }
+}
+
+/** Nơi model của một provider đang được gán: chat mặc định, bậc dự phòng, chuỗi ảnh, video hay model nhúng. */
+export interface UseRow {
+  kind: 'chat' | 'fallback' | 'image' | 'video' | 'embed'
+  /** Bậc trong chuỗi (từ 1); chat mặc định và nhúng không có bậc. */
+  step?: number
+  model: string
+}
+
+/** Các nguồn gán model mà `usedAt` đọc. */
+export interface UseSources {
+  chat: { provider: string; model: string } | undefined
+  /** Chuỗi dự phòng chat (bậc 1 của chuỗi này là bậc 2 sau model chính). */
+  chain: readonly { provider: string; model: string }[]
+  image: readonly { provider: string; model: string }[]
+  video: readonly { provider: string; model: string }[]
+  embed: { provider: string; model: string } | null | undefined
+  /** Bot có model riêng (chat, mục tiêu, dự phòng) hay danh sách ảnh, video riêng, kèm các provider nó dùng. */
+  bots: readonly { name: string; providers: readonly string[] }[]
+}
+
+/**
+ * Model của provider `id` đang được gán ở đâu, và tên các bot có model riêng thuộc provider này. Thứ tự: chat
+ * mặc định, dự phòng chat, tạo ảnh, tạo video, nhúng.
+ */
+export function usedAt(id: string, src: UseSources): { rows: UseRow[]; bots: string[] } {
+  const rows: UseRow[] = []
+  if (src.chat?.provider === id) rows.push({ kind: 'chat', model: src.chat.model })
+  const chain = (kind: 'fallback' | 'image' | 'video', links: UseSources['chain'], first: number) =>
+    links.forEach((l, i) => l.provider === id && rows.push({ kind, step: i + first, model: l.model }))
+  // Model chính là bậc 1 của chuỗi chat, nên dự phòng bắt đầu từ bậc 2.
+  chain('fallback', src.chain, 2)
+  chain('image', src.image, 1)
+  chain('video', src.video, 1)
+  if (src.embed?.provider === id) rows.push({ kind: 'embed', model: src.embed.model })
+  return { rows, bots: src.bots.filter((b) => b.providers.includes(id)).map((b) => b.name) }
+}
+
 /** Một dòng trong bảng model của nhà cung cấp. */
 export interface ModelLine {
   id: string

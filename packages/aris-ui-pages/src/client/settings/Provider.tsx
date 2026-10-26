@@ -1,10 +1,11 @@
 /**
- * 6.2 · Provider và model (đặc tả: docs/specs/aris-providers.md), bố cục theo canvas:
- * - Cột trái: danh bạ nhà cung cấp của dsh (đã kết nối / có sẵn), ô tìm, thêm provider tuỳ chỉnh.
- * - Giữa: provider đang chọn: khoá (chỉ ghi), Base URL, gọi thử model, bảng model.
- * - Cột phải: chi phí, model theo việc, thứ tự dự phòng.
+ * 6.2 · Provider và khoá (đặc tả: docs/specs/aris-providers.md), bố cục theo canvas:
+ * - Cột trái: danh bạ nhà cung cấp của dsh chia nhóm (Chat, Ảnh và video, Nhúng, Có sẵn), ô tìm, thêm provider
+ *   tuỳ chỉnh.
+ * - Giữa: provider đang chọn: khoá (chỉ ghi, nhiều khoá xoay vòng), Base URL, gọi thử model, bảng model.
+ * - Cột phải: "Đang dùng ở", model của provider này được gán cho việc nào (chọn model theo việc ở mục Model).
  * Nằm trong khung Cài đặt như các mục khác. Route, khoá, danh mục model đọc và ghi thẳng vào dịch
- * vụ của dsh; vòng khoá, thứ tự dự phòng, giá và chi phí qua `/api/aris/providers/state`.
+ * vụ của dsh; vòng khoá, giá và chuỗi dự phòng qua `/api/aris/providers/state`.
  */
 import {
   Button,
@@ -16,10 +17,10 @@ import {
   Select,
   Tag,
   TextInput,
+  useTeam,
 } from '@aris/ui-kit/react'
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type {
-  ConfigFormLike,
   CredentialState,
   DiscoveredModel,
   ModelGroup,
@@ -27,16 +28,18 @@ import type {
   PageProps,
   ProviderEntry,
 } from '../page.js'
-import { modelOptions } from '../options.js'
 import { MediaProviderPanel, useMedia } from './Media.js'
-import { EmbedSelect, SemanticCard, useSemantic, type SemanticApi } from './Semantic.js'
+import { DEFAULT_NS, pairKey, str, useNamespaces } from './model-common.js'
+import { useSemantic } from './Semantic.js'
 import { Box, Col, Dot } from '../ui.js'
 import {
   ACCOUNT_ROUTE,
+  MEDIA_PREFIX,
   ROUTE_RE,
   buildRows,
   credentialRefs,
   deriveKeyRef,
+  groupDirectory,
   isChatModel,
   modelLines,
   probeReason,
@@ -44,18 +47,11 @@ import {
   profileModels,
   providerColor,
   routeIdOf,
-  splitDirectory,
+  usedAt,
   type ProviderRow,
+  type UseRow,
 } from './provider-data.js'
-import {
-  fetchPrices,
-  usd,
-  useProvidersState,
-  type Cost,
-  type Link,
-  type Pool,
-  type Price,
-} from './providers-api.js'
+import { fetchPrices, usd, useProvidersState, type Pool, type Price } from './providers-api.js'
 
 /** Mã mục "Model" của dsh trong `settings.section`: trang này thay nó, nên nó không hiện trong Cài đặt. */
 export const DSH_MODELS_SECTION = 'models'
@@ -66,53 +62,12 @@ const PI_NS = 'llm-pi-ai'
 const DEEPSEEK_NS = 'llm-deepseek'
 /** Endpoint mặc định của route DeepSeek (dsh-llm-deepseek `PUBLIC_BASE_URL`); dsh không báo qua danh bạ. */
 const DEEPSEEK_BASE_URL = 'https://api.deepseek.com/anthropic'
-/** Namespace model mặc định của phiên mới. */
-const DEFAULT_NS = 'agent-default-model'
 /** Kiểu API mà dsh dò được danh sách model. */
 const PROTOCOLS = ['openai-completions', 'openai-responses', 'anthropic-messages'] as const
 /** Số provider "có sẵn" hiện khi chưa mở hết. */
 const FEW = 6
 
 type T = PageProps['t']
-
-/** Model theo việc: việc chỉnh được, việc đi theo model khác, việc chưa có ở giai đoạn này. */
-const TASKS: readonly { id: string; note?: string }[] = [
-  { id: 'chat' },
-  { id: 'commander', note: 'pv.phase2' },
-  { id: 'learn', note: 'pv.phase3' },
-  { id: 'recall', note: 'pv.step3' },
-  { id: 'judge', note: 'pv.phase3' },
-  { id: 'compaction', note: 'pv.followSession' },
-  { id: 'reflect', note: 'pv.followCompaction' },
-  { id: 'title', note: 'pv.followSession' },
-  { id: 'eval', note: 'pv.phase3' },
-  { id: 'embed' },
-]
-
-const pairKey = (provider: string, model: string) => `${provider}\u0000${model}`
-const str = (v: unknown) => (typeof v === 'string' && v.length > 0 ? v : undefined)
-
-function useForm(form: ConfigFormLike | undefined) {
-  return useSyncExternalStore(
-    (fn) => form?.subscribe(fn) ?? (() => {}),
-    () => form?.getSnapshot(),
-  )
-}
-
-/** Giá trị các namespace cấu hình, vẽ lại khi một namespace đổi. */
-function useNamespaces(models: ModelSettings | undefined, namespaces: readonly string[]) {
-  const [version, setVersion] = useState(0)
-  const key = namespaces.join('|')
-  useEffect(() => {
-    if (!models) return
-    const offs = namespaces.map((ns) => models.form(ns).subscribe(() => setVersion((v) => v + 1)))
-    return () => offs.forEach((off) => off())
-  }, [models, key]) // `key` đại diện cho danh sách namespace
-  return useCallback(
-    (ns: string) => (models && ns ? models.form(ns).getSnapshot().value : undefined),
-    [models, version], // `version` tăng khi một namespace đổi, buộc đọc lại
-  )
-}
 
 function StatusMark({ t, row }: { t: T; row: ProviderRow }) {
   if (row.entry.declared) return <Tag>{t('pv.custom')}</Tag>
@@ -129,10 +84,11 @@ function StatusMark({ t, row }: { t: T; row: ProviderRow }) {
   )
 }
 
-/** Cột trái: danh bạ nhà cung cấp. */
+/** Cột trái: danh bạ nhà cung cấp chia nhóm theo việc provider làm được. */
 function Directory({
   t,
   rows,
+  has,
   selected,
   adding,
   onSelect,
@@ -140,6 +96,8 @@ function Directory({
 }: {
   t: T
   rows: readonly ProviderRow[]
+  /** Provider có model ảnh, video hay model nhúng (ngoài dòng `media:*`). */
+  has: { media: ReadonlySet<string>; embed: ReadonlySet<string> }
   selected: string | undefined
   adding: boolean
   onSelect: (id: string) => void
@@ -147,11 +105,13 @@ function Directory({
 }) {
   const [query, setQuery] = useState('')
   const [all, setAll] = useState(false)
-  const { connected, available } = useMemo(() => splitDirectory(rows, query), [rows, query])
+  const groups = useMemo(() => groupDirectory(rows, query, has), [rows, query, has])
+  const { available } = groups
   const shown = all || query ? available : available.slice(0, FEW)
-  const item = (r: ProviderRow, muted?: boolean) => (
+  // Một provider nằm được ở nhiều nhóm: mã dòng kèm nhóm để không trùng khoá.
+  const item = (group: string, r: ProviderRow, muted?: boolean) => (
     <NavItem
-      key={r.entry.id}
+      key={`${group}:${r.entry.id}`}
       label={r.entry.name}
       variant="plain"
       className={muted ? 'a-muted' : undefined}
@@ -161,6 +121,14 @@ function Directory({
       onClick={() => onSelect(r.entry.id)}
     />
   )
+  const section = (group: 'chat' | 'media' | 'embed') =>
+    groups[group].length > 0 && (
+      <>
+        <div className="ap-h">{t(`pv.grp.${group}`)}</div>
+        {groups[group].map((r) => item(group, r))}
+      </>
+    )
+  const none = groups.chat.length + groups.media.length + groups.embed.length + available.length === 0
   return (
     <nav className="ap-side" aria-label={t('sec.provider')}>
       <div style={{ fontWeight: 600, padding: '2px 10px 8px' }}>{t('pv.directory')}</div>
@@ -174,10 +142,11 @@ function Directory({
           placeholder={t('pv.search', { n: rows.length })}
         />
       </label>
-      {connected.length > 0 && <div className="ap-h">{t('pv.connected')}</div>}
-      {connected.map((r) => item(r))}
+      {section('chat')}
+      {section('media')}
+      {section('embed')}
       {available.length > 0 && <div className="ap-h">{t('pv.available')}</div>}
-      {shown.map((r) => item(r, true))}
+      {shown.map((r) => item('available', r, true))}
       {!query && available.length > FEW && (
         <NavItem
           label={all ? t('pv.less') : t('pv.all', { n: available.length })}
@@ -185,7 +154,7 @@ function Directory({
           onClick={() => setAll(!all)}
         />
       )}
-      {query && connected.length + available.length === 0 && (
+      {query && none && (
         <div className="a-muted" style={{ padding: '8px 10px', fontSize: 12.5 }}>
           {t('pv.none')}
         </div>
@@ -807,235 +776,83 @@ function NewProvider({
   )
 }
 
-/** Model theo việc: chat ghi thẳng vào `agent-default-model`; việc khác hiện trạng thái. */
-function Tasks({
+/** Cột phải: model của provider đang chọn được gán cho việc nào. */
+function UsedAt({
   t,
-  models,
-  groups,
-  error,
-  sem,
+  nav,
+  name,
+  used,
 }: {
   t: T
-  models: ModelSettings
-  groups: readonly ModelGroup[]
-  error: string | null
-  sem: SemanticApi
+  nav: PageProps['nav']
+  name: string
+  used: ReturnType<typeof usedAt>
 }) {
-  const form = models.form(DEFAULT_NS)
-  const snap = useForm(form)
-  const [busy, setBusy] = useState(false)
-  const [failed, setFailed] = useState(false)
-  const value = (snap?.value ?? {}) as Record<string, unknown>
-  const provider = str(value.provider) ?? ''
-  const model = str(value.model) ?? ''
-  const current = provider && model ? pairKey(provider, model) : ''
-
-  async function change(next: string) {
-    setBusy(true)
-    setFailed(false)
-    const [p, m] = next.split('\u0000')
-    const ok = await form.mutate([
-      { op: 'set', path: ['provider'], value: p },
-      { op: 'set', path: ['model'], value: m },
-    ])
-    setBusy(false)
-    setFailed(!ok)
-  }
-
+  const label = (r: UseRow) =>
+    r.kind === 'chat' || r.kind === 'embed' ? t(`pv.used.${r.kind}`) : t(`pv.used.${r.kind}`, { n: r.step })
+  const empty = used.rows.length === 0 && used.bots.length === 0
   return (
-    <Card title={t('pv.byTask')} subtitle={t('pv.byTaskHint')}>
-      {error && (
-        <div className="ap-grid2" style={{ color: 'var(--a-danger)', display: 'block' }}>
-          {t('pv.catalogError', { error })}
-        </div>
-      )}
-      {TASKS.map((task) => (
-        <div className="ap-grid2" key={task.id}>
-          <span className={task.note ? 'a-muted' : undefined}>{t(`pv.task.${task.id}`)}</span>
-          {task.id === 'chat' ? (
-            snap?.status === 'unavailable' ? (
-              <span className="a-muted">{t('pv.notServed')}</span>
-            ) : (
-              <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                <Select
-                  label={t('pv.task.chat')}
-                  value={current}
-                  disabled={busy || snap?.status !== 'ready' || !snap.writable}
-                  onChange={(v) => void change(v)}
-                  options={modelOptions(
-                    groups,
-                    undefined,
-                    current ? { provider, model } : undefined,
-                    (_p, m) => isChatModel(m),
-                  )}
-                  searchPlaceholder={t('sel.search')}
-                  emptyLabel={t('sel.empty')}
-                />
-                {failed && (
-                  <span style={{ color: 'var(--a-danger)', fontSize: 12 }}>{t('pv.saveFailed')}</span>
-                )}
-              </span>
-            )
-          ) : task.id === 'embed' ? (
-            <EmbedSelect t={t} sem={sem} />
-          ) : (
-            <span className="ap-sel a-muted">{t(task.note!)}</span>
-          )}
-        </div>
-      ))}
-    </Card>
-  )
-}
-
-/** Chi phí hôm nay và 7 ngày, theo bảng giá pi-ai. */
-function CostBox({ t, cost }: { t: T; cost: Cost | undefined }) {
-  const loc = t('pv.locale')
-  return (
-    <Box>
-      <b>{t('pv.cost')}</b>
-      <div style={{ display: 'flex', gap: 18, marginTop: 6, fontSize: 13 }}>
-        <span>
-          <span className="a-num" style={{ fontSize: 20, fontWeight: 600 }}>
-            {cost ? usd(cost.today, loc) : '—'}
-          </span>{' '}
-          <span className="a-muted">{t('pv.costToday')}</span>
-        </span>
-        <span>
-          <span className="a-num" style={{ fontSize: 20, fontWeight: 600 }}>
-            {cost ? usd(cost.week, loc) : '—'}
-          </span>{' '}
-          <span className="a-muted">{t('pv.costWeek')}</span>
-        </span>
-      </div>
-      {cost?.byModel.slice(0, 4).map((m) => (
-        <div key={pairKey(m.provider, m.model)} className="a-muted" style={{ fontSize: 12, marginTop: 4 }}>
-          <span className="a-mono">{m.model}</span> · {t('pv.costCalls', { n: m.calls })} ·{' '}
-          {m.priced ? `${usd(m.usd, loc)} USD` : t('pv.costUnpriced')}
-        </div>
-      ))}
-      <div className="a-muted" style={{ fontSize: 12, marginTop: 6 }}>
-        {t('pv.costHint')}
-      </div>
-    </Box>
-  )
-}
-
-/** Thứ tự dự phòng: lỗi hoặc hết hạn mức thì chuyển sang mắt xích kế tiếp. */
-function Fallback({
-  t,
-  chain,
-  groups,
-  rows,
-  busy,
-  error,
-  onSave,
-}: {
-  t: T
-  chain: readonly Link[] | undefined
-  groups: readonly ModelGroup[]
-  rows: readonly ProviderRow[]
-  busy: boolean
-  error: string | null
-  onSave: (chain: Link[]) => void
-}) {
-  const [adding, setAdding] = useState('')
-  const links = chain ?? []
-  const name = (id: string) => rows.find((r) => r.entry.id === id)?.entry.name ?? id
-  const has = new Set(links.map((l) => pairKey(l.provider, l.model)))
-  const move = (i: number, d: -1 | 1) => {
-    const next = [...links]
-    ;[next[i], next[i + d]] = [next[i + d]!, next[i]!]
-    onSave(next)
-  }
-  return (
-    <Box>
-      <b>{t('pv.fallback')}</b>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
-        {links.length === 0 && (
-          <div className="a-muted" style={{ fontSize: 12.5 }}>
-            {t('pv.fallbackEmpty')}
-          </div>
-        )}
-        {links.map((l, i) => (
-          <div key={pairKey(l.provider, l.model)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Tag>{`${i + 1} · ${name(l.provider)}`}</Tag>
-            <span
-              className="a-mono"
-              style={{ fontSize: 12, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
-            >
-              {l.model}
-            </span>
-            <span style={{ marginLeft: 'auto', display: 'flex', gap: 2 }}>
-              <Button
-                size="sm"
-                variant="ghost"
-                disabled={busy || i === 0}
-                aria-label={t('pv.up')}
-                onClick={() => move(i, -1)}
-              >
-                ↑
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                disabled={busy || i === links.length - 1}
-                aria-label={t('pv.down')}
-                onClick={() => move(i, 1)}
-              >
-                ↓
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                disabled={busy}
-                aria-label={t('pv.remove')}
-                onClick={() => onSave(links.filter((_, j) => j !== i))}
-              >
-                ×
-              </Button>
+    <>
+      <Card title={t('pv.used.title')} subtitle={t('pv.used.hint', { name })}>
+        {empty && <div className="ap-grid2 a-muted">{t('pv.used.none')}</div>}
+        {used.rows.map((r) => (
+          <div className="ap-grid2" key={`${r.kind}:${r.step ?? 0}:${r.model}`}>
+            <span>{label(r)}</span>
+            <span className="a-mono" style={{ fontSize: 12.5 }}>
+              {r.model}
             </span>
           </div>
         ))}
-      </div>
-      <Select
-        label={t('pv.fallbackAdd')}
-        value={adding}
-        disabled={busy}
-        placeholder={t('pv.fallbackAdd')}
-        style={{ marginTop: 8 }}
-        onChange={(v) => {
-          setAdding('')
-          if (!v) return
-          const [provider, model] = v.split('\u0000') as [string, string]
-          onSave([...links, { provider, model }])
-        }}
-        options={modelOptions(
-          groups,
-          undefined,
-          undefined,
-          (p, m) => isChatModel(m) && !has.has(pairKey(p, m)),
+        {used.bots.length > 0 && (
+          <div className="ap-grid2">
+            <span>{t('pv.used.bots')}</span>
+            <span style={{ fontSize: 12.5 }}>{used.bots.join(', ')}</span>
+          </div>
         )}
-        searchPlaceholder={t('sel.search')}
-        emptyLabel={t('sel.empty')}
-      />
-      <div className="a-muted" style={{ fontSize: 12, marginTop: 6 }}>
-        {error ? <span style={{ color: 'var(--a-danger)' }}>{error}</span> : t('pv.fallbackHint')}
-      </div>
-    </Box>
+        <div className="ap-grid2" style={{ display: 'block' }}>
+          <a className="ap-link" onClick={() => nav.go('settings', { section: 'model' })}>
+            {t('pv.used.go')}
+          </a>
+        </div>
+      </Card>
+      <Box style={{ fontSize: 12.5, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <span className="a-muted">
+          {t('pv.see.cost')}:{' '}
+          <a
+            className="ap-link"
+            style={{ fontSize: 12.5 }}
+            onClick={() => nav.go('settings', { section: 'stats' })}
+          >
+            {t('pv.see.stats')}
+          </a>
+        </span>
+        <span className="a-muted">
+          {t('pv.see.cap')}:{' '}
+          <a
+            className="ap-link"
+            style={{ fontSize: 12.5 }}
+            onClick={() => nav.go('settings', { section: 'guard' })}
+          >
+            {t('pv.see.budget')}
+          </a>
+        </span>
+      </Box>
+    </>
   )
 }
 
-export function Provider({ t, models, nav }: PageProps) {
+export function Provider({ t, models, nav, params }: PageProps) {
   const ps = useProvidersState()
   const sem = useSemantic()
   const media = useMedia()
+  const team = useTeam()
   const [entries, setEntries] = useState<readonly ProviderEntry[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [groups, setGroups] = useState<readonly ModelGroup[]>([])
-  const [catalogError, setCatalogError] = useState<string | null>(null)
   const [creds, setCreds] = useState<Readonly<Record<string, CredentialState>>>({})
   const [rev, setRev] = useState(0)
-  const [picked, setPicked] = useState<string | undefined>()
+  // `params.provider` chọn sẵn một provider (link từ Tìm theo nghĩa).
+  const [picked, setPicked] = useState<string | undefined>(params.provider || undefined)
   const [adding, setAdding] = useState(false)
   const [probe, setProbe] = useState<{
     id: string
@@ -1044,6 +861,12 @@ export function Provider({ t, models, nav }: PageProps) {
     error?: string | undefined
   } | null>(null)
   const reload = useCallback(() => setRev((r) => r + 1), [])
+  useEffect(() => {
+    if (params.provider) {
+      setPicked(params.provider)
+      setAdding(false)
+    }
+  }, [params.provider])
 
   useEffect(() => {
     if (!models) return
@@ -1057,8 +880,8 @@ export function Provider({ t, models, nav }: PageProps) {
     })
     models
       .catalog()
-      .then((g) => live && (setGroups(g), setCatalogError(null)))
-      .catch((e: Error) => live && setCatalogError(e.message))
+      .then((g) => live && setGroups(g))
+      .catch(() => {})
     return () => {
       live = false
     }
@@ -1088,7 +911,14 @@ export function Provider({ t, models, nav }: PageProps) {
   const mediaRows = useMemo<ProviderRow[]>(
     () =>
       (media.data?.keys ?? []).map((k) => ({
-        entry: { id: `media:${k.provider}`, name: k.name, ns: '', path: [], nativeEnv: [], active: k.hasKey },
+        entry: {
+          id: `${MEDIA_PREFIX}${k.provider}`,
+          name: k.name,
+          ns: '',
+          path: [],
+          nativeEnv: [],
+          active: k.hasKey,
+        },
         configured: k.hasKey,
         profile: {},
         keyRef: k.ref,
@@ -1100,7 +930,16 @@ export function Provider({ t, models, nav }: PageProps) {
     [media.data],
   )
   const rows = useMemo(() => [...chatRows, ...mediaRows], [chatRows, mediaRows])
-  const defaultProvider = str((nsValue(DEFAULT_NS) as Record<string, unknown> | undefined)?.provider)
+  // Provider có model ảnh, video (từ danh sách model của mục Model) và model nhúng (từ Tìm theo nghĩa).
+  const has = useMemo(
+    () => ({
+      media: new Set((media.data?.models ?? []).map((m) => m.provider)),
+      embed: new Set((sem.data?.models ?? []).map((m) => m.provider)),
+    }),
+    [media.data, sem.data],
+  )
+  const defaultValue = nsValue(DEFAULT_NS) as Record<string, unknown> | undefined
+  const defaultProvider = str(defaultValue?.provider)
   const row =
     rows.find((r) => r.entry.id === picked) ??
     rows.find((r) => r.entry.id === defaultProvider) ??
@@ -1113,11 +952,38 @@ export function Provider({ t, models, nav }: PageProps) {
     setProbe(null)
   }
 
+  // Model của provider đang chọn được gán ở đâu (chat, dự phòng, ảnh, video, nhúng, bot riêng).
+  const mediaId = row?.entry.id.startsWith(MEDIA_PREFIX)
+    ? row.entry.id.slice(MEDIA_PREFIX.length)
+    : row?.entry.id
+  const used = useMemo(() => {
+    const model = str(defaultValue?.model)
+    const own = (p: { mode: string; list?: readonly { provider: string }[] | undefined } | undefined) =>
+      p?.mode === 'own' ? (p.list ?? []).map((l) => l.provider) : []
+    const bots = new Map<string, Set<string>>()
+    const add = (name: string, ids: readonly (string | undefined)[]) => {
+      const set = bots.get(name) ?? new Set<string>()
+      for (const id of ids) if (id) set.add(id)
+      bots.set(name, set)
+    }
+    for (const b of team.bots)
+      add(b.name, [b.model?.provider, b.models?.goal?.provider, b.models?.fallback?.provider])
+    for (const b of media.data?.bots ?? []) add(b.name, [...own(b.media.image), ...own(b.media.video)])
+    return usedAt(mediaId ?? '', {
+      chat: defaultProvider && model ? { provider: defaultProvider, model } : undefined,
+      chain: ps.data?.chain ?? [],
+      image: media.data?.settings.image ?? [],
+      video: media.data?.settings.video ?? [],
+      embed: sem.data?.model,
+      bots: [...bots].map(([name, set]) => ({ name, providers: [...set] })),
+    })
+  }, [mediaId, defaultValue, defaultProvider, team.bots, media.data, ps.data, sem.data])
+
   // Route DeepSeek chính thức của dsh gọi endpoint tương thích Anthropic.
   const api = row
     ? (str(row.profile.api) ?? (row.entry.ns === DEEPSEEK_NS ? 'anthropic-messages' : undefined))
     : undefined
-  const subtitle = row?.entry.id.startsWith('media:')
+  const subtitle = row?.entry.id.startsWith(MEDIA_PREFIX)
     ? t('pv.mediaOnly', { ref: row.keyRef ?? '' })
     : row
       ? [
@@ -1143,6 +1009,7 @@ export function Provider({ t, models, nav }: PageProps) {
       <Directory
         t={t}
         rows={rows}
+        has={has}
         selected={row?.entry.id}
         adding={adding}
         onSelect={select}
@@ -1191,12 +1058,12 @@ export function Provider({ t, models, nav }: PageProps) {
                   }
                 }}
               />
-            ) : row?.entry.id.startsWith('media:') ? (
+            ) : row?.entry.id.startsWith(MEDIA_PREFIX) ? (
               <MediaProviderPanel
                 t={t}
-                provider={row.entry.id.slice('media:'.length)}
+                provider={row.entry.id.slice(MEDIA_PREFIX.length)}
                 api={media}
-                onOpenMedia={() => nav.go('settings', { section: 'media' })}
+                onOpenMedia={() => nav.go('settings', { section: 'model' })}
               />
             ) : row ? (
               <>
@@ -1216,19 +1083,8 @@ export function Provider({ t, models, nav }: PageProps) {
               </>
             ) : null}
           </Col>
-          <Col basis={360}>
-            <CostBox t={t} cost={ps.data?.cost} />
-            <Tasks t={t} models={models} groups={groups} error={catalogError} sem={sem} />
-            <SemanticCard t={t} sem={sem} />
-            <Fallback
-              t={t}
-              chain={ps.data?.chain}
-              groups={groups}
-              rows={chatRows}
-              busy={ps.busy}
-              error={ps.error}
-              onSave={(chain) => void ps.act({ op: 'chain', chain })}
-            />
+          <Col basis={300}>
+            {!adding && row && <UsedAt t={t} nav={nav} name={row.entry.name} used={used} />}
           </Col>
         </div>
       </PageShell>

@@ -1,6 +1,6 @@
 /**
  * 6.5 · Thống kê và nhật ký (giai đoạn 7, đợt 7c; bản vẽ `ThongKe.dc.html`): chi phí theo loại việc, trúng prompt
- * cache, việc xong không cần người dùng, skill mới bật, nhật ký phiên. "Phát lại" mở màn 6.5b (`Replay.tsx`). Dữ
+ * cache, việc xong không cần người dùng, skill mới bật, chi phí theo model, nhật ký phiên. "Phát lại" mở màn 6.5b (`Replay.tsx`). Dữ
  * liệu từ `/api/aris/stats` (`@aris/stats`).
  */
 import { Button, Card, PageShell, Segmented } from '@aris/ui-kit/react'
@@ -8,7 +8,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Bot, Box, Col } from '../ui.js'
 import { Replay } from './Replay.js'
-import { dayLabel, fmtTokens, fmtUsd, logTime } from './stats-format.js'
+import { providerLabel } from './Media.js'
+import { dayLabel, fmtInt, fmtTokens, fmtUsd, logTime } from './stats-format.js'
 
 type Range = 'today' | '7d' | '30d'
 type KindKey = 'chat' | 'giao' | 'routine' | 'hoc'
@@ -33,6 +34,15 @@ interface Row {
   tokens: number
   running: boolean
 }
+/** Một dòng "Chi phí theo model" (`byModel` của `@aris/stats`). */
+interface ModelRow {
+  provider: string
+  model: string
+  calls: number
+  tokens: number
+  cachePct: number | null
+  usd: number
+}
 interface Data {
   range: Range
   total: number
@@ -40,6 +50,7 @@ interface Data {
   cache: { pct: number | null; savePct: number | null }
   autonomous: { done: number; total: number }
   skills: { enabled: number; rolledBack: number }
+  byModel: ModelRow[]
   log: Row[]
 }
 
@@ -217,6 +228,29 @@ function Overview({ t, nav }: PageProps) {
           ))}
         </Col>
       </div>
+      <Card title={t('stats.byModel')} subtitle={t('sx.byModelRange', { range: rangeName })}>
+        <div style={{ overflowX: 'auto' }}>
+          <div className="ap-sxm a-muted" style={{ fontSize: 12, fontWeight: 600 }}>
+            <span>{t('sx.m.model')}</span>
+            <span>{t('sx.m.calls')}</span>
+            <span>{t('stats.tokens')}</span>
+            <span>{t('sx.m.cache')}</span>
+            <span>{t('stats.costCol')}</span>
+          </div>
+          {data.byModel.length === 0 && <div className="ap-sxempty a-muted">{t('sx.m.empty')}</div>}
+          {data.byModel.map((m) => (
+            <div className="ap-sxm" key={`${m.provider}/${m.model}`}>
+              <span className="a-mono ap-sxses" title={`${m.provider}/${m.model}`}>
+                {providerLabel(m.provider)} · {m.model}
+              </span>
+              <span className="a-muted">{fmtInt(m.calls, dec)}</span>
+              <span className="a-muted">{m.tokens > 0 ? fmtTokens(m.tokens, dec) : '—'}</span>
+              <span className="a-muted">{m.cachePct === null ? '—' : `${Math.round(m.cachePct)}%`}</span>
+              <span className="a-mono">{fmtUsd(m.usd, dec)}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
       <Card title={t('stats.log')} subtitle={t('stats.logHint')}>
         <div style={{ overflowX: 'auto' }}>
           <div className="ap-lr a-muted" style={{ fontSize: 12, fontWeight: 600 }}>

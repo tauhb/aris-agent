@@ -287,7 +287,7 @@ function ModelCard({ t, bot, team, nav }: { t: T; bot: BotData; team: TeamView; 
         ),
       )}
       {!bot.external && (
-        <BotMediaRows t={t} botId={bot.id} onManage={() => nav.go('settings', { section: 'media' })} />
+        <BotMediaRows t={t} botId={bot.id} onManage={() => nav.go('settings', { section: 'model' })} />
       )}
       {error && (
         <div className="a-row" style={{ fontSize: 12.5, color: 'var(--a-danger)' }}>

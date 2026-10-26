@@ -1,6 +1,7 @@
 /**
- * Tìm theo nghĩa ở trang 6.2 (giai đoạn 5, đợt 5a; bản vẽ 6.2b): chọn model nhúng ở dòng "Nhúng" của Model theo
- * việc, và thẻ trạng thái lập chỉ mục, phần gửi đi nhúng, thử tìm. Dữ liệu qua `/api/aris/brain?semantic`.
+ * Tìm theo nghĩa (giai đoạn 5, đợt 5a; bản vẽ 6.2c, mục Cài đặt › Tìm theo nghĩa): ô chọn model nhúng, thẻ
+ * "Gửi đi nhúng" (phần nào của bộ não và ký ức được nhúng) và thẻ "Chỉ mục" (trạng thái lập chỉ mục, thử tìm).
+ * Dữ liệu qua `/api/aris/brain?semantic`; trang ráp ở `SemanticPage.tsx`.
  */
 import { Button, Card, Checkbox, Select, TextInput } from '@aris/ui-kit/react'
 import { useCallback, useEffect, useState } from 'react'
@@ -77,7 +78,7 @@ export type SemanticApi = ReturnType<typeof useSemantic>
 const pairOf = (m: { provider: string; model: string } | null | undefined) =>
   m ? `${m.provider}/${m.model}` : 'off'
 
-/** Ô chọn model nhúng ở dòng "Nhúng" của Model theo việc. */
+/** Ô chọn model nhúng. */
 export function EmbedSelect({ t, sem }: { t: T; sem: SemanticApi }) {
   const d = sem.data
   if (!d?.available) return <span className="ap-sel a-muted">{t('sm.unavailable')}</span>
@@ -90,23 +91,16 @@ export function EmbedSelect({ t, sem }: { t: T; sem: SemanticApi }) {
     })),
   ]
   return (
-    <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-      <Select
-        label={t('pv.task.embed')}
-        value={pairOf(d.model)}
-        options={options}
-        disabled={sem.busy}
-        onChange={(id) => {
-          const m = d.models.find((x) => pairOf(x) === id)
-          void sem.act({ op: 'semantic-config', model: m ? { provider: m.provider, model: m.model } : null })
-        }}
-      />
-      {d.model && (
-        <span className="a-muted" style={{ fontSize: 11.5 }}>
-          {t('sm.reembedHint')}
-        </span>
-      )}
-    </span>
+    <Select
+      label={t('tn.embedTitle')}
+      value={pairOf(d.model)}
+      options={options}
+      disabled={sem.busy}
+      onChange={(id) => {
+        const m = d.models.find((x) => pairOf(x) === id)
+        void sem.act({ op: 'semantic-config', model: m ? { provider: m.provider, model: m.model } : null })
+      }}
+    />
   )
 }
 
@@ -122,8 +116,57 @@ const STATE_TONE: Record<SemanticStatus['state'], string> = {
 
 const clock = (ms: number) => new Date(ms).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
 
-/** Thẻ Tìm theo nghĩa: trạng thái, phần gửi đi nhúng, thử tìm. */
-export function SemanticCard({ t, sem }: { t: T; sem: SemanticApi }) {
+/** Nhãn trạng thái lập chỉ mục (viên thuốc ở đầu trang). */
+export function StateBadge({ t, state }: { t: T; state: SemanticStatus['state'] }) {
+  return (
+    <span
+      style={{
+        fontSize: 12,
+        fontWeight: 600,
+        borderRadius: 999,
+        padding: '2px 10px',
+        color: STATE_TONE[state],
+        border: `1px solid ${STATE_TONE[state]}`,
+      }}
+    >
+      {t(`sm.state.${state}`)}
+    </span>
+  )
+}
+
+/** Thẻ "Gửi đi nhúng": phần nào của bộ não và ký ức bot được nhúng. */
+export function SendCard({ t, sem }: { t: T; sem: SemanticApi }) {
+  const d = sem.data
+  if (!d?.available) return null
+  const scope = (k: Scope, label: string, n: number) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <Checkbox
+        checked={d.scopes[k]}
+        disabled={sem.busy || !d.model}
+        onChange={(v) => void sem.act({ op: 'semantic-config', scopes: { [k]: v } })}
+        label={label}
+      />
+      <span className="a-muted" style={{ marginLeft: 'auto', fontSize: 12 }}>
+        {t('sm.nChunks', { n })}
+      </span>
+    </div>
+  )
+  return (
+    <Card title={t('sm.send')}>
+      <div style={{ padding: '0 14px 12px', display: 'flex', flexDirection: 'column', gap: 2, fontSize: 13 }}>
+        {scope('personal', t('sm.personal'), d.parts.personal)}
+        {scope('company', t('sm.company'), d.parts.company)}
+        {scope('memory', t('sm.memory'), d.parts.memory)}
+        <span className="a-muted" style={{ fontSize: 12 }}>
+          {t('sm.sendHint')}
+        </span>
+      </div>
+    </Card>
+  )
+}
+
+/** Thẻ "Chỉ mục": tiến độ và trạng thái lập chỉ mục, thử tìm, nhúng lại, tạm dừng. */
+export function IndexCard({ t, sem }: { t: T; sem: SemanticApi }) {
   const d = sem.data
   const [q, setQ] = useState('')
   const [hits, setHits] = useState<TryHit[] | null>(null)
@@ -133,37 +176,8 @@ export function SemanticCard({ t, sem }: { t: T; sem: SemanticApi }) {
     const j = (await sem.act({ op: 'semantic-try', query: q })) as { hits?: TryHit[] } | null
     setHits(j?.hits ?? [])
   }
-  const scope = (k: Scope, label: string, n: number, unit: string) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <Checkbox
-        checked={d.scopes[k]}
-        disabled={sem.busy || !d.model}
-        onChange={(v) => void sem.act({ op: 'semantic-config', scopes: { [k]: v } })}
-        label={label}
-      />
-      <span className="a-muted" style={{ marginLeft: 'auto', fontSize: 12 }}>
-        {t(unit, { n })}
-      </span>
-    </div>
-  )
   return (
-    <Card
-      title={t('sm.title')}
-      actions={
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            borderRadius: 999,
-            padding: '2px 10px',
-            color: STATE_TONE[d.state],
-            border: `1px solid ${STATE_TONE[d.state]}`,
-          }}
-        >
-          {t(`sm.state.${d.state}`)}
-        </span>
-      }
-    >
+    <Card title={t('sm.title')}>
       <div
         style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13 }}
       >
@@ -216,16 +230,6 @@ export function SemanticCard({ t, sem }: { t: T; sem: SemanticApi }) {
             {t('sm.error', { error: d.error ?? '' })}
           </div>
         )}
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <b style={{ fontSize: 12.5 }}>{t('sm.send')}</b>
-          {scope('personal', t('sm.personal'), d.parts.personal, 'sm.nChunks')}
-          {scope('company', t('sm.company'), d.parts.company, 'sm.nChunks')}
-          {scope('memory', t('sm.memory'), d.parts.memory, 'sm.nChunks')}
-          <span className="a-muted" style={{ fontSize: 12 }}>
-            {t('sm.sendHint')}
-          </span>
-        </div>
 
         {d.state === 'ready' && (
           <div

@@ -1,7 +1,9 @@
 /**
- * 2.5 · Commander: bot được giao việc (cờ `assignable` của từng bot, duyệt mỗi lần giao), giới hạn
- * điều phối và trần tiền mỗi việc (cấu hình của `@aris/commander`), quyết định định tuyến gần đây.
- * Driver bật theo từng dự án ở Kanban (4.3).
+ * 2.5 · Commander (bản vẽ `Commander.dc.html`): hàng trên ba thẻ cạnh nhau tự xuống dòng khi hẹp: bot được giao
+ * việc (cờ `assignable` của từng bot, duyệt mỗi lần giao), giới hạn điều phối và trần tiền mỗi việc (cấu hình của
+ * `@aris/commander`), Commander đã học (chỉ khi có dữ liệu). Dưới là bảng quyết định định tuyến gần đây rộng
+ * cả trang, cuộn ngang khi hẹp, lý do dài cắt ở hai dòng và bấm dòng để mở. Driver bật theo từng dự án ở Kanban (4.3).
+ * Chưa nối: nút "Chuyển vai trò sang bot khác" của bản vẽ (chưa có API đổi bot làm Commander).
  */
 import {
   Card,
@@ -148,6 +150,7 @@ export function Commander({ t, nav }: PageProps) {
   const COMMANDER = team.commander
   const { log, learned, settings, save, errors } = useCommander()
   const [botError, setBotError] = useState<string | null>(null)
+  const [open, setOpen] = useState<ReadonlySet<string>>(new Set())
   const nameOf = (id: string) => team.members.find((m) => m.id === id)?.name ?? id
   const bots = (data?.bots ?? []).filter((b) => b.kind === 'member')
   const canTake = (b: BotData) => b.assignable !== false && (!b.external || b.external.assignable !== false)
@@ -178,7 +181,7 @@ export function Commander({ t, nav }: PageProps) {
       actions={<Pill tone="ok">{t('cmd.on')}</Pill>}
     >
       <div className="ap-cols">
-        <Col basis={380}>
+        <Col basis={300}>
           <Card title={t('cmd.delegates')} subtitle={t('cmd.delegatesHint')}>
             {bots.map((b) => {
               const on = canTake(b)
@@ -235,6 +238,8 @@ export function Commander({ t, nav }: PageProps) {
               </div>
             )}
           </Card>
+        </Col>
+        <Col basis={300}>
           <Card title={t('cmd.limits')}>
             <div className="a-row">
               <span className="grow ap-limit">
@@ -289,29 +294,83 @@ export function Commander({ t, nav }: PageProps) {
             </div>
           </Card>
         </Col>
-        <Col grow={1.4} basis={500}>
-          <Card
-            title={t('cmd.routing')}
-            actions={
-              <a className="ap-link" onClick={() => nav.go('settings', { section: 'stats' })}>
-                {t('cmd.seeAll')}
-              </a>
-            }
-          >
-            <div className="ap-dr a-muted" style={{ fontSize: 12, fontWeight: 600 }}>
-              <span>{t('stats.time')}</span>
-              <span>{t('cmd.request')}</span>
-              <span>{t('cmd.decision')}</span>
-              <span>{t('cmd.reason')}</span>
-              <span>{t('cmd.result')}</span>
-            </div>
-            {log?.length === 0 && (
-              <div className="ap-dr a-muted" style={{ display: 'block' }}>
-                {t('cmd.noRouting')}
+        {learned && learned.length > 0 && (
+          <Col basis={300}>
+            <Card title={t('cmd.learned')} subtitle={t('cmd.learnedHint')}>
+              <div style={{ padding: '0 14px 10px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {learned.slice(0, 12).map((l) => {
+                  const b = team.members.find((m) => m.id === l.bot)
+                  const finished = l.done + l.failed
+                  return (
+                    <div
+                      key={`${l.bot}-${l.kind}`}
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5 }}
+                    >
+                      <Mascot id={b?.mascot ?? l.bot} size={22} />
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <b>{b?.name ?? l.bot}</b> · {l.kind}
+                      </span>
+                      <span className="a-muted" style={{ fontSize: 12.5 }}>
+                        {t('cmd.learnedRow', { n: l.times })}
+                        {finished
+                          ? ` · ${t('cmd.learnedRate', { p: Math.round((l.done / finished) * 100) })}`
+                          : ''}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
-            )}
-            {log?.map((r) => (
-              <div className="ap-dr" key={r.at + r.handle}>
+            </Card>
+          </Col>
+        )}
+      </div>
+      <Card
+        title={t('cmd.routing')}
+        actions={
+          <a className="ap-link" onClick={() => nav.go('settings', { section: 'stats' })}>
+            {t('cmd.seeAll')}
+          </a>
+        }
+      >
+        <div className="ap-drwrap">
+          <div className="ap-dr a-muted" style={{ fontSize: 12, fontWeight: 600 }}>
+            <span>{t('stats.time')}</span>
+            <span>{t('cmd.request')}</span>
+            <span>{t('cmd.decision')}</span>
+            <span>{t('cmd.reason')}</span>
+            <span>{t('cmd.result')}</span>
+          </div>
+          {log?.length === 0 && (
+            <div className="ap-dr a-muted" style={{ display: 'block' }}>
+              {t('cmd.noRouting')}
+            </div>
+          )}
+          {log?.map((r) => {
+            const key = r.at + r.handle
+            const full = open.has(key)
+            const toggle = () =>
+              setOpen((cur) => {
+                const next = new Set(cur)
+                if (!next.delete(key)) next.add(key)
+                return next
+              })
+            // Cả dòng bấm được để mở lý do dài (mặc định cắt ở hai dòng).
+            return (
+              <div
+                className={`ap-dr ap-dr-row${full ? ' open' : ''}`}
+                key={key}
+                role="button"
+                tabIndex={0}
+                aria-expanded={full}
+                title={t(full ? 'cmd.collapse' : 'cmd.expand')}
+                onClick={toggle}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    toggle()
+                  }
+                }}
+              >
                 <span className="a-mono a-muted">
                   {new Date(r.at).toLocaleString([], {
                     day: '2-digit',
@@ -320,47 +379,17 @@ export function Commander({ t, nav }: PageProps) {
                     minute: '2-digit',
                   })}
                 </span>
-                <span>{r.title}</span>
+                <span className="clip">{r.title}</span>
                 <span>
                   <Pill tone={KIND_TONE.delegate}>{t('cmd.kind.delegate', { n: 1 })}</Pill> {nameOf(r.bot)}
                 </span>
-                <span className="a-muted">{r.reason}</span>
+                <span className="a-muted clip">{r.reason}</span>
                 <span>{r.reused ? t('cmd.followUp') : t('cmd.newTask')}</span>
               </div>
-            ))}
-          </Card>
-          <Card title={t('cmd.learned')} subtitle={t('cmd.learnedHint')}>
-            <div style={{ padding: '0 14px 10px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {learned?.length === 0 && (
-                <span className="a-muted" style={{ fontSize: 13 }}>
-                  {t('cmd.learnedEmpty')}
-                </span>
-              )}
-              {learned?.slice(0, 12).map((l) => {
-                const b = team.members.find((m) => m.id === l.bot)
-                const finished = l.done + l.failed
-                return (
-                  <div
-                    key={`${l.bot}-${l.kind}`}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5 }}
-                  >
-                    <Mascot id={b?.mascot ?? l.bot} size={22} />
-                    <span style={{ flex: 1, minWidth: 0 }}>
-                      <b>{b?.name ?? l.bot}</b> · {l.kind}
-                    </span>
-                    <span className="a-muted" style={{ fontSize: 12.5 }}>
-                      {t('cmd.learnedRow', { n: l.times })}
-                      {finished
-                        ? ` · ${t('cmd.learnedRate', { p: Math.round((l.done / finished) * 100) })}`
-                        : ''}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          </Card>
-        </Col>
-      </div>
+            )
+          })}
+        </div>
+      </Card>
     </PageShell>
   )
 }

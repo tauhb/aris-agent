@@ -1,4 +1,7 @@
-/** 6.6 · Màn hình của bot: desktop ảo của từng bot, cầm lái khi bot bị chặn, tài nguyên, việc bot vừa làm. */
+/**
+ * 6.6 · Màn hình của bot: desktop ảo của từng bot, cầm lái khi bot bị chặn, tài nguyên, việc bot vừa làm.
+ * Màn mẫu: chưa nối vào menu Cài đặt (đã gỡ khỏi `SECTIONS`), sẽ làm lại ở giai đoạn 8.
+ */
 import { BotPicker, Button, Card, PageShell } from '@aris/ui-kit/react'
 import { useState } from 'react'
 import type { PageProps } from '../page.js'

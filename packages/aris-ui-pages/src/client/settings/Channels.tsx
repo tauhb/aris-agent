@@ -1,7 +1,7 @@
 /**
  * 6.3 · Kênh và ghép đôi (đặc tả: docs/specs/aris-telegram.md), bố cục theo canvas: tài khoản
  * bot Telegram, nhóm, mã ghép đôi, người đã ghép đôi, cách xử lý khi nhắn thêm lúc bot đang
- * làm. Dữ liệu thật qua `/api/aris/channels`. Lark và Zalo làm sau.
+ * làm. Dữ liệu thật qua `/api/aris/channels`. Lark làm sau, Zalo cá nhân làm ở đợt 7e.
  */
 import {
   Button,
@@ -354,9 +354,9 @@ export function Channels({ t }: PageProps) {
           <Card
             title={
               <>
-                Zalo OA{' '}
+                {t('ch.zalo')}{' '}
                 <span className="a-muted" style={{ fontWeight: 400, fontSize: 12.5 }}>
-                  {t('ch.later')}
+                  {t('ch.zaloLater')}
                 </span>
               </>
             }

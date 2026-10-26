@@ -524,8 +524,8 @@ export async function apply(ctx: Context): Promise<void> {
     const word = KIND_TEXT[kind].one
     if (!chain.length)
       return policy?.mode === 'off'
-        ? `${name} chưa được bật tạo ${word}. Người dùng bật ở Hồ sơ bot · tab Model, hay Cài đặt › Ảnh và video.`
-        : `Chưa có model tạo ${word} nào trong danh sách. Người dùng thêm ở Cài đặt › Ảnh và video.`
+        ? `${name} chưa được bật tạo ${word}. Người dùng bật ở Hồ sơ bot · tab Model, hay Cài đặt › Model.`
+        : `Chưa có model tạo ${word} nào trong danh sách. Người dùng thêm ở Cài đặt › Model.`
     const spent = ledger.spentToday()
     const capAll = settings.caps[kind]
     if ((spent[`media-${kind}`] ?? 0) >= capAll)
@@ -542,7 +542,7 @@ export async function apply(ctx: Context): Promise<void> {
       return [
         `Chưa tạo được ${word}: đã thử ${out.tried.length} model theo thứ tự.`,
         ...failed.map((f) => `- ${f}`),
-        `Báo người dùng lý do; họ bật thanh toán, nạp tiền hay thêm model ở Cài đặt › Ảnh và video.`,
+        `Báo người dùng lý do; họ bật thanh toán, nạp tiền hay thêm model ở Cài đặt › Model.`,
         `[aris-media] ${JSON.stringify({ kind, ids: [], tried: out.tried.map((a) => ({ model: a.link.model, kind: a.kind, message: a.message.slice(0, 160) })) })}`,
       ].join('\n')
     const day = dayOf(Date.now())
@@ -690,7 +690,7 @@ export async function apply(ctx: Context): Promise<void> {
     },
   })
 
-  /** Trạng thái cho Cài đặt › Ảnh và video và tab Model của hồ sơ bot. */
+  /** Trạng thái cho Cài đặt › Model và tab Model của hồ sơ bot. */
   async function mediaState() {
     const providers = [...new Set(MEDIA_MODELS.map((m) => m.provider))]
     const keys = Object.fromEntries(

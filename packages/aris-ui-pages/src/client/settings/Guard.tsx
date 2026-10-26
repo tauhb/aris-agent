@@ -1,12 +1,14 @@
 /**
- * 6.4 · Ngân sách, duyệt, an toàn (giai đoạn 7, đợt 7a; bản vẽ `BaoMat.dc.html`): trần cả đội và trần riêng, báo
- * khi tới ngưỡng, dừng khẩn cấp, danh sách cấm cứng, chế độ và hạn duyệt, kho khoá trong Keychain. Dữ liệu từ
- * `/api/aris/guard` (`@aris/guard`, `@aris/keychain`).
+ * 6.4 · Ngân sách, duyệt, an toàn (giai đoạn 7, đợt 7a; bản vẽ `BaoMat.dc.html`): trần cả đội, trần tạo ảnh và
+ * tạo video, trần riêng, báo khi tới ngưỡng, dừng khẩn cấp, danh sách cấm cứng, chế độ và hạn duyệt, kho khoá
+ * trong Keychain. Dữ liệu từ `/api/aris/guard` (`@aris/guard`, `@aris/keychain`); trần ảnh, video từ
+ * `/api/aris/media` (`@aris/providers`), cùng nguồn với thứ tự model ở mục Model.
  */
 import { Button, Card, CardRow, PageShell, Pill, Segmented, Tag } from '@aris/ui-kit/react'
 import { useCallback, useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Col } from '../ui.js'
+import { KINDS, useMedia } from './Media.js'
 
 interface Settings {
   teamCapUsd: number
@@ -39,7 +41,7 @@ const when = (iso: string) => {
   return `${two(d.getHours())}:${two(d.getMinutes())} ${two(d.getDate())}/${two(d.getMonth() + 1)}`
 }
 /** Trần riêng cố định của các việc nền (USD mỗi ngày), theo mã nguồn của từng gói. */
-const FIXED_CAPS = [
+export const FIXED_CAPS = [
   ['guard.cap.librarian', 0.5],
   ['guard.cap.reflect', 0.3],
   ['guard.cap.profile', 0.2],
@@ -93,6 +95,7 @@ function Bar({ used, max }: { used: number; max: number }) {
 }
 
 export function Guard({ t, nav }: PageProps) {
+  const media = useMedia()
   const [s, setS] = useState<State | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -158,7 +161,9 @@ export function Guard({ t, nav }: PageProps) {
         </>
       }
     >
-      {error && <div style={{ color: 'var(--a-danger)', fontSize: 13 }}>{error}</div>}
+      {(error ?? media.error) && (
+        <div style={{ color: 'var(--a-danger)', fontSize: 13 }}>{error ?? media.error}</div>
+      )}
       {g.stopped && (
         <div className="ap-intalert" role="status">
           <span className="grow">
@@ -215,6 +220,21 @@ export function Guard({ t, nav }: PageProps) {
               />
               <span className="a-muted">%</span>
             </CardRow>
+            {media.data &&
+              KINDS.map((kind) => (
+                <CardRow key={kind}>
+                  <span className="grow">{t(kind === 'image' ? 'guard.imageCap' : 'guard.videoCap')}</span>
+                  <NumberField
+                    label={t(kind === 'image' ? 'guard.imageCap' : 'guard.videoCap')}
+                    value={media.data!.settings.caps[kind]}
+                    min={0}
+                    max={1000}
+                    step={0.1}
+                    onSave={(v) => void media.act({ op: 'caps', caps: { [kind]: v } })}
+                  />
+                  <span className="a-muted">USD</span>
+                </CardRow>
+              ))}
             <CardRow>
               <span className="grow">{t('guard.whenCap')}</span>
               <Segmented
@@ -246,7 +266,7 @@ export function Guard({ t, nav }: PageProps) {
             <CardRow>
               <span className="grow">{t('guard.media')}</span>
               <span className="a-muted ap-gdfig">{money(s.media.image + s.media.video)}</span>
-              <Button size="sm" onClick={() => nav.go('settings', { section: 'media' })}>
+              <Button size="sm" onClick={() => nav.go('settings', { section: 'model' })}>
                 {t('guard.edit')}
               </Button>
             </CardRow>

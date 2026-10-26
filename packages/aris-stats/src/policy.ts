@@ -261,6 +261,53 @@ export function overview(records: Iterable<SessionRecord>, range: Range, now = D
   }
 }
 
+/** Một dòng của bảng "Chi phí theo model": gộp mọi lần gọi của một model trong khoảng. */
+export interface ModelRow {
+  provider: string
+  model: string
+  calls: number
+  /** Token đầu vào (kể cả cache) cộng đầu ra. */
+  tokens: number
+  /** Phần token đầu vào đọc từ cache (%), null khi không có token đầu vào. */
+  cachePct: number | null
+  usd: number
+}
+
+/**
+ * Chi phí theo model trong khoảng, từ bảng `calls` (từng lần gọi, giữ `CALL_DAYS` ngày). Lần gọi ngoài khoảng bị bỏ;
+ * model nhiều tiền nhất đứng đầu, bằng nhau thì nhiều lần gọi hơn đứng trước.
+ */
+export function byModel(calls: Iterable<CallRecord>, range: Range, now = Date.now()): ModelRow[] {
+  const inRange = new Set(rangeDays(range, now).days)
+  const sums = new Map<string, ModelRow & { allIn: number; cacheRead: number }>()
+  for (const c of calls) {
+    if (!inRange.has(c.day)) continue
+    const key = `${c.provider}\u0000${c.model}`
+    const row = sums.get(key) ?? {
+      provider: c.provider,
+      model: c.model,
+      calls: 0,
+      tokens: 0,
+      cachePct: null,
+      usd: 0,
+      allIn: 0,
+      cacheRead: 0,
+    }
+    row.calls++
+    row.tokens += c.input + c.output + c.cacheRead + c.cacheWrite
+    row.usd += c.usd
+    row.allIn += c.input + c.cacheRead + c.cacheWrite
+    row.cacheRead += c.cacheRead
+    sums.set(key, row)
+  }
+  return [...sums.values()]
+    .map(({ allIn, cacheRead, ...row }) => ({
+      ...row,
+      cachePct: allIn > 0 ? round1((cacheRead / allIn) * 100) : null,
+    }))
+    .sort((a, z) => z.usd - a.usd || z.calls - a.calls)
+}
+
 /** Mã các bản ghi quá hạn giữ (để dọn). */
 export function expiredKeys<V>(
   entries: Iterable<[string, V]>,

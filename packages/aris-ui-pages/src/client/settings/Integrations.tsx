@@ -54,6 +54,8 @@ const hm = (iso: string) => {
   const d = new Date(iso)
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
+/** Lần chặn gần nhất chỉ lên dải cảnh báo trong ngần này thời gian. */
+const BLOCK_ALERT_MS = 24 * 3_600_000
 const TONE: Record<Result, 'ok' | 'warn' | 'danger' | 'muted'> = {
   'mo-phien': 'muted',
   'cho-phep': 'muted',
@@ -111,7 +113,10 @@ export function Integrations({ t, nav }: PageProps) {
   const rows = work.filter((l) =>
     filter === 'all' ? true : filter === 'chan' ? l.result === 'chan' : l.result.startsWith('ung-dung'),
   )
-  const lastBlocked = work.find((l) => l.result === 'chan' && l.reason?.length)
+  // Dải đỏ chỉ báo lần chặn trong 24 giờ qua; cũ hơn chỉ còn trong nhật ký bên dưới.
+  const lastBlocked = work.find(
+    (l) => l.result === 'chan' && l.reason?.length && Date.now() - Date.parse(l.at) < BLOCK_ALERT_MS,
+  )
   const mascotOf = (botId: string) => s.bots.find((b) => b.id === botId)?.mascot ?? 'aris'
 
   return (

@@ -3,6 +3,7 @@ import type { CallRecord, EventRecord, SessionRecord } from './domain.js'
 import {
   addCall,
   buildSteps,
+  byModel,
   cacheSavings,
   classify,
   classifyNoSession,
@@ -568,5 +569,45 @@ describe('dựng các bước phát lại', () => {
     expect(describeCall('t', { foo: 3 })).toBe('{"foo":3}')
     expect(describeCall('t', 'không phải JSON')).toBe('không phải JSON')
     expect(describeCall('t', {})).toBe('')
+  })
+})
+
+describe('chi phí theo model', () => {
+  const call = (o: Partial<CallRecord> & Pick<CallRecord, 'day' | 'model'>): CallRecord => ({
+    at: 0,
+    kind: 'chat',
+    source: 'web',
+    provider: 'deepseek',
+    input: 0,
+    output: 0,
+    cacheRead: 0,
+    cacheWrite: 0,
+    usd: 0,
+    ...o,
+  })
+  const calls: CallRecord[] = [
+    call({ day: '2026-10-26', model: 'flash', input: 1000, output: 200, cacheRead: 9000, usd: 0.02 }),
+    call({ day: '2026-10-26', model: 'flash', input: 500, output: 100, usd: 0.01 }),
+    call({ day: '2026-10-25', model: 'pro', input: 2000, output: 500, usd: 0.4 }),
+    call({ day: '2026-10-26', model: 'qwen', provider: 'openrouter', input: 10, output: 5 }),
+    call({ day: '2026-10-10', model: 'cũ', usd: 50 }),
+  ]
+
+  it('gộp theo (provider, model), model tốn nhất đứng đầu, ngoài khoảng bị bỏ', () => {
+    const w = byModel(calls, '7d', NOW)
+    expect(w.map((r) => r.model)).toEqual(['pro', 'flash', 'qwen'])
+    expect(w[1]).toMatchObject({ provider: 'deepseek', model: 'flash', calls: 2, tokens: 10800 })
+    expect(w[1]!.usd).toBeCloseTo(0.03, 6)
+    expect(byModel(calls, 'today', NOW).map((r) => r.model)).toEqual(['flash', 'qwen'])
+    expect(byModel(calls, '30d', NOW).map((r) => r.model)).toEqual(['cũ', 'pro', 'flash', 'qwen'])
+  })
+
+  it('trúng cache = đọc cache / toàn bộ đầu vào; không có đầu vào thì null', () => {
+    const w = byModel(calls, 'today', NOW)
+    expect(w[0]!.cachePct).toBeCloseTo((9000 / 10500) * 100, 0)
+    expect(
+      byModel([call({ day: '2026-10-26', model: 'x', output: 5 })], 'today', NOW)[0]!.cachePct,
+    ).toBeNull()
+    expect(byModel([], '7d', NOW)).toEqual([])
   })
 })

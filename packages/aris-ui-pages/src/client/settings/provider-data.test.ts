@@ -4,6 +4,7 @@ import {
   buildRows,
   credentialRefs,
   deriveKeyRef,
+  groupDirectory,
   joinProviders,
   modelLines,
   isChatModel,
@@ -12,6 +13,7 @@ import {
   providerName,
   routeIdOf,
   splitDirectory,
+  usedAt,
 } from './provider-data.js'
 
 const pi = (id: string, name = id, extra: Partial<ProviderEntry> = {}): Omit<ProviderEntry, 'active'> => ({
@@ -97,6 +99,78 @@ describe('provider-data', () => {
     expect(all.connected.map((r) => r.entry.id)).toEqual(['a'])
     expect(all.available.map((r) => r.entry.id)).toEqual(['g', 'q'])
     expect(splitDirectory(rows, 'gemini').available.map((r) => r.entry.id)).toEqual(['g'])
+  })
+
+  it('danh bạ chia nhóm: Chat, Ảnh và video, Nhúng, Có sẵn; một provider nằm được ở nhiều nhóm', () => {
+    const entries = joinProviders(
+      [
+        { id: 'deepseek-official', name: 'DeepSeek' },
+        { id: 'google', name: 'Google Gemini' },
+        { id: 'openrouter', name: 'OpenRouter' },
+      ],
+      [
+        pi('deepseek-official', 'DeepSeek'),
+        pi('google', 'Google Gemini'),
+        pi('openrouter', 'OpenRouter'),
+        pi('q', 'Qwen'),
+      ],
+    )
+    const media = {
+      entry: { id: 'media:fal', name: 'fal.ai', ns: '', path: [], nativeEnv: [], active: true },
+      configured: true,
+      profile: {},
+      keyRef: 'FAL_KEY',
+      keyNamed: false,
+      key: undefined,
+      nativeKey: false,
+      status: 'ok' as const,
+    }
+    const rows = [...buildRows(entries, () => undefined, {}), media]
+    const g = groupDirectory(rows, '', { media: new Set(['google']), embed: new Set(['google']) })
+    const ids = (a: typeof g.chat) => a.map((r) => r.entry.id)
+    expect(ids(g.chat)).toEqual(['deepseek-official', 'google', 'openrouter'])
+    expect(ids(g.media)).toEqual(['google', 'media:fal'])
+    expect(ids(g.embed)).toEqual(['google'])
+    expect(ids(g.available)).toEqual(['q'])
+    // Ô tìm lọc cả bốn nhóm.
+    const q = groupDirectory(rows, 'fal', { media: new Set(['google']), embed: new Set(['google']) })
+    expect([ids(q.chat), ids(q.media), ids(q.embed), ids(q.available)]).toEqual([[], ['media:fal'], [], []])
+  })
+
+  it('đang dùng ở: chat mặc định, bậc dự phòng từ 2, chuỗi ảnh, video, nhúng, bot có model riêng', () => {
+    const src = {
+      chat: { provider: 'deepseek', model: 'flash' },
+      chain: [
+        { provider: 'deepseek', model: 'pro' },
+        { provider: 'openrouter', model: 'qwen' },
+      ],
+      image: [
+        { provider: 'fal', model: 'flux' },
+        { provider: 'google', model: 'img' },
+      ],
+      video: [{ provider: 'google', model: 'vid' }],
+      embed: { provider: 'google', model: 'emb' },
+      bots: [
+        { name: 'Khoa', providers: ['deepseek'] },
+        { name: 'Thơ', providers: ['fal', 'google'] },
+        { name: 'Dev', providers: ['openrouter'] },
+      ],
+    }
+    expect(usedAt('deepseek', src)).toEqual({
+      rows: [
+        { kind: 'chat', model: 'flash' },
+        { kind: 'fallback', step: 2, model: 'pro' },
+      ],
+      bots: ['Khoa'],
+    })
+    expect(usedAt('google', src).rows).toEqual([
+      { kind: 'image', step: 2, model: 'img' },
+      { kind: 'video', step: 1, model: 'vid' },
+      { kind: 'embed', model: 'emb' },
+    ])
+    expect(usedAt('google', src).bots).toEqual(['Thơ'])
+    expect(usedAt('fal', src).rows).toEqual([{ kind: 'image', step: 1, model: 'flux' }])
+    expect(usedAt('nobody', { ...src, chat: undefined, embed: null })).toEqual({ rows: [], bots: [] })
   })
 
   it('bảng model: gộp model đang phục vụ, tự khai và vừa dò', () => {
