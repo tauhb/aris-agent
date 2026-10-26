@@ -359,6 +359,8 @@ Code, Codex làm bot ngoài: cùng một lõi, một bộ dữ liệu.
 > **Đợt (chốt 26/10)**: 7a An toàn và ngân sách (màn 6.4 thật: trần ngày cả đội, báo khi tới ngưỡng, nút dừng khẩn cấp, danh sách cấm cứng cho mọi bot, chế độ duyệt, kho bí mật trong Keychain của macOS) → 7b Sao lưu (hằng đêm, mã hoá, vào thư mục local do người dùng chọn, diễn tập khôi phục) → 7c Quan sát (màn 6.5 thật, đo token, otel, phát lại phiên) → 7f Đo và rà soát (rà soát bảo mật, build dsh từ mã nguồn, đo đối đầu với Hermes). 7d Kênh Lark (kèm Mai đọc email, lịch) khi có ứng dụng Lark, rồi 7e Kênh Zalo cá nhân. Webhook để tới khi lên server.
 >
 > **Đợt 7a làm 26/10** ([đặc tả](specs/aris-guard.md)): gói `@aris/guard` (trần cả đội, báo Telegram ở ngưỡng và trần, dừng khẩn cấp nối vào routine, Driver, ACP, Telegram, danh sách cấm cứng cho mọi bot, chế độ và hạn duyệt) và `@aris/keychain` (kho khoá trong Keychain, tệp khoá làm lớp dưới); màn 6.4 dữ liệu thật.
+>
+> **Đợt 7b làm 26/10** ([đặc tả](specs/aris-backup.md)): gói `@aris/backup` (hằng đêm 02:00, nén và mã hoá AES-256-GCM vào thư mục người dùng chọn, mã khôi phục trong Keychain, giữ 7 bản ngày và 4 bản tuần, diễn tập khôi phục mỗi Chủ nhật, báo Telegram khi lỗi) và lệnh `aris restore`; màn 6.4b dữ liệu thật. Người dùng tự bật và chọn thư mục.
 
 **Việc cần làm**
 1. **Lên server**: container, `systemd`, egress allowlist (chỉ cho các API cần thiết), proxy có nhật ký cho tool mạng.

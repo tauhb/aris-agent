@@ -7,6 +7,7 @@
 import { SettingsShell } from '@aris/ui-kit/react'
 import type { ComponentType } from 'react'
 import type { PageProps } from '../page.js'
+import { Backup } from './Backup.js'
 import { Channels } from './Channels.js'
 import { Commander } from './Commander.js'
 import { Guard } from './Guard.js'
@@ -24,6 +25,7 @@ export const SECTIONS: Record<string, ComponentType<PageProps>> = {
   channels: Channels,
   integrations: Integrations,
   guard: Guard,
+  backup: Backup,
   stats: Stats,
   commander: Commander,
   screen: Screen,
@@ -37,6 +39,7 @@ const ORDER = [
   'channels',
   'integrations',
   'guard',
+  'backup',
   'stats',
   'commander',
   'screen',

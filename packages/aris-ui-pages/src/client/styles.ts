@@ -459,6 +459,17 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-gdfig{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12.5px}
 .ap-gdwarn{border:1px solid var(--a-warn);background:var(--a-warnSoft);border-radius:12px;padding:10px 14px;font-size:13.5px}
 .ap-gdkey{font-size:12.5px;overflow:hidden;text-overflow:ellipsis}
+.ap-bkstep{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-top:1px solid var(--a-line)}
+.ap-bknum{width:22px;height:22px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex:none;background:var(--a-panel2);color:var(--a-muted)}
+.ap-bknum.done{background:var(--a-ok);color:#fff}
+.ap-bkbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;font-size:13.5px}
+.ap-bkbody>.a-muted{font-size:13px}
+.ap-bkline{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ap-bkcode{font-size:17px;letter-spacing:.06em;padding:12px 14px;border:1px dashed var(--a-line);border-radius:10px;background:var(--a-panel2);text-align:center;user-select:all}
+.ap-bkunit{font-size:12.5px;width:170px}
+.ap-bkmark{display:inline-flex;color:var(--a-ok);flex:none}
+.ap-bkmark.bad{color:var(--a-danger)}
+.ap-bkcmd{display:block;font-size:12.5px;color:var(--a-ink);background:var(--a-panel2);border-radius:8px;padding:8px 10px;overflow-wrap:anywhere;user-select:all}
 .ap-intnote{border:1px solid var(--a-line);background:var(--a-panel2);border-radius:12px;padding:10px 14px;font-size:13.5px}
 .ap-intalert{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid var(--a-danger);background:var(--a-dangerSoft);border-radius:12px;padding:10px 14px;font-size:13.5px}
 .ap-inthint{font-weight:400;font-size:12.5px}

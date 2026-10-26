@@ -111,6 +111,59 @@ function notRunning() {
 const launchctl = (...args) => spawnSync('launchctl', args, { encoding: 'utf8' })
 const loaded = () => launchctl('print', `gui/${uid()}/${LABEL}`).status === 0
 
+/** Hỏi một dòng trên terminal. */
+async function ask(q) {
+  const { createInterface } = await import('node:readline/promises')
+  const rl = createInterface({ input: process.stdin, output: process.stdout })
+  try {
+    return (await rl.question(q)).trim()
+  } finally {
+    rl.close()
+  }
+}
+
+/** `aris restore <tệp>`: khôi phục đè từ bản sao lưu (@aris/backup) khi aris đã dừng hẳn. */
+async function restore(file, yes) {
+  if (!file) return console.error('Dùng: aris restore <tệp .aris> [--yes]')
+  if ((await callSocket('GET', '/status')) || (process.platform === 'darwin' && loaded())) {
+    console.error('aris đang chạy. Tắt trước: aris stop, khôi phục xong thì aris start.')
+    process.exitCode = 1
+    return
+  }
+  const lib = (f) => new URL(`../packages/${f}`, import.meta.url).href
+  const { readHeader } = await import(lib('aris-backup/lib/archive.js'))
+  const { restoreBackup } = await import(lib('aris-backup/lib/restore.js'))
+  const { partSpecs } = await import(lib('aris-backup/lib/sources.js'))
+  const { normalizeCode } = await import(lib('aris-backup/lib/policy.js'))
+  const { Keychain } = await import(lib('aris-keychain/lib/keychain.js'))
+  const { header } = await readHeader(file)
+  const when = new Date(header.created).toLocaleString('vi-VN')
+  console.log(`Bản sao lưu lúc ${when} trên máy ${header.host}:`)
+  for (const p of header.parts) console.log(`  ${p.id}: ${p.files + p.sqlite.length} tệp`)
+  let code = await new Keychain(undefined, 'aris-backup').get(`code-${header.codeId}`)
+  if (!code) {
+    code = normalizeCode(await ask('Máy này không có khoá của bản này. Nhập mã khôi phục: '))
+    if (!code) {
+      console.error('Mã không hợp lệ (24 ký tự, sáu nhóm bốn).')
+      process.exitCode = 1
+      return
+    }
+  }
+  if (!yes) {
+    const ok = await ask(
+      'Khôi phục đè lên dữ liệu hiện tại? Dữ liệu cũ được cất sang bên, không xoá. Gõ "co" để tiếp: ',
+    )
+    if (ok.toLowerCase() !== 'co') return console.log('Đã huỷ.')
+  }
+  const roots = Object.fromEntries(
+    partSpecs({ ...process.env, DSH_HOME: arisHome() }).map((p) => [p.id, p.root]),
+  )
+  const r = await restoreBackup(file, code, roots)
+  for (const p of r.parts)
+    console.log(`Đã khôi phục ${p.id} vào ${p.root}${p.aside ? `; dữ liệu cũ ở ${p.aside}` : ''}`)
+  console.log('Xong. Bật lại: aris start')
+}
+
 function mac() {
   if (process.platform !== 'darwin') {
     console.error('aris: chạy ngầm bằng launchd chỉ có trên macOS.')
@@ -127,7 +180,8 @@ const HELP = `aris — điều khiển aris chạy ngầm
   aris logs [-f]        xem log (theo dõi với -f)
   aris open | url       mở web đã đăng nhập / in đường đăng nhập
   aris send "…"         gửi Telegram tới nơi nhận (/sethome)
-  aris ask "…" [--json] giao một việc cho Aris và in câu trả lời cuối`
+  aris ask "…" [--json] giao một việc cho Aris và in câu trả lời cuối
+  aris restore <tệp>    khôi phục đè từ bản sao lưu .aris (aris phải dừng; dữ liệu cũ được cất sang bên)`
 
 async function main(argv) {
   const { cmd, flags, text } = parseArgs(argv)
@@ -235,6 +289,8 @@ async function main(argv) {
       process.exitCode = r.reason === 'completed' ? 0 : 1
       return
     }
+    case 'restore':
+      return restore(text, flags.has('--yes'))
     default:
       console.log(HELP)
   }

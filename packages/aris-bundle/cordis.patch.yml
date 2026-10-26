@@ -33,6 +33,8 @@
       name: '@aris/acp'
     - id: aris-guard
       name: '@aris/guard'
+    - id: aris-backup
+      name: '@aris/backup'
     - id: aris-brain
       name: '@aris/brain'
     - id: aris-recall
