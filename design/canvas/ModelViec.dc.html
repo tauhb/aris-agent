@@ -16,7 +16,7 @@ body{margin:0}
 .t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614}
 button{font-family:inherit;cursor:pointer;color:inherit}
 button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.ib{width:28px;height:28px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
 .b2{height:30px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:12.5px;flex:none;white-space:nowrap}
 .m{color:var(--muted)}
 .mono{font-family:'JetBrains Mono',monospace}
@@ -24,6 +24,8 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 .ch{padding:12px 14px;display:flex;align-items:center;gap:8px}
 .sn{display:block;border-radius:8px;padding:7px 10px;font-size:13.5px;color:var(--ink);text-decoration:none}
 .r{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.r:has(>.lk){flex-wrap:wrap;row-gap:4px}
+.r>.lk+.m{flex:1 1 200px !important;min-width:0}
 .task{display:grid;grid-template-columns:130px minmax(0,1fr);gap:12px;align-items:start;padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px}
 .chain{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .lk{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;background:var(--panel);padding:3px 10px 3px 6px;font-size:12.5px;white-space:nowrap}
@@ -68,46 +70,40 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
     <div style="padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
       <div style="flex: 1.3 1 470px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
         <div class="card">
-          <div class="ch"><span style="flex: 1; min-width: 0"><b>Chat và việc nền</b><span class="m" style="display: block; font-size: 12.5px">Áp cho mọi bot chưa gán riêng. Chuỗi đọc từ trái sang phải: số 1 là model chính.</span></span></div>
-          <div class="task">
-            <span><b>Chat</b><span class="m" style="display: block; font-size: 12px">trả lời, làm việc, giao việc</span></span>
-            <span class="chain">
-              <span class="lk main"><span class="n">1</span><span class="dot" style="background: #4D6BFE"></span>DeepSeek · deepseek-v4-flash</span>
-              <span class="m">→</span>
-              <span class="lk"><span class="n">2</span><span class="dot" style="background: #4D6BFE"></span>DeepSeek · deepseek-v4-pro</span>
-              <span class="m">→</span>
-              <span class="lk"><span class="n">3</span><span class="dot" style="background: #6467F2"></span>OpenRouter · qwen3-max</span>
-              <button type="button" class="add">+ thêm</button>
-            </span>
-          </div>
+          <div class="ch"><span style="flex: 1; min-width: 0"><b>Chat và việc nền</b><span class="m" style="display: block; font-size: 12.5px">Áp cho mọi bot chưa gán riêng. Model lỗi thì thử dòng kế tiếp.</span></span></div>
+          <div class="r m" style="font-size: 12.5px; padding-top: 6px; padding-bottom: 6px; border-top: 0"><b style="color: var(--ink); font-size: 13.5px">Chat</b><span>trả lời, làm việc, giao việc · dòng 1 là model chính</span></div>
+          <div class="r"><span class="lk main"><span class="n">1</span><span class="dot" style="background: #4D6BFE"></span>DeepSeek · deepseek-v4-flash</span><span class="m" style="flex: 1; font-size: 12.5px">0,14 / 0,28 USD mỗi 1M token · suy luận · đọc ảnh</span><span class="pill" style="color: var(--ok); background: var(--okSoft)">sẵn sàng</span><button type="button" class="ib" aria-label="Lên">↑</button><button type="button" class="ib" aria-label="Xuống">↓</button><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
+          <div class="r"><span class="lk"><span class="n">2</span><span class="dot" style="background: #4D6BFE"></span>DeepSeek · deepseek-v4-pro</span><span class="m" style="flex: 1; font-size: 12.5px">1,52 / 3,96 USD · suy luận · ngữ cảnh dài</span><span class="pill" style="color: var(--ok); background: var(--okSoft)">sẵn sàng</span><button type="button" class="ib" aria-label="Lên">↑</button><button type="button" class="ib" aria-label="Xuống">↓</button><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
+          <div class="r"><span class="lk"><span class="n">3</span><span class="dot" style="background: #6467F2"></span>OpenRouter · qwen3-max</span><span class="m" style="flex: 1; font-size: 12.5px">1,20 / 6,00 USD</span><span class="pill" style="color: var(--warn); background: var(--warnSoft)">chưa có giá</span><button type="button" class="ib" aria-label="Lên">↑</button><button type="button" class="ib" aria-label="Xuống">↓</button><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
+          <div class="r"><button type="button" class="add">+ Thêm model chat từ provider đã kết nối</button><span class="m" style="margin-left: auto; font-size: 12px">đưa lên dòng 1 là thành model chính</span></div>
           <div class="task">
             <span>Rút ký ức<span class="m" style="display: block; font-size: 12px">vòng học nền</span></span>
-            <span class="chain"><span class="lk"><span class="dot" style="background: #4D6BFE"></span>theo chuỗi chat</span><span class="m" style="font-size: 12px">trần 0,30 USD/ngày</span></span>
+            <span class="chain"><span class="lk"><span class="dot" style="background: #4D6BFE"></span>model Flash rẻ của provider mặc định</span><span class="m" style="font-size: 12px">trần 0,30 USD/ngày</span></span>
           </div>
           <div class="task">
             <span>Đặt tên phiên</span>
-            <span class="chain"><span class="lk"><span class="dot" style="background: #4D6BFE"></span>theo chuỗi chat</span></span>
+            <span class="chain"><span class="lk"><span class="dot" style="background: #4D6BFE"></span>theo model của phiên</span></span>
           </div>
           <div class="task">
             <span>Kiểm thử skill</span>
-            <span class="chain"><span class="lk"><span class="dot" style="background: #4D6BFE"></span>theo chuỗi chat</span></span>
+            <span class="chain"><span class="lk"><span class="dot" style="background: #4D6BFE"></span>model Flash rẻ của provider mặc định</span></span>
           </div>
           <div class="r m" style="font-size: 12.5px">Tìm theo nghĩa dùng một model nhúng riêng: <a href="TimTheoNghia.dc.html" style="color: var(--accent); text-decoration: none">Tìm theo nghĩa ›</a></div>
         </div>
 
         <div class="card">
           <div class="ch"><span style="flex: 1; min-width: 0"><b>Tạo ảnh</b><span class="m" style="display: block; font-size: 12.5px">Thứ tự thử cho bot chưa gán riêng</span></span><span class="m" style="font-size: 12.5px">hôm nay 0,07 / 1,00 USD · <a href="BaoMat.dc.html" style="color: var(--accent); text-decoration: none">sửa trần ›</a></span></div>
-          <div class="r"><span class="lk main"><span class="n">1</span><span class="dot" style="background: #111"></span>fal.ai · flux-2-pro</span><span class="m" style="flex: 1; font-size: 12.5px">0,05 USD/ảnh · chữ tiếng Việt tốt</span><span class="pill" style="color: var(--ok); background: var(--okSoft)">sẵn sàng</span><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
-          <div class="r"><span class="lk"><span class="n">2</span><span class="dot" style="background: #6467F2"></span>OpenRouter · openai/gpt-image-2</span><span class="m" style="flex: 1; font-size: 12.5px">tính theo token</span><span class="pill" style="color: var(--ok); background: var(--okSoft)">sẵn sàng</span><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
-          <div class="r"><span class="lk"><span class="n">3</span><span class="dot" style="background: #4285F4"></span>Google Gemini · gemini-3.1-flash-lite-image</span><span class="m" style="flex: 1; font-size: 12.5px">0,034 USD/ảnh</span><span class="pill" style="color: var(--warn); background: var(--warnSoft)">cần bật thanh toán</span><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
-          <div class="r"><button type="button" class="add">+ Thêm model ảnh từ provider đã kết nối</button><span class="m" style="margin-left: auto; font-size: 12px">kéo để đổi thứ tự</span></div>
+          <div class="r"><span class="lk main"><span class="n">1</span><span class="dot" style="background: #111"></span>fal.ai · flux-2-pro</span><span class="m" style="flex: 1; font-size: 12.5px">0,05 USD/ảnh · chữ tiếng Việt tốt</span><span class="pill" style="color: var(--ok); background: var(--okSoft)">sẵn sàng</span><button type="button" class="ib" aria-label="Lên">↑</button><button type="button" class="ib" aria-label="Xuống">↓</button><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
+          <div class="r"><span class="lk"><span class="n">2</span><span class="dot" style="background: #6467F2"></span>OpenRouter · openai/gpt-image-2</span><span class="m" style="flex: 1; font-size: 12.5px">tính theo token</span><span class="pill" style="color: var(--ok); background: var(--okSoft)">sẵn sàng</span><button type="button" class="ib" aria-label="Lên">↑</button><button type="button" class="ib" aria-label="Xuống">↓</button><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
+          <div class="r"><span class="lk"><span class="n">3</span><span class="dot" style="background: #4285F4"></span>Google Gemini · gemini-3.1-flash-lite-image</span><span class="m" style="flex: 1; font-size: 12.5px">0,034 USD/ảnh</span><span class="pill" style="color: var(--warn); background: var(--warnSoft)">cần bật thanh toán</span><button type="button" class="ib" aria-label="Lên">↑</button><button type="button" class="ib" aria-label="Xuống">↓</button><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
+          <div class="r"><button type="button" class="add">+ Thêm model ảnh từ provider đã kết nối</button><span class="m" style="margin-left: auto; font-size: 12px">đưa lên dòng 1 là thành model chính</span></div>
         </div>
 
         <div class="card">
           <div class="ch"><span style="flex: 1; min-width: 0"><b>Tạo video</b><span class="m" style="display: block; font-size: 12.5px">Thứ tự thử cho bot chưa gán riêng</span></span><span class="m" style="font-size: 12.5px">hôm nay 0 / 2,00 USD · <a href="BaoMat.dc.html" style="color: var(--accent); text-decoration: none">sửa trần ›</a></span></div>
-          <div class="r"><span class="lk main"><span class="n">1</span><span class="dot" style="background: #111"></span>fal.ai · kling-v3</span><span class="m" style="flex: 1; font-size: 12.5px">khoảng 0,07 USD/giây · tối đa 10 giây</span><span class="pill" style="color: var(--ok); background: var(--okSoft)">sẵn sàng</span><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
-          <div class="r"><span class="lk"><span class="n">2</span><span class="dot" style="background: #4285F4"></span>Google Gemini · gemini-omni-1.1-flash</span><span class="m" style="flex: 1; font-size: 12.5px">khoảng 0,10 USD/giây</span><span class="pill" style="color: var(--warn); background: var(--warnSoft)">cần bật thanh toán</span><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
-          <div class="r"><button type="button" class="add">+ Thêm model video</button><span class="m" style="margin-left: auto; font-size: 12px">video dài quá 8 giây thì hỏi {{you}} trước</span></div>
+          <div class="r"><span class="lk main"><span class="n">1</span><span class="dot" style="background: #111"></span>fal.ai · kling-v3</span><span class="m" style="flex: 1; font-size: 12.5px">khoảng 0,07 USD/giây · tối đa 10 giây</span><span class="pill" style="color: var(--ok); background: var(--okSoft)">sẵn sàng</span><button type="button" class="ib" aria-label="Lên">↑</button><button type="button" class="ib" aria-label="Xuống">↓</button><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
+          <div class="r"><span class="lk"><span class="n">2</span><span class="dot" style="background: #4285F4"></span>Google Gemini · gemini-omni-1.1-flash</span><span class="m" style="flex: 1; font-size: 12.5px">khoảng 0,10 USD/giây</span><span class="pill" style="color: var(--warn); background: var(--warnSoft)">cần bật thanh toán</span><button type="button" class="ib" aria-label="Lên">↑</button><button type="button" class="ib" aria-label="Xuống">↓</button><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
+          <div class="r"><button type="button" class="add">+ Thêm model video</button><span class="m" style="margin-left: auto; font-size: 12px">đưa lên dòng 1 là thành model chính</span></div>
         </div>
       </div>
 
