@@ -137,3 +137,49 @@ describe('nhân bản, xuất, nhập bot', () => {
     expect((await call({ op: 'commander-latest', candidates: ['s-tho'] })).body.sessionId).toBeNull()
   })
 })
+
+describe('phiên gần đây của bot (?sessions=)', () => {
+  it('store.sessionsOf: phiên đã gắn bot, mới gắn trước', async () => {
+    let n = 0
+    const store = new BotStore(memTables(), () => new Date(Date.UTC(2026, 9, 26, 0, 0, n++)))
+    await store.ensureCommander()
+    const a = await store.create({ handle: 'tho', name: 'Thơ' })
+    const b = await store.create({ handle: 'an', name: 'An' })
+    await store.tag('s1', a.id, 'open')
+    await store.tag('s2', b.id, 'team')
+    await store.tag('s3', a.id, 'dispatch')
+    expect(store.sessionsOf(a.id)).toEqual(['s3', 's1'])
+    expect(store.sessionsOf('khong-co')).toEqual([])
+  })
+
+  it('GET ?sessions=<bot> trả danh sách phiên do máy chủ cung cấp', async () => {
+    const store = new BotStore(memTables())
+    await store.ensureCommander()
+    const asked: string[] = []
+    const get = async (q: string, withSessions = true) => {
+      const r = await handleApi(
+        {
+          store,
+          templates: async () => [],
+          open: async () => 's',
+          ...(withSessions
+            ? {
+                sessions: async (bot: string) => {
+                  asked.push(bot)
+                  return [{ id: 's1', title: 'Bài Facebook', at: 5, running: true }]
+                },
+              }
+            : {}),
+        },
+        new Request(`http://x/api/aris/bots${q}`),
+      )
+      return (await r.json()) as Record<string, unknown>
+    }
+    expect(await get('?sessions=tho')).toEqual({
+      sessions: [{ id: 's1', title: 'Bài Facebook', at: 5, running: true }],
+    })
+    expect(asked).toEqual(['tho'])
+    // Không có nguồn phiên thì rơi về ảnh chụp đội như các tham số lạ khác.
+    expect(await get('?sessions=tho', false)).toHaveProperty('bots')
+  })
+})

@@ -1,6 +1,7 @@
 /**
  * Logic thuần của trang Văn phòng (bản vẽ `VanPhong2D`, `VanPhongPhongBan`): câu bong bóng của Aris dựng từ dữ liệu
  * thật, bàn làm việc theo phòng ban, việc đang chờ người dùng, thẻ phòng ban, lọc dòng "Vừa làm gì". Không gọi mạng.
+ * Phần cột "Vừa làm gì" nằm ở `feedModel.ts`, bảng chat gọn ở `chatModel.ts`.
  */
 import type { BotStatus, TeamMember } from '@aris/ui-kit'
 import type { BotData, CatalogGroup, PendingApproval, TeamLive, TeamView } from '@aris/ui-kit/react'
@@ -19,6 +20,7 @@ export interface FeedItem {
   at: number
   bot: string
   kind:
+    | 'running'
     | 'assigned'
     | 'started'
     | 'done'
@@ -31,6 +33,10 @@ export interface FeedItem {
     | 'routineFailed'
   tone: 'ok' | 'warn' | 'bad'
   what: string
+  /** Mã phiên của việc (bot ngoài: mã lần chạy): mở kết quả hay chat đúng phiên này. */
+  session?: string | undefined
+  /** Mã yêu cầu quyền đang chờ {you}; chỉ có ở dòng xin duyệt còn treo. */
+  approval?: string | undefined
 }
 
 // --- Bàn làm việc ----------------------------------------------------------------------------------------------

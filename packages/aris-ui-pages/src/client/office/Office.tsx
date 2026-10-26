@@ -1,7 +1,7 @@
 /**
  * Trang Văn phòng (bản vẽ `VanPhong2D`, `VanPhong3D`, `VanPhongPhongBan`, `VanPhongKanban`): đầu trang có tên, nút 2D / 3D
  * (nhớ lựa chọn, mặc định 2D; 3D chỉ áp dụng cho tab Tổng quan), ba tab Tổng quan, Phòng ban, Kanban, giờ và nút "Cần {you}"
- * mở danh sách duyệt nhanh. Dữ liệu đọc lại mỗi vài giây.
+ * mở danh sách duyệt nhanh. Tab Tổng quan có cột phải "Vừa làm gì" và bảng chat (`Overview`). Dữ liệu đọc lại mỗi vài giây.
  */
 import {
   Button,
@@ -213,6 +213,8 @@ export function Office({ t, nav, params }: PageProps) {
             team={team}
             live={live}
             need={needs.length}
+            approvals={approvals}
+            reloadApprovals={reload}
             mode={mode}
             onUnsupported={() => {
               setNoGl(true)

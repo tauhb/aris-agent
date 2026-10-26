@@ -21,6 +21,7 @@ import type {} from '@deepseek-ai/dsh-user-questions'
 import type {} from '@deepseek-ai/dsh-workspace'
 import { handleApi, type MemoryPort } from './api.js'
 import { botsDomain, type ActivityRecord, type Table, type Tables } from './domain.js'
+import { pickSessions, type SessionRow } from './sessions.js'
 import { botStats, LiveTracker } from './live.js'
 import { checkConnection, connectionOf, McpStore, needsAsk, pluginConfig, type McpRecord } from './mcp.js'
 import { renderPersona } from './persona.js'
@@ -83,7 +84,7 @@ export async function apply(ctx: Context): Promise<void> {
   await store.ensurePolicies(await loadTemplates())
 
   // Việc gần đây lưu bền: giữ 8 ngày (số liệu 7 ngày ở cột phải hồ sơ bot), tối đa 3.000 mục; nạp lại
-  // 30 mục mới nhất khi khởi động.
+  // 200 mục mới nhất khi khởi động (cột "Vừa làm gì" của Văn phòng xem được 7 ngày).
   const activity = domain.table('activity') as unknown as Table<ActivityRecord>
   const keep = 3000
   const keepMs = 8 * 86_400_000
@@ -96,6 +97,7 @@ export async function apply(ctx: Context): Promise<void> {
         kind: item.kind,
         at: item.at,
         ...(item.task ? { task: item.task } : {}),
+        ...(item.session ? { session: item.session } : {}),
       }
       void activity
         .put(`${item.at}-${Math.random().toString(36).slice(2, 8)}`, rec)
@@ -469,9 +471,7 @@ export async function apply(ctx: Context): Promise<void> {
   // Trạng thái trực tiếp kèm tên phiên đang chạy hay đang đợi (dòng việc của bot khi chưa có việc được giao).
   // Tên nhớ 5 phút; phiên chưa có tên thì hỏi lại sau 20 giây.
   const titleCache = new Map<string, { title: string; at: number }>()
-  async function liveView() {
-    const snap = live.snapshot(store.list().map((b) => b.id))
-    const ids = [...new Set(Object.values(snap.status).flatMap((l) => l.sessions))]
+  async function titlesFor(ids: readonly string[]): Promise<Record<string, string>> {
     const now = Date.now()
     const stale = (id: string) => {
       const c = titleCache.get(id)
@@ -497,13 +497,41 @@ export async function apply(ctx: Context): Promise<void> {
         }
       for (const id of want) if (!got.has(id)) titleCache.set(id, { title: '', at: now })
     }
-    const titles = Object.fromEntries(
+    return Object.fromEntries(
       ids.flatMap((id) => {
         const t = titleCache.get(id)?.title
         return t ? [[id, t]] : []
       }),
     )
-    return { ...snap, titles }
+  }
+
+  async function liveView() {
+    const snap = live.snapshot(store.list().map((b) => b.id))
+    const ids = [...new Set(Object.values(snap.status).flatMap((l) => l.sessions))]
+    return { ...snap, titles: await titlesFor(ids) }
+  }
+
+  // Phiên gần đây của một bot cho ô chọn phiên ở bảng chat Văn phòng (`?sessions=<bot>`): tối đa 5 phiên có nội dung,
+  // mới sửa trước. Bot trong đội: phiên đã gắn bot (chat riêng, phiên nhận việc). Aris: phiên chat riêng trong nhà
+  // chưa gắn bot nào và không phải phiên con.
+  async function botSessions(botId: string) {
+    const bot = store.get(botId)
+    if (!bot || bot.external) return []
+    const ac = new AbortController()
+    const listed = (await ctx.sessionController.list({}, ac.signal).catch(() => undefined)) as
+      { items: SessionRow[] } | undefined
+    const rows = new Map((listed?.items ?? []).map((x) => [String(x.sessionId), x]))
+    let ids: string[]
+    if (bot.kind === 'commander') {
+      const home = (await ensureHome(ctx.workspaceRegistry as never).catch(() => undefined))?.workspaceId
+      const reg = ctx.workspaceRegistry as unknown as {
+        list(): { id: string; sessionIds: readonly string[] }[]
+      }
+      ids = (reg.list().find((w) => w.id === home)?.sessionIds ?? [])
+        .map(String)
+        .filter((id) => !store.tagOf(id) && !rows.get(id)?.parentSessionId)
+    } else ids = store.sessionsOf(bot.id)
+    return pickSessions(ids, rows, await titlesFor(ids), 5)
   }
 
   async function catalog() {
@@ -531,6 +559,7 @@ export async function apply(ctx: Context): Promise<void> {
               live: liveView,
               memory: () => ctx.get('arisMemory') as MemoryPort | undefined,
               profile: (bot) => profile(bot),
+              sessions: (bot) => botSessions(bot),
               mcp,
               checkMcp,
               souls,

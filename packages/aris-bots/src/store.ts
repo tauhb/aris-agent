@@ -504,6 +504,14 @@ export class BotStore {
     return best?.id
   }
 
+  /** Mã các phiên đã gắn với bot (chat riêng, phiên nhận việc), mới gắn trước. */
+  sessionsOf(bot: string): string[] {
+    return [...this.t.sessions.entries()]
+      .filter(([, r]) => r.bot === bot)
+      .sort(([, a], [, b]) => b.at.localeCompare(a.at))
+      .map(([key, r]) => r.session ?? key)
+  }
+
   tagOf(sessionId: string): SessionRecord | undefined {
     return this.t.sessions.get(sessionKey(sessionId))
   }

@@ -43,6 +43,8 @@ export interface ApiDeps {
   memory?: () => MemoryPort | undefined
   /** Số liệu cột phải hồ sơ bot (`?profile=<mã bot>`). */
   profile?: (bot: string) => unknown | Promise<unknown>
+  /** Phiên gần đây của một bot (`?sessions=<mã bot>`), cho ô chọn phiên ở bảng chat Văn phòng. */
+  sessions?: (bot: string) => unknown | Promise<unknown>
   /** Lịch sử tính cách (SOUL) theo phiên bản. */
   souls?: SoulHistory
   /** Gọi model viết lại tính cách (model của Commander, không thì model vừa dùng gần nhất). */
@@ -93,6 +95,8 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
     if (q.get('live') && d.live) return json(await d.live())
     const profile = q.get('profile')
     if (profile && d.profile) return json(await d.profile(profile))
+    const sessions = q.get('sessions')
+    if (sessions && d.sessions) return json({ sessions: await d.sessions(sessions) })
     return json(await snapshot(d))
   }
   let body: Record<string, unknown>

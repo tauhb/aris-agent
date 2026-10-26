@@ -132,3 +132,89 @@ describe('mã phiên của bot', () => {
     expect(live.of('minh').sessions).toEqual([])
   })
 })
+
+describe('mã phiên trong việc gần đây', () => {
+  it('mọi mục (nhận việc, bắt đầu, chờ, xong, vấp) mang mã phiên của việc', () => {
+    const bots: Record<string, string> = { s1: 'minh', s2: 'tho' }
+    const live = new LiveTracker(
+      (s) => bots[s] ?? 'aris',
+      () => 1,
+    )
+    live.assigned('minh', 'Việc A', 's1')
+    live.turnStart('s1')
+    live.waitStart('s1')
+    live.waitEnd('s1')
+    live.turnEnd('s1', 'completed')
+    live.assigned('tho', 'Việc B', 's2')
+    live.turnStart('s2')
+    live.turnEnd('s2', 'error')
+    expect(live.activity.map((a) => `${a.kind}:${a.session}`)).toEqual([
+      'failed:s2',
+      'started:s2',
+      'assigned:s2',
+      'done:s1',
+      'waiting:s1',
+      'started:s1',
+      'assigned:s1',
+    ])
+  })
+
+  it('bot ngoài ghi mã lần chạy làm mã phiên', () => {
+    const live = new LiveTracker(
+      () => 'aris',
+      () => 1,
+    )
+    live.assigned('kiet', 'Rà lỗi', 'run-1')
+    live.externalStart('kiet', 'run-1', 'Rà lỗi')
+    live.externalWaiting('kiet', true, 'run-1')
+    live.externalWaiting('kiet', false, 'run-1')
+    live.externalEnd('kiet', 'run-1', true)
+    expect(live.activity.map((a) => `${a.kind}:${a.session}`)).toEqual([
+      'done:run-1',
+      'waiting:run-1',
+      'started:run-1',
+      'assigned:run-1',
+    ])
+  })
+
+  it('nhận việc không kèm phiên thì không có trường session', () => {
+    const live = new LiveTracker(
+      () => 'aris',
+      () => 1,
+    )
+    live.assigned('minh', 'Việc A')
+    expect('session' in live.activity[0]!).toBe(false)
+  })
+})
+
+describe('phiên đang chạy', () => {
+  it('runningInfo trả bot, việc được giao và lúc bắt đầu của từng phiên đang chạy', () => {
+    let now = 100
+    const bots: Record<string, string> = { s1: 'minh', s2: 'tho' }
+    const live = new LiveTracker(
+      (s) => bots[s] ?? 'aris',
+      () => now,
+    )
+    live.assigned('minh', 'Việc A', 's1')
+    live.turnStart('s1')
+    now = 200
+    live.turnStart('s2')
+    expect(live.runningInfo()).toEqual([
+      { session: 's1', bot: 'minh', task: 'Việc A', since: 100 },
+      { session: 's2', bot: 'tho', task: undefined, since: 200 },
+    ])
+    live.turnEnd('s1', 'completed')
+    expect(live.runningInfo().map((r) => r.session)).toEqual(['s2'])
+  })
+
+  it('giữ tới 200 mục việc gần đây', () => {
+    let n = 0
+    const live = new LiveTracker(
+      () => 'aris',
+      () => n++,
+    )
+    for (let i = 0; i < 250; i++) live.assigned('minh', `Việc ${i}`)
+    expect(live.activity).toHaveLength(200)
+    expect(live.activity[0]!.task).toBe('Việc 249')
+  })
+})

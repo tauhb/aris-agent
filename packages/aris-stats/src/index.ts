@@ -28,6 +28,7 @@ import {
   type Table,
 } from './domain.js'
 import { mergeFeed } from './feed.js'
+import { sessionResult } from './result.js'
 import {
   addCall,
   buildSteps,
@@ -54,6 +55,7 @@ import {
 
 export * from './policy.js'
 export * from './feed.js'
+export * from './result.js'
 export { KINDS, SOURCES, type Kind, type Source } from './domain.js'
 
 export const name = 'aris-stats'
@@ -86,6 +88,22 @@ interface SessionQueryPort {
     ids: unknown[],
   ): Promise<{ sessionId: string; status: string; value?: { title?: { title?: string } } }[]>
 }
+/** Danh sách phiên của dsh (`sessionController.list`): chỉ cần thư mục làm việc của từng phiên. */
+interface SessionListPort {
+  list?(req: object, signal: AbortSignal): Promise<{ items: { sessionId: string; cwd?: string }[] }>
+}
+/** Yêu cầu quyền đang chờ (`arisApprovals.list`, @aris/commander). */
+interface ArisApprovalsPort {
+  list?(): {
+    id: string
+    run: string
+    bot: string
+    target?: string
+    tool?: string
+    kind: string
+    at: string
+  }[]
+}
 interface AgentLike {
   session: { id: string; header?: { parentSession?: string } }
 }
@@ -100,6 +118,7 @@ interface ArisRoutinePort {
 }
 
 const TITLE_TTL_MS = 5 * 60_000
+const CWD_TTL_MS = 60_000
 const CLEAN_MS = 12 * 3_600_000
 
 const json = (v: unknown, status = 200) =>
@@ -369,11 +388,24 @@ export async function apply(ctx: Context): Promise<void> {
     return { botName: b?.name ?? id, mascot: b?.mascot ?? id, accessory: b?.accessory }
   }
 
-  /** Dòng "Vừa làm gì" của Văn phòng: việc của bot, duyệt và hỏi, hàng rào chặn, routine xong, trong 24 giờ qua. */
-  function feedResponse(limit: number) {
-    const since = Date.now() - 86_400_000
+  /** Khoảng của dòng "Vừa làm gì": từ nửa đêm hôm nay, 7 ngày, hay (mặc định) 24 giờ qua. */
+  const feedSince = (range: string | null) => {
+    const now = Date.now()
+    if (range === '7d') return now - 7 * 86_400_000
+    if (range === 'today') return new Date(now).setHours(0, 0, 0, 0)
+    return now - 86_400_000
+  }
+
+  /**
+   * Dòng "Vừa làm gì" của Văn phòng: việc của bot, phiên đang chạy, duyệt (đã trả lời và còn treo) và hỏi, hàng rào
+   * chặn, routine xong, trong khoảng `range`.
+   */
+  async function feedResponse(limit: number, range: string | null) {
+    const since = feedSince(range)
     const b = bots()
     const botOfSession = (sid: string) => b?.botOf(sid).id ?? ''
+    const running = b?.live.runningInfo() ?? []
+    const names = await titlesOf(running.map((r) => r.session))
     return mergeFeed(
       {
         activity: b?.live.activity.filter((a) => a.at >= since) ?? [],
@@ -383,6 +415,7 @@ export async function apply(ctx: Context): Promise<void> {
           .map((r) => ({
             at: r.at,
             bot: botOfSession(r.session),
+            session: r.session,
             type: r.type,
             what: r.what,
             tool: r.tool,
@@ -395,9 +428,41 @@ export async function apply(ctx: Context): Promise<void> {
           what: r.what,
         })),
         routines: svc<ArisRoutinePort>('arisRoutine')?.recentRuns?.(since, limit) ?? [],
+        running: running.map((r) => ({
+          session: r.session,
+          bot: r.bot,
+          title: r.task?.trim() || names.get(r.session) || '',
+          at: r.since || Date.now(),
+        })),
+        pending: (svc<ArisApprovalsPort>('arisApprovals')?.list?.() ?? []).map((a) => ({
+          id: a.id,
+          bot: a.bot,
+          // Bot trong đội: mã phiên con nằm sau `member:`; bot ngoài: mã lần chạy.
+          session: a.run.startsWith('member:') ? a.run.slice(7) : a.run,
+          what: a.target || a.tool || a.kind,
+          at: Date.parse(a.at) || Date.now(),
+        })),
       },
       limit,
     )
+  }
+
+  /** Thư mục làm việc của các phiên (từ danh sách phiên của dsh), nhớ 1 phút. */
+  let cwds: { at: number; byId: Map<string, string> } | undefined
+  async function cwdOf(sid: string): Promise<string | undefined> {
+    const sc = svc<SessionListPort>('sessionController')
+    if (!sc?.list) return undefined
+    if (!cwds || Date.now() - cwds.at > CWD_TTL_MS) {
+      const ac = new AbortController()
+      const v = await sc.list({}, ac.signal).catch(() => undefined)
+      cwds = {
+        at: Date.now(),
+        byId: new Map(
+          (v?.items ?? []).flatMap((x) => (x.cwd ? [[String(x.sessionId), x.cwd] as const] : [])),
+        ),
+      }
+    }
+    return cwds.byId.get(sid)
   }
 
   async function statsResponse(rangeParam: string | null) {
@@ -459,7 +524,7 @@ export async function apply(ctx: Context): Promise<void> {
       : undefined
   }
 
-  async function replay(sid: string, only?: { n: number; full: boolean }) {
+  async function replay(sid: string, only?: { n: number; full: boolean }, fullText = false) {
     const entries = await readLog(sid)
     if (!entries.length) return undefined
     const calls = [...callsT.entries()].map(([, r]) => r).filter((r) => r.session === sid)
@@ -470,6 +535,7 @@ export async function apply(ctx: Context): Promise<void> {
       ) ?? []
     const steps = buildSteps(entries, calls, events, blocked, {
       ...(only?.full ? { limit: FULL_CHARS } : {}),
+      ...(fullText ? { fullText: true } : {}),
       cost: costOf,
     })
     if (only) return steps.find((s) => s.n === only.n)
@@ -500,6 +566,27 @@ export async function apply(ctx: Context): Promise<void> {
     }
   }
 
+  /**
+   * Kết quả của một phiên (`?result=<phiên>`): câu trả lời cuối, tệp đã ghi hay sửa, trạng thái. Phiên không đọc được
+   * log (bot ngoài chạy bằng mã lần chạy, phiên đã xoá) thì không có kết quả.
+   */
+  async function resultOf(sid: string) {
+    const entries = await readLog(sid)
+    if (!entries.length) return undefined
+    const b = bots()
+    const out = sessionResult(entries, {
+      running: (b?.live.runningSessions() ?? []).includes(sid),
+      waiting: b?.live.sessionState(sid) === 'waiting',
+      cwd: await cwdOf(sid),
+    })
+    const rows = [...sessionsT.entries()].map(([, r]) => r).filter((r) => r.session === sid)
+    const bot = rows.sort((a, z) => z.lastAt - a.lastAt)[0]?.bot || (b?.botOf(sid).id ?? '')
+    // Tên việc được giao nếu có, không thì tên phiên.
+    const task = b?.live.activity.find((a) => a.session === sid && a.task)?.task
+    const title = task?.trim() || (await titlesOf([sid])).get(sid) || ''
+    return { session: sid, bot, ...botView(bot), title, ...out }
+  }
+
   ctx.inject(['connection'], (ctx) => {
     ctx.effect(() => {
       const dispose = ctx.connection.fetch.register({
@@ -512,7 +599,17 @@ export async function apply(ctx: Context): Promise<void> {
             const sid = q.get('replay')
             if (q.get('feed')) {
               const limit = Math.min(100, Math.max(1, Math.trunc(Number(q.get('limit'))) || 30))
-              return json({ feed: feedResponse(limit) })
+              return json({ feed: await feedResponse(limit, q.get('range')) })
+            }
+            const result = q.get('result')
+            if (result !== null) {
+              if (!result || result.length > 200 || /[\s/\\]/.test(result))
+                return json({ error: 'mã phiên không hợp lệ' }, 400)
+              const out = await resultOf(result).catch((e: unknown) => {
+                logger.warn('đọc kết quả phiên %s: %s', result, String(e))
+                return undefined
+              })
+              return out ? json(out) : json({ error: 'không đọc được phiên này' }, 404)
             }
             if (!sid) return json(await statsResponse(q.get('range')))
             if (sid.length > 200 || /[\s/\\]/.test(sid)) return json({ error: 'mã phiên không hợp lệ' }, 400)
@@ -522,7 +619,7 @@ export async function apply(ctx: Context): Promise<void> {
               const step = await replay(sid, { n, full: q.get('full') === '1' })
               return step ? json(step) : json({ error: 'không có bước này' }, 404)
             }
-            const out = await replay(sid).catch((e: unknown) => {
+            const out = await replay(sid, undefined, q.get('text') === 'full').catch((e: unknown) => {
               logger.warn('đọc phiên %s: %s', sid, String(e))
               return undefined
             })

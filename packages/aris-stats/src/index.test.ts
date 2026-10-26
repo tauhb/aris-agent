@@ -58,7 +58,11 @@ function setup(extra: Record<string, unknown> = {}) {
       },
       live: {
         runningSessions: () => ['s-run'],
-        activity: [{ bot: 'lam', kind: 'done', task: 'So 3 đối thủ', at: Date.now() - 1000 }],
+        runningInfo: () => [] as { session: string; bot: string; task?: string; since: number }[],
+        sessionState: () => 'idle',
+        activity: [
+          { bot: 'lam', kind: 'done', task: 'So 3 đối thủ', session: 's-done', at: Date.now() - 1000 },
+        ],
       },
     },
     arisRoutine: {
@@ -71,6 +75,7 @@ function setup(extra: Record<string, unknown> = {}) {
       isLarkSession: (s: string) => flags.lark.has(s),
     },
     arisJobs: { list: () => [{ session: 's-job', parentSession: 's-chat' }] },
+    arisApprovals: { list: () => [] as Rec[] },
     arisSkills: { skillEvents: () => ({ enabled: 3, rolledBack: 1 }) },
     arisGuard: {
       blocked: () => [],
@@ -353,5 +358,197 @@ describe('dòng Vừa làm gì', () => {
     expect(all.body.feed[0]).toMatchObject({ bot: 'aris', tone: 'warn', what: 'Giọng văn nào?' })
     const two = (await s.get('?feed=1&limit=2')) as unknown as { body: { feed: Rec[] } }
     expect(two.body.feed).toHaveLength(2)
+  })
+
+  it('việc xong mang mã phiên; phiên đang chạy thành dòng "Đang làm" lấy tên từ việc được giao hay tên phiên', async () => {
+    const bots = {
+      botOf: () => ({ id: 'lam', name: 'Lâm', kind: 'member' }),
+      store: { tagOf: () => undefined, list: () => [] },
+      live: {
+        runningSessions: () => ['s-a', 's-b'],
+        runningInfo: () => [
+          { session: 's-a', bot: 'lam', task: 'Viết bài', since: Date.now() - 5000 },
+          { session: 's-b', bot: 'tho', since: Date.now() - 4000 },
+        ],
+        sessionState: () => 'idle',
+        activity: [
+          { bot: 'lam', kind: 'done', task: 'So 3 đối thủ', session: 's-done', at: Date.now() - 1000 },
+          { bot: 'lam', kind: 'started', task: 'Viết bài', session: 's-a', at: Date.now() - 5000 },
+        ],
+      },
+    }
+    const s = (current = setup({ arisBots: bots }))
+    await s.ready
+    const { body } = (await s.get('?feed=1')) as unknown as { body: { feed: Rec[] } }
+    const running = body.feed.filter((f) => f.kind === 'running')
+    expect(running.map((f) => [f.bot, f.session, f.what])).toEqual([
+      ['tho', 's-b', 'Nghiên cứu đối thủ'],
+      ['lam', 's-a', 'Viết bài'],
+    ])
+    expect(body.feed.find((f) => f.kind === 'done')).toMatchObject({
+      session: 's-done',
+      what: 'So 3 đối thủ',
+    })
+    // Dòng "bắt đầu" của chính phiên đang chạy không hiện thêm lần nữa.
+    expect(body.feed.some((f) => f.kind === 'started')).toBe(false)
+  })
+
+  it('yêu cầu quyền còn treo thành dòng chờ có mã duyệt và mã phiên con', async () => {
+    const s = (current = setup({
+      arisApprovals: {
+        list: () => [
+          {
+            id: 'ap-1',
+            run: 'member:s-an',
+            bot: 'an',
+            kind: 'run',
+            target: 'gửi email',
+            at: new Date().toISOString(),
+          },
+          { id: 'ap-2', run: 'run-9', bot: 'kiet', kind: 'edit', tool: 'Edit', at: new Date().toISOString() },
+        ],
+      },
+    }))
+    await s.ready
+    const { body } = (await s.get('?feed=1')) as unknown as { body: { feed: Rec[] } }
+    const waiting = body.feed.filter((f) => f.approval)
+    expect(waiting.map((f) => [f.approval, f.bot, f.session, f.kind, f.what])).toEqual(
+      expect.arrayContaining([
+        ['ap-1', 'an', 's-an', 'asked', 'gửi email'],
+        ['ap-2', 'kiet', 'run-9', 'asked', 'Edit'],
+      ]),
+    )
+  })
+
+  it('khoảng: mặc định 24 giờ, today từ nửa đêm, 7d lấy việc cũ hơn một ngày', async () => {
+    const old = Date.now() - 3 * 86_400_000
+    const bots = {
+      botOf: () => ({ id: 'lam', name: 'Lâm', kind: 'member' }),
+      store: { tagOf: () => undefined, list: () => [] },
+      live: {
+        runningSessions: () => [],
+        runningInfo: () => [],
+        sessionState: () => 'idle',
+        activity: [
+          { bot: 'lam', kind: 'done', task: 'Mới', session: 's1', at: Date.now() - 1000 },
+          { bot: 'lam', kind: 'done', task: 'Cũ', session: 's2', at: old },
+        ],
+      },
+    }
+    const s = (current = setup({ arisBots: bots }))
+    await s.ready
+    const feed = async (q: string) =>
+      ((await s.get(q)) as unknown as { body: { feed: Rec[] } }).body.feed
+        .filter((f) => f.kind === 'done')
+        .map((f) => f.what)
+    expect(await feed('?feed=1')).toEqual(['Mới'])
+    expect(await feed('?feed=1&range=7d')).toEqual(['Mới', 'Cũ'])
+  })
+})
+
+describe('kết quả của một phiên', () => {
+  const log = (extra: Rec[] = []) => ({
+    observeSession: async () => ({
+      events: [
+        {
+          type: 'user/message',
+          time: 1000,
+          data: { role: 'user', content: [{ type: 'text', text: 'Làm bảng' }], source: { kind: 'user' } },
+        },
+        {
+          type: 'tool/call',
+          time: 1500,
+          data: {
+            callId: 'c1',
+            name: 'write',
+            arguments: JSON.stringify({ file_path: 'bang-so-sanh.csv', content: 'x' }),
+          },
+        },
+        {
+          type: 'assistant/message',
+          time: 2000,
+          data: {
+            turn: 1,
+            step: 2,
+            message: {
+              role: 'assistant',
+              content: [{ type: 'text', text: 'Xong **bảng** rồi.' }],
+              source: { kind: 'model' },
+            },
+          },
+        },
+        { type: 'turn/end', time: 2100, data: { turn: 1, reason: { kind: 'completed' } } },
+        ...extra,
+      ],
+      [Symbol.dispose]() {},
+    }),
+    readTitleSnapshots: async (ids: string[]) =>
+      ids.map((sessionId) => ({ sessionId, status: 'fulfilled', value: { title: { title: 'Tên phiên' } } })),
+  })
+
+  it('trả bot, tên việc, trạng thái, toàn văn câu cuối và tệp đã ghi', async () => {
+    const s = (current = setup({ sessionQuery: log() }))
+    await s.ready
+    const { status, body } = await s.get('?result=s-done')
+    expect(status).toBe(200)
+    expect(body).toMatchObject({
+      session: 's-done',
+      bot: 'aris',
+      title: 'So 3 đối thủ',
+      status: 'done',
+      text: 'Xong **bảng** rồi.',
+      files: [{ path: 'bang-so-sanh.csv', name: 'bang-so-sanh.csv' }],
+      at: 2000,
+    })
+  })
+
+  it('phiên đang chạy báo running; không có việc được giao thì lấy tên phiên; mã sai thì 400, không đọc được thì 404', async () => {
+    const s = (current = setup({ sessionQuery: log() }))
+    await s.ready
+    const run = await s.get('?result=s-run')
+    expect(run.body).toMatchObject({ status: 'running', title: 'Tên phiên' })
+    expect((await s.get('?result=a/b')).status).toBe(400)
+    expect((await s.get('?result=')).status).toBe(400)
+    const none = (current = setup({
+      sessionQuery: {
+        observeSession: async () => {
+          throw new Error('không có')
+        },
+      },
+    }))
+    await none.ready
+    expect((await none.get('?result=s-x')).status).toBe(404)
+  })
+
+  it('phát lại với text=full giữ đủ chữ tin trợ lý, mặc định vẫn cắt', async () => {
+    const long = 'Dài. '.repeat(2000)
+    const s = (current = setup({
+      sessionQuery: {
+        observeSession: async () => ({
+          events: [
+            {
+              type: 'assistant/message',
+              time: 1,
+              data: {
+                turn: 1,
+                step: 1,
+                message: {
+                  role: 'assistant',
+                  content: [{ type: 'text', text: long }],
+                  source: { kind: 'model' },
+                },
+              },
+            },
+          ],
+          [Symbol.dispose]() {},
+        }),
+        readTitleSnapshots: async () => [],
+      },
+    }))
+    await s.ready
+    const cut = (await s.get('?replay=s-1')).body.steps[0] as Rec
+    expect(cut.bodyFull).toBe(false)
+    const full = (await s.get('?replay=s-1&text=full')).body.steps[0] as Rec
+    expect(full).toMatchObject({ bodyFull: true, body: long })
   })
 })

@@ -12,6 +12,8 @@ export interface ActivityItem {
   kind: 'assigned' | 'started' | 'done' | 'failed' | 'waiting'
   /** Việc (khi biết, từ lúc Commander giao). */
   task?: string | undefined
+  /** Mã phiên của việc (bot ngoài: mã lần chạy); Văn phòng dùng để mở kết quả và chat đúng phiên. */
+  session?: string | undefined
   at: number
 }
 
@@ -32,7 +34,16 @@ export interface BotLive {
 
 /** "Xong" hay "lỗi" chỉ hiện một lúc rồi về "rảnh". */
 export const RECENT_MS = 30 * 60_000
-const MAX_ACTIVITY = 30
+/** Số mục việc gần đây giữ trong bộ nhớ (cột "Vừa làm gì" của Văn phòng xem được 7 ngày). */
+const MAX_ACTIVITY = 200
+
+/** Một phiên đang chạy: bot, việc được giao (khi biết) và lúc phiên bắt đầu chạy. */
+export interface RunningSession {
+  session: string
+  bot: string
+  task?: string | undefined
+  since: number
+}
 
 export class LiveTracker {
   private running = new Map<string, Set<string>>()
@@ -43,6 +54,8 @@ export class LiveTracker {
   private since = new Map<string, number>()
   /** Phiên → việc được giao. */
   private tasks = new Map<string, string>()
+  /** Phiên → lúc bắt đầu chạy (phiên đang chạy). */
+  private startedAt = new Map<string, number>()
   readonly activity: ActivityItem[] = []
 
   constructor(
@@ -71,9 +84,10 @@ export class LiveTracker {
   /** Commander giao việc cho bot (phiên con khi đã biết). */
   assigned(bot: string, task: string, sessionId?: string) {
     if (sessionId) this.tasks.set(sessionId, task)
-    this.log({ bot, kind: 'assigned', task })
+    this.log({ bot, kind: 'assigned', task, ...(sessionId ? { session: sessionId } : {}) })
     // Bot mới thường đã chạy trước lúc Commander kịp ghi việc: ghi luôn "bắt đầu".
-    if (sessionId && this.running.get(bot)?.has(sessionId)) this.log({ bot, kind: 'started', task })
+    if (sessionId && this.running.get(bot)?.has(sessionId))
+      this.log({ bot, kind: 'started', task, session: sessionId })
   }
 
   /** Gắn việc cho phiên con khi biết mã phiên sau lúc giao. */
@@ -87,18 +101,20 @@ export class LiveTracker {
     if (!set) this.running.set(bot, (set = new Set()))
     if (set.size === 0) this.since.set(bot, this.now())
     set.add(sessionId)
+    this.startedAt.set(sessionId, this.now())
     const task = this.tasks.get(sessionId)
-    if (task) this.log({ bot, kind: 'started', task })
+    if (task) this.log({ bot, kind: 'started', task, session: sessionId })
   }
 
   turnEnd(sessionId: string, reason: string) {
     const bot = this.botOf(sessionId)
     this.running.get(bot)?.delete(sessionId)
+    this.startedAt.delete(sessionId)
     const task = this.tasks.get(sessionId)
     if (reason === 'completed' || reason === 'error') {
       const status = reason === 'completed' ? 'done' : 'failed'
       this.last.set(bot, { status, at: this.now(), task })
-      if (task) this.log({ bot, kind: status, task })
+      if (task) this.log({ bot, kind: status, task, session: sessionId })
     }
     this.since.set(bot, this.now())
   }
@@ -109,17 +125,19 @@ export class LiveTracker {
     if (!set) this.running.set(bot, (set = new Set()))
     if (set.size === 0) this.since.set(bot, this.now())
     set.add(runId)
+    this.startedAt.set(runId, this.now())
     this.tasks.set(runId, task)
-    this.log({ bot, kind: 'started', task })
+    this.log({ bot, kind: 'started', task, session: runId })
   }
 
   /** Lần chạy của bot ngoài kết thúc: xong hay vấp. */
   externalEnd(bot: string, runId: string, ok: boolean) {
     this.running.get(bot)?.delete(runId)
+    this.startedAt.delete(runId)
     const task = this.tasks.get(runId)
     const status = ok ? 'done' : 'failed'
     this.last.set(bot, { status, at: this.now(), task })
-    if (task) this.log({ bot, kind: status, task })
+    if (task) this.log({ bot, kind: status, task, session: runId })
     this.since.set(bot, this.now())
   }
 
@@ -130,7 +148,8 @@ export class LiveTracker {
     else this.waiting.set(bot, n)
     this.since.set(bot, this.now())
     const task = runId ? this.tasks.get(runId) : undefined
-    if (on) this.log({ bot, kind: 'waiting', ...(task ? { task } : {}) })
+    if (on)
+      this.log({ bot, kind: 'waiting', ...(task ? { task } : {}), ...(runId ? { session: runId } : {}) })
   }
 
   waitStart(sessionId: string) {
@@ -138,7 +157,7 @@ export class LiveTracker {
     this.waiting.set(bot, (this.waiting.get(bot) ?? 0) + 1)
     this.waitingSessions.set(sessionId, (this.waitingSessions.get(sessionId) ?? 0) + 1)
     this.since.set(bot, this.now())
-    this.log({ bot, kind: 'waiting', task: this.tasks.get(sessionId) })
+    this.log({ bot, kind: 'waiting', task: this.tasks.get(sessionId), session: sessionId })
   }
 
   waitEnd(sessionId: string) {
@@ -163,6 +182,20 @@ export class LiveTracker {
     const out = new Set<string>()
     for (const set of this.running.values()) for (const id of set) out.add(id)
     return [...out]
+  }
+
+  /** Mọi phiên đang chạy kèm bot, việc được giao và lúc bắt đầu (dòng "Đang làm" của Văn phòng). */
+  runningInfo(): RunningSession[] {
+    const out: RunningSession[] = []
+    for (const [bot, set] of this.running)
+      for (const session of set)
+        out.push({
+          session,
+          bot,
+          task: this.tasks.get(session),
+          since: this.startedAt.get(session) ?? this.since.get(bot) ?? 0,
+        })
+    return out
   }
 
   /** Số phiên đang đợi người dùng duyệt hoặc trả lời. */

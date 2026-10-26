@@ -414,7 +414,7 @@ const blocksOf = (content: unknown): Block[] =>
       : []
 
 /** Chữ của các khối `type` (mặc định `text`); ảnh, tệp thành `[image]`, `[file]` khi lấy chữ thường. */
-function textOf(content: unknown, type = 'text'): string {
+export function textOf(content: unknown, type = 'text'): string {
   const parts: string[] = []
   for (const b of blocksOf(content)) {
     if (b?.type === type && typeof b.text === 'string') parts.push(b.text)
@@ -471,7 +471,7 @@ export function describeCall(tool: string, args: unknown): string {
   return json === '{}' ? '' : oneLine(json, 140)
 }
 
-function parseJson(s: string): unknown {
+export function parseJson(s: string): unknown {
   try {
     return JSON.parse(s)
   } catch {
@@ -498,6 +498,8 @@ interface Draft extends Step {
 export interface BuildOptions {
   /** Cắt `body` và `out` ở bấy nhiêu ký tự (mặc định `STEP_CHARS`). */
   limit?: number
+  /** Giữ đủ chữ của tin người dùng và tin trợ lý (bảng chat của Văn phòng); bước khác vẫn cắt ở `limit`. */
+  fullText?: boolean
   /** Tính tiền khi không ghép được lần gọi đã ghi (phiên có trước khi có thống kê). */
   cost?: (
     provider: string,
@@ -797,7 +799,12 @@ export function buildSteps(
   for (const d of approvals) insertAt(d, d.callId ? byCall.get(d.callId) : undefined)
   for (const d of rest.sort((a, z) => a.at - z.at)) insertAt(d)
 
-  return all.map((d, i) => finish({ ...d, n: i + 1 }, limit))
+  return all.map((d, i) =>
+    finish(
+      { ...d, n: i + 1 },
+      opts.fullText && (d.type === 'user' || d.type === 'assistant') ? FULL_CHARS : limit,
+    ),
+  )
 }
 
 function approvalStep(a: {

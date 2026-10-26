@@ -143,6 +143,8 @@ export interface ActivityItem {
   bot: string
   kind: 'assigned' | 'started' | 'done' | 'failed' | 'waiting'
   task?: string
+  /** Mã phiên của việc (bot ngoài: mã lần chạy). */
+  session?: string
   at: number
 }
 

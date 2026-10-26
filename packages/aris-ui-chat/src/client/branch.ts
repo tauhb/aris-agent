@@ -2,24 +2,12 @@
  * Đọc một lần gọi công cụ `subagent` của dsh thành một nhánh "dòng việc": bot nào
  * nhận, việc gì, đang ở bước nào. Thuần, không phụ thuộc React.
  */
-import { MASCOTS, type BotStatus } from '@aris/ui-kit'
+import { MASCOTS, USER_REJECTED, type BotStatus, type SubagentCall } from '@aris/ui-kit'
 import { currentTeam } from '@aris/ui-kit/react'
 import type { ChatKey } from './locale.js'
 
-/** Lần gọi ở ba pha mà dsh truyền cho toolview (`tool.call.toolview`). */
-export type SubagentCall =
-  | { phase: 'preparing'; block: { callId: string } }
-  | { phase: 'start'; block: { callId: string; argsRaw: string } }
-  | {
-      phase: 'result'
-      block: {
-        callId: string
-        call: { argsRaw: string } | null
-        content: readonly { type: string; text?: string }[]
-        isError: boolean
-        error?: { code?: string; message?: string } | undefined
-      }
-    }
+// Đọc lần gọi `giao_viec` nằm ở `@aris/ui-kit` để Văn phòng dùng lại đúng dữ liệu của khung chat.
+export { dispatchItems, type DispatchItem, type SubagentCall } from '@aris/ui-kit'
 
 export interface SubagentArgs {
   description?: string | undefined
@@ -87,9 +75,6 @@ export interface BranchStepModel {
   params?: Record<string, unknown>
 }
 
-/** Lời dsh trả về khi người dùng từ chối lần gọi công cụ. */
-const REJECTED = /user rejected tool/i
-
 /** Các bước hiện trong nhánh theo pha của lần gọi và trạng thái phiên bot con. */
 export function branchSteps(call: SubagentCall, child: { running: boolean } | undefined): BranchStepModel[] {
   if (call.phase !== 'result') return [{ status: 'working', key: 'branch.preparing' }]
@@ -97,7 +82,7 @@ export function branchSteps(call: SubagentCall, child: { running: boolean } | un
   if (error?.code === 'interrupted') return [{ status: 'idle', key: 'branch.stopped' }]
   if (isError) {
     const text = content.find((c) => c.text)?.text ?? error?.message ?? ''
-    if (REJECTED.test(text)) return [{ status: 'failed', key: 'branch.rejected' }]
+    if (USER_REJECTED.test(text)) return [{ status: 'failed', key: 'branch.rejected' }]
     return [{ status: 'failed', key: 'branch.failed', params: { error: text.split('\n')[0] } }]
   }
   const received: BranchStepModel = { status: 'done', key: 'branch.received' }
@@ -106,76 +91,4 @@ export function branchSteps(call: SubagentCall, child: { running: boolean } | un
     received,
     child.running ? { status: 'working', key: 'branch.running' } : { status: 'done', key: 'branch.done' },
   ]
-}
-
-/** Một việc trong lần gọi `giao_viec` của Commander. */
-export interface DispatchItem {
-  handle: string
-  title?: string | undefined
-  /** Mã phiên của bot (có khi đã giao xong). */
-  sessionId?: string | undefined
-  /** Giao không được (lời báo trong kết quả). */
-  error?: string | undefined
-  /** Bot ngoài: mã lần chạy (không có phiên riêng). */
-  externalRun?: string | undefined
-  /** Người dùng từ chối lần giao (duyệt mỗi lần). */
-  rejected?: boolean | undefined
-}
-
-/** Đọc lần gọi `giao_viec`: các việc trong tham số, ghép với phiên của từng bot trong kết quả. */
-export function dispatchItems(call: SubagentCall): DispatchItem[] {
-  const raw =
-    call.phase === 'start'
-      ? call.block.argsRaw
-      : call.phase === 'result'
-        ? call.block.call?.argsRaw
-        : undefined
-  let items: DispatchItem[] = []
-  try {
-    const v = JSON.parse(raw ?? '{}') as { viec?: { bot?: unknown; tieu_de?: unknown; noi_dung?: unknown }[] }
-    items = (v.viec ?? []).flatMap((x) =>
-      typeof x.bot === 'string'
-        ? [
-            {
-              handle: x.bot.replace(/^@/, '').toLowerCase(),
-              title:
-                typeof x.tieu_de === 'string'
-                  ? x.tieu_de
-                  : typeof x.noi_dung === 'string'
-                    ? x.noi_dung.split('\n')[0]
-                    : undefined,
-            },
-          ]
-        : [],
-    )
-  } catch {
-    // Tham số đang truyền dở: chưa có việc nào để vẽ.
-  }
-  if (call.phase !== 'result') return items
-  const text = call.block.content.map((c) => c.text ?? '').join('\n')
-  for (const line of text.split('\n')) {
-    const m = line.match(/^- @([a-z0-9-]+)(.*)$/)
-    const item = m && items.find((i) => i.handle === m[1])
-    if (!item) continue
-    const sid = m[2]!.match(/phiên (\S+)$/)?.[1]
-    if (sid) item.sessionId = sid
-    const run = m[2]!.match(/việc ngoài (\S+)$/)?.[1]
-    if (run) item.externalRun = run
-    const err = m[2]!.match(/không giao được — (.*)$/)?.[1]
-    if (err) item.error = err
-  }
-  // Không có dòng của bot: cả lần giao bị chặn (quá giới hạn, người dùng từ chối…), không bot nào nhận.
-  const whole =
-    text
-      .split('\n')
-      .find((l) => l.trim())
-      ?.replace(/^Không giao được:\s*/, '')
-      .trim() || 'không giao được'
-  const rejected = REJECTED.test(text)
-  for (const item of items)
-    if (!item.sessionId && !item.externalRun && !item.error) {
-      item.error = whole
-      if (rejected) item.rejected = true
-    }
-  return items
 }

@@ -460,6 +460,32 @@ describe('dựng các bước phát lại', () => {
     expect(cutText('abc', 2)).toEqual({ text: 'ab', full: false })
   })
 
+  it('fullText giữ đủ chữ của tin người dùng và trợ lý, bước công cụ vẫn cắt', () => {
+    const long = 'Rất dài. '.repeat(1000)
+    const entries: LogEntry[] = [
+      { type: 'user/message', time: T0, data: msg('user', text(long)) },
+      {
+        type: 'assistant/message',
+        time: T0 + 5,
+        data: { turn: 1, step: 1, message: msg('assistant', text(long), { kind: 'model' }) },
+      },
+      {
+        type: 'tool/call',
+        time: T0 + 6,
+        data: { turn: 1, step: 2, callId: 'c', name: 'write', arguments: long },
+      },
+    ]
+    const cut = buildSteps(entries, [], [], [])
+    expect(cut.map((x) => x.body.length)).toEqual([STEP_CHARS, STEP_CHARS, STEP_CHARS])
+    expect(cut[0]!.bodyFull).toBe(false)
+    const full = buildSteps(entries, [], [], [], { fullText: true })
+    expect(full[0]).toMatchObject({ type: 'user', bodyFull: true })
+    expect(full[0]!.body).toBe(long)
+    expect(full[1]).toMatchObject({ type: 'assistant', bodyFull: true })
+    expect(full[1]!.body).toBe(long)
+    expect(full[2]).toMatchObject({ type: 'tool', bodyFull: false })
+  })
+
   it('xin duyệt đứng ngay trước bước công cụ; log phiên hợp với bản ghi events theo callId', () => {
     const entries: LogEntry[] = [
       ...log.slice(0, 7),

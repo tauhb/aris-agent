@@ -115,11 +115,13 @@ export const ownerRecord = z.object({
 })
 export type OwnerRecord = z.infer<typeof ownerRecord>
 
-/** Một mục việc gần đây của đội (giữ 30 mục mới nhất). */
+/** Một mục việc gần đây của đội (nạp lại 200 mục mới nhất khi khởi động). */
 export const activityRecord = z.object({
   bot: z.string(),
   kind: z.enum(['assigned', 'started', 'done', 'failed', 'waiting']),
   task: z.string().optional(),
+  /** Mã phiên của việc (bot ngoài: mã lần chạy). */
+  session: z.string().optional(),
   at: z.number(),
 })
 export type ActivityRecord = z.infer<typeof activityRecord>

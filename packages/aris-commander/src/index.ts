@@ -64,6 +64,7 @@ import { ApprovalCenter, callInput, toolAlias, type ApprovalEvent } from './appr
 import { childEnv, runClaude, stepOf, type DriverHooks } from './claude-driver.js'
 import { runCodex } from './codex-driver.js'
 import { cliVersion, findBinary } from './cli.js'
+import { sessionSend, type SendAgent } from './session-send.js'
 import {
   DEFAULT_SETTINGS,
   SettingsError,
@@ -1635,7 +1636,7 @@ export async function apply(ctx: Context): Promise<void> {
     }
     await externals.put(runId, rec)
     const live = bots().live
-    live.assigned(bot.id, title)
+    live.assigned(bot.id, title, runId)
     live.externalStart(bot.id, runId, title)
     void (domain.table('dispatch') as unknown as Table<DispatchRecord>)
       .put(`${Date.now()}-${bot.handle}`, {
@@ -1809,7 +1810,7 @@ export async function apply(ctx: Context): Promise<void> {
     }
     await externals.put(runId, rec)
     const live = bots().live
-    live.assigned(bot.id, title)
+    live.assigned(bot.id, title, runId)
     live.externalStart(bot.id, runId, title)
     const timer = setTimeout(() => void stopRun(runId, 'timeout'), cfg.timeoutMin * 60_000)
     activeRuns.set(runId, { dispose: () => act.dispose(), timer })
@@ -1965,6 +1966,29 @@ export async function apply(ctx: Context): Promise<void> {
                 return json({ error: 'Phiên này không đang chạy.' }, 409)
               agent.steer(createUserMessage({ content: [{ type: 'text', text }], source: { kind: 'user' } }))
               return json({ ok: true })
+            }
+            // Văn phòng: gửi tin vào một phiên (bảng chat gọn). Bot đang chạy thì chèn vào việc hay xếp sau, phiên rảnh thì
+            // chạy luôn; cùng cách Telegram và Lark gửi tin vào phiên.
+            if (body.op === 'session-send') {
+              const sc = ctx.get('sessionController') as SessionPort | undefined
+              const out = await sessionSend(
+                {
+                  stopped: () =>
+                    (ctx.get('arisGuard') as { stopped?(): boolean } | undefined)?.stopped?.() ?? false,
+                  agentOf: async (sid) => {
+                    const opened = await sc?.resolveAgent?.(SessionId(sid))
+                    return opened && 'agent' in opened ? (opened.agent as SendAgent) : undefined
+                  },
+                  message: (text) =>
+                    createUserMessage({ content: [{ type: 'text', text }], source: { kind: 'user' } }),
+                  track: (sid, title) => {
+                    const b = bots()
+                    if (title && b) b.live.assigned(b.botOf(sid).id, title, sid)
+                  },
+                },
+                body,
+              )
+              return json(out.body, out.status)
             }
             if (body.op === 'room-stop' && body.session) {
               stopRoom(body.session)

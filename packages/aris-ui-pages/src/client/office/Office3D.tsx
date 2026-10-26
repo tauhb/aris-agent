@@ -1,8 +1,8 @@
 /**
  * Tab Tổng quan của Văn phòng, chế độ 3D (bản vẽ `VanPhong3D`): cảnh three.js dựng từ đội thật (mỗi phòng ban một khu,
  * mỗi bot một bàn), thẻ tên HTML bám theo bot (bot rảnh gộp thành một thẻ "Rảnh · N" trên sofa, rê chuột hoặc chọn thì hiện
- * thẻ riêng; thẻ chồng nhau thì giãn ra), ba con số ở góc trên trái, khung "Vừa làm gì" ở góc dưới trái. Bấm vào bot thì
- * `onPick` (nơi gọi mở cùng ngăn kéo với 2D). Cảnh nằm ở `scene3d.ts` và chỉ được nạp khi vào đây, nên người dùng 2D không
+ * thẻ riêng; thẻ chồng nhau thì giãn ra), ba con số ở góc trên trái. "Vừa làm gì" và bảng chat nằm ở cột phải dùng chung
+ * với 2D (`Overview`). Bấm vào bot thì `onPick` (nơi gọi mở bảng chat với bot đó). Cảnh nằm ở `scene3d.ts` và chỉ được nạp khi vào đây, nên người dùng 2D không
  * tải thư viện 3D. Không có WebGL thì gọi `onUnsupported` để quay về 2D.
  */
 import { getMascot } from '@aris/ui-kit'
@@ -10,9 +10,8 @@ import type { TeamLive } from '@aris/ui-kit/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { STATUS_DOT } from './Desk.js'
-import { FeedRow } from './FeedRow.js'
 import { assigneeOf, labelPlan, layoutOffice, spotsFor, spreadLabels, type Occupant } from './layout.js'
-import type { Desk, DeskGroup, Face, FeedItem } from './model.js'
+import type { Desk, DeskGroup } from './model.js'
 import type { Actor, OfficeScene } from './scene3d.js'
 
 type T = PageProps['t']
@@ -39,8 +38,6 @@ export function Office3D({
   cost,
   costNote,
   need,
-  lines,
-  faceOf,
   selected,
   onPick,
   onUnsupported,
@@ -54,8 +51,6 @@ export function Office3D({
   cost: string
   costNote: string
   need: number
-  lines: readonly FeedItem[] | null
-  faceOf: (bot: string) => Face
   selected: string | null
   onPick: (id: string | null) => void
   onUnsupported: () => void
@@ -144,7 +139,6 @@ export function Office3D({
   })
   useEffect(() => scene?.select(selected), [scene, selected])
 
-  const shown = lines?.slice(0, 4)
   return (
     <div className="ap-of-3d" ref={stage}>
       <canvas ref={canvas} role="img" aria-label={t('of.3d.aria')} />
@@ -220,15 +214,6 @@ export function Office3D({
           <b className={need > 0 ? 'warn' : undefined}>{need}</b>
           <span>{t('of.num.waiting')}</span>
         </div>
-      </div>
-      <div className="ap-of-3d-feed">
-        <div className="head">
-          <b>{t('of.feed.title')}</b>
-        </div>
-        {shown?.length === 0 && <div className="none">{t('of.feed.empty')}</div>}
-        {shown?.map((f) => (
-          <FeedRow key={`${f.at}-${f.bot}-${f.kind}-${f.what}`} item={f} t={t} face={faceOf(f.bot)} />
-        ))}
       </div>
     </div>
   )
