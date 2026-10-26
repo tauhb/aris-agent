@@ -680,6 +680,34 @@
       "w": 1440,
       "x": 1520,
       "y": 7920
+    },
+    "SidebarMoi.dc.html": {
+      "h": 900,
+      "page": "vp",
+      "title": "Thanh bên mới · menu Văn phòng, Tự học; Đội hình phương án 3: Aris, bot cần chú ý, bot rảnh thành dải linh vật nhún nhẹ",
+      "w": 260,
+      "x": 0,
+      "y": 0
+    },
+    "VanPhong2D.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "vp",
+      "title": "Văn phòng · chế độ 2D theo dõi — tóm tắt, số liệu, “Cần anh” duyệt ngay, bàn làm việc theo phòng ban, bảng bot đang chọn để nhắn và dừng",
+      "w": 1440,
+      "x": 340,
+      "y": 0,
+      "is_interactive": true
+    },
+    "VanPhong3D.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "vp",
+      "title": "Văn phòng · chế độ 3D văn phòng — mặt bằng các khu phòng ban, bot đi tới bàn, phòng chờ duyệt, góc nghỉ theo trạng thái; cùng bảng bên phải",
+      "w": 1440,
+      "x": 340,
+      "y": 980,
+      "is_interactive": true
     }
   },
   "createdOnFiles": {
@@ -853,12 +881,19 @@
     "ModelAnhVideo.dc.html",
     "HoSoBotModel.dc.html",
     "SoatRanhGioi.dc.html",
-    "DuAnNoi.dc.html"
+    "DuAnNoi.dc.html",
+    "SidebarMoi.dc.html",
+    "VanPhong2D.dc.html",
+    "VanPhong3D.dc.html"
   ],
   "pages": [
     {
       "id": "rv",
       "name": "Revamp nhẹ · đã áp dụng"
+    },
+    {
+      "id": "vp",
+      "name": "Revamp · Thanh bên & Văn phòng"
     },
     {
       "id": "g1",

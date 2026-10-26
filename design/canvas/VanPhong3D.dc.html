@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Văn phòng · 3D</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FCEBE9;--floor:#EDEBE5;--floor2:#E4E1D9}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18;--floor:#1A1C21;--floor2:#22252C}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.m{color:var(--muted)}.mono{font-family:'JetBrains Mono',monospace}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.b2{height:28px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:12.5px;white-space:nowrap}
+.b1{height:28px;padding:0 10px;border:0;border-radius:8px;background:var(--ink);color:var(--panel);font-size:12.5px;font-weight:600;white-space:nowrap}
+.seg{white-space:nowrap;border:0;border-radius:7px;padding:4px 10px;background:transparent;font-size:12.5px;color:var(--muted)}
+.seg.on{background:var(--hover);color:var(--ink);font-weight:600}
+.tab{border:0;background:transparent;padding:8px 2px;margin-right:16px;font-size:13.5px;color:var(--muted);border-bottom:2px solid transparent}
+.tab.on{color:var(--ink);font-weight:600;border-bottom-color:var(--ink)}
+.pill{font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.tile{flex:1 1 90px;padding:10px 12px;border-right:1px solid var(--line)}
+.tile:last-child{border-right:0}
+.tile b{display:block;font-family:'Lexend',sans-serif;font-size:20px;font-variant-numeric:tabular-nums}
+.tile span{font-size:12px;color:var(--muted)}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes work{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-3px) rotate(-4deg)}75%{transform:translateY(-1px) rotate(4deg)}}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(180,83,9,.4)}100%{box-shadow:0 0 0 10px rgba(180,83,9,0)}}
+@keyframes zz{0%{opacity:0;transform:translate(0,0)}50%{opacity:1}100%{opacity:0;transform:translate(6px,-10px)}}
+.a-work{animation:work .9s ease-in-out infinite}
+.a-idle{animation:bob 3.2s ease-in-out infinite}
+.a-wait{animation:bob 1.6s ease-in-out infinite}
+.ring{border-radius:50%;animation:ping 1.6s ease-out infinite}
+.zz{position:absolute;font-size:11px;font-weight:700;color:var(--muted);animation:zz 2.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.a-work,.a-idle,.a-wait,.ring,.zz{animation:none}}
+
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; height: 900px; display: flex; overflow: hidden">
+  <dc-import name="SidebarMoi" active="office" bot="none" hint-size="260px,900px"></dc-import>
+  <main style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; min-height: 0">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 10px 24px 0; flex-wrap: wrap">
+      <span style="display: flex; flex-direction: column"><span style="font-family: 'Lexend', sans-serif; font-weight: 600; font-size: 16px">Văn phòng</span><span class="m" style="font-size: 12px">Đội bot đang làm gì, tốn bao nhiêu, cần {{you}} gì</span></span>
+      <span role="group" aria-label="Chế độ xem" style="margin-left: 12px; display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 2px"><a class="seg" href="VanPhong2D.dc.html" style="text-decoration: none">2D · theo dõi</a><a class="seg on" href="VanPhong3D.dc.html" style="text-decoration: none">3D · văn phòng</a></span>
+      <span class="m mono" style="margin-left: auto; font-size: 12px">10:47:12 · cập nhật 3 giây trước</span>
+      <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px"><input type="checkbox" checked style="accent-color: var(--accent)">Tự cập nhật</label>
+      <button type="button" class="b2" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối">☾</button>
+    </div>
+    <div style="display: flex; padding: 0 24px; border-bottom: 1px solid var(--line)"><button type="button" class="tab on">Tổng quan</button><button type="button" class="tab">Phòng ban · 3</button><button type="button" class="tab">Kanban · 9</button></div>
+    <div style="flex: 1; min-height: 0; display: flex">
+      <div style="flex: 1; min-width: 0; position: relative; overflow: hidden; background: radial-gradient(ellipse at 50% 40%, var(--panel) 0%, var(--bg) 70%)">
+        <div class="card" style="position: absolute; left: 16px; top: 14px; right: 16px; display: flex; flex-wrap: wrap; z-index: 2">
+          <div style="flex: 2 1 280px; padding: 8px 12px; border-right: 1px solid var(--line); font-size: 13px; display: flex; align-items: center"><span>2 việc đang chờ {{you}}. 3 bot đang làm.</span></div>
+          <div class="tile"><b>1,2M</b><span>token</span></div>
+          <div class="tile"><b>0,58</b><span>/ 5 USD</span></div>
+          <div class="tile"><b style="color: var(--warn)">2</b><span>chờ {{you}}</span></div>
+        </div>
+        <div style="position: absolute; left: 0; top: 90px; width: 940px; height: 560px">
+          <svg width="940" height="560" viewBox="0 0 940 560" aria-label="Mặt bằng văn phòng, nhìn nghiêng" role="img"><polygon points="470,40 990,340 522,610 2,310" fill="var(--floor)" stroke="var(--line)"></polygon>
+<polygon points="470,70 678,190 470,310 262,190" fill="var(--accentSoft)" stroke="var(--line)" stroke-width="1.5"></polygon>
+<text x="470" y="102" font-size="12" font-weight="600" fill="var(--muted)" font-family="Lexend, sans-serif">Tăng trưởng</text>
+<polygon points="730,220 938,340 730,460 522,340" fill="var(--okSoft)" stroke="var(--line)" stroke-width="1.5"></polygon>
+<text x="730" y="252" font-size="12" font-weight="600" fill="var(--muted)" font-family="Lexend, sans-serif">Vận hành</text>
+<polygon points="210,220 418,340 262,430 54,310" fill="var(--panel2)" stroke="var(--line)" stroke-width="1.5"></polygon>
+<text x="210" y="252" font-size="12" font-weight="600" fill="var(--muted)" font-family="Lexend, sans-serif">Kỹ thuật</text>
+<polygon points="470,370 574,430 418,520 314,460" fill="var(--warnSoft)" stroke="var(--line)" stroke-width="1.5"></polygon>
+<text x="470" y="402" font-size="12" font-weight="600" fill="var(--muted)" font-family="Lexend, sans-serif">Phòng chờ duyệt</text>
+<polygon points="574,430 678,490 522,580 418,520" fill="var(--floor2)" stroke="var(--line)" stroke-width="1.5"></polygon>
+<text x="574" y="462" font-size="12" font-weight="600" fill="var(--muted)" font-family="Lexend, sans-serif">Góc nghỉ</text>
+<polygon points="439,148 501,184 465,205 402,169" fill="var(--panel)" stroke="var(--line)"></polygon><rect x="431" y="150" width="16" height="11" rx="2" fill="var(--ink)" opacity=".75"></rect>
+<polygon points="522,196 584,232 548,253 486,217" fill="var(--panel)" stroke="var(--line)"></polygon><rect x="514" y="198" width="16" height="11" rx="2" fill="var(--ink)" opacity=".75"></rect>
+<polygon points="699,298 761,334 725,355 662,319" fill="var(--panel)" stroke="var(--line)"></polygon><rect x="691" y="300" width="16" height="11" rx="2" fill="var(--ink)" opacity=".75"></rect>
+<polygon points="782,346 844,382 808,403 746,367" fill="var(--panel)" stroke="var(--line)"></polygon><rect x="774" y="348" width="16" height="11" rx="2" fill="var(--ink)" opacity=".75"></rect>
+<polygon points="210,292 272,328 236,349 174,313" fill="var(--panel)" stroke="var(--line)"></polygon><rect x="202" y="294" width="16" height="11" rx="2" fill="var(--ink)" opacity=".75"></rect>
+<polygon points="293,340 356,376 319,397 257,361" fill="var(--panel)" stroke="var(--line)"></polygon><rect x="285" y="342" width="16" height="11" rx="2" fill="var(--ink)" opacity=".75"></rect>
+<rect x="482" y="490" width="80" height="22" rx="10" fill="var(--panel2)" stroke="var(--line)"></rect>
+<ellipse cx="486" cy="349" rx="60" ry="22" fill="var(--panel)" stroke="var(--accent)" stroke-dasharray="4 4"></ellipse></svg>
+          <button type="button" onClick="{{pick.aris}}" style="position: absolute; left: 457px; top: 279px; width: 58px; height: 58px; border: 0; background: transparent; padding: 0; {{ring.aris}}; border-radius: 50%"><span style="position: absolute; bottom: 64px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 11.5px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; box-shadow: 0 2px 6px rgba(0,0,0,.08)">Aris · giao việc cho Lâm</span><svg class="a-work" width="58" height="58" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg></button><button type="button" onClick="{{pick.lam}}" style="position: absolute; left: 414px; top: 140px; width: 50px; height: 50px; border: 0; background: transparent; padding: 0; {{ring.lam}}; border-radius: 50%"><span style="position: absolute; bottom: 56px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 11.5px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; box-shadow: 0 2px 6px rgba(0,0,0,.08)">Lâm · đọc hocvienc.edu.vn</span><svg class="a-work" width="50" height="50" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><path d="M45 43L43 53M58 41L56 51" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg></button><button type="button" onClick="{{pick.ha}}" style="position: absolute; left: 497px; top: 188px; width: 50px; height: 50px; border: 0; background: transparent; padding: 0; {{ring.ha}}; border-radius: 50%"><span style="position: absolute; bottom: 56px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 11.5px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; box-shadow: 0 2px 6px rgba(0,0,0,.08)">Hạ · viết bài, bản nháp 2</span><svg class="a-work" width="50" height="50" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M41 44Q46.5 36 52 44M57 42Q62.5 34 68 42" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"></path></svg></button><button type="button" onClick="{{pick.mai}}" style="position: absolute; left: 424px; top: 398px; width: 50px; height: 50px; border: 0; background: transparent; padding: 0; {{ring.mai}}; border-radius: 50%"><span style="position: absolute; bottom: 56px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 11.5px; background: var(--warnSoft); border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; box-shadow: 0 2px 6px rgba(0,0,0,.08)">Mai · chờ anh Tầu duyệt</span><svg class="a-wait" width="50" height="50" viewBox="0 0 100 100" aria-hidden="true"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><circle cx="44" cy="58" r="8" fill="#fff"></circle><circle cx="61" cy="58" r="8" fill="#fff"></circle></svg><span class="ring" style="position: absolute; inset: 4px"></span></button><button type="button" onClick="{{pick.tin}}" style="position: absolute; left: 469px; top: 458px; width: 44px; height: 44px; border: 0; background: transparent; padding: 0; {{ring.tin}}; border-radius: 50%"><svg class="a-idle" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M39 50h9M55 49h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg><span class="zz" style="right: 0; top: 0">z</span></button><button type="button" onClick="{{pick.dev}}" style="position: absolute; left: 521px; top: 476px; width: 44px; height: 44px; border: 0; background: transparent; padding: 0; {{ring.dev}}; border-radius: 50%"><svg class="a-idle" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 12C80 12 88 20 88 50C88 80 80 88 50 88C20 88 12 80 12 50C12 20 20 12 50 12Z" fill="#00C972"></path><path d="M43 52h9M60 47h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg><span class="zz" style="right: 0; top: 0">z</span></button>
+        </div>
+        <div class="card" style="position: absolute; left: 16px; bottom: 14px; padding: 8px 12px; font-size: 12px; display: flex; gap: 14px; z-index: 2"><span>🖱 kéo để xoay · cuộn để phóng to · bấm bot để xem bên phải</span><span class="m">Bot đi tới bàn khi làm, sang phòng chờ khi xin duyệt, ra góc nghỉ khi rảnh</span></div>
+        <div class="card" style="position: absolute; right: 16px; bottom: 14px; padding: 6px 10px; font-size: 12px; display: flex; gap: 8px; z-index: 2"><button type="button" class="b2">Toàn cảnh</button><button type="button" class="b2">Theo bot đang chọn</button></div>
+      </div>
+      <aside style="flex: 0 0 320px; border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0">
+        <div style="padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--warnSoft); display: flex; flex-direction: column; gap: 8px">
+          <b style="font-size: 13px; color: var(--warn)">Cần {{you}} · 2</b>
+          <div style="display: flex; gap: 8px; align-items: center; font-size: 12.5px"><svg class="" width="24" height="24" viewBox="0 0 100 100" aria-hidden="true"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><circle cx="44" cy="58" r="8" fill="#fff"></circle><circle cx="61" cy="58" r="8" fill="#fff"></circle></svg><span style="flex: 1; min-width: 0">Mai xin gửi email báo giá</span><button type="button" class="b2">Từ chối</button><button type="button" class="b1">Duyệt</button></div>
+          <div style="display: flex; gap: 8px; align-items: center; font-size: 12.5px"><svg class="" width="24" height="24" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M41 44Q46.5 36 52 44M57 42Q62.5 34 68 42" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"></path></svg><span style="flex: 1; min-width: 0">Hạ hỏi giọng văn bài Facebook</span><button type="button" class="b2">Trả lời</button></div>
+        </div>
+        <div style="padding: 14px 16px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid var(--line)">
+          <sc-if value="{{is.aris}}" hint-placeholder-val="{{ false }}"><svg class="" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg></sc-if><sc-if value="{{is.lam}}" hint-placeholder-val="{{ true }}"><svg class="" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><path d="M45 43L43 53M58 41L56 51" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg></sc-if><sc-if value="{{is.ha}}" hint-placeholder-val="{{ false }}"><svg class="" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M41 44Q46.5 36 52 44M57 42Q62.5 34 68 42" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"></path></svg></sc-if><sc-if value="{{is.mai}}" hint-placeholder-val="{{ false }}"><svg class="" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><circle cx="44" cy="58" r="8" fill="#fff"></circle><circle cx="61" cy="58" r="8" fill="#fff"></circle></svg></sc-if><sc-if value="{{is.tin}}" hint-placeholder-val="{{ false }}"><svg class="" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M39 50h9M55 49h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg></sc-if><sc-if value="{{is.dev}}" hint-placeholder-val="{{ false }}"><svg class="" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 12C80 12 88 20 88 50C88 80 80 88 50 88C20 88 12 80 12 50C12 20 20 12 50 12Z" fill="#00C972"></path><path d="M43 52h9M60 47h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg></sc-if>
+          <span style="flex: 1; min-width: 0"><b style="font-family: 'Lexend', sans-serif">{{sel.name}}</b><span class="m" style="display: block; font-size: 12px">{{sel.role}}</span></span>
+          <span class="pill" style="{{sel.pill}}">{{sel.state}}</span>
+        </div>
+        <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--line)">
+          <span class="m" style="font-size: 12px">Đang làm</span>
+          <span style="font-size: 13.5px">{{sel.task}}</span>
+          <span class="m" style="font-size: 12px">{{sel.meta}}</span>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap"><a class="b2" href="PhatLai.dc.html" style="display: inline-flex; align-items: center; text-decoration: none">Xem từng bước</a><button type="button" class="b2">Mở chat</button><button type="button" class="b2" style="color: var(--danger)">Dừng việc</button></div>
+        </div>
+        <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 0">
+          <span class="m" style="font-size: 12px">Vài bước gần nhất</span>
+          <sc-for list="{{sel.steps}}" as="st" hint-placeholder-count="4"><div style="display: flex; gap: 8px; font-size: 12.5px"><span class="mono m" style="font-size: 11.5px; flex: none">{{st.at}}</span><span>{{st.text}}</span></div></sc-for>
+        </div>
+        <div style="padding: 12px 16px; border-top: 1px solid var(--line); display: flex; gap: 6px">
+          <input placeholder="{{sel.ph}}" aria-label="Nhắn bot đang chọn" style="flex: 1; min-width: 0; height: 32px; box-sizing: border-box; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--ink); font: inherit; font-size: 13px; padding: 0 10px">
+          <button type="button" class="b1" style="height: 32px">Gửi</button>
+        </div>
+        <div class="m" style="padding: 0 16px 12px; font-size: 11.5px">Tin nhắn chèn vào việc đang làm, không mở phiên mới.</div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const sel = s.sel || 'lam';
+    const B = [["aris", "Aris", "Chỉ huy", "", "work", "Đang giao việc “Nghiên cứu 3 đối thủ” cho Lâm", "deepseek-v4-flash", "0,21", "—"], ["lam", "Lâm", "Nghiên cứu", "Tăng trưởng", "work", "Nghiên cứu 3 đối thủ khoá học AI · đang đọc hocvienc.edu.vn", "deepseek-v4-flash", "0,11", "bước 6/14"], ["ha", "Hạ", "Sáng tạo", "Tăng trưởng", "work", "Viết bài Facebook về khoá học · bản nháp 2", "deepseek-v4-pro", "0,19", "bước 3/8"], ["mai", "Mai", "Thư ký", "Vận hành", "wait", "Xin duyệt: gửi email báo giá cho chị Hà", "deepseek-v4-flash", "0,04", "chờ 4 phút"], ["tin", "Tín", "Tài chính", "Vận hành", "idle", "Rảnh từ 08:12 · xong “Báo cáo chi tiêu tuần”", "deepseek-v4-flash", "0,03", "—"], ["dev", "Dev", "Lập trình", "Kỹ thuật", "idle", "Rảnh 2 giờ · lần cuối sửa lỗi build web", "deepseek-v4-pro", "0,00", "—"]];
+    const STEPS = {
+      aris: [['10:41','Nhận yêu cầu “so 3 đối thủ” từ anh Tầu'],['10:42','Chọn Lâm (khớp “nghiên cứu”, 0,92)'],['10:42','Giao việc, trần 0,30 USD']],
+      lam: [['10:43:02','bash curl hocviena.vn · hàng rào chặn'],['10:43:05','web_fetch hocviena.vn'],['10:44:40','Suy nghĩ: so ba bên'],['10:45:10','Đang đọc hocvienc.edu.vn…']],
+      ha: [['10:30','Nhận việc từ anh Tầu'],['10:38','Viết bản nháp 1'],['10:44','Hỏi anh Tầu về giọng văn']],
+      mai: [['10:39','Soạn email báo giá'],['10:43','Xin duyệt gửi email']],
+      tin: [['08:00','Routine: báo cáo chi tiêu tuần'],['08:12','Gửi báo cáo vào Telegram']],
+      dev: [['08:31','Sửa lỗi build web'],['08:40','Xong, chờ việc mới']],
+    };
+    const st = { work: ['đang làm','var(--accent)','var(--accentSoft)'], wait: ['chờ anh Tầu duyệt','var(--warn)','var(--warnSoft)'], idle: ['rảnh','var(--muted)','var(--panel2)'] };
+    const b = B.find((x) => x[0] === sel);
+    const is = {}; B.forEach((x) => { is[x[0]] = x[0] === sel; });
+    const pick = {}; B.forEach((x) => { pick[x[0]] = () => this.setState({ sel: x[0] }); });
+    const ring = {}; B.forEach((x) => { ring[x[0]] = x[0] === sel ? 'outline: 2px solid var(--accent); outline-offset: 2px' : ''; });
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      you: 'anh Tầu', is, pick, ring,
+      sel: {
+        name: b[1], role: b[2] + (b[3] ? ' · ' + b[3] : ''), task: b[5],
+        meta: b[6] + ' · ' + b[7] + ' USD hôm nay' + (b[8] !== '—' ? ' · ' + b[8] : ''),
+        state: st[b[4]][0], pill: 'color:' + st[b[4]][1] + ';background:' + st[b[4]][2],
+        steps: STEPS[sel].map(([at, text]) => ({ at, text })),
+        ph: 'Nhắn ' + b[1] + '…',
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>
