@@ -51,14 +51,25 @@ function setup(extra: Record<string, unknown> = {}) {
           { id: 'lam', name: 'Lâm', kind: 'member', mascot: 'trang-giay' },
         ],
       },
-      live: { runningSessions: () => ['s-run'] },
+      live: {
+        runningSessions: () => ['s-run'],
+        activity: [{ bot: 'lam', kind: 'done', task: 'So 3 đối thủ', at: Date.now() - 1000 }],
+      },
     },
-    arisRoutine: { isRoutine: (s: string) => flags.routine.has(s) },
+    arisRoutine: {
+      isRoutine: (s: string) => flags.routine.has(s),
+      recentRuns: () => [{ at: Date.now() - 3000, bot: 'lam', title: 'Báo cáo tuần', status: 'done' }],
+    },
     arisBrain: { isLibrarian: (s: string) => flags.librarian.has(s) },
     arisChannels: { isChannelSession: (s: string) => flags.channel.has(s) },
     arisJobs: { list: () => [{ session: 's-job', parentSession: 's-chat' }] },
     arisSkills: { skillEvents: () => ({ enabled: 3, rolledBack: 1 }) },
-    arisGuard: { blocked: () => [] },
+    arisGuard: {
+      blocked: () => [],
+      recentBlocked: () => [
+        { at: new Date(Date.now() - 2000).toISOString(), bot: 'lam', tool: 'bash', what: 'curl x' },
+      ],
+    },
     sessionQuery: {
       observeSession: async () => ({
         events: [
@@ -312,5 +323,23 @@ describe('/api/aris/stats', () => {
     }))
     await s.ready
     expect((await s.get('?replay=s-x')).status).toBe(404)
+  })
+})
+
+describe('dòng Vừa làm gì', () => {
+  it('gộp việc của bot, hỏi người dùng, hàng rào chặn và routine xong; cắt theo limit', async () => {
+    const s = (current = setup())
+    await s.ready
+    s.tables.events!.set('e1', {
+      at: Date.now() - 500,
+      session: 's-chat',
+      type: 'hoi',
+      what: 'Giọng văn nào?',
+    })
+    const all = (await s.get('?feed=1')) as unknown as { body: { feed: Rec[] } }
+    expect(all.body.feed.map((f) => f.kind)).toEqual(['asked', 'done', 'blocked', 'routine'])
+    expect(all.body.feed[0]).toMatchObject({ bot: 'aris', tone: 'warn', what: 'Giọng văn nào?' })
+    const two = (await s.get('?feed=1&limit=2')) as unknown as { body: { feed: Rec[] } }
+    expect(two.body.feed).toHaveLength(2)
   })
 })

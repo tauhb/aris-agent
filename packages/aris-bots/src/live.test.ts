@@ -85,3 +85,24 @@ describe('trạng thái theo phiên', () => {
     expect(live.sessionState('s1')).toBe('idle')
   })
 })
+
+describe('mã phiên của bot', () => {
+  it('phiên đang chạy đứng trước phiên đang đợi, không lặp, và hết khi xong', () => {
+    const bots: Record<string, string> = { s1: 'minh', s2: 'minh', s3: 'tho' }
+    const live = new LiveTracker(
+      (s) => bots[s] ?? 'aris',
+      () => 1,
+    )
+    expect(live.of('minh').sessions).toEqual([])
+    live.turnStart('s1')
+    live.turnStart('s3')
+    live.waitStart('s2')
+    live.waitStart('s1')
+    expect(live.of('minh').sessions).toEqual(['s1', 's2'])
+    expect(live.of('tho').sessions).toEqual(['s3'])
+    live.waitEnd('s1')
+    live.waitEnd('s2')
+    live.turnEnd('s1', 'completed')
+    expect(live.of('minh').sessions).toEqual([])
+  })
+})

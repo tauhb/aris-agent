@@ -13,10 +13,13 @@ export interface Route {
 }
 
 export const ROUTES = {
-  map: { kind: 'page', nav: true, order: 5 },
+  office: { kind: 'page', nav: true, order: 5 },
   brain: { kind: 'page', nav: true, order: 6 },
   routine: { kind: 'page', nav: true, order: 7 },
-  kanban: { kind: 'page', nav: true, order: 8 },
+  learn: { kind: 'page', nav: true, order: 8 },
+  // `map` và `kanban` không còn trang riêng: `resolveRoute` đưa về Văn phòng.
+  map: { kind: 'page' },
+  kanban: { kind: 'page' },
   settings: { kind: 'page' },
   memory: { kind: 'page' },
   skills: { kind: 'page' },
@@ -38,6 +41,16 @@ export type RouteId = keyof typeof ROUTES
 export type Params = Readonly<Record<string, string>>
 
 export const isRoute = (id: string): id is RouteId => id in ROUTES
+
+/**
+ * Đường cũ chuyển sang chỗ mới: Bản đồ đội thành Văn phòng, Kanban thành tab Kanban của Văn phòng (giữ tham số
+ * dự án). Hộp duyệt, Ký ức, Thư viện skill vẫn có trang riêng nên không đổi.
+ */
+export function resolveRoute(to: RouteId, params: Params = {}): { to: RouteId; params: Params } {
+  if (to === 'map') return { to: 'office', params }
+  if (to === 'kanban') return { to: 'office', params: { ...params, tab: 'kanban' } }
+  return { to, params }
+}
 
 /** Mã panel dsh của một trang aris. */
 export const panelId = (id: RouteId) => `aris-${id}`

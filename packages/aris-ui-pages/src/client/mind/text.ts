@@ -284,6 +284,11 @@ export const MIND_TEXT = text(
     'run.cp.truncated': '(cut short)',
     'run.diff': 'View changes',
     'run.restore': 'Restore',
+    'lr.title': 'Learning',
+    'lr.tabs': 'Learning views',
+    'lr.tab.inbox': 'Approvals',
+    'lr.tab.memory': 'Memory',
+    'lr.tab.skills': 'Skill library',
   },
   {
     'mem.title': 'Ký ức của {name}',
@@ -563,5 +568,10 @@ export const MIND_TEXT = text(
     'run.cp.truncated': '(đã cắt bớt)',
     'run.diff': 'Xem khác biệt',
     'run.restore': 'Khôi phục',
+    'lr.title': 'Tự học',
+    'lr.tabs': 'Các màn của Tự học',
+    'lr.tab.inbox': 'Hộp duyệt',
+    'lr.tab.memory': 'Ký ức',
+    'lr.tab.skills': 'Thư viện skill',
   },
 )

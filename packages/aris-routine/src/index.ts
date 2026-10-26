@@ -65,6 +65,11 @@ export interface ArisRoutine {
   card(
     sessionId: string,
   ): { title: string; bot: string; name: string; answer: string; suggestion?: string | undefined } | undefined
+  /** Lần chạy đã kết thúc (xong, lỗi, chạm trần tiền) từ lúc `since` (ms), mới trước; dòng "Vừa làm gì" của Văn phòng. */
+  recentRuns(
+    since: number,
+    limit: number,
+  ): { at: number; bot: string; title: string; status: 'done' | 'failed' | 'cap' }[]
 }
 
 interface SessionPort {
@@ -171,6 +176,17 @@ export async function apply(ctx: Context): Promise<void> {
         ...(run.suggestion ? { suggestion: run.suggestion } : {}),
       }
     },
+    recentRuns: (since, limit) =>
+      [...runs.entries()]
+        .map(([, r]) => r)
+        .flatMap((r) => {
+          const at = Date.parse(r.finishedAt ?? '')
+          if (!(at >= since) || (r.status !== 'done' && r.status !== 'failed' && r.status !== 'cap'))
+            return []
+          return [{ at, bot: r.bot, title: routines.get(r.routine)?.title ?? r.routine, status: r.status }]
+        })
+        .sort((a, b) => b.at - a.at)
+        .slice(0, limit),
   } satisfies ArisRoutine)
 
   const runsOf = (routine: string) =>

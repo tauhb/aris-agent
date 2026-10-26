@@ -34,7 +34,7 @@ export interface ApiDeps {
   /** Tạo phiên trong chat riêng, gắn bot, chọn model của bot; trả mã phiên. */
   open: (botId: string) => Promise<string>
   /** Trạng thái trực tiếp và việc gần đây (`?live=1`). */
-  live?: () => unknown
+  live?: () => unknown | Promise<unknown>
   /** Chi phí hôm nay theo phòng ban (USD), để trang Phòng ban hiện thanh ngân sách. */
   spend?: () => Record<string, number>
   /** Danh mục model đang phục vụ (để chọn model riêng cho bot). */
@@ -90,7 +90,7 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
     const q = new URL(request.url).searchParams
     const session = q.get('session')
     if (session) return json({ bot: d.store.botOf(session).id })
-    if (q.get('live') && d.live) return json(d.live())
+    if (q.get('live') && d.live) return json(await d.live())
     const profile = q.get('profile')
     if (profile && d.profile) return json(await d.profile(profile))
     return json(await snapshot(d))

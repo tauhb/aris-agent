@@ -157,6 +157,7 @@ export const AUTO_TEXT = text(
     'kb.col.ready': 'Ready',
     'kb.col.doing': 'In progress',
     'kb.col.review': 'Needs your approval',
+    'kb.approve': 'Approve',
     'kb.col.done': 'Done',
   },
   {
@@ -312,6 +313,7 @@ export const AUTO_TEXT = text(
     'kb.col.ready': 'Sẵn sàng',
     'kb.col.doing': 'Đang làm',
     'kb.col.review': 'Chờ {you} duyệt',
+    'kb.approve': 'Duyệt',
     'kb.col.done': 'Xong',
   },
 )

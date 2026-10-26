@@ -47,19 +47,22 @@ import {
   isRoute,
   navigate,
   panelId,
+  resolveRoute,
   type NavState,
   type Params,
   type RouteId,
 } from './routes.js'
-import { Kanban } from './auto/Kanban.js'
 import { Routine } from './auto/Routine.js'
 import { RoutineNew } from './auto/RoutineNew.js'
 import { Brain } from './brain/Brain.js'
 import { Approvals } from './mind/Approvals.js'
+import { LEARN_CSS, Learn } from './mind/Learn.js'
 import { Memory } from './mind/Memory.js'
 import { Runs } from './mind/Runs.js'
 import { Skill } from './mind/Skill.js'
 import { Skills } from './mind/Skills.js'
+import { Office } from './office/Office.js'
+import { OFFICE_CSS } from './office/styles.js'
 import { SettingsPage } from './settings/SettingsPage.js'
 import { joinProviders } from './settings/provider-data.js'
 import { BotProfile } from './team/Bot.js'
@@ -68,7 +71,6 @@ import { McpDialog } from './team/BotTools.js'
 import { CreateBot } from './team/CreateBot.js'
 import { CreateProject, type ProjectActions } from './team/CreateProject.js'
 import { Department } from './team/Department.js'
-import { TeamMap } from './team/Map.js'
 import { OwnerProfile } from './team/Owner.js'
 import { Search } from './team/Search.js'
 import { NavIcon } from './icons.js'
@@ -184,13 +186,13 @@ const PAGES: Partial<Record<RouteId, ComponentType<PageProps>>> = {
   skill: Skill,
   approvals: Approvals,
   runs: Runs,
-  map: TeamMap,
+  office: Office,
+  learn: Learn,
   bot: BotProfile,
   owner: OwnerProfile,
   department: Department,
   routine: Routine,
   'routine-new': RoutineNew,
-  kanban: Kanban,
   brain: Brain,
 }
 
@@ -223,7 +225,7 @@ type RenderSlot = (
 function injectStyle(): () => void {
   const style = document.createElement('style')
   style.dataset.plugin = '@aris/ui-pages'
-  style.textContent = CSS
+  style.textContent = CSS + OFFICE_CSS + LEARN_CSS
   document.head.appendChild(style)
   return () => style.remove()
 }
@@ -244,11 +246,13 @@ export function apply(ctx: ClientContext): void {
   const store = createNavStore()
   const nav: PageNav = {
     go(to, params) {
-      if (!PAGES[to] && !DIALOGS[to]) return
-      const panel = navigate(store, to, params)
+      // Bản đồ đội và Kanban cũ nay là Văn phòng.
+      const target = resolveRoute(to, params)
+      if (!PAGES[target.to] && !DIALOGS[target.to]) return
+      const panel = navigate(store, target.to, target.params)
       if (panel) {
         service('layout').selectPanel(panel)
-        announceRoute(to, { ...params })
+        announceRoute(target.to, { ...target.params })
       }
     },
     openPanel: (id) => service('layout').selectPanel(id),

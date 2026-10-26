@@ -3,6 +3,7 @@ import type { PageText } from './page.js'
 import { AUTO_TEXT } from './auto/text.js'
 import { BRAIN_TEXT } from './brain/text.js'
 import { MIND_TEXT } from './mind/text.js'
+import { OFFICE_TEXT } from './office/text.js'
 import { SETTINGS_TEXT } from './settings/text.js'
 import { TEAM_TEXT } from './team/text.js'
 import { text } from './page.js'
@@ -15,14 +16,20 @@ export const TEXTS: readonly PageText[] = [
   TEAM_TEXT,
   AUTO_TEXT,
   BRAIN_TEXT,
+  OFFICE_TEXT,
   // Nhãn mục thanh bên của các trang có mục riêng.
   text(
-    { 'nav.map': 'Team map', 'nav.brain': 'Second Brain', 'nav.routine': 'Routines', 'nav.kanban': 'Kanban' },
     {
-      'nav.map': 'Bản đồ đội',
+      'nav.office': 'Office',
+      'nav.brain': 'Second Brain',
+      'nav.routine': 'Routines',
+      'nav.learn': 'Learning',
+    },
+    {
+      'nav.office': 'Văn phòng',
       'nav.brain': 'Second Brain',
       'nav.routine': 'Routine',
-      'nav.kanban': 'Kanban',
+      'nav.learn': 'Tự học',
     },
   ),
 ]

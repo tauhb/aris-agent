@@ -17,12 +17,10 @@ export function NavIcon({ id, size, active }: { id: RouteId; size: number; activ
   const soft = active ? 0.2 : 0
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{ flex: 'none' }}>
-      {id === 'map' && (
+      {id === 'office' && (
         <>
-          <ellipse cx={12} cy={16} rx={9} ry={3.5} {...stroke} />
-          <circle cx={12} cy={8} r={3} {...stroke} fill={fill} fillOpacity={soft} />
-          <circle cx={5.5} cy={15} r={1.6} {...stroke} />
-          <circle cx={18.5} cy={15} r={1.6} {...stroke} />
+          <rect x={3} y={4} width={18} height={16} rx={2} {...stroke} fill={fill} fillOpacity={soft} />
+          <path d="M3 10h18M9 10v10" {...stroke} />
         </>
       )}
       {id === 'brain' && (
@@ -42,11 +40,10 @@ export function NavIcon({ id, size, active }: { id: RouteId; size: number; activ
           <path d="M12 7.5V12l3 2" {...stroke} />
         </>
       )}
-      {id === 'kanban' && (
+      {id === 'learn' && (
         <>
-          <rect x={4} y={4.5} width={4.5} height={15} rx={1.5} {...stroke} fill={fill} fillOpacity={soft} />
-          <rect x={9.75} y={4.5} width={4.5} height={10} rx={1.5} {...stroke} />
-          <rect x={15.5} y={4.5} width={4.5} height={12.5} rx={1.5} {...stroke} />
+          <path d="M12 3l9 5-9 5-9-5z" {...stroke} fill={fill} fillOpacity={soft} />
+          <path d="M7 10.5V16c3 2 7 2 10 0v-5.5" {...stroke} />
         </>
       )}
     </svg>

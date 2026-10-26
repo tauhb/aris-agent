@@ -50,6 +50,8 @@ export interface ArisGuard {
   stopped(): boolean
   /** Các lần hàng rào chặn công cụ trong một phiên (còn giữ trong nhật ký chặn), cũ trước (phát lại phiên, @aris/stats). */
   blocked(sessionId: string): BlockedRecord[]
+  /** Các lần chặn từ lúc `since` (ms), mới trước (dòng "Vừa làm gì" của Văn phòng). */
+  recentBlocked(since: number, limit: number): BlockedRecord[]
 }
 
 interface SpendPort {
@@ -82,6 +84,12 @@ export async function apply(ctx: Context): Promise<void> {
         .map(([, r]) => r)
         .filter((r) => r.session === sessionId)
         .sort((a, z) => a.at.localeCompare(z.at)),
+    recentBlocked: (since, limit) =>
+      [...blockedT.entries()]
+        .map(([, r]) => r)
+        .filter((r) => Date.parse(r.at) >= since)
+        .sort((a, z) => z.at.localeCompare(a.at))
+        .slice(0, limit),
   } satisfies ArisGuard)
 
   /** Việc nền: routine, Thủ thư, kiểm thử skill, phiên khách, thành viên đội và việc được giao. */

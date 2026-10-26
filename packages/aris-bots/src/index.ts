@@ -466,6 +466,46 @@ export async function apply(ctx: Context): Promise<void> {
     }
   }
 
+  // Trạng thái trực tiếp kèm tên phiên đang chạy hay đang đợi (dòng việc của bot khi chưa có việc được giao).
+  // Tên nhớ 5 phút; phiên chưa có tên thì hỏi lại sau 20 giây.
+  const titleCache = new Map<string, { title: string; at: number }>()
+  async function liveView() {
+    const snap = live.snapshot(store.list().map((b) => b.id))
+    const ids = [...new Set(Object.values(snap.status).flatMap((l) => l.sessions))]
+    const now = Date.now()
+    const stale = (id: string) => {
+      const c = titleCache.get(id)
+      return !c || now - c.at > (c.title ? 300_000 : 20_000)
+    }
+    const want = ids.filter(stale)
+    const query = ctx.get('sessionQuery') as
+      | {
+          readTitleSnapshots(
+            ids: unknown[],
+          ): Promise<{ sessionId: string; status: string; value?: { title?: { title?: string } } }[]>
+        }
+      | undefined
+    if (want.length && query) {
+      const rs = await query.readTitleSnapshots(want.map((id) => SessionId(id))).catch(() => [])
+      const got = new Set<string>()
+      for (const r of rs)
+        if (r.status === 'fulfilled') {
+          // Bỏ tiền tố "[Phòng nhóm · …]" của phiên con.
+          const title = r.value?.title?.title?.replace(/^\[[^\]]*(\]|$)\s*/, '').trim() ?? ''
+          titleCache.set(r.sessionId, { title, at: now })
+          got.add(r.sessionId)
+        }
+      for (const id of want) if (!got.has(id)) titleCache.set(id, { title: '', at: now })
+    }
+    const titles = Object.fromEntries(
+      ids.flatMap((id) => {
+        const t = titleCache.get(id)?.title
+        return t ? [[id, t]] : []
+      }),
+    )
+    return { ...snap, titles }
+  }
+
   async function catalog() {
     const c = await ctx.sessionController.modelCatalog()
     return c.groups.map((g) => ({
@@ -488,7 +528,7 @@ export async function apply(ctx: Context): Promise<void> {
               templates: () => loadTemplates(),
               open,
               catalog,
-              live: () => live.snapshot(store.list().map((b) => b.id)),
+              live: liveView,
               memory: () => ctx.get('arisMemory') as MemoryPort | undefined,
               profile: (bot) => profile(bot),
               mcp,

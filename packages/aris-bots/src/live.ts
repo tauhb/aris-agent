@@ -23,6 +23,11 @@ export interface BotLive {
   since: number
   /** Số phiên của bot đang chạy. */
   running: number
+  /**
+   * Mã phiên đang chạy hoặc đang đợi người dùng, đang chạy trước (bot ngoài: mã lần chạy). Văn phòng dùng
+   * để mở chat, xem bước gần nhất, chen tin và dừng.
+   */
+  sessions: string[]
 }
 
 /** "Xong" hay "lỗi" chỉ hiện một lúc rồi về "rảnh". */
@@ -174,16 +179,24 @@ export class LiveTracker {
     return n
   }
 
+  /** Phiên của bot đang chạy rồi đến phiên đang đợi người dùng (không lặp). */
+  private sessionsOf(bot: string): string[] {
+    const out = new Set(this.running.get(bot) ?? [])
+    for (const [sid, n] of this.waitingSessions) if (n > 0 && this.botOf(sid) === bot) out.add(sid)
+    return [...out]
+  }
+
   of(bot: string): BotLive {
     const running = this.running.get(bot)?.size ?? 0
     const since = this.since.get(bot) ?? 0
-    const runningTask = [...(this.running.get(bot) ?? [])].map((s) => this.tasks.get(s)).find(Boolean)
-    if (this.waiting.get(bot)) return { status: 'waiting', task: runningTask, since, running }
-    if (running > 0) return { status: 'working', task: runningTask, since, running }
+    const sessions = this.sessionsOf(bot)
+    const runningTask = sessions.map((s) => this.tasks.get(s)).find(Boolean)
+    if (this.waiting.get(bot)) return { status: 'waiting', task: runningTask, since, running, sessions }
+    if (running > 0) return { status: 'working', task: runningTask, since, running, sessions }
     const last = this.last.get(bot)
     if (last && this.now() - last.at < RECENT_MS)
-      return { status: last.status, task: last.task, since: last.at, running }
-    return { status: 'idle', since, running }
+      return { status: last.status, task: last.task, since: last.at, running, sessions }
+    return { status: 'idle', since, running, sessions }
   }
 
   snapshot(bots: readonly string[]): { status: Record<string, BotLive>; activity: ActivityItem[] } {

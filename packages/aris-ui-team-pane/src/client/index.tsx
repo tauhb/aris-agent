@@ -25,8 +25,8 @@ export const inject = ['slots', 'locale', 'layout', 'sidebarRightTabs', 'sidebar
 /** Mã kiểu tab bắt đầu của cột phải trong dsh (`dsh-client-ui-sidebar-right`). */
 const GUIDE_ID = '@deepseek-ai/dsh-client-ui-sidebar-right/guide'
 
-/** Trang bản đồ đội (tạm là trang thử của `@aris/web-spike`; G5 thay bằng `@aris/ui-team-map`). */
-const MAP_PANEL = 'aris-map'
+/** Trang Văn phòng (thay Bản đồ đội 3D cũ). */
+const MAP_PANEL = 'aris-office'
 
 function injectStyle(): () => void {
   const style = document.createElement('style')

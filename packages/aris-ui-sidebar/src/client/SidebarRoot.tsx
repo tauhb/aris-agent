@@ -1,6 +1,6 @@
 /**
- * Thanh bên aris theo canvas "Thanh bên dùng chung": logo, Việc mới, các trang
- * (Chat + trang do plugin đăng ký), Đội hình, Dự án, ô chờ duyệt và chủ nhân.
+ * Thanh bên aris theo bản vẽ `SidebarMoi`: logo, Việc mới, bốn trang (Văn phòng, Second Brain, Routine,
+ * Tự học), Đội hình theo trạng thái (Aris, "Cần chú ý", dải "Rảnh"), Dự án, ô chờ duyệt và chủ nhân.
  * Ghép từ bộ thành phần `@aris/ui-kit/react`; giữ nguyên các chỗ cắm của dsh nên
  * plugin khác vẫn cắm vào được.
  */
@@ -10,10 +10,12 @@ import {
   BrandMark,
   Button,
   Dialog,
-  CrownIcon,
   GearIcon,
   GroupLabel,
   IconButton,
+  Mascot,
+  Menu,
+  MenuItem,
   NavItem,
   PanelIcon,
   PlusIcon,
@@ -26,15 +28,18 @@ import {
   latestCommanderSession,
   openBotSession,
   teamAction,
+  useDismiss,
   usePendingApprovals,
   useTeam,
+  useTeamLive,
   type NavRequest,
   type TemplateData,
 } from '@aris/ui-kit/react'
 import { isProjectWorkspace, type TeamMember } from '@aris/ui-kit'
-import { useEffect, useState, type ReactElement } from 'react'
+import { useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import { useTodayCost } from './cost.js'
 import { latestProjectSession, recentSessions } from './projects.js'
+import { countWorking, splitRoster, workLine, type AttentionRow } from './roster.js'
 import type { Translate } from './locale.js'
 import type { PanelEntry, SidebarProps, WorkspaceRow } from './types.js'
 
@@ -44,14 +49,24 @@ const SETTINGS_PANELS = new Set(['plugins'])
 const HIDDEN_PANELS = new Set(['schedules'])
 /** Trang của dsh mà aris đặt tên khác ("Automation tasks" thành Routine). */
 const PANEL_LABELS = {
-  'aris-map': 'panel.map',
+  'aris-office': 'panel.office',
   'aris-brain': 'panel.brain',
   'aris-routine': 'panel.schedules',
-  'aris-kanban': 'panel.kanban',
+  'aris-learn': 'panel.learn',
 } as const
 
-/** Trang con sáng mục cha trên thanh bên (Tạo routine thuộc Routine). */
-const PARENT_PANEL: Record<string, string> = { 'aris-routine-new': 'aris-routine' }
+/**
+ * Trang con sáng mục cha trên thanh bên: Tạo routine thuộc Routine; Hộp duyệt, Ký ức, Thư viện skill thuộc
+ * Tự học; Phòng ban thuộc Văn phòng.
+ */
+const PARENT_PANEL: Record<string, string> = {
+  'aris-routine-new': 'aris-routine',
+  'aris-approvals': 'aris-learn',
+  'aris-memory': 'aris-learn',
+  'aris-skills': 'aris-learn',
+  'aris-skill': 'aris-learn',
+  'aris-department': 'aris-office',
+}
 
 /** Trang aris xem một bot cụ thể, và tham số chứa mã bot (mặc định Aris). */
 const BOT_PAGES: Record<string, string> = { 'aris-bot': 'id', 'aris-memory': 'bot', 'aris-owner': 'bot' }
@@ -65,7 +80,18 @@ function Tip({ label, wide, children }: { label: string; wide: boolean; children
   )
 }
 
-function PanelNav({ panel, wide, props }: { panel: PanelEntry; wide: boolean; props: SidebarProps }) {
+function PanelNav({
+  panel,
+  wide,
+  props,
+  meta,
+}: {
+  panel: PanelEntry
+  wide: boolean
+  props: SidebarProps
+  /** Nhãn nhỏ bên phải: "N đang làm" ở Văn phòng, số việc chờ duyệt ở Tự học. */
+  meta?: ReactNode
+}) {
   const active = props.usePanelInfo((info) => {
     const id = info.activePanelId
     return (id !== null && PARENT_PANEL[id] !== undefined ? PARENT_PANEL[id] : id) === panel.id
@@ -79,6 +105,7 @@ function PanelNav({ panel, wide, props }: { panel: PanelEntry; wide: boolean; pr
         active={active}
         collapsed={!wide}
         icon={props.renderSlot('sidebar.panellist', { size: 18, active }, { only: panel.id })}
+        meta={meta}
         onClick={() => props.selectPanel(panel.id)}
       />
     </Tip>
@@ -88,46 +115,170 @@ function PanelNav({ panel, wide, props }: { panel: PanelEntry; wide: boolean; pr
 function Bot({
   member,
   lead,
-  groupLead,
   current,
   wide,
   t,
   onOpen,
+  line,
 }: {
   member: TeamMember
   lead?: boolean
-  /** Trưởng nhóm của phòng ban. */
-  groupLead?: boolean
+  /** Dòng việc đang làm thay cho ghi chú (Aris lúc đang chạy). */
+  line?: string | undefined
   /** Bot đang được xem ở vùng chính. */
   current?: boolean
   wide: boolean
   t: Translate
   onOpen: () => void
 }) {
-  const tip = groupLead
-    ? `${member.name} · ${t('team.groupLead')} · ${member.note}`
-    : `${member.name} · ${member.note}`
   return (
-    <Tip label={tip} wide={wide}>
+    <Tip label={`${member.name} · ${member.note}`} wide={wide}>
       <BotRow
         mascot={member.mascot ?? member.id}
         name={member.name}
-        note={member.note}
+        note={line || member.note}
         status={member.status}
         statusLabel={t(`status.${member.status}`)}
         lead={lead}
-        badge={
-          groupLead ? (
-            <span role="img" aria-label={t('team.groupLead')}>
-              <CrownIcon size={13} />
-            </span>
-          ) : undefined
-        }
         current={current}
         collapsed={!wide}
         onClick={onOpen}
       />
     </Tip>
+  )
+}
+
+/**
+ * Một bot đang làm hay đang đợi: linh vật, tên, "· phòng ban" và một dòng việc. Màu xanh khi đang làm, cam
+ * khi đợi người dùng duyệt. Bấm tên phòng ban thì mở trang phòng ban, bấm phần còn lại thì mở chat; hai
+ * nút là anh em (không lồng nhau), nút mở chat phủ cả dòng bên dưới.
+ */
+function AttentionBot({
+  row,
+  line,
+  current,
+  t,
+  onOpen,
+}: {
+  row: AttentionRow
+  line: string
+  current: boolean
+  t: Translate
+  onOpen: () => void
+}) {
+  const { member, department, state } = row
+  const note = state === 'waiting' ? [t('team.waiting'), line].filter(Boolean).join(' · ') : line
+  return (
+    <div className={`as-att ${state}`}>
+      <button
+        type="button"
+        className="as-att-hit"
+        aria-label={`${member.name}${department ? ` · ${department.label}` : ''}${note ? ` · ${note}` : ''}`}
+        aria-current={current ? 'page' : undefined}
+        onClick={onOpen}
+      />
+      <span className="as-mv">
+        <Mascot id={member.mascot ?? member.id} size={28} motion={member.status} seed={member.name} />
+      </span>
+      <span className="txt">
+        <span className="nm">
+          {member.name}
+          {department && (
+            <button
+              type="button"
+              className="as-dept"
+              title={t('team.openGroup', { name: department.label })}
+              onClick={() => arisNavigate('department', { id: department.id })}
+            >
+              · {department.label}
+            </button>
+          )}
+        </span>
+        {note && <span className="note">{note}</span>}
+      </span>
+    </div>
+  )
+}
+
+/** Dải linh vật của các bot đang rảnh (hay vừa xong, vừa vấp): rê chuột ra tên, bấm để mở chat. */
+function RestStrip({
+  members,
+  t,
+  onOpen,
+  onAll,
+}: {
+  members: readonly TeamMember[]
+  t: Translate
+  onOpen: (id: string) => void
+  onAll: () => void
+}) {
+  return (
+    <div className="as-rest">
+      <div className="as-rest-head">
+        <span>{t('team.rest', { n: members.length })}</span>
+        <button type="button" className="as-all" onClick={onAll}>
+          {t('team.seeAll')}
+        </button>
+      </div>
+      {members.length > 0 && (
+        <div className="as-rest-row">
+          {members.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              className="as-m"
+              title={`${m.name} · ${t(`status.${m.status}`)}`}
+              aria-label={`${m.name} · ${t(`status.${m.status}`)}`}
+              onClick={() => onOpen(m.id)}
+            >
+              <Mascot id={m.mascot ?? m.id} size={30} motion={m.status} seed={m.name} />
+              <span className={`as-dot ${m.status}`} aria-hidden="true" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Nút "+" cạnh Đội hình: bot mới hay phòng ban mới. */
+function AddMenu({ t }: { t: Translate }) {
+  const [open, setOpen] = useState(false)
+  const root = useRef<HTMLSpanElement>(null)
+  useDismiss(root, open, () => setOpen(false))
+  return (
+    <span className="a-pop" ref={root}>
+      <IconButton
+        label={t('team.add')}
+        size="sm"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        <PlusIcon size={15} width={2} />
+      </IconButton>
+      {open && (
+        <Menu label={t('team.add')} align="end" width={200}>
+          <MenuItem
+            onSelect={() => {
+              setOpen(false)
+              arisNavigate('create-bot')
+            }}
+          >
+            {t('team.newBot')}
+          </MenuItem>
+          <MenuItem
+            onSelect={() => {
+              setOpen(false)
+              // Dấu thời gian để mở lại hộp tạo được dù lần trước chưa tạo xong.
+              arisNavigate('department', { new: String(Date.now()) })
+            }}
+          >
+            {t('team.newDept')}
+          </MenuItem>
+        </Menu>
+      )}
+    </span>
   )
 }
 
@@ -242,6 +393,9 @@ export function SidebarRoot(props: SidebarProps) {
       ),
     ).then((id) => (id ? props.openSession(id) : props.startSession(homes[0]?.workspaceId)), openChat)
   const team = useTeam(t('team.noDepartment'))
+  const live = useTeamLive()
+  const roster = splitRoster(team.groups)
+  const working = countWorking(team.groups) + (team.commander.status === 'working' ? 1 : 0)
   // Bấm bot: mở lại phiên chat gần nhất với bot đó (chưa có thì tạo).
   // Bot ngoài không có phiên chat riêng: mở hồ sơ.
   const chatWith = (id: string) => () =>
@@ -315,24 +469,32 @@ export function SidebarRoot(props: SidebarProps) {
 
       <div className="nav" role="list" aria-label={t('panels.label')}>
         {navPanels.map((panel) => (
-          <PanelNav key={panel.id} panel={panel} wide={wide} props={props} />
+          <PanelNav
+            key={panel.id}
+            panel={panel}
+            wide={wide}
+            props={props}
+            meta={
+              panel.id === 'aris-office' && working > 0 ? (
+                <span className="as-working">{t('office.working', { n: working })}</span>
+              ) : panel.id === 'aris-learn' && pending.length > 0 ? (
+                <span className="as-count">{pending.length}</span>
+              ) : undefined
+            }
+          />
         ))}
       </div>
 
       <div className="middle">
         <div className="team">
-          {wide && (
-            <SectionHeader
-              title={t('team.title')}
-              action={
-                <IconButton label={t('team.add')} size="sm" onClick={() => arisNavigate('create-bot')}>
-                  <PlusIcon size={15} width={2} />
-                </IconButton>
-              }
-            />
-          )}
+          {wide && <SectionHeader title={t('team.title')} action={<AddMenu t={t} />} />}
           <Bot
             member={team.commander}
+            line={
+              team.commander.status === 'working'
+                ? workLine(live?.status[team.commander.id], live?.titles)
+                : undefined
+            }
             lead
             current={viewedBot === team.commander.id}
             wide={wide}
@@ -342,37 +504,43 @@ export function SidebarRoot(props: SidebarProps) {
           {wide && team.ready && team.members.length === 0 && (
             <PickTemplate t={t} templates={team.templates} />
           )}
-          {team.groups.map((group) => (
-            <div key={group.id || '-'} style={{ display: 'contents' }}>
-              {wide && (
-                <GroupLabel>
-                  {group.id ? (
-                    <button
-                      type="button"
-                      className="grp"
-                      title={t('team.openGroup', { name: group.label })}
-                      onClick={() => arisNavigate('department', { id: group.id })}
-                    >
-                      {group.label}
-                    </button>
-                  ) : (
-                    group.label
-                  )}
-                </GroupLabel>
+          {wide && team.members.length > 0 && (
+            <>
+              {roster.attention.length > 0 && (
+                <>
+                  <GroupLabel>{t('team.attention', { n: roster.attention.length })}</GroupLabel>
+                  {roster.attention.map((row) => (
+                    <AttentionBot
+                      key={row.member.id}
+                      row={row}
+                      line={workLine(live?.status[row.member.id], live?.titles)}
+                      current={viewedBot === row.member.id}
+                      t={t}
+                      onOpen={chatWith(row.member.id)}
+                    />
+                  ))}
+                </>
               )}
-              {group.members.map((m) => (
-                <Bot
-                  key={m.id}
-                  member={m}
-                  groupLead={m.id === group.lead}
-                  current={viewedBot === m.id}
-                  wide={wide}
-                  t={t}
-                  onOpen={chatWith(m.id)}
-                />
-              ))}
-            </div>
-          ))}
+              <RestStrip
+                members={roster.rest}
+                t={t}
+                onOpen={(id) => chatWith(id)()}
+                onAll={() => arisNavigate('office')}
+              />
+            </>
+          )}
+          {/* Thanh thu gọn: chỉ còn linh vật, theo thứ tự phòng ban. */}
+          {!wide &&
+            team.members.map((m) => (
+              <Bot
+                key={m.id}
+                member={m}
+                current={viewedBot === m.id}
+                wide={wide}
+                t={t}
+                onOpen={chatWith(m.id)}
+              />
+            ))}
         </div>
 
         <div className="projects">

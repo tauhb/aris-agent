@@ -27,6 +27,7 @@ import {
   type Source,
   type Table,
 } from './domain.js'
+import { mergeFeed } from './feed.js'
 import {
   addCall,
   buildSteps,
@@ -52,6 +53,7 @@ import {
 } from './policy.js'
 
 export * from './policy.js'
+export * from './feed.js'
 export { KINDS, SOURCES, type Kind, type Source } from './domain.js'
 
 export const name = 'aris-stats'
@@ -86,6 +88,15 @@ interface SessionQueryPort {
 }
 interface AgentLike {
   session: { id: string; header?: { parentSession?: string } }
+}
+interface ArisGuardPort {
+  recentBlocked?(since: number, limit: number): { at: string; bot: string; tool: string; what: string }[]
+}
+interface ArisRoutinePort {
+  recentRuns?(
+    since: number,
+    limit: number,
+  ): { at: number; bot: string; title: string; status: 'done' | 'failed' | 'cap' }[]
 }
 
 const TITLE_TTL_MS = 5 * 60_000
@@ -357,6 +368,37 @@ export async function apply(ctx: Context): Promise<void> {
     return { botName: b?.name ?? id, mascot: b?.mascot ?? id }
   }
 
+  /** Dòng "Vừa làm gì" của Văn phòng: việc của bot, duyệt và hỏi, hàng rào chặn, routine xong, trong 24 giờ qua. */
+  function feedResponse(limit: number) {
+    const since = Date.now() - 86_400_000
+    const b = bots()
+    const botOfSession = (sid: string) => b?.botOf(sid).id ?? ''
+    return mergeFeed(
+      {
+        activity: b?.live.activity.filter((a) => a.at >= since) ?? [],
+        events: [...eventsT.entries()]
+          .map(([, r]) => r)
+          .filter((r) => r.at >= since)
+          .map((r) => ({
+            at: r.at,
+            bot: botOfSession(r.session),
+            type: r.type,
+            what: r.what,
+            tool: r.tool,
+            decision: r.decision,
+          })),
+        blocked: (svc<ArisGuardPort>('arisGuard')?.recentBlocked?.(since, limit) ?? []).map((r) => ({
+          at: Date.parse(r.at),
+          bot: r.bot,
+          tool: r.tool,
+          what: r.what,
+        })),
+        routines: svc<ArisRoutinePort>('arisRoutine')?.recentRuns?.(since, limit) ?? [],
+      },
+      limit,
+    )
+  }
+
   async function statsResponse(rangeParam: string | null) {
     const range = parseRange(rangeParam)
     const now = Date.now()
@@ -467,6 +509,10 @@ export async function apply(ctx: Context): Promise<void> {
           const q = new URL(request.url).searchParams
           try {
             const sid = q.get('replay')
+            if (q.get('feed')) {
+              const limit = Math.min(100, Math.max(1, Math.trunc(Number(q.get('limit'))) || 30))
+              return json({ feed: feedResponse(limit) })
+            }
             if (!sid) return json(await statsResponse(q.get('range')))
             if (sid.length > 200 || /[\s/\\]/.test(sid)) return json({ error: 'mã phiên không hợp lệ' }, 400)
             const n = Number(q.get('step'))

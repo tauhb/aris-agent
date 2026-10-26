@@ -197,6 +197,8 @@ interface SessionPort {
   create(req: { workspaceId?: string }): Promise<{ sessionId: string }>
   /** Agent của phiên, mở lại phiên nguội khi cần. */
   resolveAgent?(id: SessionId): Promise<{ agent: unknown } | { error: unknown }>
+  /** Huỷ lượt đang chạy của phiên (như nút Dừng trong chat). */
+  cancel?(req: { sessionId: SessionId }): Promise<unknown>
   prompt(
     req: { requestId: string; sessionId: string; mode: 'queue'; content: { type: 'text'; text: string }[] },
     signal: AbortSignal,
@@ -1938,6 +1940,31 @@ export async function apply(ctx: Context): Promise<void> {
                 if (e instanceof SettingsError) return json({ error: e.message }, 400)
                 throw e
               }
+            }
+            // Văn phòng: dừng phiên của bot đang chạy, hay chen tin vào việc đang chạy ("Chèn vào việc", như
+            // Telegram khi bot đang bận). Chỉ phiên mà đội đang chạy hay đang đợi mới nhận.
+            if ((body.op === 'session-stop' || body.op === 'session-steer') && body.session) {
+              const sid = body.session
+              const live = (ctx.get('arisBots') as ArisBots | undefined)?.live
+              const known =
+                (live?.runningSessions() ?? []).includes(sid) || live?.sessionState(sid) === 'waiting'
+              if (!known) return json({ error: 'Phiên này không đang chạy.' }, 409)
+              const sc = ctx.get('sessionController') as SessionPort | undefined
+              if (body.op === 'session-stop') {
+                await sc?.cancel?.({ sessionId: SessionId(sid) })
+                return json({ ok: true })
+              }
+              const text = String((body as { text?: unknown }).text ?? '').trim()
+              if (!text || text.length > 4000) return json({ error: 'Tin nhắn trống hoặc quá dài.' }, 400)
+              const opened = await sc?.resolveAgent?.(SessionId(sid)).catch(() => undefined)
+              const agent =
+                opened && 'agent' in opened
+                  ? (opened.agent as { status: string; steer(m: unknown): void })
+                  : undefined
+              if (!agent || agent.status !== 'running')
+                return json({ error: 'Phiên này không đang chạy.' }, 409)
+              agent.steer(createUserMessage({ content: [{ type: 'text', text }], source: { kind: 'user' } }))
+              return json({ ok: true })
             }
             if (body.op === 'room-stop' && body.session) {
               stopRoom(body.session)

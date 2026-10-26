@@ -133,6 +133,8 @@ export interface BotLive {
   task?: string
   since: number
   running: number
+  /** Mã phiên đang chạy hoặc đang đợi (bot ngoài: mã lần chạy), đang chạy trước. */
+  sessions?: string[]
 }
 
 export interface ActivityItem {
@@ -145,6 +147,8 @@ export interface ActivityItem {
 export interface TeamLive {
   status: Record<string, BotLive>
   activity: ActivityItem[]
+  /** Tên các phiên đang chạy hay đang đợi, theo mã phiên (phiên chưa có tên thì không có). */
+  titles?: Record<string, string>
 }
 
 const endpoint = () => new URL('api/aris/bots', document.baseURI)

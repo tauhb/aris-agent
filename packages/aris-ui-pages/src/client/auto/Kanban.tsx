@@ -14,12 +14,15 @@ import {
   Segmented,
   Select,
   TextInput,
+  answerApproval,
   boardAction,
   projectAction,
   useBoard,
+  usePendingApprovals,
   useProjects,
   useTeam,
   type BoardCard,
+  type PendingApproval,
   type ProjectEntry,
   type TeamView,
 } from '@aris/ui-kit/react'
@@ -88,6 +91,8 @@ function Card({
   team,
   members,
   nav,
+  approval,
+  onApproved,
   onError,
 }: {
   t: T
@@ -95,6 +100,9 @@ function Card({
   team: TeamView
   members: readonly string[]
   nav: PageProps['nav']
+  /** Yêu cầu quyền đang chờ của bot nhận thẻ này, nếu có: thẻ ở cột chờ duyệt có nút Duyệt. */
+  approval?: PendingApproval | undefined
+  onApproved: () => void
   onError: (e: string | null) => void
 }) {
   const bot = team.bots.find((b) => b.id === c.bot)
@@ -165,6 +173,25 @@ function Card({
         {bot && <Mascot id={bot.mascot} size={18} />}
         {bot && <b>{bot.name}</b>}
         <span className={c.failed || c.stuck ? 'st bad' : 'st'}>{status}</span>
+        {approval && c.column === 'waiting' && (
+          <Button
+            size="sm"
+            variant="primary"
+            disabled={busy}
+            title={approval.target ?? approval.tool}
+            onClick={() => {
+              setBusy(true)
+              void answerApproval(approval.id, true)
+                .catch(() => false)
+                .then(() => {
+                  setBusy(false)
+                  onApproved()
+                })
+            }}
+          >
+            {t('kb.approve')}
+          </Button>
+        )}
         {c.session && (
           <button
             type="button"
@@ -459,6 +486,7 @@ export function Kanban({ t, nav, params }: PageProps) {
   const projects = useProjects()
   const current = projects?.find((p) => p.workspace === params.project) ?? projects?.[0]
   const board = useBoard(current?.workspace)
+  const [pending, reloadPending] = usePendingApprovals('all')
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState<string | null>(null)
   if (!projects || !current)
@@ -554,7 +582,17 @@ export function Kanban({ t, nav, params }: PageProps) {
                   <span className="n">{list.length}</span>
                 </div>
                 {list.map((c) => (
-                  <Card key={c.id} t={t} c={c} team={team} members={members} nav={nav} onError={setError} />
+                  <Card
+                    key={c.id}
+                    t={t}
+                    c={c}
+                    team={team}
+                    members={members}
+                    nav={nav}
+                    approval={c.session ? pending.find((p) => p.run === `member:${c.session}`) : undefined}
+                    onApproved={reloadPending}
+                    onError={setError}
+                  />
                 ))}
                 {col.id === 'unassigned' && cards.length === 0 ? (
                   <span className="a-muted" style={{ fontSize: 12.5 }}>

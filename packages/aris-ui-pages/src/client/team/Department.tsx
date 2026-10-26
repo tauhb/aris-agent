@@ -359,7 +359,8 @@ function Policy({
   )
 }
 
-function CreateDialog({
+/** Hộp tạo phòng ban (dùng cả ở tab Phòng ban của Văn phòng). */
+export function CreateDialog({
   t,
   team,
   onClose,
@@ -597,7 +598,11 @@ function MoreMenu({ t, onRename, onDelete }: { t: T; onRename: () => void; onDel
 export function Department({ t, nav, params }: PageProps) {
   const team = useTeam()
   const dep = team.departments.find((d) => d.id === params.id) ?? team.departments[0]
-  const [dialog, setDialog] = useState<'create' | 'rename' | 'delete' | null>(null)
+  const [dialog, setDialog] = useState<'create' | 'rename' | 'delete' | null>(params.new ? 'create' : null)
+  // "Phòng ban mới" từ thanh bên: mở thẳng hộp tạo, kể cả khi trang đã mở sẵn.
+  useEffect(() => {
+    if (params.new) setDialog('create')
+  }, [params.new])
   const saved = dep?.policy ?? DEFAULT_POLICY
   const [draft, setDraft] = useState<PolicyData>(saved)
   const [budget, setBudget] = useState(budgetText(saved.budgetUsd))

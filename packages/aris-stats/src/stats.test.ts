@@ -166,6 +166,16 @@ describe('gộp theo ngày, cache, tự chủ, nhật ký', () => {
     expect(overview(records, '30d', NOW).total).toBeCloseTo(99.85, 6)
   })
 
+  it('tổng token của khoảng gồm cả phần gom ngoài phiên và không bị cắt theo 100 dòng nhật ký', () => {
+    const many = Array.from({ length: 130 }, (_, i) =>
+      rec({ day: '2026-10-26', session: `s${i}`, input: 10, output: 5, cacheRead: 0, cacheWrite: 0 }),
+    )
+    const o = overview(many, 'today', NOW)
+    expect(o.tokens).toBe(130 * 15)
+    expect(o.log).toHaveLength(LOG_LIMIT)
+    expect(overview([], 'today', NOW).tokens).toBe(0)
+  })
+
   it('cache = đọc cache / (đầu vào chưa cache + đọc cache + ghi cache); tiết kiệm theo giá', () => {
     const today = overview(records, 'today', NOW)
     expect(today.cache.pct).toBeCloseTo((9500 / 11000) * 100, 0)

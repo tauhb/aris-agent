@@ -182,6 +182,8 @@ export interface LogRow {
 export interface Overview {
   range: Range
   total: number
+  /** Tổng token trong khoảng (đầu vào kể cả cache, cộng đầu ra), kể cả phần gom ngoài phiên. */
+  tokens: number
   days: ({ day: string } & Record<Kind, number>)[]
   cache: { pct: number | null; savePct: number | null }
   autonomous: { done: number; total: number }
@@ -207,11 +209,13 @@ export function overview(records: Iterable<SessionRecord>, range: Range, now = D
   const autonomous = { done: 0, total: 0 }
   const bySession = new Map<string, LogRow>()
   let total = 0
+  let tokens = 0
   for (const r of records) {
     const d = perDay.get(r.day)
     if (!d) continue
     d[r.kind] += r.usd
     total += r.usd
+    tokens += tokensOf(r)
     sum.input += r.input
     sum.cacheRead += r.cacheRead
     sum.cacheWrite += r.cacheWrite
@@ -251,6 +255,7 @@ export function overview(records: Iterable<SessionRecord>, range: Range, now = D
   return {
     range,
     total,
+    tokens,
     days: days.map((day) => perDay.get(day)!),
     cache: {
       pct: allIn > 0 ? round1((sum.cacheRead / allIn) * 100) : null,
