@@ -26,6 +26,8 @@ const PATHS = {
   down: 'M6 9l6 6 6-6',
   search: 'M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14zM20 20l-3.5-3.5',
   gem: 'M12 2l7 5-2 12-5 3-5-3-2-12z',
+  graph:
+    'M4 6a2 2 0 1 0 4 0 2 2 0 1 0-4 0M16 8a2 2 0 1 0 4 0 2 2 0 1 0-4 0M8 18a2 2 0 1 0 4 0 2 2 0 1 0-4 0M8 6.3l8 1.4M6.6 8l2.8 8M17 9.8l-6 6.4',
   undo: 'M3 7v6h6M21 17a9 9 0 0 0-15-6.7L3 13',
 } as const
 export type IconName = keyof typeof PATHS

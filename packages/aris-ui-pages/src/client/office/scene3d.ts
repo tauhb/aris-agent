@@ -28,8 +28,12 @@ export interface SceneOptions {
   stage: HTMLElement
   /** Bấm vào bot (mã bot) hoặc vào chỗ trống (`null`). */
   onPick: (id: string | null) => void
-  /** Vị trí màn hình (px, trong `stage`) của thẻ tên: khoá bot, hoặc `zone:<mã phòng>`. */
+  /** Rê chuột vào bot (mã bot) hoặc ra khỏi mọi bot (`null`); chỉ gọi khi giá trị đổi. */
+  onHover: (id: string | null) => void
+  /** Vị trí màn hình (px, trong `stage`) của thẻ tên: khoá bot, `zone:<mã phòng>` hoặc `sofa:<thứ tự sofa>`. */
   onProject: (key: string, x: number, y: number, visible: boolean) => void
+  /** Gọi sau khi đã chiếu xong mọi thẻ của một khung hình, để nơi gọi giãn các thẻ đang chồng nhau. */
+  onProjected: () => void
 }
 
 export interface OfficeScene {
@@ -544,7 +548,10 @@ export function createScene(opts: SceneOptions): OfficeScene {
     for (const [id, b] of bots) project(id, b.x, b.group.position.y + 1.75 * b.scale, b.z)
     if (layout) {
       for (const z of layout.zones) project(`zone:${z.id}`, z.x, 0.1, z.z + z.d / 2 - 0.1)
+      // Nhãn chung của sofa nằm cao hơn đầu bot ngồi, để nhãn riêng của bot rảnh (khi rê chuột) nằm dưới nó.
+      layout.sofas.forEach((sofa, i) => project(`sofa:${i}`, sofa.x, 2.6, sofa.z))
     }
+    opts.onProjected()
   }
   const start = () => {
     if (raf || document.hidden) return
@@ -559,6 +566,7 @@ export function createScene(opts: SceneOptions): OfficeScene {
   document.addEventListener('visibilitychange', onVisibility)
 
   // --- Kéo xoay, cuộn phóng to, bấm chọn --------------------------------------------------------------------
+  let hovered: string | null = null
   let drag: { x: number; y: number; yaw: number; pitch: number; moved: boolean } | null = null
   const onDown = (e: PointerEvent) => {
     drag = { x: e.clientX, y: e.clientY, yaw, pitch, moved: false }
@@ -566,18 +574,20 @@ export function createScene(opts: SceneOptions): OfficeScene {
     canvas.style.cursor = 'grabbing'
   }
   const onMove = (e: PointerEvent) => {
-    if (!drag) return
+    if (!drag) {
+      setHover(botAt(e))
+      return
+    }
+    // Đang kéo xoay thì không coi là đang rê vào bot nào.
+    setHover(null)
     const dx = e.clientX - drag.x
     const dy = e.clientY - drag.y
     if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true
     yaw = drag.yaw - dx * 0.006
     pitch = Math.max(0.25, Math.min(1.25, drag.pitch + dy * 0.004))
   }
-  const onUp = (e: PointerEvent) => {
-    canvas.style.cursor = 'grab'
-    const was = drag
-    drag = null
-    if (!was || was.moved) return
+  /** Bot nằm dưới con trỏ (tia từ máy ảnh), hoặc `null` khi trỏ vào chỗ trống. */
+  const botAt = (e: PointerEvent): string | null => {
     const r = canvas.getBoundingClientRect()
     const m = new T.Vector2(
       ((e.clientX - r.left) / r.width) * 2 - 1,
@@ -590,8 +600,22 @@ export function createScene(opts: SceneOptions): OfficeScene {
       true,
     )[0]
     const key: unknown = hit?.object.userData['key']
-    opts.onPick(typeof key === 'string' ? key : null)
+    return typeof key === 'string' ? key : null
   }
+  const setHover = (id: string | null) => {
+    if (id === hovered) return
+    hovered = id
+    canvas.style.cursor = drag ? 'grabbing' : id ? 'pointer' : 'grab'
+    opts.onHover(id)
+  }
+  const onUp = (e: PointerEvent) => {
+    canvas.style.cursor = 'grab'
+    const was = drag
+    drag = null
+    if (!was || was.moved) return
+    opts.onPick(botAt(e))
+  }
+  const onLeave = () => setHover(null)
   const onWheel = (e: WheelEvent) => {
     e.preventDefault()
     zoomed = true
@@ -601,6 +625,7 @@ export function createScene(opts: SceneOptions): OfficeScene {
   canvas.addEventListener('pointermove', onMove)
   canvas.addEventListener('pointerup', onUp)
   canvas.addEventListener('pointercancel', onUp)
+  canvas.addEventListener('pointerleave', onLeave)
   canvas.addEventListener('wheel', onWheel, { passive: false })
   canvas.style.cursor = 'grab'
 
@@ -613,6 +638,7 @@ export function createScene(opts: SceneOptions): OfficeScene {
         dropBot(b)
         bots.delete(id)
         opts.onProject(id, 0, 0, false)
+        if (hovered === id) setHover(null)
       }
     }
     for (const a of next.actors) {
@@ -639,6 +665,7 @@ export function createScene(opts: SceneOptions): OfficeScene {
       canvas.removeEventListener('pointermove', onMove)
       canvas.removeEventListener('pointerup', onUp)
       canvas.removeEventListener('pointercancel', onUp)
+      canvas.removeEventListener('pointerleave', onLeave)
       canvas.removeEventListener('wheel', onWheel)
       for (const b of bots.values()) dropBot(b)
       bots.clear()

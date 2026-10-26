@@ -6,7 +6,6 @@
 import {
   Button,
   Checkbox,
-  IconButton,
   KnowledgeGraph,
   NODE_COLORS,
   ZOOM_MAX,
@@ -78,13 +77,16 @@ const shortLabel = (s: string, n = 28) => (s.length > n ? `${s.slice(0, n - 1).t
 const endpoint = (q = '') => new URL(`api/aris/brain${q}`, document.baseURI)
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase()
 
-/** Cách xem đã chọn lần trước (mỗi người xem một trình duyệt). */
+/** Cách xem mặc định khi người dùng chưa chọn lần nào: cây 3D. */
+const DEFAULT_MODE: Mode = 'tree3d'
+
+/** Cách xem đã chọn lần trước (mỗi người xem một trình duyệt); chưa có thì cây 3D. */
 const savedMode = (): Mode => {
   try {
     const m = localStorage.getItem(MODE_KEY)
-    return MODES.find((x) => x === m) ?? 'links'
+    return MODES.find((x) => x === m) ?? DEFAULT_MODE
   } catch {
-    return 'links'
+    return DEFAULT_MODE
   }
 }
 
@@ -201,9 +203,6 @@ export function BrainGraph({ t, nav }: PageProps) {
     <div className="ap-split ap-brain">
       <main className="ap-note-main" aria-label={t('gr.title')}>
         <div className="ap-note-bar ap-gbar">
-          <IconButton label={t('br.back')} onClick={() => nav.go('brain')}>
-            ‹
-          </IconButton>
           <div className="ap-seg" role="tablist" aria-label={t('gr.mode')}>
             {MODES.map((m) => (
               <button
@@ -352,9 +351,6 @@ export function BrainGraph({ t, nav }: PageProps) {
               </span>
             )}
             <span className="note">{t(tree ? 'gr.treeNote' : 'gr.note')}</span>
-          </div>
-          <div className="hint">
-            {t(mode === 'tree3d' ? 'gr.tree3dHint' : tree ? 'gr.treeHint' : 'gr.hint')}
           </div>
         </div>
       </main>

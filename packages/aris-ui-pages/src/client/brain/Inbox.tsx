@@ -451,7 +451,7 @@ export function Inbox({ t, nav }: PageProps) {
     <div className="ap-split ap-brain">
       <section className="ap-iblist" aria-label={t('br.inbox')}>
         <div className="ap-ibtop">
-          <IconButton label={t('br.back')} onClick={() => nav.go('brain')}>
+          <IconButton label={t('br.back')} onClick={() => nav.go('brain', { view: 'notes' })}>
             ‹
           </IconButton>
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.25, minWidth: 0 }}>

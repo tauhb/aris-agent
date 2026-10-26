@@ -232,7 +232,7 @@ export function Soat({ t, nav }: PageProps) {
     <div className="ap-split ap-brain ap-soat">
       <main className="ap-soatmain">
         <div className="ap-soathead">
-          <IconButton label={t('br.back')} onClick={() => nav.go('brain')}>
+          <IconButton label={t('br.back')} onClick={() => nav.go('brain', { view: 'notes' })}>
             ‹
           </IconButton>
           <div className="ap-soatttl">

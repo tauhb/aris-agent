@@ -28,7 +28,7 @@ export const OFFICE_CSS = `
 .ap-of-need .t small{display:block;color:var(--a-muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ap-of-need .none{color:var(--a-muted)}
 .ap-of-main{flex:1;min-height:0;position:relative}
-.ap-of-body{height:100%;overflow-y:auto;padding:18px 24px;display:flex;flex-direction:column;gap:14px}
+.ap-of-body{container-type:inline-size;height:100%;overflow-y:auto;padding:18px 24px;display:flex;flex-direction:column;gap:14px}
 .ap-of-kb{height:100%;overflow-y:auto}
 .ap-of-kb .a-page{min-height:0;overflow:visible}
 .ap-of-hero{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
@@ -82,12 +82,12 @@ export const OFFICE_CSS = `
 .ap-of-st{display:inline-flex;align-items:center;gap:5px;font-size:12px;margin-left:auto}
 .ap-of-st i{width:8px;height:8px;border-radius:50%}
 .ap-of-md{font-size:11px;width:100%}
-.ap-of-feed{flex:0 0 300px;position:sticky;top:0;border:1px solid var(--a-line);border-radius:14px;background:var(--a-panel);padding:10px 14px}
+.ap-of-feed{flex:0 1 340px;min-width:280px;position:sticky;top:0;border:1px solid var(--a-line);border-radius:14px;background:var(--a-panel);padding:10px 14px}
 .ap-of-feed h2{margin:0 0 4px;font-family:${FONTS.heading};font-size:14px}
-.ap-of-lg{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:5px 0;border-top:1px solid var(--a-line)}
+.ap-of-lg{display:flex;align-items:center;min-width:0;gap:8px;font-size:12.5px;padding:5px 0;border-top:1px solid var(--a-line)}
 .ap-of-lg:first-of-type{border-top:0}
 .ap-of-lg>i{width:7px;height:7px;border-radius:50%;flex:none}
-.ap-of-lg>span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ap-of-lg>span:last-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ap-of-lg .at{color:var(--a-muted);font-family:${FONTS.mono};font-variant-numeric:tabular-nums}
 .ap-of-lg svg{flex:none}
 .ap-of-drawer{position:absolute;top:0;right:0;bottom:0;width:320px;max-width:100%;background:var(--a-panel);border-left:1px solid var(--a-line);box-shadow:-12px 0 30px rgba(0,0,0,.08);display:flex;flex-direction:column;z-index:5}
@@ -144,6 +144,8 @@ export const OFFICE_CSS = `
 .ap-of-tag{position:absolute;left:0;top:0;visibility:hidden;font-size:12px;font-weight:600;background:var(--a-panel);color:var(--a-ink);border:1px solid var(--a-line);border-radius:999px;padding:2px 9px;white-space:nowrap;display:flex;align-items:center;gap:6px;box-shadow:var(--a-shadow)}
 .ap-of-tag i{width:7px;height:7px;border-radius:50%;display:inline-block}
 .ap-of-tag span{font-weight:800;color:var(--a-warn)}
+.ap-of-tag.sofa{font-weight:500;color:var(--a-muted)}
+.ap-of-tag.sofa i{background:var(--a-muted)}
 .ap-of-tag.zone{font-weight:500;color:var(--a-muted);background:transparent;border-color:transparent;box-shadow:none}
 .ap-of-sr{position:absolute;width:1px;height:1px;margin:0;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;list-style:none}
 .ap-of-3d-load{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:13px;color:var(--a-muted)}
@@ -155,6 +157,7 @@ export const OFFICE_CSS = `
 .ap-of-3d-feed .head b{font-size:13px}
 .ap-of-3d-feed .head span{margin-left:auto;font-size:12px;color:var(--a-muted)}
 .ap-of-3d-feed .none{font-size:12.5px;color:var(--a-muted);padding:5px 0}
-@media (max-width:1100px){.ap-of-cols{flex-direction:column}.ap-of-feed{position:static;flex:none;width:100%}}
+/* Dưới ~750px bề ngang của vùng nội dung (đủ 2 bàn + cột 280px thì còn song song) cột "Vừa làm gì" xuống dưới các bàn. */
+@container (max-width:750px){.ap-of-cols{flex-direction:column;align-items:stretch}.ap-of-left{flex:none}.ap-of-feed{position:static;flex:none;width:100%;min-width:0}}
 @media (prefers-reduced-motion:reduce){.ap-of *{animation:none!important}.ap-of-typ{width:auto!important;border:0!important}.ap-of-desk.idle .ap-of-bot svg{transform:rotate(-14deg) translateY(10px)}}
 `

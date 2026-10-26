@@ -258,3 +258,81 @@ function restSpot(layout: OfficeLayout, i: number): Spot {
   const p = layout.seats[i] ?? layout.seats.at(-1) ?? layout.command.stand
   return { ...p, pose: 'lean', face: 0, tilt: i % 2 === 0 ? 0.35 : -0.35 }
 }
+
+// --- Nhãn tên trên màn hình --------------------------------------------------------------------------------------
+
+/** Bot "rảnh" ở đây là bot không làm và không chờ: ngồi nghỉ trên sofa, tên chỉ hiện khi rê chuột hoặc khi được chọn. */
+const isIdle = (s: Scene) => s !== 'work' && s !== 'wait'
+
+export interface LabelPlan {
+  /** Mã các bot có nhãn riêng: bot đang làm, bot đang chờ, và bot rảnh đang được rê chuột hoặc chọn. */
+  named: Set<string>
+  /** Số bot rảnh trên từng sofa (cùng thứ tự `layout.sofas`); sofa 0 bot thì không có nhãn chung. */
+  sofas: number[]
+}
+
+/**
+ * Chọn nhãn nào hiện: bot đang làm và đang chờ luôn có nhãn riêng; bot rảnh gộp thành một nhãn chung "Rảnh · N" trên sofa
+ * họ ngồi, trừ bot trong `focus` (đang rê chuột hoặc đang chọn) thì hiện nhãn riêng.
+ */
+export function labelPlan(
+  layout: OfficeLayout,
+  bots: readonly Occupant[],
+  spots: Readonly<Record<string, Spot>>,
+  focus: readonly (string | null | undefined)[] = [],
+): LabelPlan {
+  const picked = new Set(focus.filter((f): f is string => !!f))
+  const named = new Set<string>()
+  const sofas = layout.sofas.map(() => 0)
+  for (const b of bots) {
+    if (!isIdle(b.scene) || picked.has(b.id)) {
+      named.add(b.id)
+      continue
+    }
+    const spot = spots[b.id]
+    if (!spot || layout.sofas.length === 0) continue
+    // Sofa gần chỗ ngồi nhất (theo khoảng cách thẳng): bot rảnh luôn ngồi đúng chỗ của một sofa.
+    let best = 0
+    let bestD = Infinity
+    layout.sofas.forEach((s, i) => {
+      const d = Math.hypot(s.x - spot.x, s.z - spot.z)
+      if (d < bestD) {
+        bestD = d
+        best = i
+      }
+    })
+    sofas[best]! += 1
+  }
+  return { named, sofas }
+}
+
+export interface LabelBox {
+  key: string
+  /** Giữa nhãn trên màn hình (px). */
+  x: number
+  /** Mép dưới nhãn trên màn hình (px). */
+  y: number
+  /** Bề rộng nhãn (px). */
+  w: number
+}
+
+/**
+ * Giãn các nhãn đang chồng nhau: sắp theo y rồi nhãn nằm sau (thấp hơn trên màn hình) bị đẩy xuống cho cách nhãn chồng
+ * nó ít nhất `gap` px. Chỉ tính hai nhãn có bề ngang giao nhau. Trả về y mới của từng nhãn.
+ */
+export function spreadLabels(boxes: readonly LabelBox[], gap: number): Map<string, number> {
+  const out = new Map<string, number>()
+  const placed: { x: number; w: number; y: number }[] = []
+  for (const b of [...boxes].sort((a, c) => a.y - c.y)) {
+    let y = b.y
+    // Mỗi lần đẩy, y tăng tới một mốc `y của nhãn khác + gap`, nên vòng lặp dừng sau tối đa số nhãn đã đặt.
+    for (let guard = 0; guard <= placed.length; guard++) {
+      const hit = placed.find((p) => Math.abs(p.x - b.x) < (p.w + b.w) / 2 && Math.abs(y - p.y) < gap)
+      if (!hit) break
+      y = hit.y + gap
+    }
+    placed.push({ x: b.x, w: b.w, y })
+    out.set(b.key, y)
+  }
+  return out
+}

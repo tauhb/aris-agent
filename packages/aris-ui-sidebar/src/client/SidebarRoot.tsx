@@ -1,5 +1,5 @@
 /**
- * Thanh bên aris theo bản vẽ `SidebarMoi`: logo, Việc mới, bốn trang (Văn phòng, Second Brain, Routine,
+ * Thanh bên aris theo bản vẽ `SidebarMoi`: logo, Việc mới, bốn trang (Văn phòng, Brain, Routine,
  * Tự học), Đội hình theo trạng thái (Aris, "Cần chú ý", dải "Rảnh"), Dự án, ô chờ duyệt và chủ nhân.
  * Ghép từ bộ thành phần `@aris/ui-kit/react`; giữ nguyên các chỗ cắm của dsh nên
  * plugin khác vẫn cắm vào được.
@@ -107,7 +107,10 @@ function PanelNav({
         collapsed={!wide}
         icon={props.renderSlot('sidebar.panellist', { size: 18, active }, { only: panel.id })}
         meta={meta}
-        onClick={() => props.selectPanel(panel.id)}
+        // Brain mở thẳng đồ thị dù lần trước người dùng đang ở khung nào.
+        onClick={() =>
+          panel.id === 'aris-brain' ? arisNavigate('brain', { view: 'graph' }) : props.selectPanel(panel.id)
+        }
       />
     </Tip>
   )
@@ -201,7 +204,7 @@ function AttentionBot({
   )
 }
 
-/** Dải linh vật của các bot đang rảnh (hay vừa xong, vừa vấp): rê chuột ra tên, bấm để mở chat. */
+/** Dải linh vật của các bot đang rảnh (hay vừa xong, vừa vấp): rê chuột ra "Tên - chức năng", bấm để mở chat. */
 function RestStrip({
   members,
   t,
@@ -223,19 +226,24 @@ function RestStrip({
       </div>
       {members.length > 0 && (
         <div className="as-rest-row">
-          {members.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              className="as-m"
-              title={`${m.name} · ${t(`status.${m.status}`)}`}
-              aria-label={`${m.name} · ${t(`status.${m.status}`)}`}
-              onClick={() => onOpen(m.id)}
-            >
-              <Mascot id={m.mascot ?? m.id} size={30} motion={m.status} seed={m.name} />
-              <span className={`as-dot ${m.status}`} aria-hidden="true" />
-            </button>
-          ))}
+          {members.map((m) => {
+            // Chức năng của bot là vai trò trong đội; chưa có vai trò thì dùng dòng ghi chú.
+            const fn = m.role.trim() || m.note.trim()
+            const who = fn ? `${m.name} - ${fn}` : m.name
+            return (
+              <Tooltip key={m.id} label={who} side="top" delayMs={400}>
+                <button
+                  type="button"
+                  className="as-m"
+                  aria-label={`${who} · ${t(`status.${m.status}`)}`}
+                  onClick={() => onOpen(m.id)}
+                >
+                  <Mascot id={m.mascot ?? m.id} size={30} motion={m.status} seed={m.name} />
+                  <span className={`as-dot ${m.status}`} aria-hidden="true" />
+                </button>
+              </Tooltip>
+            )
+          })}
         </div>
       )}
     </div>

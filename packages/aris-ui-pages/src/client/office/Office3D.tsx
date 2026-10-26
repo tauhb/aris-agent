@@ -1,6 +1,7 @@
 /**
  * Tab Tổng quan của Văn phòng, chế độ 3D (bản vẽ `VanPhong3D`): cảnh three.js dựng từ đội thật (mỗi phòng ban một khu,
- * mỗi bot một bàn), thẻ tên HTML bám theo bot, ba con số ở góc trên trái, khung "Vừa làm gì" ở góc dưới trái. Bấm vào bot thì
+ * mỗi bot một bàn), thẻ tên HTML bám theo bot (bot rảnh gộp thành một thẻ "Rảnh · N" trên sofa, rê chuột hoặc chọn thì hiện
+ * thẻ riêng; thẻ chồng nhau thì giãn ra), ba con số ở góc trên trái, khung "Vừa làm gì" ở góc dưới trái. Bấm vào bot thì
  * `onPick` (nơi gọi mở cùng ngăn kéo với 2D). Cảnh nằm ở `scene3d.ts` và chỉ được nạp khi vào đây, nên người dùng 2D không
  * tải thư viện 3D. Không có WebGL thì gọi `onUnsupported` để quay về 2D.
  */
@@ -10,7 +11,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { STATUS_DOT } from './Desk.js'
 import { FeedRow } from './FeedRow.js'
-import { assigneeOf, layoutOffice, spotsFor, type Occupant } from './layout.js'
+import { assigneeOf, labelPlan, layoutOffice, spotsFor, spreadLabels, type Occupant } from './layout.js'
 import type { Desk, DeskGroup, FeedItem } from './model.js'
 import type { Actor, OfficeScene } from './scene3d.js'
 
@@ -18,6 +19,16 @@ type T = PageProps['t']
 
 /** Màu thân khi linh vật không có trong thư viện. */
 const FALLBACK_COLOR = '#1D6FE0'
+/** Khoảng cách dọc tối thiểu (px) giữa hai thẻ cùng chỗ trên màn hình. */
+const LABEL_GAP = 24
+const ZONE_PREFIX = 'zone:'
+
+/** Đặt thẻ HTML tại điểm (x, y) trên màn hình, mép dưới giữa thẻ chạm điểm đó. */
+function place(el: HTMLElement | undefined, x: number, y: number, visible: boolean) {
+  if (!el) return
+  el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -100%)`
+  el.style.visibility = visible ? 'visible' : 'hidden'
+}
 
 export function Office3D({
   t,
@@ -52,7 +63,10 @@ export function Office3D({
   const stage = useRef<HTMLDivElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const tags = useRef(new Map<string, HTMLElement>())
+  // Vị trí chiếu mới nhất của từng thẻ; giãn thẻ chồng nhau làm sau khi cảnh chiếu xong cả khung hình.
+  const projected = useRef(new Map<string, { x: number; y: number; visible: boolean }>())
   const [scene, setScene] = useState<OfficeScene | null>(null)
+  const [hover, setHover] = useState<string | null>(null)
   // Hàm gọi từ cảnh luôn là bản mới nhất, không buộc dựng lại cảnh khi trang vẽ lại.
   const callbacks = useRef({ onPick, onUnsupported })
   callbacks.current = { onPick, onUnsupported }
@@ -79,6 +93,7 @@ export function Office3D({
     commander: i === 0,
   }))
   const spots = spotsFor(layout, occupants, aris.id, assignee)
+  const plan = labelPlan(layout, occupants, spots, [hover, selected])
 
   useEffect(() => {
     const cv = canvas.current
@@ -93,11 +108,21 @@ export function Office3D({
           canvas: cv,
           stage: st,
           onPick: (id) => callbacks.current.onPick(id),
+          onHover: setHover,
           onProject: (key, x, y, visible) => {
-            const el = tags.current.get(key)
-            if (!el) return
-            el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -100%)`
-            el.style.visibility = visible ? 'visible' : 'hidden'
+            if (key.startsWith(ZONE_PREFIX)) place(tags.current.get(key), x, y, visible)
+            else projected.current.set(key, { x, y, visible })
+          },
+          onProjected: () => {
+            // Đo hết rồi mới ghi, để không buộc trình duyệt tính lại bố cục nhiều lần mỗi khung hình.
+            const boxes = []
+            for (const [key, p] of projected.current) {
+              const el = tags.current.get(key)
+              if (el && p.visible) boxes.push({ key, x: p.x, y: p.y, w: el.offsetWidth })
+            }
+            const ys = spreadLabels(boxes, LABEL_GAP)
+            for (const [key, p] of projected.current)
+              place(tags.current.get(key), p.x, ys.get(key) ?? p.y, p.visible)
           },
         })
         setScene(made)
@@ -135,20 +160,41 @@ export function Office3D({
             {z.label}
           </div>
         ))}
-        {everyone.map((d) => (
-          <div
-            key={d.id}
-            className="ap-of-tag"
-            ref={(el) => {
-              if (el) tags.current.set(d.id, el)
-              else tags.current.delete(d.id)
-            }}
-          >
-            <i style={{ background: STATUS_DOT[d.status] }} />
-            {d.name}
-            {d.scene !== 'work' && <span>{d.scene === 'wait' ? '!' : 'z'}</span>}
-          </div>
-        ))}
+        {plan.sofas.map(
+          (n, i) =>
+            n > 0 && (
+              <div
+                key={`sofa:${i}`}
+                className="ap-of-tag sofa"
+                ref={(el) => {
+                  if (el) tags.current.set(`sofa:${i}`, el)
+                  else tags.current.delete(`sofa:${i}`)
+                }}
+              >
+                <i />
+                {t('of.3d.rest', { n })}
+              </div>
+            ),
+        )}
+        {everyone
+          .filter((d) => plan.named.has(d.id))
+          .map((d) => (
+            <div
+              key={d.id}
+              className="ap-of-tag"
+              ref={(el) => {
+                if (el) tags.current.set(d.id, el)
+                else {
+                  tags.current.delete(d.id)
+                  projected.current.delete(d.id)
+                }
+              }}
+            >
+              <i style={{ background: STATUS_DOT[d.status] }} />
+              {d.name}
+              {d.scene !== 'work' && <span>{d.scene === 'wait' ? '!' : 'z'}</span>}
+            </div>
+          ))}
       </div>
       <ul className="ap-of-sr">
         {everyone.map((d) => (
@@ -177,7 +223,6 @@ export function Office3D({
       <div className="ap-of-3d-feed">
         <div className="head">
           <b>{t('of.feed.title')}</b>
-          <span>{t('of.3d.hint')}</span>
         </div>
         {shown?.length === 0 && <div className="none">{t('of.feed.empty')}</div>}
         {shown?.map((f) => (

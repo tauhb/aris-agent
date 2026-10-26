@@ -11,7 +11,7 @@ import { AroundPanel } from './Around.js'
 import { frontValue, Inline, Markdown, parseMarkdown, type LinkTarget } from './markdown.js'
 import { GROUP_ICON, Group, Ico, Layer, Row, type Depth } from './tree.js'
 
-type Space = 'ca-nhan' | 'cong-ty'
+export type Space = 'ca-nhan' | 'cong-ty'
 
 interface Entry {
   path: string
@@ -131,7 +131,8 @@ function groupLabel(t: Translate, g: string) {
 }
 
 export function Notes({ t, nav, params }: PageProps) {
-  const [space, setSpace] = useState<Space>(params.space === 'cong-ty' ? 'cong-ty' : 'ca-nhan')
+  // Không gian do thanh tab của trang Brain chọn (`params.space`); đổi không gian thì trang được dựng lại.
+  const space: Space = params.space === 'cong-ty' ? 'cong-ty' : 'ca-nhan'
   const [state, setState] = useState<State | null>(null)
   const [current, setCurrent] = useState<string | undefined>(params.path)
   const [page, setPage] = useState<PageData | null>(null)
@@ -230,13 +231,6 @@ export function Notes({ t, nav, params }: PageProps) {
     setQuery('')
     setCurrent(path)
   }
-  const switchSpace = (s: Space) => {
-    setSpace(s)
-    setCurrent(undefined)
-    setPage(null)
-    setQuery('')
-    setEditing(false)
-  }
 
   const links: LinkTarget = {
     exists: (name) => !!state?.entries.some((e) => e.name === name && e.path.endsWith('.md')),
@@ -244,8 +238,10 @@ export function Notes({ t, nav, params }: PageProps) {
       const list = state?.entries.filter((e) => e.name === name && e.path.endsWith('.md')) ?? []
       const hit = list.find((e) => e.space === space) ?? list[0]
       if (!hit) return
-      if (hit.space && hit.space !== space) setSpace(hit.space)
-      select(hit.path)
+      // Trang ở không gian kia thì mở bằng đường vào (thanh tab đổi theo, ghi chú dựng lại tại trang đó).
+      if (hit.space && hit.space !== space)
+        nav.go('brain', { view: 'notes', space: hit.space, path: hit.path })
+      else select(hit.path)
     },
   }
 
@@ -334,24 +330,6 @@ export function Notes({ t, nav, params }: PageProps) {
 
   const tree = (
     <nav className="ap-tree ap-btree" aria-label={t('br.tree')}>
-      <div role="tablist" aria-label={t('nb.space')} className="ap-spaces">
-        {(['ca-nhan', 'cong-ty'] as const).map((s) => (
-          <button
-            key={s}
-            type="button"
-            role="tab"
-            aria-selected={space === s}
-            className={space === s ? 'on' : undefined}
-            onClick={() => switchSpace(s)}
-          >
-            <Ico
-              name={s === 'ca-nhan' ? 'user' : 'building'}
-              color={space === s ? (s === 'ca-nhan' ? ME : 'var(--ap-co)') : undefined}
-            />
-            {t(`nb.space.${s}`)}
-          </button>
-        ))}
-      </div>
       <label className="ap-bsearch">
         <Ico name="search" />
         <input

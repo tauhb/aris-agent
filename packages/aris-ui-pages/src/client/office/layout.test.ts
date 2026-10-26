@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   DESK_DX,
   assigneeOf,
+  labelPlan,
   layoutOffice,
   spotsFor,
+  spreadLabels,
   visitPoint,
   type LayoutGroup,
   type OfficeLayout,
@@ -173,5 +175,79 @@ describe('assigneeOf', () => {
     ]
     expect(assigneeOf(act, 'aris', working('aris', 'lam'))).toBeUndefined()
     expect(assigneeOf([], 'aris', [])).toBeUndefined()
+  })
+})
+
+describe('labelPlan', () => {
+  const l: OfficeLayout = layoutOffice({ groups: groups(3, 2) })
+  const occ = (...s: [string, Occupant['scene']][]): Occupant[] => s.map(([id, scene]) => ({ id, scene }))
+  const plan = (bots: Occupant[], focus: (string | null)[] = []) =>
+    labelPlan(l, bots, spotsFor(l, bots, 'aris'), focus)
+
+  it('bot đang làm và đang chờ luôn có nhãn riêng, bot rảnh thì không', () => {
+    const p = plan(
+      occ(['aris', 'idle'], ['b0-0', 'work'], ['b0-1', 'wait'], ['b0-2', 'idle'], ['b1-0', 'idle']),
+    )
+    expect([...p.named].sort()).toEqual(['b0-0', 'b0-1'])
+  })
+
+  it('bot rảnh gộp thành số trên sofa họ ngồi (3 ghế mỗi sofa)', () => {
+    const idle = occ(['aris', 'idle'], ['b0-0', 'idle'], ['b0-1', 'idle'], ['b0-2', 'idle'], ['b1-0', 'idle'])
+    const p = plan(idle)
+    expect(p.sofas.reduce((a, b) => a + b, 0)).toBe(5)
+    expect(p.sofas[0]).toBe(3)
+    expect(p.sofas[1]).toBe(2)
+    expect(p.named.size).toBe(0)
+  })
+
+  it('rê chuột hoặc chọn bot rảnh thì bot đó hiện nhãn riêng, nhưng vẫn tính trong số của sofa', () => {
+    const bots = occ(['aris', 'idle'], ['b0-0', 'idle'], ['b0-1', 'idle'])
+    expect([...plan(bots, ['b0-0']).named]).toEqual(['b0-0'])
+    expect([...plan(bots, [null, 'b0-1']).named]).toEqual(['b0-1'])
+    // Bot đang có nhãn riêng thì không tính vào "Rảnh · N" nữa, để tổng không đếm trùng.
+    expect(plan(bots, ['b0-0']).sofas[0]).toBe(2)
+  })
+
+  it('không bot rảnh nào thì mọi sofa bằng 0', () => {
+    const p = plan(occ(['aris', 'work'], ['b0-0', 'work']))
+    expect(p.sofas.every((n) => n === 0)).toBe(true)
+  })
+})
+
+describe('spreadLabels', () => {
+  it('nhãn không chồng nhau thì giữ nguyên chỗ', () => {
+    const r = spreadLabels(
+      [
+        { key: 'a', x: 100, y: 100, w: 60 },
+        { key: 'b', x: 400, y: 102, w: 60 },
+        { key: 'c', x: 100, y: 200, w: 60 },
+      ],
+      22,
+    )
+    expect([r.get('a'), r.get('b'), r.get('c')]).toEqual([100, 102, 200])
+  })
+
+  it('nhãn chồng thì nhãn thấp hơn bị đẩy xuống cách đủ khoảng', () => {
+    const r = spreadLabels(
+      [
+        { key: 'sau', x: 110, y: 105, w: 60 },
+        { key: 'truoc', x: 100, y: 100, w: 60 },
+      ],
+      22,
+    )
+    expect(r.get('truoc')).toBe(100)
+    expect(r.get('sau')).toBe(122)
+  })
+
+  it('ba nhãn chồng chuỗi: mỗi nhãn cách nhãn trước ít nhất gap', () => {
+    const r = spreadLabels(
+      [
+        { key: 'a', x: 100, y: 100, w: 80 },
+        { key: 'b', x: 100, y: 101, w: 80 },
+        { key: 'c', x: 100, y: 102, w: 80 },
+      ],
+      20,
+    )
+    expect([r.get('a'), r.get('b'), r.get('c')]).toEqual([100, 120, 140])
   })
 })

@@ -155,7 +155,7 @@ export function BrainLog({ t, nav, params }: PageProps) {
     <div className="ap-split ap-brain">
       <main className="ap-note-main">
         <div className="ap-lghead">
-          <IconButton label={t('br.back')} onClick={() => nav.go('brain', { space })}>
+          <IconButton label={t('br.back')} onClick={() => nav.go('brain', { view: 'notes', space })}>
             ‹
           </IconButton>
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.25, minWidth: 0 }}>

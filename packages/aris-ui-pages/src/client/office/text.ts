@@ -5,8 +5,9 @@ export const OFFICE_TEXT = text(
   {
     'of.title': 'Office',
     'of.mode': 'View mode',
-    'of.3d.aria': 'Office in 3D: each bot sits at its desk, waits at the door or rests on the sofa',
-    'of.3d.hint': 'drag to rotate · scroll to zoom',
+    'of.3d.aria':
+      'Office in 3D: each bot sits at its desk, waits at the door or rests on the sofa. Drag to rotate, scroll to zoom.',
+    'of.3d.rest': 'Idle · {n}',
     'of.3d.loading': 'Loading the 3D office…',
     'of.3d.nogl': 'This browser cannot draw 3D, so the Office stays in 2D.',
     'of.tabs': 'Office views',
@@ -87,8 +88,9 @@ export const OFFICE_TEXT = text(
   {
     'of.title': 'Văn phòng',
     'of.mode': 'Chế độ xem',
-    'of.3d.aria': 'Văn phòng 3D: mỗi bot ngồi ở bàn mình, đứng chờ ở cửa hoặc nghỉ trên sofa',
-    'of.3d.hint': 'kéo xoay · cuộn phóng to',
+    'of.3d.aria':
+      'Văn phòng 3D: mỗi bot ngồi ở bàn mình, đứng chờ ở cửa hoặc nghỉ trên sofa. Kéo để xoay, cuộn để phóng to.',
+    'of.3d.rest': 'Rảnh · {n}',
     'of.3d.loading': 'Đang dựng văn phòng 3D…',
     'of.3d.nogl': 'Trình duyệt này chưa vẽ được 3D nên Văn phòng ở chế độ 2D.',
     'of.tabs': 'Các màn của Văn phòng',

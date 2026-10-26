@@ -363,6 +363,11 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-title-sel .a-bp-btn{font-size:17px;font-weight:600;height:auto;border:0;background:transparent;padding:2px 6px 2px 2px}
 .ap-tag{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:var(--a-panel2);font-size:12.5px;color:var(--a-ink)}
 .ap-brain{height:100%;min-height:0}
+.ap-brainpage{display:flex;flex-direction:column;flex:1;height:100%;min-height:0}
+.ap-brainbody{display:flex;flex:1;min-height:0}
+.ap-btabs{flex:none;display:flex;align-items:center;padding:10px 24px;border-bottom:1px solid var(--a-line);background:var(--a-bg)}
+.aris .ap-btabs .ap-seg button{display:inline-flex;align-items:center;gap:6px;padding:5px 14px}
+.aris .ap-btabs .ap-seg button.ap-btab-graph{padding:5px 11px}
 .ap-tree{flex:0 0 220px;border-right:1px solid var(--a-line);background:var(--a-panel);padding:12px 8px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
 .aris .ap-tn{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;border-radius:8px;padding:6px 10px;font-size:13.5px;color:var(--a-ink)}
 .aris .ap-tn:hover{background:var(--a-hover)}
@@ -402,7 +407,6 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-gstage .legend{position:absolute;left:16px;bottom:14px;display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--a-muted);background:var(--a-panel);border:1px solid var(--a-line);border-radius:12px;padding:7px 12px}
 .ap-gstage .legend span{display:inline-flex;align-items:center;gap:6px}
 .ap-gstage .legend .note{flex-basis:100%;border-top:1px solid var(--a-line);padding-top:6px}
-.ap-gstage .hint{position:absolute;right:16px;top:14px;font-size:12px;color:var(--a-muted);background:var(--a-panel);border:1px solid var(--a-line);border-radius:999px;padding:4px 12px}
 .ap-gaside{flex:1 1 260px;max-width:290px;min-width:240px}
 .ap-box2{border-radius:9px;background:var(--a-panel2);padding:9px 11px;font-size:12.5px}
 .ap-via{font-size:11px;font-weight:600;border-radius:6px;padding:1px 7px;white-space:nowrap}

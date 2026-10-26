@@ -350,7 +350,7 @@ export function Ask({ t, nav, params }: PageProps) {
     <div className="ap-split ap-brain ap-askpage">
       <nav className="ap-asknav" aria-label={t('ask.history')}>
         <div className="ap-askhead">
-          <IconButton label={t('br.back')} onClick={() => nav.go('brain')}>
+          <IconButton label={t('br.back')} onClick={() => nav.go('brain', { view: 'notes' })}>
             ‹
           </IconButton>
           <h1>{t('br.ask')}</h1>

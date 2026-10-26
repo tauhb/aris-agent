@@ -1,4 +1,4 @@
-/** Chữ Second Brain: Ghi chú 5.1, Hộp thư vào 5.2, Đồ thị 5.3, Hỏi bộ não 5.4. */
+/** Chữ Brain: Ghi chú 5.1, Hộp thư vào 5.2, Đồ thị 5.3, Hỏi bộ não 5.4. */
 import { text } from '../page.js'
 
 export const BRAIN_TEXT = text(
@@ -19,7 +19,9 @@ export const BRAIN_TEXT = text(
     'br.suggest': 'aris suggests linking',
     'br.link': 'Link',
     'br.skip': 'Skip',
-    'br.back': 'Back to Second Brain',
+    'br.back': 'Back to Brain',
+    'br.tabs': 'Brain views',
+    'br.tab.graph': 'Graph',
     'type.note': 'Note',
     'type.project': 'Project',
     'type.area': 'Area',
@@ -53,7 +55,6 @@ export const BRAIN_TEXT = text(
     'gr.zoomIn': 'Zoom in',
     'gr.zoomOut': 'Zoom out',
     'gr.reset': 'Reset view',
-    'gr.hint': 'Drag to rotate · scroll to zoom · click a node to view',
     'gr.panel': 'Filters and details',
     'gr.show': 'Show',
     'gr.time': 'Over time',
@@ -68,17 +69,14 @@ export const BRAIN_TEXT = text(
     'gr.askAbout': 'Ask about this page',
     'gr.mode': 'View',
     'gr.mode.links': 'Links',
-    'gr.mode.tree': '2D tree',
-    'gr.mode.tree3d': '3D tree',
+    'gr.mode.tree': '2D',
+    'gr.mode.tree3d': '3D',
     'gr.tree3dAlt':
-      '3D brain graph as a folder tree: Brain at the center, {n} pages on the sphere, links bent along the branches. Drag to rotate, scroll to zoom.',
-    'gr.tree3dHint':
-      'Drag to rotate · scroll to zoom · click a folder to collapse, a page to highlight its links',
-    'gr.treeAlt': 'Brain graph as a folder tree: {n} pages, links bent along the branches.',
+      '3D brain graph as a folder tree: Brain at the center, {n} pages on the sphere, links bent along the branches. Drag to rotate, scroll to zoom, click a folder to collapse it or a page to highlight its links.',
+    'gr.treeAlt':
+      'Brain graph as a folder tree: {n} pages, links bent along the branches. Drag to move, scroll to zoom, click a folder to collapse it or a page to highlight its links.',
     'gr.expand': 'Expand {name} ({n} pages)',
     'gr.collapse': 'Collapse {name}',
-    'gr.treeHint':
-      'Drag to move · scroll to zoom · click a folder to collapse, a page to highlight its links',
     'gr.treeNote': 'Folder tree is the skeleton; links follow the branches up to the shared folder',
     'gr.folder': 'Folder',
     'gr.linkLegend': '[[...]] link',
@@ -558,7 +556,9 @@ export const BRAIN_TEXT = text(
     'br.suggest': 'aris gợi ý nối',
     'br.link': 'Nối',
     'br.skip': 'Bỏ qua',
-    'br.back': 'Quay lại Second Brain',
+    'br.back': 'Quay lại Brain',
+    'br.tabs': 'Các khung của Brain',
+    'br.tab.graph': 'Đồ thị',
     'type.note': 'Ghi chú',
     'type.project': 'Dự án',
     'type.area': 'Lĩnh vực',
@@ -592,7 +592,6 @@ export const BRAIN_TEXT = text(
     'gr.zoomIn': 'Phóng to',
     'gr.zoomOut': 'Thu nhỏ',
     'gr.reset': 'Về góc nhìn ban đầu',
-    'gr.hint': 'Kéo để xoay · cuộn để phóng to · bấm nút để xem',
     'gr.panel': 'Bộ lọc và chi tiết',
     'gr.show': 'Hiển thị',
     'gr.time': 'Theo thời gian',
@@ -607,15 +606,14 @@ export const BRAIN_TEXT = text(
     'gr.askAbout': 'Hỏi về trang này',
     'gr.mode': 'Cách xem',
     'gr.mode.links': 'Liên kết',
-    'gr.mode.tree': 'Cây 2D',
-    'gr.mode.tree3d': 'Cây 3D',
+    'gr.mode.tree': '2D',
+    'gr.mode.tree3d': '3D',
     'gr.tree3dAlt':
-      'Đồ thị bộ não dạng cây thư mục 3D: Brain ở tâm, {n} trang trên mặt cầu, liên kết uốn theo nhánh. Kéo để xoay, cuộn để phóng to.',
-    'gr.tree3dHint': 'Kéo để xoay · cuộn để phóng to · bấm thư mục để gộp, bấm trang để tô liên kết',
-    'gr.treeAlt': 'Đồ thị bộ não dạng cây thư mục: {n} trang, liên kết uốn theo nhánh.',
+      'Đồ thị bộ não dạng cây thư mục 3D: Brain ở tâm, {n} trang trên mặt cầu, liên kết uốn theo nhánh. Kéo để xoay, cuộn để phóng to, bấm thư mục để gộp hoặc bấm trang để tô liên kết.',
+    'gr.treeAlt':
+      'Đồ thị bộ não dạng cây thư mục: {n} trang, liên kết uốn theo nhánh. Kéo để dời, cuộn để phóng to, bấm thư mục để gộp hoặc bấm trang để tô liên kết.',
     'gr.expand': 'Mở {name} ({n} trang)',
     'gr.collapse': 'Gộp {name}',
-    'gr.treeHint': 'Kéo để dời · cuộn để phóng to · bấm thư mục để gộp, bấm trang để tô liên kết',
     'gr.treeNote': 'Cây thư mục là khung; liên kết đi theo nhánh lên tới thư mục chung',
     'gr.folder': 'Thư mục',
     'gr.linkLegend': 'Liên kết [[...]]',

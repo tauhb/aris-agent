@@ -21,13 +21,13 @@ export const TEXTS: readonly PageText[] = [
   text(
     {
       'nav.office': 'Office',
-      'nav.brain': 'Second Brain',
+      'nav.brain': 'Brain',
       'nav.routine': 'Routines',
       'nav.learn': 'Learning',
     },
     {
       'nav.office': 'Văn phòng',
-      'nav.brain': 'Second Brain',
+      'nav.brain': 'Brain',
       'nav.routine': 'Routine',
       'nav.learn': 'Tự học',
     },
