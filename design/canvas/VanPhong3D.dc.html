@@ -11,143 +11,242 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 <style>
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--stage:#EFEDE7;--wood:#C9A27A;--wood2:#A9825C;--laptop:#2A2D35;--screen:#9DC3FF;--term:#16171B;--termInk:#D5F5DD}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--stage:#14161B;--wood:#5B4632;--wood2:#47362A;--laptop:#3A3E48;--screen:#5AA5FF;--term:#0B0C0F;--termInk:#9BE3B5}
 body{margin:0}
-.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D;--dangerSoft:#FCEBE9;--floor:#EDEBE5;--floor2:#E4E1D9}
-.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18;--floor:#1A1C21;--floor2:#22252C}
 button{font-family:inherit;cursor:pointer;color:inherit}
-button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .m{color:var(--muted)}.mono{font-family:'JetBrains Mono',monospace}
-.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
-.b2{height:28px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:12.5px;white-space:nowrap}
-.b1{height:28px;padding:0 10px;border:0;border-radius:8px;background:var(--ink);color:var(--panel);font-size:12.5px;font-weight:600;white-space:nowrap}
-.seg{white-space:nowrap;border:0;border-radius:7px;padding:4px 10px;background:transparent;font-size:12.5px;color:var(--muted)}
+.pillt{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 14px;font-size:13.5px;font-weight:600;display:inline-flex;gap:6px;align-items:center}
+.pillt.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.pillt small{font-weight:600;font-size:11px;border-radius:999px;padding:1px 7px;background:var(--accentSoft);color:var(--accent)}
+.big{display:flex;flex-direction:column;align-items:flex-start;padding:10px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);min-width:110px}
+.big b{font-family:'Lexend',sans-serif;font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}
+.big span{font-size:12px;color:var(--muted)}
+.desk{border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:12px 12px 10px;display:flex;flex-direction:column;align-items:stretch;gap:6px;text-align:left}
+.desk:hover{border-color:var(--muted)}
+.term{background:var(--term);color:var(--termInk);font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:8px;padding:7px 10px;height:18px;overflow:hidden;white-space:nowrap}
+.typ{display:inline-block;overflow:hidden;vertical-align:top;border-right:2px solid var(--termInk);animation:typing 3.2s steps(28) infinite,caret .8s step-end infinite;max-width:100%}
+.s-idle .typ{animation:caret 1.2s step-end infinite;opacity:.6}
+.s-wait .term{color:#FFD7A8}
+.stage{position:relative;height:150px;background:var(--stage);border-radius:12px;overflow:hidden;display:block}
+.bot{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);display:block}
+.table{position:absolute;left:50%;bottom:0;width:220px;height:70px;transform:translateX(-50%)}
+.lap{fill:var(--laptop)}.lapb{fill:var(--laptop)}.top{fill:var(--wood)}.leg{fill:var(--wood2)}
+.scr{fill:var(--screen);opacity:.25}
+.s-work .scr{animation:glow 1.4s ease-in-out infinite}
+.s-work .bot svg{animation:type .5s ease-in-out infinite}
+.s-wait .bot svg{animation:hop 1s ease-in-out infinite}
+.s-idle .bot svg{transform-origin:50% 90%;transform:rotate(-14deg) translateY(10px);animation:snore 3.4s ease-in-out infinite}
+.bang{position:absolute;left:calc(50% + 36px);top:8px;width:24px;height:24px;border-radius:50%;background:var(--warn);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;animation:hop 1s ease-in-out infinite;z-index:2}
+.zz{position:absolute;font-weight:800;color:var(--muted);animation:zz 2.6s ease-in-out infinite;z-index:2}
+.z1{left:calc(50% + 34px);top:30px;font-size:14px}.z2{left:calc(50% + 46px);top:16px;font-size:18px;animation-delay:-1.3s}
+.who{display:flex;align-items:center;gap:8px;font-size:13px;flex-wrap:wrap}
+.who b{font-family:'Lexend',sans-serif;font-size:14.5px}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:12px;margin-left:auto}
+.st i{width:8px;height:8px;border-radius:50%}
+.md{font-size:11px;width:100%}
+.hero{display:flex;align-items:flex-end;gap:14px}
+.say{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:15px;max-width:520px;margin-bottom:34px}
+.say:after{content:"";position:absolute;left:-8px;bottom:14px;width:14px;height:14px;background:var(--panel);border-left:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}
+.feed{display:flex;gap:18px;overflow:hidden;white-space:nowrap;font-size:12.5px}
+.bell{position:relative;height:32px;padding:0 12px;border:1px solid var(--warn);border-radius:999px;background:var(--warnSoft);color:var(--warn);font-weight:600;font-size:13px}
+.drawer{position:absolute;top:0;right:0;bottom:0;width:320px;background:var(--panel);border-left:1px solid var(--line);box-shadow:-12px 0 30px rgba(0,0,0,.08);display:flex;flex-direction:column;z-index:5}
+.b2{height:30px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:12.5px}
+.b1{height:30px;padding:0 12px;border:0;border-radius:8px;background:var(--ink);color:var(--panel);font-size:12.5px;font-weight:600}
+.seg{white-space:nowrap;border:0;border-radius:7px;padding:4px 10px;background:transparent;font-size:12.5px;color:var(--muted);text-decoration:none}
 .seg.on{background:var(--hover);color:var(--ink);font-weight:600}
-.tab{border:0;background:transparent;padding:8px 2px;margin-right:16px;font-size:13.5px;color:var(--muted);border-bottom:2px solid transparent}
-.tab.on{color:var(--ink);font-weight:600;border-bottom-color:var(--ink)}
-.pill{font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;white-space:nowrap}
-.tile{flex:1 1 90px;padding:10px 12px;border-right:1px solid var(--line)}
-.tile:last-child{border-right:0}
-.tile b{display:block;font-family:'Lexend',sans-serif;font-size:20px;font-variant-numeric:tabular-nums}
-.tile span{font-size:12px;color:var(--muted)}
-@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-@keyframes work{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-3px) rotate(-4deg)}75%{transform:translateY(-1px) rotate(4deg)}}
-@keyframes ping{0%{box-shadow:0 0 0 0 rgba(180,83,9,.4)}100%{box-shadow:0 0 0 10px rgba(180,83,9,0)}}
-@keyframes zz{0%{opacity:0;transform:translate(0,0)}50%{opacity:1}100%{opacity:0;transform:translate(6px,-10px)}}
-.a-work{animation:work .9s ease-in-out infinite}
-.a-idle{animation:bob 3.2s ease-in-out infinite}
-.a-wait{animation:bob 1.6s ease-in-out infinite}
-.ring{border-radius:50%;animation:ping 1.6s ease-out infinite}
-.zz{position:absolute;font-size:11px;font-weight:700;color:var(--muted);animation:zz 2.4s ease-in-out infinite}
-@media (prefers-reduced-motion: reduce){.a-work,.a-idle,.a-wait,.ring,.zz{animation:none}}
+.ring-on{outline:2px solid var(--accent);outline-offset:2px}
+@keyframes typing{0%{width:0}60%,100%{width:100%}}
+@keyframes caret{50%{border-color:transparent}}
+@keyframes glow{0%,100%{opacity:.35}50%{opacity:.9}}
+@keyframes type{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes hop{0%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
+@keyframes snore{0%,100%{transform:rotate(-14deg) translateY(10px)}50%{transform:rotate(-12deg) translateY(8px) scale(1.02)}}
+@keyframes zz{0%{opacity:0;transform:translate(0,6px)}40%{opacity:1}100%{opacity:0;transform:translate(10px,-14px)}}
+@media (prefers-reduced-motion: reduce){.typ,.scr,.bot svg,.bang,.zz{animation:none!important}.typ{width:auto;border:0}}
 
+.tag{position:absolute;left:0;top:0;transform:translate(-50%,-100%);font-size:12px;font-weight:600;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:2px 9px;white-space:nowrap;display:flex;align-items:center;gap:6px;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.tag i{width:7px;height:7px;border-radius:50%;display:inline-block}
+.tag span:empty{display:none}
+.tag span{font-weight:800;color:var(--warn)}
+.hint3d{position:absolute;left:16px;bottom:14px;font-size:12px;color:var(--muted)}
 </style>
 </helmet>
-<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; height: 900px; display: flex; overflow: hidden">
+<div class="{{themeClass}}" data-office3d="1" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; height: 900px; display: flex; overflow: hidden">
   <dc-import name="SidebarMoi" active="office" bot="none" hint-size="260px,900px"></dc-import>
-  <main style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; min-height: 0">
-    <div style="display: flex; align-items: center; gap: 12px; padding: 10px 24px 0; flex-wrap: wrap">
-      <span style="display: flex; flex-direction: column"><span style="font-family: 'Lexend', sans-serif; font-weight: 600; font-size: 16px">Văn phòng</span><span class="m" style="font-size: 12px">Đội bot đang làm gì, tốn bao nhiêu, cần {{you}} gì</span></span>
-      <span role="group" aria-label="Chế độ xem" style="margin-left: 12px; display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 2px"><a class="seg" href="VanPhong2D.dc.html" style="text-decoration: none">2D · theo dõi</a><a class="seg on" href="VanPhong3D.dc.html" style="text-decoration: none">3D · văn phòng</a></span>
-      <span class="m mono" style="margin-left: auto; font-size: 12px">10:47:12 · cập nhật 3 giây trước</span>
-      <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px"><input type="checkbox" checked style="accent-color: var(--accent)">Tự cập nhật</label>
-      <button type="button" class="b2" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối">☾</button>
+  <main style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; min-height: 0; position: relative">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <span style="font-family: 'Lexend', sans-serif; font-weight: 600; font-size: 16px">Văn phòng</span>
+      <span role="group" aria-label="Chế độ xem" style="display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 2px"><a class="seg" href="VanPhong2D.dc.html">2D</a><a class="seg on" href="VanPhong3D.dc.html">3D</a></span>
+      <span role="tablist" style="display: inline-flex; gap: 2px; margin-left: 8px"><a class="seg on" href="#">Tổng quan</a><a class="seg" href="PhongBan.dc.html">Phòng ban</a><a class="seg" href="Kanban.dc.html">Kanban</a></span>
+      <span class="mono m" style="margin-left: auto; font-size: 12px">10:47:12</span>
+      <button type="button" class="bell" onClick="{{toggleNeed}}">Cần {{you}} · 2</button>
+      <button type="button" class="b2" onClick="{{toggleTheme}}" aria-label="Đổi sáng tối">☾</button>
     </div>
-    <div style="display: flex; padding: 0 24px; border-bottom: 1px solid var(--line)"><button type="button" class="tab on">Tổng quan</button><button type="button" class="tab">Phòng ban · 3</button><button type="button" class="tab">Kanban · 9</button></div>
-    <div style="flex: 1; min-height: 0; display: flex">
-      <div style="flex: 1; min-width: 0; position: relative; overflow: hidden; background: radial-gradient(ellipse at 50% 40%, var(--panel) 0%, var(--bg) 70%)">
-        <div class="card" style="position: absolute; left: 16px; top: 14px; right: 16px; display: flex; flex-wrap: wrap; z-index: 2">
-          <div style="flex: 2 1 280px; padding: 8px 12px; border-right: 1px solid var(--line); font-size: 13px; display: flex; align-items: center"><span>2 việc đang chờ {{you}}. 3 bot đang làm.</span></div>
-          <div class="tile"><b>1,2M</b><span>token</span></div>
-          <div class="tile"><b>0,58</b><span>/ 5 USD</span></div>
-          <div class="tile"><b style="color: var(--warn)">2</b><span>chờ {{you}}</span></div>
+      <sc-if value="{{needOpen}}" hint-placeholder-val="{{ false }}">
+        <div style="position: absolute; right: 70px; top: 54px; width: 360px; z-index: 6; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); box-shadow: 0 12px 30px rgba(0,0,0,.12)">
+          <div style="padding: 10px 12px; display: flex; gap: 10px; align-items: center; font-size: 13px"><svg class="" width="26" height="26" viewBox="0 0 100 100" aria-hidden="true" style="overflow: visible"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><circle cx="44" cy="58" r="8" fill="#fff"></circle><circle cx="61" cy="58" r="8" fill="#fff"></circle><g fill="none" stroke="#16171B" stroke-width="5" stroke-linecap="round"><path d="M28 50C28 22 72 22 74 48"></path></g><rect x="22" y="46" width="10" height="16" rx="4" fill="#16171B"></rect><rect x="70" y="44" width="10" height="16" rx="4" fill="#16171B"></rect></svg><span style="flex: 1">Mai xin gửi email báo giá</span><button type="button" class="b2">Từ chối</button><button type="button" class="b1">Duyệt</button></div>
+          <div style="padding: 10px 12px; display: flex; gap: 10px; align-items: center; font-size: 13px; border-top: 1px solid var(--line)"><svg class="" width="26" height="26" viewBox="0 0 100 100" aria-hidden="true" style="overflow: visible"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M41 44Q46.5 36 52 44M57 42Q62.5 34 68 42" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"></path><path d="M30 24C38 12 66 12 72 22L74 28C60 22 42 22 28 30Z" fill="#7C3AED"></path><circle cx="50" cy="13" r="4" fill="#7C3AED"></circle></svg><span style="flex: 1">Hạ hỏi giọng văn bài viết</span><button type="button" class="b2">Trả lời</button></div>
         </div>
-        <div style="position: absolute; left: 0; top: 90px; width: 940px; height: 560px">
-          <svg width="940" height="560" viewBox="0 0 940 560" aria-label="Mặt bằng văn phòng, nhìn nghiêng" role="img"><polygon points="470,40 990,340 522,610 2,310" fill="var(--floor)" stroke="var(--line)"></polygon>
-<polygon points="470,70 678,190 470,310 262,190" fill="var(--accentSoft)" stroke="var(--line)" stroke-width="1.5"></polygon>
-<text x="470" y="102" font-size="12" font-weight="600" fill="var(--muted)" font-family="Lexend, sans-serif">Tăng trưởng</text>
-<polygon points="730,220 938,340 730,460 522,340" fill="var(--okSoft)" stroke="var(--line)" stroke-width="1.5"></polygon>
-<text x="730" y="252" font-size="12" font-weight="600" fill="var(--muted)" font-family="Lexend, sans-serif">Vận hành</text>
-<polygon points="210,220 418,340 262,430 54,310" fill="var(--panel2)" stroke="var(--line)" stroke-width="1.5"></polygon>
-<text x="210" y="252" font-size="12" font-weight="600" fill="var(--muted)" font-family="Lexend, sans-serif">Kỹ thuật</text>
-<polygon points="470,370 574,430 418,520 314,460" fill="var(--warnSoft)" stroke="var(--line)" stroke-width="1.5"></polygon>
-<text x="470" y="402" font-size="12" font-weight="600" fill="var(--muted)" font-family="Lexend, sans-serif">Phòng chờ duyệt</text>
-<polygon points="574,430 678,490 522,580 418,520" fill="var(--floor2)" stroke="var(--line)" stroke-width="1.5"></polygon>
-<text x="574" y="462" font-size="12" font-weight="600" fill="var(--muted)" font-family="Lexend, sans-serif">Góc nghỉ</text>
-<polygon points="439,148 501,184 465,205 402,169" fill="var(--panel)" stroke="var(--line)"></polygon><rect x="431" y="150" width="16" height="11" rx="2" fill="var(--ink)" opacity=".75"></rect>
-<polygon points="522,196 584,232 548,253 486,217" fill="var(--panel)" stroke="var(--line)"></polygon><rect x="514" y="198" width="16" height="11" rx="2" fill="var(--ink)" opacity=".75"></rect>
-<polygon points="699,298 761,334 725,355 662,319" fill="var(--panel)" stroke="var(--line)"></polygon><rect x="691" y="300" width="16" height="11" rx="2" fill="var(--ink)" opacity=".75"></rect>
-<polygon points="782,346 844,382 808,403 746,367" fill="var(--panel)" stroke="var(--line)"></polygon><rect x="774" y="348" width="16" height="11" rx="2" fill="var(--ink)" opacity=".75"></rect>
-<polygon points="210,292 272,328 236,349 174,313" fill="var(--panel)" stroke="var(--line)"></polygon><rect x="202" y="294" width="16" height="11" rx="2" fill="var(--ink)" opacity=".75"></rect>
-<polygon points="293,340 356,376 319,397 257,361" fill="var(--panel)" stroke="var(--line)"></polygon><rect x="285" y="342" width="16" height="11" rx="2" fill="var(--ink)" opacity=".75"></rect>
-<rect x="482" y="490" width="80" height="22" rx="10" fill="var(--panel2)" stroke="var(--line)"></rect>
-<ellipse cx="486" cy="349" rx="60" ry="22" fill="var(--panel)" stroke="var(--accent)" stroke-dasharray="4 4"></ellipse></svg>
-          <button type="button" onClick="{{pick.aris}}" style="position: absolute; left: 457px; top: 279px; width: 58px; height: 58px; border: 0; background: transparent; padding: 0; {{ring.aris}}; border-radius: 50%"><span style="position: absolute; bottom: 64px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 11.5px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; box-shadow: 0 2px 6px rgba(0,0,0,.08)">Aris · giao việc cho Lâm</span><svg class="a-work" width="58" height="58" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg></button><button type="button" onClick="{{pick.lam}}" style="position: absolute; left: 414px; top: 140px; width: 50px; height: 50px; border: 0; background: transparent; padding: 0; {{ring.lam}}; border-radius: 50%"><span style="position: absolute; bottom: 56px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 11.5px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; box-shadow: 0 2px 6px rgba(0,0,0,.08)">Lâm · đọc hocvienc.edu.vn</span><svg class="a-work" width="50" height="50" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><path d="M45 43L43 53M58 41L56 51" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg></button><button type="button" onClick="{{pick.ha}}" style="position: absolute; left: 497px; top: 188px; width: 50px; height: 50px; border: 0; background: transparent; padding: 0; {{ring.ha}}; border-radius: 50%"><span style="position: absolute; bottom: 56px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 11.5px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; box-shadow: 0 2px 6px rgba(0,0,0,.08)">Hạ · viết bài, bản nháp 2</span><svg class="a-work" width="50" height="50" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M41 44Q46.5 36 52 44M57 42Q62.5 34 68 42" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"></path></svg></button><button type="button" onClick="{{pick.mai}}" style="position: absolute; left: 424px; top: 398px; width: 50px; height: 50px; border: 0; background: transparent; padding: 0; {{ring.mai}}; border-radius: 50%"><span style="position: absolute; bottom: 56px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 11.5px; background: var(--warnSoft); border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; box-shadow: 0 2px 6px rgba(0,0,0,.08)">Mai · chờ anh Tầu duyệt</span><svg class="a-wait" width="50" height="50" viewBox="0 0 100 100" aria-hidden="true"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><circle cx="44" cy="58" r="8" fill="#fff"></circle><circle cx="61" cy="58" r="8" fill="#fff"></circle></svg><span class="ring" style="position: absolute; inset: 4px"></span></button><button type="button" onClick="{{pick.tin}}" style="position: absolute; left: 469px; top: 458px; width: 44px; height: 44px; border: 0; background: transparent; padding: 0; {{ring.tin}}; border-radius: 50%"><svg class="a-idle" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M39 50h9M55 49h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg><span class="zz" style="right: 0; top: 0">z</span></button><button type="button" onClick="{{pick.dev}}" style="position: absolute; left: 521px; top: 476px; width: 44px; height: 44px; border: 0; background: transparent; padding: 0; {{ring.dev}}; border-radius: 50%"><svg class="a-idle" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 12C80 12 88 20 88 50C88 80 80 88 50 88C20 88 12 80 12 50C12 20 20 12 50 12Z" fill="#00C972"></path><path d="M43 52h9M60 47h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg><span class="zz" style="right: 0; top: 0">z</span></button>
-        </div>
-        <div class="card" style="position: absolute; left: 16px; bottom: 14px; padding: 8px 12px; font-size: 12px; display: flex; gap: 14px; z-index: 2"><span>🖱 kéo để xoay · cuộn để phóng to · bấm bot để xem bên phải</span><span class="m">Bot đi tới bàn khi làm, sang phòng chờ khi xin duyệt, ra góc nghỉ khi rảnh</span></div>
-        <div class="card" style="position: absolute; right: 16px; bottom: 14px; padding: 6px 10px; font-size: 12px; display: flex; gap: 8px; z-index: 2"><button type="button" class="b2">Toàn cảnh</button><button type="button" class="b2">Theo bot đang chọn</button></div>
-      </div>
-      <aside style="flex: 0 0 320px; border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0">
-        <div style="padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--warnSoft); display: flex; flex-direction: column; gap: 8px">
-          <b style="font-size: 13px; color: var(--warn)">Cần {{you}} · 2</b>
-          <div style="display: flex; gap: 8px; align-items: center; font-size: 12.5px"><svg class="" width="24" height="24" viewBox="0 0 100 100" aria-hidden="true"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><circle cx="44" cy="58" r="8" fill="#fff"></circle><circle cx="61" cy="58" r="8" fill="#fff"></circle></svg><span style="flex: 1; min-width: 0">Mai xin gửi email báo giá</span><button type="button" class="b2">Từ chối</button><button type="button" class="b1">Duyệt</button></div>
-          <div style="display: flex; gap: 8px; align-items: center; font-size: 12.5px"><svg class="" width="24" height="24" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M41 44Q46.5 36 52 44M57 42Q62.5 34 68 42" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"></path></svg><span style="flex: 1; min-width: 0">Hạ hỏi giọng văn bài Facebook</span><button type="button" class="b2">Trả lời</button></div>
-        </div>
-        <div style="padding: 14px 16px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid var(--line)">
-          <sc-if value="{{is.aris}}" hint-placeholder-val="{{ false }}"><svg class="" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg></sc-if><sc-if value="{{is.lam}}" hint-placeholder-val="{{ true }}"><svg class="" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><path d="M45 43L43 53M58 41L56 51" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg></sc-if><sc-if value="{{is.ha}}" hint-placeholder-val="{{ false }}"><svg class="" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M41 44Q46.5 36 52 44M57 42Q62.5 34 68 42" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"></path></svg></sc-if><sc-if value="{{is.mai}}" hint-placeholder-val="{{ false }}"><svg class="" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><circle cx="44" cy="58" r="8" fill="#fff"></circle><circle cx="61" cy="58" r="8" fill="#fff"></circle></svg></sc-if><sc-if value="{{is.tin}}" hint-placeholder-val="{{ false }}"><svg class="" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M39 50h9M55 49h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg></sc-if><sc-if value="{{is.dev}}" hint-placeholder-val="{{ false }}"><svg class="" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 12C80 12 88 20 88 50C88 80 80 88 50 88C20 88 12 80 12 50C12 20 20 12 50 12Z" fill="#00C972"></path><path d="M43 52h9M60 47h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path></svg></sc-if>
-          <span style="flex: 1; min-width: 0"><b style="font-family: 'Lexend', sans-serif">{{sel.name}}</b><span class="m" style="display: block; font-size: 12px">{{sel.role}}</span></span>
-          <span class="pill" style="{{sel.pill}}">{{sel.state}}</span>
-        </div>
-        <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--line)">
-          <span class="m" style="font-size: 12px">Đang làm</span>
-          <span style="font-size: 13.5px">{{sel.task}}</span>
-          <span class="m" style="font-size: 12px">{{sel.meta}}</span>
-          <div style="display: flex; gap: 6px; flex-wrap: wrap"><a class="b2" href="PhatLai.dc.html" style="display: inline-flex; align-items: center; text-decoration: none">Xem từng bước</a><button type="button" class="b2">Mở chat</button><button type="button" class="b2" style="color: var(--danger)">Dừng việc</button></div>
-        </div>
-        <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 0">
-          <span class="m" style="font-size: 12px">Vài bước gần nhất</span>
-          <sc-for list="{{sel.steps}}" as="st" hint-placeholder-count="4"><div style="display: flex; gap: 8px; font-size: 12.5px"><span class="mono m" style="font-size: 11.5px; flex: none">{{st.at}}</span><span>{{st.text}}</span></div></sc-for>
-        </div>
-        <div style="padding: 12px 16px; border-top: 1px solid var(--line); display: flex; gap: 6px">
-          <input placeholder="{{sel.ph}}" aria-label="Nhắn bot đang chọn" style="flex: 1; min-width: 0; height: 32px; box-sizing: border-box; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--ink); font: inherit; font-size: 13px; padding: 0 10px">
-          <button type="button" class="b1" style="height: 32px">Gửi</button>
-        </div>
-        <div class="m" style="padding: 0 16px 12px; font-size: 11.5px">Tin nhắn chèn vào việc đang làm, không mở phiên mới.</div>
-      </aside>
+      </sc-if>
+    <div data-stage3d="1" style="flex: 1; min-height: 0; position: relative; overflow: hidden">
+      <canvas data-office-cv="1" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none"></canvas>
+      <div data-tags="1" style="position: absolute; inset: 0; pointer-events: none"><div class="tag" data-tag="aris"><i data-dot="aris"></i>Aris<span data-extra="aris"></span></div><div class="tag" data-tag="lam"><i data-dot="lam"></i>Lâm<span data-extra="lam"></span></div><div class="tag" data-tag="ha"><i data-dot="ha"></i>Hạ<span data-extra="ha"></span></div><div class="tag" data-tag="mai"><i data-dot="mai"></i>Mai<span data-extra="mai"></span></div><div class="tag" data-tag="tin"><i data-dot="tin"></i>Tín<span data-extra="tin"></span></div><div class="tag" data-tag="dev"><i data-dot="dev"></i>Dev<span data-extra="dev"></span></div></div>
+      <div style="position: absolute; left: 16px; top: 14px; display: flex; gap: 10px; pointer-events: none"><div class="big"><b>1,2M</b><span>token</span></div><div class="big"><b>0,58 $</b><span>/ 5 $</span></div><div class="big"><b style="color: var(--warn)">2</b><span>chờ {{you}}</span></div></div>
+      <div class="hint3d" data-hint3d="1">Kéo để xoay · cuộn để phóng to · bấm một bot</div>
     </div>
+      <sc-if value="{{hasSel}}" hint-placeholder-val="{{ false }}">
+        <aside class="drawer">
+          <div style="padding: 14px 16px; display: flex; gap: 10px; align-items: center"><sc-if value="{{is.aris}}" hint-placeholder-val="{{ false }}"><svg class="" width="48" height="48" viewBox="0 0 100 100" aria-hidden="true" style="overflow: visible"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path><path d="M38 18l4 8 8-10 8 10 4-8 2 14H36Z" fill="#FFAA00"></path></svg></sc-if><sc-if value="{{is.lam}}" hint-placeholder-val="{{ false }}"><svg class="" width="48" height="48" viewBox="0 0 100 100" aria-hidden="true" style="overflow: visible"><path d="M50 14C54 14 57 16 61 19L87 41C92 45.5 92 54.5 87 59L61 81C57 84 54 86 50 86C46 86 43 84 39 81L13 59C8 54.5 8 45.5 13 41L39 19C43 16 46 14 50 14Z" fill="#00B5A5"></path><path d="M45 43L43 53M58 41L56 51" stroke="#fff" stroke-width="6" stroke-linecap="round"></path><g fill="none" stroke="#16171B" stroke-width="4"><circle cx="43" cy="49" r="9"></circle><circle cx="61" cy="47" r="7.5"></circle><path d="M52 48h2"></path></g></svg></sc-if><sc-if value="{{is.ha}}" hint-placeholder-val="{{ false }}"><svg class="" width="48" height="48" viewBox="0 0 100 100" aria-hidden="true" style="overflow: visible"><path d="M50 88C40 80 12 62 10 40C8 24 20 14 32 14C42 14 48 20 50 26C52 20 58 14 68 14C80 14 92 24 90 40C88 62 60 80 50 88Z" fill="#FF309C"></path><path d="M41 44Q46.5 36 52 44M57 42Q62.5 34 68 42" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"></path><path d="M30 24C38 12 66 12 72 22L74 28C60 22 42 22 28 30Z" fill="#7C3AED"></path><circle cx="50" cy="13" r="4" fill="#7C3AED"></circle></svg></sc-if><sc-if value="{{is.mai}}" hint-placeholder-val="{{ false }}"><svg class="" width="48" height="48" viewBox="0 0 100 100" aria-hidden="true" style="overflow: visible"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><circle cx="44" cy="58" r="8" fill="#fff"></circle><circle cx="61" cy="58" r="8" fill="#fff"></circle><g fill="none" stroke="#16171B" stroke-width="5" stroke-linecap="round"><path d="M28 50C28 22 72 22 74 48"></path></g><rect x="22" y="46" width="10" height="16" rx="4" fill="#16171B"></rect><rect x="70" y="44" width="10" height="16" rx="4" fill="#16171B"></rect></svg></sc-if><sc-if value="{{is.tin}}" hint-placeholder-val="{{ false }}"><svg class="" width="48" height="48" viewBox="0 0 100 100" aria-hidden="true" style="overflow: visible"><path d="M50 10C53 10 55 11 58 13L86 33C90 36 92 41 90 46L80 80C78 86 74 90 68 90H32C26 90 22 86 20 80L10 46C8 41 10 36 14 33L42 13C45 11 47 10 50 10Z" fill="#FFAA00"></path><path d="M39 50h9M55 49h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path><rect x="66" y="58" width="22" height="28" rx="4" fill="#2A2D35"></rect><rect x="70" y="62" width="14" height="6" rx="1" fill="#9BE3B5"></rect></svg></sc-if><sc-if value="{{is.dev}}" hint-placeholder-val="{{ false }}"><svg class="" width="48" height="48" viewBox="0 0 100 100" aria-hidden="true" style="overflow: visible"><path d="M50 12C80 12 88 20 88 50C88 80 80 88 50 88C20 88 12 80 12 50C12 20 20 12 50 12Z" fill="#00C972"></path><path d="M43 52h9M60 47h7" stroke="#fff" stroke-width="6" stroke-linecap="round"></path><path d="M26 34C30 18 70 16 76 32Z" fill="#16171B"></path><path d="M70 30h18" stroke="#16171B" stroke-width="6" stroke-linecap="round"></path></svg></sc-if><span style="flex: 1"><b style="font-family: 'Lexend', sans-serif; font-size: 15px">{{sel.name}}</b><span class="m" style="display: block; font-size: 12px">{{sel.role}}</span></span><button type="button" class="b2" onClick="{{close}}" aria-label="Đóng">✕</button></div>
+          <div class="term" style="margin: 0 16px; height: auto; white-space: normal">{{sel.line}}</div>
+          <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; flex: 1">
+            <sc-for list="{{sel.steps}}" as="st" hint-placeholder-count="3"><span><span class="mono m">{{st.at}}</span> {{st.text}}</span></sc-for>
+          </div>
+          <div style="padding: 0 16px 10px; display: flex; gap: 6px"><a class="b2" href="PhatLai.dc.html" style="display: inline-flex; align-items: center; text-decoration: none">Từng bước</a><button type="button" class="b2">Mở chat</button><button type="button" class="b2" style="color: var(--danger)">Dừng</button></div>
+          <div style="padding: 10px 16px 14px; border-top: 1px solid var(--line); display: flex; gap: 6px"><input placeholder="{{sel.ph}}" aria-label="Nhắn bot" style="flex: 1; min-width: 0; height: 34px; box-sizing: border-box; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--ink); font: inherit; font-size: 13px; padding: 0 10px"><button type="button" class="b1" style="height: 34px">Gửi</button></div>
+        </aside>
+      </sc-if>
   </main>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
+
+  componentDidMount() {
+    this.alive = true;
+    const root = () => document.querySelector('[data-office3d]');
+    import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js').then((T) => { if (this.alive) this.build(T, root()); }).catch((e) => { const h = document.querySelector('[data-hint3d]'); if (h) h.textContent = 'Không tải được thư viện 3D: ' + e; });
+  }
+  componentWillUnmount() { this.alive = false; cancelAnimationFrame(this.raf); if (this.ren) this.ren.dispose(); }
+  build(T, el) {
+    const cv = el.querySelector('[data-office-cv]');
+    const stage = el.querySelector('[data-stage3d]');
+    const ren = new T.WebGLRenderer({ canvas: cv, antialias: true });
+    ren.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    ren.shadowMap.enabled = true; ren.shadowMap.type = T.PCFSoftShadowMap;
+    this.ren = ren;
+    const scene = new T.Scene();
+    const cam = new T.PerspectiveCamera(38, 1, 0.1, 200);
+    let yaw = 0.62, pitch = 0.7, dist = 30; const target = new T.Vector3(0, 0, 0);
+    const place = () => { cam.position.set(target.x + dist * Math.cos(pitch) * Math.sin(yaw), target.y + dist * Math.sin(pitch), target.z + dist * Math.cos(pitch) * Math.cos(yaw)); cam.lookAt(target); };
+    const mat = (c, o = {}) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.8 }, o));
+    const box = (w, h, d, m, x, y, z) => { const g = new T.Mesh(new T.BoxGeometry(w, h, d), m); g.position.set(x, y, z); g.castShadow = true; g.receiveShadow = true; scene.add(g); return g; };
+    // Ánh sáng
+    const hemi = new T.HemisphereLight(0xffffff, 0x444444, 1.0); scene.add(hemi);
+    const sun = new T.DirectionalLight(0xffffff, 1.4); sun.position.set(-8, 16, 10); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+    Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16 }); scene.add(sun);
+    // Sàn, tường, cửa kính
+    const floorM = mat(0xd9cdb8); const wallM = mat(0xf2efe9);
+    const floor = new T.Mesh(new T.PlaneGeometry(22, 16), floorM); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+    box(22, 4, 0.2, wallM, 0, 2, -8); box(0.2, 4, 16, wallM, -11, 2, 0);
+    const glassM = mat(0x9ec5ff, { emissive: 0x000000, roughness: 0.2 });
+    const panes = [];
+    for (let i = 0; i < 6; i++) panes.push(box(2.4, 2, 0.05, glassM, -8 + i * 3.2, 2.3, -7.88));
+    // Đèn thành phố ngoài cửa (hiện khi tối)
+    const city = new T.Group(); scene.add(city);
+    for (let i = 0; i < 70; i++) { const s = new T.Mesh(new T.PlaneGeometry(0.12, 0.18), new T.MeshBasicMaterial({ color: 0xffd27a })); s.position.set(-10 + Math.random() * 20, 1.5 + Math.random() * 1.6, -7.84); city.add(s); }
+    // Thảm khu phòng ban
+    const rug = (x, z, w, d, c) => { const r = new T.Mesh(new T.PlaneGeometry(w, d), mat(c)); r.rotation.x = -Math.PI / 2; r.position.set(x, 0.01, z); r.receiveShadow = true; scene.add(r); };
+    rug(-5.5, -4.6, 8, 5, 0xcfe0f7); rug(4.5, -4.6, 8, 5, 0xd4ecdc); rug(-5.5, 3.5, 7, 5, 0xe6e3dc); rug(6, 4.5, 6, 5, 0xf3e1c8);
+    // Bàn có laptop
+    const woodM = mat(0xb08a62), lapM = mat(0x2a2d35);
+    const screens = {};
+    const desk = (x, z, key) => { box(2.2, 0.12, 1.1, woodM, x, 0.95, z); [[-1, -0.45], [1, -0.45], [-1, 0.45], [1, 0.45]].forEach(([a, b]) => box(0.08, 0.95, 0.08, woodM, x + a, 0.47, z + b)); box(0.9, 0.04, 0.6, lapM, x, 1.03, z - 0.05); const sm = mat(0x1d6fe0, { emissive: 0x1d6fe0, emissiveIntensity: 0.2 }); const s = box(0.9, 0.6, 0.04, sm, x, 1.33, z + 0.25); if (key) screens[key] = s; };
+    desk(-7, -4.5, 'lam'); desk(-4, -4.5, 'ha'); desk(3, -4.5, 'mai'); desk(6, -4.5, 'tin'); desk(-6, 3, 'dev'); desk(-3.6, 3, null);
+    // Bàn chỉ huy của Aris
+    const cmd = new T.Mesh(new T.CylinderGeometry(1.3, 1.3, 0.12, 40), mat(0x2a2d35)); cmd.position.set(0, 0.95, -0.5); cmd.castShadow = true; scene.add(cmd);
+    box(0.1, 0.9, 0.1, mat(0x2a2d35), 0, 0.45, -0.5);
+    // Bàn họp tròn
+    const meet = new T.Mesh(new T.CylinderGeometry(1.2, 1.2, 0.1, 40), woodM); meet.position.set(1.5, 0.8, 4); meet.castShadow = true; scene.add(meet);
+    // Sofa góc nghỉ
+    const sofaM = mat(0x8a9bb0); box(3.2, 0.5, 1.1, sofaM, 6.5, 0.35, 5.6); box(3.2, 0.8, 0.3, sofaM, 6.5, 0.8, 6.1);
+    // Tủ tài liệu, cây
+    box(1.2, 2, 0.6, mat(0x6b6f78), -10.3, 1, -5.5);
+    const plant = (x, z) => { box(0.5, 0.6, 0.5, mat(0x7a5b44), x, 0.3, z); const l = new T.Mesh(new T.SphereGeometry(0.6, 16, 12), mat(0x3f8f5a)); l.position.set(x, 1.1, z); l.castShadow = true; scene.add(l); };
+    plant(-10, 6.5); plant(9.6, -6.8); plant(2.2, -6.8);
+    // Đèn bàn (sáng khi tối)
+    const lamps = [];
+    [[-7, -4.5], [-4, -4.5], [3, -4.5], [6, -4.5], [-6, 3]].forEach(([x, z]) => { const p = new T.PointLight(0xffc27a, 0, 5); p.position.set(x, 2.2, z); scene.add(p); lamps.push(p); });
+    // Linh vật 3D: thân bo tròn, mắt, phụ kiện
+    const BOT = { aris: 0x1084fe, lam: 0x00b5a5, ha: 0xe0457b, mai: 0xff6700, tin: 0xffaa00, dev: 0x00c972 };
+    const bots = {};
+    const mk = (k, s = 1) => {
+      const g = new T.Group(); g.userData.key = k;
+      const body = new T.Mesh(new T.CapsuleGeometry(0.42 * s, 0.45 * s, 8, 20), mat(BOT[k], { roughness: 0.5 })); body.position.y = 0.66 * s; body.castShadow = true; g.add(body);
+      const eyeM = new T.MeshBasicMaterial({ color: 0xffffff }), pupM = new T.MeshBasicMaterial({ color: 0x16171b });
+      [-0.15, 0.15].forEach((ex) => { const e = new T.Mesh(new T.SphereGeometry(0.1 * s, 12, 10), eyeM); e.position.set(ex * s, 0.85 * s, 0.36 * s); g.add(e); const p = new T.Mesh(new T.SphereGeometry(0.05 * s, 10, 8), pupM); p.position.set(ex * s, 0.85 * s, 0.45 * s); g.add(p); });
+      if (k === 'aris') { const c = new T.Mesh(new T.ConeGeometry(0.22, 0.3, 5), mat(0xffaa00)); c.position.y = 1.4; g.add(c); }
+      if (k === 'mai') { const h = new T.Mesh(new T.TorusGeometry(0.4, 0.05, 8, 20, Math.PI), mat(0x16171b)); h.position.y = 1.0; g.add(h); }
+      if (k === 'dev') { const c = new T.Mesh(new T.CylinderGeometry(0.3, 0.34, 0.12, 20), mat(0x16171b)); c.position.y = 1.32; g.add(c); const b = new T.Mesh(new T.BoxGeometry(0.34, 0.04, 0.3), mat(0x16171b)); b.position.set(0, 1.28, 0.38); g.add(b); }
+      if (k === 'ha') { const b = new T.Mesh(new T.SphereGeometry(0.36, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat(0x7c3aed)); b.position.y = 1.12; g.add(b); }
+      g.traverse((m) => { m.userData.key = k; });
+      scene.add(g); bots[k] = g; return g;
+    };
+    const POS = { lam: [-7, -5.4], ha: [-4, -5.4], mai: [9.2, 0.5], tin: [5.9, 5.5], dev: [7.1, 5.5] };
+    Object.entries(POS).forEach(([k, [x, z]]) => { const g = mk(k); g.position.set(x, 0, z); if (k === 'tin' || k === 'dev') { g.position.y = 0.45; g.rotation.z = k === 'tin' ? 0.35 : -0.35; } if (k === 'mai') g.rotation.y = -1.2;  });
+    const aris = mk('aris', 1.15);
+    // Cửa phòng anh (Mai chờ duyệt đứng đây)
+    box(0.15, 2.6, 1.6, mat(0x8a6d52), 10.9, 1.3, 0.5);
+    // Màu theo sáng tối
+    const applyTheme = () => {
+      const dark = el.classList.contains('t-dark');
+      scene.background = new T.Color(dark ? 0x0f1013 : 0xf6f5f2);
+      floorM.color.set(dark ? 0x2b2621 : 0xd9cdb8); wallM.color.set(dark ? 0x1c1e24 : 0xf2efe9);
+      glassM.color.set(dark ? 0x0b1630 : 0xbfdcff);
+      city.visible = dark; hemi.intensity = dark ? 0.35 : 1.0; sun.intensity = dark ? 0.25 : 1.4;
+      lamps.forEach((l) => { l.intensity = dark ? 9 : 0; });
+      this.dark = dark;
+    };
+    // Kéo xoay, cuộn phóng to, bấm chọn bot
+    let drag = null;
+    cv.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, yaw, pitch, moved: false }; cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing'; });
+    cv.addEventListener('pointermove', (e) => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true; yaw = drag.yaw - dx * 0.006; pitch = Math.max(0.25, Math.min(1.25, drag.pitch + dy * 0.004)); });
+    cv.addEventListener('pointerup', (e) => { cv.style.cursor = 'grab'; if (drag && !drag.moved) { const r = cv.getBoundingClientRect(); const m = new T.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); const rc = new T.Raycaster(); rc.setFromCamera(m, cam); const hit = rc.intersectObjects(Object.values(bots), true)[0]; if (hit) this.setState({ sel: hit.object.userData.key }); } drag = null; });
+    cv.addEventListener('wheel', (e) => { e.preventDefault(); dist = Math.max(12, Math.min(40, dist + e.deltaY * 0.02)); }, { passive: false });
+    const tags = {}; el.querySelectorAll('[data-tag]').forEach((t) => { tags[t.dataset.tag] = t; });
+    const DOT = { work: 'var(--accent)', wait: 'var(--warn)', idle: 'var(--muted)' };
+    const ST = { aris: 'work', lam: 'work', ha: 'work', mai: 'wait', tin: 'idle', dev: 'idle' };
+    Object.entries(ST).forEach(([k, s]) => { const d = el.querySelector('[data-dot="' + k + '"]'); if (d) d.style.background = DOT[s]; const x = el.querySelector('[data-extra="' + k + '"]'); if (x) x.textContent = s === 'wait' ? '!' : s === 'idle' ? 'z' : ''; });
+    const v = new T.Vector3();
+    const t0 = performance.now();
+    const loop = () => {
+      if (!this.alive) return;
+      const w = stage.clientWidth, h = stage.clientHeight;
+      if (cv.width !== Math.floor(w * ren.getPixelRatio()) || cv.height !== Math.floor(h * ren.getPixelRatio())) { ren.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+      if (this.dark !== el.classList.contains('t-dark')) applyTheme();
+      const t = (performance.now() - t0) / 1000;
+      ['lam', 'ha'].forEach((k, i) => { bots[k].position.y = Math.abs(Math.sin(t * 6 + i)) * 0.06; if (screens[k]) screens[k].material.emissiveIntensity = 0.5 + Math.sin(t * 5 + i) * 0.3; });
+      bots.mai.position.y = Math.abs(Math.sin(t * 3)) * 0.18;
+      ['tin', 'dev'].forEach((k, i) => { bots[k].scale.setScalar(1 + Math.sin(t * 1.5 + i) * 0.02); });
+      // Aris đi từ bàn chỉ huy tới bàn Lâm rồi quay về
+      const p = (Math.sin(t * 0.35) + 1) / 2; const ax = 0 + (-6.2 - 0) * p, az = 0.6 + (-3.4 - 0.6) * p;
+      const px = aris.position.x, pz = aris.position.z; aris.position.set(ax, Math.abs(Math.sin(t * 7)) * 0.05, az);
+      if (Math.abs(ax - px) + Math.abs(az - pz) > 1e-4) aris.rotation.y = Math.atan2(ax - px, az - pz);
+      place(); ren.render(scene, cam);
+      Object.entries(tags).forEach(([k, tg]) => { const g = bots[k]; if (!g) return; v.set(g.position.x, g.position.y + (k === 'aris' ? 2.0 : 1.7), g.position.z).project(cam); tg.style.display = v.z < 1 ? 'flex' : 'none'; tg.style.left = ((v.x + 1) / 2 * w) + 'px'; tg.style.top = ((1 - v.y) / 2 * h) + 'px'; });
+      this.raf = requestAnimationFrame(loop);
+    };
+    applyTheme(); loop();
+  }
   renderVals() {
     const s = this.state || {};
     const theme = s.theme || this.props.theme || 'light';
-    const sel = s.sel || 'lam';
-    const B = [["aris", "Aris", "Chỉ huy", "", "work", "Đang giao việc “Nghiên cứu 3 đối thủ” cho Lâm", "deepseek-v4-flash", "0,21", "—"], ["lam", "Lâm", "Nghiên cứu", "Tăng trưởng", "work", "Nghiên cứu 3 đối thủ khoá học AI · đang đọc hocvienc.edu.vn", "deepseek-v4-flash", "0,11", "bước 6/14"], ["ha", "Hạ", "Sáng tạo", "Tăng trưởng", "work", "Viết bài Facebook về khoá học · bản nháp 2", "deepseek-v4-pro", "0,19", "bước 3/8"], ["mai", "Mai", "Thư ký", "Vận hành", "wait", "Xin duyệt: gửi email báo giá cho chị Hà", "deepseek-v4-flash", "0,04", "chờ 4 phút"], ["tin", "Tín", "Tài chính", "Vận hành", "idle", "Rảnh từ 08:12 · xong “Báo cáo chi tiêu tuần”", "deepseek-v4-flash", "0,03", "—"], ["dev", "Dev", "Lập trình", "Kỹ thuật", "idle", "Rảnh 2 giờ · lần cuối sửa lỗi build web", "deepseek-v4-pro", "0,00", "—"]];
-    const STEPS = {
-      aris: [['10:41','Nhận yêu cầu “so 3 đối thủ” từ anh Tầu'],['10:42','Chọn Lâm (khớp “nghiên cứu”, 0,92)'],['10:42','Giao việc, trần 0,30 USD']],
-      lam: [['10:43:02','bash curl hocviena.vn · hàng rào chặn'],['10:43:05','web_fetch hocviena.vn'],['10:44:40','Suy nghĩ: so ba bên'],['10:45:10','Đang đọc hocvienc.edu.vn…']],
-      ha: [['10:30','Nhận việc từ anh Tầu'],['10:38','Viết bản nháp 1'],['10:44','Hỏi anh Tầu về giọng văn']],
-      mai: [['10:39','Soạn email báo giá'],['10:43','Xin duyệt gửi email']],
-      tin: [['08:00','Routine: báo cáo chi tiêu tuần'],['08:12','Gửi báo cáo vào Telegram']],
-      dev: [['08:31','Sửa lỗi build web'],['08:40','Xong, chờ việc mới']],
-    };
-    const st = { work: ['đang làm','var(--accent)','var(--accentSoft)'], wait: ['chờ anh Tầu duyệt','var(--warn)','var(--warnSoft)'], idle: ['rảnh','var(--muted)','var(--panel2)'] };
-    const b = B.find((x) => x[0] === sel);
-    const is = {}; B.forEach((x) => { is[x[0]] = x[0] === sel; });
-    const pick = {}; B.forEach((x) => { pick[x[0]] = () => this.setState({ sel: x[0] }); });
-    const ring = {}; B.forEach((x) => { ring[x[0]] = x[0] === sel ? 'outline: 2px solid var(--accent); outline-offset: 2px' : ''; });
+    const sel = s.sel || null;
+    const B = { aris: ['Aris','Chỉ huy','Giao “Nghiên cứu 3 đối thủ” cho Lâm'], lam: ['Lâm','Nghiên cứu · Tăng trưởng','Đang đọc hocvienc.edu.vn'], ha: ['Hạ','Sáng tạo · Tăng trưởng','Đang viết bản nháp 2'], mai: ['Mai','Thư ký · Vận hành','Chờ anh duyệt gửi email báo giá'], tin: ['Tín','Tài chính · Vận hành','Nghỉ từ 08:12'], dev: ['Dev','Lập trình · Kỹ thuật','Nghỉ 2 giờ'] };
+    const STEPS = { aris: [['10:41','Nhận việc từ anh Tầu'],['10:42','Giao cho Lâm']], lam: [['10:43','web_fetch hocviena.vn'],['10:44','Suy nghĩ: so ba bên'],['10:45','Đọc hocvienc.edu.vn']], ha: [['10:38','Viết bản nháp 1'],['10:44','Hỏi anh về giọng văn']], mai: [['10:39','Soạn email'],['10:43','Xin duyệt gửi']], tin: [['08:12','Gửi báo cáo chi tiêu tuần']], dev: [['08:40','Sửa xong lỗi build']] };
+    const is = {}, pick = {}, ring = {};
+    Object.keys(B).forEach((k) => { is[k] = k === sel; pick[k] = () => this.setState({ sel: k }); ring[k] = k === sel ? 'outline: 2px solid var(--accent); outline-offset: 2px' : ''; });
+    const b = sel ? B[sel] : ['', '', ''];
     return {
-      themeClass: 't-' + theme,
+      themeClass: 't-' + theme, you: 'anh Tầu',
       toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
-      you: 'anh Tầu', is, pick, ring,
-      sel: {
-        name: b[1], role: b[2] + (b[3] ? ' · ' + b[3] : ''), task: b[5],
-        meta: b[6] + ' · ' + b[7] + ' USD hôm nay' + (b[8] !== '—' ? ' · ' + b[8] : ''),
-        state: st[b[4]][0], pill: 'color:' + st[b[4]][1] + ';background:' + st[b[4]][2],
-        steps: STEPS[sel].map(([at, text]) => ({ at, text })),
-        ph: 'Nhắn ' + b[1] + '…',
-      },
+      needOpen: !!s.need, toggleNeed: () => this.setState({ need: !s.need }),
+      dept: s.dept || 'all', is, pick, ring, hasSel: !!sel, close: () => this.setState({ sel: null }),
+      tabAll: 'pillt' + ((s.dept || 'all') === 'all' ? ' on' : ''), tabTt: 'pillt' + (s.dept === 'tt' ? ' on' : ''), tabVh: 'pillt' + (s.dept === 'vh' ? ' on' : ''), tabKt: 'pillt' + (s.dept === 'kt' ? ' on' : ''),
+      toAll: () => this.setState({ dept: 'all' }), toTt: () => this.setState({ dept: 'tt' }), toVh: () => this.setState({ dept: 'vh' }), toKt: () => this.setState({ dept: 'kt' }),
+      sel: { name: b[0], role: b[1], line: '> ' + b[2], ph: 'Nhắn ' + b[0] + '…', steps: (STEPS[sel] || []).map(([at, text]) => ({ at, text })) },
+      showTt: !s.dept || s.dept === 'all' || s.dept === 'tt', showVh: !s.dept || s.dept === 'all' || s.dept === 'vh', showKt: !s.dept || s.dept === 'all' || s.dept === 'kt',
     };
   }
 }
