@@ -848,6 +848,8 @@ export async function skillsApi(
           ...s,
           stale: store.isStale(s),
           idleDays: store.idleDays(s),
+          // Nơi nhập từ đâu (bản đang dùng, không có thì bản gần nhất có nguồn).
+          source: (store.active(s.id) ?? store.versionsOf(s.id).find((v) => v.source))?.source ?? null,
           proposed: proposed ? { version: proposed.version, why: proposed.why, by: proposed.by } : null,
           // Thành công: tỉ lệ đạt của lần kiểm thử gần nhất (bản so sánh → bản thử).
           success: sum?.cases

@@ -84,6 +84,13 @@ Khi agent được tạo, aris gắn một nguồn skill vào phạm vi của ag
 - Chạy thử: `GET /api/aris/skills?curator=preview` trả kế hoạch lần tới mà không đổi gì. Màn 3.2 hiện dòng cuối: mốc dọn, kết quả lần gần nhất, và lần tới sẽ cất gì.
 - Gộp skill trùng bằng model (Hermes để tắt mặc định) vẫn để sau.
 
+## Đợt 8.1 · Kho skill chung của đội, nhập skill
+
+- Skill của đội có `bot = '_doi'` và `assigned` (`'all'` hoặc danh sách bot). Skill riêng của bot cùng tên thắng skill đội. Số lượt dùng đếm riêng từng bot (`usesBy`).
+- Nhập skill từ GitHub (repo, nhánh, thư mục), `~/.claude/skills`, `~/.codex/skills` hoặc một thư mục: quét, chọn, rồi mọi thứ nhập vào đều thành **đề xuất** (`by: import`) kèm nguồn, bản (sha) và cảnh báo nguy hiểm (curl|sh, eval, rm -rf rộng, sudo, đường dẫn bí mật, cụm tiêm lệnh). Duyệt xong thì gán theo lựa chọn lúc nhập.
+- Giao diện: Tự học › Thư viện skill (bộ lọc Kho đội, nút "Nhập skill", ô gán bot), trang chi tiết skill đội ("Bot được dùng", nguồn, Kiểm tra bản mới, Chia sẻ cho đội, Trả về làm skill riêng), Hộp duyệt gộp theo lần nhập, hồ sơ bot › Skill & tool (mục "Từ kho đội").
+- Chưa làm: kiểm tra bản mới tự động hằng tuần (hiện chỉ bấm tay).
+
 ## Để sau
 
 Bảng nhập cho "Học skill từ tài liệu…" (cần vẽ), gộp skill trùng (người dọn kho pha 2), nhập lại từ tệp sao lưu.

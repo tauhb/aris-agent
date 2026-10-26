@@ -3,11 +3,30 @@
  * lý do và lối mở đoạn chat, cảnh báo của bộ kiểm; Từ chối / Sửa rồi bật / Duyệt và bật; lịch sử các
  * bản với khôi phục. Chỉ số kiểm thử và ca thử chạy lại phiên cũ là đợt 4 (để mờ).
  */
-import { Button, Card, IconButton, PageShell, useTeamData } from '@aris/ui-kit/react'
+import {
+  Button,
+  Card,
+  Checkbox,
+  IconButton,
+  Mascot,
+  PageShell,
+  Pill,
+  Switch,
+  useTeamData,
+} from '@aris/ui-kit/react'
 import { useCallback, useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Box, Col } from '../ui.js'
 import { dayOf } from './Skills.js'
+import {
+  isTeamSkill,
+  shortSha,
+  sourceLabel,
+  sourceUrl,
+  toggleAssigned,
+  type Assigned,
+  type SkillSource,
+} from './skill-team.js'
 
 interface Version {
   id: string
@@ -15,7 +34,11 @@ interface Version {
   version: number
   body: string
   status: 'proposed' | 'active' | 'superseded' | 'rejected'
-  by: 'reflect' | 'user' | 'restore'
+  by: 'reflect' | 'user' | 'restore' | 'import'
+  /** Nơi nhập từ đâu, dấu hiệu nguy hiểm, tệp kèm (skill nhập từ ngoài). */
+  source?: SkillSource
+  risks?: string[]
+  files?: string[]
   why?: string
   quote?: string
   sessionId?: string
@@ -64,6 +87,8 @@ interface Detail {
     stale?: boolean
     idleDays?: number
     cases?: { request: string }[]
+    assigned?: Assigned
+    usesBy?: Record<string, number>
   }
   eval: Eval | null
   versions: Version[]
@@ -83,8 +108,13 @@ const post = async (body: unknown) => {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   })
-  const out = (await res.json().catch(() => ({}))) as { error?: string }
+  const out = (await res.json().catch(() => ({}))) as {
+    error?: string
+    skill?: { id: string }
+    state?: string
+  }
   if (!res.ok) throw new Error(out.error ?? `HTTP ${res.status}`)
+  return out
 }
 
 export function Skill({ t, nav, params }: PageProps) {
@@ -95,6 +125,7 @@ export function Skill({ t, nav, params }: PageProps) {
   const [body, setBody] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [info, setInfo] = useState<string | null>(null)
   const load = useCallback(async () => {
     const res = await fetch(new URL(`api/aris/skills?id=${encodeURIComponent(id)}`, document.baseURI), {
       credentials: 'same-origin',
@@ -108,15 +139,32 @@ export function Skill({ t, nav, params }: PageProps) {
     const timer = setInterval(() => void load(), 4000)
     return () => clearInterval(timer)
   }, [d?.eval?.status, load])
+  const isTeam = !!d && isTeamSkill(d.skill)
   const bot = team?.bots.find((b) => b.id === d?.skill.bot)
+  const botName = isTeam ? t('ski.teamLib') : (bot?.name ?? d?.skill.bot ?? '')
+  const members = (team?.bots ?? []).filter((b) => !b.external)
   const p = d?.proposed
   const current = d?.versions.find((v) => v.status === 'active')
   async function act(body: Record<string, unknown>) {
     setBusy(true)
     setError(null)
+    setInfo(null)
     try {
-      await post(body)
+      const out = await post(body)
       setEditing(false)
+      // Chia sẻ hay trả về làm đổi mã skill: mở lại ở mã mới.
+      if ((body.op === 'share' || body.op === 'unshare') && out.skill?.id)
+        nav.go('skill', { id: out.skill.id })
+      else if (body.op === 'import-check')
+        setInfo(
+          t(
+            out.state === 'proposed'
+              ? 'ski.newProposed'
+              : out.state === 'unchanged'
+                ? 'ski.sameContent'
+                : 'ski.noNew',
+          ),
+        )
       await load()
     } catch (e) {
       setError((e as Error).message)
@@ -154,9 +202,9 @@ export function Skill({ t, nav, params }: PageProps) {
       }
       subtitle={
         p
-          ? t(p.base ? 'skd.subPatch' : 'skd.subNew', { name: bot?.name ?? d.skill.bot, v: p.version })
+          ? t(p.base ? 'skd.subPatch' : 'skd.subNew', { name: botName, v: p.version })
           : t(d.skill.status === 'archived' ? 'skd.subArchived' : 'skd.subActive', {
-              name: bot?.name ?? d.skill.bot,
+              name: botName,
               v: d.skill.version,
               n: d.skill.uses,
             })
@@ -192,6 +240,23 @@ export function Skill({ t, nav, params }: PageProps) {
             >
               {d.skill.pinned ? t('skd.unpin') : t('skd.pin')}
             </Button>
+            {(current?.source ?? d.versions.find((v) => v.source)?.source)?.kind === 'github' && (
+              <Button disabled={busy} onClick={() => void act({ op: 'import-check', skill: d.skill.id })}>
+                {t('ski.checkNew')}
+              </Button>
+            )}
+            {isTeam
+              ? Array.isArray(d.skill.assigned) &&
+                d.skill.assigned.length === 1 && (
+                  <Button disabled={busy} onClick={() => void act({ op: 'unshare', skill: d.skill.id })}>
+                    {t('ski.unshare')}
+                  </Button>
+                )
+              : d.skill.status === 'active' && (
+                  <Button disabled={busy} onClick={() => void act({ op: 'share', skill: d.skill.id })}>
+                    {t('ski.share')}
+                  </Button>
+                )}
             {d.skill.status === 'archived' ? (
               <Button
                 variant="primary"
@@ -210,6 +275,7 @@ export function Skill({ t, nav, params }: PageProps) {
       }
     >
       {error && <div className="ap-error">{error}</div>}
+      {info && <div className="ap-hint ap-hint-ok">{info}</div>}
       <div className="ap-cols">
         <Col grow={1.3} basis={480}>
           <section className="a-card" style={{ overflow: 'hidden' }}>
@@ -282,9 +348,105 @@ export function Skill({ t, nav, params }: PageProps) {
                 <b>{t('ap.skillLint')}:</b> {p.warnings.join(' ')}
               </div>
             )}
+            {p && (p.risks?.length ?? 0) > 0 && (
+              <div
+                style={{
+                  padding: '10px 14px',
+                  borderTop: '1px solid var(--a-line)',
+                  fontSize: 13,
+                  color: 'var(--a-danger)',
+                }}
+              >
+                <b>{t('ski.risksTitle')}:</b>
+                <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
+                  {p.risks!.map((r) => (
+                    <li key={r}>{r}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </section>
         </Col>
         <Col basis={380}>
+          {isTeam && (
+            <Box style={{ padding: 0 }}>
+              <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <b>
+                  {t('ski.botsTitle', {
+                    n: d.skill.assigned === 'all' ? members.length : (d.skill.assigned?.length ?? 0),
+                  })}
+                </b>
+                <span style={{ marginLeft: 'auto' }}>
+                  <Checkbox
+                    checked={d.skill.assigned === 'all'}
+                    onChange={(on) => void act({ op: 'assign', skill: d.skill.id, bots: on ? 'all' : [] })}
+                    label={t('conn.scopeAll')}
+                  />
+                </span>
+              </div>
+              {members.map((b) => {
+                const on = d.skill.assigned === 'all' || (d.skill.assigned ?? []).includes(b.id)
+                const uses = d.skill.usesBy?.[b.id] ?? 0
+                return (
+                  <div className="a-row" key={b.id} style={{ alignItems: 'center' }}>
+                    <Mascot id={b.mascot} accessory={b.accessory} size={26} />
+                    <span style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                      <b>{b.name}</b>
+                      <span className="a-muted" style={{ fontSize: 12.5 }}>
+                        {on ? t('ski.usesBy', { n: uses }) : t('ski.notAssigned')}
+                      </span>
+                    </span>
+                    <Switch
+                      checked={on}
+                      label={t(on ? 'ski.unassignFor' : 'ski.assignFor', { name: d.skill.name, bot: b.name })}
+                      onChange={(next) =>
+                        void act({
+                          op: 'assign',
+                          skill: d.skill.id,
+                          bots: toggleAssigned(
+                            d.skill.assigned,
+                            b.id,
+                            next,
+                            members.map((m) => m.id),
+                          ),
+                        })
+                      }
+                    />
+                  </div>
+                )
+              })}
+            </Box>
+          )}
+          {(() => {
+            const src = (p ?? current)?.source ?? d.versions.find((v) => v.source)?.source
+            if (!src) return null
+            const link = sourceUrl(src)
+            const files = (p ?? current)?.files ?? []
+            return (
+              <Box style={{ padding: '10px 14px', fontSize: 13 }}>
+                <b>{t('ski.source')}</b>
+                <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <span>
+                    <Pill tone="accent">{sourceLabel(src)}</Pill>{' '}
+                    {src.sha &&
+                      (link ? (
+                        <a className="ap-link a-mono" href={link} target="_blank" rel="noreferrer">
+                          {shortSha(src.sha)}
+                        </a>
+                      ) : (
+                        <span className="a-mono">{shortSha(src.sha)}</span>
+                      ))}
+                  </span>
+                  <span className="a-muted a-mono" style={{ fontSize: 12, wordBreak: 'break-all' }}>
+                    {src.path}
+                  </span>
+                  {files.length > 0 && (
+                    <span className="a-muted">{t('ski.filesCount', { n: files.length })}</span>
+                  )}
+                </div>
+              </Box>
+            )
+          })()}
           <EvalPanel t={t} d={d} busy={busy} onRun={() => void act({ op: 'eval', skill: d.skill.id })} />
           <Box style={{ padding: '10px 14px', fontSize: 13 }}>
             <b>{t('skd.history')}</b>

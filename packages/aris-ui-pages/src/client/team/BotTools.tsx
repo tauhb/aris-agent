@@ -28,6 +28,8 @@ import {
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { PageProps } from '../page.js'
 import type { SkillRow } from '../mind/Skills.js'
+import { skillsPost } from '../mind/skills-api.js'
+import { assignedTo, isTeamSkill, notAssigned, sourceLabel, toggleAssigned } from '../mind/skill-team.js'
 import { ALL_SCOPE, ScopePicker, type Scope } from './ScopePicker.js'
 
 type T = PageProps['t']
@@ -381,18 +383,42 @@ function Toolset({ t, bot, team }: { t: T; bot: BotData; team: TeamView }) {
 }
 
 /** Skill của bot (`@aris/skills`): đang dùng, chờ duyệt, ít dùng, lưu kho; bấm để mở chi tiết. */
-function BotSkills({ t, nav, bot }: { t: T; nav: PageProps['nav']; bot: BotData }) {
-  const [rows, setRows] = useState<SkillRow[] | null>(null)
+function BotSkills({ t, nav, bot, team }: { t: T; nav: PageProps['nav']; bot: BotData; team: TeamView }) {
+  const [all, setAll] = useState<SkillRow[] | null>(null)
+  const [tick, setTick] = useState(0)
+  const [adding, setAdding] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   useEffect(() => {
     let live = true
     void fetch(new URL('api/aris/skills', document.baseURI), { credentials: 'same-origin' })
       .then((r) => (r.ok ? (r.json() as Promise<{ skills: SkillRow[] }>) : undefined))
-      .then((d) => live && d && setRows(d.skills.filter((s) => s.bot === bot.id)))
+      .then((d) => live && d && setAll(d.skills))
       .catch(() => {})
     return () => {
       live = false
     }
-  }, [bot.id])
+  }, [bot.id, tick])
+  const rows = all?.filter((s) => s.bot === bot.id) ?? null
+  // Skill của kho đội: đã gán cho bot này (bật), và các skill còn lại có thể thêm vào.
+  const fromTeam = (all ?? []).filter((s) => isTeamSkill(s) && s.status === 'active' && assignedTo(s, bot.id))
+  const addable = notAssigned(
+    (all ?? []).filter((s) => s.status === 'active'),
+    bot.id,
+  )
+  const members = team.bots.filter((b) => !b.external).map((b) => b.id)
+  async function setTeamSkill(skill: SkillRow, on: boolean) {
+    setError(null)
+    try {
+      await skillsPost({
+        op: 'assign',
+        skill: skill.id,
+        bots: toggleAssigned(skill.assigned, bot.id, on, members),
+      })
+      setTick((n) => n + 1)
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
   const state = (s: SkillRow) =>
     s.proposed
       ? { tone: 'warn' as const, text: t('bot.sk.pending', { v: s.proposed.version }) }
@@ -402,38 +428,101 @@ function BotSkills({ t, nav, bot }: { t: T; nav: PageProps['nav']; bot: BotData 
           ? { tone: 'muted' as const, text: t('bot.sk.rare', { n: s.idleDays }) }
           : { tone: 'ok' as const, text: t('bot.sk.active') }
   return (
-    <Card
-      title={t('bot.skillCount', { n: rows?.length ?? 0 })}
-      subtitle={t('bot.skillHint', { name: bot.name })}
-      actions={
-        <a className="ap-link" onClick={() => nav.go('skills', { bot: bot.id })}>
-          {t('bot.openLibrary')}
-        </a>
-      }
-    >
-      {rows?.length === 0 && (
-        <CardRow>
-          <span className="a-muted" style={{ fontSize: 13 }}>
-            {t('bot.skillEmpty', { name: bot.name })}
-          </span>
-        </CardRow>
-      )}
-      {rows?.map((s) => {
-        const st = state(s)
-        return (
-          <CardRow key={s.id}>
-            <a className="a-mono grow ap-link" onClick={() => nav.go('skill', { id: s.id })}>
-              {s.name}
-            </a>
-            <Tag>v{s.version || s.proposed?.version}</Tag>
-            <Pill tone={st.tone}>{st.text}</Pill>
-            <span className="a-muted" style={{ fontSize: 12.5 }}>
-              {t('bot.sk.uses', { n: s.uses })}
+    <>
+      <Card
+        title={t('bot.skillCount', { n: rows?.length ?? 0 })}
+        subtitle={t('bot.skillHint', { name: bot.name })}
+        actions={
+          <a className="ap-link" onClick={() => nav.go('skills', { bot: bot.id })}>
+            {t('bot.openLibrary')}
+          </a>
+        }
+      >
+        {rows?.length === 0 && (
+          <CardRow>
+            <span className="a-muted" style={{ fontSize: 13 }}>
+              {t('bot.skillEmpty', { name: bot.name })}
             </span>
           </CardRow>
-        )
-      })}
-    </Card>
+        )}
+        {rows?.map((s) => {
+          const st = state(s)
+          return (
+            <CardRow key={s.id}>
+              <a className="a-mono grow ap-link" onClick={() => nav.go('skill', { id: s.id })}>
+                {s.name}
+              </a>
+              <Tag>v{s.version || s.proposed?.version}</Tag>
+              <Pill tone={st.tone}>{st.text}</Pill>
+              <span className="a-muted" style={{ fontSize: 12.5 }}>
+                {t('bot.sk.uses', { n: s.uses })}
+              </span>
+            </CardRow>
+          )
+        })}
+      </Card>
+      {(fromTeam.length > 0 || addable.length > 0) && (
+        <Card
+          title={
+            <span style={{ display: 'flex', flexDirection: 'column' }}>
+              <b>{t('ski.fromTeam', { n: fromTeam.length })}</b>
+              <span className="a-muted" style={{ fontSize: 12.5, fontWeight: 400 }}>
+                {t('ski.fromTeamHint', { name: bot.name })}
+              </span>
+            </span>
+          }
+          actions={
+            addable.length > 0 && (
+              <Button size="sm" onClick={() => setAdding(!adding)}>
+                {t('ski.addFromTeam')}
+              </Button>
+            )
+          }
+        >
+          {fromTeam.map((s) => (
+            <div className="a-row" key={s.id} style={{ alignItems: 'center' }}>
+              <a className="a-mono grow ap-link" onClick={() => nav.go('skill', { id: s.id })}>
+                {s.name}
+              </a>
+              {s.source && <Pill tone="accent">{sourceLabel(s.source)}</Pill>}
+              {s.assigned === 'all' && <Pill tone="muted">{t('conn.scopeAll')}</Pill>}
+              <span className="a-muted" style={{ fontSize: 12.5 }}>
+                {t('bot.sk.uses', { n: s.usesBy?.[bot.id] ?? 0 })}
+              </span>
+              <Switch
+                checked
+                label={t('ski.unassignFor', { name: s.name, bot: bot.name })}
+                onChange={() => void setTeamSkill(s, false)}
+              />
+            </div>
+          ))}
+          {adding &&
+            addable.map((s) => (
+              <div className="a-row" key={s.id} style={{ alignItems: 'center' }}>
+                <span className="a-mono grow">{s.name}</span>
+                {s.source && <Pill tone="accent">{sourceLabel(s.source)}</Pill>}
+                <Switch
+                  checked={false}
+                  label={t('ski.assignFor', { name: s.name, bot: bot.name })}
+                  onChange={() => void setTeamSkill(s, true)}
+                />
+              </div>
+            ))}
+          {adding && addable.length === 0 && (
+            <CardRow>
+              <span className="a-muted" style={{ fontSize: 13 }}>
+                {t('ski.noneToAdd')}
+              </span>
+            </CardRow>
+          )}
+          {error && (
+            <div className="a-row" style={{ color: 'var(--a-danger)', fontSize: 13 }}>
+              {error}
+            </div>
+          )}
+        </Card>
+      )}
+    </>
   )
 }
 
@@ -441,7 +530,7 @@ export function SkillsTab({ t, nav, bot }: { t: T; nav: PageProps['nav']; bot: B
   const team = useTeam()
   return (
     <>
-      <BotSkills t={t} nav={nav} bot={bot} />
+      <BotSkills t={t} nav={nav} bot={bot} team={team} />
       <McpCard t={t} nav={nav} bot={bot} team={team} />
       <TeamMcpCard t={t} nav={nav} bot={bot} team={team} />
       <Toolset t={t} bot={bot} team={team} />

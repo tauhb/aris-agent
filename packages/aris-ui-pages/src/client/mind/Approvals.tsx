@@ -3,10 +3,20 @@
  * tự từ chối sau 15 phút) và ký ức bot đề xuất (`@aris/memory`, tự bỏ sau 7 ngày). Bên trái là danh
  * sách lọc theo loại, bên phải chi tiết việc đang chọn. Skill vào ở đợt 3; gợi ý luật để đợt sau.
  */
-import { Button, Mascot, useTeamData, type BotData } from '@aris/ui-kit/react'
+import { Button, Mascot, Pill, useTeamData, type BotData } from '@aris/ui-kit/react'
 import { useCallback, useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Later } from '../team/BotTools.js'
+import {
+  cleanItems,
+  groupImports,
+  shortSha,
+  sourceLabel,
+  sourceUrl,
+  type Assigned,
+  type ImportGroup,
+  type SkillSource,
+} from './skill-team.js'
 
 type T = PageProps['t']
 
@@ -55,8 +65,13 @@ interface SkillItem {
   quote?: string
   sessionId?: string
   /** Vòng học nền đề xuất (`reflect`) hay người dùng nhờ học bằng `/learn` (`user`). */
-  by?: 'reflect' | 'user' | 'restore'
+  by?: 'reflect' | 'user' | 'restore' | 'import'
   warnings: string[]
+  /** Skill nhập từ ngoài: nguồn, dấu hiệu nguy hiểm, tệp kèm, bot gán sẵn khi duyệt. */
+  source?: SkillSource
+  risks?: string[]
+  files?: string[]
+  assignOnApprove?: Assigned
   at: string
 }
 
@@ -72,6 +87,7 @@ type Row =
   | { type: 'action'; a: ActionItem }
   | { type: 'memory'; m: MemoryItem }
   | { type: 'skill'; s: SkillItem }
+  | { type: 'imports'; g: ImportGroup<SkillItem> }
   | { type: 'soat'; b: SoatSummary }
 
 /** Yêu cầu quyền tự từ chối sau 15 phút (như thẻ Telegram). */
@@ -170,13 +186,36 @@ export function Approvals({ t, nav }: PageProps) {
   const rows: Row[] = [
     ...(actions ?? []).map((a) => ({ type: 'action' as const, a })),
     ...(memories ?? []).map((m) => ({ type: 'memory' as const, m })),
-    ...(skills ?? []).map((s) => ({ type: 'skill' as const, s })),
+    ...(() => {
+      // Skill nhập từ ngoài gom theo từng lần nhập; skill của vòng học và /learn vẫn từng thẻ.
+      const { groups, rest } = groupImports(skills ?? [])
+      return [
+        ...groups.map((g) => ({ type: 'imports' as const, g })),
+        ...rest.map((s) => ({ type: 'skill' as const, s })),
+      ]
+    })(),
     ...(soat ? [{ type: 'soat' as const, b: soat }] : []),
   ]
   const idOf = (r: Row) =>
-    r.type === 'action' ? r.a.id : r.type === 'memory' ? r.m.id : r.type === 'skill' ? r.s.id : 'soat'
+    r.type === 'action'
+      ? r.a.id
+      : r.type === 'memory'
+        ? r.m.id
+        : r.type === 'skill'
+          ? r.s.id
+          : r.type === 'imports'
+            ? `import:${r.g.key}`
+            : 'soat'
   const botIdOf = (r: Row) =>
-    r.type === 'action' ? r.a.bot : r.type === 'memory' ? r.m.bot : r.type === 'skill' ? r.s.bot : 'b-thu-thu'
+    r.type === 'action'
+      ? r.a.bot
+      : r.type === 'memory'
+        ? r.m.bot
+        : r.type === 'skill'
+          ? r.s.bot
+          : r.type === 'imports'
+            ? '_doi'
+            : 'b-thu-thu'
   const titleOf = (r: Row) =>
     r.type === 'action'
       ? actionLabel(t, r.a)
@@ -184,7 +223,9 @@ export function Approvals({ t, nav }: PageProps) {
         ? t('ap.memTitle')
         : r.type === 'skill'
           ? t('ap.skillTitle', { name: r.s.name, v: r.s.version })
-          : t('ap.soatTitle')
+          : r.type === 'imports'
+            ? t('ski.groupTitle', { n: r.g.items.length, src: sourceLabel(r.g.source) })
+            : t('ap.soatTitle')
   const subOf = (r: Row) =>
     r.type === 'action'
       ? (r.a.target ?? r.a.tool ?? '')
@@ -192,10 +233,14 @@ export function Approvals({ t, nav }: PageProps) {
         ? `“${r.m.text}”`
         : r.type === 'soat'
           ? soatLine(t, r.b)
-          : r.s.base
-            ? t('ap.skillPatch', { add: r.s.stat.add, del: r.s.stat.del })
-            : t('ap.skillNew')
-  const shown = rows.filter((r) => filter === 'all' || r.type === filter)
+          : r.type === 'imports'
+            ? t('ski.groupSub', { n: r.g.items.filter((i) => i.risks?.length).length })
+            : r.s.base
+              ? t('ap.skillPatch', { add: r.s.stat.add, del: r.s.stat.del })
+              : t('ap.skillNew')
+  const shown = rows.filter(
+    (r) => filter === 'all' || r.type === filter || (filter === 'skill' && r.type === 'imports'),
+  )
   const current = shown.find((r) => idOf(r) === selected) ?? shown[0]
   const chips: ['all' | Kind, string][] = [
     ['all', t('ap.all')],
@@ -237,7 +282,12 @@ export function Approvals({ t, nav }: PageProps) {
         {shown.map((r) => {
           const id = idOf(r)
           const bot = botOf(botIdOf(r))
-          const name = r.type === 'action' ? r.a.name : (bot?.name ?? botIdOf(r))
+          const name =
+            r.type === 'action'
+              ? r.a.name
+              : r.type === 'imports'
+                ? t('ski.teamLib')
+                : (bot?.name ?? botIdOf(r))
           return (
             <button
               key={id}
@@ -255,7 +305,12 @@ export function Approvals({ t, nav }: PageProps) {
                       ? t('ap.minutesLeft', { n: minutesLeft(r.a) })
                       : r.type === 'soat'
                         ? t('ap.soatOpen', { n: r.b.open })
-                        : t('ap.daysLeft', { n: r.type === 'memory' ? daysLeft(r.m) : skillDaysLeft(r.s) })}
+                        : t('ap.daysLeft', {
+                            n:
+                              r.type === 'memory'
+                                ? daysLeft(r.m)
+                                : skillDaysLeft(r.type === 'imports' ? r.g.items[0]! : r.s),
+                          })}
                   </span>
                 </span>
                 <span className="a-muted ap-li-sub">
@@ -317,6 +372,16 @@ export function Approvals({ t, nav }: PageProps) {
             t={t}
             s={current.s}
             bot={botOf(current.s.bot)}
+            nav={nav}
+            onDone={reload}
+          />
+        )}
+        {current?.type === 'imports' && (
+          <ImportsDetail
+            key={current.g.key}
+            t={t}
+            g={current.g}
+            team={team?.bots ?? []}
             nav={nav}
             onDone={reload}
           />
@@ -664,6 +729,134 @@ function SkillDetail({
       {error && <div style={{ color: 'var(--a-danger)', fontSize: 13 }}>{error}</div>}
       <p className="a-muted" style={{ margin: 0, fontSize: 12.5 }}>
         {t('ap.memTimeout', { n: skillDaysLeft(s) })}
+      </p>
+    </>
+  )
+}
+
+/** Một lần nhập skill từ ngoài (bản vẽ `SkillDoiChiTiet.dc.html` B): duyệt cả lần, hay chỉ những skill không cảnh báo. */
+function ImportsDetail({
+  t,
+  g,
+  team,
+  nav,
+  onDone,
+}: {
+  t: T
+  g: ImportGroup<SkillItem>
+  team: readonly BotData[]
+  nav: PageProps['nav']
+  onDone: () => Promise<void>
+}) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const clean = cleanItems(g.items)
+  const sha = g.source.sha
+  const link = sourceUrl(g.source)
+  const first = g.items[0]
+  const assigned = first?.assignOnApprove
+  const faces =
+    assigned === 'all' ? [] : (assigned ?? []).map((id) => team.find((b) => b.id === id)).filter(Boolean)
+  async function answer(op: 'approve' | 'reject', items: readonly SkillItem[]) {
+    setBusy(true)
+    setError(null)
+    try {
+      // Từng bản một: một bản lỗi (ví dụ đã được trả lời) không chặn các bản còn lại.
+      const failed: string[] = []
+      for (const s of items)
+        await post('api/aris/skills', { op, id: s.id }).catch((e: unknown) =>
+          failed.push(`${s.name}: ${(e as Error).message}`),
+        )
+      if (failed.length) setError(failed.join(' · '))
+      await onDone()
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <>
+      <Head
+        mascot="aris"
+        title={t('ski.groupTitle', { n: g.items.length, src: sourceLabel(g.source) })}
+        context={`${t('ski.groupVia')} · ${hhmm(first?.at ?? '')} ${new Date(first?.at ?? 0).toLocaleDateString('vi-VN')}`}
+      />
+      <div className="a-card" style={{ padding: '4px 16px 8px', maxWidth: 760 }}>
+        <div className="ap-kv">
+          <span className="a-muted">{t('ski.source')}</span>
+          <span>
+            <Pill tone="accent">{sourceLabel(g.source)}</Pill>{' '}
+            {sha &&
+              (link ? (
+                <a className="ap-link a-mono" href={link} target="_blank" rel="noreferrer">
+                  {shortSha(sha)}
+                </a>
+              ) : (
+                <span className="a-mono">{shortSha(sha)}</span>
+              ))}
+          </span>
+        </div>
+        <div className="ap-kv">
+          <span className="a-muted">{t('ski.groupAssigned')}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            {assigned === 'all' ? (
+              t('conn.scopeAll')
+            ) : faces.length ? (
+              faces.map((b) => <Mascot key={b!.id} id={b!.mascot} accessory={b!.accessory} size={22} />)
+            ) : (
+              <span className="a-muted">{t('ski.noneAssignedYet')}</span>
+            )}
+          </span>
+        </div>
+        {g.items.map((s) => (
+          <div className="ap-kv" key={s.id} style={{ alignItems: 'flex-start' }}>
+            <span className="a-mono" style={{ fontWeight: 500 }}>
+              {s.name}
+            </span>
+            <span style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
+              <span className="a-muted" style={{ fontSize: 12.5 }}>
+                {t('ski.files', { n: s.files?.length ?? 0 })}
+                {' · '}
+                <a className="ap-link" onClick={() => nav.go('skill', { id: s.skill })}>
+                  {t('ski.view')}
+                </a>
+              </span>
+              {(s.risks ?? []).map((r) => (
+                <span
+                  key={r}
+                  className="a-pill danger"
+                  style={{ height: 'auto', whiteSpace: 'normal', padding: '2px 9px' }}
+                >
+                  {r}
+                </span>
+              ))}
+              {s.warnings.length > 0 && (
+                <span style={{ color: 'var(--a-warn)', fontSize: 12.5 }}>{s.warnings.join(' ')}</span>
+              )}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        <Button variant="primary" size="lg" disabled={busy} onClick={() => void answer('approve', g.items)}>
+          {t('ski.approveAll', { n: g.items.length })}
+        </Button>
+        {clean.length > 0 && clean.length < g.items.length && (
+          <Button size="lg" disabled={busy} onClick={() => void answer('approve', clean)}>
+            {t('ski.approveClean', { n: clean.length })}
+          </Button>
+        )}
+        <Button
+          size="lg"
+          disabled={busy}
+          style={{ color: 'var(--a-danger)' }}
+          onClick={() => void answer('reject', g.items)}
+        >
+          {t('ski.rejectAll')}
+        </Button>
+      </div>
+      {error && <div style={{ color: 'var(--a-danger)', fontSize: 13 }}>{error}</div>}
+      <p className="a-muted" style={{ margin: 0, fontSize: 12.5 }}>
+        {t('ski.groupNote')}
       </p>
     </>
   )

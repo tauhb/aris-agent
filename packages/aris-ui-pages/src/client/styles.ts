@@ -207,7 +207,7 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .aris .ap-chip{height:30px;border:1px solid var(--a-line);border-radius:999px;background:var(--a-panel);padding:0 12px;font-size:12.5px;color:var(--a-muted)}
 .aris .ap-chip[aria-pressed=true]{background:var(--a-hover);color:var(--a-ink);font-weight:600}
 .aris .ap-sk{display:grid;grid-template-columns:minmax(0,2fr) 70px 70px 120px 70px 120px 90px;gap:12px;align-items:center;padding:11px 16px;border-top:1px solid var(--a-line);font-size:13.5px;min-width:760px;width:100%;text-align:left}
-.aris button.ap-sk:hover{background:var(--a-hover)}
+.aris button.ap-sk:hover,.aris div.ap-sk[role=button]:hover{background:var(--a-hover)}.aris div.ap-sk[role=button]{cursor:pointer}.ap-sk-panel{min-width:760px;border-top:1px solid var(--a-line);background:var(--a-panel2)}.ap-sk-panel .ap-sc-panel{padding-left:16px;background:transparent;border-top:0}.ap-si-list{max-height:280px;overflow-y:auto}
 .aris .ap-sk[data-hot]{background:var(--a-accentSoft)}
 .ap-dl{font-family:var(--dsh-font-family-code-default);font-size:12.5px;padding:2px 14px;white-space:pre-wrap;color:var(--a-muted)}
 .ap-dl[data-kind="+"]{background:var(--a-okSoft);color:var(--a-ok)}
