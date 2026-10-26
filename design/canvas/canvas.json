@@ -726,6 +726,15 @@
       "w": 1440,
       "x": 1860,
       "y": 980
+    },
+    "KenhLark.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "6.3c · Kênh Lark (GĐ7 đợt 7d) — lần đầu: 5 bước tạo ứng dụng, dán App ID/Secret; đã kết nối: ứng dụng, mã ghép đôi riêng Lark, người đã ghép, Mai đọc email/lịch (đăng nhập Lark), nhóm",
+      "w": 1440,
+      "x": 0,
+      "y": 9240
     }
   },
   "createdOnFiles": {
@@ -904,7 +913,8 @@
     "VanPhong2D.dc.html",
     "VanPhong3D.dc.html",
     "VanPhongPhongBan.dc.html",
-    "VanPhongKanban.dc.html"
+    "VanPhongKanban.dc.html",
+    "KenhLark.dc.html"
   ],
   "pages": [
     {
