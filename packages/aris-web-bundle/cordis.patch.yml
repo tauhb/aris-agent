@@ -3,6 +3,17 @@
 # tắt đi và thay bằng một gói aris giữ nguyên hợp đồng slot (dsh không cho đổi
 # tên gói của row có sẵn, nên phải tắt row gốc rồi chèn row mới).
 
+# Không in URL đăng nhập có token (`dsh web: http://127.0.0.1:3201/?token=…`) ra stdout: launchd ghi dòng đó vào
+# `~/Library/Logs/aris/daemon.log`, token sống tới khi daemon khởi động lại và bot đọc được log (đợt 7f, S4). Lấy URL
+# bằng `aris url` (đi qua socket 0600 của daemon). Patch thay cả `config` của row nên chép lại đủ các khoá của row gốc
+# (dsh-web-app/cordis.patch.yml); chỉ `printUrl` khác.
+- id: web-runtime
+  config:
+    openBrowser: !!js ctx.webStartup.openBrowser
+    printUrl: false
+    publicUrl: !!js ctx.webStartup.publicUrl
+    surfaceContext: true
+
 # Thanh bên trái: Đội hình, Việc mới, các trang theo canvas.
 - id: ui-sidebar
   name: '@deepseek-ai/dsh-client-ui-sidebar'

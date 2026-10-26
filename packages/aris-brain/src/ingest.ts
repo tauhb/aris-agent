@@ -130,9 +130,44 @@ export function review(
   const flagged = ops.some((o) => o.flag)
   const deptTouched = ops.some((o) => placeOf(o.path).dept)
   if (flagged || deptTouched) return { ops, level: 'ky' }
-  const mine = b.source.kind === 'nhat-ky' || b.source.from === 'note'
+  // Nhật ký tự nạp, trừ phần ghi nhanh của phiên không tin cậy (from 'bot'): phần đó luôn chờ người dùng duyệt (S6).
+  const mine = (b.source.kind === 'nhat-ky' && b.source.from !== 'bot') || b.source.from === 'note'
   const light = ops.every((o) => o.kind === 'lien-ket' || (o.kind === 'moi' && /\/tom-tat\//.test(o.path)))
   return { ops, level: mine || light ? 'tu-nap' : 'nhanh' }
+}
+
+// --- Nhật ký: nguồn của từng mục ghi nhanh (đợt 7f, S6) -----------------------------------------------
+
+/** Dòng đánh dấu mục ghi nhanh do phiên không tin cậy ghi: Thủ thư không tự nạp, người dùng xem trong Hộp thư vào. */
+export const UNTRUSTED_MARK = 'nguon: khong-tin-cay'
+
+export interface NoteSource {
+  /** Mã bot ghi. */
+  bot: string
+  /** Mã phiên ghi. */
+  session?: string | undefined
+  /** Loại phiên không tin cậy (`routine`, `thu-thu`, `khach-acp`…); không có là chat trực tiếp. */
+  kind?: string | undefined
+}
+
+/** Dòng nguồn đặt dưới tiêu đề mục ghi nhanh: bot, phiên, loại phiên, tin cậy hay không. */
+export function noteSourceLine(o: NoteSource & { untrusted: boolean }): string {
+  return [
+    o.untrusted ? UNTRUSTED_MARK : 'nguon: tin-cay',
+    `bot ${o.bot}`,
+    ...(o.session ? [`phiên ${o.session}`] : []),
+    `loại ${o.kind ?? 'chat trực tiếp'}`,
+  ].join(' · ')
+}
+
+/** Chữ ghi nhanh của bot không được tự dựng tiêu đề (giả một mục khác có nguồn tin cậy): thoát dấu `#` đầu dòng. */
+export const defangNote = (text: string) => text.replace(/^([ \t]*)(#{1,6})(?=\s)/gm, '$1\\$2')
+
+/** Tách nhật ký thành phần tin cậy (tiêu đề, mục của người dùng và chat trực tiếp) và các mục không tin cậy. */
+export function splitDiary(md: string): { trusted: string; untrusted: string[] } {
+  const parts = md.split(/^(?=## Ghi nhanh · )/m)
+  const bad = (p: string) => /^nguon: khong-tin-cay\b/m.test(p)
+  return { trusted: parts.filter((p) => !bad(p)).join(''), untrusted: parts.filter(bad) }
 }
 
 /** Thư mục wiki được ghi của một bản nạp. */

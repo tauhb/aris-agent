@@ -2,6 +2,7 @@
  * Kiểm thử skill bằng chạy lại (giai đoạn 3, đợt 4; đặc tả: docs/specs/aris-skills.md). Phần thuần:
  * luật "chỉ đọc" của phiên kiểm thử, lời chấm và cách đọc, tổng hợp số liệu cho màn 3.3.
  */
+import { readOnlyCommand } from '@aris/shell'
 import { fold } from './lint.js'
 
 /** Tối đa ca mỗi lần kiểm thử, trần tiền mỗi lần (USD). */
@@ -60,38 +61,14 @@ export const READ_ONLY_TOOLS = new Set([
   'working_directory',
 ])
 
-const READ_COMMANDS =
-  /^(git\s+(-C\s+\S+\s+)?(--no-pager\s+)?(log|status|diff|show|branch|rev-parse|ls-files|blame|remote|tag)\b|ls\b|cat\b|head\b|tail\b|wc\b|grep\b|rg\b|find\b|pwd\b|echo\b|stat\b|file\b|tree\b|du\b|which\b|date\b|sed\s+-n\b|awk\b|sort\b|uniq\b|(node|npm|pnpm|python3?)\s+--version\b)/
-
-/** Lệnh bash chỉ đọc: mỗi đoạn (nối bằng `&&`, `;`, `|`) đều là lệnh đọc, không chuyển hướng ghi vào tệp. */
+/**
+ * Lệnh bash chỉ đọc: dùng chung bộ kiểm của hàng rào (`readOnlyCommand` ở `@aris/shell`, đợt 7f, S10) ở chế độ nới.
+ * Mỗi đoạn (tách theo `;`, `&&`, `||`, `|`, `&`, xuống dòng) phải là lệnh đọc trong danh sách, không chuyển hướng
+ * ghi, không lệnh con, không cờ biến lệnh đọc thành ghi hay chạy chương trình (`find -fprint`, `git diff --output`,
+ * `sort -o`, `rg --pre`…). `awk`, `sed` (trừ `sed -n 'Np'`), `git branch|remote|tag` không còn trong danh sách.
+ */
 export function readOnlyBash(command: string): boolean {
-  // Bỏ chuyển hướng vô hại: lỗi vào /dev/null, gộp luồng lỗi.
-  const cmd = command
-    .trim()
-    .replace(/\d?>>?\s*\/dev\/null/g, '')
-    .replace(/\d>&\d/g, '')
-  if (!cmd || />|\btee\b|\$\(|`|\bfind\b.*\s-(delete|execdir|ok|okdir|fprint\w*)\b|\bsed\b.*\s-i\b/.test(cmd))
-    return false
-  // Trong ngoặc là chữ thường (lệnh con `$(` và dấu huyền đã bị chặn ở trên): bỏ trước khi cắt lệnh.
-  return cmd
-    .replace(/"[^"]*"|'[^']*'/g, 'Q')
-    .split(/&&|\|\||;|\|/)
-    .map((p) => p.trim().replace(/^cd\s+\S+\s*$/, 'pwd'))
-    .every((p) => !p || readSegment(p))
-}
-
-/** Lệnh `find -exec` và `xargs` được chạy tiếp: chỉ khi chính lệnh đó là lệnh đọc. */
-const READ_TAIL = /^(cat|wc|head|tail|grep|rg|ls|stat|file|du|sort|uniq)\b/
-
-function readSegment(p: string): boolean {
-  // Gán biến không có lệnh con (`$(` và dấu huyền đã bị chặn ở trên): `d=/duong/dan`.
-  if (/^[A-Za-z_][A-Za-z0-9_]*=(\S*|"[^"]*"|'[^']*')$/.test(p)) return true
-  const xargs = /^xargs\s+(?:-\S+\s+)*(.+)$/.exec(p)
-  if (xargs) return READ_TAIL.test(xargs[1]!)
-  if (!READ_COMMANDS.test(p)) return false
-  // `find … -exec <lệnh> {} +|;`: lệnh chạy tiếp phải là lệnh đọc.
-  const exec = /\s-exec\s+(.+?)\s+\{\}/.exec(p)
-  return !exec || READ_TAIL.test(exec[1]!)
+  return readOnlyCommand(command, { lenient: true })
 }
 
 /** Lý do từ chối trong phiên kiểm thử (model đọc). */

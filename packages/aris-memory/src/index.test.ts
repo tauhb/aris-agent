@@ -8,7 +8,7 @@ interface Tool {
   execute: (args: Record<string, string>, exec: unknown) => Promise<string>
 }
 
-function fakeContext() {
+function fakeContext(services: Record<string, unknown> = {}) {
   const contexts: { name: string; order: number; text: () => string }[] = []
   const sections: { name: string }[] = []
   const tools: Tool[] = []
@@ -18,7 +18,7 @@ function fakeContext() {
     inject: () => {},
     on: () => {},
     logger: () => ({ warn: () => {}, info: () => {} }),
-    get: () => undefined,
+    get: (name: string) => services[name],
     systemPrompt: {
       section: (s: { name: string }) => (sections.push(s), () => {}),
       context: (c: (typeof contexts)[number]) => (contexts.push(c), () => {}),
@@ -83,5 +83,73 @@ describe('aris-memory', () => {
     expect(pending).toHaveLength(1)
     expect(pending[0]).toMatchObject({ tier: 'archive', trust: 'external', proposal: { via: 'tool' } })
     expect(contexts[0]!.text()).not.toContain('Giá vàng')
+  })
+})
+
+describe('đợt 7f · S5: origin=user chỉ tin trong chat trực tiếp của người dùng', () => {
+  const save = (origin: string, text = 'Người dùng thích báo cáo ngắn') => ({
+    action: 'save',
+    text,
+    book: 'owner',
+    tier: 'core',
+    kind: 'preference',
+    origin,
+  })
+
+  it.each([
+    ['routine', { arisRoutine: { isRoutine: (id: string) => id === 'phien-test' } }],
+    ['Thủ thư', { arisBrain: { isLibrarian: (id: string) => id === 'phien-test' } }],
+    ['kiểm thử skill', { arisSkills: { isEval: (id: string) => id === 'phien-test' } }],
+    ['khách ACP', { arisAcp: { isGuest: (id: string) => id === 'phien-test' } }],
+    [
+      'việc được giao',
+      { arisBots: { botOf: () => ({ id: 'commander' }), store: { tagOf: () => ({ via: 'dispatch' }) } } },
+    ],
+    [
+      'thành viên đội',
+      { arisBots: { botOf: () => ({ id: 'commander' }), store: { tagOf: () => ({ via: 'team' }) } } },
+    ],
+    ['Telegram không phải chủ', { arisChannels: { restricted: (id: string) => id === 'phien-test' } }],
+  ])(
+    'phiên %s: save origin=user thành đề xuất chờ duyệt; update, forget bị từ chối',
+    async (_ten, services) => {
+      const { ctx, tools, map } = fakeContext(services)
+      await apply(ctx)
+      const memory = tools.find((t) => t.name === 'memory')!
+      const session = Session.create(SessionId('phien-test'))
+      const out = await memory.execute(save('user'), { agent: { session } })
+      expect(out).toMatch(/^Đã gửi đề xuất ký ức/)
+      const items = [...map.values()]
+      expect(items).toHaveLength(1)
+      expect(items[0]).toMatchObject({ status: 'pending', trust: 'agent-inferred' })
+      const id = items[0]!.id
+      expect(await memory.execute({ action: 'update', id, text: 'sửa lén' }, { agent: { session } })).toMatch(
+        /^Không làm được: phiên này không phải chat trực tiếp/,
+      )
+      expect(await memory.execute({ action: 'forget', id }, { agent: { session } })).toMatch(
+        /^Không làm được: phiên này không phải chat trực tiếp/,
+      )
+      expect([...map.values()][0]!.text).toBe('Người dùng thích báo cáo ngắn')
+    },
+  )
+
+  it('chat trực tiếp của người dùng: origin=user vẫn lưu ngay, sửa và quên được', async () => {
+    const { ctx, tools, map } = fakeContext({
+      arisRoutine: { isRoutine: () => false },
+      arisBots: { botOf: () => ({ id: 'commander' }), store: { tagOf: () => undefined } },
+      arisChannels: { restricted: () => false },
+    })
+    await apply(ctx)
+    const memory = tools.find((t) => t.name === 'memory')!
+    const session = Session.create(SessionId('chat-truc-tiep'))
+    expect(await memory.execute(save('user'), { agent: { session } })).toMatch(/^Đã lưu \[m-/)
+    const id = [...map.values()][0]!.id
+    expect(
+      await memory.execute(
+        { action: 'update', id, text: 'Người dùng thích báo cáo dài' },
+        { agent: { session } },
+      ),
+    ).toMatch(/^Đã sửa/)
+    expect(await memory.execute({ action: 'forget', id }, { agent: { session } })).toMatch(/^Đã quên/)
   })
 })

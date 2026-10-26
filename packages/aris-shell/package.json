@@ -1,0 +1,19 @@
+{
+  "name": "@aris/shell",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Phân tích lệnh shell, đường dẫn và nhận diện phiên không tin cậy cho hàng rào của aris: chuẩn hoá lệnh, đường cấm, lệnh chỉ đọc. Thuần, không phụ thuộc gói nào",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    }
+  },
+  "files": [
+    "lib"
+  ],
+  "license": "MIT"
+}

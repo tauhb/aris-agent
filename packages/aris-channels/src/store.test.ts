@@ -63,6 +63,38 @@ describe('kho kênh', () => {
     expect(await s.shouldNotifyStranger(9)).toBe(true)
   })
 
+  it('đợt 7f, S18: sai mã ghép đôi 5 lần thì khoá chat một giờ, kể cả gõ đúng; hết giờ thì thử lại được', async () => {
+    let now = 1_000
+    const s = memStore(() => now)
+    const code = await s.createCode('owner')
+    for (let i = 0; i < 5; i++) expect(await s.redeem('2222-2222', { id: 7, name: 'K' })).toBeUndefined()
+    expect(s.pairLocked(7)).toBe(true)
+    expect(await s.redeem(code.code, { id: 7, name: 'K' })).toBeUndefined()
+    // Chat khác không bị ảnh hưởng.
+    expect(await s.redeem(code.code, { id: 8, name: 'L' })).toMatchObject({ userId: 8 })
+    now += 3_600_001
+    const again = await s.createCode('member')
+    expect(s.pairLocked(7)).toBe(false)
+    expect(await s.redeem(again.code, { id: 7, name: 'K' })).toMatchObject({ userId: 7, role: 'member' })
+  })
+
+  it('đợt 7f, S18: nhắn đúng trước khi đủ 5 lần sai thì đếm lại từ đầu; tin không giống mã không tính', async () => {
+    const s = memStore()
+    const code = await s.createCode('owner')
+    for (let i = 0; i < 4; i++) await s.redeem('2222-2222', { id: 7, name: 'K' })
+    for (let i = 0; i < 10; i++) await s.redeem('xin chào bạn', { id: 7, name: 'K' })
+    expect(s.pairLocked(7)).toBe(false)
+    expect(await s.redeem(code.code, { id: 7, name: 'K' })).toMatchObject({ role: 'owner' })
+  })
+
+  it('đợt 7f, S18: bảng người lạ dọn bản ghi quá 30 ngày', async () => {
+    const now = 40 * 86_400_000
+    const s = memStore(() => now)
+    await s.updateSettings({ strangers: { '1': 0, '2': now - 29 * 86_400_000 } })
+    expect(await s.shouldNotifyStranger(3)).toBe(true)
+    expect(Object.keys(s.settings().strangers).sort()).toEqual(['2', '3'])
+  })
+
   it('đổi phiên giữ lịch sử để /sessions, /resume', async () => {
     const s = memStore()
     const base = { key: 'k', bot: 'aris', chatId: 1 }

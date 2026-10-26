@@ -1,9 +1,16 @@
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
-import { drillBackup, extractBackup, readHeader, writeBackup } from './archive.js'
+import {
+  drillBackup,
+  escapingLinks,
+  extractBackup,
+  readHeader,
+  validateHeader,
+  writeBackup,
+} from './archive.js'
 import {
   cleanBackup,
   codeIdOf,
@@ -187,5 +194,128 @@ describe('sao lưu, diễn tập, khôi phục thật trên thư mục tạm', (
     expect(existsSync(join(home, '.aris', 'brain', 'bin', 'native'))).toBe(true)
     expect(execFileSync('/usr/bin/sqlite3', [db, 'SELECT x FROM t']).toString().trim()).toBe('42')
     expect(r.parts.map((p) => p.id).sort()).toEqual(['aris', 'brain', 'dsh', 'workspace'])
+  })
+})
+
+describe('đợt 7f · S8: đầu tệp được xác thực, id và gốc không tin đầu tệp', () => {
+  const base = mkdtempSync(join(tmpdir(), 'aris-backup-s8-'))
+  afterAll(() => rmSync(base, { recursive: true, force: true }))
+  const code = newRecoveryCode()
+  const src = join(base, 'nguon')
+  mkdirSync(src, { recursive: true })
+  writeFileSync(join(src, 'a.txt'), 'du lieu that')
+
+  const part = (o: Record<string, unknown> = {}) => ({
+    id: 'workspace',
+    root: src,
+    files: [join(src, 'a.txt')],
+    sqlite: [] as string[],
+    bytes: 12,
+    ...o,
+  })
+  const make = async (name: string, parts: ReturnType<typeof part>[]) =>
+    (await writeBackup(parts as never, join(base, name), code)).file
+
+  it('tệp mới có phiên bản 2; sửa bất kỳ byte nào của đầu tệp thì giải mã lỗi', async () => {
+    const file = await make('v2.aris', [part()])
+    expect((await readHeader(file)).header.v).toBe(2)
+    const raw = readFileSync(file)
+    // Đổi một ký tự trong giá trị `host` (độ dài giữ nguyên, JSON vẫn đọc được).
+    const at = raw.indexOf('"host":"') + '"host":"'.length
+    raw[at] = raw[at] === 0x58 ? 0x59 : 0x58
+    const bad = join(base, 'sua-dau.aris')
+    writeFileSync(bad, raw)
+    expect(JSON.parse(JSON.stringify((await readHeader(bad)).header)).v).toBe(2)
+    await expect(extractBackup(bad, code, join(base, 'x1'))).rejects.toThrow('bị sửa hay hỏng')
+    // Sửa mã phần trong đầu tệp (workspace → workspacf) cũng hỏng thẻ.
+    const raw2 = readFileSync(file)
+    const i2 = raw2.indexOf('"id":"workspace"') + '"id":"workspac'.length
+    raw2[i2] = 0x66
+    writeFileSync(bad, raw2)
+    await expect(extractBackup(bad, code, join(base, 'x2'))).rejects.toThrow()
+  })
+
+  it('bản phiên bản 1 (không có AAD) bị từ chối với lời báo rõ', async () => {
+    const file = await make('v1.aris', [part()])
+    const raw = readFileSync(file)
+    const n = raw.readUInt32BE(8)
+    const head = JSON.parse(raw.subarray(12, 12 + n).toString('utf8')) as { v: number }
+    head.v = 1
+    const json = Buffer.from(JSON.stringify(head).padEnd(n, ' '), 'utf8')
+    const old = Buffer.concat([raw.subarray(0, 12), json, raw.subarray(12 + n)])
+    const f = join(base, 'cu.aris')
+    writeFileSync(f, old)
+    await expect(readHeader(f)).rejects.toThrow('phiên bản 1 không có xác thực đầu tệp')
+  })
+
+  it('mã phần lạ, tên mục có / hay .. bị từ chối khi giải nén lẫn khôi phục', async () => {
+    const roots = { dsh: join(base, 'dsh-root'), workspace: join(base, 'ws-root') }
+    mkdirSync(roots.dsh, { recursive: true })
+    for (const bad of [
+      part({ id: '..' }),
+      part({ id: 'launchagents' }),
+      part({ id: '../../x' }),
+      part({ entries: ['../ngoai'] }),
+      part({ entries: ['a/b'] }),
+      part({ entries: ['a.txt'], merge: ['..'] }),
+    ]) {
+      const f = await make('la.aris', [bad])
+      await expect(extractBackup(f, code, join(base, 'y'))).rejects.toThrow(/phần lạ|tên mục/)
+      await expect(restoreBackup(f, code, roots)).rejects.toThrow(/phần lạ|tên mục/)
+    }
+    expect(() => validateHeader({ parts: [{ id: 'dsh', entries: ['sessions'] }] } as never)).not.toThrow()
+    expect(() =>
+      validateHeader({ parts: [{ id: 'brain' }, { id: 'aris', merge: ['brain'] }] } as never),
+    ).not.toThrow()
+    expect(existsSync(join(base, 'y'))).toBe(false)
+  })
+
+  it('khôi phục chỉ dùng gốc từ roots: phần không có gốc bị bỏ qua và báo, gốc ghi trong đầu tệp không được dùng', async () => {
+    const other = join(base, 'phan-khac')
+    mkdirSync(other, { recursive: true })
+    writeFileSync(join(other, 'b.txt'), 'goc-cu')
+    const f = await make('goc.aris', [
+      part({ id: 'workspace' }),
+      part({ id: 'projects', root: other, files: [join(other, 'b.txt')] }),
+    ])
+    writeFileSync(join(other, 'b.txt'), 'da-doi-sau-sao-luu')
+    const mine = join(base, 'cua-toi')
+    mkdirSync(mine, { recursive: true })
+    const r = await restoreBackup(f, code, { dsh: mine, workspace: join(mine, 'ws') }, 'T')
+    expect(r.parts.map((p) => p.id)).toEqual(['workspace'])
+    expect(r.skipped).toEqual(['projects'])
+    expect(readFileSync(join(mine, 'ws', 'a.txt'), 'utf8')).toBe('du lieu that')
+    // Gốc ghi trong đầu tệp (`other`) không bị đụng: nội dung nguyên, không có thư mục cất bên cạnh.
+    expect(readFileSync(join(other, 'b.txt'), 'utf8')).toBe('da-doi-sau-sao-luu')
+    expect(existsSync(`${other}.truoc-khoi-phuc-T`)).toBe(false)
+    await expect(restoreBackup(f, code, {})).rejects.toThrow('không có thư mục đích')
+  })
+
+  it('liên kết mềm trỏ ra ngoài thư mục giải nén: xoá liên kết, báo lỗi, khôi phục không đụng dữ liệu thật', async () => {
+    const evil = join(base, 'ac')
+    mkdirSync(evil, { recursive: true })
+    writeFileSync(join(evil, 'b.txt'), 'binh thuong')
+    symlinkSync('/etc', join(evil, 'tuyet-doi'))
+    symlinkSync('../../..', join(evil, 'di-len'))
+    symlinkSync('b.txt', join(evil, 'ok-trong'))
+    const f = await make('lienket.aris', [
+      part({
+        root: evil,
+        files: [join(evil, 'b.txt'), join(evil, 'tuyet-doi'), join(evil, 'di-len'), join(evil, 'ok-trong')],
+      }),
+    ])
+    const dest = join(base, 'giai')
+    await expect(extractBackup(f, code, dest)).rejects.toThrow('liên kết mềm trỏ ra ngoài')
+    expect(await escapingLinks(dest)).toEqual([])
+    expect(existsSync(join(dest, 'workspace', 'tuyet-doi'))).toBe(false)
+    expect(existsSync(join(dest, 'workspace', 'ok-trong'))).toBe(true)
+    const target = join(base, 'dich-that')
+    mkdirSync(join(target, 'ws'), { recursive: true })
+    writeFileSync(join(target, 'ws', 'giu.txt'), 'dung-dung-vao')
+    await expect(restoreBackup(f, code, { dsh: target, workspace: join(target, 'ws') }, 'T')).rejects.toThrow(
+      'liên kết mềm',
+    )
+    expect(readFileSync(join(target, 'ws', 'giu.txt'), 'utf8')).toBe('dung-dung-vao')
+    expect(existsSync(join(target, 'ws.truoc-khoi-phuc-T'))).toBe(false)
   })
 })

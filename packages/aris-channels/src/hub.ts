@@ -1249,8 +1249,8 @@ export class ChannelHub {
     const isOwner = this.store.roleOf(q.from.id) === 'owner'
     const done = (text?: string) => api.answerCallback(q.id, text).catch(() => undefined)
     const [kind, a, b, c] = data.split(':')
-    const ownerOnly = !['q'].includes(kind ?? '')
-    if (ownerOnly && !isOwner) return done('Chỉ người dùng chính bấm được.')
+    // Mọi nút, kể cả trả lời câu hỏi của agent (`q:`), chỉ người dùng chính bấm được (đợt 7f, S19).
+    if (!isOwner) return done('Chỉ người dùng chính bấm được.')
     const edit = (html: string, buttons?: InlineButton[][]) =>
       msg
         ? api
@@ -1537,6 +1537,16 @@ export class ChannelHub {
   // ======================================================================================
   // Duyệt và câu hỏi (chuỗi người trả lời của dsh)
   // ======================================================================================
+
+  /**
+   * Lượt đang chạy của phiên có tin của người không phải người dùng chính (thành viên, khách) không. Có thì quyền
+   * bị hạn chế thật: @aris/guard chỉ cho công cụ đọc, @aris/memory và @aris/brain không tin chữ trong phiên
+   * (đợt 7f, S9). Hết lượt trả lời thì hết hạn chế.
+   */
+  restricted(sessionId: string): boolean {
+    const turn = this.turnOf(sessionId)
+    return turn !== undefined && turn.trust !== 'owner'
+  }
 
   /** Lượt hiện tại của phiên có phải của kênh không; nếu có thì người gửi có quyền thấp nhất là gì. */
   private turnOf(sessionId: string): { last: Pending; trust: Trust } | undefined {

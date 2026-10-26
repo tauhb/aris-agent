@@ -21,16 +21,20 @@ import {
   isOpen,
   LIBRARIAN_DAILY_USD,
   librarianPrompt,
+  defangNote,
   logLine,
   nextToPlan,
+  noteSourceLine,
   OP_KINDS,
   pageSummary,
   parseClassify,
   renderIndex,
   review,
+  splitDiary,
   stampFront,
   staleAction,
   type Batch,
+  type NoteSource,
   type Op,
   type OpKind,
 } from './ingest.js'
@@ -242,6 +246,11 @@ export function startIngest(d: IngestDeps) {
 
   /** Chữ của nguồn: tệp chữ đọc thẳng; tệp khác trích ra bản .md đi kèm (một lần). */
   async function sourceTextOf(b: Batch): Promise<string> {
+    // Nhật ký: bản tự nạp chỉ gồm phần tin cậy; bản `from: 'bot'` chỉ gồm các mục không tin cậy (đợt 7f, S6).
+    if (b.source.kind === 'nhat-ky') {
+      const { trusted, untrusted } = splitDiary(await readText(b.source.path))
+      return sourceText(b.source.from === 'bot' ? untrusted.join('\n') : trusted)
+    }
     const kind = fileKind(b.source.path)
     if (kind === 'chu') return sourceText(await readText(b.source.path))
     if (kind === 'khac') throw new IngestError('Loại tệp này chưa đọc được.')
@@ -855,8 +864,16 @@ export function startIngest(d: IngestDeps) {
   }
 
   // --- Nhật ký: ghi nhanh, tự nạp cuối ngày --------------------------------------------------------
-  /** Ghi nhanh vào nhật ký hôm nay; `by` là tên bot ghi (không có: người dùng). */
-  async function note(text: string, space: Space = 'ca-nhan', by?: string) {
+  /**
+   * Ghi nhanh vào nhật ký hôm nay; `by` là tên bot ghi (không có: người dùng). Bot ghi thì kèm `src`: mã bot, mã
+   * phiên, loại phiên và đánh dấu tin cậy; mục không tin cậy không được tự nạp lúc 23:00 (S6).
+   */
+  async function note(
+    text: string,
+    space: Space = 'ca-nhan',
+    by?: string,
+    src?: NoteSource & { untrusted: boolean },
+  ) {
     const at = now()
     const rel = `${space}/nhat-ky/${dayKey(at)}.md`
     const abs = join(root, rel)
@@ -866,7 +883,7 @@ export function startIngest(d: IngestDeps) {
     await mkdir(dirname(abs), { recursive: true })
     await writeFile(
       abs,
-      `${cur.replace(/\s*$/, '\n')}\n## Ghi nhanh · ${two(at.getHours())}:${two(at.getMinutes())}${by ? ` · ${by}` : ''}\n\n${text.trim()}\n`,
+      `${cur.replace(/\s*$/, '\n')}\n## Ghi nhanh · ${two(at.getHours())}:${two(at.getMinutes())}${by ? ` · ${by}` : ''}\n\n${src ? `${noteSourceLine(src)}\n\n${defangNote(text.trim())}` : text.trim()}\n`,
     )
     await d.indexFile(rel)
     await commit(`${by ?? d.who()} ghi nhanh`, [rel])
@@ -881,22 +898,35 @@ export function startIngest(d: IngestDeps) {
     for (const space of SPACES) {
       if (s.diaryDone?.[space] === day) continue
       const rel = `${space}/nhat-ky/${day}.md`
-      const text = existsSync(join(root, rel)) ? sourceText(await readText(rel)) : ''
-      // Nhật ký chỉ có tiêu đề thì thôi.
-      if (text.replace(/^#.*$/m, '').trim()) {
+      const { trusted, untrusted } = splitDiary(existsSync(join(root, rel)) ? await readText(rel) : '')
+      const text = sourceText(trusted)
+      const [y, m, dd] = day.split('-')
+      const queue = async (source: Batch['source']) => {
         const id = newId()
-        const [y, m, dd] = day.split('-')
         await batches.put(id, {
           id,
           createdAt: at.toISOString(),
           updatedAt: at.toISOString(),
           status: 'moi',
-          source: { path: rel, title: `Nhật ký ${dd}/${m}/${y}`, kind: 'nhat-ky', from: 'tu-dong' },
+          source,
           space,
           ops: [],
           cost: 0,
         })
       }
+      // Nhật ký chỉ có tiêu đề thì thôi.
+      if (text.replace(/^#.*$/m, '').trim())
+        await queue({ path: rel, title: `Nhật ký ${dd}/${m}/${y}`, kind: 'nhat-ky', from: 'tu-dong' })
+      // Mục ghi nhanh của phiên không tin cậy (routine, phiên con, khách ACP, người lạ trên Telegram…): không tự nạp,
+      // thành một bản nạp riêng chờ người dùng duyệt (S6).
+      if (untrusted.length)
+        await queue({
+          path: rel,
+          title: `Ghi nhanh chưa rõ nguồn ${dd}/${m}/${y}`,
+          kind: 'nhat-ky',
+          from: 'bot',
+          by: 'phiên không tin cậy',
+        })
       await d.saveState({ ...d.state(), diaryDone: { ...(d.state().diaryDone ?? {}), [space]: day } })
     }
   }

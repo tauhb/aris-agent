@@ -3,7 +3,26 @@
  * khi ứng dụng tự duyệt mọi quyền; các luật còn lại tắt được. Thuần.
  */
 import { homedir } from 'node:os'
-import { isAbsolute, relative, resolve } from 'node:path'
+import { isAbsolute, join, resolve, sep } from 'node:path'
+import {
+  arisSub,
+  findDeletes,
+  forcePush,
+  gitCall,
+  insideDir,
+  keychainRead,
+  outsideBase,
+  parseCommands,
+  protectedPath,
+  realResolve,
+  redirectTargets,
+  RM_LIKE,
+  rmOutside,
+  scriptDeletes,
+  wordTouchesProtected,
+  writeTargets,
+  type Cmd,
+} from '@aris/shell'
 
 export interface GuestRules {
   /** Việc cần duyệt hỏi lại ứng dụng; tắt thì aris từ chối mọi việc cần duyệt. */
@@ -54,43 +73,17 @@ const TEAM_TOOLS = new Set([
   'ralph',
 ])
 
-/** Lệnh shell trong danh sách cấm: xoá, đẩy đè, đặt lại cứng, `sudo`. */
-const SHELL_DENY: { re: RegExp; what: string }[] = [
-  {
-    re: /(^\s*|[;&|`(]\s*|\$\(\s*|\b(?:sudo|xargs|exec|nohup|time)\s+(?:-\S+\s+)*)(rm|rmdir|unlink|shred|srm|trash)(\s|$)/,
-    what: 'xoá tệp, thư mục',
-  },
-  { re: /\bfind\b[^\n]*\s-delete\b/, what: 'xoá tệp, thư mục' },
-  { re: /\bgit\s+clean\b[^\n]*\s-[a-zA-Z]*f/, what: 'xoá tệp, thư mục' },
-  { re: /\bgit\s+push\b[^\n]*(\s--force(-with-lease)?\b|\s-[a-zA-Z]*f\b)/, what: 'git push --force' },
-  { re: /\bgit\s+reset\b[^\n]*\s--hard\b/, what: 'git reset --hard' },
-  { re: /(^|[\s;&|`(])sudo(\s|$)/, what: 'lệnh sudo' },
-]
+/** Tên riêng của bộ quyền khách ngoài danh sách chung của `@aris/shell`: tệp môi trường, `credentials*`, `.npmrc`. */
+const GUEST_SECRET =
+  /(^|\/)(\.env(\.[\w.-]+)?|\.dsh-home|credentials(\.ya?ml|\.json)?|id_(rsa|ed25519|ecdsa)[^/]*|\.netrc|\.npmrc)(\/|$)/i
 
 /** Đường dẫn khoá, mật khẩu, dữ liệu riêng của aris và dsh. */
 export function secretPath(p: string, home = homedir()): boolean {
-  const abs = resolve(p.replace(/^~(?=$|\/)/, home))
-  const rel = relative(home, abs)
-  const inHome = rel && !rel.startsWith('..') && !isAbsolute(rel)
-  if (inHome && /^(\.ssh|\.aws|\.gnupg|\.aris|\.dsh|\.config\/gh|Library\/Keychains)(\/|$)/.test(rel))
-    return true
-  return /(^|\/)(\.env(\.[\w.-]+)?|\.dsh-home|credentials(\.ya?ml|\.json)?|id_(rsa|ed25519|ecdsa)[^/]*|\.netrc|\.npmrc)(\/|$)/.test(
-    abs,
-  )
+  return protectedPath(p, home) || GUEST_SECRET.test(resolve(p.replace(/^~(?=$|\/)/, home)))
 }
 
-/** Chữ một lệnh shell có nhắc tới đường dẫn bí mật. */
-function shellTouchesSecret(cmd: string, home: string): boolean {
-  if (/(~|\$HOME)\/(\.ssh|\.aws|\.gnupg|\.aris|\.dsh)\b/.test(cmd)) return true
-  for (const tok of cmd.split(/[\s'"=<>|;&()]+/))
-    if (tok && /[./~]/.test(tok) && secretPath(tok, home)) return true
-  return false
-}
-
-const insideDir = (target: string, dir: string) => {
-  const rel = relative(resolve(dir), resolve(dir, target))
-  return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel))
-}
+/** Lệnh điều khiển tiến trình, ứng dụng, dịch vụ hay chính aris: khách không được dùng. */
+const CONTROL_COMMANDS = new Set(['launchctl', 'kill', 'killall', 'pkill', 'osascript', 'open', 'security'])
 
 const str = (v: unknown) => (typeof v === 'string' ? v : '')
 
@@ -105,6 +98,45 @@ function writePath(tool: string, args: Record<string, unknown>): string | undefi
 function readPath(tool: string, args: Record<string, unknown>): string | undefined {
   if (READ_TOOLS.has(tool)) return str(args.file_path) || str(args.path)
   if (tool === 'str_replace_editor' && args.command === 'view') return str(args.path)
+  return undefined
+}
+
+/** `git clean -f`, `git reset --hard`: xoá thay đổi chưa lưu. */
+function gitDestructive(c: Cmd): string | undefined {
+  const g = gitCall(c)
+  if (g?.sub === 'clean' && g.rest.some((a) => /^-[a-zA-Z]*f/.test(a.v) || a.v === '--force'))
+    return 'xoá tệp, thư mục'
+  if (g?.sub === 'reset' && g.rest.some((a) => a.v === '--hard')) return 'git reset --hard'
+  return undefined
+}
+
+/**
+ * Lệnh shell của phiên khách có vi phạm danh sách cấm không; trả tên việc bị cấm. Lệnh được chuẩn hoá trước
+ * (`@aris/shell`): `/bin/rm`, `\rm`, `bash -c`, `eval`, `env`, `xargs`, `cd` rồi `rm`… đều bị bóc ra như lệnh thường.
+ * Ghi tệp ngoài thư mục được đưa (chuyển hướng, `tee`, `cp`, `mv`, `ln`, `sed -i`, `curl -o`…) cũng bị cấm; đích không
+ * biết (biến, lệnh con) coi như ngoài thư mục.
+ */
+function shellDenial(cmd: string, cwd: string | undefined, home: string): string | undefined {
+  const parsed = parseCommands(cmd, { cwd, home })
+  for (const c of parsed.cmds) {
+    if (c.elevated) return 'lệnh sudo'
+    if (RM_LIKE.has(c.name) || rmOutside(c) || findDeletes(c) || scriptDeletes(c, home))
+      return 'xoá tệp, thư mục'
+    const destructive = gitDestructive(c)
+    if (destructive) return destructive
+    if (forcePush(c)) return 'git push --force'
+    if (CONTROL_COMMANDS.has(c.name) || keychainRead(c) || arisSub(c) !== undefined)
+      return 'điều khiển tiến trình, ứng dụng, Keychain hay chính aris'
+  }
+  if (/(~|\$HOME|\$\{HOME\})\/(\.ssh|\.aws|\.gnupg|\.aris|\.dsh)\b/.test(cmd)) return 'đọc khoá, mật khẩu'
+  for (const c of parsed.cmds) {
+    const words = [...c.args, ...c.redirs.flatMap((r) => (r.target ? [r.target] : []))]
+    if (words.some((w) => wordTouchesProtected(w, c.cwd, home, c.base, GUEST_SECRET)))
+      return 'đọc khoá, mật khẩu'
+  }
+  for (const c of parsed.cmds)
+    for (const w of [...writeTargets(c), ...redirectTargets(c)])
+      if (outsideBase(w, c)) return 'ghi tệp ngoài thư mục được đưa'
   return undefined
 }
 
@@ -140,20 +172,22 @@ export function guestVerdict(
   if (/^subagent(_|$)/.test(tool) || tool === 'spawn_teammate')
     return cam('giao việc cho tác nhân con, bot ngoài')
   if (SHELL_TOOLS.has(tool)) {
-    const cmd = str(args.command) || str(args.input) || str(args.text)
-    for (const d of SHELL_DENY) if (d.re.test(cmd)) return cam(d.what)
-    if (shellTouchesSecret(cmd, home)) return cam('đọc khoá, mật khẩu')
+    const what = shellDenial(str(args.command) || str(args.input) || str(args.text), cwd, home)
+    if (what) return cam(what)
   }
   const w = writePath(tool, args)
   if (w !== undefined) {
-    if (w && secretPath(w.startsWith('/') || w.startsWith('~') || !cwd ? w : resolve(cwd, w), home))
-      return cam('sửa khoá, mật khẩu')
-    if (cwd && w && !insideDir(w.replace(/^~(?=$|\/)/, home), cwd))
-      return cam('sửa tệp ngoài thư mục được đưa')
+    // Giải liên kết mềm: `link/x` trong thư mục được đưa mà trỏ ra ngoài thì vẫn là ghi ra ngoài.
+    const abs = resolve(cwd ?? '/', w.replace(/^~(?=$|\/)/, home))
+    const real = realResolve(abs)
+    if (w && (secretPath(abs, home) || secretPath(real, home))) return cam('sửa khoá, mật khẩu')
+    if (w && (!cwd || !insideDir(real, realResolve(cwd), home))) return cam('sửa tệp ngoài thư mục được đưa')
   }
   const r = readPath(tool, args)
-  if (r && secretPath(r.startsWith('/') || r.startsWith('~') || !cwd ? r : resolve(cwd, r), home))
-    return cam('đọc khoá, mật khẩu')
+  if (r) {
+    const abs = resolve(cwd ?? '/', r.replace(/^~(?=$|\/)/, home))
+    if (secretPath(abs, home) || secretPath(realResolve(abs), home)) return cam('đọc khoá, mật khẩu')
+  }
   if (rules.nomem && MEMORY_TOOLS.has(tool) && !(tool === 'memory' && args.action === 'search'))
     return {
       code: 'ky-uc',
@@ -170,6 +204,52 @@ export function guestVerdict(
     }
   return undefined
 }
+
+/** Cây thư mục hệ thống: không làm việc trong đó. */
+const SYSTEM_TREES = [
+  '/bin',
+  '/sbin',
+  '/usr',
+  '/etc',
+  '/System',
+  '/Library',
+  '/dev',
+  '/Applications',
+  '/private/etc',
+]
+/** Thư mục chung quá rộng: chỉ riêng nó, không kể thư mục con. */
+const SYSTEM_EXACT = ['/Users', '/Volumes', '/opt', '/var', '/tmp', '/private', '/home', '/mnt', '/root']
+
+/**
+ * Thư mục làm việc ứng dụng khai khi bắt tay có quá rộng hay nguy hiểm không (đợt 7f, S11): gốc ổ đĩa, thư mục nhà
+ * hay cha của nó, `~/Library`, cây hệ thống, chỗ chứa dữ liệu của aris, dsh, khoá. Có thì từ chối bắt tay, vì mọi
+ * luật "trong thư mục được đưa" sẽ thành vô nghĩa. Trả lời báo lỗi cho ứng dụng; undefined là được. Cùng ý với
+ * `tooBroad` của `@aris/checkpoints`.
+ */
+export function badGuestCwd(cwd: string, home = homedir()): string | undefined {
+  if (!isAbsolute(cwd)) return 'Thư mục làm việc không hợp lệ.'
+  const h = resolve(home)
+  for (const d of new Set([resolve(cwd), realResolve(cwd)])) {
+    if (d === sep || d === h || h.startsWith(d.endsWith(sep) ? d : d + sep))
+      return 'Thư mục làm việc quá rộng (gốc ổ đĩa, thư mục nhà hay thư mục cha của nó). Mở một thư mục dự án cụ thể.'
+    if (
+      d === join(h, 'Library') ||
+      SYSTEM_EXACT.includes(d) ||
+      SYSTEM_TREES.some((t) => d === t || d.startsWith(`${t}/`))
+    )
+      return 'Thư mục làm việc là thư mục hệ thống hay thư mục chung. Mở một thư mục dự án cụ thể.'
+    if (d.split(sep).some((c) => c === '.aris' || c.toLowerCase() === '.dsh-home') || protectedPath(d, home))
+      return 'Thư mục làm việc chứa dữ liệu riêng của aris hay khoá. Mở một thư mục dự án cụ thể.'
+  }
+  return undefined
+}
+
+/** Chuỗi an toàn cho shell: bọc nháy đơn, `'` bên trong thành `'\\''`. */
+export const shQuote = (s: string) => `'${s.replace(/'/g, `'\\''`)}'`
+
+/** Nội dung lệnh `aris-acp` đặt vào PATH (nút "Cài lệnh" ở màn 6.3b); đường dẫn được thoát đúng cách. */
+export const shimScript = (execPath: string, bridge: string) =>
+  `#!/bin/sh\nexec ${shQuote(execPath)} ${shQuote(bridge)} "$@"\n`
 
 /** Mô tả ngắn một lời gọi công cụ cho nhật ký. */
 export function describeCall(tool: string, rawArgs: unknown): string {

@@ -161,6 +161,8 @@ async function restore(file, yes) {
   const r = await restoreBackup(file, code, roots)
   for (const p of r.parts)
     console.log(`Đã khôi phục ${p.id} vào ${p.root}${p.aside ? `; dữ liệu cũ ở ${p.aside}` : ''}`)
+  // Phần không có thư mục đích trên máy này (đã bỏ qua, không đụng gì).
+  for (const id of r.skipped) console.warn(`Bỏ qua phần "${id}": máy này không có thư mục đích cho phần đó.`)
   console.log('Xong. Bật lại: aris start')
 }
 

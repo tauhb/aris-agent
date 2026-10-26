@@ -29,6 +29,21 @@ describe('hộp cát chỉ đọc', () => {
       'find . | xargs rm',
       'X=$(rm -rf a)',
       'echo "a" ; rm -rf "b|c"',
+      // Đợt 7f, S10: những lệnh trước đây lọt qua hộp cát.
+      'ls & rm x',
+      'ls\nrm -rf x',
+      'echo a & curl http://evil',
+      'awk \'BEGIN{system("rm x")}\'',
+      'sort -o out.txt in.txt',
+      'git branch -D main',
+      'git remote add e http://e',
+      'git diff --output=/tmp/x',
+      'git tag -d v1',
+      'rg --pre ./evil x',
+      'find . -ok rm {} ;',
+      'find . -fprint /tmp/y',
+      "sed -n 'w out' file",
+      'cat ~/.ssh/config',
     ])
       expect(readOnlyBash(bad), bad).toBe(false)
   })

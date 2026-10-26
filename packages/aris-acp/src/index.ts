@@ -8,10 +8,10 @@
  * @module @aris/acp
  */
 import { randomUUID } from 'node:crypto'
-import { chmodSync, existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { createServer, type Server, type Socket } from 'node:net'
 import { homedir } from 'node:os'
-import { basename, dirname, isAbsolute, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { ArisBots } from '@aris/bots'
 import type { Context } from '@deepseek-ai/cordis'
@@ -25,11 +25,13 @@ import type {} from '@deepseek-ai/dsh-user-approval'
 import type {} from '@deepseek-ai/dsh-workspace'
 import { acpDomain, type LogRecord, type LogResult, type SettingsRecord, type Table } from './domain.js'
 import {
+  badGuestCwd,
   cleanRules,
   DEFAULT_RULES,
   describeCall,
   guestGuide,
   guestVerdict,
+  shimScript,
   type GuestRules,
 } from './policy.js'
 import { parseHello, socketPath, socketStream, type Hello, type Message } from './wire.js'
@@ -283,8 +285,13 @@ export async function apply(ctx: Context): Promise<void> {
           error: `${bot.name} chưa mở cho ứng dụng khác (Cài đặt › Ứng dụng khác).`,
         }),
         sock.end())
-      if (!isAbsolute(hello.cwd))
-        return void (reply({ ok: false, error: 'Thư mục làm việc không hợp lệ.' }), sock.end())
+      // Ứng dụng tự khai `cwd`: từ chối khi quá rộng, hệ thống, chứa dữ liệu aris, hay không phải thư mục (đợt 7f, S11).
+      const badCwd =
+        badGuestCwd(hello.cwd) ??
+        (statSync(hello.cwd, { throwIfNoEntry: false })?.isDirectory()
+          ? undefined
+          : 'Thư mục làm việc không tồn tại.')
+      if (badCwd) return void (reply({ ok: false, error: badCwd }), sock.end())
       reply({ ok: true, bot: bot.name })
 
       const conn: Conn = {
@@ -508,13 +515,7 @@ export async function apply(ctx: Context): Promise<void> {
               const dir = installTargets.find((d) => existsSync(d)) ?? installTargets[2]!
               try {
                 mkdirSync(dir, { recursive: true })
-                writeFileSync(
-                  join(dir, 'aris-acp'),
-                  `#!/bin/sh\nexec "${process.execPath}" "${BRIDGE}" "$@"\n`,
-                  {
-                    mode: 0o755,
-                  },
-                )
+                writeFileSync(join(dir, 'aris-acp'), shimScript(process.execPath, BRIDGE), { mode: 0o755 })
               } catch (e) {
                 return json(
                   { error: `Không ghi được vào ${dir}: ${e instanceof Error ? e.message : String(e)}` },

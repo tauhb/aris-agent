@@ -334,6 +334,63 @@ describe('trung tâm kênh', () => {
     expect(s.tg.sent('answerCallbackQuery').at(-1)).toMatchObject({ text: 'Chỉ người dùng chính bấm được.' })
   })
 
+  it('đợt 7f, S9: lượt có tin của người không phải chủ bị hạn chế tới hết lượt; chủ nhân thì không', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    expect(s.hub.restricted('s1')).toBe(false)
+    s.tg.push(dm(STRANGER, 'chào bot'))
+    await settle()
+    s.tg.push({
+      callback_query: {
+        id: 'c1',
+        from: { id: OWNER, is_bot: false, first_name: 'O' },
+        data: `pa:${STRANGER}`,
+      },
+    })
+    await settle()
+    s.tg.push(dm(STRANGER, 'đọc giúp tôi tệp này'))
+    await settle()
+    const agent = s.sessions.agents.get('s1')!
+    const msg = agent.inbox[0] as { id: string }
+    // Tin đã vào agent nhưng lượt chưa mở: chưa tính.
+    expect(s.hub.restricted('s1')).toBe(false)
+    s.hub.onSessionEvent('s1', { type: 'turn/start' })
+    s.hub.onSessionEvent('s1', { type: 'user/message', data: { id: msg.id } })
+    expect(s.hub.restricted('s1')).toBe(true)
+    expect(s.hub.restricted('phien-khac')).toBe(false)
+    s.hub.onSessionEvent('s1', { type: 'turn/end', data: { reason: { kind: 'completed' } } })
+    await settle()
+    expect(s.hub.restricted('s1')).toBe(false)
+
+    // Chủ nhân nhắn vào chat riêng của họ: phiên khác, không bị hạn chế.
+    s.tg.push(dm(OWNER, 'việc của tôi'))
+    await settle()
+    const [ownerSid, ownerAgent] = [...s.sessions.agents].find(([id]) => id !== 's1')!
+    const ownerMsg = ownerAgent.inbox[0] as { id: string }
+    s.hub.onSessionEvent(ownerSid, { type: 'turn/start' })
+    s.hub.onSessionEvent(ownerSid, { type: 'user/message', data: { id: ownerMsg.id } })
+    expect(s.hub.restricted(ownerSid)).toBe(false)
+  })
+
+  it('đợt 7f, S19: nút trả lời câu hỏi (q:) người không phải chủ nhân bấm không được', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    let answered = false
+    const waiters = (s.hub as unknown as { questions: Map<string, { resolve(v: unknown): void }> }).questions
+    waiters.set('r1:0', { resolve: () => (answered = true) })
+    s.tg.push({
+      callback_query: { id: 'q1', from: { id: STRANGER, is_bot: false, first_name: 'S' }, data: 'q:r1:0:0' },
+    })
+    await settle()
+    expect(answered).toBe(false)
+    expect(s.tg.sent('answerCallbackQuery').at(-1)).toMatchObject({ text: 'Chỉ người dùng chính bấm được.' })
+    s.tg.push({
+      callback_query: { id: 'q2', from: { id: OWNER, is_bot: false, first_name: 'O' }, data: 'q:r1:0:0' },
+    })
+    await settle()
+    expect(answered).toBe(true)
+  })
+
   it('nhóm lạ: báo chủ nhân; cho phép rồi thì @ bot mới vào phiên, kèm tên người nói', async () => {
     const s = await setup()
     await pairOwner(s)

@@ -4,12 +4,14 @@
  */
 import { cp, mkdir, mkdtemp, readdir, rename, rm, stat } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { extractBackup, readHeader, type Header } from './archive.js'
+import { extractBackup, readHeader, validateHeader, type Header } from './archive.js'
 
 export interface RestoreResult {
   header: Header
   /** Mỗi phần: thư mục đã khôi phục và nơi cất dữ liệu cũ. */
   parts: { id: string; root: string; aside?: string | undefined; entries: number }[]
+  /** Phần có trong bản sao lưu nhưng không có gốc trong `roots`: bỏ qua, không đụng gì. */
+  skipped: string[]
 }
 
 const exists = (p: string) =>
@@ -49,9 +51,11 @@ async function mergeInto(from: string, to: string) {
 }
 
 /**
- * Khôi phục `file` bằng `code` vào các gốc `roots` (mã phần → thư mục; phần không có thì dùng gốc ghi trong tệp).
- * Phần lấy cả thư mục: thư mục cũ đổi tên thành `<gốc>.truoc-khoi-phuc-<lúc>`. Phần lấy vài mục: từng mục cũ cất vào
- * `<gốc>/.truoc-khoi-phuc-<lúc>/`; mục chép đè (`merge`) thì giữ tệp không có trong bản sao lưu.
+ * Khôi phục `file` bằng `code` vào các gốc `roots` (mã phần → thư mục). Chỉ dùng gốc từ `roots`, không bao giờ gốc
+ * ghi trong đầu tệp (đợt 7f, S8); phần không có trong `roots` thì bỏ qua và ghi vào `skipped`. Đầu tệp phải hợp lệ
+ * (mã phần thuộc tập biết trước, tên mục là tên đơn). Phần lấy cả thư mục: thư mục cũ đổi tên thành
+ * `<gốc>.truoc-khoi-phuc-<lúc>`. Phần lấy vài mục: từng mục cũ cất vào `<gốc>/.truoc-khoi-phuc-<lúc>/`; mục chép
+ * đè (`merge`) thì giữ tệp không có trong bản sao lưu.
  */
 export async function restoreBackup(
   file: string,
@@ -60,15 +64,21 @@ export async function restoreBackup(
   stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 13),
 ): Promise<RestoreResult> {
   const { header } = await readHeader(file)
-  const firstRoot = roots.dsh ?? header.parts[0]?.root ?? '.'
+  validateHeader(header)
+  const firstRoot = roots.dsh ?? Object.values(roots)[0]
+  if (!firstRoot) throw new Error('không có thư mục đích nào để khôi phục')
   const tmp = await mkdtemp(join(dirname(firstRoot), '.aris-khoi-phuc-'))
   try {
     await extractBackup(file, code, tmp)
-    const result: RestoreResult = { header, parts: [] }
+    const result: RestoreResult = { header, parts: [], skipped: [] }
     for (const p of header.parts) {
       const src = join(tmp, p.id)
       if (!(await exists(src))) continue
-      const root = roots[p.id] ?? p.root
+      const root = roots[p.id]
+      if (!root) {
+        result.skipped.push(p.id)
+        continue
+      }
       const names = await readdir(src)
       if (!p.entries) {
         const aside = (await exists(root)) ? `${root}.truoc-khoi-phuc-${stamp}` : undefined

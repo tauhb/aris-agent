@@ -20,7 +20,15 @@ import type {} from '@deepseek-ai/dsh-storage-domain'
 import type {} from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-user-approval'
 import { guardDomain, type BlockedRecord, type NoticeRecord, type Table } from './domain.js'
-import { cleanGuard, DEFAULT_GUARD, hardVerdict, lowRisk, warnLevel, type GuardSettings } from './policy.js'
+import {
+  cleanGuard,
+  DEFAULT_GUARD,
+  hardVerdict,
+  lowRisk,
+  restrictedVerdict,
+  warnLevel,
+  type GuardSettings,
+} from './policy.js'
 
 export * from './policy.js'
 
@@ -163,7 +171,15 @@ export async function apply(ctx: Context): Promise<void> {
     async (exec, next) => {
       const a = exec.agent as unknown as AgentLike | undefined
       const cwd = a?.session.header?.cwd
-      const v = hardVerdict(exec.name, exec.arguments, cwd)
+      // Lượt có tin của người không phải người dùng chính trên Telegram: chỉ công cụ đọc (đợt 7f, S9).
+      const restricted =
+        !!a &&
+        (ctx.get('arisChannels') as { restricted?(id: string): boolean } | undefined)?.restricted?.(
+          a.session.id,
+        ) === true
+      const v =
+        (restricted ? restrictedVerdict(exec.name, exec.arguments) : undefined) ??
+        hardVerdict(exec.name, exec.arguments, cwd)
       if (v) {
         const id = `b-${Date.now().toString(36)}-${randomUUID().slice(0, 6)}`
         const sid = a?.session.id ?? ''

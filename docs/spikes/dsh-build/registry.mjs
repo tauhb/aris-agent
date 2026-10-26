@@ -1,3 +1,4 @@
+/* global process, fetch, Buffer, console */
 // Registry cục bộ: phục vụ các gói dsh vừa pack (tarballs/), còn lại chuyển tiếp tới registry.npmjs.org.
 import http from 'node:http'
 import { readdirSync, readFileSync, createReadStream, statSync } from 'node:fs'

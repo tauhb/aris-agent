@@ -4,6 +4,7 @@
  * chặn bot đọc thẳng tệp trong kho; bot Thủ thư mặc định; API cho màn 5.1.
  * @module @aris/brain
  */
+import { untrustedKind, type SessionLike } from '@aris/shell'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-client-connection'
@@ -825,8 +826,21 @@ export async function apply(ctx: Context): Promise<void> {
           bots()
             ?.store.list()
             .find((b) => b.id === reader.id)?.name ?? reader.id
-        await ingest.note(text.slice(0, 2000), space, name)
-        return `Đã ghi vào nhật ký hôm nay (${SPACE_LABEL[space]}); Thủ thư nạp lúc 23:00.`
+        // Ghi nguồn (bot, phiên, loại phiên). Phiên không phải chat trực tiếp của người dùng thì mục bị đánh dấu
+        // chưa rõ nguồn: Thủ thư không tự nạp lúc 23:00, người dùng xem trong Hộp thư vào (đợt 7f, S6).
+        const kind = untrustedKind(
+          (svc) => ctx.get(svc),
+          (exec.agent as { session: SessionLike } | undefined)?.session,
+        )
+        await ingest.note(text.slice(0, 2000), space, name, {
+          bot: reader.id,
+          ...(sid ? { session: sid } : {}),
+          ...(kind ? { kind } : {}),
+          untrusted: kind !== undefined,
+        })
+        return kind
+          ? `Đã ghi vào nhật ký hôm nay (${SPACE_LABEL[space]}), đánh dấu chưa rõ nguồn vì phiên này không phải chat trực tiếp của người dùng: Thủ thư không tự nạp, người dùng sẽ xem rồi quyết trong Hộp thư vào.`
+          : `Đã ghi vào nhật ký hôm nay (${SPACE_LABEL[space]}); Thủ thư nạp lúc 23:00.`
       },
     }),
   )

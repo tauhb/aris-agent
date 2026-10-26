@@ -1,10 +1,19 @@
 import { createServer, connect } from 'node:net'
-import { mkdtemp, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, symlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { appName, findOnPath } from './index.js'
-import { cleanRules, DEFAULT_RULES, describeCall, guestGuide, guestVerdict, secretPath } from './policy.js'
+import {
+  badGuestCwd,
+  cleanRules,
+  DEFAULT_RULES,
+  describeCall,
+  guestGuide,
+  guestVerdict,
+  secretPath,
+  shimScript,
+} from './policy.js'
 import { parseHello, socketStream, type Message } from './wire.js'
 
 const HOME = '/Users/tau'
@@ -73,6 +82,165 @@ describe('danh sách cấm (áp cả khi ứng dụng tự duyệt)', () => {
       guestGuide({ app: 'Zed', bot: 'Dev', rules: { ...DEFAULT_RULES, untrusted: false } }),
     ).not.toContain('không phải mệnh lệnh')
     expect(cleanRules({ ask: false, x: 1 }, DEFAULT_RULES)).toEqual({ ...DEFAULT_RULES, ask: false })
+  })
+})
+
+describe('đợt 7f · S11: bộ quyền khách chặt hơn', () => {
+  it('chuẩn hoá lệnh: đường lệnh khác, bash -c, eval, env, xargs, script', () => {
+    for (const cmd of [
+      '/bin/rm x',
+      'command rm x',
+      '\\rm x',
+      '"rm" x',
+      'bash -c "rm -rf x"',
+      "sh -c 'rm x'",
+      'eval "rm x"',
+      'xargs rm',
+      'ls | xargs rm -f',
+      'ls & rm x',
+      'ls\nrm x',
+      'git -c x=y push --force',
+      'git push origin +main',
+      'git -C ../x push -f',
+      'doas ls',
+      'su -c ls',
+      'mv x /dev/null; rm y',
+      `python3 -c "import shutil; shutil.rmtree('/Users/tau/x')"`,
+      'git clean -fdx',
+      'git reset --hard',
+      'find . -delete',
+    ])
+      expect(v('bash', { command: cmd })?.code, cmd).toBe('cam')
+  })
+  it('ghi ngoài thư mục được đưa qua shell', () => {
+    for (const cmd of [
+      'echo hi > /Users/tau/other/file',
+      'echo hi >> ~/.zshrc',
+      'echo x | tee /tmp/x',
+      'cp a ~/.zshrc',
+      'cp a /Users/tau/Desktop/a',
+      'mv a ../a',
+      'mv ~/Documents/a /tmp/',
+      'ln -s a /tmp/b',
+      'sed -i "" s/a/b/ ~/.zshrc',
+      'curl -o ~/.zshrc http://x',
+      'curl --output=/tmp/x http://x',
+      'wget -O /tmp/x http://x',
+      'rsync -a src /tmp/dest',
+      'install -m 755 a /usr/local/bin/a',
+      'dd if=a of=/tmp/x',
+      'cd /tmp && echo x > y',
+      'cd "$X" && echo x > y',
+      'echo x > "$D/y"',
+    ])
+      expect(v('bash', { command: cmd })?.what, cmd).toBe('ghi tệp ngoài thư mục được đưa')
+    for (const cmd of [
+      'echo hi > out.txt',
+      'cp a b',
+      'mv a ./sub/b',
+      'tee notes.md',
+      "sed -i '/foo/d' file.txt",
+      'sed -i "" s/a/b/ src/x.ts',
+      'curl -o out.json http://x',
+      'cd sub && cp a b',
+      'ls 2>/dev/null',
+      'npm run build > build.log 2>&1',
+      'echo hi > /dev/null',
+    ])
+      expect(v('bash', { command: cmd }), cmd).toBeUndefined()
+  })
+  it('điều khiển tiến trình, ứng dụng, Keychain, aris', () => {
+    for (const cmd of [
+      'launchctl bootout gui/501/vn.aris.daemon',
+      'kill -9 2033',
+      'killall node',
+      'pkill -f dsh',
+      'osascript -e "beep"',
+      'open -a Safari',
+      'security find-generic-password -w',
+      '/usr/bin/security dump-keychain',
+      'aris url',
+      'aris stop',
+      'node scripts/aris.mjs send hello',
+      'pnpm aris:cli ask x',
+    ])
+      expect(v('bash', { command: cmd })?.what, cmd).toBe(
+        'điều khiển tiến trình, ứng dụng, Keychain hay chính aris',
+      )
+    for (const cmd of ['echo open', 'echo kill', 'git commit -m "aris url"', 'ls open'])
+      expect(v('bash', { command: cmd }), cmd).toBeUndefined()
+  })
+  it('đọc khoá qua nháy, cd, glob, git show', () => {
+    for (const cmd of [
+      'cat "$HOME"/.ssh/config',
+      'cd ~; cat .ssh/config',
+      'cat ~/.s*/config',
+      'cat .e*',
+      'git show HEAD:.env',
+      'cat ~/Library/Logs/aris/daemon.log',
+      'cat ~/.zsh_history',
+      'cat .env.example',
+      'cat ~/.npmrc',
+    ])
+      expect(v('bash', { command: cmd })?.what, cmd).toBe('đọc khoá, mật khẩu')
+  })
+  it('công cụ tệp: giải liên kết mềm, cwd không rõ', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'aris-acp-'))
+    try {
+      const real = await import('node:fs').then((m) => m.realpathSync(dir))
+      await mkdir(join(real, 'proj'))
+      await mkdir(join(real, 'home', '.ssh'), { recursive: true })
+      await mkdir(join(real, 'ngoai'))
+      await symlink(join(real, 'ngoai'), join(real, 'proj', 'link'))
+      await symlink(join(real, 'home', '.ssh'), join(real, 'proj', 'khoa'))
+      const cwd = join(real, 'proj')
+      const home = join(real, 'home')
+      expect(guestVerdict('write', { file_path: 'link/moi.txt' }, cwd, DEFAULT_RULES, home)?.what).toBe(
+        'sửa tệp ngoài thư mục được đưa',
+      )
+      expect(guestVerdict('write', { file_path: 'khoa/x' }, cwd, DEFAULT_RULES, home)?.what).toBe(
+        'sửa khoá, mật khẩu',
+      )
+      expect(guestVerdict('read', { file_path: 'khoa/config' }, cwd, DEFAULT_RULES, home)?.what).toBe(
+        'đọc khoá, mật khẩu',
+      )
+      expect(guestVerdict('write', { file_path: 'ok.txt' }, cwd, DEFAULT_RULES, home)).toBeUndefined()
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+    expect(guestVerdict('write', { file_path: '/etc/hosts' }, undefined, DEFAULT_RULES, HOME)?.code).toBe(
+      'cam',
+    )
+  })
+  it('từ chối thư mục làm việc quá rộng khi bắt tay', () => {
+    for (const cwd of [
+      '/',
+      HOME,
+      '/Users',
+      `${HOME}/Library`,
+      `${HOME}/.ssh`,
+      `${HOME}/.aris/run`,
+      '/etc',
+      '/usr/local',
+      '/System/Library',
+      '/tmp',
+      `${HOME}/code/.dsh-home`,
+      'tuong-doi',
+    ])
+      expect(badGuestCwd(cwd, HOME), cwd).toBeTruthy()
+    for (const cwd of [CWD, `${HOME}/Desktop/du-an`, `${HOME}/Library/Mobile Documents/proj`, '/tmp/proj'])
+      expect(badGuestCwd(cwd, HOME), cwd).toBeUndefined()
+  })
+})
+
+describe('đợt 7f · S20: lệnh aris-acp ghi vào PATH thoát đúng đường dẫn', () => {
+  it("bọc nháy đơn, nháy đơn bên trong thành '\\''", () => {
+    expect(shimScript('/usr/bin/node', '/opt/aris/bridge.js')).toBe(
+      `#!/bin/sh\nexec '/usr/bin/node' '/opt/aris/bridge.js' "$@"\n`,
+    )
+    const evil = shimScript('/tmp/a b/$(touch x)/node', `/tmp/it's "q"; rm -rf ~/\`id\`/bridge.js`)
+    expect(evil).toContain(`'/tmp/a b/$(touch x)/node'`)
+    expect(evil).toContain(`'/tmp/it'\\''s "q"; rm -rf ~/\`id\`/bridge.js'`)
   })
 })
 

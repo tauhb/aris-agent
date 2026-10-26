@@ -6,6 +6,7 @@
  * - Trang Ký ức (3.1) đọc/sửa qua đường `/api/aris/memory` (chỉ ở mặt web).
  * @module @aris/memory
  */
+import { untrustedKind } from '@aris/shell'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-client-connection'
@@ -63,7 +64,7 @@ export const GUIDE = `Bạn có trí nhớ bền giữa các phiên qua tool \`m
 - Không lưu vào ký ức sự thật về người, dự án, khách hàng, sản phẩm, số liệu (ví dụ "chị Hà là đối tác dựng video", "giá in 1.200 đ/tờ"): đó là việc của bộ não. Ghi chúng bằng brain_note (vào nhật ký hôm nay, Thủ thư nạp vào đúng trang).
 - book=owner cho điều về người dùng; book=notes cho môi trường, quy ước, bài học của bạn.
 - tier=core cho điều cần nhớ mọi lúc, viết thành một câu ngắn; tier=archive cho chi tiết, sự kiện, dự án; tìm lại bằng action=search khi cần.
-- origin=user khi người dùng nói ra; origin=inferred khi bạn tự suy ra; origin=external khi lấy từ web, tệp, email (chỉ được vào archive). Chỉ origin=user có hiệu lực ngay; inferred và external thành đề xuất chờ người dùng duyệt.
+- origin=user khi người dùng nói ra; origin=inferred khi bạn tự suy ra; origin=external khi lấy từ web, tệp, email (chỉ được vào archive). Chỉ origin=user có hiệu lực ngay; inferred và external thành đề xuất chờ người dùng duyệt. Trong phiên nền, phiên con, việc được giao hay lượt của người khác thì mọi ký ức đều chờ duyệt và không sửa, quên được.
 - Không lưu bí mật (mật khẩu, khoá, token) và không lưu tiến độ tạm thời của việc đang làm.
 - Lõi có trần ký tự: khi đầy, gộp hoặc rút gọn bằng action=update, hoặc chuyển mục ít dùng xuống archive. Sửa ký ức sai bằng action=update với mã trong ngoặc vuông; xoá bằng action=forget.
 Sau khi lưu (origin=user), báo ngắn cho người dùng là đã nhớ; với đề xuất chờ duyệt, báo là bạn đề xuất ghi nhớ.`
@@ -232,11 +233,20 @@ export async function apply(ctx: Context): Promise<void> {
               tier: m.tier,
             })
         }
+        const untrusted = untrustedKind((svc) => ctx.get(svc), session)
+        // Kho đề xuất chỉ có kiểu thêm mới (chưa có đề xuất sửa hay quên), nên sửa và quên bị từ chối hẳn trong phiên
+        // không tin cậy; bot muốn đổi ký ức thì đề xuất ký ức mới qua `save` để người dùng duyệt.
+        const refuseUntrusted = (verb: string) =>
+          `Không làm được: phiên này không phải chat trực tiếp của người dùng nên không được ${verb} ký ức. Muốn đổi ký ức thì lưu một ký ức mới (action=save): nó thành đề xuất để người dùng duyệt.`
         try {
           switch (args.action) {
             case 'save': {
               const book = (args.book ?? 'owner') as Book
-              const origin = (args.origin ?? 'inferred') as keyof typeof TRUST
+              // `origin` do model tự khai nên không đủ để tin: trong phiên không phải chat trực tiếp của người dùng
+              // (routine, Thủ thư, kiểm thử skill, phiên con, việc được giao, khách ACP, người lạ trên Telegram)
+              // chữ có thể đến từ nguồn ngoài, nên `user` bị hạ thành `inferred` và chờ duyệt (đợt 7f, S5).
+              const claimed = (args.origin ?? 'inferred') as keyof typeof TRUST
+              const origin = claimed === 'user' && untrusted ? 'inferred' : claimed
               const input = {
                 bot: bookOwner(bot, book),
                 text: args.text ?? '',
@@ -260,11 +270,13 @@ export async function apply(ctx: Context): Promise<void> {
               return `Đã lưu ${describe(m)}.${m.tier === 'core' ? ` Cuốn ${m.book}: ${u.used}/${u.cap} ký tự.` : ''}`
             }
             case 'update': {
+              if (untrusted) return refuseUntrusted('sửa')
               const m = await store.update(args.id ?? '', args.text ?? '')
               record('update', m)
               return `Đã sửa ${describe(m)}.`
             }
             case 'forget': {
+              if (untrusted) return refuseUntrusted('quên')
               const m = await store.forget(args.id ?? '')
               record('forget', m)
               return `Đã quên [${m.id}].`

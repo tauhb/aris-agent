@@ -26,6 +26,7 @@
     "@deepseek-ai/dsh-tools": "0.2.1-rc.2"
   },
   "dependencies": {
+    "@aris/shell": "workspace:*",
     "@aris/channels": "workspace:*",
     "yaml": "2.9.1",
     "zod": "4.4.3"

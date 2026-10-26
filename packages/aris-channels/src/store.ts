@@ -44,6 +44,11 @@ export function threadKey(tgBotId: number, chatId: number, threadId?: number): s
 /** Mã ghép đôi: 8 ký tự dễ đọc (bỏ 0/O, 1/I/L), dạng `4KX7-29QM`. */
 const ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'
 export const CODE_TTL_MS = 10 * 60_000
+/** Nhắn sai mã ghép đôi quá bấy nhiêu lần trong một giờ thì khoá chat đó tới hết giờ (đợt 7f, S18). */
+export const CODE_MAX_WRONG = 5
+export const CODE_LOCK_MS = 3_600_000
+/** Người lạ đã báo quá bấy nhiêu ngày thì xoá khỏi bảng `strangers`. */
+export const STRANGER_KEEP_MS = 30 * 86_400_000
 
 export function newCode(): string {
   const s = Array.from({ length: 8 }, () => ALPHABET[randomInt(ALPHABET.length)]).join('')
@@ -60,6 +65,9 @@ export function normalizeCode(text: string): string | undefined {
 const DEFAULT_SETTINGS: SettingsRecord = { busy: 'steer', guestMode: false, strangers: {} }
 
 export class ChannelStore implements AccessState {
+  /** Số lần nhắn sai mã ghép đôi theo người gửi (trong bộ nhớ: khởi động lại thì tính lại). */
+  private readonly wrongCodes = new Map<number, { n: number; since: number }>()
+
   constructor(
     readonly t: Tables,
     private readonly now: () => number = Date.now,
@@ -107,6 +115,21 @@ export class ChannelStore implements AccessState {
     const now = this.now()
     for (const [k, c] of [...this.t.codes.entries()]) if (c.expiresAt <= now) await this.t.codes.delete(k)
   }
+  /** Chat này đang bị khoá thử mã ghép đôi (đã sai `CODE_MAX_WRONG` lần trong giờ qua). */
+  pairLocked(userId: number): boolean {
+    const w = this.wrongCodes.get(userId)
+    if (!w) return false
+    if (this.now() - w.since >= CODE_LOCK_MS) {
+      this.wrongCodes.delete(userId)
+      return false
+    }
+    return w.n >= CODE_MAX_WRONG
+  }
+  private noteWrongCode(userId: number) {
+    const w = this.wrongCodes.get(userId)
+    if (!w || this.now() - w.since >= CODE_LOCK_MS) this.wrongCodes.set(userId, { n: 1, since: this.now() })
+    else w.n++
+  }
   /** Người nhắn đúng mã còn hạn thì thành chủ nhân/người được phép; mã dùng một lần. */
   async redeem(
     text: string,
@@ -114,9 +137,15 @@ export class ChannelStore implements AccessState {
   ): Promise<PersonRecord | undefined> {
     const code = normalizeCode(text)
     if (!code) return undefined
+    // Thử sai nhiều lần thì khoá chat tới hết giờ, kể cả khi sau đó gõ đúng (chống dò mã).
+    if (this.pairLocked(user.id)) return undefined
     const key = code.replace('-', '')
     const rec = this.t.codes.get(key)
-    if (!rec || rec.expiresAt <= this.now()) return undefined
+    if (!rec || rec.expiresAt <= this.now()) {
+      this.noteWrongCode(user.id)
+      return undefined
+    }
+    this.wrongCodes.delete(user.id)
     await this.t.codes.delete(key)
     const person: PersonRecord = {
       userId: user.id,
@@ -167,7 +196,9 @@ export class ChannelStore implements AccessState {
     const s = this.settings()
     const last = s.strangers[String(userId)]
     if (last !== undefined && this.now() - last < 3_600_000) return false
-    await this.updateSettings({ strangers: { ...s.strangers, [String(userId)]: this.now() } })
+    // Dọn người lạ đã báo quá 30 ngày để bảng không phình mãi.
+    const keep = Object.entries(s.strangers).filter(([, at]) => this.now() - at < STRANGER_KEEP_MS)
+    await this.updateSettings({ strangers: { ...Object.fromEntries(keep), [String(userId)]: this.now() } })
     return true
   }
   async shouldNotifyGroup(chatId: number, title: string): Promise<boolean> {

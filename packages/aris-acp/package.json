@@ -32,6 +32,7 @@
     "@deepseek-ai/dsh-workspace": "0.2.1-rc.2"
   },
   "dependencies": {
+    "@aris/shell": "workspace:*",
     "@aris/bots": "workspace:*",
     "zod": "4.4.3"
   },

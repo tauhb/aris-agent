@@ -2,13 +2,28 @@
  * Tệp sao lưu `.aris`: `ARISBAK1`, độ dài đầu tệp (4 byte), đầu tệp JSON (không mã hoá: thời điểm, mã băm của mã
  * khôi phục, các phần và số tệp), rồi tar.gz mã hoá AES-256-GCM, cuối cùng 16 byte thẻ xác thực. Khoá suy từ mã
  * khôi phục bằng scrypt với muối riêng mỗi tệp. Nén bằng `tar` của macOS; SQLite đang mở chụp bằng `sqlite3 .backup`.
+ *
+ * Từ phiên bản 2 (đợt 7f, S8) toàn bộ byte đầu tệp (`ARISBAK1`, độ dài, JSON) là dữ liệu kèm xác thực (AAD) của GCM:
+ * sửa đầu tệp thì thẻ sai, giải mã lỗi. Phiên bản 1 không có AAD nên không còn đọc.
  */
 import { execFile, spawn } from 'node:child_process'
 import { createCipheriv, createDecipheriv, randomBytes, scrypt } from 'node:crypto'
 import { createReadStream, createWriteStream } from 'node:fs'
-import { mkdir, mkdtemp, open, readdir, readFile, realpath, rename, rm, stat } from 'node:fs/promises'
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  open,
+  readdir,
+  readFile,
+  readlink,
+  realpath,
+  rename,
+  rm,
+  stat,
+} from 'node:fs/promises'
 import { hostname, tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { codeIdOf, normalizeCode } from './policy.js'
@@ -28,14 +43,37 @@ export interface HeaderPart {
   bytes: number
   sqlite: string[]
 }
+/** Các phần một bản sao lưu được phép có (`partSpecs`). Phần khác trong đầu tệp bị từ chối. */
+export const KNOWN_PARTS = ['dsh', 'brain', 'workspace', 'projects', 'aris'] as const
+export const isKnownPart = (id: unknown): id is (typeof KNOWN_PARTS)[number] =>
+  typeof id === 'string' && (KNOWN_PARTS as readonly string[]).includes(id)
+
 export interface Header {
-  v: 1
+  v: 2
   created: string
   host: string
   codeId: string
   salt: string
   iv: string
   parts: HeaderPart[]
+}
+
+/** Tên một mục ở gốc phần: một tên đơn, không `/`, không `..`. */
+const plainName = (n: unknown) =>
+  typeof n === 'string' && n !== '' && n !== '.' && n !== '..' && !n.includes('/') && !n.includes('\0')
+
+/**
+ * Kiểm đầu tệp trước khi dùng: `id` phần phải thuộc tập biết trước, tên mục trong `entries`, `merge` phải là tên
+ * đơn. Đầu tệp đã có AAD nên kẻ không có mã không sửa được, nhưng vẫn kiểm để tệp tạo sai không gây hại.
+ */
+export function validateHeader(h: Header): void {
+  if (!Array.isArray(h.parts)) throw new Error('tệp sao lưu hỏng')
+  for (const p of h.parts) {
+    if (!isKnownPart(p.id)) throw new Error(`bản sao lưu có phần lạ "${String(p.id)}", từ chối`)
+    for (const list of [p.entries, p.merge])
+      if (list && !(Array.isArray(list) && list.every(plainName)))
+        throw new Error(`bản sao lưu có tên mục không hợp lệ trong phần ${p.id}, từ chối`)
+  }
 }
 
 export const totalFiles = (h: Pick<Header, 'parts'>) =>
@@ -93,7 +131,7 @@ export async function writeBackup(
     const salt = randomBytes(16)
     const iv = randomBytes(12)
     const header: Header = {
-      v: 1,
+      v: 2,
       created: now.toISOString(),
       host: hostname(),
       codeId: codeIdOf(code),
@@ -127,6 +165,9 @@ export async function writeBackup(
     len.writeUInt32BE(head.length)
     const key = await deriveKey(code, salt)
     const cipher = createCipheriv('aes-256-gcm', key, iv)
+    // Đầu tệp (ARISBAK1, độ dài, JSON) vào AAD: sửa đầu tệp thì thẻ xác thực sai.
+    const prefix = Buffer.concat([MAGIC, len, head])
+    cipher.setAAD(prefix)
     const tar = spawn(
       TAR,
       ['-czf', '-', '-C', '/', '--null', '-T', '-', '--no-mac-metadata', '--no-xattrs', ...subst],
@@ -137,7 +178,7 @@ export async function writeBackup(
     const exited = new Promise<number>((resolve) => tar.on('close', (c) => resolve(c ?? 1)))
     tar.stdin.end(list.map((f) => f + '\0').join(''))
     const out = createWriteStream(partial, { mode: 0o600 })
-    out.write(Buffer.concat([MAGIC, len, head]))
+    out.write(prefix)
     const withTag = new Transform({
       transform: (chunk, _enc, cb) => cb(null, chunk),
       flush(cb) {
@@ -176,7 +217,9 @@ export async function readHeader(file: string): Promise<{ header: Header; offset
     const head = Buffer.alloc(n)
     await fh.read(head, 0, n, 12)
     const header = JSON.parse(head.toString('utf8')) as Header
-    if (header.v !== 1) throw new Error(`bản sao lưu phiên bản ${String(header.v)} chưa đọc được`)
+    if ((header.v as number) === 1)
+      throw new Error('bản sao lưu phiên bản 1 không có xác thực đầu tệp nên không còn đọc; tạo bản mới')
+    if (header.v !== 2) throw new Error(`bản sao lưu phiên bản ${String(header.v)} chưa đọc được`)
     return { header, offset: 12 + n, size }
   } finally {
     await fh.close()
@@ -184,20 +227,47 @@ export async function readHeader(file: string): Promise<{ header: Header; offset
 }
 
 /**
+ * Mọi liên kết mềm trong `dir` trỏ ra ngoài `dir` (đường tuyệt đối hay đi lên khỏi `dir`), tương đối `dir`.
+ * Không đi theo liên kết.
+ */
+export async function escapingLinks(dir: string): Promise<string[]> {
+  const root = resolve(dir)
+  const bad: string[] = []
+  const walk = async (d: string): Promise<void> => {
+    for (const e of await readdir(d, { withFileTypes: true }).catch(() => [])) {
+      const p = join(d, e.name)
+      if (e.isSymbolicLink()) {
+        const to = resolve(d, await readlink(p).catch(() => '/'))
+        const rel = relative(root, to)
+        if (rel.startsWith('..') || isAbsolute(rel)) bad.push(relative(root, p))
+      } else if (e.isDirectory() && !(await lstat(p)).isSymbolicLink()) await walk(p)
+    }
+  }
+  await walk(root)
+  return bad
+}
+
+/**
  * Giải mã và giải nén vào `dest` (mỗi phần thành `dest/<mã phần>`). Thẻ xác thực sai (tệp bị sửa, hỏng) thì lỗi ở
- * cuối, nên chỉ dùng kết quả khi hàm xong không lỗi.
+ * cuối, nên chỉ dùng kết quả khi hàm xong không lỗi. Đầu tệp phải hợp lệ (`validateHeader`), và không có liên kết
+ * mềm nào trỏ ra ngoài `dest`: có thì xoá các liên kết đó rồi báo lỗi.
  */
 export async function extractBackup(file: string, code: string, dest: string): Promise<Header> {
   const { header, offset, size } = await readHeader(file)
+  validateHeader(header)
   if (codeIdOf(code) !== header.codeId) throw new Error('mã khôi phục không khớp bản sao lưu này')
   const fh = await open(file, 'r')
   const tag = Buffer.alloc(TAG)
+  const aad = Buffer.alloc(offset)
   await fh.read(tag, 0, TAG, size - TAG)
+  await fh.read(aad, 0, offset, 0)
   await fh.close()
   const key = await deriveKey(code, Buffer.from(header.salt, 'base64'))
   const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(header.iv, 'base64'))
   decipher.setAuthTag(tag)
+  decipher.setAAD(aad)
   await mkdir(dest, { recursive: true })
+  // Không truyền `-P`: bsdtar mặc định bỏ tiền tố `/` và từ chối tên có `..`, đúng điều ta cần.
   const tar = spawn(TAR, ['-xzf', '-', '-C', dest, '--no-same-owner'], { stdio: ['pipe', 'ignore', 'pipe'] })
   let stderr = ''
   tar.stderr.on('data', (d: Buffer) => (stderr += d.toString('utf8')))
@@ -210,6 +280,13 @@ export async function extractBackup(file: string, code: string, dest: string): P
   }
   const exit = await exited
   if (exit !== 0) throw new Error(`giải nén: ${stderr.trim() || exit}`)
+  const links = await escapingLinks(dest)
+  if (links.length) {
+    for (const l of links) await rm(join(dest, l), { force: true })
+    throw new Error(
+      `bản sao lưu có liên kết mềm trỏ ra ngoài thư mục giải nén (${links.slice(0, 3).join(', ')}); từ chối`,
+    )
+  }
   return header
 }
 
