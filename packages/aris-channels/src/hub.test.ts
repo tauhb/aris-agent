@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   ChannelHub,
   type ApprovalsPort,
@@ -186,6 +186,40 @@ async function pairOwner(s: Awaited<ReturnType<typeof setup>>) {
 }
 
 describe('trung tâm kênh', () => {
+  it('khởi động lúc mạng chập chờn: getMe lỗi thì tự thử lại, bật được thì nhận tin', async () => {
+    const s = await setup()
+    s.hub.stop()
+    let fail = 2
+    const flaky: Fetch = async (url, init) => {
+      if (url.endsWith('/getMe') && fail-- > 0) throw new TypeError('fetch failed')
+      return s.tg.fetch(url, init)
+    }
+    const hub = new ChannelHub({
+      store: s.store,
+      credentials: {
+        resolve: async (r) => s.secrets.get(r),
+        set: async (r, v) => void s.secrets.set(r, v),
+        unset: async (r) => void s.secrets.delete(r),
+      },
+      sessions: s.sessions.port,
+      logger: { info() {}, warn() {} },
+      fetchImpl: flaky,
+    })
+    hubs.push(hub)
+    vi.useFakeTimers()
+    try {
+      await hub.start()
+      expect(s.store.bot('aris')?.error).toBeTruthy()
+      await vi.advanceTimersByTimeAsync(15_000)
+      expect(s.store.bot('aris')?.error).toBeTruthy()
+      await vi.advanceTimersByTimeAsync(30_000)
+      expect(s.store.bot('aris')?.error).toBeUndefined()
+    } finally {
+      hub.stop()
+      vi.useRealTimers()
+    }
+  })
+
   it('kết nối: lưu token vào kho khoá, không lưu trong bản ghi bot', async () => {
     const s = await setup()
     expect(s.secrets.get('TELEGRAM_ARIS_BOT_TOKEN')).toBe('123:TOKEN')

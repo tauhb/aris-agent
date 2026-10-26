@@ -379,13 +379,38 @@ export class ChannelHub {
   // Tài khoản bot
   // ======================================================================================
 
+  /** Hẹn giờ thử bật lại bot lỗi lúc khởi động (mạng chập chờn khi máy vừa thức). */
+  private retries = new Map<string, ReturnType<typeof setTimeout>>()
+
   async start() {
-    for (const rec of this.store.bots())
-      await this.startBot(rec).catch((e: unknown) => this.botError(rec.bot, e))
+    for (const rec of this.store.bots()) await this.startOrRetry(rec)
     await this.recover()
   }
 
+  /**
+   * Bật một bot; lỗi tạm (mạng, Telegram trả 5xx) thì thử lại sau 15 giây, gấp đôi mỗi lần, tối đa 5 phút, cho tới khi
+   * bật được hay bot bị gỡ. Token sai (401) hay chưa có token thì không thử lại.
+   */
+  private async startOrRetry(rec: BotRecord, delay = 15_000) {
+    this.retries.delete(rec.bot)
+    try {
+      await this.startBot(rec)
+    } catch (e) {
+      await this.botError(rec.bot, e)
+      const fatal = (e instanceof TelegramError && e.code === 401) || !this.store.bot(rec.bot)
+      if (fatal || (e instanceof Error && e.message === 'chưa có token trong kho khoá')) return
+      const timer = setTimeout(() => {
+        const cur = this.store.bot(rec.bot)
+        if (cur && !this.runtimes.has(rec.bot)) void this.startOrRetry(cur, Math.min(delay * 2, 300_000))
+      }, delay)
+      timer.unref?.()
+      this.retries.set(rec.bot, timer)
+    }
+  }
+
   stop() {
+    for (const t of this.retries.values()) clearTimeout(t)
+    this.retries.clear()
     for (const rt of this.runtimes.values()) rt.abort.abort()
     this.runtimes.clear()
     for (const t of this.typing.values()) clearInterval(t)
