@@ -6,6 +6,7 @@
  * Chưa nối: nút "Chuyển vai trò sang bot khác" của bản vẽ (chưa có API đổi bot làm Commander).
  */
 import {
+  Button,
   Card,
   Mascot,
   PageShell,
@@ -144,6 +145,9 @@ function LimitInput({
 
 const check = { width: 18, height: 18, accentColor: 'var(--a-accent)', flex: 'none' } as const
 
+/** Số quyết định mỗi trang ở bảng định tuyến. */
+const ROUTING_PAGE = 10
+
 export function Commander({ t, nav }: PageProps) {
   const team = useTeam()
   const data = useTeamData()
@@ -151,6 +155,7 @@ export function Commander({ t, nav }: PageProps) {
   const { log, learned, settings, save, errors } = useCommander()
   const [botError, setBotError] = useState<string | null>(null)
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set())
+  const [page, setPage] = useState(0)
   const nameOf = (id: string) => team.members.find((m) => m.id === id)?.name ?? id
   const bots = (data?.bots ?? []).filter((b) => b.kind === 'member')
   const canTake = (b: BotData) => b.assignable !== false && (!b.external || b.external.assignable !== false)
@@ -345,7 +350,7 @@ export function Commander({ t, nav }: PageProps) {
               {t('cmd.noRouting')}
             </div>
           )}
-          {log?.map((r) => {
+          {log?.slice(page * ROUTING_PAGE, (page + 1) * ROUTING_PAGE).map((r) => {
             const key = r.at + r.handle
             const full = open.has(key)
             const toggle = () =>
@@ -389,6 +394,27 @@ export function Commander({ t, nav }: PageProps) {
             )
           })}
         </div>
+        {log && log.length > ROUTING_PAGE && (
+          <div className="ap-pager">
+            <Button size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
+              {t('cmd.prev')}
+            </Button>
+            <span className="a-muted">
+              {t('cmd.page', {
+                page: page + 1,
+                pages: Math.ceil(log.length / ROUTING_PAGE),
+                n: log.length,
+              })}
+            </span>
+            <Button
+              size="sm"
+              disabled={(page + 1) * ROUTING_PAGE >= log.length}
+              onClick={() => setPage(page + 1)}
+            >
+              {t('cmd.next')}
+            </Button>
+          </div>
+        )}
       </Card>
     </PageShell>
   )

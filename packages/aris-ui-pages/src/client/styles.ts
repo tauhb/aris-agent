@@ -171,6 +171,7 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-rpnote{font-size:13px}
 .ap-rperr{margin:0 8px 0 0;font-size:12px}
 .ap-drwrap{overflow-x:auto}
+.ap-pager{display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 14px;border-top:1px solid var(--a-line);font-size:12.5px}
 .ap-dr{display:grid;grid-template-columns:112px minmax(0,1.4fr) minmax(150px,1fr) minmax(0,2.2fr) 84px;gap:12px;align-items:start;padding:10px 14px;border-top:1px solid var(--a-line);font-size:13px;min-width:760px}
 .ap-dr-row{cursor:pointer}
 .ap-dr-row:hover{background:var(--a-hover)}
