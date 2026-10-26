@@ -754,6 +754,33 @@
       "x": 1860,
       "y": 1960,
       "is_interactive": true
+    },
+    "VanPhongNhatKy.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "vp",
+      "title": "Văn phòng làm việc · 1 — cột phải luôn có: Vừa làm gì với pill tên bot, pill trạng thái, dòng Xong mở rộng xem và nhận kết quả, dòng chờ duyệt có nút ngay",
+      "w": 1440,
+      "x": 340,
+      "y": 3840
+    },
+    "VanPhongChatBot.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "vp",
+      "title": "Văn phòng làm việc · 2 — bấm bot (Thơ): cột phải thành chat gọn, chọn phiên, các bước gộp một dòng tiến độ, ô nhắn Chèn vào việc/Xếp sau, Dừng, Mở phiên đầy đủ",
+      "w": 1440,
+      "x": 1860,
+      "y": 3840
+    },
+    "VanPhongChatAris.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "vp",
+      "title": "Văn phòng làm việc · 3 — chat với Aris: Aris chia việc, khối Đội đang làm có nhánh từng bot (xong/đang làm/chờ duyệt) và thanh tiến độ",
+      "w": 1440,
+      "x": 3380,
+      "y": 3840
     }
   },
   "createdOnFiles": {
@@ -935,7 +962,10 @@
     "VanPhongKanban.dc.html",
     "KenhLark.dc.html",
     "PhuKienLinhVat.dc.html",
-    "PhuKien3D.dc.html"
+    "PhuKien3D.dc.html",
+    "VanPhongNhatKy.dc.html",
+    "VanPhongChatBot.dc.html",
+    "VanPhongChatAris.dc.html"
   ],
   "pages": [
     {
