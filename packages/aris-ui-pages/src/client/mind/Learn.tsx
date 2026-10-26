@@ -43,9 +43,9 @@ export function Learn(props: PageProps) {
 
 export const LEARN_CSS = `
 .ap-lr{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--a-bg)}
-.ap-lr-head{display:flex;align-items:flex-end;gap:24px;padding:0 24px;border-bottom:1px solid var(--a-line);flex:none;flex-wrap:wrap}
+.ap-lr-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:0 24px;width:100%;box-sizing:border-box;border-bottom:1px solid var(--a-line);flex:none;flex-wrap:wrap}
 .ap-lr-head h1{margin:0;font-size:16px;font-weight:600;padding:12px 0}
-.ap-lr-head .a-tabs{border-bottom:0}
+.ap-lr-head .a-tabs{border-bottom:0;margin-left:auto}
 .ap-lr-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 .ap-lr-body>.a-page{min-height:0}
 `
