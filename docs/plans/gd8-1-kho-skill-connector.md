@@ -85,10 +85,39 @@ Mỗi hàm có test riêng.
   Lệnh trong khối mã thì phân tích bằng `@aris/shell` (`parse`, `ops`) để phân loại, đừng chỉ dò chuỗi.
 - Một lần nhập tạo tối đa 30 đề xuất. Trùng tên với skill đang có của bot thì đề xuất **bản mới** của skill đó, và Hộp duyệt hiện phần khác biệt (đã có `diff.ts`).
 
-### A4. Cho bot nào
+### A4. Kho skill chung của đội và gán skill cho bot (người dùng yêu cầu 26/10)
 
-- Hộp nhập có ô chọn **bot nhận**: một hoặc nhiều bot, hoặc "Aris".
-- Nhập cho nhiều bot thì mỗi bot một đề xuất. Hộp duyệt gộp chúng thành **một thẻ** "N skill từ <nguồn> cho <các bot>", có nút Duyệt tất cả và Xem từng cái.
+Người dùng muốn: skill nằm ở một kho chung, rồi **chính họ gán skill nào cho bot nào dùng**.
+
+**Mô hình dữ liệu**
+- Thêm khái niệm **skill của đội**: `SkillRecord.bot = '_doi'` (hằng số `TEAM_OWNER`). Bản ghi thêm `assigned: string[] | 'all'`, là danh sách mã bot được dùng. Skill riêng của từng bot (do vòng học `reflect` tạo ra) giữ nguyên như cũ.
+- **Skill nhập từ ngoài luôn vào kho của đội.** Lúc duyệt, người dùng chọn gán cho những bot nào; mặc định chưa gán bot nào.
+
+**Nguồn skill của phiên** (`SkillProvider` trong `index.ts`): bot thấy các skill riêng của mình **cộng với** các skill của đội đã gán cho mình.
+- Trùng tên thì skill riêng thắng.
+- Đếm lượt dùng (`recordUse`) cho skill của đội theo từng bot. Thêm `usesBy: Record<bot, number>` nếu cần cho màn thống kê.
+
+**Thao tác mới** (`/api/aris/skills`):
+- `assign { skill, bots | 'all' }`;
+- `unassign { skill, bot }`;
+- `share { skill }`: chuyển skill riêng của một bot vào kho đội, giữ các bản cũ, gán sẵn cho bot gốc;
+- `unshare`: trả về làm skill riêng của một bot, chỉ được khi skill chỉ gán cho một bot.
+
+**Duyệt:** một lần nhập nhiều skill thì Hộp duyệt gộp thành **một thẻ** "N skill từ <nguồn>", có nút Duyệt tất cả, Xem từng cái, và ô chọn gán cho bot nào.
+
+**Giao diện (vẽ ở A7):**
+- **Thư viện skill** có bộ lọc "Kho đội · Riêng từng bot". Mỗi thẻ skill của đội có một dải linh vật các bot đã gán, và nút "Gán…" mở danh sách bot có ô chọn, kèm lựa chọn "Cả đội".
+- **Trang chi tiết skill:**
+  - mục "Bot được dùng": danh sách bot có công tắc;
+  - số lần dùng theo từng bot;
+  - với skill riêng của bot thì có thêm nút "Chia sẻ cho đội".
+- **Hồ sơ bot › Skill & tool:** hai nhóm "Skill riêng" và "Từ kho đội". Nhóm "Từ kho đội" có công tắc bật/tắt từng skill (chính là gán và bỏ gán), và nút "＋ Thêm từ kho đội".
+
+**Test:**
+- bot chỉ thấy skill của đội đã gán cho mình;
+- trùng tên thì skill riêng thắng;
+- `share` / `unshare` giữ nguyên lịch sử các bản;
+- gán `'all'` thì bot tạo sau cũng nhận được.
 
 ### A5. Cập nhật từ nguồn
 
@@ -99,7 +128,7 @@ Mỗi hàm có test riêng.
 
 - `POST { op: 'import-scan', source: { kind, url | path } }` trả về danh sách skill tìm được. Mỗi skill gồm `name`, `description`, `files` (số tệp, số tệp bị bỏ), `warnings`, `exists` (bot nào đã có skill trùng tên), và `scanId`.
   - Kết quả quét giữ trong bộ nhớ 15 phút. Với GitHub thì giữ thư mục đã bung tới khi nhập xong hay hết hạn.
-- `POST { op: 'import', scanId, names: string[], bots: string[] }` trả về các đề xuất đã tạo.
+- `POST { op: 'import', scanId, names: string[], bots?: string[] | 'all' }` tạo đề xuất vào kho của đội. `bots` là danh sách gán sẵn, chỉ có hiệu lực khi đề xuất được duyệt. Trả về các đề xuất đã tạo.
 - `POST { op: 'import-check', skill }` dùng cho phần A5.
 - Lỗi mạng, repo riêng tư (404), hay vượt giới hạn tần suất của API GitHub thì trả câu lỗi dễ hiểu.
 
@@ -146,10 +175,11 @@ Sửa khung `MatTichHop.dc.html` hoặc thêm khung mới cạnh nó, gồm:
 
 ## Thứ tự làm
 
-1. Phần máy chủ A1–A3 và A6, kèm test, đọc GitHub thật bằng mạng. **Điểm dừng 1:** cho người dùng xem kết quả `import-scan` thật trên `github.com/anthropics/skills` và trên `~/.claude/skills`. Chỉ kể số lượng và tên, không đổ cả nội dung ra.
+0. **Làm phần B (kết nối dùng chung) trước**, theo thứ tự người dùng chốt ngày 26/10: B1 và B2 máy chủ, vẽ B3, chờ duyệt, rồi làm giao diện. Xong B mới sang A.
+1. Phần máy chủ A1–A4 và A6, kèm test, đọc GitHub thật bằng mạng. **Điểm dừng 1:** cho người dùng xem kết quả `import-scan` thật trên `github.com/anthropics/skills` và trên `~/.claude/skills`. Chỉ kể số lượng và tên, không đổ cả nội dung ra.
 2. Vẽ A7 và B3. **Điểm dừng 2:** chờ người dùng duyệt bản vẽ.
 3. Giao diện phần A, rồi phần A4–A5.
-4. Phần B1–B2 máy chủ, rồi giao diện B3.
+4. Rà lại phần B (đã làm ở bước 0) xem còn khớp với kho skill của đội không. Nếu nên dùng chung khuôn "phạm vi bot" giữa kết nối và skill thì tách ra một hàm chung.
 5. Thử thật:
    - nhập 2 skill từ `anthropics/skills` cho Minh, duyệt, rồi hỏi Minh một câu làm skill đó được dùng (câu ngắn);
    - nhập một skill từ `~/.claude/skills`;

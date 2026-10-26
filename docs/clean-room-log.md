@@ -43,3 +43,7 @@ Kết quả: chỉ rút ra danh mục năng lực (mục 15 của `tinh-nang-ari
 ## 26/10/2026 — GĐ7 đợt 7f phần C (chuẩn bị đo đối đầu)
 
 Đọc phần trợ giúp CLI của Hermes v0.20.0 đã cài (`hermes --help`, `hermes profile --help`, `hermes profile create --help`, `hermes profile alias --help`) để hướng dẫn người dùng tạo profile Hermes riêng cho bộ đo, dùng DeepSeek. Không đọc mã nguồn, không sao chép gì.
+
+## 26/10/2026 — GĐ8, lên plan 8.3 (điều khiển màn hình)
+
+Đọc bài so sánh của bên thứ ba (codenote.net, tháng 9/2026) có mô tả kiến trúc computer-use của Hermes Agent: bộ công cụ `computer_use` gọi cua-driver qua MCP, ba chế độ quyền (hỏi từng thao tác / trong phạm vi khai báo / không hỏi), lệnh install/status/doctor. Chỉ rút ý tưởng kiến trúc và chính sách quyền để ghi vào `docs/plans/gd8-3-dieu-khien-man-hinh.md`. Không đọc mã nguồn Hermes, không sao chép gì. Cũng đọc mô tả công khai của cua-driver (trycua, MIT), Peekaboo (MIT), và tài liệu kênh Zalo của OpenClaw cho plan 8.4.

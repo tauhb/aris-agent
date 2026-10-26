@@ -1,127 +1,125 @@
-# Plan 8.3 · Bot điều khiển màn hình (computer-use)
+# Plan 8.3 · Bot điều khiển màn hình (computer-use) · phương án B
 
-Đọc trước `docs/plans/gd8-chung.md`. Đây là việc **rủi ro cao nhất** trong giai đoạn 8, vì bot sẽ bấm và gõ trên máy thật của người dùng. Làm chậm, hỏi nhiều.
+Đọc trước `docs/plans/gd8-chung.md`.
+
+Ngày 26/10 người dùng chọn **phương án B**: aris tự có bộ công cụ điều khiển máy. Họ cũng muốn tham khảo những repo đang làm việc này tốt. Đây là việc **rủi ro cao nhất** trong giai đoạn 8, vì bot bấm và gõ trên máy thật. Làm chậm, hỏi nhiều.
 
 ## Hiện trạng (Opus đã kiểm trên máy)
 
-- dsh bản đang dùng **không có** công cụ computer-use (đã kiểm ngày 25/10, ghi trong `docs/ke-hoach-trien-khai.md`). Aris đã có trình duyệt tự động qua Playwright MCP (mẫu kết nối `browser`), nhưng công cụ đó chỉ điều khiển trình duyệt, không điều khiển cả máy.
-- Trên máy có sẵn:
-  - `swiftc` (Command Line Tools, Swift 6.3);
-  - `/usr/sbin/screencapture` (có sẵn trong macOS);
-  - `cliclick` ở `/opt/homebrew/bin` (người dùng tự cài, máy khác chưa chắc có).
-- Codex trên máy có sẵn computer-use riêng của OpenAI: `~/.codex/computer-use/Codex Computer Use.app`, plugin `computer-use@openai-bundled`. Aris đã có bot ngoài Lan chạy Codex (`codex app-server`).
+- dsh bản đang dùng **không có** công cụ computer-use. Aris đã có trình duyệt tự động qua Playwright MCP (mẫu kết nối `browser`), nhưng chỉ cho trình duyệt.
+- Trên máy có:
+  - `swiftc` (Swift 6.3);
+  - `screencapture`;
+  - `cliclick` (`/opt/homebrew`);
+  - Node, dùng được thư viện Node có sẵn bản cho máy.
 
-## Điểm dừng 1 · Chọn phương án
+## Tham khảo (Opus đã tra ngày 26/10)
 
-Trình bày cho người dùng ba phương án dưới đây, kèm đề xuất. **Chờ người dùng chọn rồi mới làm.**
+Chỉ đọc tài liệu và kiến trúc. **Không chép mã của Hermes.** Ghi việc đã đọc vào `docs/clean-room-log.md`.
 
-**A. Giao cho Lan (Codex) dùng computer-use của Codex**
-- Ít mã nhất: sửa mô tả năng lực của Lan để Aris biết giao việc "thao tác trên máy" cho Lan, và kiểm tra luồng xin quyền của Codex đi về thanh duyệt của aris.
-- Nhược điểm:
-  - phụ thuộc ứng dụng và gói cước ChatGPT của người dùng;
-  - chỉ một bot dùng được;
-  - aris không xem được từng thao tác, chỉ thấy những bước Codex báo về;
-  - không chạy được trên máy không có Codex.
+1. **Hermes Agent** (MIT), đọc qua bài so sánh tháng 9/2026 ([codenote.net](https://codenote.net/en/posts/computer-use-agents-macos-windows-selection-notes-2026/)):
+   - **Kiến trúc:** Hermes chỉ là lớp điều phối. Bộ công cụ `computer_use` gọi **cua-driver** qua MCP (stdio). Model nào cũng dùng được.
+   - **Lệnh:** `computer-use install | status | doctor` để cài driver và báo thiếu quyền.
+   - **Ba chế độ quyền:**
+     - `standard`: hỏi từng thao tác. Đây là mặc định; `click`, `type`, `drag`, `scroll`, `key`, `focus_app` đều phải duyệt.
+     - `bounded`: chỉ cho các thao tác nằm trong một danh sách năng lực khai báo trước, ngoài danh sách thì từ chối.
+     - `unrestricted`: không hỏi, chỉ nên dùng trong máy ảo.
+   - Chặn cứng lệnh nguy hiểm.
+   - **Aris học theo ý tưởng này,** tự viết mã của mình.
+2. **cua-driver** của trycua: **MIT**, npm `@trycua/cua-driver` 0.37.0 ("Rust-backed Cua Driver SDK and embedded Node host"), repo `github.com/trycua/cua`.
+   - Lớp thao tác dùng chung: chụp màn hình, đọc phần tử giao diện (Accessibility), gửi chuột và phím. Có SDK cho TypeScript, máy chủ MCP và dòng lệnh.
+   - **Ưu điểm lớn:** trên macOS, nó gửi sự kiện theo từng tiến trình (PID) qua API Trợ năng và SPI SkyLight, **không di chuyển con trỏ của người dùng**. Bot làm "nền" được trong lúc người dùng vẫn dùng máy, dù không bảo đảm với mọi ứng dụng.
+   - **Nhược điểm:** dùng SPI không công khai của Apple nên có thể hỏng khi cập nhật macOS; không chạy được với ứng dụng tự vẽ (Blender, game).
+3. **Peekaboo** (steipete), MIT, Swift: dòng lệnh và máy chủ MCP cho macOS.
+   - Chụp cửa sổ hay màn hình, `click --on "<nhãn>"` (tìm phần tử theo nhãn rồi bấm), gõ phím.
+   - Cài bằng Homebrew hoặc `npx @steipete/peekaboo` (cần Node 22 trở lên). Bản 3 đang beta.
+   - Thao tác ở tiền cảnh (di chuyển con trỏ thật).
+4. **UI-TARS Desktop** và **Agent S** (Apache-2.0): chỉ dựa vào ảnh chụp, mặc định một màn hình. Chỉ tham khảo cách nhắc model và cách bám toạ độ, không dùng làm lõi.
 
-**B. Aris tự làm bộ công cụ điều khiển máy (Opus đề xuất)**
-- Mọi bot được cấp quyền đều dùng được.
-- Duyệt từng thao tác qua hàng rào của aris, xem được màn hình của bot, cầm lái lại được.
-- Dùng `screencapture` có sẵn và một chương trình nhỏ viết bằng Swift, dịch ngay trên máy bằng `swiftc`. Không tải tệp nhị phân lạ.
-- Nhược điểm:
-  - nhiều việc hơn;
-  - người dùng phải tự cấp quyền **Trợ năng** và **Ghi màn hình** trong Cài đặt hệ thống;
-  - ảnh chụp màn hình tốn token.
+## Điểm dừng 1 · Chọn lõi thao tác
 
-**C. Dùng máy chủ MCP computer-use của Codex làm một kết nối trong aris.** Không đề xuất: đó là phần mềm đóng của OpenAI, đã bị tắt trong cấu hình, chỉ chạy được bên trong Codex, và điều khoản sử dụng không rõ.
+Trình bày cho người dùng, đề xuất **B1**, rồi chờ người dùng chọn:
+- **B1. cua-driver (đề xuất):**
+  - giống cách Hermes làm và làm được ở nền, nên bot không giành chuột của người dùng;
+  - cần **cài gói** `@trycua/cua-driver@0.37.0` (MIT, kéo theo tệp nhị phân Rust dựng sẵn); phải xin người dùng đồng ý và kiểm giấy phép các gói đi kèm (`pnpm check:licenses`);
+  - nếu gói tải thêm tệp nhị phân lúc cài hay lúc chạy, phải báo rõ: tải từ đâu, kích thước bao nhiêu.
+- **B2. Peekaboo:**
+  - trưởng thành, đọc giao diện theo nhãn tốt;
+  - nhưng thao tác tiền cảnh (giành chuột) và bản 3 còn beta;
+  - cũng cần cài.
+- **B3. Tự viết `aris-cua` bằng Swift:** dịch ngay trên máy bằng `swiftc`, không phụ thuộc ai, nhưng nhiều việc nhất, mặc định thao tác tiền cảnh, và phải tự lo phần đọc cây Trợ năng.
 
-Phần còn lại của plan viết cho phương án **B**. Nếu người dùng chọn **A**, chỉ làm mục "Nếu chọn A" ở cuối rồi dừng.
+Dù chọn lõi nào, aris cũng bọc lõi đó sau một giao diện chung `ComputerDriver`. Đổi lõi sau này không phải sửa lớp công cụ và lớp an toàn.
 
 ## Điểm dừng 2 · Thử khả năng đọc ảnh của model
 
-Trước khi viết công cụ, kiểm tra model trong chuỗi chat có đọc được ảnh không, và mỗi ảnh tốn bao nhiêu token.
-- Cách thử: nhờ một bot đọc một ảnh nhỏ, ví dụ ảnh chụp màn hình 1280px, qua cơ chế ảnh sẵn có của aris (Telegram và Playwright MCP đã gửi ảnh cho model).
-- Nếu model không đọc được ảnh: báo người dùng. Cách đi khi đó là chỉ dùng cây Trợ năng (AX tree: danh sách nút và ô nhập kèm vị trí), không dùng ảnh; hoặc chọn một model có đọc ảnh cho riêng việc này. **Chờ người dùng quyết.**
+- Kiểm tra model trong chuỗi chat có đọc được ảnh chụp màn hình không, và mỗi ảnh 1280px tốn bao nhiêu token.
+- Nếu không đọc được: chỉ dùng cây Trợ năng (danh sách phần tử và nhãn), hoặc chọn một model có đọc ảnh cho riêng việc này. **Chờ người dùng quyết.**
 
-## B1. Chương trình phụ `aris-cua`
+## B-1. Gói `@aris/computer`
 
-- Mã nguồn đặt trong gói mới `packages/aris-computer/native/main.swift`. Chỉ dùng thư viện của Apple: CoreGraphics, ApplicationServices, AppKit.
-- Lệnh `pnpm aris:cli computer setup`, hoặc tự chạy lần đầu dùng: dịch bằng `xcrun swiftc -O`, ra tệp `~/.aris/bin/aris-cua`. Ghi kèm mã băm (sha256) của mã nguồn đã dịch; mã nguồn đổi thì dịch lại.
-- **Giao tiếp:** mỗi lệnh là một lần chạy, nhận tham số JSON qua stdin và trả JSON qua stdout. Các lệnh:
-  - `screens`: các màn hình, kích thước, tỉ lệ điểm ảnh;
-  - `windows`: cửa sổ đang mở (ứng dụng, tiêu đề, vị trí), dùng `CGWindowListCopyWindowInfo`;
-  - `front`: ứng dụng đang ở trước;
-  - `move x y`, `click x y [left|right] [count]`, `drag x1 y1 x2 y2`, `scroll dx dy`;
-  - `type "chữ"`: gõ theo Unicode bằng `CGEventKeyboardSetUnicodeString`, có tiếng Việt;
-  - `key "cmd+shift+4"`;
-  - `ax-at x y`: phần tử dưới con trỏ (vai trò, nhãn, có phải ô mật khẩu không, kiểu `AXSecureTextField`);
-  - `ax-tree [app]`: cây Trợ năng rút gọn, tối đa 300 nút;
-  - `idle`: số giây kể từ lần cuối người dùng tự động chuột hay phím (`CGEventSourceSecondsSinceLastEventType`).
-- **Ảnh chụp:** dùng `screencapture -x -t png` (cả màn hình, hoặc `-R` cho một vùng). Thu nhỏ về cạnh dài tối đa 1280px. Trả về đường dẫn tệp và tỉ lệ đổi toạ độ.
-- **Quyền:** lần đầu chạy, nếu thiếu quyền Trợ năng (`AXIsProcessTrusted`) hay Ghi màn hình, thì trả lỗi rõ ràng. Giao diện hiện hướng dẫn ba bước và nút "Mở Cài đặt", nút này chỉ chạy `open "x-apple.systempreferences:..."`. **Không tự cấp quyền.** Cần thử xem macOS tính quyền cho `aris-cua` hay cho tiến trình daemon (node dưới launchd), rồi viết đúng vào hướng dẫn.
+- **`ComputerDriver`** (giao diện chung): `screens`, `windows`, `frontApp`, `screenshot(region?, maxEdge=1280)`, `axTree(app|pid, limit=300)`, `elementAt(x, y)`, `click(target)`, `drag`, `scroll`, `type(text)`, `key(combo)`, `openApp`, `focusApp`, `userIdleSeconds`.
+  - `target` là một trong ba dạng: `{ x, y }` theo toạ độ ảnh, `{ element: <mã phần tử từ axTree> }`, hoặc `{ label: "<nhãn>", app }`.
+  - Nếu lõi không có `userIdleSeconds` thì đọc bằng một dòng Swift hoặc `ioreg -c IOHIDSystem`.
+- **Bộ nối lõi đã chọn:** gọi qua SDK TypeScript, hoặc chạy máy chủ MCP của lõi bằng stdio như Hermes. Chọn cách ít phụ thuộc hơn sau khi đọc tài liệu của lõi.
+- **Lệnh `pnpm aris:cli computer doctor`:** kiểm tra lõi, quyền Trợ năng, quyền Ghi màn hình, model đọc ảnh, và in hướng dẫn. **Không tự cấp quyền.** Nút "Mở Cài đặt" chỉ chạy `open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"`, hoặc `…?Privacy_ScreenCapture`.
+- Ghi rõ macOS tính quyền cho tiến trình nào (tệp nhị phân của lõi hay daemon node dưới launchd). Thử thật rồi viết đúng vào hướng dẫn.
 
-## B2. Công cụ cho bot (`@aris/computer`)
+## B-2. Công cụ cho bot
 
-Viết bằng `defineTool`, tên tiếng Việt như các công cụ khác của aris:
-- `man_hinh_xem`: chụp màn hình và trả ảnh cho model, kèm danh sách cửa sổ và ứng dụng đang ở trước;
-- `man_hinh_bam`, `man_hinh_keo`, `man_hinh_cuon`;
-- `man_hinh_go`, `man_hinh_phim`;
-- `man_hinh_tim`: cây Trợ năng của ứng dụng đang ở trước, để bấm theo nhãn thay vì đoán toạ độ;
-- `ung_dung_mo`: chạy `open -a "<tên>"`.
+Tên tiếng Việt như các công cụ khác của aris:
+- `man_hinh_xem`: ảnh chụp và danh sách cửa sổ;
+- `man_hinh_tim`: cây Trợ năng rút gọn, có mã phần tử;
+- `man_hinh_bam`, `man_hinh_keo`, `man_hinh_cuon`, `man_hinh_go`, `man_hinh_phim`;
+- `ung_dung_mo`.
 
-Toạ độ trong công cụ tính theo **ảnh đã thu nhỏ**; công cụ tự đổi sang toạ độ thật.
+Lời dặn trong mô tả công cụ: **ưu tiên bấm theo phần tử hay nhãn** lấy từ `man_hinh_tim`; chỉ dùng toạ độ khi không có cách khác. Toạ độ tính theo ảnh đã thu nhỏ; công cụ tự đổi sang toạ độ thật.
 
-## B3. Quyền và an toàn
+## B-3. Quyền và an toàn (học theo ý tưởng của Hermes, viết theo kiểu aris)
 
-- **Bật theo bot:** thêm `tools.computer` vào hồ sơ bot, mặc định tắt. Chỉ bot được bật mới thấy các công cụ `man_hinh_*`. Aris có giao việc thì cũng chỉ giao cho bot đã bật.
-- **Duyệt:**
-  - `man_hinh_xem` và `man_hinh_tim` là thao tác chỉ đọc. Lần đầu mỗi phiên thì hỏi, sau đó tự làm.
-  - Mọi thao tác bấm, gõ, phím, kéo, cuộn và mở ứng dụng đều **hỏi duyệt từng lần**. Thẻ duyệt kèm ảnh chụp có đánh dấu chỗ sẽ bấm.
-  - Người dùng có thể chọn "Tự làm trong ứng dụng X trong phiên này". Lựa chọn này hết hiệu lực khi phiên kết thúc.
-- **Chặn cứng**, không duyệt được:
-  - gõ vào ô mật khẩu (`AXSecureTextField`);
-  - thao tác trong các ứng dụng: Cài đặt hệ thống, Truy cập Chuỗi khoá (Keychain Access), 1Password, Bitwarden, Terminal, iTerm. Muốn chạy lệnh thì dùng công cụ `bash` có hàng rào;
+- **Bật theo bot:** hồ sơ bot có `tools.computer`, mặc định tắt. Thêm mức quyền `computerMode`:
+  - **Hỏi từng bước** (mặc định): mọi thao tác thay đổi đều hỏi duyệt, kèm ảnh chụp có đánh dấu chỗ sẽ bấm. `man_hinh_xem` và `man_hinh_tim` chỉ hỏi lần đầu mỗi phiên.
+  - **Trong phạm vi:** người dùng chọn trước các ứng dụng được phép (ví dụ Ghi chú, Finder, Lịch) và loại thao tác được phép. Trong phạm vi thì tự làm, ngoài phạm vi thì **từ chối**, không hỏi.
+  - **Không có chế độ "không hỏi gì".**
+- **Chặn cứng**, nằm trong `@aris/guard` cạnh danh sách cấm cứng đang có:
+  - gõ vào ô mật khẩu (phần tử bảo mật);
+  - thao tác trong các ứng dụng: Cài đặt hệ thống, Keychain Access, 1Password, Bitwarden, Terminal, iTerm, Trình cài đặt (Installer);
   - phím tắt khoá máy, đăng xuất, tắt máy;
-  - thao tác khi màn hình đang khoá.
-
-  Danh sách này để ở `@aris/guard` cạnh danh sách cấm cứng đang có.
-- **Một bot một lúc:** chỉ một phiên được điều khiển máy tại một thời điểm, các phiên khác xếp hàng.
+  - thao tác khi màn hình đang khoá;
+  - kéo thả vào Thùng rác.
+- **Một bot một lúc** điều khiển máy; các phiên khác xếp hàng.
 - **Người dùng giành lại quyền:**
-  - nếu `idle` dưới 2 giây (người dùng đang tự dùng chuột hay phím), bot tự **tạm dừng** và báo "{you} đang dùng máy". Chạy tiếp khi người dùng bấm "Trả lại";
-  - nút dừng khẩn cấp (`arisGuard.stopped()`) dừng mọi thao tác ngay.
+  - lõi chạy tiền cảnh: thấy người dùng vừa động chuột hay phím trong vòng 2 giây thì bot **tạm dừng** và báo "{you} đang dùng máy";
+  - lõi chạy nền (cua-driver): vẫn tạm dừng nếu người dùng đang thao tác **trong đúng ứng dụng** mà bot đang làm;
+  - nút dừng khẩn cấp dừng ngay mọi thao tác.
 - **Trần:** mỗi lượt tối đa 40 ảnh chụp và 150 thao tác. Vượt thì dừng và hỏi.
 
-## B4. Màn hình của bot (vẽ trước, chờ duyệt)
+## B-4. Màn hình của bot (vẽ trước, chờ duyệt)
 
-Vẽ khung `ManHinhBot.dc.html` trên trang `vp`. Đã có bản vẽ cũ `ManHinhBot.dc.html` (màn 6.6): đọc trước, rồi sửa theo bảng chat gọn của Văn phòng.
-- Trong **bảng chat gọn** của Văn phòng, khi bot đang dùng công cụ màn hình:
-  - phía trên dòng tiến độ có một khung ảnh màn hình mới nhất, cỡ nhỏ, đánh dấu chỗ vừa bấm;
-  - bấm vào ảnh thì phóng to.
-- Nút **"Cầm lái"** tạm dừng bot để người dùng tự làm, ví dụ đăng nhập hay nhập mã 2FA; nút **"Trả lại"** cho bot chạy tiếp.
-- Thẻ duyệt thao tác hiện cả ở bảng chat lẫn ở chuông "Cần {you}".
-- **Hồ sơ bot › Quyền** có công tắc "Điều khiển máy" kèm trạng thái quyền của macOS: đã cấp / chưa cấp, nút Hướng dẫn.
+Đọc bản vẽ cũ `ManHinhBot.dc.html` (màn 6.6), rồi sửa theo bảng chat gọn của Văn phòng:
+- trong bảng chat có khung ảnh màn hình mới nhất của bot, đánh dấu chỗ vừa bấm; bấm vào thì phóng to;
+- nút **"Cầm lái"** cho người dùng tự làm, ví dụ đăng nhập hay nhập mã 2FA; nút **"Trả lại"** cho bot chạy tiếp;
+- thẻ duyệt thao tác có ảnh và vùng đánh dấu, hiện ở bảng chat và ở chuông "Cần {you}";
+- **Hồ sơ bot › Quyền**: công tắc "Điều khiển máy", chọn chế độ, danh sách ứng dụng được phép, và trạng thái quyền của macOS kèm nút Hướng dẫn.
 
 **Điểm dừng 3:** chờ người dùng duyệt bản vẽ.
 
-## B5. Thử thật (có người dùng ngồi cạnh)
+## B-5. Thử thật (người dùng ngồi cạnh)
 
-1. Người dùng bật "Điều khiển máy" cho một bot, ví dụ Khoa, và tự cấp quyền theo hướng dẫn.
-2. Việc thử an toàn: "Mở ứng dụng Ghi chú (Notes), tạo ghi chú mới với nội dung 'aris thử điều khiển máy', rồi chụp màn hình xác nhận." Duyệt từng bước.
-3. Thử chặn cứng: nhờ bot mở Cài đặt hệ thống thì phải bị từ chối.
-4. Thử giành lại quyền: rê chuột giữa chừng thì bot phải tạm dừng.
-5. Báo số ảnh chụp, số token, chi phí.
+1. Người dùng bật cho Khoa, tự cấp quyền theo `computer doctor`.
+2. Việc thử: "Mở Ghi chú, tạo ghi chú 'aris thử điều khiển máy', chụp màn hình xác nhận." Duyệt từng bước.
+3. Nhờ bot mở Cài đặt hệ thống thì phải bị chặn.
+4. Đặt chế độ Trong phạm vi chỉ gồm Ghi chú: bot tự làm, không hỏi; nhờ mở Safari thì bị từ chối.
+5. Thử giành lại quyền theo kiểu của lõi đã chọn.
+6. Báo số ảnh, số token, chi phí.
 
 ## Test bắt buộc
 
-- Đổi toạ độ giữa ảnh thu nhỏ và màn hình thật, kể cả màn Retina và nhiều màn hình.
-- Phân tích phím tắt (`cmd+shift+4`…).
-- Luật chặn cứng (ứng dụng, ô mật khẩu), luật duyệt (chỉ đọc hay thay đổi), "tự làm trong ứng dụng X".
+- Đổi toạ độ (Retina, nhiều màn hình).
+- Phân tích phím tắt.
+- Chặn cứng: ứng dụng, ô mật khẩu, khoá máy.
+- Hai chế độ quyền: phạm vi theo ứng dụng và theo loại thao tác.
 - Khoá một bot một lúc, trần thao tác.
-- Không có `swiftc` hay thiếu quyền thì trả lỗi rõ ràng.
-- Mã Swift không có test tự động, nhưng phải có lệnh `aris-cua selftest`: chạy `screens`, `front`, `idle`, không bấm gì.
+- Lỗi rõ ràng khi thiếu lõi hay thiếu quyền.
+- Một `ComputerDriver` giả để test lớp công cụ mà không đụng máy thật.
 - Viết `docs/specs/aris-computer.md`.
-
-## Nếu chọn A
-
-- Sửa mô tả năng lực của Lan trong `aris-bots` (hồ sơ bot) để Aris giao việc "thao tác ứng dụng trên máy" cho Lan.
-- Kiểm tra cấu hình Codex của người dùng có bật plugin computer-use không: **chỉ đọc và báo**, không sửa `~/.codex/config.toml`.
-- Thử một việc nhỏ với người dùng ngồi cạnh. Ghi rõ những gì aris thấy và không thấy được.

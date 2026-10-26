@@ -1,111 +1,138 @@
-# Plan 8.4 · Kênh Zalo
+# Plan 8.4 · Kênh Zalo cá nhân
 
-Đọc trước `docs/plans/gd8-chung.md`. Làm theo khuôn của kênh Lark (`packages/aris-channels/src/lark/`, plan `docs/plans/gd7-7d-lark.md`): kênh chạy cạnh Telegram qua `hub.attachPeer`, mã ghép đôi riêng cho mỗi kênh. Kiểu kênh `'zalo'` đã có trong `store.ts`.
+Đọc trước `docs/plans/gd8-chung.md`.
 
-## Ba cách đưa Zalo vào aris (Opus đã tra ngày 26/10)
+Ngày 26/10 người dùng chọn **Zalo cá nhân**: aris đọc và trả lời ngay trên tài khoản Zalo của người dùng, qua thư viện không chính thức `zca-js`.
 
-**A. Zalo Bot, nền tảng bot chính thức của Zalo (Opus đề xuất)**
-- Tạo bot ở `bot.zaloplatforms.com`, nhận **mã token** dạng `số:bí mật`.
-- Nhận tin bằng **hỏi định kỳ** (`getUpdates`), giống Telegram, nên **không cần server hay địa chỉ công khai**. Có webhook nhưng không bắt buộc.
-- Gửi được chữ (tối đa 2.000 ký tự mỗi tin) và ảnh/tệp (mặc định tối đa 5 MB). Dùng được trong nhóm khi bot được @nhắc.
-- Ưu điểm: chính thức, không rủi ro khoá tài khoản.
-- Nhược điểm: người dùng và người khác nhắn cho **tài khoản bot**, không phải tài khoản Zalo cá nhân của người dùng.
-- Nguồn đã đọc: tài liệu kênh Zalo của OpenClaw (`docs.openclaw.ai/.../channels/zalo`). Đây là dự án khác, không phải Hermes; chỉ đọc tài liệu, không chép mã.
+Làm theo khuôn kênh Lark (`packages/aris-channels/src/lark/`, plan `docs/plans/gd7-7d-lark.md`):
+- kênh chạy cạnh Telegram qua `hub.attachPeer`;
+- mã ghép đôi riêng cho từng kênh;
+- kiểu kênh `'zalo'` đã có trong `store.ts`.
 
-**B. Zalo cá nhân qua thư viện không chính thức `zca-js`**
-- Thư viện giả lập Zalo Web, đăng nhập bằng mã QR, đọc và trả lời ngay trên **tài khoản cá nhân** của người dùng.
-- **Rủi ro bị khoá hay cấm tài khoản.** Chính tác giả thư viện cảnh báo điều này; OpenClaw cũng ghi "không chính thức, có thể bị khoá".
-- Mỗi tài khoản chỉ chạy được một trình nghe: người dùng mở Zalo Web trên trình duyệt thì aris mất kết nối.
-- Phải cài gói npm mới (cần người dùng đồng ý), và **chưa rõ giấy phép**: phải kiểm trước khi cài.
+## Thông tin đã kiểm (26/10)
 
-**C. Zalo OA (tài khoản doanh nghiệp đã xác thực)**
-- Cần OA đã xác thực và **webhook có địa chỉ công khai**, nên gắn với việc lên server (việc 6 trong danh sách). Để sau.
+**Thư viện `zca-js`**
+- Bản mới nhất 2.2.0, giấy phép **MIT**, repo `github.com/RFS-ADRENO/zca-js`, cập nhật ngày 9/9/2026.
+- Gói đi kèm: `ws`, `pako`, `semver`, `crypto-js`, `form-data`, `spark-md5`, `json-bigint`, `tough-cookie`.
+- Cách chạy: giả lập Zalo Web, đăng nhập bằng mã QR, nhận tin qua trình nghe sự kiện `message`, gửi bằng API JS.
+- **Mỗi tài khoản chỉ chạy được một trình nghe.** Người dùng mở Zalo Web trên trình duyệt thì trình nghe của aris tắt.
+- Tin nhắn tối đa 2.000 ký tự.
 
-## Điểm dừng 1 · Chọn cách
+**Rủi ro:** tác giả thư viện và tài liệu OpenClaw (`docs.openclaw.ai/.../channels/zalouser`) đều cảnh báo **tài khoản có thể bị khoá hay cấm**.
 
-Trình bày ba cách trên, đề xuất **A**, rồi **chờ người dùng chọn**.
-- Nếu người dùng chọn **B**: nhắc lại rủi ro bị khoá thành một câu rõ ràng. Hỏi người dùng có muốn dùng một tài khoản Zalo phụ để thử trước không. Rồi xin phép cài gói, kèm phiên bản chính xác và giấy phép.
-- Có thể làm cả A lẫn B, nhưng làm A trước.
+**Cách chính thức để làm sau nếu cần:** Zalo Bot (`bot.zaloplatforms.com`) dùng token, nhận tin bằng `getUpdates` giống Telegram, không cần server. Ghi ở cuối plan.
 
-## Phần A · Zalo Bot
+## Điểm dừng 1 · Xác nhận và xin cài gói
 
-### A1. Tìm hiểu API
+- Nhắc lại rủi ro bị khoá tài khoản bằng **một câu rõ ràng**.
+- Đề nghị người dùng **thử bằng một tài khoản Zalo phụ trước**, rồi mới dùng tài khoản chính.
+- Xin cài `zca-js@2.2.0`, ghim đúng phiên bản, vào `packages/aris-channels`. Nêu giấy phép MIT và các gói đi kèm.
+- Cài xong chạy `pnpm check:licenses`.
+- Chờ người dùng đồng ý rồi mới cài.
 
-- Đọc tài liệu chính thức trên `bot.zaloplatforms.com` (được dùng mạng để đọc), ghi vào `docs/specs/aris-zalo.md`:
-  - địa chỉ gốc của API;
-  - các phương thức `getMe`, `getUpdates` (tham số chờ, offset), `sendMessage`, gửi ảnh và tệp, tải tệp về, `sendChatAction` nếu có;
-  - cấu trúc tin đến: mã người gửi, mã cuộc trò chuyện, nhóm hay riêng, @nhắc;
-  - giới hạn tần suất.
-- Nếu tài liệu khác với mô tả ở trên thì báo người dùng trước khi làm tiếp.
-- **Điểm dừng 2:** tóm tắt API cho người dùng. Hướng dẫn người dùng tạo bot và lấy token; người dùng tự dán token vào giao diện (mục A4), **không dán vào chat**.
+## 1. Bộ nối `packages/aris-channels/src/zalo/`
 
-### A2. Bộ nối `packages/aris-channels/src/zalo/`
+Chép khuôn của `lark/`: `channel.ts`, `access.ts`, `content.ts`, `copy.ts`, `sdk.ts` (bọc `zca-js` sau một giao diện nhỏ để test được), `types.ts`.
 
-Chép khuôn từ `lark/`, gồm các tệp: `channel.ts`, `access.ts`, `content.ts`, `copy.ts`, `sdk.ts` (tự gọi HTTP bằng `fetch`, không cần gói npm), `types.ts`.
-- **Kết nối:**
-  - nhận token và gọi `getMe` để kiểm tra;
-  - lưu tên bot trong store; token lưu trong Keychain với tên `ZALO_<MÃ BOT>_TOKEN`.
-- **Nhận tin:**
-  - vòng `getUpdates` hỏi định kỳ, offset lưu bền;
-  - tin chữ, ảnh, tệp: tải về theo cách Lark và Telegram đang làm.
+### 1a. Đăng nhập
+
+- **Bằng QR trên giao diện:**
+  - máy chủ gọi đăng nhập QR của `zca-js` và nhận ảnh QR;
+  - giao diện đọc ảnh QR qua API (đọc lại vài giây một lần), người dùng quét bằng ứng dụng Zalo;
+  - QR hết hạn thì có nút "Tạo mã mới".
+- **Dữ liệu đăng nhập** (cookie, imei, user agent) lưu trong **Keychain** với tên `ZALO_<MÃ BOT>_SESSION`, dạng JSON. Không ghi ra tệp thường, không in ra log.
+- Khởi động lại thì đăng nhập bằng dữ liệu đã lưu. Hết hạn thì trạng thái là "Cần quét lại QR" và báo chủ qua Telegram.
+- Mỗi tài khoản Zalo gắn với **một bot** của aris, mặc định là Aris. Người dùng chọn bot nào trả lời khi kết nối.
+
+### 1b. Nhận tin
+
+- **Nguồn tin:** trình nghe `message` của `zca-js`, gồm tin riêng và tin nhóm. Loại: chữ, ảnh, tệp, tin thoại.
+  - Ảnh và tệp tải về theo cách Lark và Telegram đang làm.
+  - Tin thoại chép lời bằng cơ chế giọng nói sẵn có, nếu dùng chung được.
+- **Bỏ qua:**
+  - tin do chính tài khoản gửi, kể cả tin aris vừa gửi, để không lặp;
+  - tin cũ hơn lúc kết nối.
 - **Danh tính:**
-  - khoá người là `zl-<mã người dùng>`;
-  - trong nhóm, bot chỉ trả lời khi được @nhắc.
+  - khoá người là `zc-<mã người dùng Zalo>`;
+  - nhóm khoá theo mã nhóm.
+- **Ai được aris trả lời** (quan trọng để giảm rủi ro bị khoá):
+  - **chỉ người đã ghép đôi**, tức đã nhắn đúng mã ghép đôi của kênh Zalo;
+  - tin của người lạ thì aris **im lặng**, không trả lời; chỉ báo chủ một lần mỗi người mỗi ngày: "<tên> nhắn Zalo cho {you}: <trích 80 ký tự>";
+  - **nhóm mặc định tắt**. Người dùng bật từng nhóm, và trong nhóm chỉ trả lời khi tài khoản được @nhắc.
 - **Ghép đôi:** `createCode(role, 'zalo')`, `redeem(..., 'zalo')`. Mã của kênh khác thì trả lời "Mã này dành cho kênh khác."
-- **Gửi tin:**
-  - chia tin dài theo 2.000 ký tự, cắt ở ranh giới đoạn hay câu;
-  - Markdown đổi sang chữ thường dễ đọc, vì Zalo Bot không hiển thị Markdown (kiểm lại theo tài liệu).
-- Dùng lại cơ chế chung của hub: hàng đợi bền, `/new`, `/stop`, `/status`, người lạ thì báo chủ, quyền hạn chế, "Khi bot đang làm mà {you} nhắn thêm", dừng khẩn cấp.
-- **Tự kết nối lại:** bắt đầu 15 giây, gấp đôi mỗi lần, tối đa 5 phút, như `startOrRetry`.
-- **Test** dùng bản giả của `sdk` (không gọi mạng):
-  - ghép đôi;
-  - tin vào đúng phiên;
-  - lượt xong thì trả lời;
-  - mã khác kênh;
-  - nhóm không @nhắc thì im lặng;
-  - người lạ;
-  - chia tin dài;
-  - offset không đọc lại tin cũ khi khởi động lại.
 
-### A3. API `/api/aris/channels`
+### 1c. Gửi tin
 
-Thêm cho Zalo những gì Lark đang có:
-- `connect-zalo { bot, token }`;
-- `disconnect`;
-- trạng thái kênh;
-- danh sách người đã ghép đôi;
-- mã ghép đôi với `channel: 'zalo'`.
+- Chia tin theo 2.000 ký tự, cắt ở ranh giới đoạn hay câu. Markdown đổi sang chữ thường dễ đọc: bỏ `**`, bảng đổi thành dòng gạch đầu dòng.
+- **Giới hạn tần suất**, là hằng số trong `zalo/access.ts`:
+  - tối đa 1 tin mỗi 3 giây cho một cuộc trò chuyện;
+  - tối đa 20 tin mỗi phút cho cả tài khoản;
+  - tối đa 300 tin mỗi ngày.
 
-### A4. Giao diện (vẽ trước, chờ duyệt)
+  Vượt giới hạn thì xếp hàng; vượt giới hạn ngày thì dừng và báo chủ.
+- Không bao giờ tự nhắn trước cho người chưa ghép đôi, không gửi hàng loạt, không kết bạn, không tham gia nhóm.
+- "Đang soạn tin" (typing): chỉ dùng nếu `zca-js` có, và tối đa mỗi 5 giây một lần.
 
-Vẽ khung `KenhZalo.dc.html` trên trang `g6`, chép khuôn `KenhLark.dc.html`:
-- **Chưa kết nối:** 3 bước tạo bot ở `bot.zaloplatforms.com`, ô Token (`type=password`), nút **Kết nối**.
-- **Đã kết nối:** tên bot, trạng thái, mã ghép đôi riêng của Zalo, người đã ghép đôi (có nút Gỡ), dòng Nhóm.
-- Phần Zalo nằm trong Cài đặt › Kênh và ghép đôi, dưới phần Lark.
+### 1d. Dùng chung với hub
 
-**Điểm dừng 3:** chờ người dùng duyệt bản vẽ.
+Dùng lại hàng đợi bền, `/new`, `/stop`, `/status`, quyền hạn chế cho người không phải chủ, "Khi bot đang làm mà {you} nhắn thêm", và dừng khẩn cấp.
 
-### A5. Thử thật
+### 1e. Mất kết nối
 
-- Người dùng dán token và bấm Kết nối.
-- Người dùng nhắn mã ghép đôi cho bot trên Zalo.
-- Người dùng nhắn thử một câu ngắn, rồi gửi một ảnh. Thử thêm trong nhóm, nếu nền tảng cho bot vào nhóm.
-- Kiểm tra phiên, câu trả lời và nguồn "Zalo" trong Thống kê. Phải thêm nguồn `zalo` vào `aris-stats`, như đã làm với Lark.
+- Trình nghe bị ngắt (thường do người dùng mở Zalo Web): trạng thái là "Zalo Web đang mở, aris tạm ngừng nghe".
+- Thử lại chậm: 2 phút, gấp đôi mỗi lần, tối đa 30 phút. Không giành lại kết nối liên tục với Zalo Web.
+- Lỗi đăng nhập thì trạng thái là "Cần quét lại QR".
 
-## Phần B · Zalo cá nhân (chỉ làm nếu người dùng chọn và đồng ý cài gói)
+### 1f. Test
 
-- Kiểm giấy phép `zca-js` bằng `npm view zca-js license` và tệp LICENSE trong gói. Báo người dùng, chờ đồng ý, rồi cài **đúng một phiên bản** vào `packages/aris-channels`.
-- **Đăng nhập bằng QR trên giao diện:** hiện ảnh QR, người dùng quét bằng ứng dụng Zalo. Dữ liệu đăng nhập (cookie, imei) lưu trong Keychain, không lưu tệp thường.
-- **Giảm rủi ro bị khoá:**
-  - **chỉ trả lời người đã ghép đôi**, không bao giờ tự nhắn trước cho người lạ;
-  - mỗi cuộc trò chuyện tối đa 1 tin mỗi 3 giây, tối đa 300 tin mỗi ngày;
-  - không gửi hàng loạt;
-  - nhóm thì mặc định tắt.
-- Trình nghe bị ngắt (người dùng mở Zalo Web) thì báo "Zalo trên trình duyệt đang mở, aris tạm ngừng nghe" và thử lại chậm, không tranh với Zalo Web.
-- **Giao diện:** khung cảnh báo màu cam, ghi đúng một câu "Không chính thức, tài khoản có thể bị khoá", kèm ô xác nhận "Tôi hiểu" trước nút Kết nối.
-- Dùng chung khuôn bộ nối và test với phần A, chỉ khác `sdk`.
+Dùng bản giả của `sdk`, không gọi mạng:
+- đăng nhập từ dữ liệu đã lưu;
+- ghép đôi; mã khác kênh;
+- người lạ thì im lặng và báo chủ đúng một lần mỗi ngày;
+- nhóm tắt, và nhóm bật nhưng không @nhắc;
+- bỏ qua tin của chính mình;
+- chia tin dài;
+- giới hạn tần suất và giới hạn ngày;
+- thử lại khi mất kết nối.
+
+## 2. API `/api/aris/channels`
+
+- `zalo-login-start { bot }` trả `{ qrPng (base64), expiresAt }`.
+- `zalo-login-status` trả trạng thái: chờ quét, đã quét, đã đăng nhập (kèm tên và ảnh đại diện Zalo), hoặc hết hạn.
+- `zalo-logout` xoá dữ liệu đăng nhập trong Keychain.
+- Trạng thái kênh, danh sách người đã ghép đôi, danh sách nhóm (bật/tắt từng nhóm), mã ghép đôi `channel: 'zalo'`.
+- Thêm nguồn `zalo` vào `aris-stats`, như đã làm với Lark.
+
+## 3. Giao diện (vẽ trước, chờ duyệt)
+
+Vẽ khung `KenhZalo.dc.html` trên trang `g6`, chép khuôn `KenhLark.dc.html`. Phần Zalo nằm trong Cài đặt › Kênh và ghép đôi, dưới phần Lark.
+- **Chưa kết nối:**
+  - khung cảnh báo màu cam, đúng một câu: "Không chính thức, tài khoản Zalo có thể bị khoá. Nên thử bằng tài khoản phụ.";
+  - ô chọn "Tôi hiểu" và ô chọn bot trả lời;
+  - nút **"Hiện mã QR"**, rồi khung QR kèm đếm ngược.
+- **Đã kết nối:**
+  - ảnh đại diện và tên Zalo, trạng thái;
+  - mã ghép đôi riêng của Zalo, người đã ghép đôi (có nút Gỡ);
+  - danh sách nhóm có công tắc (mặc định tắt);
+  - giới hạn tần suất (chỉ hiện, không sửa);
+  - nút Đăng xuất.
+
+**Điểm dừng 2:** chờ người dùng duyệt bản vẽ.
+
+## 4. Thử thật (người dùng ngồi cạnh, nên dùng tài khoản phụ)
+
+1. Người dùng quét QR. Trạng thái phải là "đang nghe".
+2. Từ một tài khoản Zalo khác, nhắn mã ghép đôi, rồi nhắn một câu ngắn, rồi gửi một ảnh. Aris trả lời đúng phiên.
+3. Từ một tài khoản chưa ghép đôi, nhắn thử: aris im lặng, chủ nhận được thông báo.
+4. Mở Zalo Web trên trình duyệt: trạng thái đổi thành "tạm ngừng nghe". Đóng Zalo Web: aris tự nghe lại.
+5. Khởi động lại daemon: aris tự đăng nhập lại, không cần quét QR.
+6. Báo chi phí, và kiểm tra nguồn "Zalo" trong Thống kê.
 
 ## Ghi chép
 
-- Ghi việc đã đọc tài liệu OpenClaw và tài liệu Zalo vào `docs/clean-room-log.md`, như với Hermes cho nhất quán. Không chép mã.
-- Cập nhật `docs/specs/aris-telegram.md` (phần kênh chung) hoặc tạo `docs/specs/aris-zalo.md`.
+- Ghi việc đã đọc tài liệu OpenClaw và README của `zca-js` vào `docs/clean-room-log.md`. Không chép mã.
+- Viết `docs/specs/aris-zalo.md`: cách đăng nhập, giới hạn, rủi ro, cách chuyển sang Zalo Bot chính thức.
+
+## Để sau (không làm trong plan này)
+
+**Zalo Bot chính thức** (`bot.zaloplatforms.com`): token, `getUpdates`, không rủi ro bị khoá, nhưng người khác phải nhắn cho tài khoản bot. Bộ nối có thể dùng chung `zalo/channel.ts`, chỉ thay `sdk`.

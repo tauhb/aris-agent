@@ -1,13 +1,14 @@
 # Giai đoạn 8 · Luật chung cho bốn plan
 
-Opus viết plan. Sau đó người dùng đổi model của phiên chính sang Sonnet. **Sonnet làm trực tiếp trong phiên chính, không dùng subagent** (không gọi công cụ Agent).
+Opus viết năm plan (người dùng chốt ngày 26/10). Sau đó người dùng đổi model của phiên chính sang Sonnet. **Sonnet làm trực tiếp trong phiên chính, không dùng subagent** (không gọi công cụ Agent).
 
 Thứ tự làm, xong plan trước mới sang plan sau:
 
-1. `gd8-1-kho-skill-connector.md`: kho skill từ GitHub, nhập skill từ Claude Code và Codex, kết nối dùng chung.
+1. `gd8-1-kho-skill-connector.md`: **kết nối dùng chung làm trước**, rồi kho skill chung của đội (nhập từ GitHub, Claude Code, Codex) và gán skill cho từng bot.
 2. `gd8-2-goal-cho-gop-skill.md`: phán quyết "chờ" của `/goal`, gộp skill trùng.
-3. `gd8-3-dieu-khien-man-hinh.md`: bot điều khiển màn hình.
-4. `gd8-4-zalo.md`: kênh Zalo.
+3. `gd8-3-dieu-khien-man-hinh.md`: bot điều khiển màn hình, phương án B, đề xuất lõi cua-driver.
+4. `gd8-4-zalo.md`: kênh Zalo cá nhân (`zca-js`).
+5. `gd8-5-connector.md`: danh mục connector, đăng nhập OAuth cho MCP hosted, connector API.
 
 ## Cách làm mỗi plan
 
