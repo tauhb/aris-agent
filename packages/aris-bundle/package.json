@@ -35,6 +35,7 @@
     "@aris/projects": "workspace:*",
     "@aris/providers": "workspace:*",
     "@aris/recall": "workspace:*",
-    "@aris/routine": "workspace:*"
+    "@aris/routine": "workspace:*",
+    "@aris/stats": "workspace:*"
   }
 }

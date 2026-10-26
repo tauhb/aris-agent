@@ -124,7 +124,46 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-chart .stk{width:34px;display:flex;flex-direction:column-reverse;border-radius:5px;overflow:hidden}
 .ap-days{display:flex;gap:10px;font-size:12px}
 .ap-days span{flex:1;text-align:center}
-.ap-lr{display:grid;grid-template-columns:70px 40px minmax(0,1.6fr) 90px 80px 80px;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--a-line);font-size:13px;min-width:700px}
+.ap-lr{display:grid;grid-template-columns:88px 40px minmax(0,1.6fr) 100px 70px 70px 80px;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--a-line);font-size:13px;min-width:780px}
+.ap-chart.ap-sx-narrow{gap:4px}
+.ap-chart.ap-sx-narrow .stk{width:100%;max-width:16px}
+.ap-days.ap-sx-narrow{gap:4px}
+.ap-days.ap-sx-narrow span{display:flex;justify-content:center;min-width:0;font-size:11px;white-space:nowrap}
+.ap-sxnote{font-size:12.5px}
+.ap-sxempty{padding:16px 14px;font-size:13px}
+.ap-sxses{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ap-sxlive{display:inline-flex;align-items:center;gap:5px;margin-left:8px;font-size:11.5px;font-weight:600;color:var(--a-ok);flex:none}
+.ap-sxdot{width:7px;height:7px;border-radius:50%;background:var(--a-ok)}
+.ap-rphead>.ap-rptitle{min-width:0;flex:1}
+.ap-rpname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ap-rpbar{display:flex;align-items:center;gap:8px;padding:10px 24px;border-bottom:1px solid var(--a-line);flex-wrap:wrap}
+.aris .ap-rppb{width:32px;height:32px;border:1px solid var(--a-line);border-radius:8px;background:var(--a-panel);color:var(--a-ink)}
+.aris .ap-rppb:hover{background:var(--a-hover)}
+.aris .ap-rppb.main,.aris .ap-rppb.main:hover{background:var(--a-accent);border-color:var(--a-accent);color:#fff}
+.aris .ap-rppb:disabled{opacity:.5;cursor:default}
+.ap-rppos{font-size:13px;margin:0 6px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ap-rpticks{flex:1 1 260px;min-width:200px;display:flex;gap:3px;align-items:center}
+.aris .ap-rptick{flex:1;min-width:2px;height:10px;border-radius:2px;border:0;padding:0}
+.aris .ap-rptick.on{height:16px}
+.ap-rpleg{display:inline-flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--a-muted)}
+.ap-rpdot{display:inline-block;width:9px;height:9px;border-radius:3px;flex:none}
+.ap-rplist{max-height:70vh;overflow:auto}
+.aris .ap-rpst{display:grid;grid-template-columns:28px 62px 10px minmax(0,1fr) 64px 52px;gap:8px;align-items:center;width:100%;box-sizing:border-box;padding:8px 12px;border:0;border-top:1px solid var(--a-line);background:transparent;text-align:left;font-size:13px;color:var(--a-ink)}
+.aris .ap-rpst:hover{background:var(--a-hover)}
+.aris .ap-rpst.on{background:var(--a-accentSoft)}
+.ap-rpfig{font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ap-rpr{text-align:right}
+.ap-rpat{font-size:11.5px}
+.ap-rptext{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ap-rpdh{padding:12px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ap-rpdt{flex:1;min-width:0;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ap-rpkv{padding:0 14px 12px;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px}
+.ap-rpblock{padding:12px 14px;border-top:1px solid var(--a-line);display:flex;flex-direction:column;gap:8px}
+.ap-rplabel{display:flex;align-items:center;font-size:12.5px}
+.ap-rplabel .grow{flex:1}
+.ap-rppre{font-size:12.5px;background:var(--a-panel2);border-radius:8px;padding:10px 12px;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;max-height:420px;overflow:auto}
+.ap-rpnote{font-size:13px}
+.ap-rperr{margin:0 8px 0 0;font-size:12px}
 .ap-dr{display:grid;grid-template-columns:52px minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.3fr) 54px;gap:12px;align-items:center;padding:10px 14px;border-top:1px solid var(--a-line);font-size:13px}
 .ap-ev{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;padding:7px 0;border-top:1px solid var(--a-line);font-size:13px}
 .ap-desk{border-radius:12px;overflow:hidden;border:1px solid var(--a-line);background:#1B1E24;aspect-ratio:16/10;display:flex;flex-direction:column}

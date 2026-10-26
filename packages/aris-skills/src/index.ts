@@ -80,6 +80,8 @@ export interface ArisSkills {
   pending(): string[]
   /** Phiên kiểm thử skill (vòng học nền bỏ qua). */
   isEval(sessionId: string): boolean
+  /** Số skill được bật lần đầu và số lần khôi phục bản cũ kể từ một thời điểm (thống kê, @aris/stats). */
+  skillEvents(sinceMs: number): { enabled: number; rolledBack: number }
 }
 
 interface Usage {
@@ -143,6 +145,7 @@ export async function apply(ctx: Context): Promise<void> {
     on: (fn: (e: SkillEvent) => void) => store.on(fn),
     pending: () => store.pending().map((v) => v.id),
     isEval: (sessionId: string) => evalMode.has(sessionId),
+    skillEvents: (sinceMs: number) => store.eventsSince(sinceMs),
     answer: async (id: string, approve: boolean, by: 'telegram') => {
       const v = approve ? await store.approve(id, by) : await store.reject(id, by)
       refresh()

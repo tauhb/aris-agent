@@ -27,47 +27,6 @@ export const DEMO_DASHBOARD = {
   warning: 'routine “Tin đối thủ trong tuần” lỗi 2 lần · ký ức hồ sơ của Aris đã dùng 88%',
 }
 
-/** 6.5 · GĐ7 (thống kê, nhật ký phiên). */
-export const DEMO_STATS = {
-  total: '2,96 USD',
-  days: ['T6', 'T7', 'CN', 'T2', 'T3', 'T4', 'T5'],
-  /** Phần trăm từng loại việc trong cột mỗi ngày: chat, được giao, routine, vòng học. */
-  bars: [
-    [40, 25, 20, 15],
-    [38, 30, 17, 15],
-    [45, 20, 20, 15],
-    [30, 45, 12, 13],
-    [40, 28, 17, 15],
-    [30, 10, 50, 10],
-    [45, 30, 15, 10],
-  ],
-  /** Chiều cao cột mỗi ngày (px, khung 170px). */
-  heights: [90, 110, 70, 160, 100, 40, 75],
-  cache: { value: '86%', note: 'tiết kiệm ước tính 61% chi phí đầu vào' },
-  autonomous: { value: '78%', note: '142 / 182 việc' },
-  skills: { value: '3', note: '1 bị rollback' },
-  log: [
-    {
-      at: '10:42',
-      bot: 'lam',
-      title: 'Nghiên cứu 3 đối thủ',
-      by: 'do Aris giao',
-      source: 'Commander',
-      usd: '0,11',
-    },
-    { at: '10:40', bot: 'aris', title: 'Tóm tắt đối thủ + họp thứ 5', by: '', source: 'Web', usd: '0,19' },
-    { at: '08:00', bot: 'tin', title: 'Routine: báo cáo chi tiêu tuần', by: '', source: 'Lịch', usd: '0,03' },
-    {
-      at: '07:55',
-      bot: 'ha',
-      title: 'Ghi âm: ý tưởng series 5 tập',
-      by: '',
-      source: 'Telegram',
-      usd: '0,01',
-    },
-  ],
-}
-
 /** 6.6 · GĐ8 (màn hình ảo của bot). */
 export const DEMO_SCREEN = {
   bots: ['aris', 'lam', 'dev'],

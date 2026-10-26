@@ -31,10 +31,14 @@
       name: '@aris/checkpoints'
     - id: aris-acp
       name: '@aris/acp'
+    # Thống kê đứng trước hàng rào: hook duyệt của hàng rào bọc ngoài, việc hàng rào tự cho không bị tính là có hỏi.
+    - id: aris-stats
+      name: '@aris/stats'
     - id: aris-guard
       name: '@aris/guard'
     - id: aris-backup
       name: '@aris/backup'
+    # Xếp sau providers (nguồn từng lần gọi) và guard (hook duyệt: thống kê đứng ngoài hàng rào để thấy kết quả).
     - id: aris-brain
       name: '@aris/brain'
     - id: aris-recall

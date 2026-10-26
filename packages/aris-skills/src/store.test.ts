@@ -83,6 +83,20 @@ describe('kho skill', () => {
     expect(store.reviewedToday()).toBe(2)
   })
 
+  it('đếm skill mới bật và lần khôi phục kể từ một mốc (thống kê)', async () => {
+    const { store, tick } = setup()
+    const v1 = await store.propose(input)
+    await store.approve(v1!.id, 'user')
+    const v2 = await store.propose({ ...input, body: `${BODY}\n4. Gửi người dùng` })
+    await store.approve(v2!.id, 'user')
+    tick('2026-10-25T10:00:00Z')
+    await store.restore('tin--bao-cao-doanh-thu-tuan', 1)
+    const at = (d: string) => Date.parse(d)
+    expect(store.eventsSince(at('2026-10-24T00:00:00Z'))).toEqual({ enabled: 1, rolledBack: 1 })
+    expect(store.eventsSince(at('2026-10-25T00:00:00Z'))).toEqual({ enabled: 0, rolledBack: 1 })
+    expect(store.eventsSince(at('2026-10-26T00:00:00Z'))).toEqual({ enabled: 0, rolledBack: 0 })
+  })
+
   it('sửa rồi bật kiểm lại; từ chối bản đầu thì skill biến mất; đề xuất mới thay đề xuất cũ; quá hạn tự bỏ', async () => {
     const { store, tick } = setup()
     const v1 = await store.propose(input)

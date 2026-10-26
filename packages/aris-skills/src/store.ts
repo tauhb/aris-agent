@@ -364,6 +364,19 @@ export class SkillStore {
     return v
   }
 
+  /**
+   * Số skill được bật lần đầu và số lần khôi phục bản cũ (rollback) kể từ một thời điểm: lấy từ `activatedAt`
+   * của skill và `at` của bản khôi phục (`by: 'restore'`), nên tính được cả những lần đã xảy ra trước đó.
+   */
+  eventsSince(sinceMs: number): { enabled: number; rolledBack: number } {
+    const since = (iso: string | undefined) => (iso ? Date.parse(iso) >= sinceMs : false)
+    let enabled = 0
+    for (const [, s] of this.skills.entries()) if (since(s.activatedAt)) enabled++
+    let rolledBack = 0
+    for (const [, v] of this.versions.entries()) if (v.by === 'restore' && since(v.at)) rolledBack++
+    return { enabled, rolledBack }
+  }
+
   /** Bỏ đề xuất quá hạn; trả số bản đã bỏ. */
   async expire(days = PROPOSAL_DAYS): Promise<number> {
     const cutoff = this.now().getTime() - days * 86_400_000

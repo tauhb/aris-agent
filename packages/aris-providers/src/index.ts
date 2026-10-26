@@ -45,7 +45,7 @@ import {
 import { classify, Router, type Failure } from './fallback.js'
 import { KeyPools } from './keys.js'
 import { dayOf, Ledger } from './ledger.js'
-import { costOf, createPrices } from './prices.js'
+import { costOf, createPrices, type Price } from './prices.js'
 import { EMBED_MODELS, embed, GOOGLE_KEY_REFS, type EmbedRequest } from './embed.js'
 import { probe, probeInputError } from './probe.js'
 
@@ -131,6 +131,22 @@ interface Usage {
   totalTokens?: number
 }
 
+/** Một lần gọi model (hay một khoản chi ảnh, video) gửi cho `arisSpend.onCall`. */
+export interface CallInfo {
+  /** Phiên gọi; vắng khi gọi ngoài phiên (vòng học nền). */
+  session?: string
+  /** Phiên cha của phiên gọi (phiên được tách ra từ phiên khác), nếu có. */
+  parent?: string
+  provider: string
+  model: string
+  usage: Usage
+  /** Tiền theo bảng giá (0 khi model chưa có giá hay chỉ là chi phí ảnh, video đã tính sẵn). */
+  usd: number
+  at: number
+  /** Các phạm vi chi phí được cộng (phòng ban, `bot:<mã>`, `reflect`, `media-image`…). */
+  scope: string[]
+}
+
 export async function apply(ctx: Context): Promise<void> {
   const logger = ctx.logger('aris-providers')
   const domain = await ctx.storageDomain.open(providersDomain)
@@ -173,6 +189,17 @@ export async function apply(ctx: Context): Promise<void> {
   const ledger = new Ledger(t('ledger'), prices, t('spend'))
   // Chi phí hôm nay theo phòng ban: @aris/bots đọc để áp trần ngân sách và hiện ở trang Phòng ban.
   const costListeners = new Set<(session: string, usd: number) => void>()
+  // Từng lần gọi model (và chi phí ảnh, video) cho @aris/stats ghi thống kê.
+  const callListeners = new Set<(call: CallInfo) => void>()
+  const emitCall = (call: CallInfo) => {
+    for (const fn of callListeners) {
+      try {
+        fn(call)
+      } catch (e) {
+        logger.warn('người nghe lần gọi: %s', String(e))
+      }
+    }
+  }
   ctx.provide('arisSpend', {
     today: () => ledger.spentToday(),
     /** Tổng chi phí hôm nay của cả đội: mọi lần gọi model cộng ảnh, video (trần cả đội, @aris/guard). */
@@ -188,13 +215,26 @@ export async function apply(ctx: Context): Promise<void> {
       return () => void costListeners.delete(fn)
     },
     /**
+     * Từng lần gọi model: trong phiên, ngoài phiên (`charge`) và chi phí ảnh, video; trả về hàm huỷ.
+     * Ngoài phiên thì không có `session`; ảnh, video thì `usage` bằng 0 và `model` là model ảnh hay video.
+     */
+    onCall(fn: (call: CallInfo) => void): () => void {
+      callListeners.add(fn)
+      return () => void callListeners.delete(fn)
+    },
+    /** Giá một model (USD cho mỗi 1 triệu token); chưa có giá thì undefined. */
+    priceOf: (provider: string, model: string): Price | undefined => prices.of(provider, model),
+    /**
      * Ghi một lần gọi model ngoài phiên (vòng học nền) vào sổ chi phí, cộng vào các phạm vi
      * (`reflect`, `bot:<mã>`); trả số tiền theo bảng giá (0 khi chưa có giá).
      */
     async charge(provider: string, model: string, usage: Usage, scope: readonly string[]): Promise<number> {
-      await ledger.record(provider, model, usage, Date.now(), scope)
+      const at = Date.now()
+      await ledger.record(provider, model, usage, at, scope)
       const price = prices.of(provider, model)
-      return price ? costOf(price, usage) : 0
+      const usd = price ? costOf(price, usage) : 0
+      emitCall({ provider, model, usage: { ...usage }, usd, at, scope: [...scope] })
+      return usd
     },
   })
   const pools = new KeyPools(t('pools'), {
@@ -417,16 +457,26 @@ export async function apply(ctx: Context): Promise<void> {
       usage.totalTokens ??
         usage.inputTokens + usage.outputTokens + (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0),
     )
+    const at = Date.now()
+    const scope = [departmentOf(session.id), `bot:${arisBots()?.store.botOf(session.id).id ?? 'aris'}`]
     ledger
-      .record(provider, model, usage, Date.now(), [
-        departmentOf(session.id),
-        `bot:${arisBots()?.store.botOf(session.id).id ?? 'aris'}`,
-      ])
+      .record(provider, model, usage, at, scope)
       .catch((e: unknown) => logger.warn('sổ chi phí: %s', String(e)))
-    const price = costListeners.size ? prices.of(provider, model) : undefined
-    if (price) {
-      const usd = costOf(price, usage)
-      for (const fn of costListeners) fn(session.id, usd)
+    const price = costListeners.size || callListeners.size ? prices.of(provider, model) : undefined
+    const usd = price ? costOf(price, usage) : 0
+    if (price) for (const fn of costListeners) fn(session.id, usd)
+    if (callListeners.size) {
+      const parent = (session as unknown as { header?: { parentSession?: string } }).header?.parentSession
+      emitCall({
+        session: session.id,
+        ...(parent ? { parent: String(parent) } : {}),
+        provider,
+        model,
+        usage: { ...usage },
+        usd,
+        at,
+        scope: scope.filter((x): x is string => !!x),
+      })
     }
   })
 
@@ -524,12 +574,17 @@ export async function apply(ctx: Context): Promise<void> {
       await files.put(id, r)
       made.push(r)
     }
-    await ledger.addUsd(out.usd, [
-      `media-${kind}`,
-      `media-${kind}:bot:${bot.id}`,
-      `bot:${bot.id}`,
-      departmentOf(sid),
-    ])
+    const mediaScope = [`media-${kind}`, `media-${kind}:bot:${bot.id}`, `bot:${bot.id}`, departmentOf(sid)]
+    await ledger.addUsd(out.usd, mediaScope)
+    emitCall({
+      ...(sid ? { session: sid } : {}),
+      provider: out.link.provider,
+      model: out.link.model,
+      usage: { inputTokens: 0, outputTokens: 0 },
+      usd: out.usd,
+      at: Date.now(),
+      scope: mediaScope.filter((x): x is string => !!x),
+    })
     if (sid) fresh.set(sid, [...(fresh.get(sid) ?? []), ...made.map((m) => m.id)])
     try {
       if (agent)

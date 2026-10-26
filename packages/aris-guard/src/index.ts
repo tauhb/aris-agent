@@ -40,6 +40,8 @@ const BLOCKED_DAYS = 7
 /** Dịch vụ cho plugin khác: aris có đang dừng khẩn cấp không (routine, Driver, kênh, ứng dụng khác). */
 export interface ArisGuard {
   stopped(): boolean
+  /** Các lần hàng rào chặn công cụ trong một phiên (còn giữ trong nhật ký chặn), cũ trước (phát lại phiên, @aris/stats). */
+  blocked(sessionId: string): BlockedRecord[]
 }
 
 interface SpendPort {
@@ -65,7 +67,14 @@ export async function apply(ctx: Context): Promise<void> {
   const bots = () => ctx.get('arisBots') as ArisBots | undefined
   const spend = () => ctx.get('arisSpend') as SpendPort | undefined
   const totalToday = () => spend()?.total?.() ?? 0
-  ctx.provide('arisGuard', { stopped: () => settings().stopped } satisfies ArisGuard)
+  ctx.provide('arisGuard', {
+    stopped: () => settings().stopped,
+    blocked: (sessionId: string) =>
+      [...blockedT.entries()]
+        .map(([, r]) => r)
+        .filter((r) => r.session === sessionId)
+        .sort((a, z) => a.at.localeCompare(z.at)),
+  } satisfies ArisGuard)
 
   /** Việc nền: routine, Thủ thư, kiểm thử skill, phiên khách, thành viên đội và việc được giao. */
   const isBackground = (agent: AgentLike) => {
