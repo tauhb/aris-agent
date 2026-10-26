@@ -1,0 +1,14 @@
+diff --git a/packages/client/tsdown.client.ts b/packages/client/tsdown.client.ts
+index 90b26c196e..0b64bce6d1 100644
+--- a/packages/client/tsdown.client.ts
++++ b/packages/client/tsdown.client.ts
+@@ -590,7 +590,8 @@ function clientConfig(
+         this.addWatchFile(fileId)
+         const source = await readFile(fileId)
+         const { code, exports: cssExports } = transform({
+-          filename: fileId,
++          // Vá thử: băm lớp CSS theo tiền tố cố định (đường dẫn CI chính thức) để ra cùng tên lớp với bản npm.
++          filename: process.env.DSH_CSS_HASH_PREFIX === undefined ? fileId : fileId.replace(resolvePath(import.meta.dirname, '../..'), process.env.DSH_CSS_HASH_PREFIX),
+           code: source,
+           cssModules: { pattern: '[hash]_[local]' },
+           minify: true,

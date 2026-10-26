@@ -39,3 +39,7 @@ Mục đích: đánh giá aris có dùng được như Hermes khi chạy ngầm,
 Đối chiếu tài liệu dsh: `docs/cli-help.md` (`acp`, `headless`, `sdk`, `web`), `docs/config-catalog.md` (`dsh-acp`, `dsh-subagent-acp`), `docs/subsystems/mcp.md`.
 
 Kết quả: chỉ rút ra danh mục năng lực (mục 15 của `tinh-nang-aris.md`). Không sao chép mã, schema hay nội dung skill.
+
+## 26/10/2026 — GĐ7 đợt 7f phần C (chuẩn bị đo đối đầu)
+
+Đọc phần trợ giúp CLI của Hermes v0.20.0 đã cài (`hermes --help`, `hermes profile --help`, `hermes profile create --help`, `hermes profile alias --help`) để hướng dẫn người dùng tạo profile Hermes riêng cho bộ đo, dùng DeepSeek. Không đọc mã nguồn, không sao chép gì.
