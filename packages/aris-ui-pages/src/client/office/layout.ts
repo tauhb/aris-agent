@@ -214,7 +214,7 @@ export function assigneeOf(
  * Chỗ đứng của từng người theo trạng thái thật:
  * - đang làm: ngồi sau bàn mình (Aris: đi qua lại tới bàn bot được giao việc gần nhất nếu biết, không thì đứng ở bàn chỉ huy);
  * - chờ người dùng: đứng ở cửa;
- * - rảnh (kể cả xong và vấp): ngồi nghỉ trên sofa.
+ * - rảnh (kể cả xong và vấp): ngồi nghỉ trên sofa; riêng Aris luôn ở trong phòng, rảnh thì đứng ở bàn chỉ huy.
  * Thứ tự chỗ chờ và chỗ sofa theo thứ tự `occupants`, nên một bot đổi trạng thái chỉ làm dịch chỗ những bot cùng nhóm.
  */
 export function spotsFor(
@@ -247,6 +247,8 @@ export function spotsFor(
         if (d) out[o.id] = { ...d.seat, pose: 'type', face: 0, tilt: 0 }
         else out[o.id] = restSpot(layout, resting++)
       }
+    } else if (o.id === commander) {
+      out[o.id] = { ...layout.command.stand, pose: 'stand', face: 0, tilt: 0 }
     } else {
       out[o.id] = restSpot(layout, resting++)
     }
@@ -273,19 +275,21 @@ export interface LabelPlan {
 
 /**
  * Chọn nhãn nào hiện: bot đang làm và đang chờ luôn có nhãn riêng; bot rảnh gộp thành một nhãn chung "Rảnh · N" trên sofa
- * họ ngồi, trừ bot trong `focus` (đang rê chuột hoặc đang chọn) thì hiện nhãn riêng.
+ * họ ngồi, trừ bot trong `focus` (đang rê chuột hoặc đang chọn) và Aris (`commander`) thì hiện nhãn riêng.
  */
 export function labelPlan(
   layout: OfficeLayout,
   bots: readonly Occupant[],
   spots: Readonly<Record<string, Spot>>,
   focus: readonly (string | null | undefined)[] = [],
+  commander?: string,
 ): LabelPlan {
   const picked = new Set(focus.filter((f): f is string => !!f))
   const named = new Set<string>()
   const sofas = layout.sofas.map(() => 0)
   for (const b of bots) {
-    if (!isIdle(b.scene) || picked.has(b.id)) {
+    // Aris đứng ở bàn chỉ huy, không ngồi sofa: luôn có nhãn riêng.
+    if (!isIdle(b.scene) || picked.has(b.id) || b.id === commander) {
       named.add(b.id)
       continue
     }

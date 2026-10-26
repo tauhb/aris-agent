@@ -104,6 +104,32 @@ export function Overview({
   const cap = guard?.settings.teamCapUsd ?? 0
   const spent = guard ? `${fmtUsd(guard.spent, dec)} $` : '–'
 
+  const pills = groups.length > 0 && (
+    <div className="ap-of-pills" role="group" aria-label={t('of.dept.filter')}>
+      <button
+        type="button"
+        className={`ap-of-pill${dept === 'all' ? ' on' : ''}`}
+        aria-pressed={dept === 'all'}
+        onClick={() => setDept('all')}
+      >
+        {t('of.dept.all')}
+      </button>
+      {groups.map((g) => (
+        <button
+          key={keyOf(g)}
+          type="button"
+          className={`ap-of-pill${dept === keyOf(g) ? ' on' : ''}`}
+          aria-pressed={dept === keyOf(g)}
+          onClick={() => setDept(keyOf(g))}
+        >
+          {g.label}
+          {g.working > 0 && <small>{t('of.dept.working', { n: g.working })}</small>}
+          {g.waiting > 0 && <small className="warn">{t('of.dept.waiting', { n: g.waiting })}</small>}
+        </button>
+      ))}
+    </div>
+  )
+
   const column = (
     <aside
       className={`ap-of-col${colOpen ? ' open' : ''}`}
@@ -125,6 +151,7 @@ export function Overview({
           onBack={() => setPanel(FEED_PANEL)}
           onChat={openChat}
           reload={reload}
+          onClose={() => setColOpen(false)}
         />
       ) : (
         <Feed
@@ -138,6 +165,7 @@ export function Overview({
           waitingOf={(bot) => live?.status[bot]?.status === 'waiting'}
           onChat={openChat}
           reload={reload}
+          onClose={() => setColOpen(false)}
         />
       )}
     </aside>
@@ -166,6 +194,13 @@ export function Overview({
             cost={spent}
             costNote={cap > 0 ? t('of.num.cost', { cap: fmtUsd(cap, dec) }) : t('of.num.costFree')}
             need={need}
+            working={working}
+            summary={officeSummary({ need, bots, t })}
+            dock={pills}
+            focusBots={
+              dept === 'all' ? null : new Set([aris.id, ...shown.flatMap((g) => g.desks.map((d) => d.id))])
+            }
+            focusZones={dept === 'all' ? null : new Set(shown.map((g) => g.id))}
             selected={chatting}
             // Bấm ra ngoài bot (id rỗng) không đóng bảng chat đang mở.
             onPick={(id) => id && pick(id)}
@@ -217,29 +252,7 @@ export function Overview({
         {groups.length === 0 && team.ready && <div className="a-muted">{t('of.empty')}</div>}
         {groups.length > 0 && (
           <div className="ap-of-left">
-            <div className="ap-of-pills" role="group" aria-label={t('of.dept.filter')}>
-              <button
-                type="button"
-                className={`ap-of-pill${dept === 'all' ? ' on' : ''}`}
-                aria-pressed={dept === 'all'}
-                onClick={() => setDept('all')}
-              >
-                {t('of.dept.all')}
-              </button>
-              {groups.map((g) => (
-                <button
-                  key={keyOf(g)}
-                  type="button"
-                  className={`ap-of-pill${dept === keyOf(g) ? ' on' : ''}`}
-                  aria-pressed={dept === keyOf(g)}
-                  onClick={() => setDept(keyOf(g))}
-                >
-                  {g.label}
-                  {g.working > 0 && <small>{t('of.dept.working', { n: g.working })}</small>}
-                  {g.waiting > 0 && <small className="warn">{t('of.dept.waiting', { n: g.waiting })}</small>}
-                </button>
-              ))}
-            </div>
+            {pills}
             {shown.map((g) => (
               <section key={keyOf(g)} aria-label={g.label}>
                 <div className="ap-of-dept">

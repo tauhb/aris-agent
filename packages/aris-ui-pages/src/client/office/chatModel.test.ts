@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   branchState,
   fmtDuration,
+  jobState,
+  matchJob,
+  phongArgs,
+  phongItem,
+  type JobLike,
   pendingEcho,
   progressMs,
   progressText,
@@ -170,5 +175,84 @@ describe('khối "Đội đang làm"', () => {
     expect(teamProgress(['done', 'running', 'waiting'])).toEqual({ done: 1, total: 3, pct: 33 })
     expect(teamProgress(['done', 'done'])).toEqual({ done: 2, total: 2, pct: 100 })
     expect(teamProgress([])).toEqual({ done: 0, total: 0, pct: 0 })
+  })
+})
+
+describe('giao cả phòng (giao_phong)', () => {
+  const body = JSON.stringify({
+    phong: 'Tăng trưởng',
+    tieu_de: 'Chiến dịch ra mắt khoá học',
+    noi_dung: 'Làm đủ bộ',
+    ly_do: 'Cần nhiều vai',
+  })
+  const job = (extra: Partial<JobLike>): JobLike => ({
+    id: 'job-1',
+    department: 'd1',
+    departmentName: 'Tăng trưởng',
+    lead: 'b-tho',
+    title: 'Chiến dịch ra mắt khoá học',
+    session: 'lead-s1',
+    parentSession: 'aris-s',
+    status: 'running',
+    createdAt: new Date(T0 + 1000).toISOString(),
+    ...extra,
+  })
+
+  it('phongArgs: tên phòng và tên việc; không có tieu_de thì lấy dòng đầu noi_dung, cắt 80 ký tự', () => {
+    expect(phongArgs(body)).toEqual({ phong: 'Tăng trưởng', title: 'Chiến dịch ra mắt khoá học' })
+    expect(phongArgs(JSON.stringify({ phong: 'X', noi_dung: `Dòng đầu\ndòng hai` }))).toEqual({
+      phong: 'X',
+      title: 'Dòng đầu',
+    })
+    expect(phongArgs(JSON.stringify({ phong: 'X', noi_dung: 'a'.repeat(200) }))?.title).toHaveLength(80)
+    expect(phongArgs('{"phong": "dở dang')).toBeNull()
+  })
+
+  it('matchJob: cùng phiên giao, cùng tên việc, gần lúc gọi nhất', () => {
+    const near = job({ id: 'near' })
+    const far = job({ id: 'far', createdAt: new Date(T0 + 3_600_000).toISOString() })
+    const step = { at: T0, body }
+    expect(matchJob(step, 'aris-s', [far, near])?.id).toBe('near')
+    expect(matchJob(step, 'phien-khac', [near])).toBeUndefined()
+    expect(matchJob(step, 'aris-s', [job({ title: 'Việc khác' })])).toBeUndefined()
+    expect(matchJob(step, undefined, [near])).toBeUndefined()
+    expect(matchJob({ at: T0, body: 'hỏng' }, 'aris-s', [near])).toBeUndefined()
+  })
+
+  it('jobState: duyệt chờ, xong và lỗi theo bản ghi việc, còn chạy thì theo phiên trưởng nhóm', () => {
+    expect(jobState({ status: 'running' }, 'running', true)).toBe('waiting')
+    expect(jobState({ status: 'done' }, 'running', false)).toBe('done')
+    expect(jobState({ status: 'failed' }, 'done', false)).toBe('failed')
+    expect(jobState({ status: 'running' }, 'failed', false)).toBe('failed')
+    expect(jobState({ status: 'running' }, 'waiting', false)).toBe('waiting')
+    expect(jobState({ status: 'running' }, undefined, false)).toBe('running')
+  })
+
+  it('phongItem: trưởng nhóm theo việc lớn; lời báo lỗi; đang giao', () => {
+    expect(phongItem({ body }, job({}), 'tho')).toEqual({
+      handle: 'tho',
+      title: 'Chiến dịch ra mắt khoá học',
+      sessionId: 'lead-s1',
+    })
+    expect(phongItem({ body, out: 'Không có phòng «X». Các phòng: A.' }, undefined, '')).toEqual({
+      handle: '',
+      title: 'Chiến dịch ra mắt khoá học',
+      error: 'Không có phòng «X». Các phòng: A.',
+    })
+    // Đã giao nhưng chưa tìm thấy bản ghi việc (danh sách chưa tải): chưa phải lỗi.
+    expect(phongItem({ body, out: 'Đã giao cho phòng A: …' }, undefined, '')).toEqual({
+      handle: '',
+      title: 'Chiến dịch ra mắt khoá học',
+    })
+    expect(phongItem({ body }, undefined, '')?.error).toBeUndefined()
+    expect(phongItem({ body: 'hỏng' }, undefined, '')).toBeNull()
+  })
+
+  it('toTurns tách cả lần giao_phong thành khối riêng', () => {
+    const turns = toTurns(
+      [step(1, 'user'), step(2, 'tool', { tool: 'giao_phong' }), step(3, 'assistant')],
+      false,
+    )
+    expect(turns.map((x) => x.kind)).toEqual(['user', 'team', 'assistant'])
   })
 })

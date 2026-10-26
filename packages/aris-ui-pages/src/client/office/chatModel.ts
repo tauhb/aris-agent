@@ -25,13 +25,13 @@ export type Turn =
   | { kind: 'assistant'; key: string; at: number; text: string }
   /** Các bước suy nghĩ và công cụ giữa hai tin; `live` là đoạn cuối của phiên đang chạy. */
   | { kind: 'progress'; key: string; steps: ConvStep[]; live: boolean }
-  /** Lần Aris giao việc cho đội (`giao_viec`): vẽ thành khối "Đội đang làm". */
+  /** Lần Aris giao việc cho đội (`giao_viec`, `giao_phong`): vẽ thành khối "Đội đang làm". */
   | { kind: 'team'; key: string; at: number; step: ConvStep }
 
 type Tr = (key: string, params?: Record<string, unknown>) => string
 
-/** Công cụ giao việc của Commander; nhánh của từng bot đọc từ chính lần gọi này. */
-export const DISPATCH_TOOL = 'giao_viec'
+/** Công cụ giao việc của Commander: cho từng bot (`giao_viec`) hay cả phòng (`giao_phong`); khối "Đội đang làm" đọc từ lần gọi này. */
+export const DISPATCH_TOOLS: ReadonlySet<string> = new Set(['giao_viec', 'giao_phong'])
 
 /**
  * Gộp các bước thành lượt chat: tin người dùng và tin trợ lý đứng riêng, mọi bước suy nghĩ, công cụ, duyệt giữa hai tin
@@ -51,7 +51,7 @@ export function toTurns(steps: readonly ConvStep[], running: boolean): Turn[] {
     } else if (s.type === 'assistant') {
       flush()
       out.push({ kind: 'assistant', key: `a${s.n}`, at: s.at, text: s.body })
-    } else if (s.type === 'tool' && s.tool === DISPATCH_TOOL) {
+    } else if (s.type === 'tool' && DISPATCH_TOOLS.has(s.tool ?? '')) {
       flush()
       out.push({ kind: 'team', key: `t${s.n}`, at: s.at, step: s })
     } else group.push(s)
@@ -160,4 +160,90 @@ export function branchState(
 export function teamProgress(states: readonly BranchState[]): { done: number; total: number; pct: number } {
   const done = states.filter((s) => s === 'done').length
   return { done, total: states.length, pct: states.length ? Math.round((done / states.length) * 100) : 0 }
+}
+
+// --- Giao cả phòng (`giao_phong`) ------------------------------------------------------------------------------------
+
+/** Việc lớn của phòng ban (`/api/aris/commander?jobs=1`), phần dùng tới. */
+export interface JobLike {
+  id: string
+  department: string
+  departmentName: string
+  /** Mã nội bộ của bot trưởng nhóm. */
+  lead: string
+  title: string
+  /** Phiên gốc của trưởng nhóm cho việc này. */
+  session: string
+  /** Phiên của Commander đã giao việc. */
+  parentSession: string
+  status: 'running' | 'done' | 'failed'
+  createdAt: string
+}
+
+/** Tên phòng và tên việc trong tham số của lần gọi `giao_phong`; tên việc cắt giống lúc máy chủ ghi việc (dòng đầu, 80 ký tự). */
+export function phongArgs(body: string): { phong: string; title: string } | null {
+  try {
+    const v = JSON.parse(body) as { phong?: unknown; tieu_de?: unknown; noi_dung?: unknown }
+    const title = String(v.tieu_de ?? v.noi_dung ?? '')
+      .trim()
+      .split('\n')[0]!
+      .slice(0, 80)
+    return { phong: typeof v.phong === 'string' ? v.phong : '', title }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Việc lớn do đúng lần gọi `giao_phong` này tạo ra: cùng phiên giao, cùng tên việc, gần lúc gọi nhất. Dữ liệu có cấu trúc
+ * của máy chủ, không đọc lại từ câu chữ trả về.
+ */
+export function matchJob(
+  step: { at: number; body: string },
+  parent: string | undefined,
+  jobs: readonly JobLike[],
+): JobLike | undefined {
+  const args = phongArgs(step.body)
+  if (!args || !parent) return undefined
+  return jobs
+    .filter((j) => j.parentSession === parent && j.title === args.title)
+    .sort(
+      (a, z) => Math.abs(Date.parse(a.createdAt) - step.at) - Math.abs(Date.parse(z.createdAt) - step.at),
+    )[0]
+}
+
+/**
+ * Tình trạng nhánh trưởng nhóm: yêu cầu quyền đang chờ thì chờ {you}; việc lớn xong hay lỗi theo bản ghi việc; còn chạy
+ * thì theo phiên của trưởng nhóm (đang đợi hay đã vấp).
+ */
+export function jobState(
+  job: Pick<JobLike, 'status'>,
+  session: string | undefined,
+  hasApproval: boolean,
+): BranchState {
+  if (hasApproval) return 'waiting'
+  if (job.status === 'done') return 'done'
+  if (job.status === 'failed' || session === 'failed') return 'failed'
+  return session === 'waiting' ? 'waiting' : 'running'
+}
+
+/**
+ * Nhánh của lần `giao_phong`: trưởng nhóm theo việc lớn tìm được (phiên của trưởng nhóm, tên việc); chưa tìm được và lần
+ * gọi đã trả lời không phải "Đã giao…" thì là lỗi (lời báo dòng đầu); còn lại là đang giao.
+ */
+export function phongItem(
+  step: { body: string; out?: string | undefined },
+  job: JobLike | undefined,
+  leadHandle: string,
+): (BranchItem & { handle: string; title: string }) | null {
+  const args = phongArgs(step.body)
+  if (!args) return null
+  if (job) return { handle: leadHandle, title: job.title, sessionId: job.session }
+  const first = step.out
+    ?.split('\n')
+    .find((l) => l.trim())
+    ?.trim()
+  if (step.out !== undefined && !step.out.startsWith('Đã giao'))
+    return { handle: '', title: args.title, error: first || 'không giao được' }
+  return { handle: '', title: args.title }
 }

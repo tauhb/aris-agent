@@ -212,6 +212,7 @@ export function ChatPanel({
   onBack,
   onChat,
   reload,
+  onClose,
 }: {
   t: T
   nav: PageProps['nav']
@@ -227,6 +228,8 @@ export function ChatPanel({
   onBack: () => void
   onChat: (bot: string, session?: string) => void
   reload: () => void
+  /** Màn hẹp: đóng ngăn trượt. */
+  onClose: () => void
 }) {
   const running = live?.status[desk.id]?.sessions ?? []
   const recent = useBotSessions(desk.id, !desk.external)
@@ -328,6 +331,9 @@ export function ChatPanel({
         <button type="button" className="ap-of-back" onClick={onBack}>
           ‹ {t('of.ch.back')}
         </button>
+        <button type="button" className="ap-of-colx" aria-label={t('of.col.close')} onClick={onClose}>
+          ✕
+        </button>
       </div>
       <div className="ap-of-bh">
         <Mascot id={desk.mascot} size={44} accessory={desk.accessory} />
@@ -406,6 +412,7 @@ export function ChatPanel({
                   <TeamBlock
                     key={turn.key}
                     step={turn.step}
+                    parent={sid}
                     team={team}
                     approvals={approvals}
                     t={t}

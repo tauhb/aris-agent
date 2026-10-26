@@ -86,7 +86,7 @@ export const OFFICE_CSS = `
 .ap-of-md{font-size:11px;width:100%}
 /* Cột phải: nhật ký "Vừa làm gì" và bảng chat gọn, dùng chung cho 2D và 3D. */
 .ap-of-col{flex:0 0 384px;width:384px;border-left:1px solid var(--a-line);background:var(--a-panel);display:flex;flex-direction:column;min-height:0}
-.ap-of-colbtn{display:none}
+.ap-of-colbtn,.ap-of .ap-of-colx{display:none}
 .ap-of-ch{display:flex;align-items:center;gap:8px;padding:12px 16px 8px;flex:none}
 .ap-of-ct{font-family:${FONTS.heading};font-size:15px;font-weight:600}
 .ap-of-sm{font-size:12px}
@@ -166,7 +166,9 @@ export const OFFICE_CSS = `
 .ap-of-tmh{display:flex;align-items:center;gap:8px;font-size:12.5px}
 .ap-of-bar{flex:1;height:5px;border-radius:3px;background:var(--a-panel2);overflow:hidden}
 .ap-of-bar i{display:block;height:100%;background:var(--a-ok)}
-.ap-of-br{display:flex;gap:8px;align-items:flex-start;border-top:1px solid var(--a-line);padding-top:8px}
+.ap-of-brw{border-top:1px solid var(--a-line);padding-top:8px}
+.ap-of-br{display:flex;gap:8px;align-items:flex-start}
+.ap-of-sub{margin:8px 0 0 34px;display:flex;flex-direction:column;gap:8px}
 .ap-of-br .ap-of-fa{margin-top:6px}
 .ap-of-cmp{border-top:1px solid var(--a-line);padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;flex:none}
 .ap-of-cm{display:flex;align-items:center;gap:8px}
@@ -222,12 +224,20 @@ export const OFFICE_CSS = `
 .ap-of-tag{position:absolute;left:0;top:0;visibility:hidden;font-size:12px;font-weight:600;background:var(--a-panel);color:var(--a-ink);border:1px solid var(--a-line);border-radius:999px;padding:2px 9px;white-space:nowrap;display:flex;align-items:center;gap:6px;box-shadow:var(--a-shadow)}
 .ap-of-tag i{width:7px;height:7px;border-radius:50%;display:inline-block}
 .ap-of-tag span{font-weight:800;color:var(--a-warn)}
+.ap-of-tag.dim{opacity:.3}
 .ap-of-tag.sofa{font-weight:500;color:var(--a-muted)}
 .ap-of-tag.sofa i{background:var(--a-muted)}
 .ap-of-tag.zone{font-weight:500;color:var(--a-muted);background:transparent;border-color:transparent;box-shadow:none}
 .ap-of-sr{position:absolute;width:1px;height:1px;margin:0;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;list-style:none}
 .ap-of-3d-load{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:13px;color:var(--a-muted)}
-.ap-of-3d-nums{position:absolute;left:16px;top:14px;display:flex;gap:10px;pointer-events:none;flex-wrap:wrap;max-width:calc(100% - 32px)}
+.ap-of-3d-top{position:absolute;left:16px;top:14px;display:flex;flex-direction:column;align-items:flex-start;gap:10px;max-width:calc(100% - 32px);pointer-events:none}
+.ap-of-3d-top button{pointer-events:auto}
+.ap-of-3d-hero{display:flex;align-items:center;gap:10px}
+.ap-of .ap-of-3d-aris{border-radius:14px;padding:0;flex:none;pointer-events:auto}
+.ap-of-3d-aris svg{display:block;overflow:visible}
+.ap-of .ap-of-3d-aris.sel{outline:2px solid var(--a-accent);outline-offset:3px}
+.ap-of-say.ap-of-3d-say{margin-bottom:0;font-size:13px;max-width:360px;box-shadow:var(--a-shadow)}
+.ap-of-3d-nums{display:flex;gap:10px;flex-wrap:wrap}
 .ap-of-3d-nums .ap-of-big{padding:8px 14px;min-width:96px}
 .ap-of-3d-nums .ap-of-big b{font-size:22px}
 /* Dưới ~1100px cột phải thành ngăn trượt, mở bằng nút ở góc phải dưới. */
@@ -235,7 +245,10 @@ export const OFFICE_CSS = `
 .ap-of-col{position:absolute;top:0;right:0;bottom:0;z-index:5;max-width:100%;box-shadow:-12px 0 30px rgba(0,0,0,.08);transform:translateX(100%);visibility:hidden;transition:transform .2s ease,visibility .2s}
 .ap-of-col.open{transform:none;visibility:visible}
 .ap-of .ap-of-colbtn{display:inline-flex;align-items:center;position:absolute;right:14px;bottom:14px;z-index:6;height:32px;padding:0 14px;border:1px solid var(--a-line);border-radius:999px;background:var(--a-panel);color:var(--a-ink);font-size:13px;font-weight:600;box-shadow:var(--a-shadow)}
-.ap-of-col.open+.ap-of-colbtn{right:min(398px,calc(100% - 100px))}
+.ap-of-col.open+.ap-of-colbtn{display:none}
+.ap-of .ap-of-colx{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;margin-left:8px;border-radius:8px;color:var(--a-muted);font-size:14px}
+.ap-of .ap-of-colx:hover{background:var(--a-hover);color:var(--a-ink)}
+.ap-of-ch .ap-of-back+.ap-of-colx{margin-left:auto}
 }
 @media (prefers-reduced-motion:reduce){.ap-of-col{transition:none}.ap-of *{animation:none!important}.ap-of-typ{width:auto!important;border:0!important}.ap-of-desk.idle .ap-of-bot svg{transform:rotate(-14deg) translateY(10px)}}
 `

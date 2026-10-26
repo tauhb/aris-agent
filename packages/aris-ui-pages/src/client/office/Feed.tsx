@@ -41,6 +41,8 @@ export interface FeedProps {
   onChat: (bot: string, session?: string) => void
   /** Đọc lại nhật ký và danh sách duyệt (sau khi duyệt). */
   reload: () => void
+  /** Màn hẹp: đóng ngăn trượt. */
+  onClose: () => void
 }
 
 const FILE_ICON = (name: string) => (/\.(csv|tsv|xlsx?|json)$/i.test(name) ? '▦' : '▤')
@@ -301,6 +303,9 @@ export function Feed(p: FeedProps) {
           <option value="today">{t('of.fd.today')}</option>
           <option value="7d">{t('of.fd.week')}</option>
         </select>
+        <button type="button" className="ap-of-colx" aria-label={t('of.col.close')} onClick={p.onClose}>
+          ✕
+        </button>
       </div>
       <div className="ap-of-cb">
         {lines?.length === 0 && <div className="a-muted ap-of-empty">{t('of.feed.empty')}</div>}

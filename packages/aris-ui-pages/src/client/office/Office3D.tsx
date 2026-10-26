@@ -6,8 +6,8 @@
  * tải thư viện 3D. Không có WebGL thì gọi `onUnsupported` để quay về 2D.
  */
 import { getMascot } from '@aris/ui-kit'
-import type { TeamLive } from '@aris/ui-kit/react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Mascot, type TeamLive } from '@aris/ui-kit/react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { PageProps } from '../page.js'
 import { STATUS_DOT } from './Desk.js'
 import { assigneeOf, labelPlan, layoutOffice, spotsFor, spreadLabels, type Occupant } from './layout.js'
@@ -38,6 +38,11 @@ export function Office3D({
   cost,
   costNote,
   need,
+  working,
+  summary,
+  dock,
+  focusBots,
+  focusZones,
   selected,
   onPick,
   onUnsupported,
@@ -51,6 +56,15 @@ export function Office3D({
   cost: string
   costNote: string
   need: number
+  /** Số bot đang làm (cả Aris). */
+  working: number
+  /** Câu trong bong bóng của Aris (như 2D). */
+  summary: string
+  /** Hàng tab phòng ban (như 2D), đặt dưới các con số. */
+  dock: ReactNode
+  /** Phòng đang chọn: mã bot và mã phòng còn rõ, phần còn lại của cảnh mờ đi; `null` là xem tất cả. */
+  focusBots: ReadonlySet<string> | null
+  focusZones: ReadonlySet<string> | null
   selected: string | null
   onPick: (id: string | null) => void
   onUnsupported: () => void
@@ -89,7 +103,7 @@ export function Office3D({
     commander: i === 0,
   }))
   const spots = spotsFor(layout, occupants, aris.id, assignee)
-  const plan = labelPlan(layout, occupants, spots, [hover, selected])
+  const plan = labelPlan(layout, occupants, spots, [hover, selected], aris.id)
 
   useEffect(() => {
     const cv = canvas.current
@@ -138,6 +152,9 @@ export function Office3D({
     scene?.update({ layout, actors, spots })
   })
   useEffect(() => scene?.select(selected), [scene, selected])
+  // Chọn phòng thì làm mờ bot và khu của phòng khác; chỉ áp lại khi lựa chọn đổi.
+  const focusKey = `${focusBots ? [...focusBots].join(',') : '*'}|${focusZones ? [...focusZones].join(',') : '*'}`
+  useEffect(() => scene?.focus(focusBots, focusZones), [scene, focusKey])
 
   return (
     <div className="ap-of-3d" ref={stage}>
@@ -146,7 +163,7 @@ export function Office3D({
         {layout.zones.map((z) => (
           <div
             key={`zone:${z.id}`}
-            className="ap-of-tag zone"
+            className={`ap-of-tag zone${focusZones && !focusZones.has(z.id) ? ' dim' : ''}`}
             ref={(el) => {
               if (el) tags.current.set(`zone:${z.id}`, el)
               else tags.current.delete(`zone:${z.id}`)
@@ -176,7 +193,7 @@ export function Office3D({
           .map((d) => (
             <div
               key={d.id}
-              className="ap-of-tag"
+              className={`ap-of-tag${focusBots && !focusBots.has(d.id) ? ' dim' : ''}`}
               ref={(el) => {
                 if (el) tags.current.set(d.id, el)
                 else {
@@ -201,19 +218,38 @@ export function Office3D({
         ))}
       </ul>
       {!scene && <div className="ap-of-3d-load">{t('of.3d.loading')}</div>}
-      <div className="ap-of-3d-nums">
-        <div className="ap-of-big">
-          <b>{tokens}</b>
-          <span>{t('of.num.tokens')}</span>
+      <div className="ap-of-3d-top">
+        <div className="ap-of-3d-hero">
+          <button
+            type="button"
+            className={`ap-of-3d-aris${selected === aris.id ? ' sel' : ''}`}
+            aria-label={t('of.desk', { name: aris.name })}
+            aria-pressed={selected === aris.id}
+            onClick={() => onPick(aris.id)}
+          >
+            <Mascot id={aris.mascot} size={56} accessory={aris.accessory} />
+          </button>
+          <div className="ap-of-say ap-of-3d-say">{summary}</div>
         </div>
-        <div className="ap-of-big">
-          <b>{cost}</b>
-          <span>{costNote}</span>
+        <div className="ap-of-3d-nums">
+          <div className="ap-of-big">
+            <b>{tokens}</b>
+            <span>{t('of.num.tokens')}</span>
+          </div>
+          <div className="ap-of-big">
+            <b>{cost}</b>
+            <span>{costNote}</span>
+          </div>
+          <div className="ap-of-big">
+            <b>{working}</b>
+            <span>{t('of.num.working')}</span>
+          </div>
+          <div className="ap-of-big">
+            <b className={need > 0 ? 'warn' : undefined}>{need}</b>
+            <span>{t('of.num.waiting')}</span>
+          </div>
         </div>
-        <div className="ap-of-big">
-          <b className={need > 0 ? 'warn' : undefined}>{need}</b>
-          <span>{t('of.num.waiting')}</span>
-        </div>
+        {dock}
       </div>
     </div>
   )

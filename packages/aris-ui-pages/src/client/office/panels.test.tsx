@@ -32,6 +32,7 @@ const feedProps = (lines: FeedItem[]) => ({
   waitingOf: (bot: string) => bot === 'an',
   onChat: () => {},
   reload: () => {},
+  onClose: () => {},
 })
 
 describe('Feed', () => {
@@ -85,6 +86,12 @@ describe('Feed', () => {
     expect(html).toContain('ap-of-sp dim')
   })
 
+  it('đầu cột có nút đóng (✕, có aria-label) cho ngăn trượt ở màn hẹp', () => {
+    const html = renderToStaticMarkup(<Feed {...feedProps([])} />)
+    expect(html).toContain('class="ap-of-colx"')
+    expect(html).toContain('aria-label="of.col.close"')
+  })
+
   it('chưa có dòng nào thì báo trống; đang đọc thì không báo gì', () => {
     expect(renderToStaticMarkup(<Feed {...feedProps([])} />)).toContain('of.feed.empty')
     expect(renderToStaticMarkup(<Feed {...{ ...feedProps([]), lines: null }} />)).not.toContain(
@@ -130,6 +137,7 @@ describe('ChatPanel', () => {
       onBack={() => {}}
       onChat={() => {}}
       reload={() => {}}
+      onClose={() => {}}
     />
   )
 
@@ -144,6 +152,9 @@ describe('ChatPanel', () => {
     expect(html).toContain('of.dr.stop')
     expect(html).toContain('<textarea')
     expect(html).toContain('of.ch.openFull')
+    // Nút đóng nằm ở đầu bảng, ngay sau "‹ Cả đội", trước thân bảng.
+    expect(html.indexOf('of.ch.back')).toBeLessThan(html.indexOf('ap-of-colx'))
+    expect(html.indexOf('ap-of-colx')).toBeLessThan(html.indexOf('ap-of-bh'))
   })
 
   it('Aris: pill "đang điều phối"; bot ngoài: nút mở hồ sơ thay ô nhắn', () => {
@@ -168,6 +179,7 @@ describe('ChatPanel', () => {
         onBack={() => {}}
         onChat={() => {}}
         reload={() => {}}
+        onClose={() => {}}
       />,
     )
     expect(html).not.toContain('of.dr.stop')
@@ -195,6 +207,7 @@ describe('TeamBlock', () => {
   it('mỗi bot một nhánh với tên và việc, thanh tiến độ k/n', () => {
     const html = renderToStaticMarkup(
       <TeamBlock
+        parent="aris-s"
         step={step(
           '- @minh (Minh): đã nhận việc, thẻ task-1, phiên s-minh\n- @an (An): đã nhận việc, thẻ task-2, phiên s-an',
         )}
@@ -215,8 +228,28 @@ describe('TeamBlock', () => {
   })
 
   it('lần giao chưa có kết quả vẫn vẽ nhánh theo tham số; không có việc nào thì không vẽ gì', () => {
-    const props = { team, approvals: [], t, onChat: () => {}, reload: () => {} }
+    const props = { parent: 'aris-s', team, approvals: [], t, onChat: () => {}, reload: () => {} }
     expect(renderToStaticMarkup(<TeamBlock step={step(undefined)} {...props} />)).toContain('>Minh<')
     expect(renderToStaticMarkup(<TeamBlock step={{ ...step(undefined), body: '{}' }} {...props} />)).toBe('')
+  })
+
+  it('giao cả phòng: một nhánh cho phòng theo tên việc; lỗi giao thì hiện lời báo', () => {
+    const props = { parent: 'aris-s', team, approvals: [], t, onChat: () => {}, reload: () => {} }
+    const phong = (out: string | undefined): ConvStep => ({
+      n: 24,
+      at: 0,
+      type: 'tool',
+      tool: 'giao_phong',
+      title: 'giao_phong',
+      body: JSON.stringify({ phong: 'Tăng trưởng', tieu_de: 'Chiến dịch ra mắt', noi_dung: 'x', ly_do: 'y' }),
+      bodyFull: true,
+      ...(out === undefined ? {} : { out, outFull: true }),
+    })
+    const html = renderToStaticMarkup(<TeamBlock step={phong(undefined)} {...props} />)
+    expect(html).toContain('Tăng trưởng')
+    expect(html).toContain('Chiến dịch ra mắt')
+    expect(html).toContain('of.ch.teamDone(0,1)')
+    const bad = renderToStaticMarkup(<TeamBlock step={phong('Không có phòng «X».')} {...props} />)
+    expect(bad).toContain('Không có phòng «X».')
   })
 })

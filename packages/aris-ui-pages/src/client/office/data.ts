@@ -1,6 +1,6 @@
 /** Dữ liệu sống của Văn phòng: gọi các API có sẵn của aris, đọc lại định kỳ, giữ bản tốt gần nhất khi một lần lỗi. */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { ConvStep } from './chatModel.js'
+import type { ConvStep, JobLike } from './chatModel.js'
 import type { FeedItem } from './model.js'
 
 const url = (path: string, query: Record<string, string> = {}) => {
@@ -130,6 +130,17 @@ export function useBranchResult(session: string | undefined): SessionResultView 
   return out
 }
 
+/** Việc lớn của các phòng ban (`/api/aris/commander?jobs=1`), đọc lại mỗi 6 giây khi `enabled`. */
+export function useJobs(enabled: boolean): JobLike[] | null {
+  const data = usePoll(
+    () =>
+      enabled ? getJson<{ jobs: JobLike[] }>('api/aris/commander', { jobs: '1' }) : Promise.resolve(null),
+    6000,
+    String(enabled),
+  )[0]
+  return data?.jobs ?? null
+}
+
 /** Một phiên của bot ở ô chọn phiên (`/api/aris/bots?sessions=<bot>`). */
 export interface RecentSession {
   id: string
@@ -172,7 +183,12 @@ export function useConversation(session: string | undefined, ms: number): Conver
     if (!conv) return null
     const steps = await Promise.all(
       conv.steps.map(async (s) => {
-        if (s.type !== 'tool' || s.tool !== 'giao_viec' || (s.bodyFull && s.outFull !== false)) return s
+        if (
+          s.type !== 'tool' ||
+          !(s.tool === 'giao_viec' || s.tool === 'giao_phong') ||
+          (s.bodyFull && s.outFull !== false)
+        )
+          return s
         const key = `${session}:${s.n}`
         const cached = full.current.get(key)
         if (cached) return cached

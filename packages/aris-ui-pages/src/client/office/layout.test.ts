@@ -119,11 +119,11 @@ describe('spotsFor', () => {
     expect(s['b0-1']).toMatchObject({ ...l.waitSpots[1]!, pose: 'hop' })
   })
 
-  it('rảnh, xong và vấp: ngồi trên sofa, mỗi bot một ghế, nghiêng', () => {
+  it('rảnh, xong và vấp: bot ngồi trên sofa, mỗi bot một ghế, nghiêng (Aris đứng ở bàn chỉ huy nên không chiếm ghế)', () => {
     const s = spotsFor(l, occ(['aris', 'idle'], ['b0-0', 'idle'], ['b0-1', 'idle']), 'aris')
-    const spots = ['aris', 'b0-0', 'b0-1'].map((id) => s[id]!)
-    expect(spots.map((p) => p.pose)).toEqual(['lean', 'lean', 'lean'])
-    expect(spots.map((p) => `${p.x},${p.z}`)).toEqual(l.seats.slice(0, 3).map((p) => `${p.x},${p.z}`))
+    const spots = ['b0-0', 'b0-1'].map((id) => s[id]!)
+    expect(spots.map((p) => p.pose)).toEqual(['lean', 'lean'])
+    expect(spots.map((p) => `${p.x},${p.z}`)).toEqual(l.seats.slice(0, 2).map((p) => `${p.x},${p.z}`))
     expect(Math.abs(spots[0]!.tilt)).toBeGreaterThan(0)
   })
 
@@ -136,12 +136,15 @@ describe('spotsFor', () => {
     expect(go['aris']?.patrol).toEqual(visitPoint(deskOf('b0-0')))
   })
 
-  it('Aris chờ thì ra cửa, rảnh thì ra sofa như bot khác', () => {
+  it('Aris chờ thì ra cửa, rảnh thì đứng ở bàn chỉ huy (luôn có mặt trong phòng)', () => {
     expect(spotsFor(l, occ(['aris', 'wait']), 'aris')['aris']).toMatchObject({
       ...l.waitSpots[0]!,
       pose: 'hop',
     })
-    expect(spotsFor(l, occ(['aris', 'idle']), 'aris')['aris']).toMatchObject({ ...l.seats[0]!, pose: 'lean' })
+    expect(spotsFor(l, occ(['aris', 'idle']), 'aris')['aris']).toMatchObject({
+      ...l.command.stand,
+      pose: 'stand',
+    })
   })
 
   it('đổi trạng thái thì đổi chỗ: bot đang làm chuyển sang chờ ra cửa', () => {
@@ -182,30 +185,31 @@ describe('labelPlan', () => {
   const l: OfficeLayout = layoutOffice({ groups: groups(3, 2) })
   const occ = (...s: [string, Occupant['scene']][]): Occupant[] => s.map(([id, scene]) => ({ id, scene }))
   const plan = (bots: Occupant[], focus: (string | null)[] = []) =>
-    labelPlan(l, bots, spotsFor(l, bots, 'aris'), focus)
+    labelPlan(l, bots, spotsFor(l, bots, 'aris'), focus, 'aris')
 
   it('bot đang làm và đang chờ luôn có nhãn riêng, bot rảnh thì không', () => {
     const p = plan(
       occ(['aris', 'idle'], ['b0-0', 'work'], ['b0-1', 'wait'], ['b0-2', 'idle'], ['b1-0', 'idle']),
     )
-    expect([...p.named].sort()).toEqual(['b0-0', 'b0-1'])
+    // Aris đứng ở bàn chỉ huy nên luôn có nhãn riêng.
+    expect([...p.named].sort()).toEqual(['aris', 'b0-0', 'b0-1'])
   })
 
   it('bot rảnh gộp thành số trên sofa họ ngồi (3 ghế mỗi sofa)', () => {
     const idle = occ(['aris', 'idle'], ['b0-0', 'idle'], ['b0-1', 'idle'], ['b0-2', 'idle'], ['b1-0', 'idle'])
     const p = plan(idle)
-    expect(p.sofas.reduce((a, b) => a + b, 0)).toBe(5)
+    expect(p.sofas.reduce((a, b) => a + b, 0)).toBe(4)
     expect(p.sofas[0]).toBe(3)
-    expect(p.sofas[1]).toBe(2)
-    expect(p.named.size).toBe(0)
+    expect(p.sofas[1]).toBe(1)
+    expect([...p.named]).toEqual(['aris'])
   })
 
   it('rê chuột hoặc chọn bot rảnh thì bot đó hiện nhãn riêng, nhưng vẫn tính trong số của sofa', () => {
     const bots = occ(['aris', 'idle'], ['b0-0', 'idle'], ['b0-1', 'idle'])
-    expect([...plan(bots, ['b0-0']).named]).toEqual(['b0-0'])
-    expect([...plan(bots, [null, 'b0-1']).named]).toEqual(['b0-1'])
+    expect([...plan(bots, ['b0-0']).named].sort()).toEqual(['aris', 'b0-0'])
+    expect([...plan(bots, [null, 'b0-1']).named].sort()).toEqual(['aris', 'b0-1'])
     // Bot đang có nhãn riêng thì không tính vào "Rảnh · N" nữa, để tổng không đếm trùng.
-    expect(plan(bots, ['b0-0']).sofas[0]).toBe(2)
+    expect(plan(bots, ['b0-0']).sofas[0]).toBe(1)
   })
 
   it('không bot rảnh nào thì mọi sofa bằng 0', () => {

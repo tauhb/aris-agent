@@ -42,6 +42,11 @@ export interface SceneOptions {
 export interface OfficeScene {
   update: (input: SceneInput) => void
   select: (id: string | null) => void
+  /**
+   * Làm mờ bot và khu (thảm phòng ban) ngoài phòng đang chọn, không dựng lại cảnh: `bots` là mã bot còn rõ, `zones` là mã
+   * phòng còn rõ; `null` là không làm mờ gì.
+   */
+  focus: (bots: ReadonlySet<string> | null, zones: ReadonlySet<string> | null) => void
   dispose: () => void
 }
 
@@ -177,6 +182,8 @@ export function createScene(opts: SceneOptions): OfficeScene {
   let lamps: T.PointLight[] = []
   let layout: OfficeLayout | null = null
   const screens = new Map<string, T.Mesh>()
+  /** Thảm của từng phòng ban (mã phòng → hình), để làm mờ khu ngoài phòng đang chọn. */
+  const rugs = new Map<string, T.Mesh>()
 
   const mat = (c: number, o: T.MeshStandardMaterialParameters = {}) =>
     new T.MeshStandardMaterial({ color: c, roughness: 0.8, ...o })
@@ -214,6 +221,7 @@ export function createScene(opts: SceneOptions): OfficeScene {
     themed = []
     lamps = []
     screens.clear()
+    rugs.clear()
     const add = (o: T.Object3D) => {
       office.add(o)
       return o
@@ -266,6 +274,7 @@ export function createScene(opts: SceneOptions): OfficeScene {
       r.rotation.x = -Math.PI / 2
       r.position.set(z.x, 0.01, z.z)
       r.receiveShadow = true
+      rugs.set(z.id, r)
       add(r)
     }
 
@@ -383,6 +392,9 @@ export function createScene(opts: SceneOptions): OfficeScene {
       e.position.set(ex * s, 0.85 * s, 0.36 * s)
       const p = new T.Mesh(pupG, pupM)
       p.position.set(ex * s, 0.85 * s, 0.45 * s)
+      // Mắt dùng chung vật liệu giữa các bot: làm mờ bằng cách ẩn đi, không đổi vật liệu.
+      e.userData['eye'] = true
+      p.userData['eye'] = true
       g.add(e, p)
     }
     const acc = wear(g, a, s)
@@ -404,6 +416,28 @@ export function createScene(opts: SceneOptions): OfficeScene {
       acc,
     }
     return st
+  }
+
+  // --- Làm mờ ngoài phòng đang chọn --------------------------------------------------------------------------
+  const DIM = 0.22
+  let focusBots: ReadonlySet<string> | null = null
+  let focusZones: ReadonlySet<string> | null = null
+  const applyFocus = () => {
+    for (const [id, b] of bots) {
+      const dim = !!focusBots && !focusBots.has(id)
+      b.body.transparent = dim
+      b.body.opacity = dim ? DIM : 1
+      b.body.needsUpdate = true
+      for (const c of b.group.children) if (c.userData['eye']) c.visible = !dim
+      if (b.acc) b.acc.visible = !dim
+    }
+    for (const [id, r] of rugs) {
+      const m = r.material as T.MeshStandardMaterial
+      const dim = !!focusZones && !focusZones.has(id)
+      m.transparent = dim
+      m.opacity = dim ? DIM : 1
+      m.needsUpdate = true
+    }
   }
 
   const dropBot = (b: BotState) => {
@@ -646,6 +680,8 @@ export function createScene(opts: SceneOptions): OfficeScene {
         }
       } else bots.set(a.id, makeBot(a, next.spots[a.id]))
     }
+    // Bot mới hay thảm mới dựng thì áp lại lựa chọn phòng đang làm mờ.
+    if (focusBots || focusZones) applyFocus()
   }
 
   applyTheme(true)
@@ -655,6 +691,11 @@ export function createScene(opts: SceneOptions): OfficeScene {
     update,
     select: (id) => {
       selected = id
+    },
+    focus: (b, z) => {
+      focusBots = b
+      focusZones = z
+      applyFocus()
     },
     dispose: () => {
       stop()
