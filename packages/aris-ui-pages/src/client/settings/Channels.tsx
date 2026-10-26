@@ -416,7 +416,7 @@ function LarkSection({
               {apps.map((a: LarkApp) => (
                 <div key={a.bot}>
                   <CardRow>
-                    <Bot id={botOf(a.bot)?.mascot ?? 'aris'} />
+                    <Bot id={botOf(a.bot)?.mascot ?? 'aris'} accessory={botOf(a.bot)?.accessory} />
                     <span className="grow">
                       {a.name} <span className="a-muted a-mono">{shortId(a.appId)}</span>
                     </span>
@@ -646,7 +646,7 @@ export function Channels({ t }: PageProps) {
                 return (
                   <div key={c.bot}>
                     <CardRow>
-                      <Bot id={bot?.mascot ?? 'aris'} />
+                      <Bot id={bot?.mascot ?? 'aris'} accessory={bot?.accessory} />
                       <span className="grow">
                         {bot?.name ?? c.bot} · <span className="a-mono">@{c.username}</span>
                       </span>

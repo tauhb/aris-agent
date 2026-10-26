@@ -35,11 +35,18 @@ export interface FeedItem {
 
 // --- Bàn làm việc ----------------------------------------------------------------------------------------------
 
+/** Linh vật của một bot để vẽ: dáng và phụ kiện (bỏ trống phụ kiện là mặc định của dáng). */
+export interface Face {
+  id: string
+  accessory?: string | undefined
+}
+
 export interface Desk {
   id: string
   name: string
   role: string
   mascot: string
+  accessory?: string | undefined
   status: BotStatus
   scene: Scene
   /** Việc đang làm: việc được giao, không có thì tên phiên đang chạy. */
@@ -89,6 +96,7 @@ const deskOf = (m: TeamMember, team: TeamView, live: TeamLive | null): Desk => {
     name: m.name,
     role: m.role,
     mascot: m.mascot ?? m.id,
+    accessory: m.accessory,
     status: m.status,
     scene: sceneOf(m.status),
     task: taskOf(live, m.id),
@@ -196,7 +204,7 @@ export interface DeptCard {
   id: string
   name: string
   about: string
-  members: { id: string; name: string; mascot: string; status: BotStatus }[]
+  members: { id: string; name: string; mascot: string; accessory?: string | undefined; status: BotStatus }[]
   working: number
   waiting: number
   /** Chi tiêu hôm nay (USD). */
@@ -216,6 +224,7 @@ export function deptCards(team: TeamView, spend: Readonly<Record<string, number>
       id: m.id,
       name: m.name,
       mascot: m.mascot ?? m.id,
+      accessory: m.accessory,
       status: m.status,
     }))
     const spent = spend[d.id] ?? 0
@@ -236,13 +245,16 @@ export function deptCards(team: TeamView, spend: Readonly<Record<string, number>
 }
 
 /** Bot chưa vào phòng nào (kể cả Aris, đứng đầu). */
-export function looseBots(team: TeamView): { id: string; name: string; role: string; mascot: string }[] {
+export function looseBots(
+  team: TeamView,
+): { id: string; name: string; role: string; mascot: string; accessory?: string | undefined }[] {
   const loose = team.groups.find((g) => g.id === '')?.members ?? []
   return [team.commander, ...loose].map((m) => ({
     id: m.id,
     name: m.name,
     role: m.role,
     mascot: m.mascot ?? m.id,
+    accessory: m.accessory,
   }))
 }
 

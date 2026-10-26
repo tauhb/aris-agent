@@ -12,7 +12,7 @@ import type { PageProps } from '../page.js'
 import { STATUS_DOT } from './Desk.js'
 import { FeedRow } from './FeedRow.js'
 import { assigneeOf, labelPlan, layoutOffice, spotsFor, spreadLabels, type Occupant } from './layout.js'
-import type { Desk, DeskGroup, FeedItem } from './model.js'
+import type { Desk, DeskGroup, Face, FeedItem } from './model.js'
 import type { Actor, OfficeScene } from './scene3d.js'
 
 type T = PageProps['t']
@@ -40,7 +40,7 @@ export function Office3D({
   costNote,
   need,
   lines,
-  mascotOf,
+  faceOf,
   selected,
   onPick,
   onUnsupported,
@@ -55,7 +55,7 @@ export function Office3D({
   costNote: string
   need: number
   lines: readonly FeedItem[] | null
-  mascotOf: (bot: string) => string
+  faceOf: (bot: string) => Face
   selected: string | null
   onPick: (id: string | null) => void
   onUnsupported: () => void
@@ -89,6 +89,7 @@ export function Office3D({
     id: d.id,
     color: getMascot(d.mascot)?.color ?? FALLBACK_COLOR,
     mascot: d.mascot,
+    accessory: d.accessory,
     scene: d.scene,
     commander: i === 0,
   }))
@@ -226,7 +227,7 @@ export function Office3D({
         </div>
         {shown?.length === 0 && <div className="none">{t('of.feed.empty')}</div>}
         {shown?.map((f) => (
-          <FeedRow key={`${f.at}-${f.bot}-${f.kind}-${f.what}`} item={f} t={t} mascot={mascotOf(f.bot)} />
+          <FeedRow key={`${f.at}-${f.bot}-${f.kind}-${f.what}`} item={f} t={t} face={faceOf(f.bot)} />
         ))}
       </div>
     </div>

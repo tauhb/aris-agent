@@ -203,6 +203,7 @@ export function apply(ctx: ClientContext): void {
           handle: b.handle,
           name: b.name,
           mascot: b.mascot,
+          accessory: b.accessory,
           color: getMascot(b.mascot)?.color ?? '#64748B',
         },
       ]),

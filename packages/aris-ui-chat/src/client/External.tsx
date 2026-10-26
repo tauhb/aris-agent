@@ -184,13 +184,16 @@ export function ApprovalDock({ sessionId, t }: { sessionId: string; t: Translate
   const [list, reload] = usePendingApprovals(sessionId)
   const [busy, setBusy] = useState<string | null>(null)
   if (!list.length) return null
-  const mascotOf = (bot: string) => currentTeam().members.find((m) => m.id === bot)?.mascot ?? bot
+  const mascotOf = (bot: string) => {
+    const m = currentTeam().members.find((x) => x.id === bot)
+    return { id: m?.mascot ?? bot, accessory: m?.accessory }
+  }
   return (
     <div className="aris aris-ext-dock">
       {list.map((p) => (
         <div key={p.id} className="aris-ext-ask">
           <div className="h">
-            <Mascot id={mascotOf(p.bot)} size={18} /> {t('ext.ask.title', { name: p.name })}
+            <Mascot {...mascotOf(p.bot)} size={18} /> {t('ext.ask.title', { name: p.name })}
           </div>
           <div className="what">{stepText(t, p)}</div>
           <div className="row">

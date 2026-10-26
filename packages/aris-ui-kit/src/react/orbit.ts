@@ -50,10 +50,10 @@ export function splitMascot(body: string): MascotParts {
   return { shapeSvg: shape, eyes: eyes.filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y)) }
 }
 
-/** Ảnh SVG hoàn chỉnh (data URL) từ thân linh vật, vẽ được bằng `drawImage`. */
-export function svgDataUrl(body: string, px = 200): string {
+/** Ảnh SVG hoàn chỉnh (data URL) từ thân linh vật, vẽ được bằng `drawImage`. Phụ kiện dùng khung rộng hơn (`viewBox`). */
+export function svgDataUrl(body: string, px = 200, viewBox = '0 0 100 100'): string {
   return `data:image/svg+xml,${encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 100 100">${body}</svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="${viewBox}">${body}</svg>`,
   )}`
 }
 

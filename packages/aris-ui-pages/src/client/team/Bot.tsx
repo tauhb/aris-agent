@@ -57,6 +57,7 @@ import { SoulField } from './BotSoul.js'
 import { BotRoutineTab, useBotRoutines } from './BotRoutine.js'
 import { Later, SkillsTab } from './BotTools.js'
 import { ExternalSettings } from './ExternalBot.js'
+import { AccessoryPicker } from './AccessoryPicker.js'
 import { MascotPicker } from './MascotPicker.js'
 
 type Tab = 'soul' | 'model' | 'skills' | 'perms' | 'routine' | 'external'
@@ -87,9 +88,9 @@ function ProfileForm({
     setFromAris(false)
   }, [bot])
   const set = (patch: Partial<BotData>) => (setForm({ ...form, ...patch }), setMsg(null))
-  const dirty = (['name', 'handle', 'role', 'description', 'soul', 'mascot', 'department'] as const).some(
-    (k) => (form[k] ?? '') !== (bot[k] ?? ''),
-  )
+  const dirty = (
+    ['name', 'handle', 'role', 'description', 'soul', 'mascot', 'accessory', 'department'] as const
+  ).some((k) => (form[k] ?? '') !== (bot[k] ?? ''))
 
   async function save() {
     setBusy(true)
@@ -104,6 +105,7 @@ function ProfileForm({
           description: form.description,
           ...(form.soul !== bot.soul ? { soul: form.soul } : {}),
           mascot: form.mascot,
+          ...(form.accessory ? { accessory: form.accessory } : {}),
           department: form.department || null,
         },
         ...(fromAris && form.soul !== bot.soul ? { soulBy: 'aris' } : {}),
@@ -183,6 +185,13 @@ function ProfileForm({
         </div>
         <MascotPicker t={t} value={form.mascot} onChange={(mascot) => set({ mascot })} />
       </div>
+      <AccessoryPicker
+        t={t}
+        mascot={form.mascot}
+        name={form.name}
+        value={form.accessory}
+        onChange={(accessory) => set({ accessory })}
+      />
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         {bot.kind !== 'commander' && (
           <Button variant="ghost" disabled={busy} onClick={() => void remove()}>
@@ -340,7 +349,7 @@ export function BotProfile({ t, nav, params, plugins }: PageProps) {
         <div
           style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14, padding: '18px 24px 0' }}
         >
-          <Mascot id={bot.mascot} size={52} label={getMascot(bot.mascot)?.shape} />
+          <Mascot id={bot.mascot} size={52} label={getMascot(bot.mascot)?.shape} accessory={bot.accessory} />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <h1 className="a-page-title" style={{ fontSize: 20, fontWeight: 700 }}>
               {name}

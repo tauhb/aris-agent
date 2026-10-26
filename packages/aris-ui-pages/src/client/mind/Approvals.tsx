@@ -246,7 +246,7 @@ export function Approvals({ t, nav }: PageProps) {
               aria-current={current && id === idOf(current) ? true : undefined}
               onClick={() => setSelected(id)}
             >
-              <Mascot id={bot?.mascot ?? 'aris'} size={28} />
+              <Mascot id={bot?.mascot ?? 'aris'} size={28} accessory={bot?.accessory} />
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                   <b className="ap-li-title">{titleOf(r)}</b>
@@ -336,10 +336,20 @@ export function Approvals({ t, nav }: PageProps) {
   )
 }
 
-function Head({ mascot, title, context }: { mascot: string; title: string; context: string }) {
+function Head({
+  mascot,
+  accessory,
+  title,
+  context,
+}: {
+  mascot: string
+  accessory?: string | undefined
+  title: string
+  context: string
+}) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-      <Mascot id={mascot} size={40} motion="waiting" />
+      <Mascot id={mascot} size={40} motion="waiting" accessory={accessory} />
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <span style={{ fontSize: 18, fontWeight: 700 }}>{title}</span>
         <span className="a-muted" style={{ fontSize: 13 }}>
@@ -380,6 +390,7 @@ function ActionDetail({
     <>
       <Head
         mascot={bot?.mascot ?? 'aris'}
+        accessory={bot?.accessory}
         title={t('ap.wants', { name: a.name, what: actionLabel(t, a).toLowerCase() })}
         context={`${a.source === 'external' ? t('ap.external') : t('ap.member')} · ${hhmm(a.at)}`}
       />
@@ -467,6 +478,7 @@ function MemoryDetail({
     <>
       <Head
         mascot={bot?.mascot ?? 'aris'}
+        accessory={bot?.accessory}
         title={t('ap.memWants', { name })}
         context={`${t(VIA_KEY[m.via])} · ${hhmm(m.at)} ${new Date(m.at).toLocaleDateString('vi-VN')}`}
       />
@@ -599,6 +611,7 @@ function SkillDetail({
     <>
       <Head
         mascot={bot?.mascot ?? 'aris'}
+        accessory={bot?.accessory}
         title={t(s.base ? 'ap.skillWantsPatch' : 'ap.skillWantsNew', { name, skill: s.name })}
         context={`${t(s.by === 'user' ? 'ap.via.learn' : 'ap.via.reflect')} · ${hhmm(s.at)} ${new Date(s.at).toLocaleDateString('vi-VN')}`}
       />

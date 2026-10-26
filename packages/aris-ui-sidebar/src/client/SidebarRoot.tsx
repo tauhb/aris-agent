@@ -139,6 +139,7 @@ function Bot({
     <Tip label={`${member.name} · ${member.note}`} wide={wide}>
       <BotRow
         mascot={member.mascot ?? member.id}
+        accessory={member.accessory}
         name={member.name}
         note={line || member.note}
         status={member.status}
@@ -182,7 +183,13 @@ function AttentionBot({
         onClick={onOpen}
       />
       <span className="as-mv">
-        <Mascot id={member.mascot ?? member.id} size={28} motion={member.status} seed={member.name} />
+        <Mascot
+          id={member.mascot ?? member.id}
+          size={28}
+          motion={member.status}
+          seed={member.name}
+          accessory={member.accessory}
+        />
       </span>
       <span className="txt">
         <span className="nm">
@@ -238,7 +245,13 @@ function RestStrip({
                   aria-label={`${who} · ${t(`status.${m.status}`)}`}
                   onClick={() => onOpen(m.id)}
                 >
-                  <Mascot id={m.mascot ?? m.id} size={30} motion={m.status} seed={m.name} />
+                  <Mascot
+                    id={m.mascot ?? m.id}
+                    size={30}
+                    motion={m.status}
+                    seed={m.name}
+                    accessory={m.accessory}
+                  />
                   <span className={`as-dot ${m.status}`} aria-hidden="true" />
                 </button>
               </Tooltip>

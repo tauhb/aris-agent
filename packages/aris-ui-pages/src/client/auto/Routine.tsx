@@ -171,7 +171,7 @@ export function Routine({ t, nav }: PageProps) {
           return (
             <div className="ap-rt" key={r.id}>
               <span title={bot?.name} style={{ display: 'inline-flex' }}>
-                <Mascot id={bot?.mascot ?? 'aris'} size={26} />
+                <Mascot id={bot?.mascot ?? 'aris'} size={26} accessory={bot?.accessory} />
               </span>
               <span className={off ? 'a-muted' : undefined} style={{ minWidth: 0 }}>
                 {r.last?.sessionId ? (

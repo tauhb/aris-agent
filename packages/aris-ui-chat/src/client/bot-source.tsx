@@ -54,7 +54,7 @@ const icons = new Map<string, ComponentType<IconProps>>()
  * chữ tên thường của dsh ở dòng bot được ẩn bằng CSS. Giữ một component cho mỗi bot.
  */
 function iconOf(b: BotData): ComponentType<IconProps> {
-  const key = `${b.mascot}|${b.name}`
+  const key = `${b.mascot}|${b.accessory ?? ''}|${b.name}`
   let icon = icons.get(key)
   if (!icon) {
     const color = getMascot(b.mascot)?.color ?? '#64748B'
@@ -63,7 +63,7 @@ function iconOf(b: BotData): ComponentType<IconProps> {
         className={`aris-who aris-who-menu ${className ?? ''}`}
         style={{ '--who': color } as CSSProperties}
       >
-        <Mascot id={b.mascot} size={18} />
+        <Mascot id={b.mascot} size={18} accessory={b.accessory} />
         {b.name}
       </span>
     )

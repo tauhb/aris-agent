@@ -99,7 +99,7 @@ export function CreateProject({ t, nav, projects }: PageProps & { projects: Proj
             className="ap-chip ap-pick"
             aria-pressed
           >
-            <Mascot id={team.commander.mascot ?? 'aris'} size={18} />
+            <Mascot id={team.commander.mascot ?? 'aris'} size={18} accessory={team.commander.accessory} />
             {team.commander.name}
             <span className="a-muted"> {t('project.lead')}</span>
           </button>
@@ -113,7 +113,7 @@ export function CreateProject({ t, nav, projects }: PageProps & { projects: Proj
               className="ap-chip ap-pick"
               onClick={() => toggle(b.id)}
             >
-              <Mascot id={b.mascot} size={18} />
+              <Mascot id={b.mascot} size={18} accessory={b.accessory} />
               {b.name}
             </button>
           ))}

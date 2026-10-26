@@ -65,7 +65,7 @@ export function Drawer({
   return (
     <aside className="ap-of-drawer" aria-label={t('of.dr.aria', { name: desk.name })}>
       <header>
-        <Mascot id={desk.mascot} size={48} />
+        <Mascot id={desk.mascot} size={48} accessory={desk.accessory} />
         <span className="t">
           <b>{desk.name}</b>
           <small>{desk.role}</small>

@@ -15,8 +15,17 @@ export function Num({ value, label, width = 64 }: { value: string; label: string
   )
 }
 
-export function Bot({ id, size = 22 }: { id: string; size?: number }) {
-  return <Mascot id={id} size={size} />
+export function Bot({
+  id,
+  size = 22,
+  accessory,
+}: {
+  id: string
+  size?: number
+  /** Phụ kiện của linh vật (xem `resolveAccessory`); bỏ trống là mặc định của dáng. */
+  accessory?: string | undefined
+}) {
+  return <Mascot id={id} size={size} accessory={accessory} />
 }
 
 export function Dot({ color, size = 9 }: { color: string; size?: number }) {

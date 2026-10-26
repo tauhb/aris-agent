@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "@aris/home": "workspace:*",
+    "@aris/ui-kit": "workspace:*",
     "zod": "4.4.3",
     "@deepseek-ai/dsh-mcp-client": "0.2.1-rc.2",
     "@deepseek-ai/dsh-subprocess": "0.2.1-rc.2",

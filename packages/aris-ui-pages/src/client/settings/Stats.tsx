@@ -24,6 +24,7 @@ interface Row {
   bot: string
   botName: string
   mascot: string
+  accessory?: string | undefined
   title: string
   by: string
   source: string
@@ -269,7 +270,7 @@ function Overview({ t, nav }: PageProps) {
                 {logTime(r.firstAt)}
               </span>
               <span title={r.botName}>
-                <Bot id={r.mascot} />
+                <Bot id={r.mascot} accessory={r.accessory} />
               </span>
               <span className="ap-sxses">
                 <span className="ap-sxtitle">{r.title || t('sx.untitled')}</span>

@@ -29,6 +29,8 @@ export interface BotOption {
   note?: string | undefined
   /** Mã linh vật; bỏ trống thì dùng `icon`. */
   mascot?: string | undefined
+  /** Phụ kiện của linh vật (xem `resolveAccessory`); bỏ trống là mặc định của dáng. */
+  accessory?: string | undefined
   /** Biểu tượng cho lựa chọn không phải bot (ví dụ "Bot trống", "Để Aris chọn"). */
   icon?: ReactNode | undefined
   /** Nhãn nhóm (phòng ban); lựa chọn liền nhau cùng nhóm đứng dưới một nhãn. */
@@ -49,7 +51,7 @@ export function filterBotOptions(options: readonly BotOption[], query: string): 
 }
 
 function Face({ option, size }: { option: BotOption; size: number }) {
-  if (option.mascot) return <Mascot id={option.mascot} size={size} />
+  if (option.mascot) return <Mascot id={option.mascot} size={size} accessory={option.accessory} />
   if (option.icon === undefined) return null
   return (
     <span className="face" style={{ width: size, height: size }} aria-hidden="true">

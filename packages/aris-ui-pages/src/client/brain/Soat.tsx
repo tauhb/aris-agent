@@ -61,7 +61,7 @@ interface Data {
   schedule: { machineHour: number; deepDay: number; deepHour: number; capUsd: number }
   strong: string[]
   departments: { id: string; name: string }[]
-  bots: { id: string; name: string; mascot?: string }[]
+  bots: { id: string; name: string; mascot?: string; accessory?: string }[]
 }
 
 const GROUPS: { key: string; kinds: Kind[] }[] = [
@@ -661,7 +661,7 @@ export function Soat({ t, nav }: PageProps) {
                   const strong = !!f.bot && !!data?.strong.includes(f.bot)
                   return (
                     <div className="ap-sbline ap-sbbot" key={f.id}>
-                      <Mascot id={bot?.mascot ?? 'aris'} size={22} />
+                      <Mascot id={bot?.mascot ?? 'aris'} size={22} accessory={bot?.accessory} />
                       <b>{f.title}</b>
                       <span className="a-muted">{t('sb.botStat', { n: s.nudged, m: s.followed })}</span>
                       <span className="ap-sbbar">

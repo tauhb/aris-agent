@@ -51,6 +51,19 @@ describe('kho bot', () => {
     expect(suggestHandle('Đặng Thơ')).toBe('dang-tho')
   })
 
+  it('phụ kiện linh vật: nhận mã hợp lệ và none, bỏ qua mã lạ, giữ giá trị cũ', async () => {
+    const s = await store()
+    const b = await s.create({ handle: 'tho', name: 'Thơ', mascot: 'ha', accessory: 'mu-noi' })
+    expect(b.accessory).toBe('mu-noi')
+    expect((await s.create({ handle: 'an', name: 'An', accessory: 'mu-la' })).accessory).toBeUndefined()
+    expect((await s.create({ handle: 'vy', name: 'Vy' })).accessory).toBeUndefined()
+    expect((await s.update(b.id, { accessory: 'kinh' })).accessory).toBe('kinh')
+    expect((await s.update(b.id, { accessory: 'mu-la' })).accessory).toBe('kinh')
+    expect((await s.update(b.id, { role: 'Viết' })).accessory).toBe('kinh')
+    expect((await s.update(b.id, { accessory: 'none' })).accessory).toBe('none')
+    expect(s.get(b.id)?.accessory).toBe('none')
+  })
+
   it('sửa tên gọi không đổi mã nội bộ; phiên đã gắn vẫn theo bot', async () => {
     const s = await store()
     const b = await s.create({ handle: 'an', name: 'An' })

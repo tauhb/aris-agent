@@ -12,7 +12,7 @@ export function botNote(b: Pick<BotData, 'role' | 'description'>): string {
 }
 
 export function botOption(b: BotData, extra: Partial<SelectOption> = {}): SelectOption {
-  return { id: b.id, name: b.name, mascot: b.mascot, note: botNote(b), ...extra }
+  return { id: b.id, name: b.name, mascot: b.mascot, accessory: b.accessory, note: botNote(b), ...extra }
 }
 
 /**

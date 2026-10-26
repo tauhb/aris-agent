@@ -140,7 +140,7 @@ function Members({
         <CardRow key={m.id}>
           <span className="ap-dep-member">
             <span className="who">
-              <Mascot id={m.mascot ?? m.id} size={28} />
+              <Mascot id={m.mascot ?? m.id} size={28} accessory={m.accessory} />
               <span style={{ minWidth: 0 }}>
                 <b>{m.name}</b>
                 <div className="a-muted" style={{ fontSize: 12.5 }}>
@@ -430,7 +430,7 @@ export function CreateDialog({
               aria-pressed={picked.includes(b.id)}
               onClick={() => toggle(b.id)}
             >
-              <Mascot id={b.mascot} size={16} />
+              <Mascot id={b.mascot} size={16} accessory={b.accessory} />
               {b.name} · {depName(b.department)}
             </button>
           ))}

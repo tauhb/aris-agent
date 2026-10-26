@@ -1,5 +1,5 @@
 /** 2.1 · Tạo bot mới (bot của aris) và 2.1b · Thêm bot ngoài nói ACP, chung một hộp thoại hai loại. */
-import { MASCOTS, getMascot } from '@aris/ui-kit'
+import { MASCOTS, NO_ACCESSORY, getMascot } from '@aris/ui-kit'
 import {
   BotPicker,
   Button,
@@ -154,7 +154,7 @@ function ArisBot({ t, nav }: PageProps) {
                 title={`${m.shape} · ${m.role}`}
                 onClick={() => setMascot(m.id)}
               >
-                <Mascot id={m.id} size={26} />
+                <Mascot id={m.id} size={26} accessory={NO_ACCESSORY} />
               </button>
             ))}
           </div>

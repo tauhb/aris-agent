@@ -178,7 +178,7 @@ export function Commander({ t, nav }: PageProps) {
     <PageShell
       title={
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-          <Mascot id={COMMANDER.mascot ?? COMMANDER.id} size={30} />
+          <Mascot id={COMMANDER.mascot ?? COMMANDER.id} size={30} accessory={COMMANDER.accessory} />
           {t('cmd.title', { name: COMMANDER.name })}
         </span>
       }
@@ -192,7 +192,7 @@ export function Commander({ t, nav }: PageProps) {
               const on = canTake(b)
               return (
                 <div className="a-row" key={b.id}>
-                  <Mascot id={b.mascot} size={24} />
+                  <Mascot id={b.mascot} size={24} accessory={b.accessory} />
                   <label
                     className="grow"
                     style={{ minWidth: 0, cursor: 'pointer' }}
@@ -311,7 +311,7 @@ export function Commander({ t, nav }: PageProps) {
                       key={`${l.bot}-${l.kind}`}
                       style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5 }}
                     >
-                      <Mascot id={b?.mascot ?? l.bot} size={22} />
+                      <Mascot id={b?.mascot ?? l.bot} size={22} accessory={b?.accessory} />
                       <span style={{ flex: 1, minWidth: 0 }}>
                         <b>{b?.name ?? l.bot}</b> · {l.kind}
                       </span>

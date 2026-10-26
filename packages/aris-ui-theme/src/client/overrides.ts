@@ -9,6 +9,9 @@
  * băm: chỉ bám phần đuôi tên cục bộ (`[class*="_bubble"]`) và, với thẻ duyệt, bám thêm thuộc tính
  * `data-approval-*` mà dsh gắn cố định vào DOM. `brand.test.ts` kiểm các điểm bám này còn đủ và còn duy nhất
  * mỗi khi nâng dsh.
+ *
+ * Thêm biến `--acc-edge` cho phụ kiện linh vật (`@aris/ui-kit`, `accessories.ts`): viền mảnh để phụ kiện màu tối
+ * (tai nghe, mũ tốt nghiệp, máy tính) không chìm vào nền tối. Nền sáng thì trong suốt.
  */
 import { THEMES } from '@aris/ui-kit'
 
@@ -35,6 +38,8 @@ export const DSH_ANCHORS = {
 const CARD = '[data-approval-key]>[class*="_card"]'
 
 export const OVERRIDES_CSS = `
+:root{--acc-edge:transparent}
+body[data-ds-dark-theme]{--acc-edge:rgba(255,255,255,.45)}
 body [class*="_bubble"]{color:${THEMES.light.panel};border-radius:18px 18px 6px 18px;padding:10px 14px}
 body[data-ds-dark-theme] [class*="_bubble"]{color:${THEMES.dark.panel}}
 body ${CARD}{border:0;border-radius:14px;background:var(--dsw-alias-state-warn-tertiary);box-shadow:none}

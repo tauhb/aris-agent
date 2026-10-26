@@ -70,15 +70,15 @@ function hash(text: string): number {
 export function branchBot(
   agentPreset: string | undefined,
   key: string,
-): { mascot: string; name: string | undefined } {
+): { mascot: string; accessory: string | undefined; name: string | undefined } {
   const team = currentTeam()
   const members = [team.commander, ...team.members]
   const member = agentPreset
     ? members.find((m) => m.handle === agentPreset || m.id === agentPreset)
     : undefined
-  if (member) return { mascot: member.mascot ?? member.id, name: member.name }
+  if (member) return { mascot: member.mascot ?? member.id, accessory: member.accessory, name: member.name }
   const free = MASCOTS.filter((m) => !m.inUse)
-  return { mascot: free[hash(agentPreset ?? key) % free.length]!.id, name: agentPreset }
+  return { mascot: free[hash(agentPreset ?? key) % free.length]!.id, accessory: undefined, name: agentPreset }
 }
 
 export interface BranchStepModel {

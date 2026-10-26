@@ -44,6 +44,7 @@ interface Data {
   bot: string
   botName: string
   mascot: string
+  accessory?: string | undefined
   title: string
   by: string
   source: string
@@ -263,7 +264,7 @@ export function Replay({ t, nav, sid }: PageProps & { sid: string }) {
         <Button size="sm" onClick={back}>
           {t('rp.back')}
         </Button>
-        <Bot id={data.mascot} size={26} />
+        <Bot id={data.mascot} accessory={data.accessory} size={26} />
         <div className="grow ap-rptitle">
           <h1 className="a-page-title ap-rpname">{title}</h1>
           <span className="a-page-sub">{sub}</span>

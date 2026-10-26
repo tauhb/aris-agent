@@ -1,7 +1,9 @@
 /**
  * Linh vật phong cách Grokbot: một khối màu phẳng, đúng hai mắt trắng, không
- * miệng hay phụ kiện. Chỉ dùng cho bot (không dùng cho nút đồ thị).
+ * miệng. Phụ kiện (mũ, kính…) vẽ riêng ở `accessories.ts`, đeo thêm lên thân. Chỉ dùng
+ * cho bot (không dùng cho nút đồ thị).
  */
+import { ACCESSORY_VIEWBOX, PLAIN_VIEWBOX, accessoryOf } from './accessories.js'
 import { MASCOTS } from './mascots.generated.js'
 
 export interface Mascot {
@@ -29,12 +31,17 @@ export function getMascot(id: string): Mascot | undefined {
   return MASCOTS.find((m) => m.id === id)
 }
 
-/** SVG hoàn chỉnh của một linh vật; `label` rỗng thì ẩn với trình đọc màn hình. */
-export function mascotSvg(id: string, size = 32, label = ''): string {
+/**
+ * SVG hoàn chỉnh của một linh vật; `label` rỗng thì ẩn với trình đọc màn hình. `accessory` theo
+ * `resolveAccessory`: bỏ trống là phụ kiện mặc định của dáng, `'none'` là không đeo.
+ */
+export function mascotSvg(id: string, size = 32, label = '', accessory?: string): string {
   const m = getMascot(id)
   if (!m) throw new Error(`không có linh vật "${id}"`)
   const a11y = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"'
-  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" ${a11y}>${m.body}</svg>`
+  const acc = accessoryOf(id, accessory)
+  const viewBox = acc ? ACCESSORY_VIEWBOX : PLAIN_VIEWBOX
+  return `<svg width="${size}" height="${size}" viewBox="${viewBox}" ${a11y}>${m.body}${acc ?? ''}</svg>`
 }
 
 /** Phần tô hoặc nét trắng: mắt của linh vật. */

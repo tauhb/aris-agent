@@ -3,6 +3,7 @@
  * Không chứa chữ cố định; nhãn do nơi dùng truyền vào (đã dịch).
  */
 import { forwardRef, useMemo, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from 'react'
+import { ACCESSORY_VIEWBOX, PLAIN_VIEWBOX, accessoryOf } from '../accessories.js'
 import { getMascot, markEyes, motionVars } from '../mascots.js'
 import { STATUSES, type BotStatus } from '../status.js'
 
@@ -165,6 +166,9 @@ export function CardRow({ label, children }: { label?: ReactNode; children?: Rea
  * Linh vật của bot (khối màu, hai mắt). Có `motion` thì chuyển động theo trạng thái (bản vẽ "Linh vật
  * chuyển động"): rảnh thở nhẹ, đang làm nhún, chờ duyệt nhảy gọi, xong nảy một lần, vấp lắc đầu.
  * Danh sách chọn, menu, ô nhỏ để đứng yên (không truyền `motion`).
+ *
+ * Phụ kiện đeo thêm lên thân theo `resolveAccessory`: bỏ trống là phụ kiện mặc định của dáng, `'none'` là không
+ * đeo (nơi chọn dáng dùng). Có phụ kiện thì khung nhìn rộng hơn để mũ không bị cắt.
  */
 export function Mascot({
   id,
@@ -172,22 +176,29 @@ export function Mascot({
   label,
   motion,
   seed,
+  accessory,
 }: {
   id: string
   size?: number | undefined
   label?: string | undefined
   motion?: BotStatus | undefined
+  accessory?: string | undefined
   /** Hạt giống lệch nhịp, mặc định là `id`; nhiều bot cùng dáng thì truyền mã bot. */
   seed?: string | undefined
 }) {
   const a11y = label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true as const }
   const m = getMascot(id)
-  const body = useMemo(() => (motion && m ? markEyes(m.body) : (m?.body ?? '')), [m, motion])
+  const acc = useMemo(() => accessoryOf(id, accessory), [id, accessory])
+  // Chỉ đánh dấu mắt trên thân; phần trắng của phụ kiện (quả bông mũ len, mũ đầu bếp…) không được chớp như mắt.
+  const body = useMemo(
+    () => (motion && m ? markEyes(m.body) : (m?.body ?? '')) + (acc ?? ''),
+    [m, motion, acc],
+  )
   const svg = (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 100 100"
+      viewBox={acc ? ACCESSORY_VIEWBOX : PLAIN_VIEWBOX}
       style={{ flex: 'none' }}
       {...a11y}
       dangerouslySetInnerHTML={{ __html: body }}

@@ -16,12 +16,14 @@ export function branchColor(mascot: string): string {
 /** Một nhánh việc: linh vật, tên bot, việc được giao, rồi các bước. */
 export function TaskBranch({
   mascot,
+  accessory,
   name,
   task,
   meta,
   children,
 }: {
   mascot: string
+  accessory?: string | undefined
   name: ReactNode
   task?: ReactNode | undefined
   /** Chữ phụ hoặc nút ở cuối dòng đầu nhánh. */
@@ -31,7 +33,7 @@ export function TaskBranch({
   return (
     <div className="a-branch" style={{ ['--a-branch' as string]: branchColor(mascot) } as CSSProperties}>
       <div className="a-branch-head">
-        <Mascot id={mascot} size={20} />
+        <Mascot id={mascot} size={20} accessory={accessory} />
         <span className="nm">{name}</span>
         {task !== undefined && <span className="task">{task}</span>}
         {meta !== undefined && <span className="meta">{meta}</span>}

@@ -264,6 +264,15 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .aris .ap-mascot-more{height:44px;flex:none;border-radius:12px;border:1px dashed var(--a-line);background:transparent;color:var(--a-muted);display:inline-flex;align-items:center;gap:6px;padding:0 12px;font-size:13px;white-space:nowrap}
 .aris .ap-mascot-more:hover{color:var(--a-ink);border-color:var(--a-muted)}
 .ap-mascot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:8px;justify-items:center}
+.ap-acc{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+.ap-acc-now{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:130px}
+.ap-acc-now b{font-size:15px;margin-top:4px}
+.ap-acc-chip{font-size:11.5px;font-weight:600;color:var(--a-accent);background:var(--a-accentSoft);border-radius:999px;padding:1px 9px;margin-top:4px}
+.ap-acc-main{flex:1;min-width:260px}
+.ap-acc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:6px}
+.aris .ap-acc-grid>button{height:54px;border-radius:12px;border:1px solid var(--a-line);background:var(--a-panel);display:inline-flex;align-items:center;justify-content:center;padding:0}
+.aris .ap-acc-grid>button:hover{background:var(--a-panel2)}
+.aris .ap-acc-grid>button[aria-checked=true]{border:2px solid var(--a-accent);background:var(--a-accentSoft)}
 .ap-mascots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;width:100%}
 .aris .ap-mascots button{width:44px;height:44px;border-radius:12px;border:1px solid var(--a-line);background:var(--a-panel);display:inline-flex;align-items:center;justify-content:center}
 .aris .ap-mascots button[aria-checked=true]{border:2px solid var(--a-accent);background:var(--a-accentSoft)}

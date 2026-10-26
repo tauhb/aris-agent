@@ -16,6 +16,8 @@ export interface BotData {
   description: string
   soul: string
   mascot: string
+  /** Mã phụ kiện linh vật hoặc `'none'`; không có là phụ kiện mặc định của dáng. */
+  accessory?: string
   model?: { provider: string; model: string }
   department?: string
   /** Bot ngoài (Claude Code, Codex, ACP). */
@@ -318,6 +320,7 @@ export const toMember = (b: BotData, l?: BotLive): TeamMember => ({
   note: l && l.status !== 'idle' && l.task ? l.task : b.role,
   status: l?.status ?? 'idle',
   mascot: b.mascot,
+  accessory: b.accessory,
   handle: b.handle,
 })
 

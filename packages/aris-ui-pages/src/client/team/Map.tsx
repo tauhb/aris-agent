@@ -121,7 +121,13 @@ export function TeamMap({ t, nav }: PageProps) {
       <aside className="ap-aside" aria-label={t('map.selected')}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <span className="ap-tile">
-            <Mascot id={bot.mascot ?? bot.id} size={44} motion={bot.status} seed={bot.id} />
+            <Mascot
+              id={bot.mascot ?? bot.id}
+              size={44}
+              motion={bot.status}
+              seed={bot.id}
+              accessory={bot.accessory}
+            />
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
             <span style={{ fontWeight: 700, fontSize: 17 }}>{bot.name}</span>

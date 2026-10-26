@@ -241,7 +241,7 @@ export function RoutineNew({ t, nav, params }: PageProps) {
             />
           ) : (
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Mascot id={bot?.mascot ?? 'aris'} size={22} />
+              <Mascot id={bot?.mascot ?? 'aris'} size={22} accessory={bot?.accessory} />
               {bot?.name ?? draft.bot}
             </span>
           ),

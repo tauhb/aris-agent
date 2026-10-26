@@ -10,6 +10,8 @@ export interface TeamMember {
   name: string
   /** Mã linh vật; bỏ trống thì dùng mã bot (đội mẫu cũ). */
   mascot?: string | undefined
+  /** Phụ kiện của linh vật (xem `resolveAccessory`); bỏ trống là phụ kiện mặc định của dáng. */
+  accessory?: string | undefined
   /** Tên gọi `@handle`. */
   handle?: string | undefined
   /** Vai trong đội, hiện khi rê chuột trên sơ đồ đội. */

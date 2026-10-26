@@ -3,6 +3,7 @@
  * mẫu, gắn bot vào phiên). Đọc đồng bộ từ bộ nhớ, ghi bền qua backend của dsh.
  */
 import { randomBytes } from 'node:crypto'
+import { NO_ACCESSORY, isAccessoryId } from '@aris/ui-kit'
 import type { BotRecord, DepartmentRecord, OwnerRecord, SessionRecord, Tables } from './domain.js'
 import { cleanExternal, ExternalConfigError, type ExternalConfig } from './external.js'
 import { cleanPolicy, DEFAULT_POLICY, type Policy } from './policy.js'
@@ -24,6 +25,8 @@ export interface BotInput {
   description?: string
   soul?: string
   mascot?: string
+  /** Mã phụ kiện linh vật hoặc `'none'` (không đeo); không có là theo mặc định của dáng. Mã lạ thì bỏ qua. */
+  accessory?: string
   model?: { provider: string; model: string } | null
   department?: string | null
   /** Bot ngoài: cấu hình gửi từ hộp Thêm bot ngoài (xem `cleanExternal`); `null` là bỏ. */
@@ -152,6 +155,12 @@ export function suggestHandle(name: string): string {
 
 const clean = (s: string | undefined, max: number) => (s ?? '').trim().slice(0, max)
 
+/** Mã phụ kiện hợp lệ (một trong 22 phụ kiện hay `'none'`); giá trị lạ trả `undefined` để nơi gọi giữ giá trị cũ. */
+const cleanAccessory = (v: unknown): string | undefined => {
+  const a = typeof v === 'string' ? v.trim() : ''
+  return a === NO_ACCESSORY || isAccessoryId(a) ? a : undefined
+}
+
 export class BotStore {
   constructor(
     private t: Tables,
@@ -266,6 +275,7 @@ export class BotStore {
     let id: string
     do id = `b-${randomBytes(3).toString('hex')}`
     while (this.t.bots.get(id))
+    const accessory = cleanAccessory(input.accessory)
     const rec: BotRecord = {
       id,
       kind: 'member',
@@ -275,6 +285,7 @@ export class BotStore {
       description: clean(input.description, 1000),
       soul: clean(input.soul, 2000),
       mascot: clean(input.mascot, 40) || 'tron',
+      ...(accessory ? { accessory } : {}),
       ...(input.model ? { model: input.model } : {}),
       ...(input.department ? { department: input.department } : {}),
       ...(input.external ? { external: this.external(input.external) } : {}),
@@ -303,6 +314,8 @@ export class BotStore {
       soul: patch.soul !== undefined ? clean(patch.soul, 2000) : prev.soul,
       mascot: patch.mascot !== undefined ? clean(patch.mascot, 40) || prev.mascot : prev.mascot,
     }
+    const accessory = cleanAccessory(patch.accessory)
+    if (accessory) rec.accessory = accessory
     if (patch.model === null) delete rec.model
     else if (patch.model) rec.model = patch.model
     if (patch.department === null) delete rec.department

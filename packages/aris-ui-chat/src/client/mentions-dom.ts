@@ -11,6 +11,8 @@ export interface MentionBot {
   handle: string
   name: string
   mascot: string
+  /** Phụ kiện của linh vật (xem `resolveAccessory`); bỏ trống là mặc định của dáng. */
+  accessory?: string | undefined
   color: string
 }
 
@@ -30,7 +32,7 @@ export function mentionElement(doc: Document, bot: MentionBot, title: string): H
   el.style.setProperty('--who', bot.color)
   let svg = ''
   try {
-    svg = mascotSvg(bot.mascot, 18)
+    svg = mascotSvg(bot.mascot, 18, '', bot.accessory)
   } catch {
     // Linh vật không còn trong thư viện: chỉ hiện tên.
   }

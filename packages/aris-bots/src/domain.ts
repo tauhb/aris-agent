@@ -30,6 +30,8 @@ export const botRecord = z.object({
   /** Tính cách, cách làm việc, giọng văn. */
   soul: z.string(),
   mascot: z.string(),
+  /** Mã phụ kiện linh vật hoặc `'none'` (không đeo); không có là theo phụ kiện mặc định của dáng. */
+  accessory: z.string().optional(),
   model: modelRef.optional(),
   department: z.string().optional(),
   /** Bot ngoài (Claude Code, Codex, ACP): chạy qua plugin của dsh, không có phiên riêng. */

@@ -19,7 +19,7 @@ import type { PageProps } from '../page.js'
 import { clockSec } from '../settings/stats-format.js'
 import { Departments } from './Departments.js'
 import { Overview } from './Overview.js'
-import { needsYou, type Need } from './model.js'
+import { needsYou, type Face, type Need } from './model.js'
 
 type T = PageProps['t']
 type Tab = 'overview' | 'departments' | 'kanban'
@@ -62,13 +62,13 @@ function NeedBell({
   t,
   nav,
   needs,
-  mascotOf,
+  faceOf,
   reload,
 }: {
   t: T
   nav: PageProps['nav']
   needs: readonly Need[]
-  mascotOf: (bot: string) => string
+  faceOf: (bot: string) => Face
   reload: () => void
 }) {
   const [open, setOpen] = useState(false)
@@ -110,7 +110,7 @@ function NeedBell({
           {needs.length === 0 && <div className="none">{t('of.need.empty')}</div>}
           {needs.map((n) => (
             <div key={n.kind === 'approval' ? n.id : `q-${n.bot}`}>
-              <Mascot id={mascotOf(n.bot)} size={26} />
+              <Mascot {...faceOf(n.bot)} size={26} />
               {n.kind === 'approval' ? (
                 <>
                   <span className="t" title={n.target}>
@@ -161,7 +161,10 @@ export function Office({ t, nav, params }: PageProps) {
   // Đường vào mới (Kanban cũ, thẻ dự án) đổi tab ngay cả khi trang đã mở.
   useEffect(() => setTab(tabOf(params.tab)), [params])
   const needs = needsYou(approvals, live, team.bots)
-  const mascotOf = (bot: string) => team.bots.find((b) => b.id === bot)?.mascot ?? bot
+  const faceOf = (bot: string): Face => {
+    const b = team.bots.find((x) => x.id === bot)
+    return { id: b?.mascot ?? bot, accessory: b?.accessory }
+  }
 
   return (
     <div className="ap-of">
@@ -195,7 +198,7 @@ export function Office({ t, nav, params }: PageProps) {
           ))}
         </span>
         <Clock />
-        <NeedBell t={t} nav={nav} needs={needs} mascotOf={mascotOf} reload={reload} />
+        <NeedBell t={t} nav={nav} needs={needs} faceOf={faceOf} reload={reload} />
       </header>
       {noGl && (
         <div className="ap-of-note3d" role="status">

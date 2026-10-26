@@ -82,17 +82,17 @@ function ProjectIdentity({ t, title, path }: { t: Translate; title: string; path
   const team = useTeam()
   const project = useProjectByPath(path)?.project
   const members = [
-    { id: team.commander.id, mascot: team.commander.mascot ?? 'aris' },
+    { id: team.commander.id, mascot: team.commander.mascot ?? 'aris', accessory: team.commander.accessory },
     ...(project?.members ?? []).flatMap((id) => {
       const m = team.members.find((b) => b.id === id)
-      return m ? [{ id: m.id, mascot: m.mascot ?? m.id }] : []
+      return m ? [{ id: m.id, mascot: m.mascot ?? m.id, accessory: m.accessory }] : []
     }),
   ]
   return (
     <span className="aris aris-ch" aria-label={t('project.label', { name: title, n: members.length })}>
       <span className="stack" aria-hidden="true">
         {members.map((m) => (
-          <Mascot key={m.id} id={m.mascot} size={24} />
+          <Mascot key={m.id} id={m.mascot} size={24} accessory={m.accessory} />
         ))}
       </span>
       <span className="botName">{title}</span>
@@ -113,7 +113,7 @@ export function BotIdentity({ t, sessionId }: { t: Translate; sessionId?: string
   }
   return (
     <span className="aris aris-ch" aria-label={t('bot.chattingWith', current)}>
-      <Mascot id={bot?.mascot ?? 'aris'} size={26} />
+      <Mascot id={bot?.mascot ?? 'aris'} size={26} accessory={bot?.accessory} />
       <span className="botName">{current.name}</span>
       {current.role && <Pill>{current.role}</Pill>}
       <span className="slash" aria-hidden="true">

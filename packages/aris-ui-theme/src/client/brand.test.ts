@@ -15,6 +15,11 @@ describe('nhận diện aris', () => {
     expect(faviconHref('light')).toMatch(/^data:image\/svg\+xml,/)
     expect(decodeURIComponent(faviconHref('dark'))).toContain('#EDEEF1')
   })
+
+  it('có biến viền phụ kiện cho cả nền sáng và nền tối', () => {
+    expect(OVERRIDES_CSS).toContain(':root{--acc-edge:transparent}')
+    expect(OVERRIDES_CSS).toContain('body[data-ds-dark-theme]{--acc-edge:rgba(255,255,255,.45)}')
+  })
 })
 
 describe('chỉnh CSS bám lớp của dsh', () => {

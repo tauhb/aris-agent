@@ -4,6 +4,7 @@
  * chọn tự viết (không dùng addon). Dọn đủ khi `dispose()`. Chỉ nạp khi người dùng bật 3D (`import()` động ở `Office3D`).
  */
 import * as T from 'three'
+import { buildAccessory, disposeAccessory } from './accessory3d.js'
 import type { OfficeLayout, Spot } from './layout.js'
 import type { Scene } from './model.js'
 
@@ -11,8 +12,10 @@ export interface Actor {
   id: string
   /** Màu thân (màu chủ đạo của linh vật). */
   color: string
-  /** Mã linh vật, để gắn phụ kiện riêng của dáng. */
+  /** Mã linh vật, để chọn phụ kiện mặc định của dáng. */
   mascot: string
+  /** Phụ kiện đã lưu của bot (xem `resolveAccessory`); bỏ trống là mặc định của dáng. */
+  accessory?: string | undefined
   scene: Scene
   commander: boolean
 }
@@ -83,7 +86,10 @@ interface BotState {
   tilt: number
   phase: number
   scale: number
-  extras: T.Object3D[]
+  /** Khoá phụ kiện đang đeo (dáng + phụ kiện đã lưu), để dựng lại khi đổi. */
+  accKey: string
+  /** Nhóm phụ kiện đang đeo; hình và vật liệu riêng của bot nên tự dọn khi bỏ bot hay đổi phụ kiện. */
+  acc: T.Object3D | null
 }
 
 /** Số giả ngẫu nhiên có hạt giống: đèn thành phố giống nhau mỗi lần dựng. */
@@ -156,8 +162,6 @@ export function createScene(opts: SceneOptions): OfficeScene {
   }
   const eyeM = own(new T.MeshBasicMaterial({ color: 0xffffff }))
   const pupM = own(new T.MeshBasicMaterial({ color: 0x16171b }))
-  const inkM = own(new T.MeshStandardMaterial({ color: 0x16171b, roughness: 0.8 }))
-  const goldM = own(new T.MeshStandardMaterial({ color: 0xffaa00, roughness: 0.8 }))
   const ringM = own(new T.MeshBasicMaterial({ color: 0x1d6fe0, transparent: true, opacity: 0.9 }))
   const ring = new T.Mesh(own(new T.RingGeometry(0.62, 0.78, 40)), ringM)
   ring.rotation.x = -Math.PI / 2
@@ -343,6 +347,27 @@ export function createScene(opts: SceneOptions): OfficeScene {
   let input: SceneInput | null = null
   let selected: string | null = null
 
+  const accessoryKey = (a: Actor) => `${a.mascot}|${a.accessory ?? ''}`
+  /** Đeo phụ kiện của bot lên nhóm `g` (phóng theo cỡ bot `s`); trả nhóm phụ kiện, hoặc `null` khi không đeo. */
+  const wear = (g: T.Group, a: Actor, s: number) => {
+    const acc = buildAccessory(a.mascot, a.accessory)
+    if (!acc) return null
+    acc.scale.setScalar(s)
+    acc.traverse((m) => {
+      m.userData['key'] = a.id
+    })
+    g.add(acc)
+    return acc
+  }
+
+  /** Bỏ phụ kiện đang đeo, giải phóng hình và vật liệu của nó. */
+  const takeOff = (b: BotState) => {
+    if (!b.acc) return
+    b.group.remove(b.acc)
+    disposeAccessory(b.acc)
+    b.acc = null
+  }
+
   const makeBot = (a: Actor, spot: Spot | undefined): BotState => {
     const s = a.commander ? 1.15 : 1
     const g = new T.Group()
@@ -353,7 +378,6 @@ export function createScene(opts: SceneOptions): OfficeScene {
     g.add(body)
     const eyeG = new T.SphereGeometry(0.1 * s, 12, 10)
     const pupG = new T.SphereGeometry(0.05 * s, 10, 8)
-    const extras: T.Object3D[] = []
     for (const ex of [-0.15, 0.15]) {
       const e = new T.Mesh(eyeG, eyeM)
       e.position.set(ex * s, 0.85 * s, 0.36 * s)
@@ -361,34 +385,7 @@ export function createScene(opts: SceneOptions): OfficeScene {
       p.position.set(ex * s, 0.85 * s, 0.45 * s)
       g.add(e, p)
     }
-    // Phụ kiện riêng của vài dáng linh vật; hình dùng riêng nên tự dọn khi bỏ bot.
-    const accessory = (mesh: T.Mesh) => {
-      g.add(mesh)
-      extras.push(mesh)
-    }
-    if (a.commander) {
-      const c = new T.Mesh(new T.ConeGeometry(0.22, 0.3, 5), goldM)
-      c.position.y = 1.4 * s
-      accessory(c)
-    } else if (a.mascot === 'mai') {
-      const h = new T.Mesh(new T.TorusGeometry(0.4, 0.05, 8, 20, Math.PI), inkM)
-      h.position.y = 1.0
-      accessory(h)
-    } else if (a.mascot === 'dev') {
-      const c = new T.Mesh(new T.CylinderGeometry(0.3, 0.34, 0.12, 20), inkM)
-      c.position.y = 1.32
-      accessory(c)
-      const b = new T.Mesh(new T.BoxGeometry(0.34, 0.04, 0.3), inkM)
-      b.position.set(0, 1.28, 0.38)
-      accessory(b)
-    } else if (a.mascot === 'ha') {
-      const h = new T.Mesh(
-        new T.SphereGeometry(0.36, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2),
-        new T.MeshStandardMaterial({ color: 0x7c3aed, roughness: 0.8 }),
-      )
-      h.position.y = 1.12
-      accessory(h)
-    }
+    const acc = wear(g, a, s)
     g.traverse((m) => {
       m.userData['key'] = a.id
     })
@@ -403,23 +400,19 @@ export function createScene(opts: SceneOptions): OfficeScene {
       tilt: 0,
       phase: rand(a.id.length * 31 + (a.id.codePointAt(0) ?? 0)) * Math.PI * 2,
       scale: s,
-      extras,
+      accKey: accessoryKey(a),
+      acc,
     }
     return st
   }
 
   const dropBot = (b: BotState) => {
     scene.remove(b.group)
+    takeOff(b)
     b.group.traverse((o) => {
       if (o instanceof T.Mesh && o.geometry) o.geometry.dispose()
     })
     b.body.dispose()
-    for (const e of b.extras) {
-      if (e instanceof T.Mesh && !Array.isArray(e.material)) {
-        const m = e.material as T.Material
-        if (m !== inkM && m !== goldM) m.dispose()
-      }
-    }
   }
 
   // --- Màu theo sáng tối của app ----------------------------------------------------------------------------
@@ -643,8 +636,15 @@ export function createScene(opts: SceneOptions): OfficeScene {
     }
     for (const a of next.actors) {
       const have = bots.get(a.id)
-      if (have) have.body.color.set(a.color)
-      else bots.set(a.id, makeBot(a, next.spots[a.id]))
+      if (have) {
+        have.body.color.set(a.color)
+        // Đổi dáng hay phụ kiện trong hồ sơ bot thì đeo lại ngay, không đợi dựng lại cảnh.
+        if (have.accKey !== accessoryKey(a)) {
+          takeOff(have)
+          have.acc = wear(have.group, a, have.scale)
+          have.accKey = accessoryKey(a)
+        }
+      } else bots.set(a.id, makeBot(a, next.spots[a.id]))
     }
   }
 

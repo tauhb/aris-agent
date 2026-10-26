@@ -28,7 +28,7 @@ export function Who({ bot, inverse, t }: { bot: BotData; inverse?: boolean; t: T
       title={t('who.open', { name: bot.name })}
       onClick={() => arisNavigate('bot', { id: bot.id })}
     >
-      <Mascot id={bot.mascot} size={18} />
+      <Mascot id={bot.mascot} size={18} accessory={bot.accessory} />
       {bot.name}
     </button>
   )
@@ -78,7 +78,13 @@ export function Head({
       style={{ '--who': colorOf(bot.mascot) } as CSSProperties}
     >
       {!bare && (
-        <Mascot id={bot.mascot} size={big ? 32 : 24} motion={big ? 'idle' : undefined} seed={bot.id} />
+        <Mascot
+          id={bot.mascot}
+          size={big ? 32 : 24}
+          motion={big ? 'idle' : undefined}
+          seed={bot.id}
+          accessory={bot.accessory}
+        />
       )}
       <b className="nm">{bot.name}</b>
       {roleOf(bot, t) && <span className={lead ? 'role lead' : 'role'}>{roleOf(bot, t)}</span>}
@@ -288,7 +294,7 @@ export function HandoffTurn({
       </div>
       <div className="turn" style={{ '--who': colorOf(bot.mascot) } as CSSProperties}>
         <div className="gut">
-          <Mascot id={bot.mascot} size={32} motion="idle" seed={bot.id} />
+          <Mascot id={bot.mascot} size={32} motion="idle" seed={bot.id} accessory={bot.accessory} />
           <span className="rail" />
         </div>
         <div className="col">

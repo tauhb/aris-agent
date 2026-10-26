@@ -2,7 +2,7 @@
  * Chọn linh vật gọn: một hàng (linh vật đang chọn luôn có mặt) và nút "Xem thêm" mở hộp thoại
  * với đủ mọi linh vật.
  */
-import { MASCOTS } from '@aris/ui-kit'
+import { MASCOTS, NO_ACCESSORY } from '@aris/ui-kit'
 import { Dialog, Mascot, PlusIcon } from '@aris/ui-kit/react'
 import { useState } from 'react'
 import type { PageProps } from '../page.js'
@@ -28,7 +28,7 @@ function Choice({ id, checked, onPick }: { id: string; checked: boolean; onPick:
       title={m ? `${m.shape} · ${m.role}` : id}
       onClick={onPick}
     >
-      <Mascot id={id} size={26} />
+      <Mascot id={id} size={26} accessory={NO_ACCESSORY} />
     </button>
   )
 }

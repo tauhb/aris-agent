@@ -1653,6 +1653,7 @@ export async function apply(ctx: Context): Promise<void> {
                   id: b.id,
                   name: b.name,
                   mascot: (b as { mascot?: string }).mascot,
+                  accessory: (b as { accessory?: string }).accessory,
                 })),
               })
             }

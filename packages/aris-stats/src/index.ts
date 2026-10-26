@@ -366,7 +366,7 @@ export async function apply(ctx: Context): Promise<void> {
     const b = bots()
       ?.store.list()
       .find((x) => x.id === id)
-    return { botName: b?.name ?? id, mascot: b?.mascot ?? id }
+    return { botName: b?.name ?? id, mascot: b?.mascot ?? id, accessory: b?.accessory }
   }
 
   /** Dòng "Vừa làm gì" của Văn phòng: việc của bot, duyệt và hỏi, hàng rào chặn, routine xong, trong 24 giờ qua. */

@@ -80,7 +80,7 @@ export function DeskCard({
           </>
         )}
         <span className="ap-of-bot">
-          <Mascot id={desk.mascot} size={104} />
+          <Mascot id={desk.mascot} size={104} accessory={desk.accessory} />
         </span>
         <Table />
       </span>

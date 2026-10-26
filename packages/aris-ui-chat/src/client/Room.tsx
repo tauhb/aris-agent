@@ -10,9 +10,11 @@ import { clock, fetchRound, noteKey, textParts, type RoomEntry, type RoundData }
 import type { SubagentCall } from './branch.js'
 import { Head, WithMentions } from './Speaker.js'
 
+/** Linh vật (dáng và phụ kiện) của bot theo tên gọi; không thấy bot thì dùng chính tên gọi làm mã dáng. */
 const mascotOf = (handle: string) => {
   const team = currentTeam()
-  return [team.commander, ...team.members].find((m) => m.handle === handle)?.mascot ?? handle
+  const m = [team.commander, ...team.members].find((x) => x.handle === handle)
+  return { id: m?.mascot ?? handle, accessory: m?.accessory }
 }
 
 /** Đọc một vòng; vòng còn chạy thì đọc lại mỗi 1,5 giây. */
@@ -39,7 +41,7 @@ function useRound(callId: string, finished: boolean): RoundData | null {
 function Said({ e, t }: { e: RoomEntry; t: Translate }) {
   return (
     <div className="aris-room-msg">
-      <Mascot id={mascotOf(e.handle)} size={32} />
+      <Mascot {...mascotOf(e.handle)} size={32} />
       <div className="b">
         <div className="h">
           <b>{e.name}</b>

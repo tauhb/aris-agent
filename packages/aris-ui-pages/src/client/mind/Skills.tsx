@@ -213,7 +213,7 @@ export function Skills({ t, nav, params }: PageProps) {
                 </div>
               </span>
               <span title={bot?.name}>
-                <Mascot id={bot?.mascot ?? 'aris'} size={22} />
+                <Mascot id={bot?.mascot ?? 'aris'} size={22} accessory={bot?.accessory} />
               </span>
               <span className="a-mono">
                 {r.proposed

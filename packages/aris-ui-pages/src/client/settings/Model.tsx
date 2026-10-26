@@ -323,7 +323,7 @@ function ByBot({ t, nav, api }: { t: T; nav: PageProps['nav']; api: MediaApi }) 
   const own = (p: Policy | undefined) => !!p && p.mode !== 'shared'
   const rows = (d?.bots ?? []).flatMap((b) => {
     const chat = team.bots.find((x) => x.id === b.id)
-    const row = { b, mascot: chat?.mascot ?? b.id, chat: chat?.model }
+    const row = { b, mascot: chat?.mascot ?? b.id, accessory: chat?.accessory, chat: chat?.model }
     return row.chat || own(b.media.image) || own(b.media.video) ? [row] : []
   })
   const editBot = d?.bots.find((b) => b.id === editing)
@@ -340,7 +340,7 @@ function ByBot({ t, nav, api }: { t: T; nav: PageProps['nav']; api: MediaApi }) 
               <span>{t('md.video')}</span>
               <span />
             </div>
-            {rows.map(({ b, mascot, chat }) => (
+            {rows.map(({ b, mascot, accessory, chat }) => (
               <button
                 type="button"
                 key={b.id}
@@ -349,7 +349,7 @@ function ByBot({ t, nav, api }: { t: T; nav: PageProps['nav']; api: MediaApi }) 
                 onClick={() => setEditing(editing === b.id ? null : b.id)}
               >
                 <span className="who">
-                  <Bot id={mascot} />
+                  <Bot id={mascot} accessory={accessory} />
                   <b>{b.name}</b>
                 </span>
                 <span className={chat ? undefined : 'a-muted'}>

@@ -79,7 +79,13 @@ function botChoices(t: T, team: TeamView, members: readonly string[]) {
       group: () => t(inside ? 'kb.inside' : 'kb.outsideGroup'),
     })
   return [
-    { id: '', name: t('kb.arisPicks'), note: t('kb.arisPicksNote'), mascot: team.commander.mascot ?? 'aris' },
+    {
+      id: '',
+      name: t('kb.arisPicks'),
+      note: t('kb.arisPicksNote'),
+      mascot: team.commander.mascot ?? 'aris',
+      accessory: team.commander.accessory,
+    },
     ...by(true),
     ...by(false),
   ]
@@ -170,7 +176,7 @@ function Card({
         </div>
       )}
       <div className="ft">
-        {bot && <Mascot id={bot.mascot} size={18} />}
+        {bot && <Mascot id={bot.mascot} size={18} accessory={bot.accessory} />}
         {bot && <b>{bot.name}</b>}
         <span className={c.failed || c.stuck ? 'st bad' : 'st'}>{status}</span>
         {approval && c.column === 'waiting' && (

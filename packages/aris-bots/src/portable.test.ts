@@ -102,6 +102,32 @@ describe('nhân bản, xuất, nhập bot', () => {
     expect((await call({ op: 'import', file: { x: 1 } })).status).toBe(400)
   })
 
+  it('phụ kiện linh vật đi theo khi nhân bản, xuất và nhập', async () => {
+    const { store, call } = await setup()
+    const src = await store.create({ handle: 'tho', name: 'Thơ', mascot: 'ha', accessory: 'mu-noi' })
+    const none = await store.create({ handle: 'an', name: 'An', mascot: 'mai', accessory: 'none' })
+    const bare = await store.create({ handle: 'vy', name: 'Vy' })
+    const cloned = await call({
+      op: 'clone',
+      id: src.id,
+      name: 'Thơ 2',
+      parts: { config: false, soul: false },
+    })
+    expect(store.get(String(cloned.body.created))?.accessory).toBe('mu-noi')
+    const parts = { config: true, soul: true }
+    const file = (await call({ op: 'export', id: none.id, parts })).body.file as {
+      bot: { accessory?: string }
+    }
+    expect(file.bot.accessory).toBe('none')
+    const back = await call({ op: 'import', file })
+    expect(store.get(String(back.body.created))?.accessory).toBe('none')
+    const plain = (await call({ op: 'export', id: bare.id, parts })).body.file as { bot: object }
+    expect(plain.bot).not.toHaveProperty('accessory')
+    expect(
+      store.get(String((await call({ op: 'import', file: plain })).body.created))?.accessory,
+    ).toBeUndefined()
+  })
+
   it('phiên gần nhất của Aris: ứng viên đầu tiên chưa gắn bot', async () => {
     const { store, call } = await setup()
     const b = await store.create({ handle: 'tho', name: 'Thơ' })

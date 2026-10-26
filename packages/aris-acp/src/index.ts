@@ -461,6 +461,7 @@ export async function apply(ctx: Context): Promise<void> {
           handle: x.handle,
           role: x.role,
           mascot: (x as { mascot?: string }).mascot ?? null,
+          accessory: (x as { accessory?: string }).accessory ?? null,
           kind: x.kind,
           open: s.open.includes(x.id),
         })),

@@ -12,7 +12,15 @@ import { Drawer } from './Drawer.js'
 import { FeedRow } from './FeedRow.js'
 import { Office3D } from './Office3D.js'
 import { useFeed, useGuardNow, useTodayTokens } from './data.js'
-import { commanderDesk, deskGroups, feedFor, officeSummary, type Desk, type DeskGroup } from './model.js'
+import {
+  commanderDesk,
+  deskGroups,
+  feedFor,
+  officeSummary,
+  type Desk,
+  type DeskGroup,
+  type Face,
+} from './model.js'
 
 type T = PageProps['t']
 
@@ -55,10 +63,13 @@ export function Overview({
   const everyone = [aris, ...desks]
   const bots = everyone.map((d) => ({ name: d.name, status: d.status, since: d.since }))
   const working = everyone.filter((d) => d.status === 'working').length
-  const mascotOf = (bot: string) =>
+  const faceOf = (bot: string): Face =>
     bot === team.commander.id
-      ? (team.commander.mascot ?? 'aris')
-      : (desks.find((d) => d.id === bot)?.mascot ?? bot)
+      ? { id: team.commander.mascot ?? 'aris', accessory: team.commander.accessory }
+      : {
+          id: desks.find((d) => d.id === bot)?.mascot ?? bot,
+          accessory: desks.find((d) => d.id === bot)?.accessory,
+        }
   const feedIds = dept === 'all' ? null : new Set(shown.flatMap((g) => g.desks.map((d) => d.id)))
   const lines = feed ? feedFor(feed, feedIds) : null
 
@@ -89,7 +100,7 @@ export function Overview({
           costNote={cap > 0 ? t('of.num.cost', { cap: fmtUsd(cap, dec) }) : t('of.num.costFree')}
           need={need}
           lines={feed}
-          mascotOf={mascotOf}
+          faceOf={faceOf}
           selected={sel}
           onPick={setSel}
           onUnsupported={onUnsupported}
@@ -105,7 +116,7 @@ export function Overview({
         <div className="ap-of-hero">
           <div className="ap-of-aris">
             <button type="button" aria-label={t('of.desk', { name: aris.name })} onClick={() => pick(aris)}>
-              <Mascot id={aris.mascot} size={120} />
+              <Mascot id={aris.mascot} size={120} accessory={aris.accessory} />
             </button>
             <div className="ap-of-say">{officeSummary({ need, bots, t })}</div>
           </div>
@@ -185,12 +196,7 @@ export function Overview({
               <h2>{t('of.feed.title')}</h2>
               {lines?.length === 0 && <div className="a-muted">{t('of.feed.empty')}</div>}
               {lines?.map((f) => (
-                <FeedRow
-                  key={`${f.at}-${f.bot}-${f.kind}-${f.what}`}
-                  item={f}
-                  t={t}
-                  mascot={mascotOf(f.bot)}
-                />
+                <FeedRow key={`${f.at}-${f.bot}-${f.kind}-${f.what}`} item={f} t={t} face={faceOf(f.bot)} />
               ))}
             </aside>
           </div>

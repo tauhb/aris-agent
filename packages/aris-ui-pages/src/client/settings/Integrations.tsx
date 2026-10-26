@@ -34,6 +34,7 @@ interface State {
     handle: string
     role: string
     mascot: string | null
+    accessory: string | null
     kind: string
     open: boolean
   }[]
@@ -117,7 +118,10 @@ export function Integrations({ t, nav }: PageProps) {
   const lastBlocked = work.find(
     (l) => l.result === 'chan' && l.reason?.length && Date.now() - Date.parse(l.at) < BLOCK_ALERT_MS,
   )
-  const mascotOf = (botId: string) => s.bots.find((b) => b.id === botId)?.mascot ?? 'aris'
+  const faceOf = (botId: string) => {
+    const b = s.bots.find((x) => x.id === botId)
+    return { id: b?.mascot ?? 'aris', accessory: b?.accessory ?? undefined }
+  }
 
   return (
     <PageShell
@@ -182,7 +186,7 @@ export function Integrations({ t, nav }: PageProps) {
             <span className="ap-intarrow" aria-hidden="true">
               →
             </span>
-            <Mascot id={mascotOf(c.bot.id)} size={22} />
+            <Mascot {...faceOf(c.bot.id)} size={22} />
             <span className="ap-intwho">
               <b>{c.bot.name}</b>
               <span className={c.busy ? 'ap-intbusy' : 'a-muted'}>
@@ -394,7 +398,7 @@ export function Integrations({ t, nav }: PageProps) {
                     disabled={busy}
                     onClick={() => void post({ op: 'bot', bot: b.id, on: !b.open })}
                   >
-                    <Mascot id={b.mascot ?? 'aris'} size={14} />
+                    <Mascot id={b.mascot ?? 'aris'} size={14} accessory={b.accessory ?? undefined} />
                     {b.name} · {b.open ? t('int.open') : t('int.closed')}
                   </button>
                 ))}

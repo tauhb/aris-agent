@@ -46,6 +46,8 @@ export const NavItem = forwardRef<HTMLButtonElement, NavItemProps>(function NavI
 export interface BotRowProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type'> {
   /** Mã linh vật (thường trùng mã bot). */
   mascot: string
+  /** Phụ kiện của linh vật (xem `resolveAccessory`); bỏ trống là mặc định của dáng. */
+  accessory?: string | undefined
   name: string
   /** Dòng phụ: việc đang làm hoặc vai. */
   note: string
@@ -63,7 +65,7 @@ export interface BotRowProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
 
 /** Một bot trong đội hình: linh vật, tên, việc đang làm, glyph trạng thái. */
 export const BotRow = forwardRef<HTMLButtonElement, BotRowProps>(function BotRow(
-  { mascot, name, note, status, statusLabel, lead, current, badge, collapsed, className, ...rest },
+  { mascot, accessory, name, note, status, statusLabel, lead, current, badge, collapsed, className, ...rest },
   ref,
 ) {
   return (
@@ -75,7 +77,7 @@ export const BotRow = forwardRef<HTMLButtonElement, BotRowProps>(function BotRow
       aria-current={current ? 'page' : undefined}
       {...rest}
     >
-      <Mascot id={mascot} size={lead ? 34 : 28} motion={status} seed={name} />
+      <Mascot id={mascot} size={lead ? 34 : 28} motion={status} seed={name} accessory={accessory} />
       {!collapsed && (
         <>
           <span className="txt">

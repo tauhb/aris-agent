@@ -14,6 +14,7 @@ import {
   filterBotOptions,
   IconButton,
   KIT_CSS,
+  Mascot,
   Menu,
   MenuItem,
   MenuLabel,
@@ -205,6 +206,22 @@ describe('bộ thành phần', () => {
     const missing = [...used].filter((c) => c.startsWith('a-') && !KIT_CSS.includes(`.${c}`))
     expect(missing).toEqual([])
     expect(KIT_CSS).toContain('[data-ds-dark-theme] .aris{')
+  })
+})
+
+describe('Mascot', () => {
+  it('phụ kiện mặc định mở rộng khung nhìn, none giữ khung cũ', () => {
+    expect(html(<Mascot id="aris" />)).toContain('viewBox="-10 -16 120 120"')
+    expect(html(<Mascot id="aris" accessory="kinh" />)).toContain('stroke="#16171B"')
+    const plain = html(<Mascot id="aris" accessory="none" />)
+    expect(plain).toContain('viewBox="0 0 100 100"')
+    expect(plain).not.toContain('--acc-edge')
+  })
+  it('chỉ đánh dấu mắt trên thân, phần trắng của phụ kiện không chớp', () => {
+    const body = html(<Mascot id="lam" motion="idle" accessory="none" />)
+    const withHat = html(<Mascot id="lam" motion="idle" accessory="mu-len" />)
+    expect(withHat.match(/class="eye"/g)).toEqual(body.match(/class="eye"/g))
+    expect(withHat).toContain('fill="#fff" stroke="#16171B"')
   })
 })
 

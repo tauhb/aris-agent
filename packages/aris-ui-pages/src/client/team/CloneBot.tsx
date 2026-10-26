@@ -91,7 +91,7 @@ export function CloneBot({ t, nav, params }: PageProps) {
       width={620}
       title={
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-          <Mascot id={bot.mascot} size={28} />
+          <Mascot id={bot.mascot} size={28} accessory={bot.accessory} />
           {t('clone.title', { name: bot.name })}
         </span>
       }

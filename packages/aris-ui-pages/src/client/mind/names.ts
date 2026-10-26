@@ -24,10 +24,18 @@ export function botOptions(ids?: readonly string[]): BotOption[] {
   const want = ids ? new Set(ids) : undefined
   const out: BotOption[] = []
   const c = v.commander
-  if (!want || want.has(c.id)) out.push({ id: c.id, name: c.name, note: c.role, mascot: c.mascot ?? c.id })
+  if (!want || want.has(c.id))
+    out.push({ id: c.id, name: c.name, note: c.role, mascot: c.mascot ?? c.id, accessory: c.accessory })
   for (const g of v.groups)
     for (const m of g.members)
       if (!want || want.has(m.id))
-        out.push({ id: m.id, name: m.name, note: m.role, mascot: m.mascot ?? m.id, group: g.label })
+        out.push({
+          id: m.id,
+          name: m.name,
+          note: m.role,
+          mascot: m.mascot ?? m.id,
+          accessory: m.accessory,
+          group: g.label,
+        })
   return out
 }

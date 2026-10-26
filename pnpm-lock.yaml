@@ -158,6 +158,9 @@ importers:
       '@aris/home':
         specifier: workspace:*
         version: link:../aris-home
+      '@aris/ui-kit':
+        specifier: workspace:*
+        version: link:../aris-ui-kit
       '@deepseek-ai/dsh-mcp-client':
         specifier: 0.2.1-rc.2
         version: 0.2.1-rc.2(50033df239e08b37fa29da5c3dba510e)

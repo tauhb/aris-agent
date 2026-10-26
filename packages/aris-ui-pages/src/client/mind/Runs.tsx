@@ -134,7 +134,7 @@ export function Runs({ t, nav }: PageProps) {
   const botOf = (id: string): BotData | undefined => team?.bots.find((b) => b.id === id)
   const mascot = (id: string, size = 24) => (
     <span title={botOf(id)?.name} style={{ display: 'inline-flex' }}>
-      <Mascot id={botOf(id)?.mascot ?? 'aris'} size={size} />
+      <Mascot id={botOf(id)?.mascot ?? 'aris'} size={size} accessory={botOf(id)?.accessory} />
     </span>
   )
   const running = (goals ?? []).some((g) => g.phase === 'active') || (loops ?? []).length > 0

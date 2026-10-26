@@ -193,7 +193,7 @@ function AddBot({
           {candidates.map((m) => (
             <MenuItem
               key={m.id}
-              icon={<Mascot id={m.mascot ?? m.id} size={18} />}
+              icon={<Mascot id={m.mascot ?? m.id} size={18} accessory={m.accessory} />}
               meta={m.role}
               onSelect={() => {
                 setOpen(false)
@@ -282,7 +282,7 @@ function ProjectPane({
       </div>
       <div className="list">
         <div className="act">
-          <Mascot id={team.commander.mascot ?? 'aris'} size={22} />
+          <Mascot id={team.commander.mascot ?? 'aris'} size={22} accessory={team.commander.accessory} />
           <span className="txt">
             <b>{team.commander.name}</b>
           </span>
@@ -290,7 +290,7 @@ function ProjectPane({
         </div>
         {crew.map((m) => (
           <div key={m.id} className="act">
-            <Mascot id={m.mascot ?? m.id} size={22} />
+            <Mascot id={m.mascot ?? m.id} size={22} accessory={m.accessory} />
             <span className="txt">
               <b>{m.name}</b>
             </span>

@@ -273,7 +273,7 @@ function CopyMenu({ t, bot, onCopy }: { t: T; bot: string; onCopy: (to: string) 
             .map((o) => (
               <MenuItem
                 key={o.id}
-                icon={<Mascot id={o.mascot ?? o.id} size={18} />}
+                icon={<Mascot id={o.mascot ?? o.id} size={18} accessory={o.accessory} />}
                 meta={o.note}
                 onSelect={() => (setOpen(false), onCopy(o.id))}
               >

@@ -64,7 +64,7 @@ export function Departments({ t, nav, team }: { t: T; nav: PageProps['nav']; tea
                   title={m.name}
                   style={{ animationDelay: `${-0.7 * i}s` }}
                 >
-                  <Mascot id={m.mascot} size={44} />
+                  <Mascot id={m.mascot} size={44} accessory={m.accessory} />
                 </span>
               ))}
             </span>
@@ -101,7 +101,7 @@ export function Departments({ t, nav, team }: { t: T; nav: PageProps['nav']; tea
         <b>{t('of.dp.loose')}</b>
         {loose.map((b) => (
           <span key={b.id} className="ap-of-chip">
-            <Mascot id={b.mascot} size={22} />
+            <Mascot id={b.mascot} size={22} accessory={b.accessory} />
             {b.name} · {b.role}
           </span>
         ))}

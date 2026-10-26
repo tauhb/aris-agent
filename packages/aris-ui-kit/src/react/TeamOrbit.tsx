@@ -7,6 +7,7 @@
  */
 import { FONTS } from '../tokens.js'
 import { useEffect, useRef } from 'react'
+import { ACCESSORY_VIEWBOX, accessoryOf } from '../accessories.js'
 import { getMascot } from '../mascots.js'
 import type { BotStatus } from '../status.js'
 import { depthOrder, orbitLayout, pickSeat, splitMascot, svgDataUrl, type OrbitSeat } from './orbit.js'
@@ -16,6 +17,8 @@ export interface OrbitBot {
   id: string
   /** Mã linh vật; bỏ trống thì dùng mã bot. */
   mascot?: string | undefined
+  /** Phụ kiện của linh vật (xem `resolveAccessory`); bỏ trống là mặc định của dáng. */
+  accessory?: string | undefined
   name: string
   /** Vai, hiện khi rê chuột. */
   role: string
@@ -45,6 +48,8 @@ interface Sprite {
   full: HTMLImageElement
   shape: HTMLImageElement
   eyes: [number, number][]
+  /** Phụ kiện đeo thêm (ảnh riêng, khung rộng hơn thân), `null` khi không đeo. */
+  acc: HTMLImageElement | null
 }
 
 interface Colors {
@@ -55,6 +60,8 @@ interface Colors {
   ok: string
   danger: string
   accent: string
+  /** Viền mảnh của phụ kiện (`--acc-edge`). */
+  edge: string
 }
 
 const FONT = FONTS.canvas
@@ -65,7 +72,7 @@ function rgba(hex: string, a: number): string {
   return `rgba(${parseInt(m[1]!, 16)},${parseInt(m[2]!, 16)},${parseInt(m[3]!, 16)},${a})`
 }
 
-function sprite(id: string, onLoad: () => void): Sprite {
+function sprite(id: string, accessory: string | undefined, edge: string, onLoad: () => void): Sprite {
   const m = getMascot(id) ?? getMascot('aris')!
   const parts = splitMascot(m.body)
   const img = (src: string) => {
@@ -74,16 +81,33 @@ function sprite(id: string, onLoad: () => void): Sprite {
     el.src = src
     return el
   }
+  // Ảnh SVG riêng không thấy biến CSS của trang nên điền sẵn màu viền phụ kiện.
+  const acc = accessoryOf(m.id, accessory)?.replaceAll('var(--acc-edge)', edge)
   return {
     color: m.color,
     full: img(svgDataUrl(m.body)),
     shape: img(svgDataUrl(parts.shapeSvg)),
     eyes: parts.eyes,
+    acc: acc ? img(svgDataUrl(acc, 240, ACCESSORY_VIEWBOX)) : null,
   }
 }
 
-/** Linh vật với mắt theo trạng thái: rảnh nhắm hờ, chờ mắt tròn to, xong mắt cười, còn lại mắt gốc. */
+/** Linh vật với mắt theo trạng thái (xem `drawBody`), phụ kiện đeo lên trên cùng. */
 function drawMascot(
+  ctx: CanvasRenderingContext2D,
+  sp: Sprite,
+  status: BotStatus,
+  x: number,
+  y: number,
+  size: number,
+) {
+  drawBody(ctx, sp, status, x, y, size)
+  // Ảnh phụ kiện phủ khung -10 -16 120 120 của thân: lệch trái 0,1 và lên 0,16 cỡ thân, to gấp 1,2 lần.
+  if (sp.acc?.complete) ctx.drawImage(sp.acc, x - size * 0.6, y - size * 0.66, size * 1.2, size * 1.2)
+}
+
+/** Thân linh vật với mắt theo trạng thái: rảnh nhắm hờ, chờ mắt tròn to, xong mắt cười, còn lại mắt gốc. */
+function drawBody(
   ctx: CanvasRenderingContext2D,
   sp: Sprite,
   status: BotStatus,
@@ -192,13 +216,16 @@ export function TeamOrbit(props: TeamOrbitProps) {
       ok: '#15803D',
       danger: '#C0262D',
       accent: '#1D6FE0',
+      edge: 'transparent',
     }
     let hits: ({ x: number; y: number; r: number } | undefined)[] = []
-    const spriteOf = (id: string) => {
-      let sp = sprites.get(id)
+    // Một ảnh theo dáng, phụ kiện và màu viền hiện tại (đổi giao diện sáng tối thì dựng lại ảnh phụ kiện).
+    const spriteOf = (id: string, accessory: string | undefined) => {
+      const key = `${id}|${accessory ?? ''}|${C.edge}`
+      let sp = sprites.get(key)
       if (!sp) {
-        sp = sprite(id, () => reduced && draw(0))
-        sprites.set(id, sp)
+        sp = sprite(id, accessory, C.edge, () => reduced && draw(0))
+        sprites.set(key, sp)
       }
       return sp
     }
@@ -230,6 +257,7 @@ export function TeamOrbit(props: TeamOrbitProps) {
           ok: v('--a-ok', C.ok),
           danger: v('--a-danger', C.danger),
           accent: v('--a-accent', C.accent),
+          edge: v('--acc-edge', C.edge),
         }
         state.colorsAt = ts
       }
@@ -237,7 +265,7 @@ export function TeamOrbit(props: TeamOrbitProps) {
 
       const L = orbitLayout(members.length, state.ang, w, h, stage ? 'stage' : 'pane')
       const { K, member: M, commander: CM } = L
-      const cmd = spriteOf(commander.mascot ?? commander.id)
+      const cmd = spriteOf(commander.mascot ?? commander.id, commander.accessory)
       const glowAt = (a: number) => rgba(cmd.color, a)
       const selectedIndex = members.findIndex((m) => m.id === selected)
 
@@ -296,7 +324,7 @@ export function TeamOrbit(props: TeamOrbitProps) {
       // Dây từ Commander tới từng bot; nét đứt chạy (và chấm chạy ở bản lớn) khi bot đang làm hoặc chờ anh.
       for (const seat of L.seats) {
         const m = members[seat.i]!
-        const color = spriteOf(m.mascot ?? m.id).color
+        const color = spriteOf(m.mascot ?? m.id, m.accessory).color
         const active = m.status === 'working' || m.status === 'waiting'
         const ty = seat.y - L.wireTo * seat.s
         const x0 = L.cx
@@ -331,7 +359,7 @@ export function TeamOrbit(props: TeamOrbitProps) {
       hits = []
       const drawMember = (seat: OrbitSeat) => {
         const m = members[seat.i]!
-        const sp = spriteOf(m.mascot ?? m.id)
+        const sp = spriteOf(m.mascot ?? m.id, m.accessory)
         const hovered = state.hover === seat.i
         const picked = selectedIndex === seat.i
         const s = seat.s * (hovered ? (stage ? 1.1 : 1.12) : 1)

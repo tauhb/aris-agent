@@ -40,7 +40,13 @@ export function HeroMark({
   const bot = useSessionBot(useMounted((id) => id))
   return (
     <span className={className} style={{ display: 'inline-flex' }}>
-      <Mascot id={bot?.mascot ?? 'aris'} size={size} label={bot?.name ?? t('hero.mark')} motion="idle" />
+      <Mascot
+        id={bot?.mascot ?? 'aris'}
+        size={size}
+        label={bot?.name ?? t('hero.mark')}
+        motion="idle"
+        accessory={bot?.accessory}
+      />
     </span>
   )
 }
@@ -124,6 +130,7 @@ export function SubagentBranch(
     <div className="aris aris-taskline">
       <TaskBranch
         mascot={bot.mascot}
+        accessory={bot.accessory}
         name={bot.name ?? t('branch.subagent')}
         task={args.description}
         meta={
@@ -169,6 +176,7 @@ function DispatchBranch(props: {
   return (
     <TaskBranch
       mascot={bot.mascot}
+      accessory={bot.accessory}
       name={bot.name ?? `@${item.handle}`}
       task={item.title}
       meta={
