@@ -258,6 +258,15 @@ async function main(argv) {
         console.log(
           `Telegram: @${b.username} ${b.running ? 'đang nhận tin' : `dừng${b.error ? ` — ${b.error}` : ''}`}`,
         )
+      const larkState = {
+        receiving: 'đang nhận tin',
+        connecting: 'đang kết nối',
+        reconnecting: 'đang thử nối lại',
+      }
+      for (const b of s.lark ?? [])
+        console.log(
+          `Lark: ${b.name} (${b.appId}) ${larkState[b.state] ?? `dừng${b.error ? ` — ${b.error}` : ''}`}`,
+        )
       return
     }
     case 'logs': {

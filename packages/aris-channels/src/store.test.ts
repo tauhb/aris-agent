@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { CODE_MAX_WRONG, ChannelStore, normalizeCode, threadKey, type Table, type Tables } from './store.js'
+import {
+  CODE_MAX_WRONG,
+  ChannelStore,
+  larkKey,
+  larkThreadKey,
+  normalizeCode,
+  threadKey,
+  type Table,
+  type Tables,
+} from './store.js'
 
 export function memTable<V>(): Table<V> {
   const m = new Map<string, V>()
@@ -138,5 +147,108 @@ describe('kho kênh', () => {
     const t = await s.bindThread({ ...base, sessionId: 's1' })
     expect(t).toMatchObject({ sessionId: 's1', history: ['s2'] })
     expect(s.threadOfSession('s1')?.key).toBe('k')
+  })
+
+  it('Lark: khoá hợp lệ với storage dsh (chỉ chữ, số, gạch nối)', () => {
+    expect(larkKey('ou_7d8a6e6df7621556')).toBe('ou-7d8a6e6df7621556')
+    expect(larkThreadKey('aris', 'oc_abc123')).toBe('lk-aris-oc-abc123')
+    expect(larkKey('ou_a')).toMatch(/^[A-Za-z0-9-]+$/)
+  })
+
+  it('Lark: ghép đôi bằng open_id, mã dùng một lần, mã Telegram bị từ chối, không lẫn vào người của Telegram', async () => {
+    const s = memStore()
+    const lark = await s.createCode('owner', 'lark')
+    const tg = await s.createCode('owner', 'telegram')
+    expect(await s.redeemLark(tg.code, { openId: 'ou_a', name: 'A' })).toBe('other-channel')
+    expect(s.pairLocked('lk-ou_a')).toBe(false)
+    expect(await s.redeemLark(lark.code, { openId: 'ou_a', name: 'A' })).toMatchObject({
+      openId: 'ou_a',
+      role: 'owner',
+      channel: 'lark',
+      userId: 0,
+    })
+    expect(await s.redeemLark(lark.code, { openId: 'ou_b', name: 'B' })).toBeUndefined()
+    expect(s.larkRoleOf('ou_a')).toBe('owner')
+    expect(s.larkOwners().map((p) => p.openId)).toEqual(['ou_a'])
+    expect(s.people()).toEqual([])
+    expect(s.owners()).toEqual([])
+    expect(s.roleOf(0)).toBeUndefined()
+    // Mã người được phép không hạ quyền chủ nhân.
+    await s.redeemLark((await s.createCode('member', 'lark')).code, { openId: 'ou_a', name: 'A' })
+    expect(s.larkRoleOf('ou_a')).toBe('owner')
+    expect(await s.revokeLark('ou_a')).toBe(true)
+    expect(s.larkPeople()).toEqual([])
+  })
+
+  it('Lark: sai mã nhiều lần khoá riêng người đó, không ảnh hưởng người khác hay Telegram', async () => {
+    const s = memStore()
+    const code = await s.createCode('owner', 'lark')
+    for (let i = 0; i < CODE_MAX_WRONG; i++) await s.redeemLark('2222-2222', { openId: 'ou_a', name: 'A' })
+    expect(s.pairLocked('lk-ou_a')).toBe(true)
+    expect(await s.redeemLark(code.code, { openId: 'ou_a', name: 'A' })).toBeUndefined()
+    expect(await s.redeemLark(code.code, { openId: 'ou_b', name: 'B' })).toMatchObject({ openId: 'ou_b' })
+  })
+
+  it('Lark: ứng dụng, nhóm, tin vào, tin ra nằm riêng, Telegram không thấy', async () => {
+    const s = memStore()
+    await s.putBot({
+      bot: 'aris',
+      tgId: 1,
+      username: 'u',
+      name: 'n',
+      tokenRef: 'T',
+      canReadAll: true,
+      offset: 0,
+      voice: false,
+      addedAt: 'x',
+    })
+    await s.putLarkApp({
+      bot: 'aris',
+      tgId: 0,
+      username: 'Aris',
+      name: 'Aris',
+      tokenRef: 'LARK_ARIS_APP_SECRET',
+      canReadAll: true,
+      offset: 0,
+      voice: false,
+      addedAt: 'x',
+      appId: 'cli_a8f2c4d6e0b13579',
+      domain: 'lark',
+    })
+    expect(s.bots().map((b) => b.bot)).toEqual(['aris'])
+    expect(s.bot('aris')?.tgId).toBe(1)
+    expect(s.larkApps().map((b) => [b.bot, b.channel])).toEqual([['aris', 'lark']])
+    await s.patchLarkApp('aris', { error: 'x' })
+    expect(s.larkApp('aris')?.error).toBe('x')
+    expect(s.larkApp('aris')?.channel).toBe('lark')
+
+    await s.upsertGroup(-5, { title: 'TG' })
+    const g = await s.upsertLarkGroup('oc_g', { title: 'Lark nhóm', allowed: true, prompt: 'ngắn' })
+    expect(g).toMatchObject({ chatRef: 'oc_g', channel: 'lark', allowed: true, prompt: 'ngắn' })
+    expect(s.groups().map((x) => x.title)).toEqual(['TG'])
+    expect(s.larkGroups().map((x) => x.title)).toEqual(['Lark nhóm'])
+    expect(s.larkGroupRule('oc_g')).toEqual({ allowed: true, who: 'allowed' })
+    expect((await s.upsertLarkGroup('oc_g', { prompt: '' })).prompt).toBeUndefined()
+    expect(await s.shouldNotifyLarkGroup('oc_x', 'X')).toBe(true)
+    expect(await s.shouldNotifyLarkGroup('oc_x', 'X')).toBe(false)
+    expect(await s.removeLarkGroup('oc_g')).toBe(true)
+
+    await s.enqueue({ id: 'a', bot: 'aris', update: 1, state: 'queued', receivedAt: 1 })
+    await s.enqueue({ id: 'b', bot: 'aris', update: 2, state: 'queued', receivedAt: 2, channel: 'lark' })
+    expect(s.inbox().map((r) => r.id)).toEqual(['a'])
+    expect(s.larkInbox().map((r) => r.id)).toEqual(['b'])
+    const out = {
+      bot: 'aris',
+      chatId: 0,
+      chunks: [],
+      sent: 0,
+      state: 'pending',
+      attempts: 0,
+      createdAt: 1,
+    } as const
+    await s.putOutbox({ ...out, id: 'x' })
+    await s.putOutbox({ ...out, id: 'y', channel: 'lark' })
+    expect(s.outbox().map((r) => r.id)).toEqual(['x'])
+    expect(s.larkOutbox().map((r) => r.id)).toEqual(['y'])
   })
 })

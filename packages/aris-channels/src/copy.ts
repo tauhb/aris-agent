@@ -26,6 +26,10 @@ export const ROLE_LABEL: Record<Trust, string> = {
   guest: 'khách trong nhóm (chỉ hỏi đáp)',
 }
 
+/** Dòng nhắc giới hạn quyền gắn vào tin của người không phải người dùng chính (mọi kênh dùng chung). */
+export const NOT_OWNER_NOTE =
+  '\n(Người này không phải người dùng chính: chỉ trả lời câu hỏi, không làm việc có tác động như gửi tin, sửa tệp, chạy lệnh.)'
+
 export const T = {
   routineAt: (d: Date) => {
     const dow = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'][d.getDay()]

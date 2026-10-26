@@ -4,7 +4,7 @@
  * duyệt và câu hỏi. Mọi phụ thuộc của dsh đi qua `HubDeps` để kiểm thử bằng bản giả.
  */
 import { commandAllowed, decide, type Trust } from './access.js'
-import { T } from './copy.js'
+import { NOT_OWNER_NOTE, T } from './copy.js'
 import type { BotRecord, InboxRecord, OutboxRecord } from './domain.js'
 import { sttNotReady, textToVoice, transcribe, type SpeechToText } from './media.js'
 import { ChannelStore, keyNum, threadKey } from './store.js'
@@ -288,6 +288,16 @@ export interface HubDeps {
   stopped?: () => boolean
 }
 
+/**
+ * Kênh khác chạy cạnh Telegram (Lark) mà các gói khác vẫn hỏi qua `arisChannels`: lượt đang chạy của phiên kênh đó có bị
+ * hạn chế không (`@aris/guard`, `@aris/memory`, `@aris/brain`), và tình trạng cho `aris status`.
+ */
+export interface ChannelPeer {
+  readonly kind: string
+  restricted(sessionId: string): boolean
+  status(): unknown
+}
+
 export interface MediaPort {
   takeFresh(sessionId: string): { id: string; kind: 'image' | 'video'; model: string }[]
   read(
@@ -345,6 +355,7 @@ export class ChannelHub {
     { bot: string; chatId: number; messageId: number; html: string }
   >()
   private approvalsPort: ApprovalsPort | undefined
+  private readonly peers: ChannelPeer[] = []
   /** Model đang dùng theo phiên (từ `request/context`). */
   readonly models = new Map<string, string>()
   private readonly previews = new Map<
@@ -824,10 +835,7 @@ export class ChannelHub {
       m.chat.type === 'private'
         ? ''
         : `[${m.from ? fullName(m.from) : '?'}${m.from?.username ? ` @${m.from.username}` : ''}] `
-    const limit =
-      trust === 'owner'
-        ? ''
-        : '\n(Người này không phải người dùng chính: chỉ trả lời câu hỏi, không làm việc có tác động như gửi tin, sửa tệp, chạy lệnh.)'
+    const limit = trust === 'owner' ? '' : NOT_OWNER_NOTE
     if (body || who) parts.unshift({ type: 'text', text: `${who}${body || '(gửi tệp)'}${limit}` })
     return parts
   }
@@ -1574,7 +1582,21 @@ export class ChannelHub {
    */
   restricted(sessionId: string): boolean {
     const turn = this.turnOf(sessionId)
-    return turn !== undefined && turn.trust !== 'owner'
+    return (turn !== undefined && turn.trust !== 'owner') || this.peers.some((p) => p.restricted(sessionId))
+  }
+
+  /** Gắn một kênh chạy cạnh (Lark) để `restricted` và `peerStatus` tính cả nó. Trả hàm gỡ. */
+  attachPeer(peer: ChannelPeer): () => void {
+    this.peers.push(peer)
+    return () => {
+      const i = this.peers.indexOf(peer)
+      if (i >= 0) this.peers.splice(i, 1)
+    }
+  }
+
+  /** Tình trạng của các kênh chạy cạnh, theo tên kênh (cho `aris status`). */
+  peerStatus(): Record<string, unknown> {
+    return Object.fromEntries(this.peers.map((p) => [p.kind, p.status()]))
   }
 
   /** Lượt hiện tại của phiên có phải của kênh không; nếu có thì người gửi có quyền thấp nhất là gì. */

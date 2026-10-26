@@ -90,13 +90,15 @@ export function apply(ctx: Context): void {
 
   const port: DaemonPort = {
     status() {
-      const channels = ctx.get('arisChannels') as { status?(): unknown } | undefined
+      const channels = ctx.get('arisChannels') as
+        { status?(): unknown; peerStatus?(): Record<string, unknown> } | undefined
       return {
         pid: process.pid,
         startedAt: new Date(started).toISOString(),
         uptimeSec: Math.round((Date.now() - started) / 1000),
         web: webUrl() ?? null,
         telegram: channels?.status?.() ?? null,
+        lark: channels?.peerStatus?.().lark ?? null,
       }
     },
     loginUrl() {

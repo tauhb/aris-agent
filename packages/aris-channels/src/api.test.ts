@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { handleApi } from './api.js'
 import type { ChannelHub } from './hub.js'
+import type { LarkChannel } from './lark/channel.js'
 import { memStore } from './store.test.js'
 
 const post = (body: unknown) =>
@@ -57,5 +58,115 @@ describe('/api/aris/channels', () => {
     expect(snap.settings).toEqual({ busy: 'queue', guestMode: true })
     expect(snap.codes).toHaveLength(2)
     expect((await handleApi(store, hub, post({ op: 'nope' }))).status).toBe(400)
+  })
+
+  describe('Lark', () => {
+    const SECRET = 'S3CR3T-never-returned-0123456789'
+    function fakeLark() {
+      const calls: unknown[] = []
+      const lark = {
+        connect: async (bot: string, c: unknown) => void calls.push(['connect', bot, c]),
+        disconnect: async (bot: string) => void calls.push(['disconnect', bot]),
+        status: () => [
+          {
+            bot: 'aris',
+            appId: 'cli_a8f2c4d6e0b13579',
+            name: 'Aris',
+            domain: 'lark',
+            state: 'receiving',
+            error: null,
+            running: true,
+          },
+        ],
+      } as unknown as LarkChannel
+      return { lark, calls }
+    }
+    const run = (store: ReturnType<typeof memStore>, body: unknown, lark?: LarkChannel) =>
+      handleApi(store, fakeHub().hub, post(body), undefined, lark, async () => ({
+        path: '/x/lark-cli',
+        version: '1.0.0',
+      }))
+
+    it('kết nối: chuyển khoá cho kênh Lark, không bao giờ trả App Secret ra', async () => {
+      const store = memStore()
+      const { lark, calls } = fakeLark()
+      const res = await run(
+        store,
+        {
+          op: 'connect-lark',
+          bot: 'aris',
+          appId: ' cli_a8f2c4d6e0b13579 ',
+          appSecret: SECRET,
+          domain: 'feishu',
+        },
+        lark,
+      )
+      expect(res.status).toBe(200)
+      expect(calls).toEqual([
+        ['connect', 'aris', { appId: 'cli_a8f2c4d6e0b13579', appSecret: SECRET, domain: 'feishu' }],
+      ])
+      const text = await res.text()
+      expect(text).not.toContain(SECRET)
+      expect(JSON.parse(text).lark.apps[0]).toMatchObject({
+        state: 'receiving',
+        appId: 'cli_a8f2c4d6e0b13579',
+      })
+      expect((await run(store, { op: 'connect-lark', appId: 'x' }, lark)).status).toBe(400)
+      expect((await run(store, { op: 'connect-lark', appId: 'x', appSecret: 'y' })).status).toBe(400)
+    })
+
+    it('lỗi khi kết nối trả 400 kèm lời báo', async () => {
+      const lark = {
+        connect: async () => {
+          throw new Error('Lark 10014: app secret invalid')
+        },
+      } as unknown as LarkChannel
+      const res = await run(
+        memStore(),
+        { op: 'connect-lark', appId: 'cli_a8f2c4d6e0b13579', appSecret: SECRET },
+        lark,
+      )
+      expect(res.status).toBe(400)
+      expect(await res.text()).toContain('10014')
+    })
+
+    it('gỡ ứng dụng, gỡ người, nhóm Lark', async () => {
+      const store = memStore()
+      const { lark, calls } = fakeLark()
+      await store.redeemLark((await store.createCode('owner', 'lark')).code, { openId: 'ou_a', name: 'A' })
+      await run(store, { op: 'disconnect-lark', bot: 'aris' }, lark)
+      expect(calls).toEqual([['disconnect', 'aris']])
+      await run(store, { op: 'lark-group', chatId: 'oc_g', allowed: true, who: 'everyone', prompt: 'ngắn' })
+      expect(store.larkGroup('oc_g')).toMatchObject({ allowed: true, who: 'everyone', prompt: 'ngắn' })
+      expect(store.groups()).toEqual([])
+      await run(store, { op: 'lark-group-remove', chatId: 'oc_g' })
+      expect(store.larkGroups()).toEqual([])
+      expect((await run(store, { op: 'lark-group', chatId: 5 })).status).toBe(400)
+      expect((await run(store, { op: 'revoke-lark' })).status).toBe(400)
+      await run(store, { op: 'revoke-lark', openId: 'ou_a' })
+      expect(store.larkPeople()).toEqual([])
+    })
+
+    it('ảnh chụp trạng thái: người, nhóm, lark-cli của Lark nằm riêng; Telegram không lẫn', async () => {
+      const store = memStore()
+      await store.redeemLark((await store.createCode('owner', 'lark')).code, { openId: 'ou_a', name: 'A' })
+      await store.upsertLarkGroup('oc_g', { title: 'Nhóm' })
+      const snap = (await (
+        await handleApi(store, fakeHub().hub, new Request('http://x'), undefined, undefined, async () => ({
+          path: '/x/lark-cli',
+          version: null,
+        }))
+      ).json()) as {
+        people: unknown[]
+        groups: unknown[]
+        lark: { people: unknown[]; groups: unknown[]; cli: unknown; apps: unknown[] }
+      }
+      expect(snap.people).toEqual([])
+      expect(snap.groups).toEqual([])
+      expect(snap.lark.people).toMatchObject([{ openId: 'ou_a', name: 'A', role: 'owner' }])
+      expect(snap.lark.groups).toMatchObject([{ chatId: 'oc_g', title: 'Nhóm', allowed: false }])
+      expect(snap.lark.cli).toEqual({ path: '/x/lark-cli', version: null })
+      expect(snap.lark.apps).toEqual([])
+    })
   })
 })

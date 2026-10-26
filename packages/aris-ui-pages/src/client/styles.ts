@@ -116,6 +116,14 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-kn-code{font-size:24px;font-weight:600;letter-spacing:.12em;text-align:center;padding:8px;border:1px dashed var(--a-line);border-radius:10px;overflow-wrap:anywhere}
 .ap-kn-code.empty{font-size:13px;letter-spacing:0;font-weight:400}
 .a-row.ap-kn-first{border-top:0}
+.ap-lk-steps{flex:1.3 1 420px}
+.ap-lk-form{flex:1 1 300px;gap:8px;padding:12px 16px;font-size:13.5px}
+.ap-lk-step{align-items:flex-start}
+.ap-lk-num{flex:none;width:22px;height:22px;border-radius:50%;background:var(--a-panel2);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.ap-lk-step .sub{display:block;font-size:12.5px;color:var(--a-muted)}
+.ap-lk-step .mono{font-size:12px}
+.ap-lk-form>.a-seg{align-self:flex-start}
+.ap-lk-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .ap-kn-groups{flex-wrap:wrap}
 .ap-kn-groups .grow{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ap-grouprow{padding:10px 16px;border-top:1px solid var(--a-line);font-size:13px}

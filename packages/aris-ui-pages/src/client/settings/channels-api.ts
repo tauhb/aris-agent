@@ -41,12 +41,47 @@ export interface PairCode {
   channel: PairChannel
 }
 
+/** Một ứng dụng Lark đã nối (mỗi bot của aris tối đa một). App Secret không bao giờ trả ra. */
+export interface LarkApp {
+  bot: string
+  appId: string
+  name: string
+  domain: 'lark' | 'feishu'
+  state: 'receiving' | 'connecting' | 'reconnecting' | 'error'
+  error: string | null
+  running: boolean
+}
+
+export interface LarkPerson {
+  openId: string
+  name: string
+  role: 'owner' | 'member'
+  pairedAt: string
+}
+
+export interface LarkGroup {
+  chatId: string
+  title: string
+  allowed: boolean
+  who: 'allowed' | 'everyone'
+  prompt?: string
+}
+
+export interface LarkSnapshot {
+  apps: LarkApp[]
+  people: LarkPerson[]
+  groups: LarkGroup[]
+  /** `lark-cli` có trên máy; null khi không có. */
+  cli: { path: string; version: string | null } | null
+}
+
 export interface ChannelSnapshot {
   bots: ChannelBot[]
   people: ChannelPerson[]
   groups: ChannelGroup[]
   codes: PairCode[]
   settings: { busy: 'steer' | 'queue' | 'interrupt'; guestMode: boolean }
+  lark: LarkSnapshot
 }
 
 const endpoint = () => new URL('api/aris/channels', document.baseURI)

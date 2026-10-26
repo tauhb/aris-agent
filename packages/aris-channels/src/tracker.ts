@@ -4,18 +4,23 @@
  * Tin anh gõ trên web vào cùng phiên không gửi ra Telegram: chỉ lượt có tin của kênh mới giao.
  */
 
-export interface Pending {
+/** Phần chung của một tin đã đưa vào agent, mọi kênh đều có; mỗi kênh thêm mã chat và mã tin của riêng nó. */
+export interface PendingBase {
   /** Mã tin (UserMessage.id) đã đưa vào agent. */
   messageId: string
   inboxId: string
   threadKey: string
   bot: string
+  group: boolean
+  trust: 'owner' | 'member' | 'guest'
+}
+
+/** Tin Telegram đã đưa vào agent. */
+export interface Pending extends PendingBase {
   chatId: number
   threadId?: number | undefined
   /** Tin Telegram của người gửi (để thả cảm xúc, trả lời vào). */
   tgMessageId: number
-  group: boolean
-  trust: 'owner' | 'member' | 'guest'
 }
 
 /** Bot đích của một lần chuyển giao (bản ghi `plugin:aris/handoff`). */
@@ -32,9 +37,9 @@ export interface TurnPart {
   from?: HandoffFrom | undefined
 }
 
-export interface TurnResult {
+export interface TurnResult<P extends PendingBase = Pending> {
   sessionId: string
-  ours: Pending[]
+  ours: P[]
   /** Chữ của bot của phiên (không gồm phần chuyển giao). */
   text: string
   /** Mọi đoạn theo thứ tự, kể cả câu trả lời của bot đích khi chuyển giao. */
@@ -49,8 +54,8 @@ const textOf = (blocks: readonly Block[]) =>
     .join('')
     .trim()
 
-interface TurnState {
-  ours: Pending[]
+interface TurnState<P extends PendingBase> {
+  ours: P[]
   /** Chữ của mọi tin trả lời trong lượt, theo thứ tự (viết, gọi công cụ, viết tiếp…). */
   texts: string[]
   parts: TurnPart[]
@@ -64,27 +69,27 @@ export type TrackedEvent =
   | { type: 'turn/end'; data: { reason: TurnResult['reason'] } }
   | { type: string; data?: unknown }
 
-export class TurnTracker {
-  private readonly pending = new Map<string, Pending>()
-  private readonly turns = new Map<string, TurnState>()
+export class TurnTracker<P extends PendingBase = Pending> {
+  private readonly pending = new Map<string, P>()
+  private readonly turns = new Map<string, TurnState<P>>()
   /** Chữ đang viết theo phiên: bước hiện tại (mỗi lần gọi model là một lượt viết mới). */
   private readonly drafts = new Map<string, { attempt: string; text: string }>()
 
-  expect(p: Pending) {
+  expect(p: P) {
     this.pending.set(p.messageId, p)
   }
 
   /** Tin đã gửi vào nhưng chưa có lượt nào nhận (khi khởi động lại, dừng…). */
-  pendingFor(threadKey: string): Pending[] {
+  pendingFor(threadKey: string): P[] {
     return [...this.pending.values()].filter((p) => p.threadKey === threadKey)
   }
 
   /** Phiên có lượt đang mở chứa tin của kênh. */
-  active(sessionId: string): Pending[] {
+  active(sessionId: string): P[] {
     return this.turns.get(sessionId)?.ours ?? []
   }
 
-  onEvent(sessionId: string, event: TrackedEvent): TurnResult | undefined {
+  onEvent(sessionId: string, event: TrackedEvent): TurnResult<P> | undefined {
     switch (event.type) {
       case 'turn/start':
         this.turns.set(sessionId, { ours: [], texts: [], parts: [] })

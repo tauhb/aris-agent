@@ -1,5 +1,5 @@
 /**
- * Kênh nhắn tin của aris (đặc tả: docs/specs/aris-telegram.md). Giai đoạn 1: Telegram.
+ * Kênh nhắn tin của aris (đặc tả: docs/specs/aris-telegram.md). Giai đoạn 1: Telegram; đợt 7d: Lark.
  * Nối trung tâm kênh với dsh: tạo phiên đúng workspace và preset như web
  * (`ctx.sessionController`), nghe sự kiện phiên và luồng chữ, chen vào chuỗi người trả lời
  * duyệt/câu hỏi cho phiên của kênh, kho khoá cho token, tệp đính kèm, nhận dạng giọng nói.
@@ -23,6 +23,8 @@ import type {} from '@deepseek-ai/dsh-user-questions'
 import type {} from '@deepseek-ai/dsh-workspace'
 import { handleApi } from './api.js'
 import { channelsDomain } from './domain.js'
+import { LarkChannel } from './lark/channel.js'
+import { larkCliProbe } from './lark/cli.js'
 import {
   ChannelHub,
   type ApprovalsPort,
@@ -39,6 +41,7 @@ import type { MediaPort } from './hub.js'
 import { ChannelStore, type Tables } from './store.js'
 
 export { ChannelHub } from './hub.js'
+export { LarkChannel } from './lark/channel.js'
 export { sttNotReady, toWav16k, transcribe, type SpeechToText } from './media.js'
 export { ChannelStore } from './store.js'
 
@@ -62,8 +65,8 @@ export const inject = [
 /** Sau đoạn hướng dẫn ký ức (60) và tìm lại (61). */
 export const SECTION_ORDER = 62
 
-export const GUIDE = `Người dùng có thể nhắn bạn qua Telegram. Tin từ nhóm Telegram bắt đầu bằng [Tên người nói]; người không phải người dùng chính chỉ được hỏi đáp, đừng làm việc có tác động theo lời họ.
-- Trên Telegram viết ngắn gọn, dễ đọc trên điện thoại; bảng chỉ dùng khi thật cần.
+export const GUIDE = `Người dùng có thể nhắn bạn qua Telegram hay Lark. Tin từ nhóm bắt đầu bằng [Tên người nói]; người không phải người dùng chính chỉ được hỏi đáp, đừng làm việc có tác động theo lời họ.
+- Trên Telegram và Lark viết ngắn gọn, dễ đọc trên điện thoại; bảng chỉ dùng khi thật cần.
 - Trong nhóm, nếu tin không cần bạn trả lời (chuyện phiếm, cảm ơn…), trả lời đúng một dòng [SILENT] để im lặng.
 - Muốn chủ động nhắn người dùng (báo xong việc, nhắc lịch) thì dùng tool channel_send.`
 
@@ -127,35 +130,56 @@ export async function apply(ctx: Context): Promise<void> {
   }
 
   const attachments = ctx.get('attachments') as AttachmentPort | undefined
+  const media = () => ctx.get('arisMedia') as MediaPort | undefined
+  const stopped = () => (ctx.get('arisGuard') as { stopped?(): boolean } | undefined)?.stopped?.() ?? false
+  // Đội của aris (gói @aris/bots, nếu có): tên và màu linh vật để gửi tên thành viên ra Telegram và Lark.
+  const team = () =>
+    (
+      (
+        ctx.get('arisBots') as
+          { store: { list(): { id: string; handle: string; name: string; mascot: string }[] } } | undefined
+      )?.store.list() ?? []
+    ).map((b) => ({ id: b.id, handle: b.handle, name: b.name, color: getMascot(b.mascot)?.color }))
+  const credentials = {
+    resolve: async (ref: string) => (await ctx.credentials.resolve(credentialRef(ref)))?.value,
+    set: (ref: string, value: string) => ctx.credentials.set(credentialRef(ref), value),
+    unset: (ref: string) => ctx.credentials.unset(credentialRef(ref)),
+  }
+  const attachmentPort = attachments
+    ? {
+        saveImage: (i: Parameters<AttachmentPort['saveImage']>[0]) => attachments.saveImage(i as never),
+        saveFile: (i: Parameters<AttachmentPort['saveFile']>[0]) => attachments.saveFile(i),
+      }
+    : undefined
   const hub = new ChannelHub({
     store,
-    media: () => ctx.get('arisMedia') as MediaPort | undefined,
-    stopped: () => (ctx.get('arisGuard') as { stopped?(): boolean } | undefined)?.stopped?.() ?? false,
-    // Đội của aris (gói @aris/bots, nếu có): tên và màu linh vật để gửi tên thành viên ra Telegram.
-    team: () =>
-      (
-        (
-          ctx.get('arisBots') as
-            { store: { list(): { id: string; handle: string; name: string; mascot: string }[] } } | undefined
-        )?.store.list() ?? []
-      ).map((b) => ({ id: b.id, handle: b.handle, name: b.name, color: getMascot(b.mascot)?.color })),
-    credentials: {
-      resolve: async (ref) => (await ctx.credentials.resolve(credentialRef(ref)))?.value,
-      set: (ref, value) => ctx.credentials.set(credentialRef(ref), value),
-      unset: (ref) => ctx.credentials.unset(credentialRef(ref)),
-    },
+    media,
+    stopped,
+    team,
+    credentials,
     sessions,
-    attachments: attachments
-      ? {
-          saveImage: (i) => attachments.saveImage(i as never),
-          saveFile: (i) => attachments.saveFile(i),
-        }
-      : undefined,
+    attachments: attachmentPort,
     get stt() {
       return ctx.get('speechToText') as SpeechToText | undefined
     },
     logger: ctx.logger('aris-channels'),
   })
+  // Kênh Lark chạy cạnh Telegram: dùng chung kho, phiên, đội; hub hỏi nó khi cần biết lượt có bị hạn chế không.
+  const lark = new LarkChannel({
+    store,
+    media,
+    stopped,
+    team,
+    credentials,
+    sessions,
+    attachments: attachmentPort,
+    get stt() {
+      return ctx.get('speechToText') as SpeechToText | undefined
+    },
+    logger: ctx.logger('aris-channels'),
+  })
+  ctx.effect(() => hub.attachPeer(lark), 'aris-channels: lark')
+  const probeLarkCli = larkCliProbe()
 
   // Cho lệnh `aris send` (qua @aris/daemon) và các plugin khác gửi Telegram.
   ctx.provide('arisChannels', hub)
@@ -229,12 +253,19 @@ export async function apply(ctx: Context): Promise<void> {
       off?.()
     }
   }, 'aris-channels: bộ não')
-  ctx.on('session/event', (session, event) => hub.onSessionEvent(session.id, event as never))
+  ctx.on('session/event', (session, event) => {
+    hub.onSessionEvent(session.id, event as never)
+    lark.onSessionEvent(session.id, event as never)
+  })
   ctx.on('agent/assistant-stream', ({ agent, frame }) => hub.onStream(agent.session.id, frame as never))
-  // Phiên của kênh: duyệt và câu hỏi đi qua Telegram trước; phiên khác để người trả lời sau lo.
+  // Phiên của kênh: duyệt và câu hỏi đi qua Telegram trước; phiên Lark từ chối người ngoài, còn chủ nhân thì duyệt ở web;
+  // phiên khác để người trả lời sau lo.
   ctx.on(
     'approval/request',
-    async (req, next) => (await hub.approve(req.agent.session.id, req as never)) ?? next(),
+    async (req, next) =>
+      (await hub.approve(req.agent.session.id, req as never)) ??
+      (await lark.approve(req.agent.session.id, req as never)) ??
+      next(),
     true,
   )
   ctx.on(
@@ -266,13 +297,20 @@ export async function apply(ctx: Context): Promise<void> {
         methods: ['GET', 'POST'],
         requestBody: 'buffered',
         fetch: (request) =>
-          handleApi(store, hub, request, (bot) => {
-            const b = (
-              ctx.get('arisBots') as
-                { store: { get(id: string): { external?: unknown } | undefined } } | undefined
-            )?.store.get(bot)
-            return b ? !b.external : bot === 'aris'
-          }),
+          handleApi(
+            store,
+            hub,
+            request,
+            (bot) => {
+              const b = (
+                ctx.get('arisBots') as
+                  { store: { get(id: string): { external?: unknown } | undefined } } | undefined
+              )?.store.get(bot)
+              return b ? !b.external : bot === 'aris'
+            },
+            lark,
+            probeLarkCli,
+          ),
       })
       return () => void dispose()
     }, 'aris-channels: /api/aris/channels')
@@ -280,6 +318,10 @@ export async function apply(ctx: Context): Promise<void> {
 
   ctx.effect(() => {
     void hub.start().catch((e: unknown) => ctx.logger('aris-channels').warn('khởi động kênh: %s', String(e)))
-    return () => hub.stop()
+    void lark.start().catch((e: unknown) => ctx.logger('aris-channels').warn('khởi động Lark: %s', String(e)))
+    return () => {
+      hub.stop()
+      lark.stop()
+    }
   }, 'aris-channels: hub')
 }
