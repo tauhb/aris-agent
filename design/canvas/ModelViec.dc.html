@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Model</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b2{height:30px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:12.5px;flex:none;white-space:nowrap}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.ch{padding:12px 14px;display:flex;align-items:center;gap:8px}
+.sn{display:block;border-radius:8px;padding:7px 10px;font-size:13.5px;color:var(--ink);text-decoration:none}
+.r{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.task{display:grid;grid-template-columns:130px minmax(0,1fr);gap:12px;align-items:start;padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.chain{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.lk{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;background:var(--panel);padding:3px 10px 3px 6px;font-size:12.5px;white-space:nowrap}
+.lk.main{border-color:var(--accent);background:var(--accentSoft)}
+.n{width:18px;height:18px;border-radius:999px;background:var(--panel2);color:var(--muted);font-size:11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center}
+.lk.main .n{background:var(--accent);color:#fff}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.add{border:1px dashed var(--line);border-radius:999px;background:transparent;padding:3px 10px;font-size:12.5px;color:var(--muted)}
+.pill{font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.br{display:grid;grid-template-columns:110px repeat(3,minmax(0,1fr)) 32px;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--line);font-size:13px}
+.av{width:22px;height:22px;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none}
+.step{width:20px;height:20px;border-radius:999px;background:var(--panel2);color:var(--muted);font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex:none}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="settings" bot="none" hint-size="260px,900px"></dc-import>
+  <nav aria-label="Cài đặt" style="flex: 0 1 210px; min-width: 190px; border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px">
+    <a class="sn" href="#">Chung</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Model và kết nối</div>
+    <a class="sn" href="Provider.dc.html">Provider và khoá</a>
+    <a class="sn" href="ModelViec.dc.html" aria-current="page" style="background: var(--hover); font-weight: 600">Model</a>
+    <a class="sn" href="TimTheoNghia.dc.html">Tìm theo nghĩa</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Kênh</div>
+    <a class="sn" href="Kenh.dc.html">Kênh và ghép đôi</a>
+    <a class="sn" href="MatTichHop.dc.html">Ứng dụng khác</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Vận hành an toàn</div>
+    <a class="sn" href="BaoMat.dc.html">Ngân sách, duyệt, an toàn</a>
+    <a class="sn" href="SaoLuu.dc.html">Sao lưu</a>
+    <a class="sn" href="ThongKe.dc.html">Thống kê và nhật ký</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Đội bot</div>
+    <a class="sn" href="Commander.dc.html">Commander</a>
+    <a class="sn" href="#">Mẫu bot</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Mở rộng</div>
+    <a class="sn" href="Plugin.dc.html">Plugin</a>
+  </nav>
+  <main style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <div style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 600">Model</span><span class="m" style="font-size: 12px">Việc nào dùng model nào, model lỗi thì chuyển sang model kế tiếp trong chuỗi</span></div>
+      <button type="button" class="ib" style="margin-left: auto" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+
+    <div style="padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+      <div style="flex: 1.3 1 470px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div class="card">
+          <div class="ch"><span style="flex: 1; min-width: 0"><b>Chat và việc nền</b><span class="m" style="display: block; font-size: 12.5px">Áp cho mọi bot chưa gán riêng. Chuỗi đọc từ trái sang phải: số 1 là model chính.</span></span></div>
+          <div class="task">
+            <span><b>Chat</b><span class="m" style="display: block; font-size: 12px">trả lời, làm việc, giao việc</span></span>
+            <span class="chain">
+              <span class="lk main"><span class="n">1</span><span class="dot" style="background: #4D6BFE"></span>DeepSeek · deepseek-v4-flash</span>
+              <span class="m">→</span>
+              <span class="lk"><span class="n">2</span><span class="dot" style="background: #4D6BFE"></span>DeepSeek · deepseek-v4-pro</span>
+              <span class="m">→</span>
+              <span class="lk"><span class="n">3</span><span class="dot" style="background: #6467F2"></span>OpenRouter · qwen3-max</span>
+              <button type="button" class="add">+ thêm</button>
+            </span>
+          </div>
+          <div class="task">
+            <span>Rút ký ức<span class="m" style="display: block; font-size: 12px">vòng học nền</span></span>
+            <span class="chain"><span class="lk"><span class="dot" style="background: #4D6BFE"></span>theo chuỗi chat</span><span class="m" style="font-size: 12px">trần 0,30 USD/ngày</span></span>
+          </div>
+          <div class="task">
+            <span>Đặt tên phiên</span>
+            <span class="chain"><span class="lk"><span class="dot" style="background: #4D6BFE"></span>theo chuỗi chat</span></span>
+          </div>
+          <div class="task">
+            <span>Kiểm thử skill</span>
+            <span class="chain"><span class="lk"><span class="dot" style="background: #4D6BFE"></span>theo chuỗi chat</span></span>
+          </div>
+          <div class="r m" style="font-size: 12.5px">Tìm theo nghĩa dùng một model nhúng riêng: <a href="TimTheoNghia.dc.html" style="color: var(--accent); text-decoration: none">Tìm theo nghĩa ›</a></div>
+        </div>
+
+        <div class="card">
+          <div class="ch"><span style="flex: 1; min-width: 0"><b>Tạo ảnh</b><span class="m" style="display: block; font-size: 12.5px">Thứ tự thử cho bot chưa gán riêng</span></span><span class="m" style="font-size: 12.5px">hôm nay 0,07 / 1,00 USD · <a href="BaoMat.dc.html" style="color: var(--accent); text-decoration: none">sửa trần ›</a></span></div>
+          <div class="r"><span class="lk main"><span class="n">1</span><span class="dot" style="background: #111"></span>fal.ai · flux-2-pro</span><span class="m" style="flex: 1; font-size: 12.5px">0,05 USD/ảnh · chữ tiếng Việt tốt</span><span class="pill" style="color: var(--ok); background: var(--okSoft)">sẵn sàng</span><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
+          <div class="r"><span class="lk"><span class="n">2</span><span class="dot" style="background: #6467F2"></span>OpenRouter · openai/gpt-image-2</span><span class="m" style="flex: 1; font-size: 12.5px">tính theo token</span><span class="pill" style="color: var(--ok); background: var(--okSoft)">sẵn sàng</span><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
+          <div class="r"><span class="lk"><span class="n">3</span><span class="dot" style="background: #4285F4"></span>Google Gemini · gemini-3.1-flash-lite-image</span><span class="m" style="flex: 1; font-size: 12.5px">0,034 USD/ảnh</span><span class="pill" style="color: var(--warn); background: var(--warnSoft)">cần bật thanh toán</span><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
+          <div class="r"><button type="button" class="add">+ Thêm model ảnh từ provider đã kết nối</button><span class="m" style="margin-left: auto; font-size: 12px">kéo để đổi thứ tự</span></div>
+        </div>
+
+        <div class="card">
+          <div class="ch"><span style="flex: 1; min-width: 0"><b>Tạo video</b><span class="m" style="display: block; font-size: 12.5px">Thứ tự thử cho bot chưa gán riêng</span></span><span class="m" style="font-size: 12.5px">hôm nay 0 / 2,00 USD · <a href="BaoMat.dc.html" style="color: var(--accent); text-decoration: none">sửa trần ›</a></span></div>
+          <div class="r"><span class="lk main"><span class="n">1</span><span class="dot" style="background: #111"></span>fal.ai · kling-v3</span><span class="m" style="flex: 1; font-size: 12.5px">khoảng 0,07 USD/giây · tối đa 10 giây</span><span class="pill" style="color: var(--ok); background: var(--okSoft)">sẵn sàng</span><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
+          <div class="r"><span class="lk"><span class="n">2</span><span class="dot" style="background: #4285F4"></span>Google Gemini · gemini-omni-1.1-flash</span><span class="m" style="flex: 1; font-size: 12.5px">khoảng 0,10 USD/giây</span><span class="pill" style="color: var(--warn); background: var(--warnSoft)">cần bật thanh toán</span><button type="button" class="ib" aria-label="Bỏ khỏi chuỗi">×</button></div>
+          <div class="r"><button type="button" class="add">+ Thêm model video</button><span class="m" style="margin-left: auto; font-size: 12px">video dài quá 8 giây thì hỏi {{you}} trước</span></div>
+        </div>
+      </div>
+
+      <div style="flex: 1 1 330px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div class="card">
+          <div class="ch"><span style="flex: 1; min-width: 0"><b>Gán riêng theo bot</b><span class="m" style="display: block; font-size: 12.5px">Chỉ hiện bot khác chuỗi chung. Sửa ở Hồ sơ bot · tab Model.</span></span></div>
+          <div class="br m" style="font-size: 12px; font-weight: 600"><span>Bot</span><span>Chat</span><span>Ảnh</span><span>Video</span><span></span></div>
+          <sc-for list="{{bots}}" as="b" hint-placeholder-count="4">
+            <div class="br">
+              <span style="display: flex; align-items: center; gap: 8px; min-width: 0"><span class="av" style="{{b.bg}}">{{b.i}}</span>{{b.name}}</span>
+              <span class="{{b.chatCls}}" style="font-size: 12.5px">{{b.chat}}</span>
+              <span class="{{b.imgCls}}" style="font-size: 12.5px">{{b.img}}</span>
+              <span class="{{b.vidCls}}" style="font-size: 12.5px">{{b.vid}}</span>
+              <a href="HoSoBotModel.dc.html" class="m" style="font-size: 12.5px">Sửa</a>
+            </div>
+          </sc-for>
+          <div class="r m" style="font-size: 12.5px">7 bot khác theo chuỗi chung.</div>
+        </div>
+
+        <div class="card">
+          <div class="ch"><b>aris chọn model thế nào</b></div>
+          <div class="r" style="align-items: flex-start"><span class="step">1</span><span>Bot có chuỗi riêng thì thử theo chuỗi riêng; không có thì theo chuỗi chung ở bên trái.</span></div>
+          <div class="r" style="align-items: flex-start"><span class="step">2</span><span>Model lỗi, hết hạn mức, chưa bật thanh toán hay không làm được yêu cầu thì thử model kế tiếp; tin trả lời ghi model đã dùng.</span></div>
+          <div class="r" style="align-items: flex-start"><span class="step">3</span><span>Hết chuỗi thì dừng và báo lý do. Chạm trần chi phí ngày thì dừng dù chuỗi còn model.</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const v = (x) => (x === 'theo chung' ? 'm' : '');
+    const bot = (i, name, bg, chat, img, vid) => ({ i, name, bg: 'background:' + bg, chat, img, vid, chatCls: v(chat), imgCls: v(img), vidCls: v(vid) });
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      you: 'anh Tầu',
+      bots: [
+        bot('K', 'Khoa', '#00C972', 'deepseek-v4-pro', 'tắt', 'tắt'),
+        bot('T', 'Thơ', '#E0457B', 'theo chung', 'gpt-image-2 → flux-2-pro', 'theo chung'),
+        bot('P', 'Phát', '#E5484D', 'theo chung', 'theo chung', 'kling-v3'),
+        bot('N', 'Ngân', '#FFAA00', 'theo chung', 'tắt', 'tắt'),
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

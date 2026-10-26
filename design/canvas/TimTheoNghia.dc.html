@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<title>aris · Tìm theo nghĩa bằng Gemini</title>
+<title>aris · Tìm theo nghĩa</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -46,38 +46,31 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(-
 </helmet>
 <div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; height: 900px; display: flex; overflow: hidden">
   <dc-import name="Sidebar" active="settings" bot="none" hint-size="260px,900px"></dc-import>
-  <nav aria-label="Mục cài đặt" style="flex: 0 0 168px; border-right: 1px solid var(--line); padding: 14px 8px; display: flex; flex-direction: column; gap: 1px">
-    <div class="m" style="font-size: 12px; padding: 0 10px 6px">Cài đặt và vận hành</div>
-    <a class="sn" href="DieuKhien.dc.html">Chung</a>
-    <a class="sn on" href="#">Provider và model</a>
-    <a class="sn" href="ModelAnhVideo.dc.html">Ảnh và video</a>
+  <nav aria-label="Cài đặt" style="flex: 0 1 210px; min-width: 190px; border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px">
+    <a class="sn" href="#">Chung</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Model và kết nối</div>
+    <a class="sn" href="Provider.dc.html">Provider và khoá</a>
+    <a class="sn" href="ModelViec.dc.html">Model</a>
+    <a class="sn" href="TimTheoNghia.dc.html" aria-current="page" style="background: var(--hover); font-weight: 600">Tìm theo nghĩa</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Kênh</div>
     <a class="sn" href="Kenh.dc.html">Kênh và ghép đôi</a>
     <a class="sn" href="MatTichHop.dc.html">Ứng dụng khác</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Vận hành an toàn</div>
     <a class="sn" href="BaoMat.dc.html">Ngân sách, duyệt, an toàn</a>
     <a class="sn" href="SaoLuu.dc.html">Sao lưu</a>
     <a class="sn" href="ThongKe.dc.html">Thống kê và nhật ký</a>
-    <a class="sn" href="ManHinhBot.dc.html">Màn hình của bot</a>
-    <a class="sn" href="Plugin2.dc.html">Plugin</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Đội bot</div>
+    <a class="sn" href="Commander.dc.html">Commander</a>
+    <a class="sn" href="#">Mẫu bot</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Mở rộng</div>
+    <a class="sn" href="Plugin.dc.html">Plugin</a>
   </nav>
-  <section aria-label="Nhà cung cấp" style="flex: 0 0 172px; border-right: 1px solid var(--line); padding: 14px 8px; display: flex; flex-direction: column; gap: 1px">
-    <div class="m" style="font-size: 12px; padding: 0 10px 6px">Nhà cung cấp</div>
-    <div class="h">Đã kết nối</div>
-    <button type="button" class="pv"><span class="dot" style="background: #4D6BFE"></span>Deepseek<span style="margin-left: auto; color: var(--ok); font-size: 11px">●</span></button>
-    <button type="button" class="pv" style="background: var(--accentSoft); font-weight: 600"><span class="dot" style="background: #4285F4"></span>Google Gemini<span style="{{gDot}}">●</span></button>
-    <button type="button" class="pv"><span class="dot" style="background: #F55036"></span>Groq<span style="margin-left: auto; color: var(--ok); font-size: 11px">●</span></button>
-    <button type="button" class="pv"><span class="dot" style="background: #6467F2"></span>OpenRouter<span style="margin-left: auto; color: var(--ok); font-size: 11px">●</span></button>
-    <div class="h">Có sẵn</div>
-    <button type="button" class="pv m">Amazon Bedrock</button>
-    <button type="button" class="pv m">Anthropic</button>
-    <button type="button" class="pv m">Azure OpenAI</button>
-    <button type="button" class="pv m">OpenAI</button>
-  </section>
 
   <main style="flex: 1 1 760px; min-width: 0; display: flex; flex-direction: column; overflow-y: auto">
     <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
-      <span class="dot" style="width: 28px; height: 28px; border-radius: 8px; background: #4285F4"></span>
-      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Google Gemini</span><span class="m" style="font-size: 12px">Kiểu SDK: Google · gói miễn phí</span></div>
-      <span style="margin-left: auto; display: flex; gap: 4px" role="group" aria-label="Thử trạng thái">
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Tìm theo nghĩa</span><span class="m" style="font-size: 12px">Bot tìm bộ não, ký ức và hồ sơ chủ nhân theo nghĩa, không chỉ theo từ khoá</span></div>
+      <span style="{{stStyle}}">{{stLabel}}</span>
+      <span style="display: flex; gap: 4px" role="group" aria-label="Thử trạng thái (chỉ trên bản vẽ)">
         <button type="button" class="{{oDang}}" onClick="{{toDang}}">Đang lập chỉ mục</button>
         <button type="button" class="{{oXong}}" onClick="{{toXong}}">Đã xong</button>
         <button type="button" class="{{oHan}}" onClick="{{toHan}}">Chạm hạn mức</button>
@@ -86,28 +79,27 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(-
       <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
     </div>
     <div style="padding: 16px 24px; display: flex; gap: 16px; align-items: flex-start">
-      <div style="flex: 1.1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 12px">
-        <div class="card" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
-          <span style="font-size: 12.5px; font-weight: 600">Khoá API</span>
-          <span style="display: flex; gap: 6px"><input class="inp mono" value="{{keyVal}}" placeholder="Dán khoá từ Google AI Studio" aria-label="Khoá API"><button type="button" class="b2">Lưu khoá</button></span>
-          <span class="m" style="font-size: 12px">Chỉ ghi: lưu thành GEMINI_API_KEY, không đọc lại được. Lấy khoá miễn phí ở aistudio.google.com.</span>
-          <div style="display: flex; gap: 8px; align-items: flex-start; border-radius: 9px; background: var(--warnSoft); padding: 8px 10px; font-size: 12.5px"><span style="color: var(--warn); font-weight: 700">!</span><span>Gói miễn phí: Google có thể dùng nội dung gửi lên để cải thiện sản phẩm. Bật thanh toán ở AI Studio thì không (nhúng tốn vài xu một tháng; tạo ảnh cũng cần bật).</span></div>
-        </div>
+      <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 12px">
         <div class="card">
-          <div style="padding: 9px 14px; display: flex; align-items: center"><b>Model · 2</b><button type="button" class="b2" style="margin-left: auto; height: 28px; font-size: 12px">Tải danh sách mới</button></div>
-                    <label class="mr"><input type="checkbox" checked aria-label="Bật gemini-embedding-2" style="width: 16px; height: 16px; accent-color: var(--accent)"><span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span class="mono" style="font-size: 12.5px">gemini-embedding-2</span><span style="display: flex; flex-wrap: wrap; gap: 4px"><span class="tag">nhúng</span><span class="tag">768 chiều</span></span></span><span style="font-size: 12px; color: var(--ok)">miễn phí</span></label>
-          <label class="mr"><input type="checkbox" checked aria-label="Bật gemini-3.1-flash-lite-image" style="width: 16px; height: 16px; accent-color: var(--accent)"><span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span class="mono" style="font-size: 12.5px">gemini-3.1-flash-lite-image</span><span style="display: flex; flex-wrap: wrap; gap: 4px"><span class="tag">tạo ảnh</span><span class="tag">cần bật thanh toán</span></span></span><span class="m" style="font-size: 12px">0,034 USD/ảnh</span></label>
+          <div style="padding: 10px 14px"><b>Model nhúng</b><div class="m" style="font-size: 12px">Một model cho cả chỉ mục: vector của hai model không so được với nhau</div></div>
+          <div class="rr"><span>Model</span><span class="sel"><span class="dot" style="background: #4285F4"></span>Google Gemini · gemini-embedding-2 ▾</span></div>
+          <div class="rr"><span>Khoá Gemini</span><span style="display: flex; gap: 8px; align-items: center; font-size: 12.5px"><span style="{{keyStyle}}">{{keyText}}</span><a href="Provider.dc.html" style="color: var(--accent); text-decoration: none">Provider và khoá ›</a></span></div>
+          <div class="rr"><span>Chi phí</span><span class="m" style="font-size: 12.5px">gói miễn phí · 0 USD tháng này</span></div>
+          <div style="padding: 9px 14px; border-top: 1px solid var(--line)"><div style="display: flex; gap: 8px; align-items: flex-start; border-radius: 9px; background: var(--warnSoft); padding: 8px 10px; font-size: 12.5px"><span style="color: var(--warn); font-weight: 700">!</span><span>Gói miễn phí: Google có thể dùng nội dung gửi lên để cải thiện sản phẩm. Bật thanh toán ở AI Studio thì không (nhúng tốn vài xu một tháng).</span></div></div>
+          <div class="m" style="padding: 0 14px 10px; font-size: 12px">Đổi model thì aris nhúng lại từ đầu; trong lúc đó tìm theo từ khoá vẫn chạy.</div>
         </div>
-        <div class="card">
-          <div style="padding: 9px 14px"><b>Model theo việc</b><div class="m" style="font-size: 12px">Áp cho mọi bot</div></div>
-          <div class="rr"><span>Chat với bot</span><span class="sel"><span class="dot" style="background: #4D6BFE"></span>deepseek-flash ▾</span></div>
-                    <div class="rr" style="background: var(--accentSoft)"><span><b>Nhúng (tìm theo nghĩa)</b></span><span class="sel"><span class="dot" style="background: #4285F4"></span><span style="display: flex; flex-direction: column; line-height: 1.3"><span>Google Gemini · gemini-embedding-2 ▾</span><span class="m" style="font-size: 11px">đổi model thì aris nhúng lại từ đầu</span></span></span></div>
-          <div class="rr"><span>Tạo ảnh, video</span><a href="ModelAnhVideo.dc.html" style="color: var(--accent); font-size: 12.5px; text-decoration: none">thứ tự ưu tiên ở mục Ảnh và video ›</a></div>
+        <div class="card" style="padding: 12px 14px">
+          <div style="font-size: 12.5px; font-weight: 600; padding-bottom: 4px">Gửi đi nhúng</div>
+          <label class="ck"><input type="checkbox" checked>Bộ não · Cá nhân <span class="m" style="margin-left: auto; font-size: 12px">410 đoạn</span></label>
+          <label class="ck"><input type="checkbox" checked>Bộ não · Công ty <span class="m" style="margin-left: auto; font-size: 12px">296 đoạn</span></label>
+          <label class="ck"><input type="checkbox" checked>Ký ức các bot <span class="m" style="margin-left: auto; font-size: 12px">98 đoạn</span></label>
+          <label class="ck"><input type="checkbox" checked>Hồ sơ chủ nhân <span class="m" style="margin-left: auto; font-size: 12px">36 nhận định</span></label>
+          <div class="m" style="font-size: 12px">Bỏ tích thì phần đó không gửi cho Google, chỉ tìm theo từ khoá. Nguồn gốc (PDF, ghi âm) chỉ gửi phần chữ đã trích.</div>
         </div>
       </div>
 
       <div class="card" style="flex: 1 1 0; min-width: 0; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px">
-        <div style="display: flex; align-items: center; gap: 8px"><b style="font-size: 15px">Tìm theo nghĩa</b><span style="{{stStyle}}">{{stLabel}}</span></div>
+        <div style="display: flex; align-items: center; gap: 8px"><b style="font-size: 15px">Chỉ mục</b></div>
         <div class="m" style="font-size: 12.5px">Bot tra bộ não, Hỏi bộ não, ký ức bot và hồ sơ chủ nhân tìm cả theo nghĩa: hỏi "giá in tháng sau" vẫn ra trang "Báo giá in T11". Kết quả gộp từ khoá với theo nghĩa.</div>
 
         <sc-if value="{{isDang}}" hint-placeholder-val="{{ true }}">
@@ -133,18 +125,10 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(-
         </sc-if>
         <sc-if value="{{isChua}}" hint-placeholder-val="{{ false }}">
           <div style="border-radius: 9px; background: var(--panel2); padding: 10px 12px; font-size: 13px; display: flex; gap: 10px; align-items: center">
-            <span style="flex: 1">Chưa có khoá Gemini nên bot chỉ tìm theo từ khoá như trước. Dán khoá bên trái là aris bắt đầu nhúng.</span>
+            <span style="flex: 1">Chưa có khoá Gemini nên bot chỉ tìm theo từ khoá như trước. Thêm khoá ở Provider và khoá là aris bắt đầu nhúng.</span>
           </div>
         </sc-if>
 
-        <div>
-          <div style="font-size: 12.5px; font-weight: 600; padding-bottom: 4px">Gửi đi nhúng</div>
-          <label class="ck"><input type="checkbox" checked>Bộ não · Cá nhân <span class="m" style="margin-left: auto; font-size: 12px">410 đoạn</span></label>
-          <label class="ck"><input type="checkbox" checked>Bộ não · Công ty <span class="m" style="margin-left: auto; font-size: 12px">296 đoạn</span></label>
-          <label class="ck"><input type="checkbox" checked>Ký ức các bot <span class="m" style="margin-left: auto; font-size: 12px">98 đoạn</span></label>
-          <label class="ck"><input type="checkbox" checked>Hồ sơ chủ nhân <span class="m" style="margin-left: auto; font-size: 12px">36 nhận định</span></label>
-          <div class="m" style="font-size: 12px">Bỏ tích thì phần đó không gửi cho Google, chỉ tìm theo từ khoá. Nguồn gốc (PDF, ghi âm) chỉ gửi phần chữ đã trích.</div>
-        </div>
 
         <sc-if value="{{isXong}}" hint-placeholder-val="{{ false }}">
           <div style="border-top: 1px solid var(--line); padding-top: 10px">
@@ -191,7 +175,7 @@ class Component extends DCLogic {
       toDang: go('dang'), toXong: go('xong'), toHan: go('han'), toChua: go('chua'),
       stLabel: st[0], stStyle: 'margin-left: auto; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 2px 10px; color: ' + st[1] + '; background: ' + st[2],
       gDot: 'margin-left: auto; font-size: 11px; color: ' + (pick === 'chua' ? 'var(--line)' : pick === 'han' ? 'var(--warn)' : 'var(--ok)'),
-      keyVal: pick === 'chua' ? '' : 'AIza••••••••••••••••••••Q7c'
+      keyText: pick === 'chua' ? 'chưa có' : 'đã lưu', keyStyle: pick === 'chua' ? 'color: var(--warn)' : 'color: var(--ok)'
     };
   }
 }

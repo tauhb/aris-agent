@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<title>aris · Provider và model</title>
+<title>aris · Provider và khoá</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -36,22 +36,41 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(-
 </helmet>
 <div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
   <dc-import name="Sidebar" active="settings" bot="none" hint-size="260px,900px"></dc-import>
-  <section aria-label="Danh sách provider" style="flex: 0 1 250px; min-width: 220px; border-right: 1px solid var(--line); padding: 14px 10px; display: flex; flex-direction: column; gap: 1px">
-    <a href="DieuKhien.dc.html" class="sn m" style="font-size: 12.5px">‹ Cài đặt</a>
-    <div style="font-weight: 600; padding: 6px 10px 8px">Provider và model</div>
-    <label style="display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 9px; padding: 5px 8px; margin: 0 4px 4px; background: var(--panel)"><span class="m">⌕</span><input type="search" aria-label="Tìm provider" placeholder="Tìm trong 80+ provider" style="flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 13px; outline: none"></label>
-    <div class="h">Đã kết nối</div>
+  <nav aria-label="Cài đặt" style="flex: 0 1 210px; min-width: 190px; border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px">
+    <a class="sn" href="#">Chung</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Model và kết nối</div>
+    <a class="sn" href="Provider.dc.html" aria-current="page" style="background: var(--hover); font-weight: 600">Provider và khoá</a>
+    <a class="sn" href="ModelViec.dc.html">Model</a>
+    <a class="sn" href="TimTheoNghia.dc.html">Tìm theo nghĩa</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Kênh</div>
+    <a class="sn" href="Kenh.dc.html">Kênh và ghép đôi</a>
+    <a class="sn" href="MatTichHop.dc.html">Ứng dụng khác</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Vận hành an toàn</div>
+    <a class="sn" href="BaoMat.dc.html">Ngân sách, duyệt, an toàn</a>
+    <a class="sn" href="SaoLuu.dc.html">Sao lưu</a>
+    <a class="sn" href="ThongKe.dc.html">Thống kê và nhật ký</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Đội bot</div>
+    <a class="sn" href="Commander.dc.html">Commander</a>
+    <a class="sn" href="#">Mẫu bot</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Mở rộng</div>
+    <a class="sn" href="Plugin.dc.html">Plugin</a>
+  </nav>
+  <section aria-label="Danh sách provider" style="flex: 0 1 230px; min-width: 200px; border-right: 1px solid var(--line); padding: 14px 10px; display: flex; flex-direction: column; gap: 1px">
+    <div style="font-weight: 600; padding: 2px 10px 8px">Provider và khoá</div>
+    <label style="display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 9px; padding: 5px 8px; margin: 0 4px 4px; background: var(--panel)"><span class="m">⌕</span><input type="search" aria-label="Tìm provider" placeholder="Tìm trong 80+ provider" style="flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 12.5px"></label>
+    <div class="h">Chat</div>
     <button type="button" class="pv" style="background: var(--accentSoft); font-weight: 600"><span class="dot" style="background: #4D6BFE"></span>DeepSeek<span style="margin-left: auto; color: var(--ok); font-size: 12px">●</span></button>
-    <button type="button" class="pv"><span class="dot" style="background: #D97757"></span>Anthropic<span style="margin-left: auto; color: var(--ok); font-size: 12px">●</span></button>
-    <button type="button" class="pv"><span class="dot" style="background: var(--ink)"></span>Ollama · trên máy<span style="margin-left: auto; color: var(--ok); font-size: 12px">●</span></button>
-    <button type="button" class="pv"><span class="dot" style="background: #7C3AED"></span>LiteLLM nội bộ <span class="tag">tự thêm</span></button>
+    <button type="button" class="pv"><span class="dot" style="background: #F55036"></span>Groq<span style="margin-left: auto; color: var(--ok); font-size: 12px">●</span></button>
+    <button type="button" class="pv"><span class="dot" style="background: #6467F2"></span>OpenRouter<span style="margin-left: auto; color: var(--ok); font-size: 12px">●</span></button>
+    <div class="h">Ảnh và video</div>
+    <button type="button" class="pv"><span class="dot" style="background: #111"></span>fal.ai<span style="margin-left: auto; color: var(--ok); font-size: 12px">●</span></button>
+    <button type="button" class="pv"><span class="dot" style="background: #4285F4"></span>Google Gemini<span style="margin-left: auto; color: var(--warn); font-size: 12px">●</span></button>
+    <div class="h">Nhúng</div>
+    <button type="button" class="pv"><span class="dot" style="background: #4285F4"></span>Google Gemini<span style="margin-left: auto; color: var(--ok); font-size: 12px">●</span></button>
     <div class="h">Có sẵn</div>
+    <button type="button" class="pv m">Anthropic</button>
     <button type="button" class="pv m">OpenAI</button>
-    <button type="button" class="pv m">Google Gemini</button>
-    <button type="button" class="pv m">OpenRouter</button>
     <button type="button" class="pv m">Qwen · Moonshot · Zhipu</button>
-    <button type="button" class="pv m">Groq · Mistral · xAI</button>
-    <button type="button" class="pv m">LM Studio · vLLM</button>
     <button type="button" class="pv m" style="color: var(--accent)">Xem tất cả 80+ ›</button>
     <button type="button" class="b2" style="margin: auto 4px 0">+ Thêm provider tuỳ chỉnh</button>
   </section>
@@ -59,7 +78,7 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(-
   <main style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column">
     <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
       <span class="dot" style="width: 28px; height: 28px; border-radius: 8px; background: #4D6BFE"></span>
-      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">DeepSeek</span><span class="m" style="font-size: 12px">Kiểu SDK: tương thích OpenAI · provider mặc định</span></div>
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">DeepSeek</span><span class="m" style="font-size: 12px">Kiểu SDK: tương thích OpenAI · chat</span></div>
       <span style="margin-left: auto; font-size: 12px; font-weight: 600; color: var(--ok); background: var(--okSoft); border-radius: 999px; padding: 2px 10px">Kết nối tốt · 210 ms</span>
       <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
     </div>
@@ -68,32 +87,26 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(-
         <div class="card" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
           <label style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12.5px; font-weight: 600">Khoá API</span><span style="display: flex; gap: 6px"><input class="inp mono" value="sk-••••••••••••••••3f2a" aria-label="Khoá API"><button type="button" class="b2">Thêm khoá</button></span><span class="m" style="font-size: 12px">2 khoá · xoay vòng khi chạm giới hạn</span></label>
           <label style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12.5px; font-weight: 600">Base URL</span><input class="inp mono" value="https://api.deepseek.com" aria-label="Base URL"></label>
-          <div style="display: flex; gap: 6px; align-items: center"><span class="m" style="font-size: 12.5px">Kiểm tra bằng</span><span class="tag mono">deepseek-chat</span><button type="button" class="b2" style="margin-left: auto">Kiểm tra kết nối</button></div>
+          <div style="display: flex; gap: 6px; align-items: center"><span class="m" style="font-size: 12.5px">Kiểm tra bằng</span><span class="tag mono">deepseek-v4-flash</span><button type="button" class="b2" style="margin-left: auto">Kiểm tra kết nối</button></div>
         </div>
         <div class="card">
           <div style="padding: 10px 14px; display: flex; align-items: center"><b>Model · 2</b><button type="button" class="b2" style="margin-left: auto; height: 30px; font-size: 12px">Tải danh sách mới</button></div>
           <div class="mr m" style="font-size: 12px; font-weight: 600"><span></span><span>Model</span><span>Năng lực</span><span>Giá</span></div>
-          <label class="mr"><input type="checkbox" checked aria-label="Bật deepseek-chat" style="width: 17px; height: 17px; accent-color: var(--accent)"><span class="mono">deepseek-chat</span><span style="display: flex; flex-wrap: wrap; gap: 4px"><span class="tag">gọi tool</span><span class="tag">đầu ra JSON</span><span class="tag">cache</span></span><span class="m" style="font-size: 12px">tự cập nhật</span></label>
-          <label class="mr"><input type="checkbox" checked aria-label="Bật deepseek-reasoner" style="width: 17px; height: 17px; accent-color: var(--accent)"><span class="mono">deepseek-reasoner</span><span style="display: flex; flex-wrap: wrap; gap: 4px"><span class="tag">suy luận</span><span class="tag">gọi tool</span><span class="tag">cache</span></span><span class="m" style="font-size: 12px">tự cập nhật</span></label>
+          <label class="mr"><input type="checkbox" checked aria-label="Bật deepseek-v4-flash" style="width: 17px; height: 17px; accent-color: var(--accent)"><span class="mono">deepseek-v4-flash</span><span style="display: flex; flex-wrap: wrap; gap: 4px"><span class="tag">gọi tool</span><span class="tag">đầu ra JSON</span><span class="tag">cache</span></span><span class="m" style="font-size: 12px">tự cập nhật</span></label>
+          <label class="mr"><input type="checkbox" checked aria-label="Bật deepseek-v4-pro" style="width: 17px; height: 17px; accent-color: var(--accent)"><span class="mono">deepseek-v4-pro</span><span style="display: flex; flex-wrap: wrap; gap: 4px"><span class="tag">suy luận</span><span class="tag">gọi tool</span><span class="tag">cache</span></span><span class="m" style="font-size: 12px">tự cập nhật</span></label>
         </div>
       </div>
 
-      <div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+      <div style="flex: 0.8 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
         <div class="card">
-          <div style="padding: 10px 14px"><b>Model theo việc</b><div class="m" style="font-size: 12px">Áp dụng chung; từng bot có thể ghi đè trong Hồ sơ bot</div></div>
-          <div class="rr"><span>Chat với bot</span><span class="sel">Mặc định của bot ▾</span></div>
-          <div class="rr"><span>Commander điều phối</span><span class="sel"><span class="dot" style="background: #D97757"></span>Claude Opus 5.5 ▾</span></div>
-          <div class="rr"><span>Vòng học nền</span><span class="sel"><span class="dot" style="background: #4D6BFE"></span>deepseek-chat ▾</span></div>
-          <div class="rr"><span>Tóm tắt khi tìm lại</span><span class="sel"><span class="dot" style="background: #4D6BFE"></span>deepseek-chat ▾</span></div>
-          <div class="rr"><span>Giám khảo mục tiêu</span><span class="sel"><span class="dot" style="background: #D97757"></span>Claude Haiku 5.5 ▾</span></div>
-          <div class="rr"><span>Nén ngữ cảnh</span><span class="sel"><span class="dot" style="background: #4D6BFE"></span>deepseek-chat ▾</span></div>
-          <div class="rr"><span>Kiểm thử skill</span><span class="sel"><span class="dot" style="background: #4D6BFE"></span>deepseek-chat ▾</span></div>
-          <div class="rr"><span>Nhúng (tìm ngữ nghĩa)</span><span class="sel"><span class="dot" style="background: var(--ink)"></span>Ollama · nomic-embed-text ▾</span></div>
+          <div style="padding: 10px 14px"><b>Đang dùng ở</b><div class="m" style="font-size: 12px">Model của DeepSeek đang được gán cho</div></div>
+          <div class="rr"><span>Chat mặc định</span><span class="mono" style="font-size: 12.5px">deepseek-v4-flash</span></div>
+          <div class="rr"><span>Dự phòng chat, bậc 2</span><span class="mono" style="font-size: 12.5px">deepseek-v4-pro</span></div>
+          <div class="rr"><span>Hồ sơ bot riêng</span><span style="font-size: 12.5px">Khoa, Dev</span></div>
+          <div style="padding: 9px 14px; border-top: 1px solid var(--line)"><a href="ModelViec.dc.html" style="color: var(--accent); font-size: 13px; text-decoration: none">Đổi model theo việc ở mục Model ›</a></div>
         </div>
-        <div class="card" style="padding: 12px 14px">
-          <b>Thứ tự dự phòng</b>
-          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px"><span class="tag" style="font-size: 12.5px">1 · DeepSeek</span>→<span class="tag" style="font-size: 12.5px">2 · Anthropic</span>→<span class="tag" style="font-size: 12.5px">3 · Ollama trên máy</span></div>
-          <div class="m" style="font-size: 12px; margin-top: 6px">Kéo để đổi thứ tự · lỗi hoặc chạm giới hạn thì chuyển sang provider kế tiếp</div>
+        <div class="card" style="padding: 12px 14px; font-size: 12.5px">
+          <span class="m">Chi phí theo model nằm ở <a href="ThongKe.dc.html" style="color: var(--accent); text-decoration: none">Thống kê và nhật ký ›</a>. Trần chi phí ở <a href="BaoMat.dc.html" style="color: var(--accent); text-decoration: none">Ngân sách ›</a>.</span>
         </div>
       </div>
     </div>

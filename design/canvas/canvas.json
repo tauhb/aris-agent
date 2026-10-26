@@ -65,7 +65,7 @@
       "h": 900,
       "is_interactive": true,
       "page": "g2",
-      "title": "2.5 · Commander — điều phối đội bot",
+      "title": "2.5 · Commander (revamp Cài đặt) — trong nhóm Đội bot của Cài đặt; cấu hình ở trên, nhật ký quyết định rộng cả trang",
       "w": 1440,
       "x": 0,
       "y": 2640
@@ -267,7 +267,7 @@
       "expand": "fill",
       "h": 900,
       "page": "g6",
-      "title": "6.6 · Màn hình của bot",
+      "title": "6.6 · Màn hình của bot — để giai đoạn 8, gỡ khỏi menu Cài đặt; khi làm sẽ đặt cạnh bot",
       "w": 1440,
       "x": 1520,
       "y": 2640
@@ -361,7 +361,7 @@
       "expand": "fill",
       "h": 900,
       "page": "g6",
-      "title": "6.2 · Provider & model",
+      "title": "6.2 · Provider và khoá (revamp Cài đặt) — chỉ kết nối: danh sách chia nhóm Chat, Ảnh và video, Nhúng; khoá, thử kết nối, model và giá; đang dùng ở đâu",
       "w": 1440,
       "x": 1520,
       "y": 0
@@ -589,7 +589,7 @@
       "y": 5280,
       "w": 1440,
       "h": 900,
-      "title": "6.2b · Provider — Gemini: tìm theo nghĩa (nhúng) và tạo ảnh; tiến độ lập chỉ mục, phần gửi đi nhúng, thử tìm",
+      "title": "6.2c · Tìm theo nghĩa (revamp Cài đặt) — mục riêng: model nhúng, phần gửi đi nhúng, tiến độ chỉ mục, thử tìm",
       "expand": "fill",
       "is_interactive": true,
       "page": "g6"
@@ -619,7 +619,7 @@
       "y": 6600,
       "w": 1440,
       "h": 900,
-      "title": "6.2c · Ảnh và video — thứ tự ưu tiên model tạo ảnh, tạo video; gán riêng theo bot (nhiều model)",
+      "title": "(cũ) 6.2c · Ảnh và video — đã gộp vào 6.2b Model khi revamp Cài đặt",
       "expand": "fill",
       "is_interactive": true,
       "page": "g6"
@@ -670,6 +670,15 @@
       "title": "6.5b · Phát lại phiên (GĐ7 đợt 7c) — từng bước của một phiên: tin nhắn, gọi công cụ, duyệt, bị chặn; token và chi phí mỗi bước; tua, phát tự động",
       "w": 1440,
       "x": 0,
+      "y": 7920
+    },
+    "ModelViec.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "6.2b · Model (revamp Cài đặt) — việc nào dùng model nào: chuỗi chat và việc nền, chuỗi tạo ảnh, tạo video, gán riêng theo bot, luật chọn model",
+      "w": 1440,
+      "x": 1520,
       "y": 7920
     }
   },
@@ -811,6 +820,7 @@
     "NhatKyBoNao.dc.html",
     "DieuKhien.dc.html",
     "Provider.dc.html",
+    "ModelViec.dc.html",
     "Kenh.dc.html",
     "BaoMat.dc.html",
     "SaoLuu.dc.html",
