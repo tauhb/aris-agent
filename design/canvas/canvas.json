@@ -889,6 +889,60 @@
       "w": 1440,
       "x": 0,
       "y": 11240
+    },
+    "TaiKhoanKenh.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "8.7 đợt B · Cài đặt › Kênh: danh sách tài khoản mỗi kênh, chi tiết một tài khoản (bấm tài khoản bên trái)",
+      "w": 1440,
+      "x": 0,
+      "y": 12240
+    },
+    "TaiKhoanZalo.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "8.7 đợt B, C · Tài khoản Zalo: thêm bằng QR; chi tiết: giờ trực, nhường tay cho chủ, chế độ khách, nhãn bỏ qua, nhóm và bot riêng",
+      "w": 1440,
+      "x": 1520,
+      "y": 12240
+    },
+    "HoSoBotKenh.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "8.7 đợt B · Hồ sơ bot › Kênh: các tài khoản bot đang trả lời",
+      "w": 1440,
+      "x": 3040,
+      "y": 12240
+    },
+    "TraLoiTheoTaiLieu.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "8.7 đợt D · Chỉ trả lời theo tài liệu: nguồn, câu khi không có thông tin, thử một câu",
+      "w": 1440,
+      "x": 0,
+      "y": 13240
+    },
+    "HopThuChung.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "8.7 đợt E · Hộp thư chung: lọc, trạng thái AI / người / chờ / đóng, nháp AI chờ duyệt, thống kê",
+      "w": 1440,
+      "x": 1520,
+      "y": 13240
+    },
+    "KenhZaloBot.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "8.7 đợt E · Zalo Bot chính thức cho chủ: kết nối bằng token",
+      "w": 1440,
+      "x": 3040,
+      "y": 13240
     }
   },
   "createdOnFiles": {
@@ -1084,7 +1138,13 @@
     "SkillDoiChiTiet.dc.html",
     "GoalCho.dc.html",
     "GopSkill.dc.html",
-    "GopSkillThuVien.dc.html"
+    "GopSkillThuVien.dc.html",
+    "TaiKhoanKenh.dc.html",
+    "TaiKhoanZalo.dc.html",
+    "HoSoBotKenh.dc.html",
+    "TraLoiTheoTaiLieu.dc.html",
+    "HopThuChung.dc.html",
+    "KenhZaloBot.dc.html"
   ],
   "pages": [
     {

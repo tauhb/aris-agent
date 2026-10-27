@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Trả lời theo tài liệu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#A14A07;--warnSoft:#FCEFDF}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614}
+button{font-family:inherit;cursor:pointer;color:inherit}
+input,textarea{font-family:inherit}
+a{color:var(--accent)}a:hover{color:var(--ink)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-direction: column">
+  <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line); flex-wrap: wrap">
+    <a href="HoSoBotKenh.dc.html" style="font-size: 13px; text-decoration: none; color: var(--muted)">Mai › Quyền và kênh ›</a>
+    <span style="font-weight: 600">Chỉ trả lời theo tài liệu</span>
+    <button type="button" role="switch" aria-checked="{{on}}" aria-label="Bật chỉ trả lời theo tài liệu" onClick="{{toggle}}" style="{{sw}}"><span style="{{knob}}"></span></button>
+    <button type="button" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="margin-left: auto; width: 44px; height: 44px; border: 0; border-radius: 9px; background: transparent; color: var(--muted)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+  </div>
+  <div style="padding: 18px 24px; display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start">
+    <div style="flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+      <section style="border: 1px solid var(--line); border-radius: 12px; background: var(--panel)">
+        <div style="padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap"><b style="font-size: 15px">Áp cho</b></div>
+        <div style="padding: 10px 16px; display: flex; gap: 6px; flex-wrap: wrap"><sc-for list="{{scopes}}" as="c" hint-placeholder-count="4"><button type="button" onClick="{{c.toggle}}" aria-pressed="{{c.on}}" style="{{c.style}}">{{c.name}}</button></sc-for></div>
+        <div style="padding: 0 16px 12px; font-size: 12px; color: var(--muted)">Chat với {{you}} và nhân viên đã ghép đôi không bị giới hạn.</div>
+      </section>
+      <section style="border: 1px solid var(--line); border-radius: 12px; background: var(--panel)">
+        <div style="padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap"><b style="font-size: 15px">Nguồn tài liệu</b><span style="font-size: 12px; color: var(--muted)">thư mục trong Bộ não</span></div>
+        <sc-for list="{{folders}}" as="f" hint-placeholder-count="5">
+          <label style="padding: 8px 16px; display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--line); font-size: 13.5px; min-height: 44px; box-sizing: border-box"><input type="checkbox" checked="{{f.on}}" onChange="{{f.toggle}}" style="width: 18px; height: 18px; accent-color: var(--accent)"><span style="flex: 1">{{f.name}}</span><span style="font-size: 12px; color: var(--muted)">{{f.n}} tài liệu</span></label>
+        </sc-for>
+        <div style="padding: 10px 16px; display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--muted)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg><span style="flex: 1">Tệp khách gửi lên</span><span style="font-size: 12px">không bao giờ dùng làm nguồn</span></div>
+      </section>
+      <section style="border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 12px 16px; display: flex; flex-direction: column; gap: 8px">
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; font-weight: 600">Khi không tìm thấy trong tài liệu, bot trả lời
+          <textarea rows="2" style="border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--ink); padding: 8px 10px; font-size: 13.5px; font-weight: 400; resize: vertical">Dạ, em chưa có thông tin về việc này. Em đã báo người phụ trách, sẽ trả lời mình sớm ạ.</textarea></label>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--accent)">Đồng thời báo {{you}} (tối đa 10 phút một lần mỗi cuộc chat)</label>
+      </section>
+    </div>
+    <div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+      <section style="border: 1px solid var(--line); border-radius: 12px; background: var(--panel)">
+        <div style="padding: 12px 16px; border-bottom: 1px solid var(--line)"><b style="font-size: 15px">Thử một câu</b></div>
+        <div style="padding: 12px 16px; display: flex; gap: 8px; flex-wrap: wrap"><input aria-label="Câu hỏi thử" value="{{question}}" style="flex: 1 1 220px; height: 44px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--ink); padding: 0 10px; font-size: 13.5px"><button type="button" onClick="{{nextSample}}" style="height: 44px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--ink); color: var(--panel); font-size: 13.5px; font-weight: 600">Thử</button></div>
+        <div style="padding: 0 16px 14px; display: flex; flex-direction: column; gap: 8px">
+          <div style="align-self: flex-start; max-width: 92%; background: var(--panel2); border-radius: 12px; padding: 10px 12px; font-size: 13.5px">{{answer}}</div>
+          <sc-if value="{{hasSource}}" hint-placeholder-val="{{ true }}"><div style="font-size: 12.5px; color: var(--muted); display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap"><span>Dẫn từ</span><a href="#">{{source}}</a></div></sc-if>
+          <sc-if value="{{noSource}}" hint-placeholder-val="{{ false }}"><div style="font-size: 12.5px; color: var(--warn)">Không có đoạn nào khớp trong nguồn: bot dùng câu “chưa có thông tin”.</div></sc-if>
+        </div>
+      </section>
+      <section style="border: 1px solid var(--warn); border-radius: 12px; background: var(--warnSoft); color: var(--warn); padding: 12px 16px; font-size: 13px; display: flex; flex-direction: column; gap: 4px">
+        <b>Giảm bịa, không loại bỏ hẳn</b>
+        <span>Bot chỉ tra trong các thư mục đã chọn, và câu trả lời phải dẫn được đoạn tài liệu, không dẫn được thì thay bằng câu “chưa có thông tin”. Model vẫn có thể diễn đạt lệch ý: nên kiểm vài cuộc chat đầu.</span>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'dark';
+    const on = s.on ?? true;
+    const sc = s.sc || { 'CSKH 1': true, 'CSKH 2': true };
+    const fo = s.fo || { 'Sản phẩm và khoá học': true, 'Bảng giá 2026': true, 'Chính sách đổi trả': true, 'Câu hỏi thường gặp': true };
+    const sample = s.sample || 0;
+    const chip = (v) => 'min-height: 36px; padding: 0 12px; border-radius: 999px; font-size: 13px; border: 1px solid ' + (v ? 'var(--accent); background: var(--accentSoft); color: var(--ink); font-weight: 600' : 'var(--line); background: var(--panel); color: var(--muted)');
+    const samples = [
+      { q: 'Khoá AI cơ bản học bao lâu?', a: 'Dạ, khoá AI cơ bản học 6 buổi, mỗi buổi 2 giờ, học online qua Zoom ạ.', src: 'Sản phẩm và khoá học › Khoá AI cơ bản.md' },
+      { q: 'Bên mình có chi nhánh ở Đà Nẵng không?', a: 'Dạ, em chưa có thông tin về việc này. Em đã báo người phụ trách, sẽ trả lời mình sớm ạ.', src: '' },
+    ];
+    const cur = samples[sample % samples.length];
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      you: 'anh Tầu',
+      on, toggle: () => this.setState({ on: !on }),
+      sw: 'width: 44px; height: 26px; border: 0; border-radius: 999px; position: relative; padding: 0; flex: none; background: ' + (on ? 'var(--accent)' : 'var(--hover)'),
+      knob: 'position: absolute; top: 4px; width: 18px; height: 18px; border-radius: 50%; background: #fff; left: ' + (on ? '22px' : '4px'),
+      scopes: ['CSKH 1', 'CSKH 2', '@mai_cskh_bot', 'Mọi kênh của Mai'].map((n) => ({ name: n, on: !!sc[n], style: chip(!!sc[n]), toggle: () => this.setState({ sc: { ...sc, [n]: !sc[n] } }) })),
+      folders: [['Sản phẩm và khoá học', 18], ['Bảng giá 2026', 3], ['Chính sách đổi trả', 2], ['Câu hỏi thường gặp', 41], ['Ghi chú nội bộ', 27]].map(([n, k]) => ({ name: n, n: k, on: !!fo[n], toggle: () => this.setState({ fo: { ...fo, [n]: !fo[n] } }) })),
+      question: cur.q, answer: cur.a, source: cur.src, hasSource: !!cur.src, noSource: !cur.src,
+      nextSample: () => this.setState({ sample: sample + 1 }),
+    };
+  }
+}
+</script>
+</body>
+</html>
