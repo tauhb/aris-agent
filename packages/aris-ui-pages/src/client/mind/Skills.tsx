@@ -8,6 +8,7 @@ import { Fragment, useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Later } from '../team/BotTools.js'
 import { AssignPicker } from './SkillAssign.js'
+import { SkillLibrary, packCounts, type LibraryPack } from './SkillLibrary.js'
 import { skillsPost } from './skills-api.js'
 import { assignedTo, isTeamSkill, sourceLabel, type Assigned, type SkillSource } from './skill-team.js'
 
@@ -51,7 +52,7 @@ export interface SkillRow {
 }
 
 type Filter = 'all' | 'pending' | 'active' | 'rare' | 'archived' | 'pinned' | 'unassigned'
-type Scope = 'all' | 'team' | 'own'
+type Scope = 'all' | 'team' | 'own' | 'library'
 
 const pct = (x: number) => `${Math.round(x * 100)}%`
 
@@ -76,6 +77,7 @@ export function Skills({ t, nav, params }: PageProps) {
   const [allPairs, setAllPairs] = useState(false)
   const [dupNote, setDupNote] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const [packs, setPacks] = useState<LibraryPack[] | null>(null)
   const [tick, setTick] = useState(0)
   useEffect(() => {
     let live = true
@@ -95,6 +97,10 @@ export function Skills({ t, nav, params }: PageProps) {
         .then(() => fetch(new URL('api/aris/skills?duplicates=preview', document.baseURI)))
         .then((r) => (r.ok ? (r.json() as Promise<{ pairs: DupPair[] }>) : undefined))
         .then((d) => live && d && setPairs(d.pairs))
+        .catch(() => {})
+        .then(() => fetch(new URL('api/aris/skills?library=1', document.baseURI)))
+        .then((r) => (r.ok ? (r.json() as Promise<{ packs: LibraryPack[] }>) : undefined))
+        .then((d) => live && d && setPacks(d.packs))
         .catch(() => {})
     void load()
     const timer = setInterval(() => void load(), 10_000)
@@ -140,7 +146,10 @@ export function Skills({ t, nav, params }: PageProps) {
     ['all', t('ski.scopeAll', { n: all.length })],
     ['team', t('ski.scopeTeam', { n: teamRows.length })],
     ['own', t('ski.scopeOwn', { n: all.length - teamRows.length })],
+    ['library', t('lib.scope', { n: packs?.length ?? 0 })],
   ]
+  const libUpdates = (packs ?? []).reduce((n, p) => n + packCounts(p).updates, 0)
+  const library = scope === 'library'
 
   /** Nhờ aris soạn bản gộp cho các cặp nghi trùng (model rẻ, kết quả là đề xuất ở Hộp duyệt). */
   async function findDuplicates() {
@@ -228,20 +237,23 @@ export function Skills({ t, nav, params }: PageProps) {
             </button>
           ))}
         </div>
-        <label
-          className="ap-search"
-          style={{ flex: '0 1 300px', margin: 0, padding: '6px 10px', borderRadius: 10 }}
-        >
-          ⌕
-          <input
-            type="search"
-            aria-label={t('sk.search')}
-            placeholder={t('sk.search')}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </label>
-        {params.bot && (
+        {library && libUpdates > 0 && <Pill tone="warn">{t('lib.updatesPill', { n: libUpdates })}</Pill>}
+        {!library && (
+          <label
+            className="ap-search"
+            style={{ flex: '0 1 300px', margin: 0, padding: '6px 10px', borderRadius: 10 }}
+          >
+            ⌕
+            <input
+              type="search"
+              aria-label={t('sk.search')}
+              placeholder={t('sk.search')}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </label>
+        )}
+        {!library && params.bot && (
           <button
             type="button"
             className="ap-chip"
@@ -252,19 +264,21 @@ export function Skills({ t, nav, params }: PageProps) {
             {t('sk.botFilter', { name: botOf(params.bot)?.name ?? params.bot })} ×
           </button>
         )}
-        {chips.map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            className="ap-chip"
-            aria-pressed={filter === id}
-            onClick={() => setFilter(id)}
-          >
-            {label}
-          </button>
-        ))}
+        {!library &&
+          chips.map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              className="ap-chip"
+              aria-pressed={filter === id}
+              onClick={() => setFilter(id)}
+            >
+              {label}
+            </button>
+          ))}
       </div>
-      {(pairs.length > 0 || dupNote) && (
+      {library && <SkillLibrary t={t} nav={nav} packs={packs} onChanged={() => setTick((n) => n + 1)} />}
+      {!library && (pairs.length > 0 || dupNote) && (
         <div
           className="a-card"
           style={{ padding: '12px 14px', display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}
@@ -303,179 +317,184 @@ export function Skills({ t, nav, params }: PageProps) {
           )}
         </div>
       )}
-      <div className="a-card" style={{ overflowX: 'auto' }}>
-        <div className="ap-sk a-muted" style={{ borderTop: 0, fontSize: 12, fontWeight: 600 }}>
-          <span>{t('sk.skill')}</span>
-          <span>{t('sk.bot')}</span>
-          <span>{t('sk.version')}</span>
-          <span>{t('sk.state')}</span>
-          <span>{t('sk.uses')}</span>
-          <span>{t('sk.success')}</span>
-          <span>{t('sk.updated')}</span>
-        </div>
-        {rows && shown.length === 0 && (
-          <div className="a-muted" style={{ padding: '14px 16px', fontSize: 13 }}>
-            {all.length ? t('sk.noMatch') : t('sk.empty')}
+      {!library && (
+        <div className="a-card" style={{ overflowX: 'auto' }}>
+          <div className="ap-sk a-muted" style={{ borderTop: 0, fontSize: 12, fontWeight: 600 }}>
+            <span>{t('sk.skill')}</span>
+            <span>{t('sk.bot')}</span>
+            <span>{t('sk.version')}</span>
+            <span>{t('sk.state')}</span>
+            <span>{t('sk.uses')}</span>
+            <span>{t('sk.success')}</span>
+            <span>{t('sk.updated')}</span>
           </div>
-        )}
-        {shown.map((r) => {
-          const bot = botOf(r.bot)
-          return (
-            <Fragment key={r.id}>
-              <div
-                role="button"
-                tabIndex={0}
-                className="ap-sk"
-                data-hot={r.proposed ? true : undefined}
-                onClick={() => nav.go('skill', { id: r.id })}
-                onKeyDown={(e) => {
-                  if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
-                    e.preventDefault()
-                    nav.go('skill', { id: r.id })
-                  }
-                }}
-              >
-                <span style={{ minWidth: 0 }}>
-                  <span
-                    className={r.status === 'archived' ? 'a-mono a-muted' : 'a-mono'}
-                    style={{ fontWeight: 500 }}
-                  >
-                    {r.name}
-                  </span>
-                  {r.pinned && (
+          {rows && shown.length === 0 && (
+            <div className="a-muted" style={{ padding: '14px 16px', fontSize: 13 }}>
+              {all.length ? t('sk.noMatch') : t('sk.empty')}
+            </div>
+          )}
+          {shown.map((r) => {
+            const bot = botOf(r.bot)
+            return (
+              <Fragment key={r.id}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className="ap-sk"
+                  data-hot={r.proposed ? true : undefined}
+                  onClick={() => nav.go('skill', { id: r.id })}
+                  onKeyDown={(e) => {
+                    if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault()
+                      nav.go('skill', { id: r.id })
+                    }
+                  }}
+                >
+                  <span style={{ minWidth: 0 }}>
                     <span
-                      className="a-muted"
-                      title={t('sk.pinnedMark')}
-                      style={{ marginLeft: 6, verticalAlign: '-2px' }}
+                      className={r.status === 'archived' ? 'a-mono a-muted' : 'a-mono'}
+                      style={{ fontWeight: 500 }}
                     >
-                      <PinIcon />
+                      {r.name}
+                    </span>
+                    {r.pinned && (
+                      <span
+                        className="a-muted"
+                        title={t('sk.pinnedMark')}
+                        style={{ marginLeft: 6, verticalAlign: '-2px' }}
+                      >
+                        <PinIcon />
+                      </span>
+                    )}
+                    {isTeamSkill(r) && r.source && (
+                      <span style={{ marginLeft: 6 }}>
+                        <Pill tone="accent">{sourceLabel(r.source, t('lib.source'))}</Pill>
+                      </span>
+                    )}
+                    {r.proposed && r.version > 0 && r.proposed.by === 'import' && (
+                      <span style={{ marginLeft: 6 }}>
+                        <Pill tone="warn">{t('ski.newer')}</Pill>
+                      </span>
+                    )}
+                    <div className="a-muted ap-li-sub">
+                      {r.proposed
+                        ? r.version
+                          ? t('sk.patchNote', { why: r.proposed.why ?? '' })
+                          : t('sk.newNote', { why: r.proposed.why ?? '' })
+                        : r.description}
+                    </div>
+                  </span>
+                  {isTeamSkill(r) ? (
+                    <button
+                      type="button"
+                      className="ap-sc-pill"
+                      aria-expanded={assigning === r.id}
+                      aria-label={t('ski.assignTitle', { name: r.name })}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setError(null)
+                        setAssigning(assigning === r.id ? null : r.id)
+                      }}
+                    >
+                      <span className="ap-sc-faces" aria-hidden="true">
+                        {(r.assigned === 'all' ? [] : (r.assigned ?? []))
+                          .slice(0, 3)
+                          .map((id) => botOf(id))
+                          .map((b) =>
+                            b ? <Mascot key={b.id} id={b.mascot} accessory={b.accessory} size={22} /> : null,
+                          )}
+                      </span>
+                      {r.assigned === 'all'
+                        ? t('conn.scopeAll')
+                        : (r.assigned?.length ?? 0) === 0
+                          ? t('ski.noneAssigned')
+                          : t('conn.nBots', { n: r.assigned?.length ?? 0 })}{' '}
+                      ▾
+                    </button>
+                  ) : (
+                    <span title={bot?.name}>
+                      <Mascot id={bot?.mascot ?? 'aris'} size={22} accessory={bot?.accessory} />
                     </span>
                   )}
-                  {isTeamSkill(r) && r.source && (
-                    <span style={{ marginLeft: 6 }}>
-                      <Pill tone="accent">{sourceLabel(r.source)}</Pill>
-                    </span>
-                  )}
-                  {r.proposed && r.version > 0 && r.proposed.by === 'import' && (
-                    <span style={{ marginLeft: 6 }}>
-                      <Pill tone="warn">{t('ski.newer')}</Pill>
-                    </span>
-                  )}
-                  <div className="a-muted ap-li-sub">
+                  <span className="a-mono">
                     {r.proposed
                       ? r.version
-                        ? t('sk.patchNote', { why: r.proposed.why ?? '' })
-                        : t('sk.newNote', { why: r.proposed.why ?? '' })
-                      : r.description}
-                  </div>
-                </span>
-                {isTeamSkill(r) ? (
-                  <button
-                    type="button"
-                    className="ap-sc-pill"
-                    aria-expanded={assigning === r.id}
-                    aria-label={t('ski.assignTitle', { name: r.name })}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setError(null)
-                      setAssigning(assigning === r.id ? null : r.id)
-                    }}
-                  >
-                    <span className="ap-sc-faces" aria-hidden="true">
-                      {(r.assigned === 'all' ? [] : (r.assigned ?? []))
-                        .slice(0, 3)
-                        .map((id) => botOf(id))
-                        .map((b) =>
-                          b ? <Mascot key={b.id} id={b.mascot} accessory={b.accessory} size={22} /> : null,
-                        )}
-                    </span>
-                    {r.assigned === 'all'
-                      ? t('conn.scopeAll')
-                      : (r.assigned?.length ?? 0) === 0
-                        ? t('ski.noneAssigned')
-                        : t('conn.nBots', { n: r.assigned?.length ?? 0 })}{' '}
-                    ▾
-                  </button>
-                ) : (
-                  <span title={bot?.name}>
-                    <Mascot id={bot?.mascot ?? 'aris'} size={22} accessory={bot?.accessory} />
+                        ? `v${r.version} → v${r.proposed.version}`
+                        : `v${r.proposed.version}`
+                      : `v${r.version}`}
                   </span>
-                )}
-                <span className="a-mono">
-                  {r.proposed
-                    ? r.version
-                      ? `v${r.version} → v${r.proposed.version}`
-                      : `v${r.proposed.version}`
-                    : `v${r.version}`}
-                </span>
-                <span>
-                  <Pill tone={r.proposed ? 'warn' : r.status === 'active' && !r.stale ? 'ok' : 'muted'}>
-                    {r.proposed
-                      ? t('sk.st.pending')
-                      : r.status === 'archived'
-                        ? t('sk.st.archived')
-                        : r.stale
-                          ? t('sk.st.rare', { n: r.idleDays })
-                          : t('sk.st.active')}
-                  </Pill>
-                </span>
-                <span className={r.uses ? undefined : 'a-muted'}>{r.uses}</span>
-                <span
-                  className={r.success ? undefined : 'a-muted'}
-                  title={r.success ? t('sk.successHint') : t('sk.noEval')}
-                >
-                  {r.success ? (
-                    r.success.base !== null ? (
-                      <>
-                        {pct(r.success.base)} → <b style={{ color: 'var(--a-ok)' }}>{pct(r.success.cand)}</b>
-                      </>
+                  <span>
+                    <Pill tone={r.proposed ? 'warn' : r.status === 'active' && !r.stale ? 'ok' : 'muted'}>
+                      {r.proposed
+                        ? t('sk.st.pending')
+                        : r.status === 'archived'
+                          ? t('sk.st.archived')
+                          : r.stale
+                            ? t('sk.st.rare', { n: r.idleDays })
+                            : t('sk.st.active')}
+                    </Pill>
+                  </span>
+                  <span className={r.uses ? undefined : 'a-muted'}>{r.uses}</span>
+                  <span
+                    className={r.success ? undefined : 'a-muted'}
+                    title={r.success ? t('sk.successHint') : t('sk.noEval')}
+                  >
+                    {r.success ? (
+                      r.success.base !== null ? (
+                        <>
+                          {pct(r.success.base)} →{' '}
+                          <b style={{ color: 'var(--a-ok)' }}>{pct(r.success.cand)}</b>
+                        </>
+                      ) : (
+                        pct(r.success.cand)
+                      )
                     ) : (
-                      pct(r.success.cand)
-                    )
-                  ) : (
-                    '—'
-                  )}
-                </span>
-                <span className="a-muted">{dayOf(r.updatedAt) || t('sk.today')}</span>
-              </div>
-              {assigning === r.id && (
-                <div className="ap-sk-panel">
-                  <AssignPicker
-                    t={t}
-                    name={r.name}
-                    assigned={r.assigned}
-                    busy={busy}
-                    onSave={(next) => void saveAssign(r.id, next)}
-                    onCancel={() => setAssigning(null)}
-                  />
-                  {error && (
-                    <div style={{ color: 'var(--a-danger)', fontSize: 13, padding: '0 16px 10px' }}>
-                      {error}
-                    </div>
-                  )}
+                      '—'
+                    )}
+                  </span>
+                  <span className="a-muted">{dayOf(r.updatedAt) || t('sk.today')}</span>
                 </div>
-              )}
-            </Fragment>
-          )
-        })}
-      </div>
-      <p className="a-muted" style={{ margin: 0, fontSize: 12.5 }}>
-        {t('sk.policyNow', { stale: curator?.staleDays ?? 30, archive: curator?.archiveDays ?? 90 })}
-        {curator?.report &&
-          ` ${t('sk.curatorLast', {
-            d: dayOf(curator.report.at) || t('sk.today'),
-            a: curator.report.archive.length,
-            s: curator.report.stale.length,
-          })}`}
-        {plan &&
-          ` ${
-            plan.archive.length
-              ? t('sk.curatorPlan', {
-                  names: plan.archive.map((s) => `${s.name} (${botOf(s.bot)?.name ?? s.bot})`).join(', '),
-                })
-              : t('sk.curatorNone')
-          }`}
-      </p>
+                {assigning === r.id && (
+                  <div className="ap-sk-panel">
+                    <AssignPicker
+                      t={t}
+                      name={r.name}
+                      assigned={r.assigned}
+                      busy={busy}
+                      onSave={(next) => void saveAssign(r.id, next)}
+                      onCancel={() => setAssigning(null)}
+                    />
+                    {error && (
+                      <div style={{ color: 'var(--a-danger)', fontSize: 13, padding: '0 16px 10px' }}>
+                        {error}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Fragment>
+            )
+          })}
+        </div>
+      )}
+      {!library && (
+        <p className="a-muted" style={{ margin: 0, fontSize: 12.5 }}>
+          {t('sk.policyNow', { stale: curator?.staleDays ?? 30, archive: curator?.archiveDays ?? 90 })}
+          {curator?.report &&
+            ` ${t('sk.curatorLast', {
+              d: dayOf(curator.report.at) || t('sk.today'),
+              a: curator.report.archive.length,
+              s: curator.report.stale.length,
+            })}`}
+          {plan &&
+            ` ${
+              plan.archive.length
+                ? t('sk.curatorPlan', {
+                    names: plan.archive.map((s) => `${s.name} (${botOf(s.bot)?.name ?? s.bot})`).join(', '),
+                  })
+                : t('sk.curatorNone')
+            }`}
+        </p>
+      )}
     </PageShell>
   )
 }

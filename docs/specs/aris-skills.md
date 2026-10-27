@@ -105,8 +105,8 @@ Khi agent được tạo, aris gắn một nguồn skill vào phạm vi của ag
 - `loadLibrary` (`library.ts`) đọc và kiểm cả kho: `pack.json` khớp thư mục, mỗi skill có `SKILL.md` đọc được, tên trong tệp trùng tên thư mục, mô tả có đoạn "Dùng khi…", qua `lintSkill` **không cảnh báo nào**, qua `scanImported`, có 2–3 ca thử; thư mục không có trong danh sách và tên trùng giữa hai gói là lỗi. Test `library.test.ts` đòi kho thật không có lỗi nào.
 - Cài (`installFromLibrary`): đi qua `importItems` với nguồn `kind: 'library'` (`pack`, `libVersion`, `path` là `<gói>/<skill>`), rồi duyệt luôn thay người dùng (người dùng đã bấm cài) nên không vào Hộp duyệt. Thành skill của đội, chưa gán bot trừ khi chọn bot lúc cài; ca thử của gói thêm vào skill; skill đã cất thì lấy ra lại.
 - Tình trạng (`stateOf`): `none`, `installed`, `update` (kho có `version` lớn hơn bản đã cài), `edited` (skill cùng tên đang dùng không phải bản từ kho: người dùng sửa, vòng học vá hay nhập nơi khác), `archived`. Skill `edited` không bị ghi đè khi cài hay cập nhật, trừ khi `force` (người dùng đồng ý); bản cũ vẫn trong lịch sử bản.
-- API: `GET ?library=1` (các gói, nội dung, tình trạng, số đã cài, số có bản mới), `POST { op: library-install, pack, names?, bots?, force? }`.
-- Gói hiện có: Bán hàng và chăm sóc khách, Nội dung mạng xã hội, Phễu và marketing (mỗi gói 6 skill). Giao diện tab "Kho dựng sẵn" theo bản vẽ `design/canvas/KhoDungSan.dc.html`.
+- API: `GET ?library=1` (các gói, nội dung, tình trạng, số đã cài, số có bản mới; skill có bản mới hay đã sửa kèm các dòng khác, tối đa 40, và số dòng thêm, bớt), `POST { op: library-install, pack, names?, bots?, force? }`.
+- Gói hiện có: Bán hàng và chăm sóc khách, Nội dung mạng xã hội, Phễu và marketing (mỗi gói 6 skill). Giao diện: tab "Kho dựng sẵn" của Thư viện skill (`SkillLibrary.tsx`) theo bản vẽ `design/canvas/KhoDungSan.dc.html`; nguồn `library` hiện nhãn "Kho dựng sẵn".
 
 ## Để sau
 

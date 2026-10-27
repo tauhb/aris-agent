@@ -233,7 +233,7 @@ export function Approvals({ t, nav }: PageProps) {
             ? t('ap.mergeTitle', { gone: skillNameOf(r.s.mergeOf), keep: r.s.name })
             : t('ap.skillTitle', { name: r.s.name, v: r.s.version })
           : r.type === 'imports'
-            ? t('ski.groupTitle', { n: r.g.items.length, src: sourceLabel(r.g.source) })
+            ? t('ski.groupTitle', { n: r.g.items.length, src: sourceLabel(r.g.source, t('lib.source')) })
             : t('ap.soatTitle')
   const subOf = (r: Row) =>
     r.type === 'action'
@@ -862,14 +862,14 @@ function ImportsDetail({
     <>
       <Head
         mascot="aris"
-        title={t('ski.groupTitle', { n: g.items.length, src: sourceLabel(g.source) })}
+        title={t('ski.groupTitle', { n: g.items.length, src: sourceLabel(g.source, t('lib.source')) })}
         context={`${t('ski.groupVia')} · ${hhmm(first?.at ?? '')} ${new Date(first?.at ?? 0).toLocaleDateString('vi-VN')}`}
       />
       <div className="a-card" style={{ padding: '4px 16px 8px', maxWidth: 760 }}>
         <div className="ap-kv">
           <span className="a-muted">{t('ski.source')}</span>
           <span>
-            <Pill tone="accent">{sourceLabel(g.source)}</Pill>{' '}
+            <Pill tone="accent">{sourceLabel(g.source, t('lib.source'))}</Pill>{' '}
             {sha &&
               (link ? (
                 <a className="ap-link a-mono" href={link} target="_blank" rel="noreferrer">

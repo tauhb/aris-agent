@@ -36,6 +36,9 @@ describe('kho skill của đội ở giao diện', () => {
   it('nhãn và địa chỉ nguồn', () => {
     expect(sourceLabel(gh('x'))).toBe('GitHub · anthropics/skills')
     expect(sourceLabel({ kind: 'claude-code', path: '/x', importedAt: '' })).toBe('Claude Code')
+    expect(
+      sourceLabel({ kind: 'library', pack: 'ban-hang-cskh', path: 'b/x', importedAt: '' }, 'Kho dựng sẵn'),
+    ).toBe('Kho dựng sẵn')
     expect(sourceLabel({ kind: 'folder', path: '/Users/a/skills/pdf', importedAt: '' })).toBe('pdf')
     expect(sourceLabel(null)).toBe('')
     expect(shortSha(gh('x').sha)).toBe('dbd4588')

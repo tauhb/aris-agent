@@ -6,6 +6,7 @@
 import { readFile, readdir, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { diffStat, lineDiff, type DiffLine } from './diff.js'
 import { parseSkillMd, scanImported, toAris } from './import.js'
 import { ImportError, importItems, scanDirectory, type ImportOutcome, type ScanResult } from './import-io.js'
 import { lintSkill, NAME_RE } from './lint.js'
@@ -144,7 +145,13 @@ export interface LibrarySkillView {
   installedVersion?: number | undefined
   /** Bot được gán (skill của đội). */
   assigned?: Assigned | undefined
+  /** Có bản mới hay đã sửa: các dòng khác giữa bản đang dùng và bản trong kho (tối đa `MAX_CHANGES`), và số dòng. */
+  changes?: DiffLine[] | undefined
+  stat?: { add: number; del: number } | undefined
 }
+
+/** Số dòng khác tối đa gửi cho giao diện. */
+export const MAX_CHANGES = 40
 
 /**
  * Tình trạng một skill trong kho so với kho skill của đội: chưa cài; đã cài đúng bản; kho có bản mới; skill cùng tên
@@ -177,8 +184,15 @@ export async function packView(store: SkillStore, pack: Pack) {
   for (const s of pack.skills) {
     const text = await readFile(join(pack.dir, s.name, 'SKILL.md'), 'utf8')
     const d = toAris(parseSkillMd(text), s.name)
+    const st = stateOf(store, s)
+    const current =
+      st.state === 'update' || st.state === 'edited' ? store.active(skillId(TEAM_OWNER, s.name)) : undefined
+    const diff = current ? lineDiff(current.body, d.body) : undefined
     skills.push({
-      ...stateOf(store, s),
+      ...st,
+      ...(diff
+        ? { changes: diff.filter((l) => l.kind !== ' ').slice(0, MAX_CHANGES), stat: diffStat(diff) }
+        : {}),
       description: d.description,
       ...(d.whenToUse ? { whenToUse: d.whenToUse } : {}),
       body: d.body,

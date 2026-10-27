@@ -139,6 +139,13 @@ describe('cài từ kho', () => {
     expect(by['chot-don']).toBe('update')
     expect(by['xu-ly-tu-choi']).toBe('edited')
     expect(view.updates).toBe(1)
+    const edited = view.skills.find((s) => s.name === 'xu-ly-tu-choi')!
+    expect(edited.stat!.add).toBeGreaterThan(0)
+    expect(edited.changes!.some((l) => l.kind === '-' && l.text.includes('Hỏi lý do'))).toBe(true)
+    expect(view.skills.find((s) => s.name === 'chot-don')!.changes).toContainEqual({
+      kind: '+',
+      text: '- Không hỏi lại điều khách đã nói.',
+    })
 
     const out = await installFromLibrary(store, pack, {
       names: ['chot-don', 'xu-ly-tu-choi'],

@@ -10,7 +10,10 @@ export type Assigned = 'all' | string[]
 
 /** Nơi một skill nhập từ ngoài (như `ImportSource` của `@aris/skills`). */
 export interface SkillSource {
-  kind: 'github' | 'claude-code' | 'codex' | 'folder'
+  kind: 'github' | 'claude-code' | 'codex' | 'folder' | 'library'
+  /** Gói trong kho dựng sẵn và bản lúc cài. */
+  pack?: string
+  libVersion?: number
   repo?: string
   ref?: string
   sha?: string
@@ -39,12 +42,16 @@ export function toggleAssigned(
   return on ? [...base, bot] : base
 }
 
-/** Nhãn nguồn ngắn: "GitHub · chủ/repo", "Claude Code", "Codex", hay tên thư mục. */
-export function sourceLabel(src: SkillSource | null | undefined): string {
+/**
+ * Nhãn nguồn ngắn: "GitHub · chủ/repo", "Claude Code", "Codex", tên kho dựng sẵn (`library`, chữ theo ngôn ngữ do
+ * nơi gọi đưa vào), hay tên thư mục.
+ */
+export function sourceLabel(src: SkillSource | null | undefined, library = 'aris'): string {
   if (!src) return ''
   if (src.kind === 'github') return `GitHub · ${src.repo ?? ''}`.trim()
   if (src.kind === 'claude-code') return 'Claude Code'
   if (src.kind === 'codex') return 'Codex'
+  if (src.kind === 'library') return library
   return src.path.split('/').filter(Boolean).at(-1) ?? src.path
 }
 

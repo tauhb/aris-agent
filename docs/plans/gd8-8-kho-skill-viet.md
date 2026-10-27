@@ -52,5 +52,5 @@ Theo `gd8-chung.md`. Thêm: chạy ca thử của từng skill với model mặc
 - Điểm dừng 1: người dùng chọn thứ tự gói Bán hàng và chăm sóc khách → Nội dung mạng xã hội → Phễu và marketing.
 - Điểm dừng 2: người dùng duyệt 2 skill mẫu (`tra-loi-hoi-gia`, `xu-ly-tu-choi`) và bảo viết nốt.
 - Ba gói, mỗi gói 6 skill, mỗi skill 3 ca thử trong `pack.json`. Bộ đọc và kiểm kho, cài qua `importItems` (nguồn `library`), tình trạng đã cài / có bản mới / đã sửa, API `?library=1` và `library-install`, test `library.test.ts`.
-- Bản vẽ tab "Kho dựng sẵn" (`design/canvas/KhoDungSan.dc.html`) chờ duyệt (Điểm dừng 3); chưa làm giao diện.
+- Điểm dừng 3: người dùng duyệt bản vẽ `design/canvas/KhoDungSan.dc.html`. Giao diện tab "Kho dựng sẵn" xong (thẻ gói, cài cả gói hay từng skill kèm chọn bot, xem trước, cập nhật, so khác và hỏi trước khi thay skill đã sửa); dựng thử với dữ liệu giả trong Chromium (sáng, tối, điện thoại 390 px).
 - Chưa làm: chạy ca thử của từng skill với model mặc định (cần aris chạy thật có khoá model), thử với bot thật trong phiên thật.
