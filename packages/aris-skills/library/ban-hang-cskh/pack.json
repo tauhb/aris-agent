@@ -1,0 +1,27 @@
+{
+  "id": "ban-hang-cskh",
+  "name": "Bán hàng và chăm sóc khách",
+  "description": "Trả lời hỏi giá, xử lý từ chối, chốt đơn, nhắn lại khách, xử lý khiếu nại theo tài liệu của shop.",
+  "version": 1,
+  "suggest": ["bot trả lời khách trên kênh chat"],
+  "skills": [
+    {
+      "name": "tra-loi-hoi-gia",
+      "version": 1,
+      "cases": [
+        "Khách nhắn: \"Khoá học này bao nhiêu vậy?\" Tài liệu: gói Cơ bản 1.990.000đ (video, bài tự chấm), gói Kèm cặp 4.990.000đ (thêm 4 buổi sửa bài). Viết câu trả lời cho khách.",
+        "Khách nhắn: \"Có ship về Đà Nẵng không, phí bao nhiêu?\" Tài liệu chỉ có bảng giá sản phẩm, không nói gì về giao hàng. Viết câu trả lời cho khách.",
+        "Khách nhắn: \"Gói A với gói B khác gì nhau?\" Tài liệu: gói A 299k/tháng 1 tài khoản; gói B 499k/tháng 3 tài khoản và hỗ trợ ưu tiên. Viết câu trả lời cho khách."
+      ]
+    },
+    {
+      "name": "xu-ly-tu-choi",
+      "version": 1,
+      "cases": [
+        "Khách nhắn: \"Đắt quá, để mình suy nghĩ thêm.\" Sản phẩm: khoá học 2.990.000đ, 60 ngày, có buổi học thử miễn phí. Tài liệu không có chương trình giảm giá. Viết câu trả lời cho khách.",
+        "Khách nhắn: \"Để mình hỏi ý vợ đã.\" Sản phẩm: máy lọc nước 6.500.000đ, bảo hành 3 năm, đổi trả 7 ngày. Viết câu trả lời cho khách.",
+        "Khách đã nói \"chưa cần\" một lần, bot đã hỏi lại, giờ khách nhắn: \"Thôi không cần đâu, cảm ơn.\" Viết câu trả lời cho khách."
+      ]
+    }
+  ]
+}
