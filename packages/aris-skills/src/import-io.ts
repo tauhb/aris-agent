@@ -133,6 +133,8 @@ export interface ScanResult {
   /** Thư mục tạm cần xoá khi xong (chỉ GitHub). */
   tmp?: string | undefined
   github?: { repo: string; ref: string; sha: string | undefined; path: string }
+  /** Kho dựng sẵn: gói và bản của từng skill trong gói (theo tên). */
+  library?: { pack: string; versions: Record<string, number> }
   items: ScanItem[]
 }
 
@@ -448,7 +450,14 @@ export async function importItems(
               ...(scan.github.sha ? { sha: scan.github.sha } : {}),
             }
           : {}),
-        path: scan.github ? [scan.github.path, item.rel].filter(Boolean).join('/') : item.dir,
+        ...(scan.library
+          ? { pack: scan.library.pack, libVersion: scan.library.versions[draft.name] ?? 1 }
+          : {}),
+        path: scan.github
+          ? [scan.github.path, item.rel].filter(Boolean).join('/')
+          : scan.library
+            ? `${scan.library.pack}/${item.rel}`
+            : item.dir,
         importedAt: now,
       }
       const v = await store.propose({

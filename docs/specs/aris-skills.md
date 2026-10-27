@@ -99,6 +99,15 @@ Khi agent được tạo, aris gắn một nguồn skill vào phạm vi của ag
 - Duyệt: skill kia được cất (`archivedBy: 'curator'`, `mergedInto`), bot được gán của hai skill đội cộng lại. Từ chối ("Giữ cả hai"): ghi `mergeSkips` vào skill giữ lại, 90 ngày không đề xuất lại (hết hạn chờ không tính).
 - Người dọn kho tự tìm vào Chủ nhật (báo cáo có `dupes`). Giao diện: nút "Tìm skill trùng" và dải "N cặp có thể gộp" ở Thư viện skill, thẻ gộp ở Hộp duyệt.
 
+## Đợt 8.8 · Kho skill dựng sẵn tiếng Việt
+
+- Skill do aris viết nằm trong gói: `packages/aris-skills/library/<gói>/<skill>/SKILL.md` và `library/<gói>/pack.json` (`id` trùng tên thư mục, tên, mô tả, `version`, `suggest`, danh sách skill với `name`, `version`, `cases`). Thư mục `library` được đóng kèm gói (`files`).
+- `loadLibrary` (`library.ts`) đọc và kiểm cả kho: `pack.json` khớp thư mục, mỗi skill có `SKILL.md` đọc được, tên trong tệp trùng tên thư mục, mô tả có đoạn "Dùng khi…", qua `lintSkill` **không cảnh báo nào**, qua `scanImported`, có 2–3 ca thử; thư mục không có trong danh sách và tên trùng giữa hai gói là lỗi. Test `library.test.ts` đòi kho thật không có lỗi nào.
+- Cài (`installFromLibrary`): đi qua `importItems` với nguồn `kind: 'library'` (`pack`, `libVersion`, `path` là `<gói>/<skill>`), rồi duyệt luôn thay người dùng (người dùng đã bấm cài) nên không vào Hộp duyệt. Thành skill của đội, chưa gán bot trừ khi chọn bot lúc cài; ca thử của gói thêm vào skill; skill đã cất thì lấy ra lại.
+- Tình trạng (`stateOf`): `none`, `installed`, `update` (kho có `version` lớn hơn bản đã cài), `edited` (skill cùng tên đang dùng không phải bản từ kho: người dùng sửa, vòng học vá hay nhập nơi khác), `archived`. Skill `edited` không bị ghi đè khi cài hay cập nhật, trừ khi `force` (người dùng đồng ý); bản cũ vẫn trong lịch sử bản.
+- API: `GET ?library=1` (các gói, nội dung, tình trạng, số đã cài, số có bản mới), `POST { op: library-install, pack, names?, bots?, force? }`.
+- Gói hiện có: Bán hàng và chăm sóc khách, Nội dung mạng xã hội, Phễu và marketing (mỗi gói 6 skill). Giao diện tab "Kho dựng sẵn" theo bản vẽ `design/canvas/KhoDungSan.dc.html`.
+
 ## Để sau
 
 Bảng nhập cho "Học skill từ tài liệu…" (cần vẽ), nhập lại từ tệp sao lưu.

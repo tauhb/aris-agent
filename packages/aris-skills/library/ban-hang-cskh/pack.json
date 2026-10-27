@@ -22,6 +22,42 @@
         "Khách nhắn: \"Để mình hỏi ý vợ đã.\" Sản phẩm: máy lọc nước 6.500.000đ, bảo hành 3 năm, đổi trả 7 ngày. Viết câu trả lời cho khách.",
         "Khách đã nói \"chưa cần\" một lần, bot đã hỏi lại, giờ khách nhắn: \"Thôi không cần đâu, cảm ơn.\" Viết câu trả lời cho khách."
       ]
+    },
+    {
+      "name": "chot-don",
+      "version": 1,
+      "cases": [
+        "Khách nhắn: \"Ok vậy lấy cho mình áo đen size M nhé.\" Tài liệu: áo 350.000đ, miễn ship đơn từ 300.000đ, thanh toán chuyển khoản hoặc COD. Viết câu trả lời cho khách.",
+        "Khách hỏi: \"Thanh toán sao vậy shop?\" Tài liệu có giá sản phẩm nhưng không ghi số tài khoản hay cách thanh toán. Viết câu trả lời cho khách.",
+        "Khách vừa được báo giá khoá học 2.990.000đ, nhắn: \"Ừm, cũng được, mà để xem đã.\" Viết câu trả lời cho khách."
+      ]
+    },
+    {
+      "name": "nhan-lai-khach",
+      "version": 1,
+      "cases": [
+        "Hai ngày trước khách hỏi khoá viết content và nói \"để mình hỏi chồng đã\". Tài liệu: lớp mới khai giảng ngày 5 tháng 11. Viết tin nhắn lại cho khách.",
+        "Khách hỏi giá máy lọc nước 5 ngày trước, đã xem nhưng không trả lời, bot đã nhắn lại một lần 2 ngày trước. Tài liệu không có tin mới. Viết tin nhắn lại lần cuối.",
+        "Khách hỏi giá rồi nhắn \"thôi khỏi, đừng nhắn nữa nhé\". Chủ shop nhờ: \"nhắn lại khách này giúp anh\". Trả lời chủ shop và nói nên làm gì."
+      ]
+    },
+    {
+      "name": "xu-ly-khieu-nai",
+      "version": 1,
+      "cases": [
+        "Khách nhắn: \"Đặt áo size M mà giao size S, bực ghê, giờ sao đây?\" Tài liệu: đổi miễn phí trong 7 ngày nếu giao sai. Viết câu trả lời cho khách.",
+        "Khách nhắn: \"Hàng giao chậm 5 ngày, tôi muốn được hoàn tiền ship và bồi thường, không thì tôi đăng lên group.\" Tài liệu không có chính sách bồi thường. Viết câu trả lời cho khách và tóm tắt gửi chủ shop.",
+        "Khách nhắn: \"Máy dùng 2 tháng bị hỏng nguồn.\" Tài liệu: bảo hành 12 tháng lỗi nhà sản xuất, mang tới cửa hàng hoặc gửi qua bưu điện. Viết câu trả lời cho khách."
+      ]
+    },
+    {
+      "name": "lay-thong-tin-giao-hang",
+      "version": 1,
+      "cases": [
+        "Khách vừa đồng ý mua 2 hũ mật ong (250.000đ/hũ), nhắn: \"Lên đơn cho mình đi.\" Tài liệu: phí ship 30.000đ toàn quốc, thanh toán COD. Viết câu trả lời cho khách.",
+        "Khách nhắn: \"Gửi về Lan, 090 123 456, 12 Lê Lợi, Huế nhé.\" Viết câu trả lời cho khách.",
+        "Khách gửi đủ: \"Nguyễn Văn An, 0912345678, 25 Trần Phú, phường Lộc Thọ, Nha Trang, Khánh Hoà\", mua 1 áo 350.000đ. Tài liệu không nói phí ship. Viết tóm đơn cho khách xác nhận."
+      ]
     }
   ]
 }

@@ -45,14 +45,14 @@ Khách: "Đắt quá, để mình suy nghĩ thêm."
 
 Trả lời chưa tốt:
 
-> Dạ giá này là rẻ nhất thị trường rồi ạ, chỉ hôm nay em giảm thêm 20% cho mình nhé!
+> Dạ giá này là rẻ nhất thị trường rồi ạ, riêng mình em giảm thêm 20% cho mình nhé!
 
-(Bịa "rẻ nhất", tự giảm giá, tạo gấp gáp giả.)
+(Bịa "rẻ nhất", tự giảm giá khi chưa được dặn.)
 
 ## Không được làm
 
 - Không tự giảm giá, tặng quà, kéo dài ưu đãi nếu chưa được dặn trong tài liệu.
-- Không tạo khan hiếm giả ("chỉ còn 2 suất", "hết hôm nay") khi tài liệu không ghi.
+- Không tạo khan hiếm giả ("chỉ còn 2 suất", "chỉ trong ngày") khi tài liệu không ghi.
 - Không gây áp lực, không làm khách thấy có lỗi vì chưa mua.
 - Không chê đối thủ.
 - Không nhắn tiếp sau khi khách đã từ chối rõ hai lần hoặc xin dừng.

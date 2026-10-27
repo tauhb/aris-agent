@@ -30,6 +30,7 @@ import {
 import { LEARN_TOOL, LEARN_WINDOW_MS, MAX_LEARN_CASES, learnPrompt } from './learn.js'
 import { skillsDomain, type CuratorRun, type DupReport } from './domain.js'
 import { scanImported } from './import.js'
+import { findPack, installFromLibrary, loadLibrary, packView } from './library.js'
 import { DUP_CAP_USD, duplicateCandidates, mergePrompt, parseMerge, type DupSkill } from './merge.js'
 import {
   EVAL_PREFIX,
@@ -65,6 +66,7 @@ export * from './store.js'
 export * from './eval.js'
 export * from './learn.js'
 export * from './merge.js'
+export * from './library.js'
 
 declare module '@deepseek-ai/dsh-llm' {
   interface MessageSourceMap {
@@ -896,8 +898,10 @@ function withDiff(store: SkillStore, id: string) {
  *   GET ?backup=1             → tệp sao lưu mọi skill và các bản
  *   GET ?curator=preview      → người dọn kho chạy thử: lần tới sẽ cất gì (không đổi gì)
  *   GET ?duplicates=preview   → các cặp skill nghi trùng (không gọi model, không tốn tiền)
+ *   GET ?library=1            → kho dựng sẵn: các gói, nội dung và tình trạng đã cài của từng skill
  *   POST { op: approve | reject | restore, id (mã bản) | skill + version, body? }
  *   POST { op: pin | archive | unarchive | eval, skill, on? }
+ *   POST { op: library-install, pack, names?, bots?, force? } → cài skill từ kho (bật ngay, không qua Hộp duyệt)
  */
 export interface SkillsApiExtras {
   startEval(skill: string): Promise<EvalRecord>
@@ -948,6 +952,10 @@ export async function skillsApi(
       })
     if (q.get('curator') === 'preview') return json({ plan: store.curatePlan() satisfies CuratorPlan })
     if (q.get('duplicates') === 'preview') return json({ pairs: ext?.dupPreview() ?? [] })
+    if (q.get('library')) {
+      const lib = await loadLibrary()
+      return json({ packs: await Promise.all(lib.packs.map((p) => packView(store, p))) })
+    }
     if (q.get('pending') === 'all')
       return json({
         pending: store.pending().map((v) => withDiff(store, v.id)),
@@ -1003,6 +1011,9 @@ export async function skillsApi(
     keys?: unknown
     bots?: unknown
     bot?: unknown
+    pack?: unknown
+    names?: unknown
+    force?: unknown
   }
   const assignedOf = (v: unknown): Assigned | undefined =>
     v === 'all' ? 'all' : Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : undefined
@@ -1091,6 +1102,17 @@ export async function skillsApi(
         const outcomes = await importItems(store, scan, keys, { ...(bots ? { bots } : {}) })
         await ext.dropScan(scan.id)
         return json({ ok: true, outcomes })
+      }
+      case 'library-install': {
+        const pack = await findPack(String(body.pack ?? ''))
+        const bots = assignedOf(body.bots)
+        const names = Array.isArray(body.names) ? body.names.map(String) : undefined
+        const outcomes = await installFromLibrary(store, pack, {
+          ...(names ? { names } : {}),
+          ...(bots ? { bots } : {}),
+          force: body.force === true,
+        })
+        return json({ ok: true, outcomes, pack: await packView(store, pack) })
       }
       case 'find-duplicates':
         if (!ext) return json({ error: 'Chưa bật gộp skill.' }, 400)
