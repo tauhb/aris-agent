@@ -880,6 +880,15 @@
       "w": 1440,
       "x": 1520,
       "y": 9240
+    },
+    "DanhMucConnector.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "6.4 · Danh mục connector (GĐ8.5) — lưới thẻ có tìm kiếm và tab nhóm, pill Chính thức / Chưa kiểm / Có ghi; bấm thẻ: Đăng nhập OAuth hoặc nhập khoá, phạm vi (cả đội, phòng, bot), mức hỏi, Kiểm tra; danh sách kết nối của đội với trạng thái chạy được / cần đăng nhập lại / lỗi",
+      "w": 1440,
+      "x": 0,
+      "y": 11240
     }
   },
   "createdOnFiles": {
@@ -1068,6 +1077,7 @@
     "VanPhongChatAris.dc.html",
     "KetNoiDoi.dc.html",
     "NhapKetNoi.dc.html",
+    "DanhMucConnector.dc.html",
     "KetNoiDoiBot.dc.html",
     "NhapSkill.dc.html",
     "ThuVienSkillDoi.dc.html",

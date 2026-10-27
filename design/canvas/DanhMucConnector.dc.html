@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Danh mục connector</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:34px;padding:0 12px;border:0;border-radius:9px;background:var(--ink);color:var(--panel);font-size:13px;font-weight:600}
+.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.sn{display:block;border-radius:8px;padding:7px 10px;font-size:13.5px;color:var(--ink);text-decoration:none}
+.r{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.av{flex:none;width:22px;height:22px;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:600}
+.ok{font-size:12px;font-weight:600;color:var(--ok);background:var(--okSoft);border-radius:999px;padding:1px 9px}
+.seg{border:0;border-radius:7px;padding:4px 10px;background:transparent;font-size:12.5px;color:var(--muted)}
+.seg.on{background:var(--hover);color:var(--ink);font-weight:600}
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;padding:12px 14px}
+.cc{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:11px 12px;display:flex;flex-direction:column;gap:6px;text-align:left}
+.cc:hover{background:var(--hover)}
+.lg{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex:none}
+.pill{font-size:11px;font-weight:600;border-radius:999px;padding:1px 8px;background:var(--panel2);color:var(--muted)}
+.pill.of{background:var(--okSoft);color:var(--ok)}
+.pill.wr{background:var(--warnSoft);color:var(--warn)}
+.tab{border:0;background:transparent;padding:8px 2px;margin-right:16px;font-size:13px;color:var(--muted);border-bottom:2px solid transparent}
+.tab.on{color:var(--ink);font-weight:600;border-bottom-color:var(--ink)}
+.inp{height:34px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);padding:0 10px;font:inherit;width:100%;box-sizing:border-box}
+.warn{font-size:12px;font-weight:600;color:var(--warn);background:var(--warnSoft);border-radius:999px;padding:1px 9px}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="settings" bot="none" hint-size="260px,900px"></dc-import>
+  <nav aria-label="Cài đặt" style="flex: 0 1 210px; min-width: 190px; border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px">
+    <a class="sn" href="#">Chung</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Model và kết nối</div>
+    <a class="sn" href="Provider.dc.html">Provider và khoá</a>
+    <a class="sn" href="ModelViec.dc.html">Model</a>
+    <a class="sn" href="TimTheoNghia.dc.html">Tìm theo nghĩa</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Kênh</div>
+    <a class="sn" href="Kenh.dc.html">Kênh và ghép đôi</a>
+    <a class="sn" href="MatTichHop.dc.html">Ứng dụng khác</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Vận hành an toàn</div>
+    <a class="sn" href="BaoMat.dc.html">Ngân sách, duyệt, an toàn</a>
+    <a class="sn" href="SaoLuu.dc.html">Sao lưu</a>
+    <a class="sn" href="ThongKe.dc.html">Thống kê và nhật ký</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Đội bot</div>
+    <a class="sn" href="Commander.dc.html">Commander</a>
+    <a class="sn" href="#">Mẫu bot</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Mở rộng</div>
+    <a class="sn" href="KetNoiDoi.dc.html" aria-current="page" style="background: var(--hover); font-weight: 600">Kết nối</a>
+    <a class="sn" href="Plugin.dc.html">Plugin</a>
+  </nav>
+  <main style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Kết nối</span><span class="m" style="font-size: 12px">Dịch vụ ngoài mà bot dùng được: cấu hình một lần, cả đội dùng chung</span></div>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="margin-left: auto"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+    <div style="padding:18px 24px;display:flex;flex-direction:column;gap:16px">
+      <section class="card">
+        <div style="padding:12px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--line)"><b style="font-size:15px">Danh mục connector</b><span class="m" style="font-size:12.5px">đợt 1 · kiểm từng cái trên tài liệu chính hãng</span><span role="group" aria-label="Xem trạng thái (chỉ trên bản vẽ)" style="margin-left:auto;display:inline-flex;border:1px dashed var(--line);border-radius:8px;padding:2px"><button type="button" class="{{vGrid}}" onClick="{{toGrid}}">Danh mục</button><button type="button" class="{{vOauth}}" onClick="{{toOauth}}">Đăng nhập OAuth</button><button type="button" class="{{vToken}}" onClick="{{toToken}}">Nhập khoá</button><button type="button" class="{{vTeam}}" onClick="{{toTeam}}">Của đội</button></span></div>
+
+        <sc-if value="{{isGrid}}" hint-placeholder-val="{{ true }}">
+        <div style="padding:12px 14px 0;display:flex;flex-direction:column;gap:6px"><input class="inp" placeholder="Tìm connector · Notion, HubSpot, Canva…" aria-label="Tìm connector"><div style="display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line)"><button type="button" class="tab on">Tất cả</button><button type="button" class="tab">Công việc</button><button type="button" class="tab">Bán hàng</button><button type="button" class="tab">Nội dung</button><button type="button" class="tab">Quảng cáo</button><button type="button" class="tab">Phân tích</button><button type="button" class="tab">Thương mại</button><button type="button" class="tab">Tự động hoá</button><button type="button" class="tab">Nội bộ</button><button type="button" class="tab">Khác</button></div></div>
+        <div class="cg"><button type="button" class="cc" onClick="{{toDetail}}"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="background:#4285F4">G</span><b style="font-size:14px">Google Workspace</b></span><span class="m" style="font-size:12.5px">Gmail, Lịch, Drive, Chat</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill of">Chính thức</span><span class="pill wr">Có ghi</span></span></button><button type="button" class="cc" onClick="{{toDetail}}"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="background:#2B2B2B">N</span><b style="font-size:14px">Notion</b></span><span class="m" style="font-size:12.5px">Trang, cơ sở dữ liệu, ghi chú</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill of">Chính thức</span><span class="pill wr">Có ghi</span></span></button><button type="button" class="cc" onClick="{{toDetail}}"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="background:#7C3AED">S</span><b style="font-size:14px">Slack</b></span><span class="m" style="font-size:12.5px">Đọc và gửi tin trong kênh</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill of">Chính thức</span><span class="pill wr">Có ghi</span></span></button><button type="button" class="cc" onClick="{{toDetail}}"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="background:#2563EB">A</span><b style="font-size:14px">Atlassian</b></span><span class="m" style="font-size:12.5px">Jira, Confluence</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill of">Chính thức</span><span class="pill wr">Có ghi</span></span></button><button type="button" class="cc" onClick="{{toDetail}}"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="background:#EA580C">H</span><b style="font-size:14px">HubSpot</b></span><span class="m" style="font-size:12.5px">Liên hệ, deal, hoạt động</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill of">Chính thức</span><span class="pill wr">Có ghi</span></span></button><button type="button" class="cc" onClick="{{toDetail}}"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="background:#16A34A">HL</span><b style="font-size:14px">HighLevel</b></span><span class="m" style="font-size:12.5px">CRM, hội thoại, lịch hẹn</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill">Chưa kiểm</span><span class="pill wr">Có ghi</span></span></button><button type="button" class="cc" onClick="{{toDetail}}"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="background:#0891B2">C</span><b style="font-size:14px">Canva</b></span><span class="m" style="font-size:12.5px">Tạo và sửa thiết kế</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill of">Chính thức</span><span class="pill wr">Có ghi</span></span></button><button type="button" class="cc" onClick="{{toDetail}}"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="background:#DB2777">F</span><b style="font-size:14px">Figma</b></span><span class="m" style="font-size:12.5px">Đọc thiết kế, design-to-code</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill of">Chính thức</span></span></button><button type="button" class="cc" onClick="{{toDetail}}"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="background:#9333EA">HG</span><b style="font-size:14px">HeyGen</b></span><span class="m" style="font-size:12.5px">Video có người dẫn</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill">Chưa kiểm</span><span class="pill wr">Có ghi</span></span></button><button type="button" class="cc" onClick="{{toDetail}}"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="background:#1D4ED8">M</span><b style="font-size:14px">Meta Ads</b></span><span class="m" style="font-size:12.5px">Chiến dịch, báo cáo; ghi xong để tạm dừng</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill of">Chính thức</span><span class="pill wr">Có ghi</span></span></button><button type="button" class="cc" onClick="{{toDetail}}"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="background:#CA8A04">GA</span><b style="font-size:14px">Google Ads</b></span><span class="m" style="font-size:12.5px">Báo cáo quảng cáo, chỉ đọc</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill of">Chính thức</span></span></button><button type="button" class="cc" onClick="{{toDetail}}"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="background:#0D9488">K</span><b style="font-size:14px">Klaviyo</b></span><span class="m" style="font-size:12.5px">Email marketing, danh sách</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill">Chưa kiểm</span></span></button><button type="button" class="cc" onClick="{{toDetail}}"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="background:#DC2626">R</span><b style="font-size:14px">Rainmaker</b></span><span class="m" style="font-size:12.5px">MCP nội bộ của công ty</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill">Chưa kiểm</span><span class="pill wr">Có ghi</span></span></button><button type="button" class="cc" onClick="{{toDetail}}"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="background:#475569">{ }</span><b style="font-size:14px">API của dịch vụ khác</b></span><span class="m" style="font-size:12.5px">KiotViet, Haravan, Sapo, MISA… nhập địa chỉ và khoá</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill">Chưa kiểm</span><span class="pill wr">Có ghi</span></span></button></div>
+        </sc-if>
+
+        <sc-if value="{{isOauth}}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-wrap:wrap">
+          <div style="flex:1 1 360px;min-width:0;border-right:1px solid var(--line);padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+            <span style="display:flex;align-items:center;gap:10px"><span class="lg" style="background:#EA580C">H</span><span><b style="font-size:15px">HubSpot</b><span class="m" style="display:block;font-size:12.5px">Liên hệ, deal, hoạt động · mcp.hubspot.com</span></span><span class="pill of" style="margin-left:auto">Chính thức</span><span class="pill wr">Có ghi</span></span>
+            <button type="button" class="b1" onClick="{{login}}" style="align-self:flex-start">Đăng nhập HubSpot</button>
+            <span class="m" style="font-size:12px">Mở cửa sổ đăng nhập của HubSpot; xong thì quay lại đây. Khoá cất trong Keychain, không hiện lại.</span>
+            <div class="{{loginCls}}" style="align-self:flex-start">{{loginText}}</div>
+          </div>
+          <div style="flex:1 1 320px;min-width:0;padding:14px 16px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;flex-direction:column;gap:6px"><b style="font-size:13px">Ai dùng được</b><span role="group" style="display:inline-flex;border:1px solid var(--line);border-radius:8px;padding:2px;align-self:flex-start"><button type="button" class="seg on">Cả đội</button><button type="button" class="seg">Theo phòng</button><button type="button" class="seg">Từng bot</button></span></div>
+<div style="display:flex;flex-direction:column;gap:6px"><b style="font-size:13px">Khi bot dùng công cụ của kết nối này</b><span role="group" style="display:inline-flex;border:1px solid var(--line);border-radius:8px;padding:2px;align-self:flex-start"><button type="button" class="seg on">Hỏi trước khi ghi</button><button type="button" class="seg">Hỏi mọi lần</button><button type="button" class="seg">Tự dùng</button></span></div>
+            <span style="display:flex;align-items:center;gap:10px"><button type="button" class="b2">Kiểm tra</button><span class="m" style="font-size:12.5px">{{checkText}}</span></span></div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isToken}}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-wrap:wrap">
+          <div style="flex:1 1 360px;min-width:0;border-right:1px solid var(--line);padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+            <span style="display:flex;align-items:center;gap:10px"><span class="lg" style="background:#16A34A">HL</span><span><b style="font-size:15px">HighLevel</b><span class="m" style="display:block;font-size:12.5px">CRM, hội thoại, lịch hẹn</span></span><span class="pill" style="margin-left:auto">Chưa kiểm</span><span class="pill wr">Có ghi</span></span>
+            <input class="inp" placeholder="Private Integration Token · pit-…" type="password" aria-label="Token">
+            <input class="inp" placeholder="Location ID" aria-label="Location ID">
+            <span class="m" style="font-size:12px">Khoá cất trong Keychain, không hiện lại. Tạo token ở HighLevel › Settings › Private Integrations.</span>
+          </div>
+          <div style="flex:1 1 320px;min-width:0;padding:14px 16px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;flex-direction:column;gap:6px"><b style="font-size:13px">Ai dùng được</b><span role="group" style="display:inline-flex;border:1px solid var(--line);border-radius:8px;padding:2px;align-self:flex-start"><button type="button" class="seg on">Cả đội</button><button type="button" class="seg">Theo phòng</button><button type="button" class="seg">Từng bot</button></span></div>
+<div style="display:flex;flex-direction:column;gap:6px"><b style="font-size:13px">Khi bot dùng công cụ của kết nối này</b><span role="group" style="display:inline-flex;border:1px solid var(--line);border-radius:8px;padding:2px;align-self:flex-start"><button type="button" class="seg on">Hỏi trước khi ghi</button><button type="button" class="seg">Hỏi mọi lần</button><button type="button" class="seg">Tự dùng</button></span></div>
+            <span style="display:flex;align-items:center;gap:10px"><button type="button" class="b2">Kiểm tra</button><span class="m" style="font-size:12.5px">chưa kiểm tra</span></span></div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isTeam}}" hint-placeholder-val="{{ false }}">
+        <div class="r" style="border-top:0"><b style="flex:1;font-size:13px">Kết nối của đội</b><button type="button" class="b2" onClick="{{toGrid}}">＋ Kết nối</button></div>
+        <div class="r"><span class="lg" style="background:#2B2B2B;width:26px;height:26px;font-size:12px">N</span><span style="flex:1"><b>Notion</b><span class="m" style="display:block;font-size:12.5px">Cả đội · hỏi trước khi ghi · 14 công cụ</span></span><span class="ok">chạy được</span></div>
+        <div class="r"><span class="lg" style="background:#EA580C;width:26px;height:26px;font-size:12px">H</span><span style="flex:1"><b>HubSpot</b><span class="m" style="display:block;font-size:12.5px">Phòng Bán hàng · hỏi trước khi ghi · 22 công cụ</span></span><span class="warn">Cần đăng nhập lại</span><button type="button" class="b1" style="height:28px">Đăng nhập lại</button></div>
+        <div class="r"><span class="lg" style="background:#16A34A;width:26px;height:26px;font-size:12px">HL</span><span style="flex:1"><b>HighLevel</b><span class="m" style="display:block;font-size:12.5px">Bot Khoa · hỏi mọi lần</span></span><span class="warn">Lỗi: token bị từ chối</span><button type="button" class="b2" style="height:28px">Sửa khoá</button></div>
+        <div class="r m" style="font-size:12.5px">Hồ sơ từng bot hiện các kết nối bot đó dùng được.</div>
+        </sc-if>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'dark';
+    const view = (this.state && this.state.view) || 'grid';
+    const logged = !!(this.state && this.state.logged);
+    const set = (patch) => () => this.setState(patch);
+    return {
+      themeClass: 't-' + theme, toggleTheme: set({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      you: 'anh Tầu',
+      isGrid: view === 'grid', isOauth: view === 'oauth', isToken: view === 'token', isTeam: view === 'team',
+      vGrid: 'seg' + (view === 'grid' ? ' on' : ''), vOauth: 'seg' + (view === 'oauth' ? ' on' : ''), vToken: 'seg' + (view === 'token' ? ' on' : ''), vTeam: 'seg' + (view === 'team' ? ' on' : ''),
+      toGrid: set({ view: 'grid' }), toOauth: set({ view: 'oauth' }), toToken: set({ view: 'token' }), toTeam: set({ view: 'team' }),
+      toDetail: set({ view: 'oauth' }),
+      login: set({ logged: true }),
+      loginCls: logged ? 'ok' : 'm', loginText: logged ? 'đã đăng nhập' : 'chưa đăng nhập',
+      checkText: logged ? 'chạy được · 22 công cụ' : 'đăng nhập trước khi kiểm tra',
+    };
+  }
+}
+</script>
+</body>
+</html>
