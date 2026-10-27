@@ -31,6 +31,8 @@ class FakeZalo {
   typed: string[] = []
   opened: ZaloSession[] = []
   handlers: ZaloListenerHandlers | undefined
+  /** Trình nghe theo imei của dữ liệu đăng nhập (mỗi tài khoản một imei). */
+  handlersBy = new Map<string, ZaloListenerHandlers>()
   closed = 0
   /** Lỗi cho lần `open` kế tiếp (mỗi phần tử dùng một lần). */
   openErrors: Error[] = []
@@ -79,6 +81,7 @@ class FakeZalo {
         listener: {
           start: (h) => {
             this.handlers = h
+            this.handlersBy.set(s.imei, h)
             h.onConnected()
           },
           close: () => void this.closed++,
@@ -372,58 +375,72 @@ describe('kênh Zalo · đăng nhập và kết nối', () => {
     expect(s.channel.status()[0]!.state).toBe('retrying')
   })
 
-  it('đăng nhập bằng QR: ảnh QR, đã quét, xong thì lưu vào kho khoá và nghe', async () => {
+  it('đăng nhập bằng QR (thêm tài khoản mới): ảnh QR, đã quét, xong thì có mã tài khoản riêng, khoá ở kho khoá', async () => {
     const s = await setup({ account: false })
-    const qr = await s.channel.loginStart('aris')
+    const qr = await s.channel.loginStart('mai', { label: 'CSKH 1' })
     expect(qr.qrPng).toBe('QR-PNG-BASE64')
     expect(qr.expiresAt).toBeGreaterThan(s.zalo.clock.t)
-    expect(s.channel.loginStatus('aris')).toMatchObject({ status: 'waiting', qrPng: 'QR-PNG-BASE64' })
+    expect(qr.key).toBe('new-mai')
+    expect(s.channel.loginStatus(qr.key)).toMatchObject({ status: 'waiting', qrPng: 'QR-PNG-BASE64' })
     s.zalo.qr!.onScanned({ name: 'Tài khoản phụ', avatar: 'https://a/b.png' })
-    expect(s.channel.loginStatus('aris')).toMatchObject({ status: 'scanned', name: 'Tài khoản phụ' })
-    expect(s.channel.loginStatus('aris')!.qrPng).toBeUndefined()
+    expect(s.channel.loginStatus(qr.key)).toMatchObject({ status: 'scanned', name: 'Tài khoản phụ' })
+    expect(s.channel.loginStatus(qr.key)!.qrPng).toBeUndefined()
     s.zalo.qrDone!.resolve({
       session: SESSION,
       profile: { id: SELF, name: 'Tài khoản phụ', avatar: 'https://a/b.png' },
     })
     await settle()
-    expect(s.channel.loginStatus('aris')).toMatchObject({ status: 'done', name: 'Tài khoản phụ' })
-    expect(JSON.parse(s.secrets.get('ZALO_ARIS_SESSION')!)).toEqual(SESSION)
-    expect(JSON.stringify(s.store.zaloAccount('aris'))).not.toContain(COOKIE)
-    expect(s.store.zaloAccount('aris')).toMatchObject({
-      channel: 'zalo',
-      botOpenId: SELF,
-      avatar: 'https://a/b.png',
+    const st = s.channel.loginStatus(qr.key)!
+    expect(st).toMatchObject({ status: 'done', name: 'Tài khoản phụ' })
+    const acc = st.account!
+    expect(acc).toMatch(/^acc-/)
+    const rec = s.store.zaloAccount(acc)!
+    expect(rec).toMatchObject({ channel: 'zalo', bot: 'mai', account: acc, label: 'CSKH 1', botOpenId: SELF })
+    expect(JSON.parse(s.secrets.get(rec.tokenRef)!)).toEqual(SESSION)
+    expect(JSON.stringify(rec)).not.toContain(COOKIE)
+    expect(s.channel.status()[0]).toMatchObject({
+      account: acc,
+      label: 'CSKH 1',
+      bot: 'mai',
+      state: 'listening',
     })
-    expect(s.channel.status()[0]).toMatchObject({ state: 'listening', name: 'Tài khoản phụ' })
   })
 
   it('mã QR hết hạn: trạng thái hết hạn, "Tạo mã mới" huỷ lần cũ và bắt đầu lại', async () => {
     const s = await setup({ account: false })
-    await s.channel.loginStart('aris')
+    const { key } = await s.channel.loginStart('aris')
     s.zalo.qr!.onExpired()
-    expect(s.channel.loginStatus('aris')).toMatchObject({ status: 'expired' })
-    expect(s.channel.loginStatus('aris')!.qrPng).toBeUndefined()
+    expect(s.channel.loginStatus(key)).toMatchObject({ status: 'expired' })
+    expect(s.channel.loginStatus(key)!.qrPng).toBeUndefined()
     s.zalo.qrDone!.reject(new ZaloError('hết hạn', true))
     await settle()
-    expect(s.channel.loginStatus('aris')!.status).toBe('expired')
+    expect(s.channel.loginStatus(key)!.status).toBe('expired')
     const again = await s.channel.loginStart('aris')
     expect(again.qrPng).toBe('QR-PNG-BASE64')
     expect(s.zalo.qrAborted).toBe(1)
-    expect(s.channel.loginStatus('aris')!.status).toBe('waiting')
+    expect(s.channel.loginStatus(key)!.status).toBe('waiting')
   })
 
-  it('quét lại bằng cùng tài khoản thì giữ người đã ghép đôi; tài khoản khác thì bỏ', async () => {
+  it('quét lại một tài khoản bằng cùng Zalo thì giữ người đã ghép đôi; bằng Zalo khác thì bỏ người riêng của nó', async () => {
     const s = await setup()
-    await pair(s, OWNER)
-    expect(s.store.zaloRoleOf(OWNER)).toBe('owner')
+    await pair(s, OTHER, 'member')
+    expect(s.store.zaloRoleOf(OTHER, 'aris')).toBe('member')
+    await s.channel.loginStart('aris', { account: 'aris' })
+    s.zalo.qrDone!.resolve({ session: SESSION, profile: { id: SELF, name: 'A', avatar: '' } })
+    await settle()
+    expect(s.store.zaloRoleOf(OTHER, 'aris')).toBe('member')
+    await s.channel.loginStart('aris', { account: 'aris' })
+    s.zalo.qrDone!.resolve({ session: SESSION, profile: { id: '7777', name: 'B', avatar: '' } })
+    await settle()
+    expect(s.store.zaloRoleOf(OTHER, 'aris')).toBeUndefined()
+  })
+
+  it('thêm tài khoản bằng một Zalo đã có trong aris thì dùng lại tài khoản đó, không tạo trùng', async () => {
+    const s = await setup()
     await s.channel.loginStart('aris')
     s.zalo.qrDone!.resolve({ session: SESSION, profile: { id: SELF, name: 'A', avatar: '' } })
     await settle()
-    expect(s.store.zaloRoleOf(OWNER)).toBe('owner')
-    await s.channel.loginStart('aris')
-    s.zalo.qrDone!.resolve({ session: SESSION, profile: { id: '7777', name: 'B', avatar: '' } })
-    await settle()
-    expect(s.store.zaloRoleOf(OWNER)).toBeUndefined()
+    expect(s.store.zaloAccounts()).toHaveLength(1)
   })
 
   it('đăng xuất: xoá dữ liệu đăng nhập, tài khoản, người đã ghép đôi và nhóm', async () => {
@@ -877,5 +894,125 @@ describe('kênh Zalo · GĐ8.7 đợt A', () => {
     await settle()
     expect(s.zalo.opened).toHaveLength(2)
     expect(s.zalo.closed).toBe(1)
+  })
+})
+
+describe('kênh Zalo · GĐ8.7 nhiều tài khoản', () => {
+  const CUSTOMER = '3001'
+  async function twoAccounts() {
+    const s = await setup({ account: false })
+    for (const [acc, imei] of [
+      ['acc-aaaaaa', 'imei-a'],
+      ['acc-bbbbbb', 'imei-b'],
+    ] as const) {
+      await s.store.putZaloAccount({
+        bot: 'mai',
+        account: acc,
+        label: acc === 'acc-aaaaaa' ? 'CSKH 1' : 'CSKH 2',
+        tgId: 0,
+        username: SELF,
+        name: 'x',
+        tokenRef: `ZALO_${acc.toUpperCase().replace('-', '_')}_SESSION`,
+        canReadAll: true,
+        offset: 0,
+        voice: false,
+        addedAt: 'x',
+        channel: 'zalo',
+        botOpenId: `${SELF}-${imei}`,
+      })
+      s.secrets.set(
+        `ZALO_${acc.toUpperCase().replace('-', '_')}_SESSION`,
+        JSON.stringify({ ...SESSION, imei }),
+      )
+    }
+    s.channel.stop()
+    await s.channel.start()
+    const push = (imei: string, ev: Partial<ZaloInbound> & { text?: string }) => {
+      const { text, ...rest } = ev
+      return s.zalo.handlersBy.get(imei)!.onMessage({
+        messageId: `m${Math.random()}`,
+        threadId: ev.senderId ?? CUSTOMER,
+        isGroup: false,
+        senderId: CUSTOMER,
+        senderName: '',
+        msgType: 'webchat',
+        content: text ?? '',
+        mentions: [],
+        createTime: s.zalo.clock.t + 1,
+        ...rest,
+      })
+    }
+    return { s, push }
+  }
+
+  it('hai tài khoản cùng bot chạy song song; trạng thái theo từng tài khoản', async () => {
+    const { s } = await twoAccounts()
+    expect(s.zalo.handlersBy.size).toBe(2)
+    expect(s.channel.status().map((a) => [a.account, a.label, a.bot, a.state])).toEqual([
+      ['acc-aaaaaa', 'CSKH 1', 'mai', 'listening'],
+      ['acc-bbbbbb', 'CSKH 2', 'mai', 'listening'],
+    ])
+  })
+
+  it('người được phép, nhóm, phiên theo tài khoản; mã của tài khoản A không dùng được ở B', async () => {
+    const { s, push } = await twoAccounts()
+    const code = await s.store.createCode('member', 'zalo', 'acc-aaaaaa')
+    await push('imei-b', { text: code.code })
+    await settle()
+    expect(s.zalo.texts(CUSTOMER).at(-1)).toBe('Mã này dành cho tài khoản khác.')
+    await push('imei-a', { text: code.code })
+    await settle()
+    expect(s.store.zaloRoleOf(CUSTOMER, 'acc-aaaaaa')).toBe('member')
+    expect(s.store.zaloRoleOf(CUSTOMER, 'acc-bbbbbb')).toBeUndefined()
+    // Trên tài khoản B khách vẫn là người lạ: bot im, báo chủ.
+    const n = s.zalo.sent.length
+    await push('imei-b', { text: 'alo' })
+    await settle()
+    expect(s.zalo.sent).toHaveLength(n)
+    expect(s.notices.some((x) => x.includes('nhắn Zalo'))).toBe(true)
+    // Trên tài khoản A: vào phiên của bot Mai, khoá cuộc chat theo tài khoản A.
+    await push('imei-a', { text: 'cho hỏi giá' })
+    await settle()
+    expect(s.store.thread(zaloThreadKey('acc-aaaaaa', CUSTOMER))!.bot).toBe('mai')
+    expect(s.store.thread(zaloThreadKey('acc-bbbbbb', CUSTOMER))).toBeUndefined()
+    // Nhóm thấy ở tài khoản A chỉ nằm ở tài khoản A.
+    await push('imei-a', { threadId: GROUP, isGroup: true, text: 'chào nhóm' })
+    await settle()
+    expect(s.store.zaloGroups('acc-aaaaaa').map((g) => g.account)).toEqual(['acc-aaaaaa'])
+    expect(s.store.zaloGroups('acc-bbbbbb')).toEqual([])
+  })
+
+  it('chế độ "mọi người nhắn riêng là khách": người lạ được trả lời với quyền khách', async () => {
+    const { s, push } = await twoAccounts()
+    await s.channel.updateAccount('acc-bbbbbb', { mode: 'guests' })
+    await push('imei-b', { text: 'shop ơi' })
+    await settle()
+    const t = s.store.thread(zaloThreadKey('acc-bbbbbb', CUSTOMER))!
+    const msg = s.sessions.agents.get(t.sessionId)!.inbox[0] as { content: { text: string }[] }
+    expect(msg.content[0]!.text).toContain('không phải người dùng chính')
+  })
+
+  it('đăng xuất một tài khoản chỉ xoá người và nhóm riêng của nó; tài khoản kia giữ nguyên', async () => {
+    const { s } = await twoAccounts()
+    await s.store.redeemZalo(
+      (await s.store.createCode('member', 'zalo', 'acc-aaaaaa')).code,
+      {
+        zaloId: '1',
+        name: 'A',
+      },
+      'acc-aaaaaa',
+    )
+    await s.store.redeemZalo(
+      (await s.store.createCode('member', 'zalo', 'acc-bbbbbb')).code,
+      {
+        zaloId: '2',
+        name: 'B',
+      },
+      'acc-bbbbbb',
+    )
+    await s.channel.logout('acc-aaaaaa')
+    expect(s.store.zaloAccounts().map((a) => a.account)).toEqual(['acc-bbbbbb'])
+    expect(s.store.zaloRoleOf('1', 'acc-aaaaaa')).toBeUndefined()
+    expect(s.store.zaloRoleOf('2', 'acc-bbbbbb')).toBe('member')
   })
 })

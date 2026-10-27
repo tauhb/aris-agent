@@ -335,3 +335,95 @@ describe('kho kênh · Zalo', () => {
     expect(await s.shouldNotifyStranger('zc-1', 24 * 3_600_000)).toBe(true)
   })
 })
+
+describe('kho kênh · GĐ8.7 tài khoản kênh', () => {
+  it('dữ liệu cũ (trước GĐ8.7) đọc như trước: tài khoản mang mã bot, người và nhóm dùng chung mọi tài khoản', async () => {
+    const s = memStore()
+    const base = {
+      tgId: 9,
+      username: 'u',
+      name: 'n',
+      tokenRef: 'r',
+      canReadAll: true,
+      offset: 0,
+      voice: false,
+      addedAt: 'x',
+    }
+    // Bản ghi cũ: không có `account`, khoá là mã bot.
+    await s.t.bots.put('aris', { ...base, bot: 'aris' })
+    await s.t.people.put('tg-5', { userId: 5, name: 'Cũ', role: 'member', pairedAt: 'x' })
+    await s.t.groups.put('tg-n100', {
+      chatId: -100,
+      title: 'Nhóm cũ',
+      allowed: true,
+      who: 'allowed',
+      seenAt: 'x',
+    })
+    expect(s.bot('aris')).toMatchObject({ bot: 'aris' })
+    expect(s.accountOf('aris')?.bot).toBe('aris')
+    // Người, nhóm cũ dùng được trên mọi tài khoản, kể cả tài khoản mới.
+    expect(s.roleOf(5, 'aris')).toBe('member')
+    expect(s.roleOf(5, 'acc-moi123')).toBe('member')
+    expect(s.groupRule(-100, 'acc-moi123')).toEqual({ allowed: true, who: 'allowed' })
+    // Sửa nhóm cũ qua một tài khoản: vẫn sửa bản ghi dùng chung, không tạo bản trùng.
+    await s.upsertGroup(-100, { prompt: 'ngắn' }, 'acc-moi123')
+    expect(s.groups()).toHaveLength(1)
+    expect(s.group(-100)).toMatchObject({ prompt: 'ngắn' })
+    expect(s.group(-100)?.account).toBeUndefined()
+  })
+
+  it('người được phép mới chỉ trên tài khoản của mã; chủ nhân dùng chung', async () => {
+    const s = memStore()
+    const m = await s.redeem((await s.createCode('member', 'telegram', 'acc-a')).code, { id: 1, name: 'M' })
+    expect(m).toMatchObject({ role: 'member', account: 'acc-a' })
+    expect(s.roleOf(1, 'acc-a')).toBe('member')
+    expect(s.roleOf(1, 'acc-b')).toBeUndefined()
+    expect(s.people('acc-b')).toEqual([])
+    const o = await s.redeem((await s.createCode('owner', 'telegram', 'acc-a')).code, { id: 2, name: 'O' })
+    expect(o).toMatchObject({ role: 'owner' })
+    expect((o as { account?: string }).account).toBeUndefined()
+    expect(s.roleOf(2, 'acc-b')).toBe('owner')
+    // Mã của tài khoản A nhắn ở tài khoản B: không dùng, không xoá mã, không tính sai.
+    const code = await s.createCode('member', 'telegram', 'acc-a')
+    expect(await s.redeem(code.code, { id: 3, name: 'X' }, 'telegram', 'acc-b')).toBe('other-account')
+    expect(await s.redeem(code.code, { id: 3, name: 'X' }, 'telegram', 'acc-a')).toMatchObject({
+      account: 'acc-a',
+    })
+  })
+
+  it('nhóm mới theo tài khoản; gỡ tài khoản xoá người, nhóm, mã riêng của nó', async () => {
+    const s = memStore()
+    await s.upsertGroup(-200, { title: 'A' }, 'acc-a')
+    await s.upsertGroup(-200, { title: 'B' }, 'acc-b')
+    expect(s.groups()).toHaveLength(2)
+    expect(s.group(-200, 'acc-a')?.title).toBe('A')
+    expect(s.group(-200, 'acc-b')?.title).toBe('B')
+    await s.redeem((await s.createCode('member', 'telegram', 'acc-a')).code, { id: 1, name: 'M' })
+    await s.createCode('member', 'telegram', 'acc-a')
+    await s.forgetAccount('telegram', 'acc-a')
+    expect(s.group(-200, 'acc-a')).toBeUndefined()
+    expect(s.group(-200, 'acc-b')?.title).toBe('B')
+    expect(s.roleOf(1, 'acc-a')).toBeUndefined()
+    expect(s.activeCodes().filter((c) => c.account === 'acc-a')).toEqual([])
+  })
+
+  it('tài khoản Zalo khoá theo mã tài khoản; bản ghi cũ khoá theo mã bot vẫn đọc được', async () => {
+    const s = memStore()
+    const base = {
+      tgId: 0,
+      username: 'u',
+      name: 'n',
+      tokenRef: 'r',
+      canReadAll: true,
+      offset: 0,
+      voice: false,
+      addedAt: 'x',
+      channel: 'zalo' as const,
+    }
+    await s.putZaloAccount({ ...base, bot: 'aris' })
+    await s.putZaloAccount({ ...base, bot: 'mai', account: 'acc-z1' })
+    expect(s.zaloAccount('aris')?.bot).toBe('aris')
+    expect(s.zaloAccount('acc-z1')?.bot).toBe('mai')
+    expect(s.zaloAccounts()).toHaveLength(2)
+  })
+})

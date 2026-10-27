@@ -23,7 +23,7 @@ import type {
   SessionPort,
 } from '../hub.js'
 import { sttNotReady, transcribe, type SpeechToText } from '../media.js'
-import { ChannelStore, normalizeCode, zaloKey, zaloThreadKey } from '../store.js'
+import { accId, ChannelStore, newAccountId, normalizeCode, zaloKey, zaloThreadKey } from '../store.js'
 import { isSilent, nameTeam, type TeamName } from '../telegram/format.js'
 import { TurnTracker, type PendingBase, type TurnPart, type TurnResult } from '../tracker.js'
 import { decideZalo, STRANGER_EXCERPT, STRANGER_NOTIFY_MS, ZALO_LIMITS, ZaloThrottle } from './access.js'
@@ -76,6 +76,12 @@ export interface ZaloDeps {
 export type ZaloState = 'connecting' | 'listening' | 'web' | 'retrying' | 'needs-qr'
 
 export interface ZaloAccountStatus {
+  /** Mã tài khoản trong aris. */
+  account: string
+  /** Tên tài khoản do người dùng đặt ("CSKH 1"). */
+  label: string
+  /** Ai được bot trả lời: chỉ người đã ghép đôi, hay mọi người là khách. */
+  mode: 'paired' | 'guests'
   bot: string
   /** Mã Zalo của tài khoản. */
   id: string
@@ -91,6 +97,10 @@ export interface ZaloAccountStatus {
 
 /** Trạng thái một lần đăng nhập bằng mã QR. */
 export interface ZaloLoginStatus {
+  /** Mã của lần đăng nhập (trả từ `loginStart`), để giao diện hỏi lại. */
+  key: string
+  /** Mã tài khoản sau khi đăng nhập xong. */
+  account?: string
   bot: string
   status: 'waiting' | 'scanned' | 'done' | 'expired' | 'declined' | 'error'
   /** Ảnh PNG base64 của mã QR (chỉ khi `waiting`). */
@@ -104,6 +114,8 @@ export interface ZaloLoginStatus {
 }
 
 interface ZaloRuntime {
+  /** Mã tài khoản Zalo (GĐ8.7; tài khoản cũ: mã bot). `rec.bot` là bot của aris trả lời. */
+  id: string
   rec: BotRecord
   api: ZaloApi
   listener: ZaloListener
@@ -217,8 +229,12 @@ export class ZaloChannel implements ChannelPeer {
   /** Tình trạng từng tài khoản, cho trang Kênh và `aris status`. */
   status(): ZaloAccountStatus[] {
     return this.store.zaloAccounts().map((rec) => {
-      const state: ZaloState = this.states.get(rec.bot) ?? (rec.error ? 'needs-qr' : 'connecting')
+      const acc = accId(rec)
+      const state: ZaloState = this.states.get(acc) ?? (rec.error ? 'needs-qr' : 'connecting')
       return {
+        account: acc,
+        label: rec.label ?? rec.name,
+        mode: rec.mode ?? 'paired',
         bot: rec.bot,
         id: rec.botOpenId ?? '',
         name: rec.name,
@@ -226,26 +242,36 @@ export class ZaloChannel implements ChannelPeer {
         state,
         error: rec.error ?? null,
         running: state === 'listening',
-        leftToday: this.throttleOf(rec.bot).leftToday(),
+        leftToday: this.throttleOf(acc).leftToday(),
       }
     })
   }
 
-  /** Tình trạng lần đăng nhập QR gần nhất của bot (cho giao diện hỏi lại vài giây một lần). */
-  loginStatus(bot: string): ZaloLoginStatus | undefined {
-    return this.logins.get(bot)?.status
+  /** Tình trạng một lần đăng nhập QR (mã do `loginStart` trả; cho giao diện hỏi lại vài giây một lần). */
+  loginStatus(key: string): ZaloLoginStatus | undefined {
+    return this.logins.get(key)?.status
+  }
+
+  /** Mọi lần đăng nhập QR còn trong bộ nhớ (ảnh chụp trạng thái cho trang Kênh). */
+  loginStatuses(): ZaloLoginStatus[] {
+    return [...this.logins.values()].map((l) => l.status)
   }
 
   /**
    * Bắt đầu đăng nhập bằng mã QR: trả ảnh QR ngay khi thư viện có. Có lần đăng nhập đang dở của bot này thì huỷ nó
    * (đây cũng là nút "Tạo mã mới"). Quét xong thì dữ liệu đăng nhập vào kho khoá và kênh tự bắt đầu nghe.
    */
-  async loginStart(bot: string): Promise<{ qrPng: string; expiresAt: number }> {
-    this.logins.get(bot)?.login.abort()
-    const status: ZaloLoginStatus = { bot, status: 'waiting' }
-    let gotQr!: (v: { qrPng: string; expiresAt: number }) => void
+  async loginStart(
+    bot: string,
+    opts: { account?: string | undefined; label?: string | undefined } = {},
+  ): Promise<{ qrPng: string; expiresAt: number; key: string }> {
+    // Quét lại một tài khoản có sẵn thì khoá theo tài khoản; thêm mới thì khoá theo bot (một lần thêm dở mỗi bot).
+    const key = opts.account ?? `new-${bot}`
+    this.logins.get(key)?.login.abort()
+    const status: ZaloLoginStatus = { key, bot, status: 'waiting' }
+    let gotQr!: (v: { qrPng: string; expiresAt: number; key: string }) => void
     let failQr!: (e: Error) => void
-    const first = new Promise<{ qrPng: string; expiresAt: number }>((res, rej) => {
+    const first = new Promise<{ qrPng: string; expiresAt: number; key: string }>((res, rej) => {
       gotQr = res
       failQr = rej
     })
@@ -255,7 +281,7 @@ export class ZaloChannel implements ChannelPeer {
           status.status = 'waiting'
           status.qrPng = png
           status.expiresAt = this.now() + QR_LIFETIME_MS
-          gotQr({ qrPng: png, expiresAt: status.expiresAt })
+          gotQr({ qrPng: png, expiresAt: status.expiresAt, key })
         },
         onScanned: (who) => {
           status.status = 'scanned'
@@ -275,12 +301,12 @@ export class ZaloChannel implements ChannelPeer {
       this.d.logger,
     )
     const entry = { login, status }
-    this.logins.set(bot, entry)
+    this.logins.set(key, entry)
     login.done.then(
-      (res) => void this.finishLogin(bot, entry, res),
+      (res) => void this.finishLogin(bot, opts, entry, res),
       (e: unknown) => {
         failQr(e instanceof Error ? e : new Error(msg(e)))
-        if (this.logins.get(bot) !== entry) return
+        if (this.logins.get(key) !== entry) return
         // Hết hạn và bị từ chối đã được ghi bởi trình xử lý riêng; còn lại là lỗi.
         if (status.status === 'waiting' || status.status === 'scanned') {
           status.status = 'error'
@@ -298,18 +324,30 @@ export class ZaloChannel implements ChannelPeer {
     }
   }
 
-  private async finishLogin(bot: string, entry: { status: ZaloLoginStatus }, res: ZaloQrResult) {
+  private async finishLogin(
+    bot: string,
+    opts: { account?: string | undefined; label?: string | undefined },
+    entry: { status: ZaloLoginStatus },
+    res: ZaloQrResult,
+  ) {
     const status = entry.status
     try {
-      const taken = this.store.zaloAccounts().find((a) => a.botOpenId === res.profile.id && a.bot !== bot)
-      if (taken) throw new Error(`tài khoản Zalo này đã gắn với bot ${taken.bot}`)
-      const cur = this.store.zaloAccount(bot)
-      // Người ghép đôi và nhóm là của tài khoản cũ (mã người khác nhau giữa các tài khoản): đổi tài khoản thì bỏ.
-      if (cur && cur.botOpenId !== res.profile.id) await this.forgetPeople()
-      const ref = zaloSessionRef(bot)
+      // Cùng tài khoản Zalo đã có trong aris: dùng lại mã tài khoản đó (giữ người đã ghép đôi, nhóm).
+      const same = this.store.zaloAccounts().find((a) => a.botOpenId === res.profile.id)
+      if (same && opts.account && accId(same) !== opts.account)
+        throw new Error(`tài khoản Zalo này đã có trong aris (${same.label ?? same.name})`)
+      const id = opts.account ?? (same ? accId(same) : newAccountId())
+      const cur = this.store.zaloAccount(id)
+      // Quét lại bằng tài khoản Zalo khác: người ghép đôi và nhóm riêng của tài khoản cũ không còn đúng, bỏ.
+      if (cur && cur.botOpenId !== res.profile.id) await this.store.forgetAccount('zalo', id)
+      const ref = cur?.tokenRef ?? zaloSessionRef(id)
       await this.d.credentials.set(ref, JSON.stringify(res.session))
+      const label = opts.label?.trim() || cur?.label
       const rec: BotRecord = {
-        bot,
+        bot: cur?.bot ?? bot,
+        ...(id !== (cur?.bot ?? bot) ? { account: id } : {}),
+        ...(label ? { label } : {}),
+        ...(cur?.mode ? { mode: cur.mode } : {}),
         tgId: 0,
         username: res.profile.id,
         name: res.profile.name,
@@ -323,8 +361,9 @@ export class ZaloChannel implements ChannelPeer {
         avatar: res.profile.avatar,
       }
       await this.store.putZaloAccount(rec)
-      this.stopApp(bot)
-      this.qrNotified.delete(bot)
+      this.stopApp(id)
+      this.qrNotified.delete(id)
+      status.account = id
       status.status = 'done'
       status.name = res.profile.name
       status.avatar = res.profile.avatar
@@ -335,21 +374,36 @@ export class ZaloChannel implements ChannelPeer {
     }
   }
 
-  /** Đăng xuất: xoá dữ liệu đăng nhập trong kho khoá, tài khoản, người đã ghép đôi và nhóm. */
-  async logout(bot: string) {
-    const rec = this.store.zaloAccount(bot)
-    this.logins.get(bot)?.login.abort()
-    this.logins.delete(bot)
-    this.stopApp(bot)
-    this.states.delete(bot)
+  /**
+   * Đăng xuất một tài khoản: xoá dữ liệu đăng nhập trong kho khoá, tài khoản, người được phép và nhóm riêng của nó.
+   * Tài khoản cuối cùng thì xoá cả chủ nhân và nhóm dùng chung của Zalo.
+   */
+  async logout(account: string) {
+    const rec = this.store.zaloAccount(account)
+    this.logins.get(account)?.login.abort()
+    this.logins.delete(account)
+    this.stopApp(account)
+    this.states.delete(account)
     if (rec) await this.d.credentials.unset(rec.tokenRef)
-    await this.store.removeZaloAccount(bot)
+    await this.store.removeZaloAccount(account)
+    await this.store.forgetAccount('zalo', account)
     if (!this.store.zaloAccounts().length) await this.forgetPeople()
   }
 
+  /** Đổi bot trả lời, tên, chế độ của một tài khoản. */
+  async updateAccount(account: string, patch: { bot?: string; label?: string; mode?: 'paired' | 'guests' }) {
+    const cur = this.store.zaloAccount(account)
+    if (!cur) throw new Error('không có tài khoản này')
+    const next: BotRecord = { ...cur, ...patch, account }
+    await this.store.putZaloAccount(next)
+    const rt = this.apps.get(account)
+    if (rt) rt.rec = next
+  }
+
   private async forgetPeople() {
-    for (const p of this.store.zaloPeople()) if (p.openId) await this.store.revokeZalo(p.openId)
-    for (const g of this.store.zaloGroups()) if (g.chatRef) await this.store.removeZaloGroup(g.chatRef)
+    for (const p of this.store.zaloPeople()) if (p.openId) await this.store.revokeZalo(p.openId, p.account)
+    for (const g of this.store.zaloGroups())
+      if (g.chatRef) await this.store.removeZaloGroup(g.chatRef, g.account)
   }
 
   private stopApp(bot: string) {
@@ -383,19 +437,20 @@ export class ZaloChannel implements ChannelPeer {
    * 30 phút. Dữ liệu hết hạn hay bị Zalo từ chối thì không thử lại: trạng thái "Cần quét lại QR" và báo chủ qua Telegram.
    */
   private async startOrRetry(rec: BotRecord) {
-    this.retries.delete(rec.bot)
-    this.states.set(rec.bot, 'connecting')
+    const id = accId(rec)
+    this.retries.delete(id)
+    this.states.set(id, 'connecting')
     try {
       await this.startApp(rec)
     } catch (e) {
-      this.d.logger.warn('aris-channels: zalo %s: %s', rec.bot, msg(e))
+      this.d.logger.warn('aris-channels: zalo %s: %s', id, msg(e))
       const fatal = (e instanceof ZaloError && e.fatal) || e instanceof MissingSession
-      if (fatal || !this.store.zaloAccount(rec.bot)) {
-        if (this.store.zaloAccount(rec.bot)) await this.needQr(rec.bot, msg(e))
+      if (fatal || !this.store.zaloAccount(id)) {
+        if (this.store.zaloAccount(id)) await this.needQr(id, msg(e))
         return
       }
-      await this.setError(rec.bot, msg(e))
-      this.scheduleRetry(rec.bot, 'retrying')
+      await this.setError(id, msg(e))
+      this.scheduleRetry(id, 'retrying')
     }
   }
 
@@ -404,8 +459,8 @@ export class ZaloChannel implements ChannelPeer {
     const last = this.kickNotified.get(bot)
     if (last !== undefined && this.now() - last < KICK_NOTIFY_MS) return
     this.kickNotified.set(bot, this.now())
-    const name = this.store.zaloAccount(bot)?.name ?? bot
-    await this.d.notify?.(ZN.kicked(name)).catch(() => undefined)
+    const a = this.store.zaloAccount(bot)
+    await this.d.notify?.(ZN.kicked(a?.label ?? a?.name ?? bot)).catch(() => undefined)
   }
 
   private async needQr(bot: string, why: string) {
@@ -413,8 +468,8 @@ export class ZaloChannel implements ChannelPeer {
     await this.setError(bot, why)
     if (this.qrNotified.has(bot)) return
     this.qrNotified.add(bot)
-    const name = this.store.zaloAccount(bot)?.name ?? bot
-    await this.d.notify?.(ZN.needQr(name)).catch(() => undefined)
+    const a = this.store.zaloAccount(bot)
+    await this.d.notify?.(ZN.needQr(a?.label ?? a?.name ?? bot)).catch(() => undefined)
   }
 
   /** Hẹn thử nối lại sau `delay` (gấp đôi lần trước, tối đa 15 lần mức đầu). */
@@ -442,18 +497,20 @@ export class ZaloChannel implements ChannelPeer {
     }
     const { api, listener } = await this.connector.open(session, this.d.logger)
     // Không để hai trình nghe cùng tài khoản: trình nghe cũ (nếu còn) đóng trước.
-    this.closeRuntime(this.apps.get(rec.bot))
+    const id = accId(rec)
+    this.closeRuntime(this.apps.get(id))
     const rt: ZaloRuntime = {
+      id,
       watchFails: 0,
-      rec: this.store.zaloAccount(rec.bot) ?? rec,
+      rec: this.store.zaloAccount(id) ?? rec,
       api,
       listener,
-      throttle: this.throttleOf(rec.bot),
+      throttle: this.throttleOf(id),
       connectedAt: this.now(),
       sent: new Set(),
       typingAt: new Map(),
     }
-    this.apps.set(rec.bot, rt)
+    this.apps.set(id, rt)
     try {
       listener.start({
         onMessage: (ev) => this.receive(rt, ev),
@@ -461,22 +518,21 @@ export class ZaloChannel implements ChannelPeer {
         onClosed: (reason, detail) => void this.onClosed(rt, reason, detail),
       })
     } catch (e) {
-      this.apps.delete(rec.bot)
+      this.apps.delete(id)
       listener.close()
       throw e
     }
   }
 
   private async onConnected(rt: ZaloRuntime) {
-    if (this.apps.get(rt.rec.bot) !== rt) return
+    if (this.apps.get(rt.id) !== rt) return
     rt.connectedAt = this.now()
-    this.states.set(rt.rec.bot, 'listening')
+    this.states.set(rt.id, 'listening')
     this.startWatch(rt)
-    await this.setError(rt.rec.bot, undefined)
+    await this.setError(rt.id, undefined)
     // Câu trả lời dở của lúc mất kết nối thì gửi nốt.
     for (const rec of this.store.zaloOutbox())
-      if (rec.bot === rt.rec.bot && rec.state === 'pending' && !this.flushing.has(rec.id))
-        void this.flush(rec)
+      if (rec.bot === rt.id && rec.state === 'pending' && !this.flushing.has(rec.id)) void this.flush(rec)
   }
 
   /**
@@ -487,12 +543,12 @@ export class ZaloChannel implements ChannelPeer {
     if (rt.watch) clearInterval(rt.watch)
     rt.watchFails = 0
     rt.watch = setInterval(() => {
-      if (this.apps.get(rt.rec.bot) !== rt) return
+      if (this.apps.get(rt.id) !== rt) return
       rt.api.profile().then(
         () => void (rt.watchFails = 0),
         (e: unknown) => {
           rt.watchFails++
-          this.d.logger.warn('aris-channels: zalo %s canh lỗi (%d): %s', rt.rec.bot, rt.watchFails, msg(e))
+          this.d.logger.warn('aris-channels: zalo %s canh lỗi (%d): %s', rt.id, rt.watchFails, msg(e))
           if (rt.watchFails >= WATCH_FAILS) void this.onClosed(rt, 'other', 'không phản hồi')
         },
       )
@@ -501,16 +557,16 @@ export class ZaloChannel implements ChannelPeer {
   }
 
   private async onClosed(rt: ZaloRuntime, reason: 'duplicate' | 'other', detail: string) {
-    if (this.apps.get(rt.rec.bot) !== rt) return
+    if (this.apps.get(rt.id) !== rt) return
     this.closeRuntime(rt)
-    this.apps.delete(rt.rec.bot)
-    if (reason === 'duplicate') await this.notifyKicked(rt.rec.bot)
-    this.d.logger.warn('aris-channels: zalo %s ngắt kết nối (%s)', rt.rec.bot, detail)
+    this.apps.delete(rt.id)
+    if (reason === 'duplicate') await this.notifyKicked(rt.id)
+    this.d.logger.warn('aris-channels: zalo %s ngắt kết nối (%s)', rt.id, detail)
     // Chỉ đặt lại thời gian chờ khi kết nối đã đứng vững; bị Zalo đá ra ngay sau khi nối (Zalo Web đang mở) thì chờ
     // lâu dần, không giành lại liên tục.
-    if (this.now() - rt.connectedAt >= STABLE_MS) this.delays.delete(rt.rec.bot)
+    if (this.now() - rt.connectedAt >= STABLE_MS) this.delays.delete(rt.id)
     // Zalo Web đang mở thì nhường, không giành lại liên tục: chờ lâu rồi mới thử.
-    this.scheduleRetry(rt.rec.bot, reason === 'duplicate' ? 'web' : 'retrying')
+    this.scheduleRetry(rt.id, reason === 'duplicate' ? 'web' : 'retrying')
   }
 
   // ======================================================================================
@@ -524,19 +580,21 @@ export class ZaloChannel implements ChannelPeer {
     if (ev.createTime < rt.connectedAt) return
     if (ev.isGroup) {
       // Nhóm được ghi nhận để hiện trong danh sách (mặc định tắt); nhóm chưa bật thì dừng ở đây.
-      if (!this.store.zaloGroup(ev.threadId))
-        await this.store.upsertZaloGroup(ev.threadId, {
-          title: (await rt.api.groupName(ev.threadId)) ?? ev.threadId,
-        })
-      if (!this.store.zaloGroupRule(ev.threadId)?.allowed) return
+      if (!this.store.zaloGroup(ev.threadId, rt.id))
+        await this.store.upsertZaloGroup(
+          ev.threadId,
+          { title: (await rt.api.groupName(ev.threadId)) ?? ev.threadId },
+          rt.id,
+        )
+      if (!this.store.zaloGroupRule(ev.threadId, rt.id)?.allowed) return
     }
-    const id = `zc-${rt.rec.bot}-${zaloKey(ev.messageId)}`
+    const id = `zc-${rt.id}-${zaloKey(ev.messageId)}`
     if (this.seen.has(id)) return
     this.seen.add(id)
     if (this.seen.size > 500) this.seen.delete(this.seen.values().next().value!)
     const inbox: InboxRecord = {
       id,
-      bot: rt.rec.bot,
+      bot: rt.id,
       update: ev,
       state: 'queued',
       receivedAt: this.now(),
@@ -555,7 +613,7 @@ export class ZaloChannel implements ChannelPeer {
     if (!resumed) this.lastAt.set(lane, this.now())
     const prev = this.lanes.get(lane) ?? Promise.resolve()
     const next = prev
-      .then(() => this.gather(lane, ev, resumed))
+      .then(() => this.gather(lane, inbox.bot, ev, resumed))
       .then(() => this.handle(rt, inbox, ev, resumed))
       .catch((e: unknown) =>
         this.d.logger.warn('aris-channels: zalo xử lý tin: %s', e instanceof Error ? e.stack : String(e)),
@@ -568,8 +626,8 @@ export class ZaloChannel implements ChannelPeer {
    * 3–4 tin liền thì bot trả lời một lần (các tin sau vào phiên ngay sau tin đầu, lượt cũ bị thay; xem `submit`).
    * Tin của chủ, lệnh, mã ghép đôi và tin làm lại sau khởi động không đợi.
    */
-  private async gather(lane: string, ev: ZaloInbound, resumed: boolean) {
-    if (resumed || this.store.zaloRoleOf(ev.senderId) === 'owner') return
+  private async gather(lane: string, account: string, ev: ZaloInbound, resumed: boolean) {
+    if (resumed || this.store.zaloRoleOf(ev.senderId, account) === 'owner') return
     // Lệnh và mã ghép đôi xử lý ngay.
     const text = ev.msgType === 'webchat' ? ev.content.trim() : ''
     if (text.startsWith('/') || normalizeCode(text)) return
@@ -606,12 +664,13 @@ export class ZaloChannel implements ChannelPeer {
 
     // Ghép đôi: nhắn đúng mã trong chat riêng.
     if (!ev.isGroup && normalizeCode(parsed.text)) {
-      const person = await this.store.redeemZalo(parsed.text, {
-        zaloId: ev.senderId,
-        name: await this.nameOf(rt, ev.senderId, ev.senderName),
-      })
-      if (person === 'other-channel') {
-        await this.say(rt, here, T.codeOtherChannel)
+      const person = await this.store.redeemZalo(
+        parsed.text,
+        { zaloId: ev.senderId, name: await this.nameOf(rt, ev.senderId, ev.senderName) },
+        rt.id,
+      )
+      if (person === 'other-channel' || person === 'other-account') {
+        await this.say(rt, here, person === 'other-channel' ? T.codeOtherChannel : T.codeOtherAccount)
         return false
       }
       if (person) {
@@ -621,13 +680,14 @@ export class ZaloChannel implements ChannelPeer {
     }
 
     const d = decideZalo(ev, parsed, {
-      roleOf: (id) => this.store.zaloRoleOf(id),
-      groupRule: (id) => this.store.zaloGroupRule(id),
+      roleOf: (id) => this.store.zaloRoleOf(id, rt.id),
+      groupRule: (id) => this.store.zaloGroupRule(id, rt.id),
+      guests: rt.rec.mode === 'guests',
     })
     if (d.kind === 'ignore' || d.kind === 'unknown-group') return false
     if (d.kind === 'stranger') {
       // Người lạ: bot im lặng; báo chủ nhiều nhất một lần mỗi người mỗi ngày.
-      if (await this.store.shouldNotifyStranger(`zc-${ev.senderId}`, STRANGER_NOTIFY_MS)) {
+      if (await this.store.shouldNotifyStranger(`zc-${rt.id}-${ev.senderId}`, STRANGER_NOTIFY_MS)) {
         const name = await this.nameOf(rt, ev.senderId, ev.senderName)
         const text = parsed.text || (parsed.resources.length ? '(gửi ảnh hay tệp)' : `(${ev.msgType})`)
         const excerpt = text.length > STRANGER_EXCERPT ? `${text.slice(0, STRANGER_EXCERPT)}…` : text
@@ -636,7 +696,7 @@ export class ZaloChannel implements ChannelPeer {
       return false
     }
 
-    const key = zaloThreadKey(rt.rec.bot, ev.threadId)
+    const key = zaloThreadKey(rt.id, ev.threadId)
     if (d.command) {
       if (!commandAllowed(d.command.name, d.trust)) {
         await this.say(rt, here, T.ownerOnly)
@@ -663,7 +723,7 @@ export class ZaloChannel implements ChannelPeer {
   /** Gửi một tin chữ qua bộ giới hạn tần suất. `false` khi hết hạn mức ngày (không gửi). */
   private async sendOne(rt: ZaloRuntime, thread: string, isGroup: boolean, text: string): Promise<boolean> {
     if (!(await rt.throttle.take(thread))) {
-      await this.dailyStop(rt.rec.bot)
+      await this.dailyStop(rt.id)
       return false
     }
     const r = await rt.api.send(thread, isGroup, text)
@@ -794,7 +854,7 @@ export class ZaloChannel implements ChannelPeer {
     if (!content) return false
     if (resumed) await this.say(rt, here, T.restarted)
     const agent = await this.sessionFor(rt.rec.bot, key, ev.threadId)
-    const group = ev.isGroup ? this.store.zaloGroup(ev.threadId) : undefined
+    const group = ev.isGroup ? this.store.zaloGroup(ev.threadId, rt.id) : undefined
     if (group?.prompt)
       agent.inject(
         this.d.sessions.notice(
@@ -807,7 +867,7 @@ export class ZaloChannel implements ChannelPeer {
       messageId: message.id,
       inboxId: inbox.id,
       threadKey: key,
-      bot: rt.rec.bot,
+      bot: rt.id,
       threadId: ev.threadId,
       msgId: ev.messageId,
       group: ev.isGroup,

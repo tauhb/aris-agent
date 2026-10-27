@@ -36,6 +36,15 @@ export const botRecord = z.object({
   domain: z.enum(['lark', 'feishu']).optional(),
   /** Lark: `open_id` của chính bot, để nhận ra lúc người ta @ nó trong nhóm. */
   botOpenId: z.string().optional(),
+  /**
+   * GĐ8.7: mã tài khoản kênh (khoá bản ghi). Bản ghi cũ không có trường này: mã tài khoản là `bot` (khoá cũ giữ
+   * nguyên, không phải chuyển dữ liệu). `bot` luôn là bot của aris trả lời trên tài khoản này.
+   */
+  account: z.string().optional(),
+  /** Tên tài khoản do người dùng đặt trong aris ("CSKH 1"); không có thì dùng tên của kênh. */
+  label: z.string().optional(),
+  /** Ai được bot trả lời trong chat riêng: `paired` (mặc định, chỉ người đã ghép đôi) hay `guests` (mọi người là khách). */
+  mode: z.enum(['paired', 'guests']).optional(),
   /** Zalo: tài khoản Zalo của bot này (khoá bản ghi `zalo-<bot>`; `tokenRef` trỏ dữ liệu đăng nhập trong kho khoá, `botOpenId` là mã Zalo của tài khoản). */
   avatar: z.string().optional(),
 })
@@ -51,6 +60,11 @@ export const personRecord = z.object({
   channel: recordChannel.optional(),
   /** Lark: `open_id` của người trong ứng dụng Lark của aris. */
   openId: z.string().optional(),
+  /**
+   * GĐ8.7: người được phép chỉ trên tài khoản kênh này. Không có (bản ghi cũ, và mọi chủ nhân) là dùng được trên mọi
+   * tài khoản của kênh.
+   */
+  account: z.string().optional(),
 })
 export type PersonRecord = z.infer<typeof personRecord>
 
@@ -67,6 +81,8 @@ export const groupRecord = z.object({
   channel: recordChannel.optional(),
   /** Lark: `chat_id` của nhóm (`oc_…`). */
   chatRef: z.string().optional(),
+  /** GĐ8.7: nhóm thấy qua tài khoản kênh này. Không có (bản ghi cũ) là áp cho mọi tài khoản của kênh. */
+  account: z.string().optional(),
 })
 export type GroupRecord = z.infer<typeof groupRecord>
 
@@ -81,6 +97,8 @@ export const codeRecord = z.object({
   expiresAt: z.number(),
   /** Kênh của mã. Tuỳ chọn để mã cũ đang lưu (chưa có trường này) vẫn đọc được: coi là Telegram. */
   channel: channelKind.optional(),
+  /** GĐ8.7: mã chỉ dùng được trên tài khoản kênh này. Không có là dùng được trên mọi tài khoản của kênh. */
+  account: z.string().optional(),
 })
 export type CodeRecord = z.infer<typeof codeRecord>
 

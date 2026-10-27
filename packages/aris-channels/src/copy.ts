@@ -47,6 +47,8 @@ export const T = {
       : `Chào ${h(name)}! Tài khoản này đã là <b>người được phép</b>: hỏi đáp được với bot, nhưng bot không làm việc có tác động (gửi thư, chạy lệnh…) theo lời người được phép.`,
   /** Người nhắn mã ghép đôi do kênh khác tạo (ví dụ mã của Lark gõ vào Telegram). */
   codeOtherChannel: 'Mã này dành cho kênh khác.',
+  /** Mã của một tài khoản khác cùng kênh (GĐ8.7: mỗi tài khoản một mã). */
+  codeOtherAccount: 'Mã này dành cho tài khoản khác.',
   help: (trust: Trust) =>
     [
       `<b>Lệnh</b> (vai: ${ROLE_LABEL[trust]})`,

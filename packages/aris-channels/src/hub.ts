@@ -7,7 +7,7 @@ import { commandAllowed, decide, type Trust } from './access.js'
 import { NOT_OWNER_NOTE, T } from './copy.js'
 import type { BotRecord, InboxRecord, OutboxRecord } from './domain.js'
 import { sttNotReady, textToVoice, transcribe, type SpeechToText } from './media.js'
-import { ChannelStore, keyNum, normalizeCode, threadKey } from './store.js'
+import { accId, ChannelStore, keyNum, newAccountId, normalizeCode, threadKey } from './store.js'
 import { TelegramApi, TelegramError, type Fetch } from './telegram/api.js'
 import {
   colorDot,
@@ -316,6 +316,8 @@ export interface MediaPort {
 }
 
 interface BotRuntime {
+  /** Mã tài khoản Telegram (khoá bản ghi; tài khoản cũ: mã bot). `rec.bot` là bot của aris trả lời. */
+  id: string
   rec: BotRecord
   api: TelegramApi
   abort: AbortController
@@ -419,19 +421,20 @@ export class ChannelHub {
    * bật được hay bot bị gỡ. Token sai (401) hay chưa có token thì không thử lại.
    */
   private async startOrRetry(rec: BotRecord, delay = 15_000) {
-    this.retries.delete(rec.bot)
+    const id = accId(rec)
+    this.retries.delete(id)
     try {
       await this.startBot(rec)
     } catch (e) {
-      await this.botError(rec.bot, e)
-      const fatal = (e instanceof TelegramError && e.code === 401) || !this.store.bot(rec.bot)
+      await this.botError(id, e)
+      const fatal = (e instanceof TelegramError && e.code === 401) || !this.store.bot(id)
       if (fatal || (e instanceof Error && e.message === 'chưa có token trong kho khoá')) return
       const timer = setTimeout(() => {
-        const cur = this.store.bot(rec.bot)
-        if (cur && !this.runtimes.has(rec.bot)) void this.startOrRetry(cur, Math.min(delay * 2, 300_000))
+        const cur = this.store.bot(id)
+        if (cur && !this.runtimes.has(id)) void this.startOrRetry(cur, Math.min(delay * 2, 300_000))
       }, delay)
       timer.unref?.()
-      this.retries.set(rec.bot, timer)
+      this.retries.set(id, timer)
     }
   }
 
@@ -470,32 +473,53 @@ export class ChannelHub {
 
   status() {
     return this.store.bots().map((b) => ({
+      account: accId(b),
       bot: b.bot,
       username: b.username,
-      running: this.runtimes.has(b.bot),
+      running: this.runtimes.has(accId(b)),
       error: b.error ?? null,
     }))
   }
 
-  api(bot: string): TelegramApi | undefined {
-    return this.runtimes.get(bot)?.api
+  /** API Telegram của một tài khoản (mã tài khoản; tài khoản cũ: mã bot). */
+  api(account: string): TelegramApi | undefined {
+    return this.runtimes.get(account)?.api
+  }
+
+  /** Tài khoản Telegram đang chạy để một bot gửi tin chủ động: tài khoản chính của bot (xem `store.accountOf`). */
+  private rtOfBot(bot: string): BotRuntime | undefined {
+    const main = this.store.accountOf(bot)
+    if (main && this.runtimes.has(accId(main))) return this.runtimes.get(accId(main))
+    return [...this.runtimes.values()].find((r) => r.rec.bot === bot)
+  }
+
+  /** Tài khoản của Aris gửi thẻ duyệt, ký ức, skill, bộ não: tài khoản chính của Aris, không thì tài khoản đầu tiên. */
+  private homeAccount(): string | undefined {
+    return this.rtOfBot('aris')?.id ?? [...this.runtimes.keys()][0]
   }
 
   private newApi(token: string) {
     return new TelegramApi(token, this.d.fetchImpl)
   }
 
-  /** Dán token: kiểm tra bằng getMe, chặn token đã gắn với bot aris khác, lưu vào kho khoá. */
-  async connect(bot: string, token: string): Promise<BotRecord> {
+  /**
+   * Dán token: kiểm tra bằng getMe, chặn token đã gắn với tài khoản khác, lưu vào kho khoá. `account` là mã tài khoản
+   * (mặc định: tài khoản cũ mang mã bot); `'new'` là thêm tài khoản mới cho bot (GĐ8.7: một bot nhiều tài khoản).
+   */
+  async connect(bot: string, token: string, account: string = bot, name?: string): Promise<BotRecord> {
     const api = this.newApi(token.trim())
     const me = await api.getMe()
-    const taken = this.store.bots().find((b) => b.tgId === me.id && b.bot !== bot)
+    const id = account === 'new' ? newAccountId() : account
+    const taken = this.store.bots().find((b) => b.tgId === me.id && accId(b) !== id)
     if (taken) throw new Error(`token này là của @${me.username}, đã gắn với bot ${taken.bot}`)
-    const ref = tokenRef(bot)
+    const cur = this.store.bot(id)
+    const ref = cur?.tokenRef ?? tokenRef(id)
     await this.d.credentials.set(ref, token.trim())
-    const cur = this.store.bot(bot)
     const rec: BotRecord = {
       bot,
+      ...(id !== bot ? { account: id } : {}),
+      ...(name?.trim() || cur?.label ? { label: (name?.trim() || cur?.label)! } : {}),
+      ...(cur?.mode ? { mode: cur.mode } : {}),
       tgId: me.id,
       username: me.username ?? '',
       name: me.first_name,
@@ -508,26 +532,39 @@ export class ChannelHub {
       addedAt: new Date(this.now()).toISOString(),
     }
     await this.store.putBot(rec)
-    this.stopBot(bot)
+    this.stopBot(id)
     await this.startBot(rec)
-    return this.store.bot(bot)!
+    return this.store.bot(id)!
   }
 
-  async disconnect(bot: string) {
-    const rec = this.store.bot(bot)
-    this.stopBot(bot)
+  /** Gỡ một tài khoản Telegram (mã tài khoản), cùng người được phép và nhóm riêng của nó. */
+  async disconnect(account: string) {
+    const rec = this.store.bot(account)
+    this.stopBot(account)
     if (rec) await this.d.credentials.unset(rec.tokenRef)
-    await this.store.removeBot(bot)
+    await this.store.removeBot(account)
+    await this.store.forgetAccount('telegram', account)
   }
 
-  private stopBot(bot: string) {
-    this.runtimes.get(bot)?.abort.abort()
-    this.runtimes.delete(bot)
+  /** Đổi bot trả lời, tên, chế độ của một tài khoản (không đổi token). */
+  async updateAccount(account: string, patch: { bot?: string; label?: string; mode?: 'paired' | 'guests' }) {
+    const cur = this.store.bot(account)
+    if (!cur) throw new Error('không có tài khoản này')
+    const next: BotRecord = { ...cur, ...patch }
+    if (patch.bot && accId(cur) !== patch.bot) next.account = accId(cur)
+    await this.store.putBot(next)
+    const rt = this.runtimes.get(account)
+    if (rt) rt.rec = next
   }
 
-  private async botError(bot: string, e: unknown) {
-    this.d.logger.warn('aris-channels: bot %s: %s', bot, e instanceof Error ? e.message : String(e))
-    await this.store.patchBot(bot, { error: e instanceof Error ? e.message : String(e) })
+  private stopBot(account: string) {
+    this.runtimes.get(account)?.abort.abort()
+    this.runtimes.delete(account)
+  }
+
+  private async botError(account: string, e: unknown) {
+    this.d.logger.warn('aris-channels: tài khoản %s: %s', account, e instanceof Error ? e.message : String(e))
+    await this.store.patchBot(account, { error: e instanceof Error ? e.message : String(e) })
   }
 
   private async startBot(rec: BotRecord) {
@@ -535,7 +572,8 @@ export class ChannelHub {
     if (!token) throw new Error('chưa có token trong kho khoá')
     const api = this.newApi(token)
     const me = await api.getMe()
-    const prev: BotRecord = { ...(this.store.bot(rec.bot) ?? rec) }
+    const id = accId(rec)
+    const prev: BotRecord = { ...(this.store.bot(id) ?? rec) }
     delete prev.error
     const cur: BotRecord = {
       ...prev,
@@ -555,8 +593,8 @@ export class ChannelHub {
         ],
       )
       .catch(() => undefined)
-    const rt: BotRuntime = { rec: cur, api, abort: new AbortController() }
-    this.runtimes.set(rec.bot, rt)
+    const rt: BotRuntime = { id, rec: cur, api, abort: new AbortController() }
+    this.runtimes.set(id, rt)
     void this.poll(rt)
   }
 
@@ -568,7 +606,7 @@ export class ChannelHub {
     const { abort } = rt
     let backoff = 1000
     while (!abort.signal.aborted) {
-      const rec = this.store.bot(rt.rec.bot)
+      const rec = this.store.bot(rt.id)
       if (!rec) return
       try {
         // Hạn chót cho mỗi lần gọi: mạng chết im (không lỗi, không trả) thì bỏ và gọi lại thay vì treo mãi.
@@ -580,27 +618,27 @@ export class ChannelHub {
         backoff = 1000
         for (const u of updates) {
           const inbox: InboxRecord = {
-            id: `${rec.bot}-${u.update_id}`,
-            bot: rec.bot,
+            id: `${rt.id}-${u.update_id}`,
+            bot: rt.id,
             update: u,
             state: 'queued',
             receivedAt: this.now(),
           }
           // Ghi vào hàng đợi bền trước, rồi mới dời vị trí đọc: tắt máy giữa chừng không mất tin.
           await this.store.enqueue(inbox)
-          await this.store.patchBot(rec.bot, { offset: u.update_id + 1 })
+          await this.store.patchBot(rt.id, { offset: u.update_id + 1 })
           this.route(inbox)
         }
       } catch (e) {
         if (abort.signal.aborted) return
         if (e instanceof TelegramError && (e.code === 401 || e.code === 409)) {
           await this.botError(
-            rec.bot,
+            rt.id,
             e.code === 401
               ? 'token không còn hiệu lực (401)'
               : 'một nơi khác đang nhận tin bằng token này (409)',
           )
-          this.runtimes.delete(rec.bot)
+          this.runtimes.delete(rt.id)
           return
         }
         this.d.logger.warn('aris-channels: getUpdates: %s', e instanceof Error ? e.message : String(e))
@@ -680,22 +718,29 @@ export class ChannelHub {
         text,
         { id: from.id, name: fullName(from), username: from.username },
         'telegram',
+        rt.id,
       )
-      if (person === 'other-channel') {
-        await api.sendMessage(m.chat.id, T.codeOtherChannel)
+      if (person === 'other-channel' || person === 'other-account') {
+        await api.sendMessage(m.chat.id, person === 'other-channel' ? T.codeOtherChannel : T.codeOtherAccount)
         return false
       }
       if (person) {
         const owner = person.role === 'owner'
-        if (owner && !this.store.bot(rt.rec.bot)?.home)
-          await this.store.patchBot(rt.rec.bot, { home: { chatId: m.chat.id } })
+        if (owner && !this.store.bot(rt.id)?.home)
+          await this.store.patchBot(rt.id, { home: { chatId: m.chat.id } })
         await api.sendMessage(m.chat.id, T.paired(person.name, owner), { html: true })
         return false
       }
     }
 
-    const me = { id: rt.rec.tgId, username: this.store.bot(rt.rec.bot)?.username ?? rt.rec.username }
-    const d = decide(m, me, this.store)
+    const me = { id: rt.rec.tgId, username: this.store.bot(rt.id)?.username ?? rt.rec.username }
+    // Quyền theo tài khoản (GĐ8.7): người và nhóm riêng của tài khoản này, cộng bản ghi dùng chung.
+    const d = decide(m, me, {
+      roleOf: (id) => this.store.roleOf(id, rt.id),
+      groupRule: (id) => this.store.groupRule(id, rt.id),
+      guestMode: this.store.guestMode,
+      guests: this.store.bot(rt.id)?.mode === 'guests',
+    })
     if (d.kind === 'ignore') return false
     if (d.kind === 'stranger') {
       if (await this.store.shouldNotifyStranger(from.id)) {
@@ -711,7 +756,7 @@ export class ChannelHub {
     }
     if (d.kind === 'unknown-group') {
       const title = m.chat.title ?? String(m.chat.id)
-      if (await this.store.shouldNotifyGroup(m.chat.id, title))
+      if (await this.store.shouldNotifyGroup(m.chat.id, title, rt.id))
         await this.notifyGroup(rt, m.chat.id, T.unknownGroup(title, m.chat.id))
       return false
     }
@@ -805,7 +850,7 @@ export class ChannelHub {
     const joined = ['member', 'administrator'].includes(u.new_chat_member.status)
     const title = u.chat.title ?? String(u.chat.id)
     if (!joined) return
-    const g = await this.store.upsertGroup(u.chat.id, { title })
+    const g = await this.store.upsertGroup(u.chat.id, { title }, rt.id)
     if (!g.allowed) await this.notifyGroup(rt, u.chat.id, T.addedToGroup(title, u.chat.id))
   }
 
@@ -912,7 +957,7 @@ export class ChannelHub {
     if (!content) return false
     if (resumed) await this.reply(rt.api, m, T.restarted)
     const agent = await this.sessionFor(rt.rec.bot, key, m.chat.id, topic)
-    const group = m.chat.type !== 'private' ? this.store.group(m.chat.id) : undefined
+    const group = m.chat.type !== 'private' ? this.store.group(m.chat.id, rt.id) : undefined
     if (group?.prompt)
       agent.inject(
         this.d.sessions.notice(
@@ -925,7 +970,7 @@ export class ChannelHub {
       messageId: message.id,
       inboxId: inbox.id,
       threadKey: key,
-      bot: rt.rec.bot,
+      bot: rt.id,
       chatId: m.chat.id,
       ...(topic ? { threadId: topic } : {}),
       tgMessageId: m.message_id,
@@ -1076,9 +1121,10 @@ export class ChannelHub {
       // Chuyển giao: lời của bot đích, mở đầu bằng tên thành viên. Bot đích có tài khoản Telegram riêng
       // thì trong nhóm chính tài khoản đó trả lời (gửi không được thì bot này gửi thay); trong chat
       // riêng thì kèm nút mở chat với bot đích.
-      const own = this.runtimes.has(seg.from.bot) ? this.store.bot(seg.from.bot) : undefined
+      const ownRt = this.rtOfBot(seg.from.bot)
+      const own = ownRt ? this.store.bot(ownRt.id) : undefined
       const md = `@${seg.from.handle}${seg.from.role ? ` · ${seg.from.role}` : ''}\n\n${seg.text}`
-      if (last.group && own) await this.send(last, first, md, seg.from.bot, undefined, last.bot)
+      if (last.group && own && ownRt) await this.send(last, first, md, ownRt.id, undefined, last.bot)
       else
         await this.send(
           last,
@@ -1269,14 +1315,14 @@ export class ChannelHub {
         return this.resume(rt, m, key, topic, target)
       }
       case 'sethome':
-        await this.store.patchBot(rt.rec.bot, {
+        await this.store.patchBot(rt.id, {
           home: { chatId: m.chat.id, ...(topic ? { threadId: topic } : {}) },
         })
         return this.reply(api, m, T.homeSet)
       case 'voice': {
         const on = args.trim().toLowerCase()
         if (on !== 'on' && on !== 'off') return this.reply(api, m, T.voiceUsage)
-        await this.store.patchBot(rt.rec.bot, { voice: on === 'on' })
+        await this.store.patchBot(rt.id, { voice: on === 'on' })
         return this.reply(api, m, T.voice(on === 'on'))
       }
       case 'note': {
@@ -1434,7 +1480,7 @@ export class ChannelHub {
         if (b === 'w') return done(T.brainWebHint)
         // Thẻ bấm sau khi aris khởi động lại: ghi lại để sự kiện trạng thái sửa đúng thẻ này.
         if (msg && !this.brainCards.has(a ?? ''))
-          this.brainCards.set(a ?? '', { bot: rt.rec.bot, chatId: msg.chat.id, messageId: msg.message_id })
+          this.brainCards.set(a ?? '', { bot: rt.id, chatId: msg.chat.id, messageId: msg.message_id })
         try {
           if (b === 'y') await port.approve(a ?? '')
           else if (b === 'k') await port.keep(a ?? '')
@@ -1468,7 +1514,7 @@ export class ChannelHub {
         }
         if (!this.skillCards.has(id) && msg)
           this.skillCards.set(id, {
-            bot: rt.rec.bot,
+            bot: rt.id,
             chatId: msg.chat.id,
             messageId: msg.message_id,
             html: escapeHtml(msg.text ?? ''),
@@ -1490,7 +1536,7 @@ export class ChannelHub {
         let card = this.memoryCards.get(a ?? '')
         if (!card && msg) {
           card = {
-            bot: rt.rec.bot,
+            bot: rt.id,
             chatId: msg.chat.id,
             messageId: msg.message_id,
             html: escapeHtml(msg.text ?? ''),
@@ -1537,12 +1583,14 @@ export class ChannelHub {
       case 'pa': {
         const id = Number(a)
         const s = this.strangers.get(id) ?? { name: String(id) }
-        await this.store.t.people.put(`tg-${keyNum(id)}`, {
+        // Người được phép chỉ trên tài khoản đã báo (GĐ8.7).
+        await this.store.t.people.put(`tg-${rt.id}-${keyNum(id)}`, {
           userId: id,
           name: s.name,
           ...(s.username ? { username: s.username } : {}),
           role: 'member',
           pairedAt: new Date(this.now()).toISOString(),
+          account: rt.id,
         })
         await edit(T.strangerAllowed(s.name))
         await api.sendMessage(id, T.welcomeMember).catch(() => undefined)
@@ -1552,15 +1600,15 @@ export class ChannelHub {
         await edit(T.strangerIgnored)
         return done()
       case 'ga': {
-        const g = await this.store.upsertGroup(num(a), { allowed: true })
+        const g = await this.store.upsertGroup(num(a), { allowed: true }, rt.id)
         await edit(T.groupAllowed(g.title))
         return done()
       }
       case 'gl': {
         const chatId = num(a)
-        const title = this.store.group(chatId)?.title ?? String(chatId)
+        const title = this.store.group(chatId, rt.id)?.title ?? String(chatId)
         await api.leaveChat(chatId).catch(() => undefined)
-        await this.store.upsertGroup(chatId, { allowed: false })
+        await this.store.upsertGroup(chatId, { allowed: false }, rt.id)
         await edit(T.groupLeft(title))
         return done()
       }
@@ -1717,7 +1765,7 @@ export class ChannelHub {
   }
 
   private async sendMemoryCard(item: ProposalItem) {
-    const bot = this.store.bot('aris') ? 'aris' : [...this.runtimes.keys()][0]
+    const bot = this.homeAccount()
     const rt = bot ? this.runtimes.get(bot) : undefined
     const chatId = (bot ? this.store.bot(bot)?.home?.chatId : undefined) ?? this.store.owners()[0]?.userId
     if (!rt || !bot || chatId === undefined) return
@@ -1757,10 +1805,11 @@ export class ChannelHub {
       suggestion?: string | undefined
     },
   ): Promise<string> {
-    const rt = this.runtimes.get(bot)
+    // `bot` là mã bot (hay mã tài khoản): gửi bằng tài khoản chính của bot đó.
+    const rt = this.runtimes.get(bot) ?? this.rtOfBot(bot)
     if (!rt) return 'Bot chưa kết nối Telegram.'
     const home =
-      this.store.bot(bot)?.home ??
+      this.store.bot(rt.id)?.home ??
       (this.store.owners()[0] ? { chatId: this.store.owners()[0]!.userId } : undefined)
     if (!home) return 'Chưa có nơi nhận: người dùng chưa ghép đôi hoặc chưa /sethome.'
     const chunks = toTelegramHtml(this.named(r.answer))
@@ -1797,7 +1846,7 @@ export class ChannelHub {
   }
 
   private async sendSkillCard(v: SkillItem, patch: boolean) {
-    const bot = this.store.bot('aris') ? 'aris' : [...this.runtimes.keys()][0]
+    const bot = this.homeAccount()
     const rt = bot ? this.runtimes.get(bot) : undefined
     const chatId = (bot ? this.store.bot(bot)?.home?.chatId : undefined) ?? this.store.owners()[0]?.userId
     if (!rt || !bot || chatId === undefined) return
@@ -1892,8 +1941,7 @@ export class ChannelHub {
 
   /** Nơi gửi thẻ bộ não: bot nhận nguồn (hay Aris), chat riêng với người dùng chính. */
   private brainTarget(c?: BrainCard): { bot: string; rt: BotRuntime; chatId: number } | undefined {
-    const bot =
-      c?.by && this.runtimes.has(c.by) ? c.by : this.store.bot('aris') ? 'aris' : [...this.runtimes.keys()][0]
+    const bot = c?.by && this.runtimes.has(c.by) ? c.by : this.homeAccount()
     const rt = bot ? this.runtimes.get(bot) : undefined
     const chatId = this.store.owners()[0]?.userId ?? (bot ? this.store.bot(bot)?.home?.chatId : undefined)
     return rt && bot && chatId !== undefined ? { bot, rt, chatId } : undefined
@@ -1933,7 +1981,7 @@ export class ChannelHub {
       if (!file) {
         const card = await port.add({
           text: withOrigin((m.text ?? m.caption ?? '').trim(), m),
-          by: rt.rec.bot,
+          by: rt.id,
         })
         return T.brainQueued(card.title)
       }
@@ -1947,7 +1995,7 @@ export class ChannelHub {
           ? `anh-${stamp}${ext || '.jpg'}`
           : (named ?? `tep-${stamp}${ext}`)
       const label = m.voice ? `ghi âm ${minSec(m.voice.duration)}` : m.photo ? `ảnh ${clock(at)}` : name
-      const card = await port.addFile({ name, data, by: rt.rec.bot })
+      const card = await port.addFile({ name, data, by: rt.id })
       return card.status === 'chua-doc' ? T.brainUnreadable(label) : T.brainQueued(label)
     } catch (e) {
       return T.brainFail(e instanceof Error ? e.message : String(e))
@@ -2011,7 +2059,7 @@ export class ChannelHub {
   }
 
   private async sendCard(item: ApprovalItem) {
-    const bot = this.store.bot('aris') ? 'aris' : [...this.runtimes.keys()][0]
+    const bot = this.homeAccount()
     const rt = bot ? this.runtimes.get(bot) : undefined
     const chatId = (bot ? this.store.bot(bot)?.home?.chatId : undefined) ?? this.store.owners()[0]?.userId
     if (!rt || !bot || chatId === undefined) return
@@ -2083,9 +2131,9 @@ export class ChannelHub {
       signal?: AbortSignal | undefined
     },
   ): Promise<'allowed-once' | 'rejected' | 'cancelled' | 'unavailable'> {
-    const rt = this.runtimes.get(bot)
+    const rt = this.runtimes.get(bot) ?? this.rtOfBot(bot)
     const home =
-      this.store.bot(bot)?.home ??
+      (rt ? this.store.bot(rt.id)?.home : undefined) ??
       (this.store.owners()[0] ? { chatId: this.store.owners()[0]!.userId } : undefined)
     if (!rt || !home) return 'unavailable'
     return this.approvalCard(rt, home.chatId, home.threadId, req)
@@ -2240,15 +2288,16 @@ export class ChannelHub {
 
   /** Gửi tới nơi nhận (`/sethome`) của bot; không có thì gửi người dùng. */
   async sendHome(bot: string, markdown: string): Promise<string> {
-    const rt = this.runtimes.get(bot)
+    // `bot` là mã bot (hay mã tài khoản): gửi bằng tài khoản chính của bot đó.
+    const rt = this.runtimes.get(bot) ?? this.rtOfBot(bot)
     if (!rt) return 'Bot chưa kết nối Telegram.'
     const home =
-      this.store.bot(bot)?.home ??
+      this.store.bot(rt.id)?.home ??
       (this.store.owners()[0] ? { chatId: this.store.owners()[0]!.userId } : undefined)
     if (!home) return 'Chưa có nơi nhận: người dùng chưa ghép đôi hoặc chưa /sethome.'
     const rec: OutboxRecord = {
       id: `${keyNum(home.chatId)}-${this.now()}-${randomId()}`,
-      bot,
+      bot: rt.id,
       chatId: home.chatId,
       ...(home.threadId ? { threadId: home.threadId } : {}),
       chunks: toTelegramHtml(this.named(markdown), REPLY_CHUNK),

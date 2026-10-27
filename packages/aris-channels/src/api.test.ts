@@ -175,12 +175,15 @@ describe('/api/aris/channels', () => {
     function fakeZalo() {
       const calls: unknown[] = []
       const zalo = {
-        loginStart: async (bot: string) => {
-          calls.push(['login-start', bot])
-          return { qrPng: 'QR-BASE64', expiresAt: 123 }
+        loginStart: async (bot: string, opts: unknown) => {
+          calls.push(['login-start', bot, opts])
+          return { qrPng: 'QR-BASE64', expiresAt: 123, key: 'new-aris' }
         },
-        loginStatus: (bot: string) => ({ bot, status: 'waiting', qrPng: 'QR-BASE64', expiresAt: 123 }),
-        logout: async (bot: string) => void calls.push(['logout', bot]),
+        loginStatuses: () => [
+          { key: 'new-aris', bot: 'aris', status: 'waiting', qrPng: 'QR-BASE64', expiresAt: 123 },
+        ],
+        logout: async (account: string) => void calls.push(['logout', account]),
+        updateAccount: async (account: string, patch: unknown) => void calls.push(['update', account, patch]),
         status: () => [
           {
             bot: 'aris',
@@ -205,16 +208,24 @@ describe('/api/aris/channels', () => {
       const res = await run(store, { op: 'zalo-login-start', bot: 'aris' }, zalo)
       expect(res.status).toBe(200)
       const body = (await res.json()) as {
-        qr: { qrPng: string; expiresAt: number }
-        zalo: { login: unknown }
+        qr: { qrPng: string; expiresAt: number; key: string }
+        zalo: { logins: unknown[] }
       }
-      expect(body.qr).toEqual({ qrPng: 'QR-BASE64', expiresAt: 123 })
-      expect(body.zalo.login).toMatchObject({ status: 'waiting' })
-      expect(calls).toEqual([['login-start', 'aris']])
-      const status = (await (await run(store, { op: 'zalo-login-status', bot: 'aris' }, zalo)).json()) as {
-        zalo: { login: { status: string } }
+      expect(body.qr).toEqual({ qrPng: 'QR-BASE64', expiresAt: 123, key: 'new-aris' })
+      expect(body.zalo.logins).toMatchObject([{ key: 'new-aris', status: 'waiting' }])
+      expect(calls).toEqual([['login-start', 'aris', { account: undefined, label: undefined }]])
+      const status = (await (await run(store, { op: 'zalo-login-status' }, zalo)).json()) as {
+        zalo: { logins: { status: string }[] }
       }
-      expect(status.zalo.login.status).toBe('waiting')
+      expect(status.zalo.logins[0]!.status).toBe('waiting')
+      await run(store, { op: 'zalo-login-start', bot: 'mai', account: 'acc-abc123', label: ' CSKH 2 ' }, zalo)
+      expect(calls.at(-1)).toEqual(['login-start', 'mai', { account: 'acc-abc123', label: 'CSKH 2' }])
+      await run(
+        store,
+        { op: 'account', channel: 'zalo', account: 'acc-abc123', bot: 'tho', mode: 'guests' },
+        zalo,
+      )
+      expect(calls.at(-1)).toEqual(['update', 'acc-abc123', { bot: 'tho', mode: 'guests' }])
       expect((await run(store, { op: 'zalo-login-start' })).status).toBe(400)
     })
 
@@ -223,7 +234,7 @@ describe('/api/aris/channels', () => {
         loginStart: async () => {
           throw new Error('Zalo chưa trả mã QR')
         },
-        loginStatus: () => undefined,
+        loginStatuses: () => [],
         status: () => [],
       } as unknown as ZaloChannel
       const res = await run(memStore(), { op: 'zalo-login-start' }, zalo)
@@ -235,8 +246,8 @@ describe('/api/aris/channels', () => {
       const store = memStore()
       const { zalo, calls } = fakeZalo()
       await store.redeemZalo((await store.createCode('owner', 'zalo')).code, { zaloId: '2001', name: 'A' })
-      await run(store, { op: 'zalo-logout', bot: 'aris' }, zalo)
-      expect(calls).toEqual([['logout', 'aris']])
+      await run(store, { op: 'zalo-logout', account: 'acc-abc123' }, zalo)
+      expect(calls).toEqual([['logout', 'acc-abc123']])
       await run(store, { op: 'zalo-group', groupId: '5001', allowed: true, who: 'everyone', prompt: 'ngắn' })
       expect(store.zaloGroup('5001')).toMatchObject({ allowed: true, who: 'everyone', prompt: 'ngắn' })
       expect(store.groups()).toEqual([])

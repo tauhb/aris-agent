@@ -26,6 +26,8 @@ export const STRANGER_EXCERPT = 80
 export interface ZaloAccessState {
   roleOf(zaloId: string): Role | undefined
   groupRule(groupId: string): GroupRule | undefined
+  /** Tài khoản đặt "mọi người nhắn riêng là khách" (GĐ8.7): người lạ thành khách, chỉ hỏi đáp. */
+  guests?: boolean | undefined
 }
 
 export function decideZalo(ev: ZaloInbound, parsed: ParsedMessage, state: ZaloAccessState): Decision {
@@ -35,7 +37,7 @@ export function decideZalo(ev: ZaloInbound, parsed: ParsedMessage, state: ZaloAc
   const text = parsed.text
 
   if (!ev.isGroup) {
-    if (!role) return { kind: 'stranger' }
+    if (!role) return state.guests ? { kind: 'accept', trust: 'guest', text, command } : { kind: 'stranger' }
     return { kind: 'accept', trust: role, text, command }
   }
   if (!parsed.mentionedSelf) return { kind: 'ignore', reason: 'không gọi tài khoản này' }
