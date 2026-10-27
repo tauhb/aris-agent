@@ -1,4 +1,4 @@
-# Plan 8.7 · Nhiều tài khoản kênh cho một bot, và kênh chăm sóc khách hàng
+# Plan 8.7 · Nhiều tài khoản kênh cho một bot, bản gọn cho chăm sóc khách hàng
 
 Đọc trước `docs/plans/gd8-chung.md`. Thay cho phần còn dở của plan 8.4 (Zalo): người dùng chốt ngày 27/10/2026.
 
@@ -10,10 +10,11 @@ Hiện gói `@aris/channels` coi bot là một tài khoản kênh: tài khoản 
 
 ## Đã chốt với người dùng
 
-- Làm theo năm đợt A → E dưới đây.
+- Làm theo các đợt A → D dưới đây.
 - Ngoài giờ trực: mặc định **giữ tin**, vào giờ thì trả lời; tuỳ chọn gửi một câu đặt sẵn (mặc định tắt).
 - Không dùng Telegram Business: "nhường tay cho chủ" chỉ làm cho Zalo cá nhân.
 - Connector API của 8.5 để sau (không thuộc plan này).
+- **Bản gọn (27/10)**: aris là trợ lý, không thành phần mềm chat support. Chủ đọc và trả lời khách ngay trên app Zalo; aris chỉ trả lời thay, biết nhường tay, và báo chủ qua Telegram. Bỏ hộp thư chung; để sau: bot riêng theo nhóm, Zalo Bot chính thức, ô thử câu ở phần tài liệu.
 
 ## Đợt A · Sửa lỗi và làm nhanh (không có giao diện mới)
 
@@ -32,7 +33,7 @@ Test: bộ canh và báo chủ 6 giờ (đồng hồ giả), cắt 1.500, gom ti
 - **Tài khoản kênh** là bản ghi riêng: mã `acc-…`, kênh (`telegram` / `zalo`; Lark giữ như cũ), tên, bot trả lời mặc định, trạng thái, giới hạn tần suất riêng. Một bot có nhiều tài khoản; một tài khoản một bot mặc định.
 - Khoá trong Keychain theo tài khoản: `TELEGRAM_<acc>_TOKEN`, `ZALO_<acc>_SESSION`.
 - Người đã ghép đôi, nhóm (bật/tắt, lời nhắc), mã ghép đôi, phiên chat, giới hạn gửi tin: **theo tài khoản**. Trả lời luôn ra đúng tài khoản đã nhận tin.
-- **Trạng thái cuộc chat**: AI / người / chờ / đóng (nền cho đợt C và E).
+- **Trạng thái cuộc chat**: bot đang trả lời / đang nhường tay / chờ người (khách gặp nhân viên). Chỉ để bot biết khi nào im, không có màn hộp thư.
 - **Chuyển dữ liệu cũ** khi khởi động: tài khoản cũ thành tài khoản mới giữ nguyên bot; người, nhóm gán vào tài khoản đó; phiên giữ nguyên. Không phải ghép đôi lại. Có bản sao trước khi chuyển.
 - Test: chuyển dữ liệu cũ không mất gì; hai tài khoản cùng bot không lẫn người, nhóm, phiên; mã của tài khoản A không dùng được ở B.
 
@@ -42,8 +43,7 @@ Test: bộ canh và báo chủ 6 giờ (đồng hồ giả), cắt 1.500, gom ti
 2. **Ba nút của model** (việc 4): công cụ "im lặng" (chat riêng lẫn nhóm); "báo chủ" (chuông trên web và Telegram, tối đa 10 phút một lần mỗi cuộc chat); "gặp nhân viên" khi khách gõ (cuộc chat sang trạng thái "người", bot im, báo chủ).
 3. **Chế độ khách**: mỗi tài khoản chọn "chỉ người đã ghép đôi" (mặc định) hay "mọi người nhắn riêng là khách" (chỉ hỏi đáp, không làm việc có tác động).
 4. **Giờ trực và nhãn** (việc 6): giờ trực theo tài khoản; nhãn Zalo chủ chọn thì bỏ qua (đọc lại nhãn vài phút một lần).
-5. **Bot riêng theo nhóm**: không chọn thì dùng bot mặc định của tài khoản.
-6. **File, phản ứng, tag** (việc 10): nhận và gửi file đã có; thêm nhận và thả cảm xúc, @nhắc thật trong nhóm Zalo.
+5. **File, phản ứng, tag** (việc 10): nhận và gửi file đã có; thêm nhận và thả cảm xúc, @nhắc thật trong nhóm Zalo.
 
 ## Đợt D · Chỉ trả lời theo tài liệu (việc 5)
 
@@ -52,23 +52,23 @@ Test: bộ canh và báo chủ 6 giờ (đồng hồ giả), cắt 1.500, gom ti
 - Tệp khách gửi lưu riêng, **không bao giờ** vào nguồn tra.
 - Không cam kết 100% không bịa: ghi rõ trên giao diện.
 
-## Đợt E · Hộp thư chung và Zalo Bot chính thức
+## Để sau (không làm trong plan này)
 
-1. **Hộp thư chung** (việc 7): danh sách cuộc chat theo tài khoản, nhóm, bot, trạng thái; xem và nhắn thay; "AI soạn nháp" (người duyệt rồi mới gửi); thống kê cơ bản (số cuộc chat, thời gian trả lời, tỉ lệ AI tự xử lý).
-2. **Zalo Bot chính thức** (việc 8): đọc tài liệu `bot.zaloplatforms.com` trước (ghi vào `clean-room-log.md`), viết bộ nối thay `zalo/sdk.ts` (token, nhận tin kiểu `getUpdates`). Dùng cho chủ ra lệnh và nhận kết quả.
+- Hộp thư chung cho nhân viên: **bỏ** (app Zalo là nơi đọc và trả lời; nháp AI, nếu cần, gửi kèm tin báo chủ).
+- Bot riêng theo từng nhóm.
+- Zalo Bot chính thức (`bot.zaloplatforms.com`) cho chủ ra lệnh: Telegram đang làm được việc báo chủ.
+- Ô "thử một câu" ở phần trả lời theo tài liệu.
 
 ## Bản vẽ (vẽ trước, chờ duyệt)
 
+Chỉ hai màn, đều trong Cài đặt › Kênh và ghép đôi:
+
 | Khung | Đợt | Nội dung |
 |---|---|---|
-| `KenhTaiKhoan.dc.html` | B | Cài đặt › Kênh: mỗi kênh là danh sách tài khoản, "+ Thêm tài khoản"; chi tiết một tài khoản: bot trả lời, trạng thái, người đã ghép, nhóm, giới hạn |
-| `KenhZalo.dc.html` (vẽ lại) | B, C | Đăng nhập QR cho tài khoản mới; chi tiết tài khoản Zalo: chế độ khách, giờ trực, nhãn bỏ qua, nhường tay cho chủ, nhóm có công tắc và bot riêng |
-| `HoSoBotKenh.dc.html` | B | Hồ sơ bot: các tài khoản kênh bot đang trả lời |
-| `TraLoiTheoTaiLieu.dc.html` | D | Bật chế độ, chọn thư mục nguồn, câu khi không có thông tin |
-| `HopThuChung.dc.html` | E | Hộp thư chung: danh sách, khung chat, nháp AI, thống kê |
-| `KenhZaloBot.dc.html` | E | Kết nối Zalo Bot chính thức bằng token |
+| `KenhTaiKhoan.dc.html` | B, C | Danh sách tài khoản mỗi kênh, "+ Thêm tài khoản" (Zalo: cảnh báo và QR); chi tiết một tài khoản: bot trả lời, trạng thái, ai được trả lời, mã ghép đôi, người đã ghép, nhóm, giờ trực, nhãn bỏ qua, nhường tay cho chủ, giới hạn |
+| (trong chi tiết tài khoản) | D | Phần "Chỉ trả lời theo tài liệu": bật/tắt, chọn thư mục nguồn, câu khi không có thông tin |
 
-Đợt A không có giao diện mới. Chuông "báo chủ" dùng chỗ thông báo sẵn có.
+Hồ sơ bot chỉ thêm một dòng "Kênh bot đang trả lời". Đợt A không có giao diện mới.
 
 ## Kiểm tra
 
