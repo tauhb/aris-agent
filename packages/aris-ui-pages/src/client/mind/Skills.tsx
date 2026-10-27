@@ -12,6 +12,13 @@ import { skillsPost } from './skills-api.js'
 import { assignedTo, isTeamSkill, sourceLabel, type Assigned, type SkillSource } from './skill-team.js'
 
 /** Một skill trong `GET /api/aris/skills`. */
+/** Cặp skill nghi trùng (`?duplicates=preview` của `/api/aris/skills`). */
+interface DupPair {
+  a: { id: string; name: string; bot: string }
+  b: { id: string; name: string; bot: string }
+  score: number
+}
+
 /** Người dọn kho (`curator` của `/api/aris/skills`). */
 interface Curator {
   next: string
@@ -65,6 +72,9 @@ export function Skills({ t, nav, params }: PageProps) {
   const [assigning, setAssigning] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pairs, setPairs] = useState<DupPair[]>([])
+  const [allPairs, setAllPairs] = useState(false)
+  const [dupNote, setDupNote] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [tick, setTick] = useState(0)
   useEffect(() => {
@@ -81,6 +91,10 @@ export function Skills({ t, nav, params }: PageProps) {
         .then(() => fetch(new URL('api/aris/skills?curator=preview', document.baseURI)))
         .then((r) => (r.ok ? (r.json() as Promise<{ plan: NonNullable<typeof plan> }>) : undefined))
         .then((d) => live && d && setPlan(d.plan))
+        .catch(() => {})
+        .then(() => fetch(new URL('api/aris/skills?duplicates=preview', document.baseURI)))
+        .then((r) => (r.ok ? (r.json() as Promise<{ pairs: DupPair[] }>) : undefined))
+        .then((d) => live && d && setPairs(d.pairs))
         .catch(() => {})
     void load()
     const timer = setInterval(() => void load(), 10_000)
@@ -128,6 +142,34 @@ export function Skills({ t, nav, params }: PageProps) {
     ['own', t('ski.scopeOwn', { n: all.length - teamRows.length })],
   ]
 
+  /** Nhờ aris soạn bản gộp cho các cặp nghi trùng (model rẻ, kết quả là đề xuất ở Hộp duyệt). */
+  async function findDuplicates() {
+    setBusy(true)
+    setError(null)
+    setDupNote(null)
+    try {
+      const r = await skillsPost<{
+        report: { pairs: number; proposed: unknown[]; overlap: unknown[]; usd: number; capped?: boolean }
+      }>({ op: 'find-duplicates' })
+      const { pairs: n, proposed, overlap, usd } = r.report
+      setDupNote(
+        n === 0
+          ? t('ski.dupNone')
+          : t('ski.dupDone', {
+              n,
+              p: proposed.length,
+              o: overlap.length,
+              usd: usd.toFixed(3),
+            }) + (r.report.capped ? ` ${t('ski.dupCapped')}` : ''),
+      )
+      setTick((x) => x + 1)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function saveAssign(id: string, next: Assigned) {
     setBusy(true)
     setError(null)
@@ -150,6 +192,9 @@ export function Skills({ t, nav, params }: PageProps) {
           <Later t={t} stage={3} row label={t('sk.learnLater')}>
             <Button disabled>{t('sk.learnFrom')}</Button>
           </Later>
+          <Button disabled={busy} onClick={() => void findDuplicates()}>
+            {t('ski.dupFind')}
+          </Button>
           <Button variant="primary" onClick={() => nav.go('skill-import')}>
             {t('ski.import')}
           </Button>
@@ -219,6 +264,45 @@ export function Skills({ t, nav, params }: PageProps) {
           </button>
         ))}
       </div>
+      {(pairs.length > 0 || dupNote) && (
+        <div
+          className="a-card"
+          style={{ padding: '12px 14px', display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}
+        >
+          {pairs.length > 0 && <b>{t('ski.dupTitle', { n: pairs.length })}</b>}
+          {pairs.length > 0 && (
+            <span className="a-muted" style={{ flex: '1 1 320px', fontSize: 13 }}>
+              {(allPairs ? pairs : pairs.slice(0, 2)).map((p, i) => (
+                <span key={p.a.id + p.b.id}>
+                  {i > 0 && ' · '}
+                  <span className="a-mono">{p.a.name}</span> ↔ <span className="a-mono">{p.b.name}</span>
+                </span>
+              ))}
+              {!allPairs && pairs.length > 2 && ` · ${t('ski.dupMore', { n: pairs.length - 2 })}`}
+            </span>
+          )}
+          {pairs.length > 2 && !allPairs && (
+            <Button size="sm" onClick={() => setAllPairs(true)}>
+              {t('ski.dupSee', { n: pairs.length })}
+            </Button>
+          )}
+          {pairs.length > 0 && (
+            <Button size="sm" disabled={busy} onClick={() => void findDuplicates()}>
+              {t('ski.dupDraft')}
+            </Button>
+          )}
+          {pairs.length > 0 && (
+            <span className="a-muted" style={{ flexBasis: '100%', fontSize: 12 }}>
+              {t('ski.dupHint')}
+            </span>
+          )}
+          {dupNote && (
+            <span style={{ flexBasis: '100%', fontSize: 13 }} role="status">
+              {dupNote}
+            </span>
+          )}
+        </div>
+      )}
       <div className="a-card" style={{ overflowX: 'auto' }}>
         <div className="ap-sk a-muted" style={{ borderTop: 0, fontSize: 12, fontWeight: 600 }}>
           <span>{t('sk.skill')}</span>

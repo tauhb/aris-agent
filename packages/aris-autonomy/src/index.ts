@@ -21,6 +21,7 @@ import { autonomyDomain, keyOf, type GoalRecord, type LoopRecord, type Table } f
 import {
   MARKER_RE,
   MAX_SUBGOALS,
+  WAIT_MARKER_RE,
   MIN_SECONDS,
   contractPrompt,
   contractText,
@@ -36,6 +37,8 @@ import {
   parseLoop,
   parseVerdict,
   unchanged,
+  waitPlan,
+  waitPrompt,
   type Verdict,
 } from './rules.js'
 
@@ -142,6 +145,7 @@ export async function apply(ctx: Context): Promise<void> {
   }
   ctx.on('agent/pre-step', async ({ agent, messages, turn }, next) => {
     const t = turnOf(agent.session.id, turn)
+    await wakeFromWait(agent, messages as readonly { role: string; content: readonly ContentBlock[] }[])
     if (!t.goal) {
       const g = goalsPort()?.get(agent)
       if (g?.phase === 'active') t.goal = g.id
@@ -200,11 +204,61 @@ export async function apply(ctx: Context): Promise<void> {
       verdicts: same || cleared ? prev!.verdicts : [],
       ...((same || cleared) && prev!.contract ? { contract: prev!.contract } : {}),
       ...((same || cleared) && prev!.subgoals ? { subgoals: prev!.subgoals } : {}),
+      ...(same && prev!.waiting ? { waiting: prev!.waiting } : {}),
+      ...(same && prev!.waits ? { waits: prev!.waits } : {}),
       createdAt: same || cleared ? prev!.createdAt : at,
       updatedAt: at,
     }
     await goals.put(keyOf(sid), rec)
     return { rec, fresh: !!g && !same }
+  }
+
+  // --- Chờ việc chạy nền: tạm dừng mục tiêu, lịch nhắc bền đánh thức lại ---------------------
+  /** Bỏ lịch chờ của mục tiêu (nếu có) và xoá dấu chờ trong bản ghi. */
+  async function cancelWait(sid: string) {
+    const rec = goals.get(keyOf(sid))
+    if (!rec?.waiting) return
+    const { waiting, ...rest } = rec
+    await goals.put(keyOf(sid), { ...rest, updatedAt: now() })
+    await schedule()
+      ?.delete({ sessionId: SessionId(sid), id: waiting.scheduleId })
+      .catch((e: unknown) => logger.warn('xoá lịch chờ: %s', String(e)))
+  }
+
+  /**
+   * Đầu mỗi bước: lượt do lịch chờ gửi (hay người dùng nhắn vào lúc đang chờ) thì bỏ lịch chờ và cho mục tiêu
+   * chạy tiếp; lịch chờ của mục tiêu đã khác (xong, huỷ, đổi) thì chỉ xoá lịch, bỏ qua.
+   */
+  async function wakeFromWait(
+    agent: Agent,
+    messages: readonly { role: string; content: readonly ContentBlock[] }[],
+  ) {
+    const sid = agent.session.id
+    const last = messages.findLast((m) => m.role === 'user')
+    const text = last ? textOf(last.content) : ''
+    const hit = WAIT_MARKER_RE.exec(text)
+    const rec = goals.get(keyOf(sid))
+    if (!rec?.waiting) {
+      // Lịch chờ còn sót (khởi động lại giữa chừng, mục tiêu đã đổi): xoá cho sạch.
+      if (hit)
+        for (const r of (await schedule()
+          ?.list({ sessionId: SessionId(sid) })
+          .catch(() => [])) ?? [])
+          if (JSON.stringify(r).includes(hit[0]))
+            await schedule()?.delete({ sessionId: SessionId(sid), id: r.id })
+      return
+    }
+    // Lượt của vòng lặp / nhịp tim không phải người dùng nhắn: giữ nguyên chờ.
+    if (!hit && /\[aris-(loop|goal-wait):/.test(text)) return
+    await cancelWait(sid)
+    const port = goalsPort()
+    const g = port?.get(agent)
+    if (port && g && g.id === rec.goalId && g.phase === 'paused')
+      try {
+        port.resume(agent, { id: g.id, revision: g.revision })
+      } catch (e) {
+        logger.warn('chạy tiếp mục tiêu sau chờ: %s', String(e))
+      }
   }
 
   // Hợp đồng hoàn thành (đợt 6): mục tiêu mới thì soạn nền; bước đầu của lượt kế chờ và nhận lời báo.
@@ -232,6 +286,11 @@ export async function apply(ctx: Context): Promise<void> {
     const sid = agent.session.id
     const g = change.goal as unknown as GoalView | undefined
     void saveGoal(sid, g, !g)
+      .then(async (r) => {
+        // Mục tiêu không còn tạm dừng (người dùng chạy tiếp, xong, bị chặn, bị xoá): bỏ lịch chờ.
+        if (goals.get(keyOf(sid))?.waiting && (!g || g.phase !== 'paused')) await cancelWait(sid)
+        return r
+      })
       .then((r) => {
         if (!r?.fresh || !g || g.phase !== 'active') return
         const p = draftContract(sid, g.id, g.objective)
@@ -325,18 +384,57 @@ export async function apply(ctx: Context): Promise<void> {
     if (!v) return
     const rec = goals.get(keyOf(agent.session.id))
     const history: Verdict[] = [...(rec?.verdicts ?? []), v]
-    if (rec)
+    // Chờ quá giới hạn thì chặn; còn lại đặt lịch chờ trước khi tạm dừng (lịch ghi cùng bản ghi một lần).
+    let wait:
+      { waiting: NonNullable<GoalRecord['waiting']>; waits: NonNullable<GoalRecord['waits']> } | undefined
+    let tooLong: string | undefined
+    if (v.verdict === 'wait' && rec) {
+      const plan = waitPlan(rec.waits, v.waitSeconds!, v.waitingFor!)
+      if (!plan.ok) tooLong = plan.message
+      else {
+        const sch = await schedule()
+          ?.create(SessionId(agent.session.id), {
+            prompt: waitPrompt(g.id, v.waitingFor!),
+            title: `Chờ: ${v.waitingFor}`.slice(0, 120),
+            every_seconds: v.waitSeconds!,
+          })
+          .catch((e: unknown) => void logger.warn('đặt lịch chờ: %s', String(e)))
+        if (sch)
+          wait = {
+            waiting: {
+              for: v.waitingFor!,
+              until: new Date(Date.now() + v.waitSeconds! * 1000).toISOString(),
+              scheduleId: String(sch.id),
+            },
+            waits: plan.tally,
+          }
+      }
+    }
+    if (rec) {
+      const base: GoalRecord = { ...rec }
+      delete base.waiting
+      delete base.waits
       await goals.put(keyOf(agent.session.id), {
-        ...rec,
+        ...base,
         verdicts: [...rec.verdicts, { ...v, round: g.roundsStarted, at: now() }].slice(-5),
+        // Lượt không phải chờ thì đếm lại từ đầu.
+        ...(v.verdict === 'wait' ? (wait ?? (rec.waits ? { waits: rec.waits } : {})) : {}),
         updatedAt: now(),
       })
+    }
     // Mục tiêu có thể đã đổi trong lúc chấm (bot tự đánh dấu xong, người dùng tạm dừng).
     const cur = port.get(agent)
-    if (!cur || cur.id !== g.id || cur.phase !== 'active') return
+    if (!cur || cur.id !== g.id || cur.phase !== 'active') {
+      if (wait) await cancelWait(agent.session.id)
+      return
+    }
     const ref = { id: cur.id, revision: cur.revision }
     try {
-      if (v.verdict === 'done') port.complete(agent, ref)
+      if (tooLong) port.block(agent, ref, { code: 'wait-too-long', message: tooLong })
+      else if (v.verdict === 'wait') {
+        // Không đặt được lịch thì không tạm dừng: để mục tiêu chạy tiếp như `continue`.
+        if (wait) port.pause(agent, ref)
+      } else if (v.verdict === 'done') port.complete(agent, ref)
       else if (v.verdict === 'blocked')
         port.block(agent, ref, { code: 'judge-blocked', message: v.missing || v.reason })
       else if (isStuck(history))
@@ -606,15 +704,31 @@ export async function apply(ctx: Context): Promise<void> {
     return r?.agent
   }
 
-  async function goalOp(sid: string, op: 'pause' | 'resume' | 'clear') {
+  async function goalOp(sid: string, op: 'pause' | 'resume' | 'clear' | 'check-now') {
     const port = goalsPort()
     const agent = await agentOf(sid)
     const g = agent ? port?.get(agent) : undefined
     if (!port || !agent || !g) throw new Error('Phiên này không còn mục tiêu.')
     const ref = { id: g.id, revision: g.revision }
-    if (op === 'pause') port.pause(agent, ref)
+    if (op === 'check-now') {
+      // Kiểm ngay: bỏ lịch chờ, chạy tiếp mục tiêu và nhắc bot xem lại điều đang đợi.
+      const w = goals.get(keyOf(sid))?.waiting
+      if (!w) throw new Error('Mục tiêu này không đang chờ.')
+      await cancelWait(sid)
+      addNotice(
+        sid,
+        `Kiểm tra lại ngay: ${w.for}. Nếu đã có kết quả thì làm tiếp mục tiêu; nếu chưa, nói rõ đang chờ gì.`,
+      )
+      port.resume(agent, { id: g.id, revision: g.revision })
+      return
+    }
+    // Người dùng tạm dừng hay xoá tay thì bỏ luôn lịch chờ.
+    if (op !== 'resume') await cancelWait(sid)
+    const live = port.get(agent) ?? g
+    const cur = { id: live.id, revision: live.revision }
+    if (op === 'pause') port.pause(agent, cur)
     else if (op === 'resume') port.resume(agent, ref)
-    else port.clear(agent, ref)
+    else port.clear(agent, cur)
   }
 
   async function view() {
@@ -657,9 +771,14 @@ export async function apply(ctx: Context): Promise<void> {
           if (request.method !== 'POST') return json(await view())
           const b = (await request.json().catch(() => ({}))) as { op?: string; session?: string; id?: string }
           try {
-            if (b.op === 'goal-pause' || b.op === 'goal-resume' || b.op === 'goal-clear') {
+            if (
+              b.op === 'goal-pause' ||
+              b.op === 'goal-resume' ||
+              b.op === 'goal-clear' ||
+              b.op === 'goal-check-now'
+            ) {
               if (!b.session) return json({ error: 'Thiếu phiên.' }, 400)
-              await goalOp(b.session, b.op.slice(5) as 'pause' | 'resume' | 'clear')
+              await goalOp(b.session, b.op.slice(5) as 'pause' | 'resume' | 'clear' | 'check-now')
             } else if (b.op === 'loop-stop') {
               const l = b.id ? loops.get(b.id) : undefined
               if (!l) return json({ error: 'Không có vòng lặp này.' }, 404)

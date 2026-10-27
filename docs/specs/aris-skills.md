@@ -91,6 +91,14 @@ Khi agent được tạo, aris gắn một nguồn skill vào phạm vi của ag
 - Giao diện: Tự học › Thư viện skill (bộ lọc Kho đội, nút "Nhập skill", ô gán bot), trang chi tiết skill đội ("Bot được dùng", nguồn, Kiểm tra bản mới, Chia sẻ cho đội, Trả về làm skill riêng), Hộp duyệt gộp theo lần nhập, hồ sơ bot › Skill & tool (mục "Từ kho đội").
 - Chưa làm: kiểm tra bản mới tự động hằng tuần (hiện chỉ bấm tay).
 
+## Đợt 8.2 · Gộp skill trùng
+
+- `duplicateCandidates` (thuần, `merge.ts`): chỉ so skill đang dùng của cùng một bot; điểm = Jaccard theo từ của tên, mô tả, khi nào dùng, cộng 0,25 Jaccard của tiêu đề các mục `##`; lấy cặp từ 0,45, tối đa 10 cặp. `GET ?duplicates=preview` chạy thử, không gọi model.
+- `POST { op: find-duplicates }`: với mỗi cặp, model rẻ trả `duplicate` / `overlap` / `distinct`, tên skill giữ lại và (khi `duplicate`) thân gộp. Trần 0,05 USD mỗi lần (`DUP_CAP_USD`). `overlap` chỉ ghi vào báo cáo.
+- `duplicate` thành đề xuất bản mới của skill giữ lại: `by: 'merge'`, `mergeOf` là skill bị gộp, qua `lintSkill` và `scanImported`. Không bao giờ tự gộp.
+- Duyệt: skill kia được cất (`archivedBy: 'curator'`, `mergedInto`), bot được gán của hai skill đội cộng lại. Từ chối ("Giữ cả hai"): ghi `mergeSkips` vào skill giữ lại, 90 ngày không đề xuất lại (hết hạn chờ không tính).
+- Người dọn kho tự tìm vào Chủ nhật (báo cáo có `dupes`). Giao diện: nút "Tìm skill trùng" và dải "N cặp có thể gộp" ở Thư viện skill, thẻ gộp ở Hộp duyệt.
+
 ## Để sau
 
-Bảng nhập cho "Học skill từ tài liệu…" (cần vẽ), gộp skill trùng (người dọn kho pha 2), nhập lại từ tệp sao lưu.
+Bảng nhập cho "Học skill từ tài liệu…" (cần vẽ), nhập lại từ tệp sao lưu.

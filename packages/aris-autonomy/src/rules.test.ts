@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   MARKER_RE,
+  MAX_WAITS,
+  MAX_WAIT_TOTAL_SECONDS,
+  WAIT_MARKER_RE,
   contractText,
   judgePrompt,
   parseContract,
@@ -16,6 +19,9 @@ import {
   parseVerdict,
   similar,
   unchanged,
+  waitMarkerOf,
+  waitPlan,
+  waitPrompt,
   type Verdict,
 } from './rules.js'
 
@@ -138,5 +144,68 @@ describe('/loop và /heartbeat', () => {
     expect(nextAuto(600, true)).toBe(900)
     expect(nextAuto(900, true)).toBe(900)
     expect(nextAuto(480, false)).toBe(60)
+  })
+})
+
+describe('phán quyết chờ (wait)', () => {
+  const wait = (extra: string) => parseVerdict(`{"verdict":"wait","reason":"CI đang chạy"${extra}}`)
+
+  it('đọc wait kèm điều đang đợi và số giây', () => {
+    expect(wait(',"waiting_for":"CI của PR 12","wait_seconds":300')).toEqual({
+      verdict: 'wait',
+      reason: 'CI đang chạy',
+      waitingFor: 'CI của PR 12',
+      waitSeconds: 300,
+    })
+  })
+
+  it('kẹp số giây về 60–3600, thiếu hay sai thì lấy 120', () => {
+    expect(wait(',"waiting_for":"x","wait_seconds":5')?.waitSeconds).toBe(60)
+    expect(wait(',"waiting_for":"x","wait_seconds":99999')?.waitSeconds).toBe(3600)
+    expect(wait(',"waiting_for":"x","wait_seconds":"lâu"')?.waitSeconds).toBe(120)
+    expect(wait(',"waiting_for":"x"')?.waitSeconds).toBe(120)
+  })
+
+  it('thiếu waiting_for thì coi như continue', () => {
+    expect(wait(',"wait_seconds":300')?.verdict).toBe('continue')
+    expect(wait(',"waiting_for":"  ","wait_seconds":300')?.verdict).toBe('continue')
+  })
+
+  it('lời của giám khảo nêu cả wait', () => {
+    const p = judgePrompt({ objective: 'x', round: 1, max: 5, answer: 'a', tools: [] })
+    expect(p).toContain('"wait"')
+    expect(p).toContain('MỌI phần trợ lý tự làm được đã xong')
+  })
+
+  it('waitPlan cộng dồn, chặn khi quá 8 lần hay quá 2 giờ', () => {
+    let tally: { count: number; seconds: number } | undefined
+    for (let i = 0; i < MAX_WAITS; i++) {
+      const r = waitPlan(tally, 60, 'CI')
+      expect(r.ok).toBe(true)
+      if (r.ok) tally = r.tally
+    }
+    expect(tally).toEqual({ count: MAX_WAITS, seconds: MAX_WAITS * 60 })
+    expect(waitPlan(tally, 60, 'CI')).toEqual({ ok: false, message: 'Chờ quá lâu: CI' })
+    expect(waitPlan({ count: 2, seconds: MAX_WAIT_TOTAL_SECONDS - 100 }, 3600, 'bản build')).toEqual({
+      ok: false,
+      message: 'Chờ quá lâu: bản build',
+    })
+    expect(waitPlan({ count: 1, seconds: 3600 }, 3600, 'x').ok).toBe(true)
+  })
+
+  it('isStuck bỏ qua lượt chờ', () => {
+    const c = (missing: string): Verdict => ({ verdict: 'continue', reason: '', missing })
+    const w: Verdict = { verdict: 'wait', reason: '', waitingFor: 'CI', waitSeconds: 60 }
+    expect(isStuck([c('thiếu test chạy'), w, w, c('thiếu test chạy')])).toBe(false)
+    expect(isStuck([c('thiếu test chạy'), w, c('thiếu test chạy'), w, c('Thiếu test chạy')])).toBe(true)
+    expect(isStuck([w, w, w])).toBe(false)
+  })
+
+  it('dấu chờ gắn đúng mã mục tiêu và đọc lại được', () => {
+    const text = waitPrompt('goal-ab12_3', 'CI của PR 12')
+    expect(text).toContain(waitMarkerOf('goal-ab12_3'))
+    expect(WAIT_MARKER_RE.exec(text)?.[1]).toBe('goal-ab12_3')
+    expect(text).toContain('Kiểm tra lại: CI của PR 12')
+    expect(MARKER_RE.test(text)).toBe(false)
   })
 })

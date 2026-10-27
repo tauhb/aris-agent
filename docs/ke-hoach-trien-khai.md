@@ -392,7 +392,9 @@ Code, Codex làm bot ngoài: cùng một lõi, một bộ dữ liệu.
 - Buzz như một kênh nhắn tin ngang Telegram (M10); thêm Discord, Slack, WhatsApp khi cần.
 - Bot tự viết tool qua hệ con `extensions` của dsh (luôn cần duyệt).
 - Nhập cấu hình/skill từ Claude Code, Codex, Cursor; kho skill cộng đồng (cài qua quét bảo mật và duyệt); xuất trajectory để huấn luyện.
-- Phần bù Hermes còn lại: phán quyết "chờ" của `/goal` (đợi tiến trình nền như CI), gộp skill trùng bằng model.
+- Phần bù Hermes còn lại: ~~phán quyết "chờ" của `/goal`, gộp skill trùng bằng model~~ (xong ở GĐ8.2, nghiệm thu 27/10).
+
+**Nghiệm thu GĐ8.2 (27/10)**: giao Khoa `/goal` chạy `sleep 100` ở nền; giám khảo trả `wait` 110 giây, mục tiêu tạm dừng với lịch nhắc, tới giờ bot kiểm lại và giám khảo chấm `done` (2 lượt). Thử thêm `sleep 600`: bấm "Kiểm ngay" thì mục tiêu chạy tiếp ngay, bot kiểm lại rồi chờ lần hai; bấm "Thôi chờ" thì lịch bị xoá, mục tiêu tạm dừng. Gộp skill: nhập hai skill gần giống vào kho đội (độ giống 0,99), model soạn bản gộp, Hộp duyệt hiện thẻ gộp, bấm Gộp thì skill kia được cất kèm `mergedInto`. Tốn khoảng 0,005 USD cho gộp; dữ liệu thử đã dọn (mục tiêu xoá, hai skill thử đã cất). Chưa thử: tin Telegram tuần cho đề xuất gộp (thẻ duyệt skill hiện có vẫn gửi như mọi đề xuất), và chạy Chủ nhật của người dọn kho.
 
 ---
 

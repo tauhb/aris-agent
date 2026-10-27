@@ -3,6 +3,7 @@
  * khoá–giá trị (bảng của storage domain dsh, hoặc Map khi kiểm thử).
  */
 import { lintSkill, NAME_RE } from './lint.js'
+import { MERGE_SKIP_DAYS, pairKey } from './merge.js'
 
 /** Chủ của skill dùng chung trong kho của đội: không phải bot nào; `SkillRecord.assigned` nói bot nào được dùng. */
 export const TEAM_OWNER = '_doi'
@@ -51,6 +52,10 @@ export interface SkillRecord {
   assigned?: Assigned | undefined
   /** Số lượt dùng theo từng bot (skill của đội). */
   usesBy?: Record<string, number> | undefined
+  /** Đã gộp vào skill này (mã) khi duyệt đề xuất gộp: skill được cất với lý do "đã gộp vào …". */
+  mergedInto?: string | undefined
+  /** Cặp bị từ chối gộp (mã skill kia, lúc từ chối): không đề xuất lại trong `MERGE_SKIP_DAYS` ngày. */
+  mergeSkips?: { with: string; at: string }[] | undefined
   createdAt: string
   updatedAt: string
 }
@@ -83,7 +88,7 @@ export interface VersionRecord {
   description: string
   whenToUse?: string | undefined
   status: 'proposed' | 'active' | 'superseded' | 'rejected'
-  by: 'reflect' | 'user' | 'restore' | 'import'
+  by: 'reflect' | 'user' | 'restore' | 'import' | 'merge'
   why?: string | undefined
   quote?: string | undefined
   sessionId?: string | undefined
@@ -98,6 +103,8 @@ export interface VersionRecord {
   files?: string[] | undefined
   /** Bot được gán khi bản này được duyệt (skill của đội). */
   assignOnApprove?: Assigned | undefined
+  /** Đề xuất gộp: mã skill bị gộp vào skill này; khi duyệt thì skill đó được cất. */
+  mergeOf?: string | undefined
   at: string
   review?: Review | undefined
 }
@@ -147,7 +154,7 @@ export interface ProposeInput {
   description: string
   whenToUse?: string | undefined
   body: string
-  by: 'reflect' | 'user' | 'import'
+  by: 'reflect' | 'user' | 'import' | 'merge'
   why?: string | undefined
   quote?: string | undefined
   sessionId?: string | undefined
@@ -158,6 +165,8 @@ export interface ProposeInput {
   risks?: readonly string[] | undefined
   files?: readonly string[] | undefined
   assignOnApprove?: Assigned | undefined
+  /** Đề xuất gộp: mã skill bị gộp vào skill này. */
+  mergeOf?: string | undefined
 }
 
 export type SkillEvent =
@@ -244,7 +253,7 @@ export class SkillStore {
     const body = input.body.trim()
     const lint = lintSkill(
       { name: input.name, description: input.description, body },
-      { imported: input.by === 'import' },
+      { imported: input.by === 'import' || input.by === 'merge' },
     )
     if (lint.errors.length) throw new SkillError(lint.errors.join(' '))
     const id = skillId(input.bot, input.name)
@@ -288,6 +297,7 @@ export class SkillStore {
       ...(input.source ? { source: input.source } : {}),
       ...(input.files?.length ? { files: [...input.files] } : {}),
       ...(input.assignOnApprove ? { assignOnApprove: input.assignOnApprove } : {}),
+      ...(input.mergeOf ? { mergeOf: input.mergeOf } : {}),
       at,
     }
     await this.versions.put(v.id, v)
@@ -478,19 +488,51 @@ export class SkillStore {
     if (body !== undefined && body.trim() !== v.body) {
       const lint = lintSkill(
         { name: v.name, description: v.description, body: body.trim() },
-        { imported: v.by === 'import' },
+        { imported: v.by === 'import' || v.by === 'merge' },
       )
       if (lint.errors.length) throw new SkillError(lint.errors.join(' '))
       next = { ...v, body: body.trim(), warnings: lint.warnings }
     }
     await this.activate(next)
-    return this.close(next, 'approved', by)
+    const closed = await this.close(next, 'approved', by)
+    if (next.mergeOf) await this.absorb(next.mergeOf, next.skill)
+    return closed
+  }
+
+  /** Duyệt gộp xong: cất skill bị gộp ("đã gộp vào …"); cả hai là skill của đội thì bot được gán cộng lại. */
+  private async absorb(goneId: string, keepId: string): Promise<void> {
+    const gone = this.get(goneId)
+    const keep = this.get(keepId)
+    if (!gone || !keep) return
+    if (gone.status === 'active')
+      await this.patch(goneId, () => ({
+        status: 'archived',
+        archivedAt: this.now().toISOString(),
+        archivedBy: 'curator',
+        mergedInto: keepId,
+      }))
+    if (gone.bot === TEAM_OWNER && keep.bot === TEAM_OWNER && gone.assigned)
+      await this.patch(keepId, (k) => ({ assigned: mergeAssigned(k.assigned, gone.assigned!) }))
+  }
+
+  /** Khoá các cặp đang trong thời gian không đề xuất lại (bị từ chối gộp chưa quá `MERGE_SKIP_DAYS` ngày). */
+  mergeSkipped(days = MERGE_SKIP_DAYS): Set<string> {
+    const out = new Set<string>()
+    const limit = this.now().getTime() - days * 86_400_000
+    for (const [, s] of this.skills.entries())
+      for (const k of s.mergeSkips ?? []) if (Date.parse(k.at) >= limit) out.add(pairKey(s.id, k.with))
+    return out
   }
 
   async reject(id: string, by: 'user' | 'telegram' | 'timeout'): Promise<VersionRecord> {
     const v = this.versions.get(id)
     if (!v || v.status !== 'proposed') throw new SkillError('Bản này đã được trả lời hoặc không còn.')
     const closed = await this.close(v, 'rejected', by)
+    // Từ chối tay một đề xuất gộp: ghi nhớ cặp để không đề xuất lại.
+    if (v.by === 'merge' && v.mergeOf && by !== 'timeout')
+      await this.patch(v.skill, (k) => ({
+        mergeSkips: [...(k.mergeSkips ?? []), { with: v.mergeOf!, at: this.now().toISOString() }],
+      }))
     const s = this.get(v.skill)
     if (s && s.status === 'draft' && !this.versionsOf(s.id).some((x) => x.status === 'proposed'))
       await this.skills.put(s.id, { ...s, status: 'rejected', updatedAt: this.now().toISOString() })

@@ -11,8 +11,12 @@ import {
   officeSummary,
   sceneOf,
   taskOf,
+  withWaiting,
+  type Desk,
   type FeedItem,
 } from './model.js'
+import { termLine } from './Desk.js'
+import { pillOf, waitingFeed } from './feedModel.js'
 
 // Bộ dịch giả: ghép khoá và tham số để thấy đúng chữ nào được chọn.
 const t = (key: string, p: Record<string, unknown> = {}) => {
@@ -276,5 +280,43 @@ describe('feedFor', () => {
     expect(feedFor(feed, new Set(['lam'])).map((f) => f.what)).toEqual(['a', 'c'])
     expect(feedFor(feed, null)).toHaveLength(3)
     expect(feedFor(feed, new Set())).toEqual([])
+  })
+})
+
+describe('mục tiêu đang chờ trong Văn phòng', () => {
+  const desk: Desk = {
+    id: 'khoa',
+    name: 'Khoa',
+    role: 'Kỹ thuật',
+    mascot: 'khoa',
+    status: 'idle',
+    scene: 'idle',
+    task: '',
+    since: at(10, 0),
+    model: '',
+    external: false,
+  }
+  const waits = [
+    { bot: 'khoa', sessionId: 's1', for: 'CI cũ', until: at(10, 30), at: at(9, 0) },
+    { bot: 'khoa', sessionId: 's2', for: 'CI của PR 212', until: at(10, 52), at: at(10, 46) },
+    { bot: 'mai', sessionId: 's3', for: 'email', until: at(11, 0), at: at(10, 0) },
+  ]
+
+  it('gắn mục tiêu chờ mới nhất của đúng bot, bot khác để nguyên', () => {
+    expect(withWaiting(desk, waits).waiting).toEqual({ for: 'CI của PR 212', until: at(10, 52) })
+    expect(withWaiting({ ...desk, id: 'tin' }, waits)).toEqual({ ...desk, id: 'tin' })
+  })
+
+  it('dòng terminal nói đang chờ gì; đang đợi anh duyệt thì giữ chữ duyệt', () => {
+    expect(termLine(withWaiting(desk, waits), t)).toBe('⏳ of.term.waitGoal')
+    expect(termLine({ ...withWaiting(desk, waits), status: 'waiting', scene: 'wait' }, t)).toBe(
+      'of.term.waiting',
+    )
+  })
+
+  it('nhật ký có dòng Đang chờ, pill màu cam', () => {
+    const [first] = waitingFeed(waits)
+    expect(first).toMatchObject({ bot: 'khoa', kind: 'waiting', tone: 'warn', what: 'CI cũ', session: 's1' })
+    expect(pillOf(first!)).toEqual({ tone: 'warn', key: 'of.feed.k.waiting' })
   })
 })

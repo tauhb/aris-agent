@@ -422,6 +422,14 @@ export function ChatPanel({
                 ) : null
             }
           })}
+          {desk.waiting && (
+            <div className="ap-of-prog static" role="status">
+              <span aria-hidden="true">⏳</span>
+              <span className="tx">
+                {t('of.ch.waitLine', { what: desk.waiting.for, at: hhmm(desk.waiting.until) })}
+              </span>
+            </div>
+          )}
           {unsent.map((e) => (
             <div key={e.id} className="ap-of-me sending">
               {e.text}

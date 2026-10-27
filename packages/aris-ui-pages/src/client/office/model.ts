@@ -31,6 +31,8 @@ export interface FeedItem {
     | 'blocked'
     | 'routine'
     | 'routineFailed'
+    /** Mục tiêu đang chờ việc chạy nền (dựng ở trình duyệt từ `@aris/autonomy`). */
+    | 'waiting'
   tone: 'ok' | 'warn' | 'bad'
   what: string
   /** Mã phiên của việc (bot ngoài: mã lần chạy): mở kết quả hay chat đúng phiên này. */
@@ -62,6 +64,8 @@ export interface Desk {
   /** Tên model riêng của bot; bot dùng model mặc định thì trống. */
   model: string
   external: boolean
+  /** Mục tiêu đang chờ việc chạy nền: điều đang đợi và lúc kiểm lại (ms). */
+  waiting?: { for: string; until: number } | undefined
 }
 
 export interface DeskGroup {
@@ -269,3 +273,12 @@ export function looseBots(
 /** Chỉ giữ dòng của các bot trong phòng đang chọn; `ids` rỗng (null) là tất cả. */
 export const feedFor = (feed: readonly FeedItem[], ids: ReadonlySet<string> | null): FeedItem[] =>
   ids ? feed.filter((f) => ids.has(f.bot)) : [...feed]
+
+/** Gắn mục tiêu đang chờ vào bàn của bot (mỗi bot lấy mục tiêu chờ mới nhất). */
+export function withWaiting(
+  desk: Desk,
+  waits: readonly { bot: string; for: string; until: number; at: number }[],
+): Desk {
+  const w = waits.filter((x) => x.bot === desk.id).sort((a, b) => b.at - a.at)[0]
+  return w ? { ...desk, waiting: { for: w.for, until: w.until } } : desk
+}

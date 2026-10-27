@@ -28,7 +28,9 @@ import {
   type ScanResult,
 } from './import-io.js'
 import { LEARN_TOOL, LEARN_WINDOW_MS, MAX_LEARN_CASES, learnPrompt } from './learn.js'
-import { skillsDomain, type CuratorRun } from './domain.js'
+import { skillsDomain, type CuratorRun, type DupReport } from './domain.js'
+import { scanImported } from './import.js'
+import { DUP_CAP_USD, duplicateCandidates, mergePrompt, parseMerge, type DupSkill } from './merge.js'
 import {
   EVAL_PREFIX,
   EVAL_USD,
@@ -62,6 +64,7 @@ export * from './diff.js'
 export * from './store.js'
 export * from './eval.js'
 export * from './learn.js'
+export * from './merge.js'
 
 declare module '@deepseek-ai/dsh-llm' {
   interface MessageSourceMap {
@@ -632,6 +635,105 @@ export async function apply(ctx: Context): Promise<void> {
     return () => clearInterval(timer)
   }, 'aris-skills: đề xuất quá hạn')
 
+  // --- Tìm và gộp skill trùng (đợt 8.2): chạy thử miễn phí; thật thì model rẻ xác nhận, kết quả là đề xuất ---
+  const dupInputs = (): DupSkill[] => {
+    // Skill đang có đề xuất gộp chờ duyệt thì để yên.
+    const busy = new Set(
+      store
+        .pending()
+        .filter((v) => v.by === 'merge')
+        .flatMap((v) => [v.skill, v.mergeOf ?? '']),
+    )
+    const out: DupSkill[] = []
+    for (const s of store.list())
+      if (s.status === 'active' && !busy.has(s.id)) {
+        const v = store.active(s.id)
+        if (v)
+          out.push({
+            id: s.id,
+            bot: s.bot,
+            name: s.name,
+            description: s.description,
+            whenToUse: s.whenToUse,
+            body: v.body,
+          })
+      }
+    return out
+  }
+  const dupPreview = () =>
+    duplicateCandidates(dupInputs(), store.mergeSkipped()).map((p) => ({
+      a: { id: p.a.id, name: p.a.name, bot: p.a.bot },
+      b: { id: p.b.id, name: p.b.name, bot: p.b.bot },
+      score: Math.round(p.score * 100) / 100,
+    }))
+
+  let dupRunning = false
+  async function findDuplicates(): Promise<DupReport> {
+    if (dupRunning) throw new SkillError('Đang tìm skill trùng; đợi xong rồi chạy tiếp.')
+    dupRunning = true
+    try {
+      const report: DupReport = { pairs: 0, proposed: [], overlap: [], usd: 0 }
+      const sc = sessions()
+      const m = sc ? pickFlash(await sc.modelCatalog()) : undefined
+      const llm = ctx.get('llm') as
+        | {
+            stream(o: Record<string, unknown>): AsyncIterable<{ type: string; text?: string; usage?: Usage }>
+          }
+        | undefined
+      const cands = duplicateCandidates(dupInputs(), store.mergeSkipped())
+      report.pairs = cands.length
+      if (!m || !llm) return report
+      for (const pair of cands) {
+        if (report.usd >= DUP_CAP_USD) {
+          report.capped = true
+          break
+        }
+        let raw = ''
+        let usage: Usage | undefined
+        for await (const c of llm.stream({
+          provider: m.provider,
+          model: m.model,
+          messages: [{ role: 'user', content: [{ type: 'text', text: mergePrompt(pair.a, pair.b) }] }],
+          maxTokens: 8000,
+        })) {
+          if (c.type === 'text-delta' && c.text) raw += c.text
+          else if (c.type === 'usage') usage = c.usage
+        }
+        if (usage) report.usd += (await spend()?.charge?.(m.provider, m.model, usage, ['skill-merge'])) ?? 0
+        const ans = parseMerge(raw, [pair.a.name, pair.b.name])
+        if (!ans) {
+          logger.warn('gộp skill: model không trả JSON dùng được (%s)', raw.slice(0, 200))
+          continue
+        }
+        if (ans.relation === 'overlap')
+          report.overlap.push({ a: pair.a.name, b: pair.b.name, reason: ans.reason })
+        if (ans.relation !== 'duplicate' || !ans.merged) continue
+        const keep = ans.keep === pair.a.name ? pair.a : pair.b
+        const gone = keep === pair.a ? pair.b : pair.a
+        try {
+          const v = await store.propose({
+            bot: keep.bot,
+            name: keep.name,
+            description: keep.description,
+            ...(keep.whenToUse ? { whenToUse: keep.whenToUse } : {}),
+            body: ans.merged,
+            by: 'merge',
+            why: `Gộp «${gone.name}» vào «${keep.name}»: ${ans.reason}`,
+            mergeOf: gone.id,
+            risks: scanImported(ans.merged),
+          })
+          if (v) report.proposed.push({ a: pair.a.name, b: pair.b.name, keep: keep.name })
+        } catch (e) {
+          logger.warn('đề xuất gộp «%s» và «%s»: %s', pair.a.name, pair.b.name, String(e))
+        }
+      }
+      if (report.proposed.length) refresh()
+      return report
+    } finally {
+      dupRunning = false
+    }
+  }
+
   // Người dọn kho: mỗi ngày cất skill `ARCHIVE_DAYS` ngày không dùng (trừ skill đã ghim), ghi báo cáo.
   const curatorRuns = domain.table('curator_runs') as unknown as Table<CuratorRun> & {
     delete(k: string): Promise<boolean>
@@ -647,8 +749,22 @@ export async function apply(ctx: Context): Promise<void> {
         .curate()
         .then(async (plan) => {
           const at = curator.last
+          // Chủ nhật (và chưa tìm trong 6 ngày qua): thêm bước tìm skill trùng vào báo cáo.
+          const lastDup = [...curatorRuns.entries()]
+            .map(([, r]) => r)
+            .find((r) => r.dupes && Date.now() - Date.parse(r.at) < 6 * 86_400_000)
+          const dupes =
+            new Date().getDay() === 0 && !lastDup
+              ? await findDuplicates().catch(
+                  (e: unknown) => void logger.warn('tìm skill trùng: %s', String(e)),
+                )
+              : undefined
           // Mã khoá chỉ gồm chữ, số, gạch nối.
-          await curatorRuns.put(at.replace(/[^0-9A-Za-z]/g, '-'), { at, ...plan })
+          await curatorRuns.put(at.replace(/[^0-9A-Za-z]/g, '-'), {
+            at,
+            ...plan,
+            ...(dupes ? { dupes } : {}),
+          })
           const old = [...curatorRuns.entries()]
             .sort(([, a], [, b]) => b.at.localeCompare(a.at))
             .slice(CURATOR_RUNS_KEPT)
@@ -739,6 +855,8 @@ export async function apply(ctx: Context): Promise<void> {
             takeScan,
             dropScan,
             checkUpdate: (id) => checkSourceUpdate(store, id),
+            findDuplicates,
+            dupPreview,
             curator: () => ({
               ...curator,
               report: lastRun() ?? null,
@@ -777,6 +895,7 @@ function withDiff(store: SkillStore, id: string) {
  *   GET ?id=<bot>--<tên>      → một skill, các bản, bản chờ so với bản đang dùng
  *   GET ?backup=1             → tệp sao lưu mọi skill và các bản
  *   GET ?curator=preview      → người dọn kho chạy thử: lần tới sẽ cất gì (không đổi gì)
+ *   GET ?duplicates=preview   → các cặp skill nghi trùng (không gọi model, không tốn tiền)
  *   POST { op: approve | reject | restore, id (mã bản) | skill + version, body? }
  *   POST { op: pin | archive | unarchive | eval, skill, on? }
  */
@@ -792,6 +911,14 @@ export interface SkillsApiExtras {
   dropScan(id: string): Promise<void>
   /** Kiểm tra bản mới của skill nhập từ GitHub. */
   checkUpdate(skill: string): ReturnType<typeof checkSourceUpdate>
+  /** Tìm skill trùng (model rẻ xác nhận, kết quả là đề xuất gộp chờ duyệt). */
+  findDuplicates(): Promise<DupReport>
+  /** Chạy thử: các cặp nghi trùng, không gọi model. */
+  dupPreview(): {
+    a: { id: string; name: string; bot: string }
+    b: { id: string; name: string; bot: string }
+    score: number
+  }[]
 }
 
 /** Người dọn kho cho màn 3.2: lần chạy gần nhất / kế, báo cáo gần nhất, các mốc. */
@@ -820,6 +947,7 @@ export async function skillsApi(
         },
       })
     if (q.get('curator') === 'preview') return json({ plan: store.curatePlan() satisfies CuratorPlan })
+    if (q.get('duplicates') === 'preview') return json({ pairs: ext?.dupPreview() ?? [] })
     if (q.get('pending') === 'all')
       return json({
         pending: store.pending().map((v) => withDiff(store, v.id)),
@@ -964,6 +1092,9 @@ export async function skillsApi(
         await ext.dropScan(scan.id)
         return json({ ok: true, outcomes })
       }
+      case 'find-duplicates':
+        if (!ext) return json({ error: 'Chưa bật gộp skill.' }, 400)
+        return json({ ok: true, report: await ext.findDuplicates() })
       case 'import-check':
         if (!ext) return json({ error: 'Chưa bật nhập skill.' }, 400)
         return json({ ok: true, ...(await ext.checkUpdate(skill)) })

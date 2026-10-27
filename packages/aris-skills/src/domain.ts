@@ -25,6 +25,8 @@ const skill: z.ZodType<SkillRecord> = z.object({
   assigned: z.union([z.literal('all'), z.array(z.string())]).optional(),
   /** Số lượt dùng theo từng bot (skill của đội). */
   usesBy: z.record(z.string(), z.number().int()).optional(),
+  mergedInto: z.string().optional(),
+  mergeSkips: z.array(z.object({ with: z.string(), at: z.string() })).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 })
@@ -39,7 +41,7 @@ const version: z.ZodType<VersionRecord> = z.object({
   description: z.string(),
   whenToUse: z.string().optional(),
   status: z.enum(['proposed', 'active', 'superseded', 'rejected']),
-  by: z.enum(['reflect', 'user', 'restore', 'import']),
+  by: z.enum(['reflect', 'user', 'restore', 'import', 'merge']),
   why: z.string().optional(),
   quote: z.string().optional(),
   sessionId: z.string().optional(),
@@ -62,6 +64,7 @@ const version: z.ZodType<VersionRecord> = z.object({
   files: z.array(z.string()).optional(),
   /** Bot được gán khi bản này được duyệt (skill của đội). */
   assignOnApprove: z.union([z.literal('all'), z.array(z.string())]).optional(),
+  mergeOf: z.string().optional(),
   at: z.string(),
   review: z
     .object({
@@ -99,15 +102,38 @@ const evalRecord: z.ZodType<EvalRecord> = z.object({
 
 const curatorItem = z.object({ id: z.string(), name: z.string(), bot: z.string(), idle: z.number().int() })
 
+/** Kết quả một lần tìm skill trùng (đợt 8.2), ghi vào báo cáo của người dọn kho. */
+export interface DupReport {
+  /** Số cặp nghi trùng đã xét. */
+  pairs: number
+  /** Đề xuất gộp đã mở: tên hai skill và skill giữ lại. */
+  proposed: { a: string; b: string; keep: string }[]
+  /** Cặp chồng nhau một phần: chỉ ghi lại, không đề xuất. */
+  overlap: { a: string; b: string; reason: string }[]
+  usd: number
+  /** Dừng giữa chừng vì hết trần tiền. */
+  capped?: boolean | undefined
+}
+
 /** Một lần chạy của người dọn kho (báo cáo). */
 export interface CuratorRun extends CuratorPlan {
   at: string
+  dupes?: DupReport | undefined
 }
 
 const curatorRun: z.ZodType<CuratorRun> = z.object({
   at: z.string(),
   archive: z.array(curatorItem),
   stale: z.array(curatorItem),
+  dupes: z
+    .object({
+      pairs: z.number().int(),
+      proposed: z.array(z.object({ a: z.string(), b: z.string(), keep: z.string() })),
+      overlap: z.array(z.object({ a: z.string(), b: z.string(), reason: z.string() })),
+      usd: z.number(),
+      capped: z.boolean().optional(),
+    })
+    .optional(),
 })
 
 export const skillsDomain = defineDomain({

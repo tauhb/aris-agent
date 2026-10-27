@@ -17,6 +17,7 @@ export const STATUS_DOT: Record<Desk['status'], string> = {
 /** Chữ trong terminal: việc đang làm, đang đợi người dùng, vấp, hay nghỉ từ lúc nào. */
 export function termLine(d: Desk, t: T): string {
   const withTask = (head: string) => (d.task ? `${head} · ${d.task}` : head)
+  if (d.waiting && d.status !== 'waiting') return `⏳ ${t('of.term.waitGoal', { what: d.waiting.for })}`
   if (d.status === 'working') return d.task || t('of.term.working')
   if (d.status === 'waiting') return withTask(t('of.term.waiting'))
   if (d.status === 'failed') return withTask(t('of.term.failed'))

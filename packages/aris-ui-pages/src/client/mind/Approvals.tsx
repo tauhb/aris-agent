@@ -65,7 +65,11 @@ interface SkillItem {
   quote?: string
   sessionId?: string
   /** Vòng học nền đề xuất (`reflect`) hay người dùng nhờ học bằng `/learn` (`user`). */
-  by?: 'reflect' | 'user' | 'restore' | 'import'
+  by?: 'reflect' | 'user' | 'restore' | 'import' | 'merge'
+  /** Đề xuất gộp: mã skill bị gộp vào skill này. */
+  mergeOf?: string
+  /** So với bản đang dùng (chỉ có ở bản chờ duyệt). */
+  diff?: { kind: ' ' | '+' | '-'; text: string }[]
   warnings: string[]
   /** Skill nhập từ ngoài: nguồn, dấu hiệu nguy hiểm, tệp kèm, bot gán sẵn khi duyệt. */
   source?: SkillSource
@@ -222,7 +226,9 @@ export function Approvals({ t, nav }: PageProps) {
       : r.type === 'memory'
         ? t('ap.memTitle')
         : r.type === 'skill'
-          ? t('ap.skillTitle', { name: r.s.name, v: r.s.version })
+          ? r.s.by === 'merge' && r.s.mergeOf
+            ? t('ap.mergeTitle', { gone: skillNameOf(r.s.mergeOf), keep: r.s.name })
+            : t('ap.skillTitle', { name: r.s.name, v: r.s.version })
           : r.type === 'imports'
             ? t('ski.groupTitle', { n: r.g.items.length, src: sourceLabel(r.g.source) })
             : t('ap.soatTitle')
@@ -235,9 +241,11 @@ export function Approvals({ t, nav }: PageProps) {
           ? soatLine(t, r.b)
           : r.type === 'imports'
             ? t('ski.groupSub', { n: r.g.items.filter((i) => i.risks?.length).length })
-            : r.s.base
-              ? t('ap.skillPatch', { add: r.s.stat.add, del: r.s.stat.del })
-              : t('ap.skillNew')
+            : r.s.by === 'merge'
+              ? t('ap.mergeSub')
+              : r.s.base
+                ? t('ap.skillPatch', { add: r.s.stat.add, del: r.s.stat.del })
+                : t('ap.skillNew')
   const shown = rows.filter(
     (r) => filter === 'all' || r.type === filter || (filter === 'skill' && r.type === 'imports'),
   )
@@ -285,7 +293,7 @@ export function Approvals({ t, nav }: PageProps) {
           const name =
             r.type === 'action'
               ? r.a.name
-              : r.type === 'imports'
+              : r.type === 'imports' || botIdOf(r) === '_doi'
                 ? t('ski.teamLib')
                 : (bot?.name ?? botIdOf(r))
           return (
@@ -645,6 +653,9 @@ function MemoryDetail({
   )
 }
 
+/** Tên skill từ mã `<bot>--<tên>`. */
+const skillNameOf = (id: string) => id.split('--').slice(1).join('--') || id
+
 function SkillDetail({
   t,
   s,
@@ -660,7 +671,8 @@ function SkillDetail({
 }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const name = bot?.name ?? s.bot
+  const name = s.bot === '_doi' ? t('ski.teamLib') : (bot?.name ?? s.bot)
+  const merge = s.by === 'merge' && s.mergeOf
   async function answer(op: 'approve' | 'reject') {
     setBusy(true)
     setError(null)
@@ -672,6 +684,75 @@ function SkillDetail({
       setBusy(false)
     }
   }
+  if (merge)
+    return (
+      <>
+        <Head
+          mascot={bot?.mascot ?? 'aris'}
+          accessory={bot?.accessory}
+          title={t('ap.mergeHead', { name })}
+          context={`${t('ap.via.merge')} · ${hhmm(s.at)} ${new Date(s.at).toLocaleDateString('vi-VN')}`}
+        />
+        <div className="a-card" style={{ padding: '4px 16px 8px', maxWidth: 760 }}>
+          <div className="ap-kv">
+            <span className="a-muted">{t('ap.mergeKeep')}</span>
+            <span>
+              <b className="a-mono">{s.name}</b> · {`v${s.base} → v${s.version}`}
+            </span>
+          </div>
+          <div className="ap-kv">
+            <span className="a-muted">{t('ap.mergeGone')}</span>
+            <span>{t('ap.mergeGoneHint', { gone: skillNameOf(s.mergeOf!), keep: s.name })}</span>
+          </div>
+          {s.why && (
+            <div className="ap-kv">
+              <span className="a-muted">{t('ap.why')}</span>
+              <span>{s.why}</span>
+            </div>
+          )}
+          {(s.risks?.length ?? 0) > 0 && (
+            <div className="ap-kv">
+              <span className="a-muted">{t('ap.mergeRisks')}</span>
+              <span style={{ color: 'var(--a-danger)' }}>{s.risks!.join(' · ')}</span>
+            </div>
+          )}
+        </div>
+        {s.diff && (
+          <div className="a-card" style={{ padding: 14, maxWidth: 760 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 8 }}>
+              <b style={{ fontSize: 13.5 }}>{t('ap.mergeDiff')}</b>
+              <span className="a-muted" style={{ fontSize: 12 }}>
+                {t('ap.skillStat', { add: s.stat.add, del: s.stat.del })}
+              </span>
+            </div>
+            <div className="a-mono ap-diff">
+              {s.diff
+                .filter((l) => l.kind !== ' ')
+                .map((l, i) => (
+                  <div key={i} style={{ color: l.kind === '+' ? 'var(--a-ok)' : 'var(--a-danger)' }}>
+                    {l.kind} {l.text}
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, maxWidth: 760 }}>
+          <Button variant="primary" size="lg" disabled={busy} onClick={() => void answer('approve')}>
+            {t('ap.mergeDo')}
+          </Button>
+          <Button size="lg" onClick={() => nav.go('skill', { id: s.skill })}>
+            {t('ap.mergeEdit')}
+          </Button>
+          <Button size="lg" disabled={busy} onClick={() => void answer('reject')}>
+            {t('ap.mergeKeepBoth')}
+          </Button>
+        </div>
+        {error && <div style={{ color: 'var(--a-danger)', fontSize: 13 }}>{error}</div>}
+        <p className="a-muted" style={{ margin: 0, fontSize: 12.5, maxWidth: 760 }}>
+          {t('ap.mergeFoot')}
+        </p>
+      </>
+    )
   return (
     <>
       <Head

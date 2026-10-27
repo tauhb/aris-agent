@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Hộp duyệt, gộp skill</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:38px;padding:0 16px;border:0;border-radius:10px;background:var(--ink);color:var(--panel);font-size:13.5px;font-weight:600}
+.b2{height:38px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font-size:13.5px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.m{color:var(--muted)}
+.chip{height:30px;border:1px solid var(--line);border-radius:999px;background:var(--panel);padding:0 11px;font-size:12.5px;color:var(--muted)}
+.li{display:flex;gap:10px;align-items:flex-start;width:100%;border:0;border-top:1px solid var(--line);background:transparent;padding:12px 14px;text-align:left}
+.av{flex:none;width:28px;height:28px;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.dl{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;padding:10px 12px;border-radius:9px;background:var(--panel2);white-space:pre-wrap}
+.add{color:var(--ok)}
+.del{color:var(--danger)}
+.kv{display:grid;grid-template-columns:120px minmax(0,1fr);gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="inbox" bot="none" hint-size="260px,900px"></dc-import>
+  <section aria-label="Danh sách chờ duyệt" style="flex: 0 1 380px; min-width: 300px; border-right: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column">
+    <div style="padding: 14px 14px 10px; display: flex; align-items: center"><span style="font-weight: 600">Hộp duyệt</span><span class="m" style="margin-left: 8px; font-size: 12.5px">2 cần anh</span><button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="margin-left: auto"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button></div>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 12px">
+      <button type="button" class="chip" style="background: var(--hover); color: var(--ink); font-weight: 600">Tất cả</button><button type="button" class="chip">Skill · 2</button><button type="button" class="chip">Hành động · 0</button>
+    </div>
+    <button type="button" class="li" style="background: var(--accentSoft)"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path></svg><span style="flex: 1; min-width: 0"><b style="font-size: 13.5px">Gộp «bao-cao-doanh-thu-theo-kenh» vào «bao-cao-doanh-thu-tuan»</b><div class="m" style="font-size: 12.5px">Mai · gộp skill trùng · 3 phút trước</div></span></button>
+    <button type="button" class="li"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path></svg><span style="flex: 1; min-width: 0"><b style="font-size: 13.5px">Gộp «len-lich-hop-khach» vào «dat-lich-hop»</b><div class="m" style="font-size: 12.5px">Mai · gộp skill trùng · 3 phút trước</div></span></button>
+    <div class="m" style="padding: 14px; font-size: 12px; border-top: 1px solid var(--line)">Đã xử lý hôm nay · 4</div>
+  </section>
+
+  <main style="flex: 999 1 520px; min-width: 0; padding: 22px 28px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M55 8C59 8 63 16 71 28C79 40 86 50 86 64C86 80 72 92 54 92C36 92 20 80 20 64C20 48 34 34 44 20C48 14 51 8 55 8Z" fill="#FF6700"></path><path d="M47 55L43 65M59 53L55 63" stroke="#fff" stroke-width="7.5" stroke-linecap="round"></path></svg>
+      <div style="display: flex; flex-direction: column"><span style="font-size: 18px; font-weight: 700">Gộp hai skill trùng của Mai</span><span class="m" style="font-size: 13px">Người dọn kho tìm ra lúc 08:00 Chủ nhật · Aris soạn bản gộp, chưa đổi gì cho đến khi anh duyệt</span></div>
+    </div>
+    <div class="card" style="padding: 4px 16px 8px; max-width: 760px">
+      <div class="kv" style="border-top: 0"><span class="m">Giữ lại</span><span><b class="mono">bao-cao-doanh-thu-tuan</b> · v3 → v4</span></div>
+      <div class="kv"><span class="m">Gộp vào</span><span><span class="mono">bao-cao-doanh-thu-theo-kenh</span> sẽ được cất vào kho, ghi “đã gộp vào bao-cao-doanh-thu-tuan”</span></div>
+      <div class="kv"><span class="m">Vì sao</span><span>Cùng một việc: lấy tệp doanh thu tuần, gộp theo kênh, xuất bảng 3 cột. Bản kia chỉ thêm một lưu ý về kênh TikTok.</span></div>
+      <div class="kv"><span class="m">Độ giống</span><span>0,71 (so tên, mô tả, các mục)</span></div>
+    </div>
+    <div class="card" style="padding: 14px; max-width: 760px">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px"><b style="font-size: 13.5px">Khác biệt so với bản đang dùng</b><span class="m" style="font-size: 12px">+4 dòng · −1 dòng</span></div>
+      <div class="dl"><div class="del">- 3. Xuất bảng 3 cột: kênh, doanh thu, tỉ trọng</div><div class="add">+ 3. Xuất bảng 3 cột: kênh, doanh thu, tỉ trọng</div><div class="add">+ 4. Kênh TikTok tính theo giờ Việt Nam, không phải giờ UTC</div><div class="add">+ ## Lỗi thường gặp</div><div class="add">+ Thiếu cột kênh khi tệp xuất từ công cụ cũ: hỏi anh trước khi đoán.</div></div>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; max-width: 760px">
+      <button type="button" class="b1">Gộp</button>
+      <button type="button" class="b2">Sửa bản gộp</button>
+      <button type="button" class="b2">Giữ cả hai</button>
+    </div>
+    <p class="m" style="margin: 0; font-size: 12.5px; max-width: 760px">“Giữ cả hai” ghi nhớ cặp này, 90 ngày sau Aris mới hỏi lại. Chỉ gộp skill của cùng một bot. Không bao giờ tự gộp. Thẻ này cũng gửi tới Telegram của anh.</p>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'dark';
+    return { themeClass: 't-' + theme, toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

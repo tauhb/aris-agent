@@ -72,6 +72,8 @@ export function pillOf(f: FeedItem, botWaiting = true): { tone: PillTone; key: s
       return f.approval || botWaiting
         ? { tone: 'warn', key: 'of.fd.st.waiting' }
         : { tone: 'dim', key: 'of.feed.k.asked' }
+    case 'waiting':
+      return { tone: 'warn', key: 'of.feed.k.waiting' }
     case 'done':
     case 'approved':
     case 'routine':
@@ -126,3 +128,16 @@ export function externalResult(run: RunLike): { text: string; files: { path: str
   }
   return { text: (run.output ?? run.diagnostic ?? '').trim(), files }
 }
+
+/** Dòng "Đang chờ" của mục tiêu đang chờ việc chạy nền, để trộn vào nhật ký (mới trước). */
+export const waitingFeed = (
+  waits: readonly { bot: string; sessionId: string; for: string; at: number }[],
+): FeedItem[] =>
+  waits.map((w) => ({
+    at: w.at,
+    bot: w.bot,
+    kind: 'waiting' as const,
+    tone: 'warn' as const,
+    what: w.for,
+    session: w.sessionId,
+  }))

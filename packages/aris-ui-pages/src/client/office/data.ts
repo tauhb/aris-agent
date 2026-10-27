@@ -228,3 +228,45 @@ export const stopSession = (session: string) => post({ op: 'session-stop', sessi
  */
 export const sendToSession = (session: string, text: string, mode: 'steer' | 'queue') =>
   post({ op: 'session-send', session, text, mode })
+
+/** Mục tiêu đang chờ việc chạy nền của một bot (`/api/aris/autonomy`, `@aris/autonomy`). */
+export interface WaitingGoal {
+  bot: string
+  sessionId: string
+  /** Đang đợi gì. */
+  for: string
+  /** Kiểm lại lúc (ms). */
+  until: number
+  /** Lúc giám khảo quyết định chờ (ms). */
+  at: number
+}
+
+/** Mục tiêu đang chờ của cả đội; đọc lại mỗi 10 giây. */
+export function useWaitingGoals(): WaitingGoal[] {
+  const data = usePoll(
+    () =>
+      getJson<{
+        goals: {
+          bot: string
+          sessionId: string
+          phase: string
+          updatedAt: string
+          waiting?: { for: string; until: string }
+        }[]
+      }>('api/aris/autonomy'),
+    10_000,
+  )[0]
+  return (data?.goals ?? []).flatMap((g) =>
+    g.phase === 'paused' && g.waiting
+      ? [
+          {
+            bot: g.bot,
+            sessionId: g.sessionId,
+            for: g.waiting.for,
+            until: Date.parse(g.waiting.until),
+            at: Date.parse(g.updatedAt),
+          },
+        ]
+      : [],
+  )
+}

@@ -12,7 +12,8 @@ import { ChatPanel } from './ChatPanel.js'
 import { DeskCard } from './Desk.js'
 import { Feed } from './Feed.js'
 import { Office3D } from './Office3D.js'
-import { useFeed, useGuardNow, useTodayTokens, type FeedRange } from './data.js'
+import { useFeed, useGuardNow, useTodayTokens, useWaitingGoals, type FeedRange } from './data.js'
+import { waitingFeed } from './feedModel.js'
 import { FEED_PANEL, loadPanel, savePanel, type Panel } from './panel.js'
 import {
   commanderDesk,
@@ -20,6 +21,7 @@ import {
   feedFor,
   officeSummary,
   type Desk,
+  withWaiting,
   type DeskGroup,
   type Face,
 } from './model.js'
@@ -64,8 +66,12 @@ export function Overview({
   const [colOpen, setColOpen] = useState(false)
   const dec = t('sx.dec')
 
-  const groups = useMemo(() => deskGroups(team, live), [team, live])
-  const aris = useMemo(() => commanderDesk(team, live), [team, live])
+  const waits = useWaitingGoals()
+  const groups = useMemo(
+    () => deskGroups(team, live).map((g) => ({ ...g, desks: g.desks.map((d) => withWaiting(d, waits)) })),
+    [team, live, waits],
+  )
+  const aris = useMemo(() => withWaiting(commanderDesk(team, live), waits), [team, live, waits])
   const desks = groups.flatMap((g) => g.desks)
   const shown = dept === 'all' ? groups : groups.filter((g) => keyOf(g) === dept)
   // Aris (chỉ huy) cũng làm việc: tính vào câu tóm tắt và số đang làm.
@@ -78,7 +84,12 @@ export function Overview({
     return { id: d?.mascot ?? bot, accessory: d?.accessory }
   }
   const feedIds = dept === 'all' ? null : new Set(shown.flatMap((g) => g.desks.map((d) => d.id)))
-  const lines = feed ? feedFor(feed, feedIds) : null
+  const lines = feed
+    ? feedFor(
+        [...waitingFeed(waits), ...feed].sort((a, b) => b.at - a.at),
+        feedIds,
+      )
+    : null
 
   // Bảng chat chỉ mở được khi bot có trong đội; chưa tải xong đội hay bot đã xoá thì vẫn ở nhật ký (không ghi đè trạng thái đã lưu).
   const chatDesk = panel.view === 'chat' ? deskOf(panel.bot) : undefined

@@ -23,7 +23,16 @@ Mục tiêu mơ hồ thì chấm cũng mơ hồ. Theo cách Hermes làm (đọc 
 - `/subgoal <tiêu chí>` thêm một tiêu chí vào mục tiêu đang chạy; `/subgoal` không kèm chữ thì hiện hợp đồng và các tiêu chí. Lượt kế nhận lời báo tiêu chí mới.
 - Giám khảo thấy hợp đồng và mọi tiêu chí; chỉ chấm "xong" khi có bằng chứng đúng phần *chứng minh bằng* và mọi tiêu chí đều đạt.
 - Màn 3.5 hiện hợp đồng (gọn, mở rộng được) và các tiêu chí dưới mục tiêu.
-- Hermes còn có phán quyết "chờ" (đợi tiến trình nền như CI); aris để sau.
+
+### Phán quyết "chờ" (GĐ8.2)
+
+- Giám khảo trả thêm `wait` kèm `waiting_for` (đang đợi gì, bắt buộc, thiếu thì coi là `continue`) và `wait_seconds` (60–3600, kẹp về mép). Chỉ chọn khi mọi việc bot tự làm được đã xong và bước kế phụ thuộc một tiến trình hay sự kiện bên ngoài (CI, deploy, thư trả lời).
+- Khi chờ: ghi phán quyết, đặt lịch nhắc bền của dsh (dấu `[aris-goal-wait:<mã mục tiêu>]`, lúc `bây giờ + wait_seconds`), rồi tạm dừng mục tiêu. Bản ghi mục tiêu có `waiting {for, until, scheduleId}` và `waits {count, seconds}`.
+- Lịch tới: lượt nhắc bỏ lịch, cho mục tiêu chạy tiếp (`resume`) và bot kiểm lại điều đang đợi; giám khảo chấm lượt đó như thường. Mục tiêu đã khác (xong, huỷ, đổi) thì chỉ xoá lịch.
+- Giới hạn trong `rules.ts`: `MAX_WAITS = 8` lần liên tiếp, `MAX_WAIT_TOTAL_SECONDS = 7200`; vượt thì chặn với lý do "Chờ quá lâu: …". Lượt không phải chờ thì đếm lại. Lượt chờ không tính vào `isStuck`.
+- Người dùng nhắn vào phiên lúc đang chờ thì huỷ lịch và chạy tiếp ngay; lượt của `/loop` hay nhịp tim không làm gì. Tạm dừng hay xoá tay cũng huỷ lịch. Khởi động lại giữa chừng: lịch bền còn nguyên.
+- API `POST /api/aris/autonomy`: `goal-check-now` (bỏ lịch, chạy tiếp ngay và nhắc bot kiểm lại), `goal-pause` ("Thôi chờ").
+- Màn 3.5: pill "Đang chờ", dòng "Chờ: … · kiểm lại lúc HH:MM (còn N phút)", đếm lần chờ, nút Kiểm ngay / Thôi chờ. Văn phòng: dòng terminal "⏳ Chờ …" ở bàn, dòng "Đang chờ" trong nhật ký, dòng tiến độ trong bảng chat.
 
 ## `/loop` và `/heartbeat`
 

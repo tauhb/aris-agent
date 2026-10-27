@@ -21,8 +21,12 @@ interface Goal {
   contract?: { done: string; proof: string; keep?: string; scope?: string; stop?: string }
   /** Tiêu chí thêm bằng `/subgoal`. */
   subgoals?: string[]
+  /** Đang chờ việc chạy nền: mục tiêu tạm dừng, lịch nhắc kiểm lại lúc `until`. */
+  waiting?: { for: string; until: string; scheduleId: string }
+  /** Số lần và giây đã chờ liên tiếp. */
+  waits?: { count: number; seconds: number }
   verdicts: {
-    verdict: 'done' | 'continue' | 'blocked'
+    verdict: 'done' | 'continue' | 'blocked' | 'wait'
     reason: string
     missing?: string
     round: number
@@ -65,6 +69,9 @@ interface Approval {
 }
 
 const DAY_MS = 86_400_000
+/** Giới hạn chờ của `@aris/autonomy` (số lần, phút). */
+const MAX_WAITS = 8
+const MAX_WAIT_MIN = 120
 const PHASE_TONE = { active: 'accent', paused: 'muted', blocked: 'warn', complete: 'ok' } as const
 const OUTCOME_COLOR = { done: 'var(--a-ok)', failed: 'var(--a-danger)', stopped: 'var(--a-muted)' } as const
 
@@ -173,12 +180,25 @@ export function Runs({ t, nav }: PageProps) {
           )}
           {goals?.map((g) => {
             const v = g.verdicts.at(-1)
+            const waiting = g.phase === 'paused' ? g.waiting : undefined
+            const leftMin = waiting
+              ? Math.max(0, Math.ceil((Date.parse(waiting.until) - Date.now()) / 60_000))
+              : 0
             return (
-              <Box key={g.sessionId} style={{ marginBottom: 10 }}>
+              <Box
+                key={g.sessionId}
+                style={{
+                  marginBottom: 10,
+                  ...(waiting ? { borderColor: 'var(--a-warn)' } : {}),
+                  ...(g.phase === 'blocked' ? { borderColor: 'var(--a-danger)' } : {}),
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   {mascot(g.bot)}
                   <b style={{ flex: 1 }}>{g.objective}</b>
-                  <Pill tone={PHASE_TONE[g.phase]}>{t(`run.phase.${g.phase}`)}</Pill>
+                  <Pill tone={waiting ? 'warn' : PHASE_TONE[g.phase]}>
+                    {waiting ? `⏳ ${t('run.phase.waiting')}` : t(`run.phase.${g.phase}`)}
+                  </Pill>
                   <span className="a-mono a-muted" style={{ fontSize: 12 }}>
                     {t('run.rounds', { n: g.rounds, max: g.max })}
                   </span>
@@ -191,6 +211,21 @@ export function Runs({ t, nav }: PageProps) {
                     }}
                   />
                 </div>
+                {waiting && (
+                  <div
+                    style={{
+                      margin: '0 0 10px',
+                      padding: '10px 12px',
+                      borderRadius: 9,
+                      background: 'var(--a-warnSoft)',
+                      fontSize: 13,
+                    }}
+                  >
+                    <b style={{ color: 'var(--a-warn)' }}>{t('run.waitFor')}</b> {waiting.for} ·{' '}
+                    {t('run.waitUntil', { at: clock(waiting.until) })}{' '}
+                    <span className="a-muted">({t('run.waitLeft', { n: leftMin })})</span>
+                  </div>
+                )}
                 {(g.contract || g.subgoals?.length) && (
                   <details style={{ fontSize: 12.5, marginBottom: 8 }}>
                     <summary className="a-muted" style={{ cursor: 'pointer' }}>
@@ -230,6 +265,16 @@ export function Runs({ t, nav }: PageProps) {
                   ) : (
                     <span className="a-muted">{t('run.noJudge')}</span>
                   )}
+                  {waiting && g.waits && (
+                    <div className="a-muted" style={{ fontSize: 12, marginTop: 4 }}>
+                      {t('run.waitCount', {
+                        n: g.waits.count,
+                        max: MAX_WAITS,
+                        min: Math.round(g.waits.seconds / 60),
+                        cap: MAX_WAIT_MIN / 60,
+                      })}
+                    </div>
+                  )}
                   {g.phase === 'blocked' && g.blocked && (
                     <div style={{ marginTop: 4, color: 'var(--a-warn)' }}>
                       {t('run.blocked', { why: g.blocked.message })}
@@ -237,12 +282,21 @@ export function Runs({ t, nav }: PageProps) {
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-                  {g.phase === 'active' && (
-                    <Button size="sm" onClick={() => void act({ op: 'goal-pause', session: g.sessionId })}>
-                      {t('run.pause')}
+                  {waiting && (
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => void act({ op: 'goal-check-now', session: g.sessionId })}
+                    >
+                      {t('run.checkNow')}
                     </Button>
                   )}
-                  {(g.phase === 'paused' || g.phase === 'blocked') && (
+                  {(g.phase === 'active' || waiting) && (
+                    <Button size="sm" onClick={() => void act({ op: 'goal-pause', session: g.sessionId })}>
+                      {waiting ? t('run.stopWaiting') : t('run.pause')}
+                    </Button>
+                  )}
+                  {((g.phase === 'paused' && !waiting) || g.phase === 'blocked') && (
                     <Button size="sm" onClick={() => void act({ op: 'goal-resume', session: g.sessionId })}>
                       {t('run.resume')}
                     </Button>

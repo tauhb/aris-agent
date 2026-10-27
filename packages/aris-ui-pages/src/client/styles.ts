@@ -27,6 +27,7 @@ select.ap-sel{max-width:100%;min-width:0;cursor:pointer;font:inherit;font-size:1
 .ap-sel.a-muted{color:var(--a-muted);border-style:dashed}
 .ap-grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--a-line);font-size:13px}
 .ap-link{color:var(--a-accent);font-size:13px;cursor:pointer}
+.ap-diff{font-size:12px;line-height:1.7;padding:10px 12px;border-radius:9px;background:var(--a-panel2);white-space:pre-wrap;word-break:break-word}
 .ap-warnbox{border:1px solid var(--a-warn);background:var(--a-warnSoft);border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .ap-h{font-size:11.5px;font-weight:600;color:var(--a-muted);padding:12px 10px 4px;text-transform:uppercase;letter-spacing:.05em}
 .ap-side{flex:0 1 250px;min-width:220px;border-right:1px solid var(--a-line);padding:14px 10px;display:flex;flex-direction:column;gap:1px;overflow-y:auto}

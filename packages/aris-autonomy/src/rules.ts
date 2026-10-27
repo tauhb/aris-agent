@@ -11,10 +11,14 @@ export function fold(s: string): string {
 // --- Giám khảo /goal -----------------------------------------------------------------
 
 export interface Verdict {
-  verdict: 'done' | 'continue' | 'blocked'
+  verdict: 'done' | 'continue' | 'blocked' | 'wait'
   reason: string
   /** Điều còn thiếu (continue) hay điều cần người dùng (blocked). */
   missing?: string | undefined
+  /** Đang đợi gì (wait). */
+  waitingFor?: string | undefined
+  /** Đợi bao lâu, giây (wait), đã kẹp trong `WAIT_MIN_SECONDS`–`WAIT_MAX_SECONDS`. */
+  waitSeconds?: number | undefined
 }
 
 /** Hợp đồng hoàn thành của một mục tiêu (đợt 6): mục tiêu mơ hồ thì chấm cũng mơ hồ. */
@@ -109,8 +113,9 @@ Chấm:
 - "done": mục tiêu đã đạt đủ (có bằng chứng trong câu trả lời: kết quả, tệp, số liệu), không cần làm gì thêm.${terms ? ' Có hợp đồng thì chỉ chấm "done" khi câu trả lời có bằng chứng cụ thể đúng phần "Chứng minh bằng" và mọi tiêu chí thêm đều đạt; lời khẳng định đã xong mà không kèm bằng chứng thì chưa đủ.' : ''}
 - "blocked": không thể tiến tiếp nếu không có người dùng (cần quyết định, cần duyệt, thiếu quyền, thiếu dữ liệu chỉ người dùng có).
 - "continue": còn việc trợ lý tự làm được.
+- "wait": chỉ khi MỌI phần trợ lý tự làm được đã xong và bước tiếp theo phụ thuộc một tiến trình hay sự kiện bên ngoài đang chạy (CI đang chạy, bản deploy đang lên, đang chờ người khác trả lời email, tệp đang được xuất). Còn việc để làm thì chọn "continue", không chọn "wait".
 
-Trả về DUY NHẤT JSON {"verdict": "done" | "continue" | "blocked", "reason": "một câu", "missing": "điều còn thiếu hoặc điều cần người dùng, ngắn; rỗng khi done"}.`
+Trả về DUY NHẤT JSON {"verdict": "done" | "continue" | "blocked" | "wait", "reason": "một câu", "missing": "điều còn thiếu hoặc điều cần người dùng, ngắn; rỗng khi done hay wait", "waiting_for": "đang đợi gì, một câu ngắn (chỉ khi wait)", "wait_seconds": số giây nên đợi, từ ${WAIT_MIN_SECONDS} đến ${WAIT_MAX_SECONDS} (chỉ khi wait)}.`
 }
 
 export function parseVerdict(raw: string): Verdict | undefined {
@@ -119,10 +124,22 @@ export function parseVerdict(raw: string): Verdict | undefined {
   if (s < 0 || e <= s) return undefined
   try {
     const v = JSON.parse(raw.slice(s, e + 1)) as Record<string, unknown>
-    if (v.verdict !== 'done' && v.verdict !== 'continue' && v.verdict !== 'blocked') return undefined
+    if (v.verdict !== 'done' && v.verdict !== 'continue' && v.verdict !== 'blocked' && v.verdict !== 'wait')
+      return undefined
     const str = (x: unknown, n: number) => (typeof x === 'string' ? x.trim().slice(0, n) : '')
     const missing = str(v.missing, 300)
-    return { verdict: v.verdict, reason: str(v.reason, 300) || '—', ...(missing ? { missing } : {}) }
+    const reason = str(v.reason, 300) || '—'
+    if (v.verdict === 'wait') {
+      const waitingFor = str(v.waiting_for, 200)
+      // Thiếu điều đang đợi thì không có gì để kiểm lại: coi như còn việc.
+      if (!waitingFor) return { verdict: 'continue', reason, ...(missing ? { missing } : {}) }
+      const n = Number(v.wait_seconds)
+      const waitSeconds = Number.isFinite(n)
+        ? Math.min(WAIT_MAX_SECONDS, Math.max(WAIT_MIN_SECONDS, Math.round(n)))
+        : WAIT_MIN_SECONDS * 2
+      return { verdict: 'wait', reason, waitingFor, waitSeconds }
+    }
+    return { verdict: v.verdict, reason, ...(missing ? { missing } : {}) }
   } catch {
     return undefined
   }
@@ -147,11 +164,46 @@ export function similar(a: string, b: string): boolean {
 /** Bao nhiêu lượt liền giám khảo nêu cùng điều còn thiếu thì coi là không tiến triển. */
 export const STUCK_ROUNDS = 3
 
-/** Lượt `continue` mới nhất cùng `STUCK_ROUNDS - 1` lượt trước nêu cùng một điều còn thiếu. */
+/** Lượt `continue` mới nhất cùng `STUCK_ROUNDS - 1` lượt trước nêu cùng một điều còn thiếu. Lượt chờ không tính. */
 export function isStuck(history: readonly Verdict[]): boolean {
-  const last = history.slice(-STUCK_ROUNDS)
+  const last = history.filter((v) => v.verdict !== 'wait').slice(-STUCK_ROUNDS)
   if (last.length < STUCK_ROUNDS || last.some((v) => v.verdict !== 'continue' || !v.missing)) return false
   return last.every((v) => similar(v.missing!, last[0]!.missing!))
+}
+
+// --- Chờ việc chạy nền (phán quyết `wait`) ----------------------------------------------
+
+/** Khoảng đợi cho phép của một lần chờ (giây): thấp nhất là nhịp tối thiểu của lịch nhắc dsh. */
+export const WAIT_MIN_SECONDS = 60
+export const WAIT_MAX_SECONDS = 3600
+/** Tối đa bao nhiêu lần chờ liên tiếp, và tổng thời gian chờ (giây), cho một mục tiêu. */
+export const MAX_WAITS = 8
+export const MAX_WAIT_TOTAL_SECONDS = 7200
+
+/** Số lần và số giây đã chờ liên tiếp của mục tiêu (về 0 khi có lượt không phải chờ). */
+export interface WaitTally {
+  count: number
+  seconds: number
+}
+
+/** Lần chờ này có được phép không; quá giới hạn thì mục tiêu bị chặn với `message`. */
+export function waitPlan(
+  tally: WaitTally | undefined,
+  seconds: number,
+  waitingFor: string,
+): { ok: true; tally: WaitTally } | { ok: false; message: string } {
+  const t = { count: (tally?.count ?? 0) + 1, seconds: (tally?.seconds ?? 0) + seconds }
+  if (t.count > MAX_WAITS || t.seconds > MAX_WAIT_TOTAL_SECONDS)
+    return { ok: false, message: `Chờ quá lâu: ${waitingFor}` }
+  return { ok: true, tally: t }
+}
+
+/** Dấu nhận ra lượt kiểm lại do lịch chờ của mục tiêu gửi. */
+export const waitMarkerOf = (goalId: string) => `[aris-goal-wait:${goalId}]`
+export const WAIT_MARKER_RE = /\[aris-goal-wait:([^\]\s]+)\]/
+
+export function waitPrompt(goalId: string, waitingFor: string): string {
+  return `${waitMarkerOf(goalId)} Kiểm tra lại: ${waitingFor}. Nếu đã có kết quả thì làm tiếp mục tiêu; nếu chưa, nói rõ đang chờ gì.`
 }
 
 // --- /loop và /heartbeat ----------------------------------------------------------------

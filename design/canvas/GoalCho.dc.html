@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Mục tiêu đang chờ</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF;--danger:#C0262D}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px}
+.b1{height:32px;padding:0 14px;border:0;border-radius:9px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:99px;font-size:12px;font-weight:600}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.h{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.av{flex:none;width:24px;height:24px;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+.tr{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.pulse{animation:pulse 1.6s ease-in-out infinite}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="none" bot="none" hint-size="260px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Việc đang chạy</span><span class="m" style="font-size: 12px">Mục tiêu đang chờ việc chạy nền: bot không bị thúc chạy lượt rỗng</span></div>
+      <button type="button" style="margin-left: auto; height: 34px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--danger); background: transparent; color: var(--danger); font-size: 13px; font-weight: 600">Dừng tất cả</button>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+
+    <div style="padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start">
+      <div style="flex: 1.2 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <div class="h">Mục tiêu</div>
+
+        <div class="card" style="padding: 14px; border-color: var(--warn)">
+          <div style="display: flex; align-items: center; gap: 10px"><svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 12C80 12 88 20 88 50C88 80 80 88 50 88C20 88 12 80 12 50C12 20 20 12 50 12Z" fill="#00C972"></path><circle cx="52" cy="52" r="8" fill="#fff"></circle><circle cx="66" cy="44" r="6" fill="#fff"></circle></svg><b style="flex: 1">Dựng bản 0.4 và báo khi CI xanh</b><span class="pill" style="background: var(--warnSoft); color: var(--warn)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h12M6 22h12M7 2v4a5 5 0 0 0 2 4l3 2-3 2a5 5 0 0 0-2 4v4M17 2v4a5 5 0 0 1-2 4l-3 2 3 2a5 5 0 0 1 2 4v4"></path></svg>Đang chờ</span><span class="mono m" style="font-size: 12px">lượt 3/20</span></div>
+          <div style="margin-top: 10px; padding: 10px 12px; border-radius: 9px; background: var(--warnSoft); font-size: 13px"><b style="color: var(--warn)">Chờ:</b> CI của PR 212 chạy xong · kiểm lại lúc <span class="mono">10:52</span> <span class="m">(còn 6 phút)</span></div>
+          <div style="font-size: 13px; margin-top: 10px"><span class="m">Giám khảo (10:46):</span> <b>chờ</b> — mọi việc bot tự làm được đã xong, bước kế phụ thuộc CI đang chạy.</div>
+          <div class="m" style="font-size: 12px; margin-top: 4px">Lần chờ 2/8 · đã chờ 9 phút trên tối đa 2 giờ</div>
+          <div style="display: flex; gap: 6px; margin-top: 12px"><button type="button" class="b1">Kiểm ngay</button><button type="button" class="b2">Thôi chờ</button><button type="button" class="b2">Huỷ mục tiêu</button></div>
+        </div>
+
+        <div class="card" style="padding: 14px">
+          <div style="display: flex; align-items: center; gap: 10px"><svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><b style="flex: 1">Tóm tắt 3 đối thủ và chốt lịch họp thứ 5</b><span class="mono m" style="font-size: 12px">lượt 2/20</span></div>
+          <div style="height: 6px; border-radius: 99px; background: var(--panel2); margin: 10px 0"><div style="width: 10%; height: 100%; border-radius: 99px; background: var(--accent)"></div></div>
+          <div style="font-size: 13px"><span class="m">Giám khảo (10:44):</span> <b>tiếp tục</b> — còn chờ kết quả của Lâm và anh duyệt lời mời của Mai.</div>
+          <div style="display: flex; gap: 6px; margin-top: 10px"><button type="button" class="b2">Tạm dừng</button><button type="button" class="b2">Sửa mục tiêu</button><button type="button" class="b2">Huỷ</button></div>
+        </div>
+
+        <div class="card" style="padding: 14px; border-color: var(--danger)">
+          <div style="display: flex; align-items: center; gap: 10px"><svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 6C57 6 62 24 72 32C82 40 94 42 94 50C94 58 82 60 72 68C62 76 57 94 50 94C43 94 38 76 28 68C18 60 6 58 6 50C6 42 18 40 28 32C38 24 43 6 50 6Z" fill="#1084FE"></path><path d="M51 41L48 53M62 39L59 51" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></svg><b style="flex: 1">Xuất báo cáo quý 3 ra tệp PDF</b><span class="pill" style="background: var(--panel2); color: var(--danger)">Bị chặn</span></div>
+          <div style="font-size: 13px; margin-top: 8px"><b>Chờ quá lâu:</b> tệp PDF vẫn chưa xuất xong sau 8 lần kiểm. Cần anh xem lại công cụ xuất.</div>
+          <div style="display: flex; gap: 6px; margin-top: 10px"><button type="button" class="b2">Chạy tiếp</button><button type="button" class="b2">Huỷ</button></div>
+        </div>
+      </div>
+
+      <div style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <div class="h">Trong Văn phòng</div>
+        <div class="card" style="padding: 14px">
+          <div style="display: flex; align-items: center; gap: 10px"><svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true" style="flex: none"><path d="M50 12C80 12 88 20 88 50C88 80 80 88 50 88C20 88 12 80 12 50C12 20 20 12 50 12Z" fill="#00C972"></path><circle cx="52" cy="52" r="8" fill="#fff"></circle><circle cx="66" cy="44" r="6" fill="#fff"></circle></svg><b style="flex: 1">Khoa · bàn làm việc</b><span class="pill" style="background: var(--warnSoft); color: var(--warn)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h12M6 22h12M7 2v4a5 5 0 0 0 2 4l3 2-3 2a5 5 0 0 0-2 4v4M17 2v4a5 5 0 0 1-2 4l-3 2 3 2a5 5 0 0 1 2 4v4"></path></svg>Chờ</span></div>
+          <div class="mono" style="margin-top: 10px; padding: 10px 12px; border-radius: 9px; background: #101114; color: #E6E8EC; font-size: 12px; line-height: 1.7"><span style="color: #7EE2A8">$</span> gh pr checks 212<br><span style="color: #F5A35C">⏳ Chờ CI của PR 212 · kiểm lại 10:52</span></div>
+          <div class="h" style="margin-top: 14px">Nhật ký</div>
+          <div class="tr" style="padding: 8px 0"><span class="mono m" style="font-size: 12px">10:46</span><span class="pill" style="background: var(--warnSoft); color: var(--warn)">Đang chờ</span><span style="flex: 1; font-size: 13px">CI của PR 212</span></div>
+          <div class="tr" style="padding: 8px 0"><span class="mono m" style="font-size: 12px">10:41</span><span class="pill" style="background: var(--okSoft); color: var(--ok)">Xong</span><span style="flex: 1; font-size: 13px">Đã đẩy nhánh và mở PR 212</span></div>
+        </div>
+
+        <div class="h">Bảng chat của Khoa</div>
+        <div class="card" style="padding: 14px; display: flex; flex-direction: column; gap: 8px">
+          <div style="align-self: flex-start; max-width: 85%; padding: 8px 12px; border-radius: 12px; background: var(--panel2); font-size: 13px">PR 212 đã mở. Em đợi CI chạy rồi báo anh nhé.</div>
+          <div class="m" style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--warn)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h12M6 22h12M7 2v4a5 5 0 0 0 2 4l3 2-3 2a5 5 0 0 0-2 4v4M17 2v4a5 5 0 0 1-2 4l-3 2 3 2a5 5 0 0 1 2 4v4"></path></svg><span>Đang chờ CI của PR 212 · kiểm lại lúc <span class="mono">10:52</span></span></div>
+        </div>
+        <p class="m" style="margin: 0; font-size: 12.5px">Anh nhắn vào phiên lúc đang chờ thì bot chạy tiếp ngay. Chờ quá 8 lần hoặc 2 giờ thì mục tiêu bị chặn và hỏi anh.</p>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'light';
+    return { themeClass: 't-' + theme, toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

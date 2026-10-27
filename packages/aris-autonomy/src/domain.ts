@@ -3,9 +3,11 @@ import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 import { z } from 'zod'
 
 const verdict = z.object({
-  verdict: z.enum(['done', 'continue', 'blocked']),
+  verdict: z.enum(['done', 'continue', 'blocked', 'wait']),
   reason: z.string(),
   missing: z.string().optional(),
+  waitingFor: z.string().optional(),
+  waitSeconds: z.number().int().optional(),
   round: z.number().int(),
   at: z.string(),
 })
@@ -34,6 +36,10 @@ export const goalRecord = z.object({
     .optional(),
   /** Tiêu chí người dùng thêm bằng `/subgoal`. */
   subgoals: z.array(z.string()).optional(),
+  /** Đang chờ việc chạy nền: mục tiêu tạm dừng, lịch nhắc `scheduleId` sẽ đánh thức lúc `until`. */
+  waiting: z.object({ for: z.string(), until: z.string(), scheduleId: z.string() }).optional(),
+  /** Số lần và số giây đã chờ liên tiếp. */
+  waits: z.object({ count: z.number().int(), seconds: z.number().int() }).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 })

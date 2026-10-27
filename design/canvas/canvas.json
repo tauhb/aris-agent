@@ -841,6 +841,36 @@
       "x": 3040,
       "y": 3640,
       "is_interactive": true
+    },
+    "GoalCho.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g3",
+      "title": "3.5b · Mục tiêu đang chờ (GĐ8 plan 8.2) — pill Đang chờ, kiểm lại lúc, Kiểm ngay / Thôi chờ, bị chặn khi chờ quá lâu; dòng chờ ở bàn làm việc, nhật ký và bảng chat Văn phòng",
+      "w": 1440,
+      "x": 0,
+      "y": 4960
+    },
+    "GopSkill.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g3",
+      "title": "3.4b · Hộp duyệt — đề xuất gộp skill trùng: giữ lại, gộp vào, khác biệt, Gộp / Sửa bản gộp / Giữ cả hai",
+      "w": 1440,
+      "x": 1520,
+      "y": 4960
+    },
+    "GopSkillThuVien.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "g3",
+      "title": "3.2d · Thư viện skill — dải “3 cặp có thể gộp”, nút Tìm skill trùng (chạy thử miễn phí, soạn bản gộp tối đa 0,05 USD)",
+      "w": 1440,
+      "x": 3040,
+      "y": 4960
     }
   },
   "createdOnFiles": {
@@ -1031,7 +1061,10 @@
     "KetNoiDoiBot.dc.html",
     "NhapSkill.dc.html",
     "ThuVienSkillDoi.dc.html",
-    "SkillDoiChiTiet.dc.html"
+    "SkillDoiChiTiet.dc.html",
+    "GoalCho.dc.html",
+    "GopSkill.dc.html",
+    "GopSkillThuVien.dc.html"
   ],
   "pages": [
     {
