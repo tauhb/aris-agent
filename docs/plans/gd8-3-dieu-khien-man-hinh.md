@@ -36,6 +36,15 @@ Chỉ đọc tài liệu và kiến trúc. **Không chép mã của Hermes.** Gh
    - Thao tác ở tiền cảnh (di chuyển con trỏ thật).
 4. **UI-TARS Desktop** và **Agent S** (Apache-2.0): chỉ dựa vào ảnh chụp, mặc định một màn hình. Chỉ tham khảo cách nhắc model và cách bám toạ độ, không dùng làm lõi.
 
+## Cập nhật 27/10 (kiểm lại trên npm)
+
+- `@trycua/cua-driver@0.37.0`: MIT, gói chính 1,1 MB. Tệp nhị phân Rust đi theo **gói phụ tuỳ chọn của npm** theo máy (`@trycua/cua-driver-darwin-arm64@0.37.0`: `MIT AND MPL-2.0`, 64,5 MB khi giải nén), tải từ npm lúc `pnpm install`, không tải thêm lúc chạy (cần xác nhận lại trên Mac). Kéo theo `@ubjs/core` và `@ubjs/node` bản `0.31.0-3` (MPL-2.0, có trong danh sách cho phép của `check:licenses`).
+- Peekaboo đã lên bản **4.9.7** (MIT), không còn là bản 3 beta.
+- **Chia việc theo nơi làm:**
+  - *Làm được trên Cloud* (không cần Mac): gói `@aris/computer` với `ComputerDriver` và bản giả, đổi toạ độ, phân tích phím tắt, lớp an toàn (chặn cứng, hai chế độ quyền, khoá một bot, trần thao tác, tạm dừng khi người dùng dùng máy), các công cụ `man_hinh_*`, thẻ duyệt có ảnh đánh dấu, phần logic của `computer doctor`, test, đặc tả, bản vẽ, giao diện.
+  - *Cần máy Mac của người dùng*: nối cua-driver thật, quyền Trợ năng và Ghi màn hình (macOS tính cho tiến trình nào), chế độ nền có thật không giành chuột, `computer doctor` thật, toàn bộ B-5.
+- **Thứ tự đợt:** (1) Cloud: lõi giả, an toàn, công cụ, test → (2) bản vẽ, chờ duyệt → (3) giao diện → (4) trên Mac: nối lõi thật, doctor, thử thật B-5.
+
 ## Điểm dừng 1 · Chọn lõi thao tác
 
 Trình bày cho người dùng, đề xuất **B1**, rồi chờ người dùng chọn:
