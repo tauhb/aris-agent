@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Kênh và ghép đôi</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#A14A07;--warnSoft:#FCEFDF}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614}
+button{font-family:inherit;cursor:pointer;color:inherit}
+input,textarea{font-family:inherit}
+a{color:var(--accent)}a:hover{color:var(--ink)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 1000px; display: flex; flex-wrap: wrap">
+  <nav aria-label="Cài đặt" style="flex: 0 1 210px; min-width: 190px; border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px">
+    <a href="#" style="display: block; border-radius: 8px; padding: 7px 10px; font-size: 13.5px; color: var(--ink); text-decoration: none">Chung</a>
+    <span style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px; color: var(--muted)">Kênh</span>
+    <a href="#" aria-current="page" style="display: block; border-radius: 8px; padding: 7px 10px; font-size: 13.5px; color: var(--ink); text-decoration: none; background: var(--hover); font-weight: 600">Kênh và ghép đôi</a>
+    <a href="#" style="display: block; border-radius: 8px; padding: 7px 10px; font-size: 13.5px; color: var(--ink); text-decoration: none">Ứng dụng khác</a>
+    <span style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px; color: var(--muted)">Mở rộng</span>
+    <a href="#" style="display: block; border-radius: 8px; padding: 7px 10px; font-size: 13.5px; color: var(--ink); text-decoration: none">Kết nối</a>
+  </nav>
+  <main style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line); flex-wrap: wrap">
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Kênh và ghép đôi</span><span style="font-size: 12px; color: var(--muted)">Mỗi kênh nhiều tài khoản; mỗi tài khoản một bot trả lời</span></div>
+      <a href="KenhThemTaiKhoan.dc.html" style="margin-left: auto; display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 10px; background: var(--ink); color: var(--panel); font-size: 13px; font-weight: 600; text-decoration: none">＋ Thêm tài khoản</a>
+      <button type="button" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="width: 44px; height: 44px; border: 0; border-radius: 9px; background: transparent; color: var(--muted)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+    <div style="padding: 18px 24px; display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start">
+
+      <section aria-label="Tài khoản" style="flex: 1 1 340px; max-width: 420px; min-width: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--panel)">
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+          <div style="padding: 10px 16px 6px; display: flex; align-items: baseline; gap: 8px; border-top: 1px solid var(--line)"><b style="font-size: 13px">{{g.name}}</b><span style="font-size: 12px; color: var(--muted)">{{g.note}}</span></div>
+          <sc-for list="{{g.items}}" as="a" hint-placeholder-count="2">
+            <button type="button" onClick="{{a.pick}}" style="{{a.rowStyle}}"><span aria-hidden="true" style="{{a.logoStyle}}">{{a.logo}}</span><span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><b>{{a.name}}</b><span style="font-size: 12.5px; color: var(--muted)">bot {{a.bot}}</span></span><span style="{{a.stStyle}}">{{a.st}}</span></button>
+          </sc-for>
+        </sc-for>
+      </section>
+
+      <section aria-label="Chi tiết tài khoản" style="flex: 2 1 520px; min-width: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--panel)">
+        <div style="padding: 14px 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap"><span aria-hidden="true" style="{{cur.logoStyle}}">{{cur.logo}}</span><span style="flex: 1; min-width: 180px; display: flex; flex-direction: column"><b style="font-size: 16px">{{cur.name}}</b><span style="font-size: 12.5px; color: var(--muted)">{{cur.kind}}</span></span><span style="{{cur.stStyle}}">{{cur.st}}</span><sc-if value="{{cur.needQr}}" hint-placeholder-val="{{ false }}"><button type="button" style="height: 40px; padding: 0 12px; border: 0; border-radius: 9px; background: var(--ink); color: var(--panel); font-size: 13px; font-weight: 600">Quét lại QR</button></sc-if><button type="button" style="height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); font-size: 13px">Gỡ</button></div>
+        <sc-if value="{{cur.hint}}" hint-placeholder-val="{{ false }}"><div style="margin: 0 16px 10px; padding: 8px 12px; border-radius: 10px; background: var(--warnSoft); color: var(--warn); font-size: 12.5px">{{cur.hint}}</div></sc-if>
+        <div role="tablist" aria-label="Phần cài đặt" style="display: flex; gap: 18px; padding: 0 16px; border-bottom: 1px solid var(--line)"><button type="button" role="tab" aria-selected="{{tabSet}}" onClick="{{toSet}}" style="{{tabSetStyle}}">Cài đặt</button><button type="button" role="tab" aria-selected="{{tabDoc}}" onClick="{{toDoc}}" style="{{tabDocStyle}}">Trả lời theo tài liệu</button></div>
+
+        <sc-if value="{{tabSet}}" hint-placeholder-val="{{ true }}">
+        <div style="padding: 14px 16px; display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; gap: 16px; flex-wrap: wrap">
+            <div style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 6px"><b style="font-size: 13px">Bot trả lời</b><span role="group" aria-label="Bot trả lời" style="display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 2px; align-self: flex-start; flex-wrap: wrap"><sc-for list="{{bots}}" as="b" hint-placeholder-count="4"><button type="button" onClick="{{b.pick}}" style="{{b.style}}">{{b.name}}</button></sc-for></span></div>
+            <div style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 4px"><b style="font-size: 13px">Ai được bot trả lời</b>
+              <label style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; min-height: 32px"><input type="radio" name="mode" checked="{{modePaired}}" onChange="{{toPaired}}" style="accent-color: var(--accent)">Chỉ người đã ghép đôi</label>
+              <label style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; min-height: 32px"><input type="radio" name="mode" checked="{{modeGuest}}" onChange="{{toGuest}}" style="accent-color: var(--accent)">Mọi người nhắn riêng là khách</label>
+              <span style="font-size: 12px; color: var(--muted)">{{modeHint}}</span>
+            </div>
+          </div>
+
+          <sc-if value="{{cur.zalo}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line)">
+            <div style="display: flex; align-items: flex-start; gap: 12px"><span style="flex: 1"><b style="font-size: 13.5px">Nhường tay cho {{you}}</b><span style="display: block; font-size: 12.5px; color: var(--muted)">{{you}} tự gõ trả lời trên điện thoại thì bot im cuộc chat đó 10 phút</span></span><button type="button" role="switch" aria-checked="{{hand}}" aria-label="Nhường tay" onClick="{{toggleHand}}" style="{{handSw}}"><span style="{{handKnob}}"></span></button></div>
+            <div style="display: flex; flex-direction: column; gap: 6px"><b style="font-size: 13.5px">Giờ trực</b>
+              <span style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center"><sc-for list="{{days}}" as="d" hint-placeholder-count="7"><button type="button" onClick="{{d.toggle}}" aria-pressed="{{d.on}}" style="{{d.style}}">{{d.name}}</button></sc-for><span style="font-size: 13.5px; padding-left: 6px">8:00 – 21:00</span></span>
+              <span style="font-size: 12px; color: var(--muted)">Ngoài giờ: giữ tin, vào giờ thì trả lời.</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px"><b style="font-size: 13.5px">Bỏ qua cuộc chat có nhãn</b><span style="display: flex; gap: 6px; flex-wrap: wrap"><sc-for list="{{labels}}" as="l" hint-placeholder-count="4"><button type="button" onClick="{{l.toggle}}" aria-pressed="{{l.on}}" style="{{l.style}}">{{l.name}}</button></sc-for></span></div>
+          </div>
+          </sc-if>
+
+          <div style="display: flex; gap: 16px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--line)">
+            <div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 6px"><b style="font-size: 13px">Mã ghép đôi</b><span style="font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 600; letter-spacing: .12em; text-align: center; padding: 6px; border: 1px dashed var(--line); border-radius: 10px">{{cur.code}}</span><span style="font-size: 12px; color: var(--muted)">Chỉ dùng được với {{cur.name}}</span></div>
+            <div style="flex: 1 1 220px; display: flex; flex-direction: column"><b style="font-size: 13px; padding-bottom: 4px">Người đã ghép đôi</b>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13.5px"><span style="flex: 1">Hoàng Bá Tầu</span><span style="font-size: 12px; font-weight: 600; color: var(--ok); background: var(--okSoft); border-radius: 999px; padding: 1px 9px">chủ nhân</span><button type="button" style="height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); font-size: 12.5px">Gỡ</button></div>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13.5px"><span style="flex: 1">Thơ</span><span style="font-size: 12px; color: var(--muted)">được phép</span><button type="button" style="height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); font-size: 12.5px">Gỡ</button></div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; padding-top: 12px; border-top: 1px solid var(--line)"><span style="display: flex; align-items: baseline; gap: 8px; padding-bottom: 4px"><b style="font-size: 13px">Nhóm</b><span style="font-size: 12px; color: var(--muted)">mặc định tắt · chỉ trả lời khi được @nhắc</span></span>
+            <sc-for list="{{chats}}" as="g" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13.5px"><span style="flex: 1">{{g.name}}</span><button type="button" role="switch" aria-checked="{{g.on}}" aria-label="Bật nhóm {{g.name}}" onClick="{{g.toggle}}" style="{{g.sw}}"><span style="{{g.knob}}"></span></button></div>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{cur.zalo}}" hint-placeholder-val="{{ true }}"><div style="font-size: 12.5px; color: var(--muted); padding-top: 10px; border-top: 1px solid var(--line)">Giới hạn gửi tin: 3 giây một tin mỗi cuộc · 20 tin mỗi phút · 300 tin mỗi ngày · <b style="color: var(--ink)">hôm nay còn {{cur.left}}</b></div></sc-if>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{tabDoc}}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 14px 16px; display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; align-items: flex-start; gap: 12px"><span style="flex: 1"><b style="font-size: 13.5px">Chỉ trả lời theo tài liệu</b><span style="display: block; font-size: 12.5px; color: var(--muted)">Áp cho khách trên tài khoản này; chat với {{you}} và người đã ghép đôi không bị giới hạn</span></span><button type="button" role="switch" aria-checked="{{docOn}}" aria-label="Chỉ trả lời theo tài liệu" onClick="{{toggleDoc}}" style="{{docSw}}"><span style="{{docKnob}}"></span></button></div>
+          <div style="display: flex; flex-direction: column"><b style="font-size: 13px; padding-bottom: 4px">Nguồn (thư mục trong Bộ não)</b>
+            <sc-for list="{{folders}}" as="f" hint-placeholder-count="4"><label style="display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13.5px; min-height: 40px"><input type="checkbox" checked="{{f.on}}" onChange="{{f.toggle}}" style="width: 18px; height: 18px; accent-color: var(--accent)"><span style="flex: 1">{{f.name}}</span></label></sc-for>
+            <span style="display: flex; align-items: center; gap: 8px; padding: 8px 0 0; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>Tệp khách gửi lên không bao giờ dùng làm nguồn.</span>
+          </div>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Khi không tìm thấy, bot trả lời<textarea rows="2" style="border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--ink); padding: 8px 10px; font-size: 13.5px; font-weight: 400; resize: vertical">Dạ, em chưa có thông tin về việc này. Em đã báo người phụ trách, sẽ trả lời mình sớm ạ.</textarea></label>
+          <span style="font-size: 12px; color: var(--muted)">Không tìm thấy thì bot cũng báo {{you}} qua Telegram (tối đa 10 phút một lần mỗi cuộc chat). Giảm bịa chứ không loại bỏ hẳn: nên đọc lại vài cuộc chat đầu.</span>
+        </div>
+        </sc-if>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'dark';
+    const sel = s.sel ?? 2;
+    const tab = s.tab || 'set';
+    const botPick = s.bot || {};
+    const mode = s.mode || { 2: 'guest' };
+    const hand = s.hand ?? true;
+    const days = s.days || [true, true, true, true, true, true, false];
+    const labels = s.labels || { 'Gia đình': true };
+    const gOn = s.gOn || {};
+    const docOn = s.docOn ?? true;
+    const fo = s.fo || { 'Sản phẩm và khoá học': true, 'Bảng giá 2026': true, 'Câu hỏi thường gặp': true };
+    const you = 'anh Tầu';
+    const pill = (tone) => 'font-size: 12px; font-weight: 600; border-radius: 999px; padding: 1px 9px; white-space: nowrap; ' + (tone === 'ok' ? 'color: var(--ok); background: var(--okSoft)' : 'color: var(--warn); background: var(--warnSoft)');
+    const logo = (c) => 'flex: none; width: 34px; height: 34px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 13px; background: ' + c;
+    const chip = (v) => 'min-height: 36px; padding: 0 12px; border-radius: 999px; font-size: 13px; border: 1px solid ' + (v ? 'var(--accent); background: var(--accentSoft); color: var(--ink); font-weight: 600' : 'var(--line); background: var(--panel); color: var(--muted)');
+    const sw = (on) => 'width: 44px; height: 26px; border: 0; border-radius: 999px; position: relative; padding: 0; flex: none; background: ' + (on ? 'var(--accent)' : 'var(--hover)');
+    const knob = (on) => 'position: absolute; top: 4px; width: 18px; height: 18px; border-radius: 50%; background: #fff; left: ' + (on ? '22px' : '4px');
+    const all = [
+      { name: '@aris_agent_ai_bot', kind: 'Telegram', bot: 'Aris', st: 'đang nhận tin', tone: 'ok', code: '4KX7-29QM', logo: 'TG', color: '#2AABEE', ch: 0, groups: ['Đội aris'] },
+      { name: '@mai_cskh_bot', kind: 'Telegram', bot: 'Mai', st: 'đang nhận tin', tone: 'ok', code: 'P7QH-3XKA', logo: 'TG', color: '#2AABEE', ch: 0, groups: ['Cộng đồng aris'] },
+      { name: 'CSKH 1', kind: 'Zalo cá nhân · 0912 *** 381', bot: 'Mai', st: 'đang nghe', tone: 'ok', code: 'Z3RM-8KQA', logo: 'ZL', color: '#0068FF', ch: 1, zalo: true, left: '158/300', groups: ['Lớp AI K12', 'Khách VIP', 'Gia đình'] },
+      { name: 'CSKH 2', kind: 'Zalo cá nhân · 0987 *** 102', bot: 'Mai', st: 'Zalo Web đang mở', tone: 'warn', code: 'Q9TP-2HXM', logo: 'ZL', color: '#0068FF', ch: 1, zalo: true, left: '300/300', hint: 'Tài khoản đang mở ở Zalo Web nên bot tạm ngừng nghe; đóng Zalo Web thì bot tự nghe lại. Đã báo ' + you + ' qua Telegram.', groups: ['Lớp AI K13'] },
+      { name: 'Zalo của ' + you, kind: 'Zalo cá nhân · 0903 *** 777', bot: 'Aris', st: 'Cần quét lại QR', tone: 'warn', code: 'M4XK-7RPA', logo: 'ZL', color: '#0068FF', ch: 1, zalo: true, left: '300/300', needQr: true, hint: 'Phiên đăng nhập đã hết hạn. Quét lại QR bằng đúng tài khoản này thì giữ nguyên người đã ghép đôi và nhóm.', groups: [] },
+      { name: 'Aris', kind: 'Lark · nội bộ', bot: 'Aris', st: 'đang nhận tin', tone: 'ok', code: '7RLM-4QXA', logo: 'LK', color: '#00B8A9', ch: 2, groups: [] },
+    ];
+    const rows = all.map((a, i) => ({
+      ...a,
+      bot: botPick[i] || a.bot,
+      logoStyle: logo(a.color),
+      stStyle: pill(a.tone),
+      pick: () => this.setState({ sel: i }),
+      rowStyle: 'width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 16px; border: 0; text-align: left; font-size: 13.5px; min-height: 56px; ' + (i === sel ? 'background: var(--accentSoft)' : 'background: transparent'),
+    }));
+    const cur = rows[sel];
+    const isGuest = mode[sel] === 'guest';
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      you,
+      groups: [
+        { name: 'Telegram', note: '', items: rows.filter((r) => r.ch === 0) },
+        { name: 'Zalo cá nhân', note: 'không chính thức, có thể bị khoá', items: rows.filter((r) => r.ch === 1) },
+        { name: 'Lark', note: 'nội bộ, mỗi bot một ứng dụng', items: rows.filter((r) => r.ch === 2) },
+      ],
+      cur: { ...cur, zalo: !!cur.zalo, needQr: !!cur.needQr, hint: cur.hint || '' },
+      tabSet: tab === 'set', tabDoc: tab === 'doc',
+      toSet: () => this.setState({ tab: 'set' }), toDoc: () => this.setState({ tab: 'doc' }),
+      tabSetStyle: 'border: 0; background: transparent; padding: 10px 2px; min-height: 44px; font-size: 13.5px; border-bottom: 2px solid ' + (tab === 'set' ? 'var(--ink); font-weight: 600' : 'transparent; color: var(--muted)'),
+      tabDocStyle: 'border: 0; background: transparent; padding: 10px 2px; min-height: 44px; font-size: 13.5px; border-bottom: 2px solid ' + (tab === 'doc' ? 'var(--ink); font-weight: 600' : 'transparent; color: var(--muted)'),
+      bots: ['Aris', 'Mai', 'Thơ', 'Khoa'].map((n) => ({
+        name: n,
+        pick: () => this.setState({ bot: { ...botPick, [sel]: n } }),
+        style: 'border: 0; border-radius: 7px; padding: 0 12px; min-height: 36px; font-size: 13px; ' + (n === cur.bot ? 'background: var(--hover); color: var(--ink); font-weight: 600' : 'background: transparent; color: var(--muted)'),
+      })),
+      modePaired: !isGuest, modeGuest: isGuest,
+      toPaired: () => this.setState({ mode: { ...mode, [sel]: 'paired' } }),
+      toGuest: () => this.setState({ mode: { ...mode, [sel]: 'guest' } }),
+      modeHint: isGuest ? 'Khách chỉ được hỏi đáp; gõ “gặp nhân viên” thì bot im và báo ' + you + '.' : 'Người lạ nhắn: bot im, báo ' + you + ' một lần mỗi ngày.',
+      hand, toggleHand: () => this.setState({ hand: !hand }), handSw: sw(hand), handKnob: knob(hand),
+      days: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((n, i) => ({ name: n, on: days[i], style: chip(days[i]), toggle: () => { const d = days.slice(); d[i] = !d[i]; this.setState({ days: d }); } })),
+      labels: ['Gia đình', 'Bạn bè', 'Đối tác'].map((n) => ({ name: n, on: !!labels[n], style: chip(!!labels[n]), toggle: () => this.setState({ labels: { ...labels, [n]: !labels[n] } }) })),
+      chats: (cur.groups.length ? cur.groups : ['Chưa có nhóm nào']).map((n, i) => {
+        const k = sel + '-' + i;
+        const on = gOn[k] ?? (cur.groups.length > 0 && i < 2 && sel === 2);
+        return { name: n, on, sw: sw(on), knob: knob(on), toggle: () => this.setState({ gOn: { ...gOn, [k]: !on } }) };
+      }),
+      docOn, toggleDoc: () => this.setState({ docOn: !docOn }), docSw: sw(docOn), docKnob: knob(docOn),
+      folders: ['Sản phẩm và khoá học', 'Bảng giá 2026', 'Câu hỏi thường gặp', 'Ghi chú nội bộ'].map((n) => ({ name: n, on: !!fo[n], toggle: () => this.setState({ fo: { ...fo, [n]: !fo[n] } }) })),
+    };
+  }
+}
+</script>
+</body>
+</html>

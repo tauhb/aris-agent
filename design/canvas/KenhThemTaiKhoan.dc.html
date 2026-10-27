@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Thêm tài khoản kênh</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#A14A07;--warnSoft:#FCEFDF}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614}
+button{font-family:inherit;cursor:pointer;color:inherit}
+input{font-family:inherit}
+a{color:var(--accent)}a:hover{color:var(--ink)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 1000px; display: flex; align-items: flex-start; justify-content: center; padding: 48px 16px; box-sizing: border-box">
+  <section role="dialog" aria-label="Thêm tài khoản" style="width: 100%; max-width: 720px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel)">
+    <div style="padding: 14px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line)"><b style="font-size: 16px; flex: 1">Thêm tài khoản</b><button type="button" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="width: 44px; height: 44px; border: 0; border-radius: 9px; background: transparent; color: var(--muted)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button><a href="KenhTaiKhoan.dc.html" aria-label="Đóng" style="width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 9px; color: var(--muted); text-decoration: none; font-size: 20px">×</a></div>
+    <div style="padding: 16px 18px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 6px"><b style="font-size: 13px">Kênh</b><span role="group" aria-label="Kênh" style="display: inline-flex; border: 1px solid var(--line); border-radius: 9px; padding: 2px; align-self: flex-start"><button type="button" onClick="{{toTg}}" style="{{tgStyle}}">Telegram</button><button type="button" onClick="{{toZl}}" style="{{zlStyle}}">Zalo cá nhân</button></span></div>
+      <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600">Tên tài khoản trong aris<input value="{{defaultName}}" style="height: 44px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--ink); padding: 0 10px; font-size: 14px; font-weight: 400"></label>
+      <div style="display: flex; flex-direction: column; gap: 6px"><b style="font-size: 13px">Bot trả lời</b><span role="group" aria-label="Bot trả lời" style="display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 2px; align-self: flex-start; flex-wrap: wrap"><sc-for list="{{bots}}" as="b" hint-placeholder-count="4"><button type="button" onClick="{{b.pick}}" style="{{b.style}}">{{b.name}}</button></sc-for></span></div>
+
+      <sc-if value="{{isTg}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line)">
+          <span style="font-size: 13px; color: var(--muted)">Tạo bot ở @BotFather trên Telegram (lệnh /newbot), sao chép token rồi dán vào đây.</span>
+          <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600">Token<input type="password" placeholder="123456789:AA…" style="height: 44px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--ink); padding: 0 10px; font-size: 14px; font-weight: 400"></label>
+          <span style="font-size: 12px; color: var(--muted)">Token cất trong Keychain, không hiện lại.</span>
+          <button type="button" style="align-self: flex-end; height: 44px; padding: 0 18px; border: 0; border-radius: 10px; background: var(--ink); color: var(--panel); font-size: 14px; font-weight: 600">Kết nối</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isZl}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--line)">
+          <div style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 12px">
+            <div style="background: var(--warnSoft); color: var(--warn); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; font-weight: 600; display: flex; gap: 8px; align-items: flex-start"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M12 3 2 20h20L12 3z"></path><path d="M12 10v4M12 17.5v.01"></path></svg><span>Không chính thức, tài khoản Zalo có thể bị khoá. Nên thử bằng tài khoản phụ.</span></div>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; min-height: 36px"><input type="checkbox" checked="{{understood}}" onChange="{{toggleUnderstood}}" style="width: 18px; height: 18px; accent-color: var(--accent)">Tôi hiểu</label>
+            <button type="button" onClick="{{showQr}}" disabled="{{qrOff}}" style="{{qrBtn}}">Hiện mã QR</button>
+            <span style="font-size: 12px; color: var(--muted)">Dữ liệu đăng nhập cất trong Keychain. Mỗi tài khoản Zalo chỉ thêm được một lần.</span>
+          </div>
+          <div style="flex: 1 1 240px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; border: 1px dashed var(--line); border-radius: 12px">
+            <sc-if value="{{qrShown}}" hint-placeholder-val="{{ true }}">
+              <div role="img" aria-label="Mã QR (bản vẽ)" style="width: 170px; height: 170px; background: #fff; border-radius: 10px; padding: 10px; box-sizing: border-box; display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 3px"><sc-for list="{{qrCells}}" as="c" hint-placeholder-count="81"><span style="{{c.style}}"></span></sc-for></div>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px">Hết hạn sau 1:24</span>
+              <span style="font-size: 12.5px; color: var(--muted); text-align: center">Zalo trên điện thoại › biểu tượng quét mã › Đồng ý</span>
+              <button type="button" style="height: 40px; padding: 0 14px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); font-size: 13px">Tạo mã mới</button>
+            </sc-if>
+            <sc-if value="{{qrHidden}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: var(--muted); padding: 56px 0; text-align: center">Mã QR hiện ở đây</span></sc-if>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'dark';
+    const ch = s.ch || 'zl';
+    const bot = s.bot || 'Mai';
+    const understood = s.understood ?? false;
+    const seg = (on) => 'border: 0; border-radius: 7px; padding: 0 14px; min-height: 40px; font-size: 13.5px; ' + (on ? 'background: var(--hover); color: var(--ink); font-weight: 600' : 'background: transparent; color: var(--muted)');
+    const pattern = '111101111100101001101001011000101101011100110001011100111010001111101111100111001';
+    return {
+      themeClass: 't-' + theme,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      isTg: ch === 'tg', isZl: ch === 'zl',
+      toTg: () => this.setState({ ch: 'tg' }), toZl: () => this.setState({ ch: 'zl' }),
+      tgStyle: seg(ch === 'tg'), zlStyle: seg(ch === 'zl'),
+      defaultName: ch === 'zl' ? 'CSKH 3' : '@mai_cskh_bot',
+      bots: ['Aris', 'Mai', 'Thơ', 'Khoa'].map((n) => ({ name: n, pick: () => this.setState({ bot: n }), style: 'border: 0; border-radius: 7px; padding: 0 12px; min-height: 36px; font-size: 13px; ' + (n === bot ? 'background: var(--hover); color: var(--ink); font-weight: 600' : 'background: transparent; color: var(--muted)') })),
+      understood, toggleUnderstood: () => this.setState({ understood: !understood }),
+      qrOff: !understood,
+      qrBtn: 'align-self: flex-start; height: 44px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--ink); color: var(--panel); font-size: 14px; font-weight: 600; opacity: ' + (understood ? '1' : '.45'),
+      showQr: () => this.setState({ qr: true }),
+      qrShown: !!s.qr, qrHidden: !s.qr,
+      qrCells: pattern.split('').map((b) => ({ style: 'border-radius: 2px; background: ' + (b === '1' ? '#16171B' : 'transparent') })),
+    };
+  }
+}
+</script>
+</body>
+</html>
