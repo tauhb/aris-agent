@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Hồ sơ bot · Điều khiển máy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#A14A07;--warnSoft:#FCEFDF;--danger:#B42318;--dangerSoft:#FCEBE9}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18}
+button{font-family:inherit;cursor:pointer;color:inherit}
+input{font-family:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:var(--accent)}a:hover{color:var(--ink)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 1000px; padding: 20px 24px; box-sizing: border-box">
+  <div style="max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+      <span aria-hidden="true" style="width: 44px; height: 44px; border-radius: 50%; background: #7C5CFF; color: #fff; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; font-size: 18px">K</span>
+      <span style="flex: 1"><b style="font-size: 18px; display: block">Khoa</b><span style="font-size: 12.5px; color: var(--muted)">Phòng Vận hành · việc trên máy tính</span></span>
+      <button type="button" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="width: 44px; height: 44px; border: 0; border-radius: 9px; background: transparent; color: var(--muted)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+    <nav aria-label="Hồ sơ bot" style="display: flex; gap: 18px; border-bottom: 1px solid var(--line); flex-wrap: wrap; font-size: 13.5px">
+      <a href="#" style="color: var(--muted); text-decoration: none; padding: 10px 2px">Tính cách</a>
+      <a href="#" style="color: var(--muted); text-decoration: none; padding: 10px 2px">Model</a>
+      <a href="#" style="color: var(--muted); text-decoration: none; padding: 10px 2px">Công cụ</a>
+      <a href="#" aria-current="page" style="color: var(--ink); text-decoration: none; padding: 10px 2px; border-bottom: 2px solid var(--ink); font-weight: 600">Quyền</a>
+      <a href="#" style="color: var(--muted); text-decoration: none; padding: 10px 2px">Routine</a>
+    </nav>
+
+    <section aria-label="Điều khiển máy" style="border: 1px solid var(--line); border-radius: 14px; background: var(--panel)">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line)">
+        <span style="flex: 1"><b style="font-size: 15px; display: block">Điều khiển máy</b><span style="font-size: 12.5px; color: var(--muted)">Khoa xem màn hình, bấm, gõ trên máy Mac của {{you}}. Tắt mặc định.</span></span>
+        <button type="button" role="switch" aria-checked="{{on}}" aria-label="Bật điều khiển máy cho Khoa" onClick="{{toggleOn}}" style="{{sw}}"><span style="{{knob}}"></span></button>
+      </div>
+
+      <sc-if value="{{on}}" hint-placeholder-val="{{ true }}">
+        <div style="padding: 14px 18px; display: flex; flex-direction: column; gap: 16px">
+          <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+            <legend style="font-size: 13px; font-weight: 600; padding: 0; margin-bottom: 6px">Cách duyệt</legend>
+            <label style="{{askCard}}"><input type="radio" name="mode" checked="{{isAsk}}" onChange="{{toAsk}}" style="width: 18px; height: 18px; accent-color: var(--accent); margin-top: 2px"><span><b style="display: block">Hỏi từng bước</b><span style="font-size: 12.5px; color: var(--muted)">Mỗi lần bấm, gõ, mở ứng dụng đều hỏi {{you}}, kèm ảnh đánh dấu chỗ sẽ bấm. Xem màn hình chỉ hỏi lần đầu mỗi phiên.</span></span></label>
+            <label style="{{boundCard}}"><input type="radio" name="mode" checked="{{isBound}}" onChange="{{toBound}}" style="width: 18px; height: 18px; accent-color: var(--accent); margin-top: 2px"><span><b style="display: block">Trong phạm vi</b><span style="font-size: 12.5px; color: var(--muted)">Trong các ứng dụng và loại thao tác chọn dưới đây thì tự làm, không hỏi. Ngoài phạm vi thì từ chối luôn, không hỏi.</span></span></label>
+            <span style="font-size: 12px; color: var(--muted)">Không có chế độ “không hỏi gì”.</span>
+          </fieldset>
+
+          <sc-if value="{{isBound}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; gap: 20px; flex-wrap: wrap">
+              <div style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 8px">
+                <b style="font-size: 13px">Ứng dụng được tự làm</b>
+                <span style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{apps}}" as="a" hint-placeholder-count="3"><span style="display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 4px 0 12px; border-radius: 999px; border: 1px solid var(--accent); background: var(--accentSoft); font-size: 13px; font-weight: 600">{{a.name}}<button type="button" onClick="{{a.remove}}" aria-label="Bỏ {{a.name}}" style="width: 30px; height: 30px; border: 0; border-radius: 50%; background: transparent">×</button></span></sc-for></span>
+                <label style="display: flex; gap: 6px; font-size: 13px"><span style="position: absolute; left: -9999px">Thêm ứng dụng</span><input placeholder="Tên ứng dụng, ví dụ Lịch" style="flex: 1; min-height: 40px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--ink); padding: 0 10px; font-size: 13.5px"><button type="button" style="min-height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); font-size: 13px">Thêm</button></label>
+              </div>
+              <fieldset style="flex: 1 1 260px; border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+                <legend style="font-size: 13px; font-weight: 600; padding: 0; margin-bottom: 6px">Loại thao tác được tự làm</legend>
+                <sc-for list="{{acts}}" as="x" hint-placeholder-count="5"><label style="display: flex; align-items: center; gap: 8px; min-height: 32px; font-size: 13.5px"><input type="checkbox" checked="{{x.on}}" onChange="{{x.toggle}}" style="width: 18px; height: 18px; accent-color: var(--accent)">{{x.name}}</label></sc-for>
+              </fieldset>
+            </div>
+          </sc-if>
+
+          <div style="display: flex; gap: 14px; flex-wrap: wrap">
+            <div style="flex: 1 1 300px; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px">
+              <b style="font-size: 13px">Luôn chặn, kể cả khi {{you}} đã duyệt</b>
+              <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 2px">
+                <li>Cài đặt hệ thống, Keychain, Mật khẩu, 1Password, Bitwarden, Terminal, iTerm, Trình cài đặt</li>
+                <li>Gõ hay bấm vào ô mật khẩu (đăng nhập thì {{you}} Cầm lái)</li>
+                <li>Phím khoá máy, đăng xuất, tắt máy, buộc thoát</li>
+                <li>Khi màn hình đang khoá; kéo vào Thùng rác</li>
+              </ul>
+            </div>
+            <div style="flex: 1 1 300px; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
+              <b style="font-size: 13px">Quyền của macOS</b>
+              <span style="display: flex; align-items: center; gap: 8px; font-size: 13px"><span style="flex: 1">Trợ năng (đọc nút, bấm, gõ)</span><span style="font-size: 12px; font-weight: 600; color: var(--ok); background: var(--okSoft); border-radius: 999px; padding: 1px 9px">đã cấp</span></span>
+              <span style="display: flex; align-items: center; gap: 8px; font-size: 13px"><span style="flex: 1">Ghi màn hình (chụp cửa sổ)</span><span style="font-size: 12px; font-weight: 600; color: var(--warn); background: var(--warnSoft); border-radius: 999px; padding: 1px 9px">chưa cấp</span></span>
+              <button type="button" onClick="{{toggleGuide}}" aria-expanded="{{guide}}" style="align-self: flex-start; min-height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); font-size: 13px">Hướng dẫn cấp quyền</button>
+              <sc-if value="{{guide}}" hint-placeholder-val="{{ false }}">
+                <ol style="margin: 0; padding-left: 18px; font-size: 13px; display: flex; flex-direction: column; gap: 4px">
+                  <li>Mở Cài đặt hệ thống › Quyền riêng tư và bảo mật › Ghi màn hình và âm thanh hệ thống.</li>
+                  <li>Bật cho <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">/opt/homebrew/bin/node</span> (tiến trình chạy aris).</li>
+                  <li>Khởi động lại aris rồi bấm “Kiểm tra lại”.</li>
+                </ol>
+                <span style="display: flex; gap: 8px; flex-wrap: wrap"><button type="button" style="min-height: 40px; padding: 0 12px; border: 0; border-radius: 9px; background: var(--ink); color: var(--panel); font-size: 13px; font-weight: 600">Mở Cài đặt hệ thống</button><button type="button" style="min-height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); font-size: 13px">Kiểm tra lại</button></span>
+                <span style="font-size: 12px; color: var(--muted)">aris không tự cấp quyền: chỉ mở đúng trang để {{you}} bật.</span>
+              </sc-if>
+            </div>
+          </div>
+          <span style="font-size: 12.5px; color: var(--muted)">Mỗi lượt tối đa 40 ảnh chụp và 150 thao tác · một bot dùng máy một lúc · {{you}} đang dùng đúng ứng dụng đó thì bot tạm dừng.</span>
+        </div>
+      </sc-if>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const on = s.on ?? true;
+    const mode = s.mode || 'bound';
+    const apps = s.apps || ['Notes', 'Lịch', 'Finder'];
+    const acts = s.acts || { 'Xem màn hình, tìm nút': true, 'Bấm, kéo, cuộn': true, 'Gõ chữ': true, 'Bấm phím tắt': false, 'Mở ứng dụng': false };
+    const sw = (v) => 'width: 48px; height: 28px; border: 0; border-radius: 999px; position: relative; padding: 0; flex: none; background: ' + (v ? 'var(--accent)' : 'var(--hover)');
+    const card = (v) => 'display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; border: 1px solid ' + (v ? 'var(--accent); background: var(--accentSoft)' : 'var(--line); background: var(--panel)');
+    return {
+      themeClass: 't-' + theme, you: 'anh Tầu',
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      on, toggleOn: () => this.setState({ on: !on }),
+      sw: sw(on), knob: 'position: absolute; top: 4px; width: 20px; height: 20px; border-radius: 50%; background: #fff; left: ' + (on ? '24px' : '4px'),
+      isAsk: mode === 'ask', isBound: mode === 'bound',
+      toAsk: () => this.setState({ mode: 'ask' }), toBound: () => this.setState({ mode: 'bound' }),
+      askCard: card(mode === 'ask'), boundCard: card(mode === 'bound'),
+      apps: apps.map((n) => ({ name: n, remove: () => this.setState({ apps: apps.filter((x) => x !== n) }) })),
+      acts: Object.keys(acts).map((n) => ({ name: n, on: acts[n], toggle: () => this.setState({ acts: { ...acts, [n]: !acts[n] } }) })),
+      guide: !!s.guide, toggleGuide: () => this.setState({ guide: !s.guide }),
+    };
+  }
+}
+</script>
+</body>
+</html>

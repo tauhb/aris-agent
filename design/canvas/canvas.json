@@ -907,6 +907,36 @@
       "w": 1440,
       "x": 1520,
       "y": 12240
+    },
+    "MayChat.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "is_interactive": true,
+      "page": "g6",
+      "title": "6.6b · Điều khiển máy (GĐ8.3) — Văn phòng › chat với bot: khung màn hình mới nhất (đánh dấu chỗ vừa bấm, phóng to), thẻ duyệt thao tác, Cầm lái / Trả lại, tin bị hàng rào chặn",
+      "w": 1440,
+      "x": 0,
+      "y": 13360
+    },
+    "MayDuyet.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "is_interactive": true,
+      "page": "g6",
+      "title": "6.6c · Điều khiển máy (GĐ8.3) — chuông Cần anh: thẻ duyệt có ảnh cửa sổ và vùng đánh dấu, lần đầu xem màn hình, dòng vừa chặn",
+      "w": 1440,
+      "x": 1520,
+      "y": 13360
+    },
+    "HoSoBotMay.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "is_interactive": true,
+      "page": "g6",
+      "title": "2.2g · Hồ sơ bot › Quyền › Điều khiển máy (GĐ8.3) — bật/tắt, hỏi từng bước hay trong phạm vi, ứng dụng và loại thao tác được phép, luôn chặn, quyền của macOS",
+      "w": 1440,
+      "x": 3040,
+      "y": 13360
     }
   },
   "createdOnFiles": {
@@ -1104,7 +1134,10 @@
     "GopSkill.dc.html",
     "GopSkillThuVien.dc.html",
     "KenhTaiKhoan.dc.html",
-    "KenhThemTaiKhoan.dc.html"
+    "KenhThemTaiKhoan.dc.html",
+    "MayChat.dc.html",
+    "MayDuyet.dc.html",
+    "HoSoBotMay.dc.html"
   ],
   "pages": [
     {
