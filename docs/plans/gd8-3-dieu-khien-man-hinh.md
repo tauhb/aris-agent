@@ -132,3 +132,14 @@ Lời dặn trong mô tả công cụ: **ưu tiên bấm theo phần tử hay nh
 - Lỗi rõ ràng khi thiếu lõi hay thiếu quyền.
 - Một `ComputerDriver` giả để test lớp công cụ mà không đụng máy thật.
 - Viết `docs/specs/aris-computer.md`.
+
+## Tiến độ (27/10/2026)
+
+- **Điểm dừng 1**: người dùng chọn **B1 cua-driver** và đồng ý cài `@trycua/cua-driver@0.37.0`.
+- **Điểm dừng 2**: người dùng chốt theo đề xuất: bot luôn đọc danh sách phần tử (cây Trợ năng); ảnh chụp chỉ đính kèm khi model của phiên đọc được ảnh.
+- **Đợt 1 (Cloud) xong**: gói `@aris/computer` (lõi giả và bộ nối cua-driver, tám công cụ, chặn cứng, hai chế độ quyền, một bot một lúc, trần, cầm lái, tạm dừng khi người dùng dùng máy, API, `aris computer doctor`), test tự động, đặc tả `docs/specs/aris-computer.md`. Đã thử lõi thật trên màn hình ảo Linux (xterm). Khác plan:
+  - lõi chạy trong tiến trình aris, nên quyền macOS tính cho tiến trình aris (không cần CuaDriver.app);
+  - giao diện chung theo đúng cách cua-driver làm việc: theo cửa sổ (`pid:mã cửa sổ`), toạ độ là điểm ảnh của ảnh chụp cửa sổ; không có `elementAt` và `userIdleSeconds` trong lõi nên aris tự tính (`coords.ts`, `ioreg`);
+  - chặn cứng nằm trong `@aris/computer` (không trong `@aris/guard`), vì phải biết ứng dụng dưới chỗ bấm lúc chạy; chưa ghi vào nhật ký chặn của hàng rào.
+- **Còn lại**: đợt 2 (bản vẽ, Điểm dừng 3), đợt 3 (giao diện), đợt 4 (thử thật trên Mac theo B-5).
+

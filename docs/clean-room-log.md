@@ -51,3 +51,7 @@ Kết quả: chỉ rút ra danh mục năng lực (mục 15 của `tinh-nang-ari
 ## 27/10/2026 — GĐ8, làm plan 8.4 (kênh Zalo cá nhân)
 
 Đọc kiểu dữ liệu (`.d.ts`) của gói `zca-js@2.2.0` (MIT) đã cài để bọc thư viện sau một giao diện nhỏ: đăng nhập QR, trình nghe, gửi tin, mã đóng kết nối. Tài liệu kênh `zalouser` của OpenClaw và README của `zca-js` (đã đọc từ 26/10 khi lên plan) chỉ cho biết cách chạy, giới hạn và cảnh báo khoá tài khoản. Không đọc mã của Hermes Agent, không sao chép mã của OpenClaw hay của `zca-js`.
+
+## 27/10/2026 — GĐ8, làm plan 8.3 đợt 1 (điều khiển màn hình)
+
+Đọc README và kiểu dữ liệu (`.d.ts`) của gói `@trycua/cua-driver@0.37.0` (MIT) đã cài, cùng mô tả và lược đồ tham số mà chính thư viện trả về (`listToolsJson`, bản Linux), để bọc lõi sau giao diện `ComputerDriver`: cửa sổ, ảnh chụp kèm cây Trợ năng, mã phần tử, toạ độ theo điểm ảnh của ảnh chụp cửa sổ, gửi ở nền. Ý tưởng ba chế độ quyền vẫn chỉ từ bài so sánh đã ghi ngày 26/10; aris bỏ chế độ "không hỏi". Không đọc mã của Hermes Agent, không sao chép mã của cua-driver.

@@ -115,6 +115,11 @@ export function apply(ctx: Context): void {
       return channels.sendHome('aris', text)
     },
     ask,
+    async computerDoctor() {
+      const computer = ctx.get('arisComputer') as { doctor(): Promise<{ text: string }> } | undefined
+      if (!computer) throw new Error('gói điều khiển máy chưa bật')
+      return computer.doctor()
+    },
     stop() {
       logger.info('dừng theo lệnh aris stop')
       process.kill(process.pid, 'SIGTERM')

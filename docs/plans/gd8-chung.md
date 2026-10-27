@@ -76,7 +76,7 @@ Mỗi lần `node scripts/aris.mjs restart` thì mã đăng nhập đổi, phả
 - 8.1 phần A (kho skill chung, nhập skill, gán bot): xong, commit `7e83832` (máy chủ) và `6e2981e` (giao diện). Còn thiếu: kiểm tra bản mới tự động hằng tuần.
 - 8.6 đã đẩy lên github.com/tauhb/aris-agent (private).
 - 8.2 (`/goal` chờ, gộp skill trùng): xong 27/10, nghiệm thu ở `docs/ke-hoach-trien-khai.md`.
-- 8.3 (điều khiển màn hình): tạm hoãn, cần máy Mac của người dùng.
+- 8.3 (điều khiển màn hình), 27/10: người dùng chọn lõi B1 cua-driver, đồng ý cài gói. **Đợt 1 xong** trên Cloud (gói `@aris/computer`, công cụ, an toàn, `aris computer doctor`, test; thử lõi thật trên màn hình ảo Linux). Còn: bản vẽ (chờ duyệt), giao diện, thử thật trên Mac.
 - 8.4 (Zalo cá nhân), cập nhật 27/10: đã cài `zca-js@2.2.0` (người dùng đồng ý), bộ nối, API, kho, Thống kê và test xong, đặc tả ở `docs/specs/aris-zalo.md`. Giao diện làm theo bản vẽ của 8.7 (thay `KenhZalo.dc.html`). Phần thử thật (quét QR, nhắn tin thật) cần tài khoản Zalo của người dùng, chưa làm.
 - 8.5 (danh mục connector), 27/10: bản vẽ đã duyệt; danh mục, OAuth, API, giao diện và test xong (đợt 1: Notion, HubSpot, Canva, Meta Ads, Google Workspace). Chưa thử thật với hãng nào. Điểm dừng 3: người dùng chọn để Connector API sang sau (27/10).
 - 8.4: người dùng muốn bàn lại cho một bot gắn được nhiều tài khoản kênh (Zalo, Telegram). Đã chốt 27/10 thành plan `gd8-7-nhieu-tai-khoan-kenh.md` (bản gọn, bốn đợt A → D). **Cả bốn đợt A → D và giao diện xong 27/10** (hai màn đã duyệt; "Connector không cần"). Chỉ kiểm bằng test tự động và trang dựng với dữ liệu giả; **chưa thử thật** với tài khoản Telegram, Zalo của người dùng (cách thử ở cuối plan 8.7). Chưa làm: nhận và thả cảm xúc trên Zalo, chuông báo trên web.

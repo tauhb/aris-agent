@@ -19,6 +19,8 @@ export interface DaemonPort {
   send(text: string): Promise<string>
   ask(text: string, signal: AbortSignal): Promise<AskResult>
   stop(): void
+  /** `aris computer doctor`: kiểm lõi và quyền điều khiển máy (GĐ8.3). */
+  computerDoctor?(): Promise<{ text: string }>
 }
 
 /** Câu giao việc tối đa (đủ cho mọi lệnh gõ tay hay script cron). */
@@ -74,6 +76,9 @@ export async function handle(port: DaemonPort, req: IncomingMessage, res: Server
         })
         return send(res, 200, await port.ask(text, abort.signal))
       }
+      case '/computer-doctor':
+        if (!port.computerDoctor) return send(res, 404, { error: 'gói điều khiển máy chưa bật' })
+        return send(res, 200, await port.computerDoctor())
       case '/stop':
         send(res, 200, { stopping: true })
         setTimeout(() => port.stop(), 100)
