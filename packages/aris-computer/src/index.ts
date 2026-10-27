@@ -231,6 +231,47 @@ export async function apply(ctx: Context): Promise<void> {
     true,
   )
 
+  // Việc cần duyệt vào hộp duyệt chung của @aris/commander (chuông Cần anh, Hộp duyệt, thanh duyệt trong chat,
+  // Telegram cùng thấy), kèm mã lời gọi để giao diện lấy ảnh cửa sổ và chỗ đánh dấu. Không có hộp chung thì để dsh hỏi.
+  ctx.on(
+    'approval/request',
+    async (raw, next) => {
+      const req = raw as unknown as {
+        toolName: string
+        callId?: unknown
+        reason?: string
+        signal?: AbortSignal
+        agent: { session: { id: string } }
+      }
+      if (!COMPUTER_TOOLS.has(req.toolName)) return next()
+      const center = ctx.get('arisApprovals') as
+        | { ask?(o: { run: string; tool: string; input: unknown }, signal?: AbortSignal): Promise<boolean> }
+        | undefined
+      if (!center?.ask) return next()
+      const sid = req.agent.session.id
+      const callId = req.callId === undefined ? undefined : String(req.callId)
+      const p = callId ? previews.get(callId) : undefined
+      const bot = botOf(sid)
+      const allow = await center.ask(
+        {
+          run: `computer:${callId ?? `${sid}-${Date.now()}`}`,
+          tool: req.toolName,
+          input: {
+            bot: bot.id,
+            name: bot.name,
+            parentSession: sid,
+            describe: p?.describe ?? req.reason ?? req.toolName,
+            ...(p ? { preview: callId } : {}),
+          },
+        },
+        req.signal,
+      )
+      if (req.signal?.aborted) return 'cancelled'
+      return allow ? 'allowed-once' : 'rejected'
+    },
+    true,
+  )
+
   // --- Công cụ ----------------------------------------------------------------------------------
   /** Model của phiên có đọc được ảnh không (như `read_image` của dsh: phải khai báo rõ). */
   const imageCapable = async (agent: AgentLike | undefined, signal: AbortSignal) => {
@@ -286,6 +327,29 @@ export async function apply(ctx: Context): Promise<void> {
               return p ? json(p) : json({ error: 'không có ảnh chờ duyệt này' }, 404)
             }
             if (url.searchParams.get('doctor')) return json(await runDoctor())
+            // ?screen=<phiên>: ảnh màn hình mới nhất của bot trong phiên, chỗ vừa bấm, các bước, trần, cầm lái.
+            const screenOf = url.searchParams.get('screen')
+            if (screenOf) {
+              const v = runtime.screenView(screenOf)
+              if (!v) return json({ active: false })
+              const img = v.screen?.image
+              return json({
+                active: true,
+                ...v,
+                screen: v.screen
+                  ? {
+                      ...v.screen,
+                      image: img
+                        ? {
+                            png: Buffer.from(img.png).toString('base64'),
+                            width: img.width,
+                            height: img.height,
+                          }
+                        : undefined,
+                    }
+                  : undefined,
+              })
+            }
             return json({
               bots: Object.fromEntries([...table.entries()]),
               defaults: DEFAULT_SETTINGS,

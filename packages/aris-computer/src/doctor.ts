@@ -5,6 +5,8 @@
 import type { ComputerDriver } from './types.js'
 
 export interface Check {
+  /** Mã cố định cho giao diện. */
+  id: 'os' | 'driver' | 'ax' | 'screen' | 'detail' | 'vision'
   name: string
   ok: boolean | null
   detail: string
@@ -38,8 +40,9 @@ export async function doctor(o: {
   const checks: Check[] = []
   checks.push(
     platform === 'darwin'
-      ? { name: 'Hệ điều hành', ok: true, detail: 'macOS' }
+      ? { id: 'os', name: 'Hệ điều hành', ok: true, detail: 'macOS' }
       : {
+          id: 'os',
           name: 'Hệ điều hành',
           ok: false,
           detail: `${platform}: aris chỉ hỗ trợ điều khiển máy trên macOS (lõi có bản Linux để thử).`,
@@ -48,6 +51,7 @@ export async function doctor(o: {
   const loaded = await o.load()
   if ('error' in loaded) {
     checks.push({
+      id: 'driver',
       name: 'Lõi cua-driver',
       ok: false,
       detail: loaded.error,
@@ -56,7 +60,7 @@ export async function doctor(o: {
     return { platform, process: proc, checks, bots: o.bots }
   }
   const d = loaded.driver
-  checks.push({ name: 'Lõi cua-driver', ok: true, detail: `${d.name}, gửi thao tác ở nền` })
+  checks.push({ id: 'driver', name: 'Lõi cua-driver', ok: true, detail: `${d.name}, gửi thao tác ở nền` })
   const p = await d.permissions().catch((e: unknown) => ({
     accessibility: undefined,
     screenRecording: undefined,
@@ -64,6 +68,7 @@ export async function doctor(o: {
   }))
   const where = `macOS tính quyền cho tiến trình aris: ${proc.execPath} (pid ${proc.pid}).`
   checks.push({
+    id: 'ax',
     name: 'Quyền Trợ năng (đọc nút, bấm, gõ)',
     ok: p.accessibility ?? null,
     detail: p.accessibility === undefined ? 'lõi không báo' : p.accessibility ? 'đã cấp' : 'chưa cấp',
@@ -74,6 +79,7 @@ export async function doctor(o: {
         }),
   })
   checks.push({
+    id: 'screen',
     name: 'Quyền Ghi màn hình (chụp cửa sổ)',
     ok: p.screenRecording ?? null,
     detail: p.screenRecording === undefined ? 'lõi không báo' : p.screenRecording ? 'đã cấp' : 'chưa cấp',
@@ -83,8 +89,9 @@ export async function doctor(o: {
           fix: `Cài đặt hệ thống › Quyền riêng tư và bảo mật › Ghi màn hình và âm thanh hệ thống: bật cho ${proc.execPath}, rồi khởi động lại aris (aris restart). Mở nhanh: open "${SETTINGS_URL.screenRecording}"`,
         }),
   })
-  if (p.detail) checks.push({ name: 'Lõi báo', ok: null, detail: p.detail })
+  if (p.detail) checks.push({ id: 'detail', name: 'Lõi báo', ok: null, detail: p.detail })
   checks.push({
+    id: 'vision',
     name: 'Model đọc ảnh',
     ok: null,
     detail:

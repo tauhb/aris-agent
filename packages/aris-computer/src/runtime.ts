@@ -66,6 +66,32 @@ interface SessionState {
   last?: string | undefined
   /** Phần tử bấm gần nhất theo cửa sổ (đoán chỗ con trỏ gõ). */
   focus: Map<string, El>
+  /** Ảnh chụp mới nhất của phiên và chỗ vừa bấm trên đó (khung "Màn hình của bot"). */
+  screen?: Screen | undefined
+  /** Các bước đã làm gần đây (mới sau). */
+  steps: { at: number; text: string }[]
+}
+
+/** Ảnh màn hình mới nhất của một phiên. */
+export interface Screen {
+  window: string
+  app: string
+  title: string
+  at: number
+  image?: { png: Uint8Array; width: number; height: number } | undefined
+  /** Chỗ vừa bấm, gõ, kéo trên ảnh. */
+  mark?: Rect | Point | undefined
+}
+
+/** Tình trạng điều khiển máy của một phiên, cho giao diện. */
+export interface ScreenView {
+  screen?: Screen | undefined
+  steps: { at: number; text: string }[]
+  shots: number
+  actions: number
+  limits: { shots: number; actions: number }
+  paused: boolean
+  holder?: { session: string; bot: string } | undefined
 }
 
 /** Bối cảnh một lời gọi, cho lớp duyệt: thao tác gì, ở đâu, trên ảnh nào, đánh dấu chỗ nào. */
@@ -150,7 +176,7 @@ export class ComputerRuntime {
   private state(sessionId: string): SessionState {
     let s = this.sessions.get(sessionId)
     if (!s) {
-      s = { shots: 0, actions: 0, snaps: new Map(), focus: new Map() }
+      s = { shots: 0, actions: 0, snaps: new Map(), focus: new Map(), steps: [] }
       this.sessions.set(sessionId, s)
     }
     return s
@@ -195,6 +221,21 @@ export class ComputerRuntime {
   holder(): { session: string; bot: string } | undefined {
     if (this.owner && this.now() - this.owner.at > this.limits.lockIdleMs) this.owner = undefined
     return this.owner ? { session: this.owner.session, bot: this.owner.bot } : undefined
+  }
+
+  /** Tình trạng điều khiển máy của phiên cho giao diện; `undefined` khi phiên chưa dùng máy. */
+  screenView(sessionId: string): ScreenView | undefined {
+    const s = this.sessions.get(sessionId)
+    if (!s) return undefined
+    return {
+      screen: s.screen,
+      steps: [...s.steps],
+      shots: s.shots,
+      actions: s.actions,
+      limits: { shots: this.limits.shots, actions: this.limits.actions },
+      paused: this.paused.has(sessionId),
+      holder: this.holder(),
+    }
   }
 
   /** Người dùng "Cầm lái": bot của phiên chờ tới khi "Trả lại". */
@@ -362,6 +403,8 @@ export class ComputerRuntime {
       ]
     else s.snaps.set(winKey(w), snap)
     s.last = winKey(w)
+    if (snap.image)
+      s.screen = { window: winKey(w), app: snap.app, title: snap.title, at: this.now(), image: snap.image }
     return snap
   }
 
@@ -542,6 +585,18 @@ export class ComputerRuntime {
       this.state(sessionId).actions++
     }
     if (this.owner?.session === sessionId) this.owner.at = this.now()
+    const st = this.state(sessionId)
+    st.steps.push({ at: this.now(), text: ctx.describe })
+    if (st.steps.length > 20) st.steps.shift()
+    // Chỗ vừa bấm, gõ, kéo: đánh dấu trên ảnh mới nhất nếu cùng cửa sổ.
+    if (
+      ctx.action !== 'xem' &&
+      ctx.action !== 'mo' &&
+      st.screen &&
+      ctx.win &&
+      st.screen.window === winKey(ctx.win)
+    )
+      st.screen = { ...st.screen, mark: ctx.mark }
 
     switch (tool) {
       case 'man_hinh_xem':

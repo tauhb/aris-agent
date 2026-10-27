@@ -241,6 +241,21 @@ describe('needsYou', () => {
     expect(needsYou([], ext, team.bots)).toEqual([])
     expect(needsYou([], null, team.bots)).toEqual([])
   })
+
+  it('yêu cầu điều khiển máy mang theo cả yêu cầu để chuông vẽ thẻ có ảnh', () => {
+    const cu = {
+      ...approval,
+      id: 'c1',
+      source: 'computer',
+      preview: 'call-1',
+      target: 'Bấm "Lưu" trong Notes',
+    } as PendingApproval
+    expect(needsYou([cu], live, team.bots)[0]).toMatchObject({
+      kind: 'approval',
+      id: 'c1',
+      computer: { preview: 'call-1' },
+    })
+  })
 })
 
 describe('deptCards', () => {

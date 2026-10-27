@@ -355,4 +355,25 @@ describe('điều khiển máy · phần chạy', () => {
     expect((await rt.inspect('p1', 'man_hinh_bam', { phan_tu: 's1:1' })).element?.label).toBe('Ghi chú mới')
     expect((await rt.inspect('p1', 'man_hinh_bam', { phan_tu: 's2:2' })).element?.label).toBe('Nội dung')
   })
+
+  it('tình trạng cho giao diện: ảnh mới nhất, chỗ vừa bấm, các bước, trần, cầm lái', async () => {
+    const { rt } = setup()
+    expect(rt.screenView('p1')).toBeUndefined()
+    await rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Notes' })
+    await rt.run('p1', 'Khoa', 'man_hinh_bam', { phan_tu: 's1:1' })
+    rt.pause('p1')
+    const v = rt.screenView('p1')!
+    expect(v.screen).toMatchObject({
+      window: '10:100',
+      app: 'Notes',
+      mark: { x: 16, y: 16, width: 64, height: 32 },
+    })
+    expect(v.screen?.image?.width).toBe(1280)
+    expect(v.steps.map((x) => x.text)).toEqual([
+      'Chụp cửa sổ Notes',
+      'Bấm AXButton "Ghi chú mới" trong Notes',
+    ])
+    expect(v).toMatchObject({ shots: 1, actions: 1, limits: { shots: 40, actions: 150 }, paused: true })
+    expect(v.holder).toEqual({ session: 'p1', bot: 'Khoa' })
+  })
 })

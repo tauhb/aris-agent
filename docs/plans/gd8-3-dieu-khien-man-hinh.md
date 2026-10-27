@@ -141,6 +141,7 @@ Lời dặn trong mô tả công cụ: **ưu tiên bấm theo phần tử hay nh
   - lõi chạy trong tiến trình aris, nên quyền macOS tính cho tiến trình aris (không cần CuaDriver.app);
   - giao diện chung theo đúng cách cua-driver làm việc: theo cửa sổ (`pid:mã cửa sổ`), toạ độ là điểm ảnh của ảnh chụp cửa sổ; không có `elementAt` và `userIdleSeconds` trong lõi nên aris tự tính (`coords.ts`, `ioreg`);
   - chặn cứng nằm trong `@aris/computer` (không trong `@aris/guard`), vì phải biết ứng dụng dưới chỗ bấm lúc chạy; chưa ghi vào nhật ký chặn của hàng rào.
-- **Đợt 2 (bản vẽ)**: ba khung `design/canvas/MayChat.dc.html` (chat với bot: màn hình mới nhất, thẻ duyệt, Cầm lái / Trả lại, tin bị chặn), `MayDuyet.dc.html` (chuông Cần anh: thẻ duyệt có ảnh và vùng đánh dấu, lần đầu xem màn hình, dòng vừa chặn), `HoSoBotMay.dc.html` (Hồ sơ bot › Quyền › Điều khiển máy). Thay cho bản vẽ cũ `ManHinhBot.dc.html` (desktop ảo trên máy chủ). **Đang chờ người dùng duyệt (Điểm dừng 3).**
-- **Còn lại**: đợt 3 (giao diện, sau khi duyệt), đợt 4 (thử thật trên Mac theo B-5).
+- **Đợt 2 (bản vẽ)**: ba khung `design/canvas/MayChat.dc.html` (chat với bot: màn hình mới nhất, thẻ duyệt, Cầm lái / Trả lại, tin bị chặn), `MayDuyet.dc.html` (chuông Cần anh: thẻ duyệt có ảnh và vùng đánh dấu, lần đầu xem màn hình, dòng vừa chặn), `HoSoBotMay.dc.html` (Hồ sơ bot › Quyền › Điều khiển máy). Thay cho bản vẽ cũ `ManHinhBot.dc.html` (desktop ảo trên máy chủ). Người dùng **duyệt 27/10**.
+- **Đợt 3 (giao diện) xong**: khung màn hình của bot và Cầm lái / Trả lại trong bảng chat của Văn phòng, thẻ duyệt có ảnh và viền cam ở chuông "Cần anh", bảng chat và Hộp duyệt, thẻ Điều khiển máy trong Hồ sơ bot › Quyền. Yêu cầu duyệt đi vào hộp duyệt chung của `@aris/commander` (thêm `arisApprovals.ask`), nên Telegram cũng nhận thẻ. Khác bản vẽ: hạn tự từ chối là 15 phút (hạn của hộp duyệt chung), không phải 30.
+- **Còn lại**: đợt 4 (thử thật trên Mac theo B-5).
 

@@ -6,6 +6,7 @@
 import { Button, Mascot, Pill, useTeamData, type BotData } from '@aris/ui-kit/react'
 import { useCallback, useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
+import { PreviewShot } from '../computer/Shot.js'
 import { Later } from '../team/BotTools.js'
 import {
   cleanItems,
@@ -23,7 +24,9 @@ type T = PageProps['t']
 /** Yêu cầu quyền đang chờ (hộp duyệt tập trung của `@aris/commander`). */
 interface ActionItem {
   id: string
-  source: 'external' | 'member'
+  source: 'external' | 'member' | 'computer'
+  /** Điều khiển máy: mã ảnh cửa sổ có vùng đánh dấu. */
+  preview?: string
   bot: string
   name: string
   parentSession?: string
@@ -465,7 +468,7 @@ function ActionDetail({
         mascot={bot?.mascot ?? 'aris'}
         accessory={bot?.accessory}
         title={t('ap.wants', { name: a.name, what: actionLabel(t, a).toLowerCase() })}
-        context={`${a.source === 'external' ? t('ap.external') : t('ap.member')} · ${hhmm(a.at)}`}
+        context={`${a.source === 'external' ? t('ap.external') : a.source === 'computer' ? t('cu.askTag') : t('ap.member')} · ${hhmm(a.at)}`}
       />
       <div className="a-card" style={{ padding: '4px 16px 8px', maxWidth: 720 }}>
         {a.tool && (
@@ -489,6 +492,7 @@ function ActionDetail({
           </div>
         )}
       </div>
+      {a.preview && <PreviewShot t={t} id={a.preview} what={a.target ?? ''} />}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         <Button variant="primary" size="lg" disabled={busy} onClick={() => void answer(true)}>
           {t('ap.allowOnce')}

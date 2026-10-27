@@ -2,6 +2,7 @@
 import type { PageText } from './page.js'
 import { AUTO_TEXT } from './auto/text.js'
 import { BRAIN_TEXT } from './brain/text.js'
+import { COMPUTER_TEXT } from './computer/text.js'
 import { MIND_TEXT } from './mind/text.js'
 import { OFFICE_TEXT } from './office/text.js'
 import { SETTINGS_TEXT } from './settings/text.js'
@@ -17,6 +18,7 @@ export const TEXTS: readonly PageText[] = [
   AUTO_TEXT,
   BRAIN_TEXT,
   OFFICE_TEXT,
+  COMPUTER_TEXT,
   // Nhãn mục thanh bên của các trang có mục riêng.
   text(
     {

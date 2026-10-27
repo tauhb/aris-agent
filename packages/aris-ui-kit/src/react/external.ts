@@ -136,8 +136,10 @@ export type PendingApproval = ExternalStep & {
   run: string
   name: string
   bot: string
-  /** Bot ngoài (lần chạy CLI) hay bot trong đội (phiên con). */
-  source?: 'external' | 'member'
+  /** Bot ngoài (lần chạy CLI), bot trong đội (phiên con), hay bot điều khiển máy. */
+  source?: 'external' | 'member' | 'computer'
+  /** Điều khiển máy: mã để lấy ảnh cửa sổ và chỗ đánh dấu (`/api/aris/computer?preview=`). */
+  preview?: string
   /** Phiên giao việc có thanh duyệt hiện yêu cầu này. */
   parentSession?: string
   reason?: string

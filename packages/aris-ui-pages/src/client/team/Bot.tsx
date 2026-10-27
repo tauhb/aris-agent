@@ -62,6 +62,7 @@ function BotChannels({ t, botId, onConnect }: { t: PageProps['t']; botId: string
     </Card>
   )
 }
+import { BotComputer } from '../computer/BotComputer.js'
 import { BotAside, PermsCard } from './BotPerms.js'
 import { SoulField } from './BotSoul.js'
 import { BotRoutineTab, useBotRoutines } from './BotRoutine.js'
@@ -424,6 +425,7 @@ export function BotProfile({ t, nav, params, plugins }: PageProps) {
           {tab === 'perms' && (
             <>
               <PermsCard t={t} bot={bot} />
+              {!bot.external && <BotComputer t={t} botId={bot.id} name={name} />}
               {!bot.external && (
                 <BotChannels
                   t={t}

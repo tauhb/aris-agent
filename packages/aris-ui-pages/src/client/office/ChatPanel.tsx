@@ -15,6 +15,7 @@ import {
   type TeamView,
 } from '@aris/ui-kit/react'
 import { useEffect, useRef, useState } from 'react'
+import { ChatScreen } from '../computer/ChatScreen.js'
 import type { PageProps } from '../page.js'
 import { MdFull } from './Md.js'
 import { TeamBlock } from './TeamBlock.js'
@@ -436,6 +437,7 @@ export function ChatPanel({
               <small>{t('of.ch.sending')}</small>
             </div>
           ))}
+          <ChatScreen t={t} sessionId={sid} name={desk.name} approvals={approvals} reloadApprovals={reload} />
         </div>
       )}
 

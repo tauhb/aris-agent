@@ -51,6 +51,7 @@ Cửa sổ chọn theo `cua_so` (`pid:mã cửa sổ` từ `man_hinh_xem`), khô
 3. **Chặn cứng**: từ chối, áp cả khi đã duyệt.
 4. Chế độ **trong phạm vi**: ứng dụng và loại thao tác nằm trong danh sách thì tự làm, ngoài danh sách thì **từ chối, không hỏi**.
 5. Chế độ **hỏi từng bước**: thao tác thay đổi luôn hỏi, kèm một dòng mô tả ("Khoa muốn điều khiển máy: Bấm AXButton "Ghi chú mới" trong Notes"); xem màn hình chỉ hỏi lần đầu mỗi phiên. Ảnh cửa sổ và chỗ đánh dấu của việc đang chờ duyệt giữ 30 phút theo mã lời gọi (`GET /api/aris/computer?preview=<callId>`) cho thẻ duyệt.
+   Yêu cầu đi vào **hộp duyệt chung** của `@aris/commander` (hook `approval/request` gọi `arisApprovals.ask`, nguồn `computer`, kèm mã ảnh `preview`): chuông "Cần {you}" của Văn phòng, Hộp duyệt, bảng chat và Telegram cùng thấy, bấm ở đâu trước thì ăn; quá 15 phút không trả lời thì từ chối (hạn của hộp duyệt chung). Không có hộp duyệt chung thì để dsh hỏi như thường.
 6. Không có chế độ "không hỏi gì".
 
 Lượt có tin của người không phải chủ nhân (khách, người được phép trên kênh) bị hàng rào chung chặn mọi công cụ không phải công cụ đọc, nên khách không điều khiển được máy.
@@ -76,6 +77,7 @@ Lượt có tin của người không phải chủ nhân (khách, người đư�
 | `GET` | Cài đặt theo bot, mặc định, ai đang giữ máy, tên lõi đã nạp, lỗi nạp lõi |
 | `GET ?doctor=1` | Báo cáo kiểm tra (như `aris computer doctor`) |
 | `GET ?preview=<callId>` | Ảnh cửa sổ (base64) và chỗ đánh dấu của việc đang chờ duyệt |
+| `GET ?screen=<phiên>` | Ảnh mới nhất của bot trong phiên, chỗ vừa bấm, các bước gần đây, số ảnh và thao tác đã dùng, đang cầm lái không, ai giữ máy |
 | `POST { op: 'set', bot, settings }` | Đổi cài đặt của bot |
 | `POST { op: 'take' \| 'give', session }` | Cầm lái / Trả lại |
 
@@ -91,7 +93,14 @@ Lệnh dòng lệnh gọi daemon qua socket (`POST /computer-doctor`). Kiểm: h
 - **Đã thử lõi thật trên Linux** (máy Cloud, màn hình ảo Xvfb, xterm), 27/10: liệt kê cửa sổ, chụp cửa sổ, bấm theo toạ độ, gõ chữ, phím tắt, cuộn; trọn đường đi duyệt → làm (xem thì hỏi, gõ thì hỏi kèm mô tả, phím khoá máy bị chặn); ảnh chụp sau khi gõ cho thấy lệnh đã chạy trong xterm. Máy Cloud không có bus Trợ năng nên chưa thử đọc phần tử và bấm theo mã.
 - **Chưa thử trên Mac** (cần máy của người dùng, B-5 của plan): quyền Trợ năng và Ghi màn hình (macOS tính cho tiến trình nào khi chạy dưới launchd), cây Trợ năng và bấm theo mã phần tử, gửi nền có thật không giành chuột, đọc `HIDIdleTime` và màn hình khoá, tên vai của ô mật khẩu trên macOS, số token mỗi ảnh.
 
-## Chưa làm (đợt sau của plan)
+## Giao diện (đợt 3, theo bản vẽ đã duyệt 27/10)
 
-- Giao diện: thẻ duyệt có ảnh và vùng đánh dấu, khung ảnh màn hình mới nhất trong bảng chat, nút Cầm lái / Trả lại, Hồ sơ bot › Quyền › Điều khiển máy. Cần vẽ trước, chờ duyệt (Điểm dừng 3).
+- **Bảng chat của Văn phòng** (`MayChat`, `ui-pages/src/client/computer/ChatScreen.tsx`): cuối luồng tin có khung "Màn hình của <bot>" (ảnh mới nhất, viền xanh ở chỗ vừa bấm, bấm để phóng to, số ảnh và thao tác đã dùng trong lượt), nút **Cầm lái**; đang cầm lái thì hiện ô "{you} đang cầm lái" với nút **Trả lại cho <bot>**; thẻ duyệt của phiên có ảnh và viền cam ở chỗ sẽ bấm, nút Cho phép / Từ chối. Đọc lại 3 giây một lần.
+- **Chuông "Cần {you}"** (`MayDuyet`): yêu cầu điều khiển máy hiện thành thẻ có ảnh nhỏ (bấm để phóng to) thay cho dòng chữ. **Hộp duyệt** (trang 3.4) hiện ảnh dưới chi tiết yêu cầu.
+- **Hồ sơ bot › Quyền › Điều khiển máy** (`HoSoBotMay`, `BotComputer.tsx`): công tắc, cách duyệt, ứng dụng và loại thao tác được tự làm (chế độ trong phạm vi), luôn chặn, quyền của macOS (đọc từ `?doctor=1`), Hướng dẫn cấp quyền với đường dẫn tiến trình và nút mở đúng trang Cài đặt hệ thống, Kiểm tra lại.
+- Đã dựng thử với dữ liệu giả (ảnh thật từ lần thử lõi trên Linux) trong Chromium, nền sáng và tối, không lỗi.
+
+## Chưa làm
+
+- Thử thật trên Mac (B-5 của plan).
 - Ghi lần chặn vào nhật ký chặn của `@aris/guard` (hiện chỉ trả lý do cho bot).
