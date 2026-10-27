@@ -60,6 +60,8 @@ export const Z = {
     `Bot chưa đọc được loại tin này (${type}). Gửi chữ, ảnh, tệp hay tin thoại nhé.`,
   failedTurn: (e: string) => `Bot gặp lỗi: ${e}`,
   continueWith: (name: string) => `Nhắn tiếp với ${name}`,
+  /** Khách xin gặp người thật: trả một câu rồi bot im cuộc chat này, chủ trả lời trên app Zalo. */
+  humanAck: 'Đã báo người phụ trách, sẽ có người trả lời sớm.',
 }
 
 /** Tin báo chủ (qua Telegram, vì Zalo có thể đang mất kết nối). Không dùng đại từ. */
@@ -71,6 +73,11 @@ export const ZN = {
   /** Bị đá phiên (thường do mở Zalo Web): báo tối đa 6 giờ một lần mỗi tài khoản. */
   kicked: (name: string) =>
     `Zalo ${name} vừa bị ngắt vì tài khoản đang mở ở nơi khác (thường là Zalo Web). Bot tạm ngừng nghe và tự thử lại sau; muốn bot nghe ngay thì đóng Zalo Web.`,
+  /** Khách xin gặp người thật: bot im cuộc chat đó 2 giờ. */
+  human: (account: string, name: string, excerpt: string) =>
+    `Zalo ${account}: ${name} muốn gặp người thật: «${excerpt}»\n\nBot im cuộc chat này 2 giờ. Trả lời khách ngay trên app Zalo.`,
+  /** Bot gọi công cụ "báo chủ" khi gặp câu cần người quyết. */
+  ping: (account: string, name: string, text: string) => `Zalo ${account}, chat với ${name}: ${text}`,
   dailyLimit: (limit: number) =>
     `Bot đã gửi ${limit} tin Zalo hôm nay, chạm giới hạn ngày nên dừng gửi tới hết ngày để tránh bị khoá tài khoản.`,
 }

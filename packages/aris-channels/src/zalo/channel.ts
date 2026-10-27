@@ -22,6 +22,7 @@ import type {
   MediaPort,
   SessionPort,
 } from '../hub.js'
+import { isOpen, nextOpen, validHours, wantsHuman } from '../hours.js'
 import { sttNotReady, transcribe, type SpeechToText } from '../media.js'
 import { accId, ChannelStore, newAccountId, normalizeCode, zaloKey, zaloThreadKey } from '../store.js'
 import { isSilent, nameTeam, type TeamName } from '../telegram/format.js'
@@ -47,6 +48,9 @@ export interface ZaloPending extends PendingBase {
   threadId: string
   /** Mã tin Zalo của người gửi. */
   msgId: string
+  /** Người hỏi (để @nhắc thật khi trả lời trong nhóm). */
+  senderId?: string
+  senderName?: string
 }
 
 export interface ZaloDeps {
@@ -82,6 +86,12 @@ export interface ZaloAccountStatus {
   label: string
   /** Ai được bot trả lời: chỉ người đã ghép đôi, hay mọi người là khách. */
   mode: 'paired' | 'guests'
+  /** Nhường tay cho chủ (mặc định bật). */
+  hand: boolean
+  /** Giờ trực; `null` là trực cả ngày. */
+  hours: BotRecord['hours'] | null
+  /** Tên các nhãn Zalo bot bỏ qua. */
+  skipLabels: string[]
   bot: string
   /** Mã Zalo của tài khoản. */
   id: string
@@ -129,6 +139,20 @@ interface ZaloRuntime {
   watch?: ReturnType<typeof setInterval> | undefined
   /** Số lần canh lỗi liền nhau. */
   watchFails: number
+  /** Số tin aris đang gửi dở theo cuộc chat: tin của chính tài khoản đến lúc này là tiếng vọng, không phải chủ gõ. */
+  inflight: Map<string, number>
+  /** Chữ aris vừa gửi (cuộc chat, chữ, giờ), để nhận ra tiếng vọng khi Zalo báo lại trước khi có mã tin. */
+  recent: { thread: string; text: string; at: number }[]
+  /** Nhãn bỏ qua đã đọc: các cuộc chat mang nhãn, giờ đọc. */
+  skip?: { at: number; threads: Set<string> } | undefined
+}
+
+/** Cuộc chat đang giữ tin: chủ đang tự trả lời (`hand`) hay ngoài giờ trực (`hours`). */
+interface ChatHold {
+  why: 'hand' | 'hours'
+  until: number
+  held: InboxRecord[]
+  timer?: ReturnType<typeof setTimeout> | undefined
 }
 
 const MAX_FILE = 20 * 1024 * 1024
@@ -143,6 +167,16 @@ const KICK_NOTIFY_MS = 6 * 3_600_000
 export const GATHER_MS = 5000
 /** Kết nối sống quá chừng này thì coi là vững: lần mất kết nối kế tiếp lại chờ từ mức đầu. */
 const STABLE_MS = 10 * 60_000
+/** Nhường tay cho chủ: chủ tự gõ trong cuộc chat thì bot im cuộc đó chừng này. */
+export const HAND_MS = 10 * 60_000
+/** Khách xin gặp người thật: bot im cuộc chat chừng này (tính từ tin cuối của khách). */
+export const HUMAN_MS = 2 * 3_600_000
+/** Công cụ "báo chủ": nhiều nhất một lần mỗi cuộc chat trong chừng này. */
+export const PING_MS = 10 * 60_000
+/** Đọc lại nhãn Zalo mỗi chừng này. */
+const LABELS_MS = 5 * 60_000
+/** Tin của chính tài khoản trùng chữ aris vừa gửi trong chừng này thì là tiếng vọng. */
+const ECHO_MS = 60_000
 /** Báo "đang soạn tin" nhiều nhất mỗi 5 giây cho một cuộc trò chuyện. */
 const TYPING_EVERY_MS = 5000
 
@@ -180,6 +214,16 @@ export class ZaloChannel implements ChannelPeer {
   private readonly lastAt = new Map<string, number>()
   /** Phiên có lượt bị dừng vì khách nhắn thêm: lượt đó không gửi gì ra. */
   private readonly superseded = new Set<string>()
+  /** Cuộc chat đang giữ tin (theo làn). */
+  private readonly holds = new Map<string, ChatHold>()
+  /** Cuộc chat khách đã xin gặp người thật: bot im tới giờ này (theo làn). */
+  private readonly humans = new Map<string, number>()
+  /** Đã gửi câu ngoài giờ cho đợt ngoài giờ nào (giờ vào trực kế tiếp), theo làn. */
+  private readonly offSent = new Map<string, number>()
+  /** Lần "báo chủ" cuối, theo làn. */
+  private readonly pinged = new Map<string, number>()
+  /** Phiên mà model đã chọn im lặng cho lượt đang chạy. */
+  private readonly silenced = new Set<string>()
   private readonly now: () => number
   private readonly sleep: (ms: number) => Promise<void>
   private readonly connector: ZaloConnector
@@ -224,6 +268,8 @@ export class ZaloChannel implements ChannelPeer {
     this.logins.clear()
     for (const rt of this.apps.values()) this.closeRuntime(rt)
     this.apps.clear()
+    for (const h of this.holds.values()) if (h.timer) clearTimeout(h.timer)
+    this.holds.clear()
   }
 
   /** Tình trạng từng tài khoản, cho trang Kênh và `aris status`. */
@@ -235,6 +281,9 @@ export class ZaloChannel implements ChannelPeer {
         account: acc,
         label: rec.label ?? rec.name,
         mode: rec.mode ?? 'paired',
+        hand: rec.hand !== false,
+        hours: rec.hours ?? null,
+        skipLabels: rec.skipLabels ?? [],
         bot: rec.bot,
         id: rec.botOpenId ?? '',
         name: rec.name,
@@ -391,13 +440,30 @@ export class ZaloChannel implements ChannelPeer {
   }
 
   /** Đổi bot trả lời, tên, chế độ của một tài khoản. */
-  async updateAccount(account: string, patch: { bot?: string; label?: string; mode?: 'paired' | 'guests' }) {
+  async updateAccount(
+    account: string,
+    patch: Partial<Pick<BotRecord, 'bot' | 'label' | 'mode' | 'hand' | 'skipLabels'>> & {
+      /** `null`: bỏ giờ trực (trực cả ngày). */
+      hours?: BotRecord['hours'] | null
+    },
+  ) {
     const cur = this.store.zaloAccount(account)
     if (!cur) throw new Error('không có tài khoản này')
-    const next: BotRecord = { ...cur, ...patch, account }
+    if (patch.hours && !validHours(patch.hours)) throw new Error('giờ trực không hợp lệ')
+    const { hours, ...rest } = patch
+    const next: BotRecord = { ...cur, ...rest, account }
+    if (hours === null) delete next.hours
+    else if (hours) next.hours = hours
     await this.store.putZaloAccount(next)
     const rt = this.apps.get(account)
-    if (rt) rt.rec = next
+    if (rt) {
+      rt.rec = next
+      if (patch.skipLabels) rt.skip = undefined
+    }
+    // Đổi giờ trực thì xét lại các cuộc chat đang giữ tin vì ngoài giờ.
+    if ('hours' in patch)
+      for (const [lane, h] of this.holds)
+        if (h.why === 'hours' && lane.startsWith(`zc-${account}-`)) this.release(lane)
   }
 
   private async forgetPeople() {
@@ -509,6 +575,8 @@ export class ZaloChannel implements ChannelPeer {
       connectedAt: this.now(),
       sent: new Set(),
       typingAt: new Map(),
+      inflight: new Map(),
+      recent: [],
     }
     this.apps.set(id, rt)
     try {
@@ -575,9 +643,9 @@ export class ZaloChannel implements ChannelPeer {
 
   /** Gọi cho mỗi tin vào. Chỉ ghi vào hàng đợi bền rồi trả về ngay. */
   private async receive(rt: ZaloRuntime, ev: ZaloInbound) {
-    // Tin của chính tài khoản, tin aris vừa gửi, tin cũ hơn lúc kết nối: bỏ.
-    if (ev.senderId === rt.api.selfId() || rt.sent.has(ev.messageId)) return
-    if (ev.createTime < rt.connectedAt) return
+    // Tin aris vừa gửi, tin cũ hơn lúc kết nối: bỏ. Tin chủ tự gõ trên điện thoại: nhường tay.
+    if (rt.sent.has(ev.messageId) || ev.createTime < rt.connectedAt) return
+    if (ev.fromSelf || ev.senderId === rt.api.selfId()) return this.onSelf(rt, ev)
     if (ev.isGroup) {
       // Nhóm được ghi nhận để hiện trong danh sách (mặc định tắt); nhóm chưa bật thì dừng ở đây.
       if (!this.store.zaloGroup(ev.threadId, rt.id))
@@ -602,6 +670,101 @@ export class ZaloChannel implements ChannelPeer {
     }
     await this.store.enqueue(inbox)
     this.route(inbox)
+  }
+
+  /** Tin của chính tài khoản: tiếng vọng của tin aris gửi thì bỏ; chủ tự gõ thì bot im cuộc chat đó `HAND_MS`. */
+  private async onSelf(rt: ZaloRuntime, ev: ZaloInbound) {
+    if (this.isEcho(rt, ev) || rt.rec.hand === false) return
+    await this.handOver(zaloThreadKey(rt.id, ev.threadId))
+  }
+
+  private isEcho(rt: ZaloRuntime, ev: ZaloInbound): boolean {
+    if ((rt.inflight.get(ev.threadId) ?? 0) > 0) return true
+    const text = ev.msgType === 'webchat' ? ev.content.trim() : ''
+    const since = this.now() - ECHO_MS
+    return rt.recent.some(
+      (r) => r.thread === ev.threadId && r.at >= since && (!text || r.text.trim() === text),
+    )
+  }
+
+  /**
+   * Chủ vừa tự trả lời khách: tin đang giữ coi như chủ đã lo (bỏ), lượt bot đang soạn dừng và không gửi, cuộc chat im
+   * `HAND_MS`; hết lúc đó mà chủ không gõ thêm thì bot trả lời các tin khách gửi trong lúc im.
+   */
+  private async handOver(lane: string) {
+    await this.dropHeld(lane)
+    this.hold(lane, 'hand', this.now() + HAND_MS)
+    await this.cancelLane(lane)
+  }
+
+  /** Bỏ giữ cuộc chat và bỏ các tin đang giữ (đã có người lo). */
+  private async dropHeld(lane: string) {
+    const old = this.holds.get(lane)
+    if (!old) return
+    if (old.timer) clearTimeout(old.timer)
+    this.holds.delete(lane)
+    for (const r of old.held) await this.store.doneInbox(r.id)
+  }
+
+  /** Dừng lượt đang chạy của cuộc chat (không gửi gì ra). */
+  private async cancelLane(lane: string) {
+    const t = this.store.thread(lane)
+    if (!t) return
+    const agent = await this.d.sessions.agent(t.sessionId).catch(() => undefined)
+    if (agent?.status !== 'running' || !this.tracker.active(t.sessionId).length) return
+    this.superseded.add(t.sessionId)
+    agent.cancel({ kind: 'user' })
+  }
+
+  /** Giữ tin của cuộc chat tới `until`; có sẵn thì chỉ dời giờ. */
+  private hold(lane: string, why: ChatHold['why'], until: number, inbox?: InboxRecord): ChatHold {
+    let h = this.holds.get(lane)
+    if (!h) {
+      h = { why, until, held: [] }
+      this.holds.set(lane, h)
+    }
+    h.why = why
+    h.until = Math.max(h.until, until)
+    if (inbox) h.held.push(inbox)
+    if (h.timer) clearTimeout(h.timer)
+    h.timer = setTimeout(() => this.releaseDue(), Math.max(0, h.until - this.now()) + 50)
+    h.timer.unref?.()
+    return h
+  }
+
+  /** Thả các cuộc chat đã hết giờ giữ (gọi bằng hẹn giờ; kiểm thử gọi thẳng sau khi chỉnh đồng hồ). */
+  releaseDue() {
+    for (const [lane, h] of this.holds) if (h.until <= this.now()) this.release(lane)
+  }
+
+  /** Thả một cuộc chat: các tin đang giữ đi lại từ đầu (xét quyền, giờ trực…), bot trả lời một lần cho cả loạt. */
+  private release(lane: string) {
+    const h = this.holds.get(lane)
+    if (!h) return
+    if (h.timer) clearTimeout(h.timer)
+    this.holds.delete(lane)
+    for (const r of h.held) this.route(r)
+  }
+
+  /** Cuộc chat mang nhãn bỏ qua không (đọc lại nhãn mỗi `LABELS_MS`; đọc lỗi thì dùng bản cũ). */
+  private async skipped(rt: ZaloRuntime, thread: string): Promise<boolean> {
+    const names = rt.rec.skipLabels ?? []
+    if (!names.length) return false
+    if (!rt.skip || this.now() - rt.skip.at >= LABELS_MS) {
+      try {
+        const want = new Set(names.map((n) => n.trim().toLowerCase()))
+        const threads = new Set<string>()
+        for (const l of await rt.api.labels())
+          if (want.has(l.name.trim().toLowerCase()))
+            // Zalo ghi cuộc chat nhóm có thể kèm tiền tố `g`: giữ cả hai dạng.
+            for (const t of l.threads) threads.add(t).add(t.replace(/^[gu](?=\d)/, ''))
+        rt.skip = { at: this.now(), threads }
+      } catch (e) {
+        this.d.logger.warn('aris-channels: zalo %s đọc nhãn: %s', rt.id, msg(e))
+        rt.skip = { at: this.now(), threads: rt.skip?.threads ?? new Set() }
+      }
+    }
+    return rt.skip.threads.has(thread)
   }
 
   /** Xếp tin vào làn của cuộc trò chuyện: trong một cuộc thì nối tiếp, giữa các cuộc thì song song. */
@@ -685,6 +848,8 @@ export class ZaloChannel implements ChannelPeer {
       guests: rt.rec.mode === 'guests',
     })
     if (d.kind === 'ignore' || d.kind === 'unknown-group') return false
+    // Cuộc chat mang nhãn chủ chọn bỏ qua: bot không đụng tới (kể cả không báo chủ).
+    if (d.kind === 'stranger' || d.trust !== 'owner') if (await this.skipped(rt, ev.threadId)) return false
     if (d.kind === 'stranger') {
       // Người lạ: bot im lặng; báo chủ nhiều nhất một lần mỗi người mỗi ngày.
       if (await this.store.shouldNotifyStranger(`zc-${rt.id}-${ev.senderId}`, STRANGER_NOTIFY_MS)) {
@@ -709,6 +874,10 @@ export class ZaloChannel implements ChannelPeer {
       await this.say(rt, here, T.guardStopped)
       return false
     }
+    if (d.trust !== 'owner') {
+      const wait = await this.waitFor(rt, inbox, ev, parsed, here, key)
+      if (wait !== undefined) return wait
+    }
     if (parsed.unsupported) {
       await this.say(rt, here, Z.unsupported(parsed.unsupported))
       return false
@@ -716,18 +885,120 @@ export class ZaloChannel implements ChannelPeer {
     return this.submit(rt, inbox, ev, parsed, here, key, d.trust, resumed)
   }
 
+  /**
+   * Tin của người không phải chủ có phải chờ không: khách đã xin gặp người thật (bot im, bỏ tin), chủ đang tự trả lời
+   * (giữ tin), ngoài giờ trực (giữ tin, gửi câu ngoài giờ nếu có). `undefined`: trả lời bình thường; `true`: tin được
+   * giữ trong hàng đợi; `false`: bỏ tin.
+   */
+  private async waitFor(
+    rt: ZaloRuntime,
+    inbox: InboxRecord,
+    ev: ZaloInbound,
+    parsed: ParsedMessage,
+    here: Reply,
+    lane: string,
+  ): Promise<boolean | undefined> {
+    const now = this.now()
+    const human = this.humans.get(lane)
+    if (human !== undefined && human > now) {
+      this.humans.set(lane, now + HUMAN_MS)
+      return false
+    }
+    if (wantsHuman(parsed.text)) {
+      this.humans.set(lane, now + HUMAN_MS)
+      await this.dropHeld(lane)
+      await this.cancelLane(lane)
+      const name = await this.nameOf(rt, ev.senderId, ev.senderName)
+      const excerpt =
+        parsed.text.length > STRANGER_EXCERPT ? `${parsed.text.slice(0, STRANGER_EXCERPT)}…` : parsed.text
+      await this.d.notify?.(ZN.human(rt.rec.label ?? rt.rec.name, name, excerpt)).catch(() => undefined)
+      await this.say(rt, here, Z.humanAck)
+      return false
+    }
+    const hold = this.holds.get(lane)
+    if (hold && hold.until > now) {
+      hold.held.push(inbox)
+      return true
+    }
+    const hours = rt.rec.hours
+    if (hours && validHours(hours) && !isOpen(hours, now)) {
+      const open = nextOpen(hours, now)
+      this.hold(lane, 'hours', open, inbox)
+      if (hours.offReply?.trim() && this.offSent.get(lane) !== open) {
+        this.offSent.set(lane, open)
+        await this.say(rt, here, hours.offReply.trim())
+      }
+      return true
+    }
+    return undefined
+  }
+
+  // ======================================================================================
+  // Ba nút của model: im lặng, báo chủ (gặp nhân viên do khách gõ, xem `waitFor`)
+  // ======================================================================================
+
+  /** Phiên này có phải của Zalo và đang trả lời người trong một cuộc chat không. */
+  owns(sessionId: string): boolean {
+    return this.tracker.active(sessionId).length > 0
+  }
+
+  /** Công cụ "im lặng": lượt đang chạy của phiên không gửi gì ra. `false` khi phiên không thuộc Zalo. */
+  silence(sessionId: string): boolean {
+    if (!this.owns(sessionId)) return false
+    this.silenced.add(sessionId)
+    return true
+  }
+
+  /**
+   * Công cụ "báo chủ": gửi chủ một dòng qua Telegram kèm tên tài khoản và người đang chat, nhiều nhất một lần mỗi cuộc
+   * chat trong `PING_MS`. Trả câu cho model; `undefined` khi phiên không thuộc Zalo.
+   */
+  async ping(sessionId: string, text: string): Promise<string | undefined> {
+    const last = this.tracker.active(sessionId).at(-1)
+    if (!last) return undefined
+    const prev = this.pinged.get(last.threadKey)
+    if (prev !== undefined && this.now() - prev < PING_MS) return 'Đã báo chủ ít phút trước, chưa báo lại.'
+    this.pinged.set(last.threadKey, this.now())
+    const rt = this.apps.get(last.bot)
+    const rec = rt?.rec ?? this.store.zaloAccount(last.bot)
+    const who = last.group
+      ? (this.store.zaloGroup(last.threadId, last.bot)?.title ?? 'nhóm')
+      : rt
+        ? await this.nameOf(rt, last.threadId, last.senderName)
+        : (last.senderName ?? 'khách')
+    if (!this.d.notify) return 'Chưa có nơi báo chủ (Telegram chưa kết nối).'
+    await this.d.notify(ZN.ping(rec?.label ?? rec?.name ?? last.bot, who, text))
+    return 'Đã báo chủ.'
+  }
+
   // ======================================================================================
   // Gửi tin
   // ======================================================================================
 
   /** Gửi một tin chữ qua bộ giới hạn tần suất. `false` khi hết hạn mức ngày (không gửi). */
-  private async sendOne(rt: ZaloRuntime, thread: string, isGroup: boolean, text: string): Promise<boolean> {
+  private async sendOne(
+    rt: ZaloRuntime,
+    thread: string,
+    isGroup: boolean,
+    text: string,
+    mention?: { uid: string; len: number },
+  ): Promise<boolean> {
     if (!(await rt.throttle.take(thread))) {
       await this.dailyStop(rt.id)
       return false
     }
-    const r = await rt.api.send(thread, isGroup, text)
-    this.remember(rt, r.messageId)
+    // Ghi chữ và đánh dấu đang gửi trước khi gọi Zalo: tiếng vọng có thể về trước khi có mã tin.
+    rt.recent.push({ thread, text, at: this.now() })
+    if (rt.recent.length > 50) rt.recent.shift()
+    rt.inflight.set(thread, (rt.inflight.get(thread) ?? 0) + 1)
+    try {
+      const r = await rt.api.send(thread, isGroup, text, mention)
+      this.remember(rt, r.messageId)
+    } finally {
+      const n = (rt.inflight.get(thread) ?? 1) - 1
+      if (n > 0) rt.inflight.set(thread, n)
+      else rt.inflight.delete(thread)
+    }
     return true
   }
 
@@ -870,6 +1141,8 @@ export class ZaloChannel implements ChannelPeer {
       bot: rt.id,
       threadId: ev.threadId,
       msgId: ev.messageId,
+      senderId: ev.senderId,
+      senderName: await this.nameOf(rt, ev.senderId, ev.senderName),
       group: ev.isGroup,
       trust,
     })
@@ -921,6 +1194,8 @@ export class ZaloChannel implements ChannelPeer {
     if (r.reason.kind === 'aborted' && this.superseded.delete(r.sessionId)) return
     const ok = r.reason.kind === 'completed'
     if (ok) this.superseded.delete(r.sessionId)
+    // Model chọn im lặng (công cụ "im lặng"): không gửi gì, kể cả ảnh.
+    if (this.silenced.delete(r.sessionId)) return
     // Các đoạn theo người nói: chữ của bot của phiên gộp lại; câu trả lời chuyển giao là đoạn riêng.
     const segments: TurnPart[] = []
     for (const p of r.parts) {
@@ -934,14 +1209,22 @@ export class ZaloChannel implements ChannelPeer {
       else return
     }
     await this.sendMedia(r.sessionId, last, rt)
+    // Trong nhóm, câu trả lời đầu tiên @nhắc thật người hỏi.
+    let tag = last.group && last.senderId && last.senderName ? last : undefined
     for (const seg of segments) {
       if (!seg.from) {
-        if (last.group && isSilent(seg.text)) continue
-        await this.send(last, seg.text)
+        if (isSilent(seg.text)) continue
+        await this.send(last, seg.text, tag)
+        tag = undefined
         continue
       }
       // Chuyển giao: lời của bot đích, mở đầu bằng tên thành viên.
-      await this.send(last, `@${seg.from.handle}${seg.from.role ? ` · ${seg.from.role}` : ''}\n\n${seg.text}`)
+      await this.send(
+        last,
+        `@${seg.from.handle}${seg.from.role ? ` · ${seg.from.role}` : ''}\n\n${seg.text}`,
+        tag,
+      )
+      tag = undefined
     }
   }
 
@@ -958,8 +1241,15 @@ export class ZaloChannel implements ChannelPeer {
           return
         }
         const name = f.rec.path.split('/').pop() ?? (f.rec.kind === 'image' ? 'anh.png' : 'video.mp4')
-        const r = await rt.api.sendFile(last.threadId, last.group, f.data, name)
-        this.remember(rt, r.messageId)
+        rt.inflight.set(last.threadId, (rt.inflight.get(last.threadId) ?? 0) + 1)
+        try {
+          const r = await rt.api.sendFile(last.threadId, last.group, f.data, name)
+          this.remember(rt, r.messageId)
+        } finally {
+          const n = (rt.inflight.get(last.threadId) ?? 1) - 1
+          if (n > 0) rt.inflight.set(last.threadId, n)
+          else rt.inflight.delete(last.threadId)
+        }
       } catch (e) {
         this.d.logger.warn('aris-channels: zalo gửi %s: %s', f.rec.kind, msg(e))
       }
@@ -967,7 +1257,10 @@ export class ZaloChannel implements ChannelPeer {
   }
 
   /** Một câu trả lời vào hộp thư ra rồi gửi (Markdown đổi sang chữ thường, chia theo 2.000 ký tự). */
-  private async send(last: ZaloPending, md: string) {
+  private async send(last: ZaloPending, md: string, tag?: ZaloPending) {
+    const at = tag?.senderName ? `@${tag.senderName}` : ''
+    const chunks = toChunks(this.named(md))
+    if (at && tag?.senderId && chunks.length) chunks[0] = `${at} ${chunks[0]!}`
     const rec: OutboxRecord = {
       id: `zc-${this.now()}-${randomId()}`,
       bot: last.bot,
@@ -975,7 +1268,8 @@ export class ZaloChannel implements ChannelPeer {
       channel: 'zalo',
       chatRef: last.threadId,
       isGroup: last.group,
-      chunks: toChunks(this.named(md)),
+      chunks,
+      ...(at && tag?.senderId ? { mention: { uid: tag.senderId, len: at.length } } : {}),
       sent: 0,
       state: 'pending',
       attempts: 0,
@@ -998,13 +1292,20 @@ export class ZaloChannel implements ChannelPeer {
       for (let i = cur.sent; i < cur.chunks.length; i++) {
         cur = { ...cur, state: 'sending' }
         await this.store.putOutbox(cur)
-        const text = recovered && i === cur.sent ? `${T.recovered}\n\n${cur.chunks[i]!}` : cur.chunks[i]!
-        for (const piece of splitText(text))
-          if (!(await this.sendOne(rt, rec.chatRef, group, piece))) {
+        const prefix = recovered && i === cur.sent ? `${T.recovered}\n\n` : ''
+        const text = `${prefix}${cur.chunks[i]!}`
+        // @nhắc chỉ ở phần đầu và chỉ khi chỗ @ vẫn ở đầu tin.
+        const tag = i === 0 && !prefix ? cur.mention : undefined
+        let first = true
+        for (const piece of splitText(text)) {
+          const ok = await this.sendOne(rt, rec.chatRef, group, piece, first ? tag : undefined)
+          first = false
+          if (!ok) {
             // Hết hạn mức ngày: bỏ phần còn lại, không để lại hộp thư ra để mai gửi dồn.
             await this.store.doneOutbox(cur.id)
             return
           }
+        }
         cur = { ...cur, sent: i + 1 }
         await this.store.putOutbox(cur)
       }

@@ -31,6 +31,8 @@ export interface ZaloInbound {
   mentions: { uid: string; pos: number; len: number }[]
   /** Giờ tạo tin (ms). */
   createTime: number
+  /** Tin do chính tài khoản gửi (chủ tự gõ trên điện thoại, hay tin aris vừa gửi): dùng cho "nhường tay cho chủ". */
+  fromSelf?: boolean | undefined
 }
 
 /** Thông tin tài khoản Zalo đang đăng nhập. */
@@ -48,8 +50,15 @@ export interface ZaloApi {
   userName(id: string): Promise<string | undefined>
   /** Tên nhóm; không lấy được thì `undefined`. */
   groupName(id: string): Promise<string | undefined>
-  /** Gửi tin chữ thường (tối đa 2.000 ký tự). Trả mã tin vừa gửi. */
-  send(threadId: string, isGroup: boolean, text: string): Promise<{ messageId: string }>
+  /** Gửi tin chữ thường (tối đa 2.000 ký tự); `mention` @nhắc thật một người ở đầu tin (nhóm). Trả mã tin vừa gửi. */
+  send(
+    threadId: string,
+    isGroup: boolean,
+    text: string,
+    mention?: { uid: string; len: number },
+  ): Promise<{ messageId: string }>
+  /** Nhãn của tài khoản (đặt trên app Zalo): tên nhãn và các cuộc chat mang nhãn. */
+  labels(): Promise<{ name: string; threads: string[] }[]>
   /** Gửi ảnh hay tệp. */
   sendFile(
     threadId: string,

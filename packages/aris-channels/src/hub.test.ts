@@ -973,6 +973,47 @@ describe('trung tâm kênh · GĐ8.7 đợt A', () => {
     expect(s.sessions.agents.get('s1')!.inbox).toHaveLength(1)
   })
 
+  it('đợt C · gặp nhân viên: báo chủ, trả một câu, rồi bot im cuộc chat đó', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    await pairMember(s)
+    s.tg.push(dm(STRANGER, 'cho mình gặp nhân viên'))
+    await settle()
+    const texts = s.tg.sent().map((b) => String(b.text))
+    expect(texts.some((t) => t.includes('muốn gặp người thật'))).toBe(true)
+    expect(texts.at(-1)).toBe('Đã báo người phụ trách, sẽ có người trả lời sớm.')
+    const n = s.tg.sent().length
+    s.tg.push(dm(STRANGER, 'alo'))
+    await settle()
+    expect(s.tg.sent()).toHaveLength(n)
+    expect(s.sessions.agents.size).toBe(0)
+  })
+
+  it('đợt C · im lặng: lượt không gửi gì; báo chủ: nhiều nhất 10 phút một lần mỗi cuộc chat', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    await pairMember(s)
+    s.tg.push(dm(STRANGER, 'ok cảm ơn'))
+    await settle()
+    const agent = s.sessions.agents.get('s1')! as unknown as { inbox: { id: string }[] }
+    s.hub.onSessionEvent('s1', { type: 'turn/start' })
+    s.hub.onSessionEvent('s1', { type: 'user/message', data: { id: agent.inbox[0]!.id } })
+    expect(s.hub.silence('khác')).toBe(false)
+    expect(s.hub.silence('s1')).toBe(true)
+    expect(await s.hub.ping('s1', 'Khách hỏi giá sỉ')).toBe('Đã báo chủ.')
+    expect(String(s.tg.sent().at(-1)!.text)).toContain('Khách hỏi giá sỉ')
+    expect(await s.hub.ping('s1', 'lần nữa')).toContain('chưa báo lại')
+    const n = s.tg.sent().length
+    s.hub.onSessionEvent('s1', {
+      type: 'assistant/message',
+      data: { message: { content: [{ type: 'text', text: 'Không có gì!' }] } },
+    })
+    s.hub.onSessionEvent('s1', { type: 'turn/end', data: { reason: { kind: 'completed' } } })
+    await settle()
+    expect(s.tg.sent().map((b) => String(b.text))).not.toContain('Không có gì!')
+    expect(s.tg.sent().length).toBe(n)
+  })
+
   it('khách nhắn thêm khi bot đang soạn: dừng lượt cũ, không gửi câu trả lời cũ, lượt mới trả lời', async () => {
     const s = await setup()
     await pairMember(s)

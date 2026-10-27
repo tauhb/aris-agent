@@ -5,7 +5,8 @@
  *   POST { op: 'connect', bot, token, account?, label? } → kiểm tra token bằng getMe, lưu vào kho khoá; `account`
  *        là mã tài khoản (mặc định: tài khoản cũ mang mã bot), `'new'` là thêm tài khoản mới cho bot (GĐ8.7)
  *   POST { op: 'disconnect', account? | bot }
- *   POST { op: 'account', channel: 'telegram' | 'zalo', account, bot?, label?, mode? } → đổi bot trả lời, tên, chế độ
+ *   POST { op: 'account', channel: 'telegram' | 'zalo', account, bot?, label?, mode? } → đổi bot trả lời, tên, chế độ;
+ *        Zalo thêm `hand?` (nhường tay cho chủ), `hours?` ({ days, from, to, offReply? } hay null), `skipLabels?`
  *   POST { op: 'code', role, channel?, account? } → mã ghép đôi mới (mặc định telegram; một lần, 10 phút; có
  *        `account` thì chỉ dùng được trên tài khoản đó)
  *   POST { op: 'revoke', userId, account? }
@@ -25,12 +26,30 @@
  *   (mã ghép đôi Zalo: op 'code' với channel 'zalo')
  */
 import { CHANNEL_KINDS, type ChannelKind } from './domain.js'
+import { validHours } from './hours.js'
 import type { ChannelHub } from './hub.js'
 import type { LarkChannel } from './lark/channel.js'
 import type { LarkCliInfo } from './lark/cli.js'
 import { accId, type ChannelStore } from './store.js'
 import { ZALO_LIMITS } from './zalo/access.js'
 import type { ZaloChannel } from './zalo/channel.js'
+
+/** Giờ trực trong thân yêu cầu: `null` là bỏ giờ trực, `false` là sai dạng, `undefined` là không đổi. */
+function hoursOf(
+  v: unknown,
+): { days: number[]; from: string; to: string; offReply?: string } | null | false | undefined {
+  if (v === undefined) return undefined
+  if (v === null) return null
+  if (typeof v !== 'object') return false
+  const h = v as Record<string, unknown>
+  const days = Array.isArray(h.days)
+    ? [...new Set(h.days.filter((d): d is number => Number.isInteger(d) && d >= 0 && d <= 6))]
+    : []
+  if (typeof h.from !== 'string' || typeof h.to !== 'string') return false
+  const off = typeof h.offReply === 'string' ? h.offReply.trim().slice(0, 500) : ''
+  const r = { days, from: h.from, to: h.to, ...(off ? { offReply: off } : {}) }
+  return validHours(r) ? r : false
+}
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -79,6 +98,9 @@ export function zaloSnapshot(store: ChannelStore, zalo: ZaloChannel | undefined)
         account: accId(a),
         label: a.label ?? a.name,
         mode: a.mode ?? 'paired',
+        hand: a.hand !== false,
+        hours: a.hours ?? null,
+        skipLabels: a.skipLabels ?? [],
         bot: a.bot,
         id: a.botOpenId ?? '',
         name: a.name,
@@ -199,7 +221,21 @@ export async function handleApi(
         }
         if (body.channel === 'zalo') {
           if (!zalo) return json({ error: 'kênh Zalo chưa bật' }, 400)
-          await zalo.updateAccount(account, patch)
+          const hours = hoursOf(body.hours)
+          if (hours === false) return json({ error: 'giờ trực không hợp lệ' }, 400)
+          await zalo.updateAccount(account, {
+            ...patch,
+            ...(typeof body.hand === 'boolean' ? { hand: body.hand } : {}),
+            ...(hours !== undefined ? { hours } : {}),
+            ...(Array.isArray(body.skipLabels)
+              ? {
+                  skipLabels: (body.skipLabels as unknown[])
+                    .filter((x): x is string => typeof x === 'string' && x.trim() !== '')
+                    .map((x) => x.trim().slice(0, 40))
+                    .slice(0, 20),
+                }
+              : {}),
+          })
         } else await hub.updateAccount(account, patch)
         break
       }

@@ -3,7 +3,7 @@ import type { LiveAgent, SessionPort } from '../hub.js'
 import { zaloThreadKey } from '../store.js'
 import { memStore } from '../store.test.js'
 import { ZALO_LIMITS } from './access.js'
-import { ZaloChannel } from './channel.js'
+import { HAND_MS, PING_MS, ZaloChannel } from './channel.js'
 import {
   ZaloError,
   type ZaloApi,
@@ -25,7 +25,10 @@ const SESSION: ZaloSession = { imei: 'imei-1', userAgent: 'UA', cookie: [{ key: 
 
 /** Zalo giả: ghi lại mọi tin gửi đi, đẩy tin vào như trình nghe. Không gọi mạng. */
 class FakeZalo {
-  sent: { thread: string; isGroup: boolean; text: string }[] = []
+  sent: { thread: string; isGroup: boolean; text: string; mention?: { uid: string; len: number } }[] = []
+  /** Nhãn trên app Zalo. */
+  labelList: { name: string; threads: string[] }[] = []
+  labelReads = 0
   sentIds: string[] = []
   files: { thread: string; filename: string }[] = []
   typed: string[] = []
@@ -55,14 +58,18 @@ class FakeZalo {
     },
     userName: async (id) => this.names[id],
     groupName: async (id) => (id === GROUP ? 'Marketing' : undefined),
-    send: async (thread, isGroup, text) => {
-      this.sent.push({ thread, isGroup, text })
+    send: async (thread, isGroup, text, mention) => {
+      this.sent.push({ thread, isGroup, text, ...(mention ? { mention } : {}) })
       this.sentIds.push(`out${++this.n}`)
       return { messageId: this.sentIds.at(-1)! }
     },
     sendFile: async (thread, _g, _d, filename) => {
       this.files.push({ thread, filename })
       return { messageId: `out${++this.n}` }
+    },
+    labels: async () => {
+      this.labelReads++
+      return this.labelList
     },
     typing: async (thread) => void this.typed.push(thread),
     download: async (url) => {
@@ -690,7 +697,13 @@ describe('kênh Zalo · nhóm', () => {
     expect(sent.content[0]!.text).toBe('[Hoàng Bá Tầu] tóm tắt giúp')
     finishTurn(s, sid, 'Đây là tóm tắt.')
     await settle()
-    expect(s.zalo.sent.at(-1)).toMatchObject({ thread: GROUP, isGroup: true, text: 'Đây là tóm tắt.' })
+    // Câu trả lời trong nhóm @nhắc thật người hỏi.
+    expect(s.zalo.sent.at(-1)).toMatchObject({
+      thread: GROUP,
+      isGroup: true,
+      text: '@Hoàng Bá Tầu Đây là tóm tắt.',
+      mention: { uid: OWNER, len: '@Hoàng Bá Tầu'.length },
+    })
     const n = s.zalo.sent.length
     await s.zalo.group(STRANGER, 'cho hỏi với')
     await settle()
@@ -1014,5 +1027,166 @@ describe('kênh Zalo · GĐ8.7 nhiều tài khoản', () => {
     expect(s.store.zaloAccounts().map((a) => a.account)).toEqual(['acc-bbbbbb'])
     expect(s.store.zaloRoleOf('1', 'acc-aaaaaa')).toBeUndefined()
     expect(s.store.zaloRoleOf('2', 'acc-bbbbbb')).toBe('member')
+  })
+})
+
+describe('kênh Zalo · bán hàng (GĐ8.7 đợt C)', () => {
+  /** Tin khách (người được phép) trong chat riêng; trả mã phiên của cuộc chat. */
+  async function guest(s: Setup, text: string) {
+    await s.zalo.push({ senderId: OTHER, text })
+    await settle()
+    return s.store.thread(zaloThreadKey('aris', OTHER))?.sessionId
+  }
+  /** Chủ tự gõ trên điện thoại trong cuộc chat với khách. */
+  async function ownerTypes(s: Setup, text: string) {
+    await s.zalo.push({ senderId: SELF, threadId: OTHER, fromSelf: true, text })
+    await settle()
+  }
+  const hhmm = (t: number) => {
+    const d = new Date(t)
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  }
+
+  it('nhường tay: chủ tự gõ thì bot im 10 phút, giữ tin khách; hết giờ mà chủ không gõ thêm thì trả lời cả loạt', async () => {
+    const s = await setup()
+    await pair(s, OTHER, 'member')
+    await ownerTypes(s, 'Chào bạn, để mình tư vấn nhé')
+    expect(await guest(s, 'giá bao nhiêu')).toBeUndefined()
+    await guest(s, 'có ship không')
+    expect(s.sessions.agents.size).toBe(0)
+    // Tin đang giữ vẫn nằm trong hàng đợi bền.
+    expect(s.store.zaloInbox()).toHaveLength(2)
+    s.zalo.clock.t += HAND_MS
+    s.channel.releaseDue()
+    await settle()
+    const sid = s.store.thread(zaloThreadKey('aris', OTHER))!.sessionId
+    expect(s.sessions.agents.get(sid)!.inbox).toHaveLength(2)
+  })
+
+  it('nhường tay: chủ gõ thêm trong lúc giữ thì tin đang giữ coi như chủ đã lo, bot không trả lời', async () => {
+    const s = await setup()
+    await pair(s, OTHER, 'member')
+    await ownerTypes(s, 'Chào bạn')
+    await guest(s, 'giá bao nhiêu')
+    await ownerTypes(s, 'Dạ 200 nghìn ạ')
+    expect(s.store.zaloInbox()).toHaveLength(0)
+    s.zalo.clock.t += HAND_MS
+    s.channel.releaseDue()
+    await settle()
+    expect(s.sessions.agents.size).toBe(0)
+  })
+
+  it('nhường tay: chủ gõ khi bot đang soạn thì dừng lượt đó, không gửi câu trả lời cũ', async () => {
+    const s = await setup()
+    await pair(s, OTHER, 'member')
+    const sid = (await guest(s, 'giá bao nhiêu'))!
+    const agent = s.sessions.agents.get(sid)!
+    const msg = agent.inbox.at(-1) as { id: string }
+    s.channel.onSessionEvent(sid, { type: 'turn/start' })
+    s.channel.onSessionEvent(sid, { type: 'user/message', data: { id: msg.id } })
+    agent.status = 'running'
+    const n = s.zalo.sent.length
+    await ownerTypes(s, 'Để mình trả lời')
+    expect(agent.cancelled).toBe(1)
+    s.channel.onSessionEvent(sid, { type: 'turn/end', data: { reason: { kind: 'aborted' } } })
+    await settle()
+    expect(s.zalo.sent).toHaveLength(n)
+  })
+
+  it('tiếng vọng tin aris vừa gửi không phải chủ gõ; tắt nhường tay thì chủ gõ cũng không giữ', async () => {
+    const s = await setup()
+    await pair(s, OTHER, 'member')
+    const sid = (await guest(s, 'chào shop'))!
+    finishTurn(s, sid, 'Chào bạn!')
+    await settle()
+    // Zalo báo lại tin aris vừa gửi (cùng mã tin), rồi một bản không có mã khớp nhưng cùng chữ.
+    await s.zalo.push({ senderId: SELF, threadId: OTHER, fromSelf: true, messageId: s.zalo.sentIds.at(-1)! })
+    await s.zalo.push({ senderId: SELF, threadId: OTHER, fromSelf: true, text: 'Chào bạn!' })
+    await settle()
+    await guest(s, 'cho hỏi giá')
+    expect(s.sessions.agents.get(sid)!.inbox).toHaveLength(2)
+
+    await s.channel.updateAccount('aris', { hand: false })
+    await ownerTypes(s, 'mình gõ tay')
+    await guest(s, 'còn hàng không')
+    expect(s.sessions.agents.get(sid)!.inbox).toHaveLength(3)
+  })
+
+  it('giờ trực: ngoài giờ giữ tin khách, gửi câu ngoài giờ một lần; vào giờ thì trả lời; chủ nhân không bị giữ', async () => {
+    const s = await setup()
+    await pair(s, OWNER)
+    await pair(s, OTHER, 'member')
+    const t = s.zalo.clock.t
+    await s.channel.updateAccount('aris', {
+      hours: {
+        days: [0, 1, 2, 3, 4, 5, 6],
+        from: hhmm(t + 2 * 3_600_000),
+        to: hhmm(t + 4 * 3_600_000),
+        offReply: 'Shop sẽ trả lời trong giờ làm việc.',
+      },
+    })
+    await guest(s, 'giá bao nhiêu')
+    await guest(s, 'có ship không')
+    expect(s.zalo.texts(OTHER).filter((x) => x.startsWith('Shop sẽ'))).toHaveLength(1)
+    expect(s.store.thread(zaloThreadKey('aris', OTHER))).toBeUndefined()
+    await s.zalo.push({ senderId: OWNER, text: 'tóm tắt việc hôm nay' })
+    await settle()
+    expect(s.store.thread(zaloThreadKey('aris', OWNER))).toBeDefined()
+    s.zalo.clock.t = t + 2 * 3_600_000 + 60_000
+    s.channel.releaseDue()
+    await settle()
+    const sid = s.store.thread(zaloThreadKey('aris', OTHER))!.sessionId
+    expect(s.sessions.agents.get(sid)!.inbox).toHaveLength(2)
+    await expect(
+      s.channel.updateAccount('aris', { hours: { days: [], from: '08:00', to: '17:00' } }),
+    ).rejects.toThrow()
+  })
+
+  it('nhãn bỏ qua: cuộc chat mang nhãn thì bot không trả lời; đọc lại nhãn mỗi 5 phút', async () => {
+    const s = await setup()
+    await pair(s, OTHER, 'member')
+    s.zalo.labelList = [{ name: 'Khách VIP', threads: [OTHER] }]
+    await s.channel.updateAccount('aris', { skipLabels: ['khách vip'] })
+    expect(await guest(s, 'giá bao nhiêu')).toBeUndefined()
+    await guest(s, 'còn hàng không')
+    expect(s.zalo.labelReads).toBe(1)
+    s.zalo.labelList = []
+    s.zalo.clock.t += 5 * 60_000
+    expect(await guest(s, 'cho hỏi')).toBeDefined()
+    expect(s.zalo.labelReads).toBe(2)
+  })
+
+  it('gặp nhân viên: báo chủ, trả một câu, rồi bot im cuộc chat đó', async () => {
+    const s = await setup()
+    await pair(s, OTHER, 'member')
+    expect(await guest(s, 'cho mình gặp nhân viên tư vấn')).toBeUndefined()
+    expect(s.notices.at(-1)).toContain('muốn gặp người thật')
+    expect(s.zalo.texts(OTHER).at(-1)).toBe('Đã báo người phụ trách, sẽ có người trả lời sớm.')
+    const n = s.zalo.sent.length
+    expect(await guest(s, 'alo')).toBeUndefined()
+    expect(s.zalo.sent).toHaveLength(n)
+  })
+
+  it('công cụ im lặng: lượt đó không gửi gì; báo chủ: nhiều nhất 10 phút một lần mỗi cuộc chat', async () => {
+    const s = await setup()
+    await pair(s, OTHER, 'member')
+    const sid = (await guest(s, 'ok cảm ơn'))!
+    const msg = s.sessions.agents.get(sid)!.inbox.at(-1) as { id: string }
+    s.channel.onSessionEvent(sid, { type: 'turn/start' })
+    s.channel.onSessionEvent(sid, { type: 'user/message', data: { id: msg.id } })
+    expect(s.channel.silence('khác')).toBe(false)
+    expect(s.channel.silence(sid)).toBe(true)
+    expect(await s.channel.ping(sid, 'Khách hỏi giá sỉ 500 cái')).toBe('Đã báo chủ.')
+    expect(s.notices.at(-1)).toBe('Zalo Tài khoản phụ, chat với Thơ: Khách hỏi giá sỉ 500 cái')
+    expect(await s.channel.ping(sid, 'lần nữa')).toContain('chưa báo lại')
+    const n = s.zalo.sent.length
+    s.channel.onSessionEvent(sid, {
+      type: 'assistant/message',
+      data: { message: { content: [{ type: 'text', text: 'Không có gì!' }] } },
+    })
+    s.channel.onSessionEvent(sid, { type: 'turn/end', data: { reason: { kind: 'completed' } } })
+    await settle()
+    expect(s.zalo.sent).toHaveLength(n)
+    expect(PING_MS).toBe(10 * 60_000)
   })
 })

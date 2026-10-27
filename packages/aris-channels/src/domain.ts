@@ -45,6 +45,22 @@ export const botRecord = z.object({
   label: z.string().optional(),
   /** Ai được bot trả lời trong chat riêng: `paired` (mặc định, chỉ người đã ghép đôi) hay `guests` (mọi người là khách). */
   mode: z.enum(['paired', 'guests']).optional(),
+  /** Zalo: nhường tay cho chủ (mặc định bật): chủ tự gõ trả lời khách trên điện thoại thì bot im cuộc chat đó một lúc. */
+  hand: z.boolean().optional(),
+  /**
+   * Zalo: giờ trực. `days` là thứ trong tuần (0 = Chủ nhật), `from`/`to` dạng `HH:MM` theo giờ máy. Ngoài giờ thì giữ
+   * tin của người không phải chủ tới lúc vào giờ; `offReply` (nếu có) gửi một lần mỗi đợt ngoài giờ.
+   */
+  hours: z
+    .object({
+      days: z.array(z.number().int().min(0).max(6)),
+      from: z.string(),
+      to: z.string(),
+      offReply: z.string().optional(),
+    })
+    .optional(),
+  /** Zalo: bỏ qua các cuộc chat có nhãn này (tên nhãn đặt trên app Zalo). */
+  skipLabels: z.array(z.string()).optional(),
   /** Zalo: tài khoản Zalo của bot này (khoá bản ghi `zalo-<bot>`; `tokenRef` trỏ dữ liệu đăng nhập trong kho khoá, `botOpenId` là mã Zalo của tài khoản). */
   avatar: z.string().optional(),
 })
@@ -161,6 +177,8 @@ export const outboxRecord = z.object({
   replyRef: z.string().optional(),
   /** Zalo: `chatRef` là mã nhóm Zalo (không phải mã người). */
   isGroup: z.boolean().optional(),
+  /** Zalo: @nhắc thật người hỏi ở đầu phần đầu tiên (trong nhóm). */
+  mention: z.object({ uid: z.string(), len: z.number().int() }).optional(),
 })
 export type OutboxRecord = z.infer<typeof outboxRecord>
 

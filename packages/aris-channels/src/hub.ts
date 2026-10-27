@@ -7,6 +7,7 @@ import { commandAllowed, decide, type Trust } from './access.js'
 import { NOT_OWNER_NOTE, T } from './copy.js'
 import type { BotRecord, InboxRecord, OutboxRecord } from './domain.js'
 import { sttNotReady, textToVoice, transcribe, type SpeechToText } from './media.js'
+import { wantsHuman } from './hours.js'
 import { accId, ChannelStore, keyNum, newAccountId, normalizeCode, threadKey } from './store.js'
 import { TelegramApi, TelegramError, type Fetch } from './telegram/api.js'
 import {
@@ -294,6 +295,10 @@ export interface HubDeps {
 }
 
 /** Câu trả lời cắt ở chừng này ký tự, theo đoạn rồi dòng rồi câu (GĐ8.7 đợt A). */
+/** Khách xin gặp người thật: bot im cuộc chat chừng này (tính từ tin cuối của khách). */
+const HUMAN_MS = 2 * 3_600_000
+/** Công cụ "báo chủ": nhiều nhất một lần mỗi cuộc chat trong chừng này. */
+const PING_MS = 10 * 60_000
 export const REPLY_CHUNK = 1500
 /** Một lần `getUpdates` quá chừng này chưa về (mạng chết im) thì bỏ và gọi lại. */
 const POLL_DEADLINE_MS = 45_000
@@ -394,6 +399,12 @@ export class ChannelHub {
   private readonly lastAt = new Map<string, number>()
   /** Phiên có lượt bị dừng vì khách nhắn thêm: lượt đó không gửi gì ra. */
   private readonly superseded = new Set<string>()
+  /** Cuộc chat khách đã xin gặp người thật: bot im tới giờ này (theo khoá cuộc chat). */
+  private readonly humans = new Map<string, number>()
+  /** Lần "báo chủ" cuối, theo khoá cuộc chat. */
+  private readonly pinged = new Map<string, number>()
+  /** Phiên mà model đã chọn im lặng cho lượt đang chạy. */
+  private readonly silenced = new Set<string>()
 
   constructor(private readonly d: HubDeps) {
     this.now = d.now ?? Date.now
@@ -786,6 +797,21 @@ export class ChannelHub {
       return false
     }
 
+    // Khách xin gặp người thật: báo chủ, trả một câu, rồi bot im cuộc chat này `HUMAN_MS` (tính từ tin cuối của khách).
+    if (d.trust !== 'owner') {
+      const until = this.humans.get(key)
+      if (until !== undefined && until > this.now()) {
+        this.humans.set(key, this.now() + HUMAN_MS)
+        return false
+      }
+      if (wantsHuman(text)) {
+        this.humans.set(key, this.now() + HUMAN_MS)
+        await this.toOwners(rt, T.human(fullName(from), from.username, text))
+        await this.reply(api, m, T.humanAck)
+        return false
+      }
+    }
+
     // Gửi vào bộ não (bản vẽ 7.5), chỉ người dùng chính trong chat riêng: chuyển tiếp thì hỏi lại;
     // tệp, ảnh, ghi âm kèm chữ "lưu", hay trả lời "lưu" vào một tin, thì lưu luôn.
     if (d.trust === 'owner' && m.chat.type === 'private' && this.brainPort) {
@@ -1092,6 +1118,8 @@ export class ChannelHub {
     if (r.reason.kind === 'aborted' && this.superseded.delete(r.sessionId)) return
     const ok = r.reason.kind === 'completed'
     if (ok) this.superseded.delete(r.sessionId)
+    // Model chọn im lặng (công cụ "im lặng"): không gửi gì.
+    if (this.silenced.delete(r.sessionId)) return
     for (const p of r.ours)
       void rt?.api.setReaction(p.chatId, p.tgMessageId, ok ? '👍' : '😢').catch(() => undefined)
     // Các đoạn theo người nói: chữ của bot của phiên gộp lại; câu trả lời chuyển giao là đoạn riêng.
@@ -2287,6 +2315,32 @@ export class ChannelHub {
   // ======================================================================================
 
   /** Gửi tới nơi nhận (`/sethome`) của bot; không có thì gửi người dùng. */
+  /** Công cụ "im lặng": lượt đang chạy của phiên không gửi gì ra. `false` khi phiên không thuộc Telegram. */
+  silence(sessionId: string): boolean {
+    if (!this.tracker.active(sessionId).length) return false
+    this.silenced.add(sessionId)
+    return true
+  }
+
+  /**
+   * Công cụ "báo chủ": gửi chủ nhân một dòng kèm tên người đang chat, nhiều nhất một lần mỗi cuộc chat trong 10 phút.
+   * `undefined` khi phiên không thuộc Telegram.
+   */
+  async ping(sessionId: string, text: string): Promise<string | undefined> {
+    const last = this.tracker.active(sessionId).at(-1)
+    if (!last) return undefined
+    const prev = this.pinged.get(last.threadKey)
+    if (prev !== undefined && this.now() - prev < PING_MS) return 'Đã báo chủ ít phút trước, chưa báo lại.'
+    this.pinged.set(last.threadKey, this.now())
+    const rt = this.runtimes.get(last.bot)
+    if (!rt) return 'Bot chưa kết nối Telegram.'
+    const who = last.group
+      ? (this.store.group(last.chatId, last.bot)?.title ?? 'nhóm')
+      : (this.store.people().find((p) => p.userId === last.chatId)?.name ?? String(last.chatId))
+    await this.toOwners(rt, T.ping(who, text))
+    return 'Đã báo chủ.'
+  }
+
   async sendHome(bot: string, markdown: string): Promise<string> {
     // `bot` là mã bot (hay mã tài khoản): gửi bằng tài khoản chính của bot đó.
     const rt = this.runtimes.get(bot) ?? this.rtOfBot(bot)

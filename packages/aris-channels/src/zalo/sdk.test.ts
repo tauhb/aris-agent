@@ -53,6 +53,11 @@ describe('thư viện zca-js: chuẩn hoá tin vào', () => {
     expect(JSON.parse(toInbound(m).content)).toEqual({ href: 'https://c/a.jpg', title: 'x' })
   })
 
+  it('tin chính tài khoản gửi (chủ tự gõ trên điện thoại) mang dấu fromSelf, nơi trả lời là người nhận', () => {
+    const m = new UserMessage('1001', raw({ uidFrom: '0', idTo: '2001' }))
+    expect(toInbound(m)).toMatchObject({ threadId: '2001', senderId: '1001', fromSelf: true })
+  })
+
   it('giờ tin hỏng thì lấy giờ hiện tại', () => {
     const before = Date.now()
     expect(toInbound(new UserMessage('1001', raw({ ts: 'x' }))).createTime).toBeGreaterThanOrEqual(before)

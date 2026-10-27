@@ -51,6 +51,7 @@ export function toInbound(m: Message): ZaloInbound {
         }))
       : [],
     createTime: Number(d.ts) || Date.now(),
+    ...(m.isSelf ? { fromSelf: true } : {}),
   }
 }
 
@@ -97,13 +98,22 @@ class SdkApi implements ZaloApi {
     }
   }
 
-  async send(threadId: string, isGroup: boolean, text: string) {
+  async send(threadId: string, isGroup: boolean, text: string, mention?: { uid: string; len: number }) {
     try {
-      const r = await this.api.sendMessage(text, threadId, isGroup ? ThreadType.Group : ThreadType.User)
+      const r = await this.api.sendMessage(
+        mention && isGroup ? { msg: text, mentions: [{ pos: 0, uid: mention.uid, len: mention.len }] } : text,
+        threadId,
+        isGroup ? ThreadType.Group : ThreadType.User,
+      )
       return { messageId: String(r.message?.msgId ?? '') }
     } catch (e) {
       throw new ZaloError(errText(e))
     }
+  }
+
+  async labels() {
+    const r = await this.api.getLabels()
+    return r.labelData.map((l) => ({ name: l.text, threads: l.conversations.map(String) }))
   }
 
   async sendFile(threadId: string, isGroup: boolean, data: Uint8Array, filename: string) {
@@ -156,9 +166,11 @@ class SdkListener implements ZaloListener {
     const self = this.api.getOwnId()
     l.on('connected', () => h.onConnected())
     l.on('message', (m) => {
-      // Tin do chính tài khoản gửi (kể cả tin aris vừa gửi) thì bỏ ngay từ cửa vào.
-      if (m.isSelf || String(m.data.uidFrom) === self) return
-      void Promise.resolve(h.onMessage(toInbound(m))).catch((e: unknown) =>
+      // Tin do chính tài khoản gửi (chủ tự gõ, hay tin aris vừa gửi) vẫn chuyển vào, có dấu `fromSelf`: kênh dùng nó để
+      // nhường tay cho chủ và tự bỏ tin của chính aris.
+      const ev = toInbound(m)
+      if (String(m.data.uidFrom) === self || String(m.data.uidFrom) === '0') ev.fromSelf = true
+      void Promise.resolve(h.onMessage(ev)).catch((e: unknown) =>
         this.log.warn('aris-channels: zalo xử lý tin: %s', errText(e)),
       )
     })
@@ -242,7 +254,8 @@ export const sdkConnector: ZaloConnector = {
   loginQR: (h) => loginQR(h),
   async open(session, log) {
     try {
-      const api = await new Zalo({ selfListen: false, checkUpdate: false, logging: false }).login(
+      // `selfListen`: nhận cả tin chính tài khoản gửi, để biết khi nào chủ tự trả lời khách.
+      const api = await new Zalo({ selfListen: true, checkUpdate: false, logging: false }).login(
         credentials(session),
       )
       return { api: new SdkApi(api), listener: new SdkListener(api, log) }

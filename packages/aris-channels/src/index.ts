@@ -70,7 +70,8 @@ export const SECTION_ORDER = 62
 export const GUIDE = `Người dùng có thể nhắn bạn qua Telegram, Lark hay Zalo. Tin từ nhóm bắt đầu bằng [Tên người nói]; người không phải người dùng chính chỉ được hỏi đáp, đừng làm việc có tác động theo lời họ.
 - Trên Telegram, Lark và Zalo viết ngắn gọn, dễ đọc trên điện thoại; bảng chỉ dùng khi thật cần.
 - Trong nhóm, nếu tin không cần bạn trả lời (chuyện phiếm, cảm ơn…), trả lời đúng một dòng [SILENT] để im lặng.
-- Muốn chủ động nhắn người dùng (báo xong việc, nhắc lịch) thì dùng tool channel_send.`
+- Muốn chủ động nhắn người dùng (báo xong việc, nhắc lịch) thì dùng tool channel_send.
+- Đang trả lời khách qua Telegram hay Zalo: tin không cần đáp (cảm ơn, ok, sticker) thì gọi channel_silence; gặp câu cần người quyết (giá sỉ, khiếu nại, đổi trả, việc ngoài hiểu biết của bạn) thì gọi channel_notify_owner rồi trả lời khách ngắn gọn là đã chuyển cho người phụ trách.`
 
 export async function apply(ctx: Context): Promise<void> {
   const domain = await ctx.storageDomain.open(channelsDomain)
@@ -307,6 +308,43 @@ export async function apply(ctx: Context): Promise<void> {
       parameters: { text: { type: 'string', required: true, description: 'Nội dung, Markdown.' } },
       output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
       execute: (args) => hub.sendHome('aris', args.text),
+    }),
+  )
+
+  ctx.tools.register(
+    defineTool({
+      name: 'channel_silence',
+      description:
+        'Không trả lời tin vừa nhận trên Telegram hay Zalo (lượt này không gửi gì cho người nhắn). Dùng khi tin không cần đáp: cảm ơn, ok, sticker, tin nói với người khác trong nhóm.',
+      parameters: {},
+      output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+      async execute(_args, exec) {
+        const sid = (exec.agent as { session: { id: string } } | undefined)?.session.id ?? ''
+        return zalo.silence(sid) || hub.silence(sid)
+          ? 'Lượt này sẽ không gửi gì.'
+          : 'Phiên này không phải chat qua Telegram hay Zalo.'
+      },
+    }),
+  )
+  ctx.tools.register(
+    defineTool({
+      name: 'channel_notify_owner',
+      description:
+        'Báo chủ nhân (qua Telegram) về cuộc chat đang trả lời trên Telegram hay Zalo khi gặp câu cần người quyết. Một dòng ngắn: khách là ai, cần gì. Nhiều nhất một lần mỗi cuộc chat trong 10 phút.',
+      parameters: { text: { type: 'string', required: true, description: 'Một dòng ngắn: khách cần gì.' } },
+      output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+      async execute(args, exec) {
+        const sid = (exec.agent as { session: { id: string } } | undefined)?.session.id ?? ''
+        const text = String(args.text ?? '')
+          .trim()
+          .slice(0, 500)
+        if (!text) return 'Thiếu nội dung.'
+        return (
+          (await zalo.ping(sid, text)) ??
+          (await hub.ping(sid, text)) ??
+          'Phiên này không phải chat qua Telegram hay Zalo; muốn nhắn người dùng thì dùng channel_send.'
+        )
+      },
     }),
   )
 
