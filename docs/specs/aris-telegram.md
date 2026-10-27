@@ -119,6 +119,17 @@ Kênh nghe hộp duyệt chung của `@aris/commander` (`arisApprovals`): yêu c
 - **Gom tin dồn dập**: tin của người không phải chủ đợi cuộc chat im 5 giây rồi mới vào phiên (lệnh, mã ghép đôi, nút bấm, tin của chủ không đợi). Người không phải chủ nhắn thêm khi bot đang soạn thì dừng lượt cũ (lượt đó không gửi gì ra), lượt mới trả lời cả loạt; chủ vẫn theo cài đặt "Khi bot đang làm mà {you} nhắn thêm".
 - Mỗi lần `getUpdates` có hạn chót 45 giây: mạng chết im thì bỏ và gọi lại (thử lại 1 giây, gấp đôi, tối đa 30 giây) thay vì treo mãi.
 
+## GĐ8.7 đợt B, C, D: nhiều tài khoản, gặp nhân viên, chỉ trả lời theo tài liệu
+
+- **Một bot nhiều tài khoản Telegram.** Tài khoản kênh là bản ghi riêng: mã `acc-…` (tài khoản có trước GĐ8.7 giữ mã là mã bot, không phải chuyển dữ liệu), tên (`label`), bot trả lời (`bot`, đổi được), ai được trả lời (`mode`). Thêm tài khoản thứ hai cho một bot: `connect { bot, token, account: 'new', label? }`; token lưu `TELEGRAM_<MÃ TÀI KHOẢN>_BOT_TOKEN`. Đổi: `account { channel: 'telegram', account, bot?, label?, mode?, docs? }`; gỡ: `disconnect { account }`.
+- **Chủ nhân dùng chung** mọi tài khoản; người được phép, nhóm (bật/tắt, lời nhắc), mã ghép đôi và phiên chat **theo tài khoản** (khoá `tg-<tài khoản>-<mã người>`; bản ghi cũ không có tài khoản thì dùng chung). Mã của tài khoản A nhắn vào B được trả lời "Mã này dành cho tài khoản khác."
+- **Mọi người nhắn riêng là khách** (`mode: 'guests'`): người lạ nhắn riêng thành khách (chỉ hỏi đáp) thay vì bị im lặng.
+- **Gặp nhân viên**: khách hay người được phép gõ "gặp nhân viên", "người thật", "/nhanvien"… thì bot trả một câu, báo chủ nhân qua Telegram, rồi im cuộc chat đó 2 giờ (tính từ tin cuối của khách).
+- **Công cụ** `channel_silence` (lượt này không gửi gì) và `channel_notify_owner` (báo chủ, 10 phút một lần mỗi cuộc chat), dùng chung với Zalo.
+- **Chỉ trả lời theo tài liệu** (theo tài khoản, áp cho khách): như Zalo, xem [aris-zalo.md](aris-zalo.md#chỉ-trả-lời-theo-tài-liệu-gđ87-đợt-d).
+- Không làm "nhường tay cho chủ" trên Telegram (không dùng Telegram Business, người dùng chốt 27/10).
+- Trang 6.3 vẽ lại theo `design/canvas/KenhTaiKhoan.dc.html`: danh sách tài khoản theo kênh bên trái, chi tiết tài khoản (tab Cài đặt, Trả lời theo tài liệu) bên phải, hộp "+ Thêm tài khoản" theo `KenhThemTaiKhoan.dc.html`. Hồ sơ bot có dòng "Kênh bot đang trả lời".
+
 ## Để sau
 
 Webhook thay long-polling (khi chạy trên server), tệp lớn hơn 20 MB (Bot API cục bộ), chủ đề riêng trong chat 1-1 (Bot API 9.4). Lark làm ở đợt 7d; Zalo cá nhân làm ở GĐ8.4, xem [aris-zalo.md](aris-zalo.md).
