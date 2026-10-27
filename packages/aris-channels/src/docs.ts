@@ -1,5 +1,5 @@
 /**
- * Chỉ trả lời theo tài liệu (GĐ8.7 đợt D). Bật theo tài khoản kênh: khi người không phải chủ nhắn, phiên chỉ được tra
+ * Chỉ trả lời theo tài liệu (GĐ8.7 đợt D). Bật theo tài khoản kênh: khi khách (chưa ghép đôi) nhắn, phiên chỉ được tra
  * `brain_search` / `brain_read` trong các thư mục nguồn của bộ não (@aris/brain giới hạn), công cụ khác bị chặn (trừ
  * im lặng, báo chủ), và lượt không tra thấy gì trong nguồn thì câu trả lời được thay bằng câu "chưa có thông tin".
  *

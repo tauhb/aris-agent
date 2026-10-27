@@ -1208,33 +1208,38 @@ describe('kênh Zalo · chỉ trả lời theo tài liệu (GĐ8.7 đợt D)', (
     return { port, scopes, hits }
   }
 
-  it('khách hỏi: phiên được giới hạn nguồn và dặn; tra thấy thì giữ câu trả lời, không thấy thì thay và báo chủ; chủ hỏi thì không giới hạn', async () => {
+  it('khách hỏi: phiên được giới hạn nguồn và dặn; tra thấy thì giữ câu trả lời, không thấy thì thay và báo chủ; chủ và người đã ghép đôi không bị giới hạn', async () => {
     const b = brain()
     const s = await setup({ docs: new DocsGate(() => b.port) })
     await pair(s, OWNER)
     await pair(s, OTHER, 'member')
+    // Mọi người nhắn riêng là khách: người lạ thành khách, chế độ tài liệu áp cho khách.
     await s.channel.updateAccount('aris', {
+      mode: 'guests',
       docs: { on: true, folders: ['cong-ty/wiki/san-pham'], noInfo: 'Chưa có thông tin ạ.' },
     })
-    const sid = (await (async () => {
-      await s.zalo.push({ senderId: OTHER, text: 'khoá AI giá bao nhiêu' })
-      await settle()
-      return s.store.thread(zaloThreadKey('aris', OTHER))!.sessionId
-    })())!
+    await s.zalo.push({ senderId: STRANGER, text: 'khoá AI giá bao nhiêu' })
+    await settle()
+    const sid = s.store.thread(zaloThreadKey('aris', STRANGER))!.sessionId
     expect(b.scopes.get(sid)).toEqual(['cong-ty/wiki/san-pham'])
     b.hits.set(sid, 1)
     finishTurn(s, sid, 'Khoá AI cơ bản giá 2 triệu.')
     await settle()
-    expect(s.zalo.texts(OTHER).at(-1)).toBe('Khoá AI cơ bản giá 2 triệu.')
+    expect(s.zalo.texts(STRANGER).at(-1)).toBe('Khoá AI cơ bản giá 2 triệu.')
     // Xong lượt thì bỏ giới hạn.
     expect(b.scopes.get(sid)).toBeUndefined()
 
-    await s.zalo.push({ senderId: OTHER, text: 'có học bổng không' })
+    await s.zalo.push({ senderId: STRANGER, text: 'có học bổng không' })
     await settle()
     finishTurn(s, sid, 'Có học bổng 50% (bịa).')
     await settle()
-    expect(s.zalo.texts(OTHER).at(-1)).toBe('Chưa có thông tin ạ.')
+    expect(s.zalo.texts(STRANGER).at(-1)).toBe('Chưa có thông tin ạ.')
     expect(s.notices.at(-1)).toContain('chưa có thông tin')
+
+    // Người đã ghép đôi không bị giới hạn.
+    await s.zalo.push({ senderId: OTHER, text: 'giá sỉ thế nào' })
+    await settle()
+    expect(b.scopes.has(s.store.thread(zaloThreadKey('aris', OTHER))!.sessionId)).toBe(false)
 
     await s.zalo.push({ senderId: OWNER, text: 'tóm tắt việc' })
     await settle()

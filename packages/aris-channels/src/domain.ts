@@ -60,7 +60,7 @@ export const botRecord = z.object({
     })
     .optional(),
   /**
-   * Chỉ trả lời theo tài liệu (GĐ8.7 đợt D): với người không phải chủ, bot chỉ tra trong các thư mục nguồn của bộ não;
+   * Chỉ trả lời theo tài liệu (GĐ8.7 đợt D): với khách (chưa ghép đôi), bot chỉ tra trong các thư mục nguồn của bộ não;
    * không thấy thì trả `noInfo`.
    */
   docs: z.object({ on: z.boolean(), folders: z.array(z.string()), noInfo: z.string().optional() }).optional(),

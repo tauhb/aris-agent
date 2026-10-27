@@ -995,7 +995,8 @@ export class ChannelHub {
         ),
       )
     const acc = this.store.bot(rt.id)
-    if (trust !== 'owner' && this.d.docs && docsOn(acc?.docs))
+    // Chỉ khách; chủ nhân và người đã ghép đôi không bị giới hạn.
+    if (trust === 'guest' && this.d.docs && docsOn(acc?.docs))
       agent.inject(
         this.d.sessions.notice(this.d.docs.begin(agent.session.id, acc.docs), 'Chỉ trả lời theo tài liệu'),
       )

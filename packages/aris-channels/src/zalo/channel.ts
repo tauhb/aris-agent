@@ -1156,7 +1156,8 @@ export class ZaloChannel implements ChannelPeer {
           'Lời nhắc riêng của nhóm',
         ),
       )
-    if (trust !== 'owner' && this.d.docs && docsOn(rt.rec.docs))
+    // Chỉ khách; chủ nhân và người đã ghép đôi không bị giới hạn.
+    if (trust === 'guest' && this.d.docs && docsOn(rt.rec.docs))
       agent.inject(
         this.d.sessions.notice(this.d.docs.begin(agent.session.id, rt.rec.docs), 'Chỉ trả lời theo tài liệu'),
       )
