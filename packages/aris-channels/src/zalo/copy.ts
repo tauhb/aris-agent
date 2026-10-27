@@ -78,6 +78,8 @@ export const ZN = {
     `Zalo ${account}: ${name} muốn gặp người thật: «${excerpt}»\n\nBot im cuộc chat này 2 giờ. Trả lời khách ngay trên app Zalo.`,
   /** Bot gọi công cụ "báo chủ" khi gặp câu cần người quyết. */
   ping: (account: string, name: string, text: string) => `Zalo ${account}, chat với ${name}: ${text}`,
+  /** Chế độ chỉ theo tài liệu không tìm thấy thông tin. */
+  noInfo: (ask: string) => `Bot chưa có thông tin trong tài liệu nguồn để trả lời${ask ? `: «${ask}»` : ''}.`,
   dailyLimit: (limit: number) =>
     `Bot đã gửi ${limit} tin Zalo hôm nay, chạm giới hạn ngày nên dừng gửi tới hết ngày để tránh bị khoá tài khoản.`,
 }

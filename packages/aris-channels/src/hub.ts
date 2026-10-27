@@ -7,6 +7,7 @@ import { commandAllowed, decide, type Trust } from './access.js'
 import { NOT_OWNER_NOTE, T } from './copy.js'
 import type { BotRecord, InboxRecord, OutboxRecord } from './domain.js'
 import { sttNotReady, textToVoice, transcribe, type SpeechToText } from './media.js'
+import { docsOn, type DocsGate } from './docs.js'
 import { wantsHuman } from './hours.js'
 import { accId, ChannelStore, keyNum, newAccountId, normalizeCode, threadKey } from './store.js'
 import { TelegramApi, TelegramError, type Fetch } from './telegram/api.js'
@@ -287,6 +288,8 @@ export interface HubDeps {
   media?: () => MediaPort | undefined
   /** aris đang dừng khẩn cấp (@aris/guard): tin thường chỉ nhận câu báo, lệnh vẫn chạy. */
   stopped?: () => boolean
+  /** Chỉ trả lời theo tài liệu (GĐ8.7 đợt D); không có thì tắt. */
+  docs?: DocsGate | undefined
   /** Gom tin dồn dập của người không phải chủ (mặc định 5 giây; kiểm thử đặt 0). */
   gatherMs?: number
   /** Nhịp nghỉ giữa các phần của một câu trả lời dài (mặc định 0,6 giây; kiểm thử đặt 0). */
@@ -558,7 +561,7 @@ export class ChannelHub {
   }
 
   /** Đổi bot trả lời, tên, chế độ của một tài khoản (không đổi token). */
-  async updateAccount(account: string, patch: { bot?: string; label?: string; mode?: 'paired' | 'guests' }) {
+  async updateAccount(account: string, patch: Partial<Pick<BotRecord, 'bot' | 'label' | 'mode' | 'docs'>>) {
     const cur = this.store.bot(account)
     if (!cur) throw new Error('không có tài khoản này')
     const next: BotRecord = { ...cur, ...patch }
@@ -991,6 +994,11 @@ export class ChannelHub {
           'Lời nhắc riêng của nhóm',
         ),
       )
+    const acc = this.store.bot(rt.id)
+    if (trust !== 'owner' && this.d.docs && docsOn(acc?.docs))
+      agent.inject(
+        this.d.sessions.notice(this.d.docs.begin(agent.session.id, acc.docs), 'Chỉ trả lời theo tài liệu'),
+      )
     const message = this.d.sessions.message(content)
     const pending: Pending = {
       messageId: message.id,
@@ -1118,8 +1126,15 @@ export class ChannelHub {
     if (r.reason.kind === 'aborted' && this.superseded.delete(r.sessionId)) return
     const ok = r.reason.kind === 'completed'
     if (ok) this.superseded.delete(r.sessionId)
+    // Chỉ trả lời theo tài liệu: lượt không tra thấy gì trong nguồn thì thay bằng câu "chưa có thông tin" và báo chủ.
+    const noInfo = this.d.docs?.end(r.sessionId)
     // Model chọn im lặng (công cụ "im lặng"): không gửi gì.
     if (this.silenced.delete(r.sessionId)) return
+    if (noInfo !== undefined && ok) {
+      await this.pingLane(last, T.noInfo).catch(() => undefined)
+      await this.send(last, first, noInfo, last.bot)
+      return
+    }
     for (const p of r.ours)
       void rt?.api.setReaction(p.chatId, p.tgMessageId, ok ? '👍' : '😢').catch(() => undefined)
     // Các đoạn theo người nói: chữ của bot của phiên gộp lại; câu trả lời chuyển giao là đoạn riêng.
@@ -2328,7 +2343,10 @@ export class ChannelHub {
    */
   async ping(sessionId: string, text: string): Promise<string | undefined> {
     const last = this.tracker.active(sessionId).at(-1)
-    if (!last) return undefined
+    return last ? this.pingLane(last, text) : undefined
+  }
+
+  private async pingLane(last: Pending, text: string): Promise<string> {
     const prev = this.pinged.get(last.threadKey)
     if (prev !== undefined && this.now() - prev < PING_MS) return 'Đã báo chủ ít phút trước, chưa báo lại.'
     this.pinged.set(last.threadKey, this.now())

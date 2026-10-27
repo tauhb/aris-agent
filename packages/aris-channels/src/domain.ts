@@ -59,6 +59,11 @@ export const botRecord = z.object({
       offReply: z.string().optional(),
     })
     .optional(),
+  /**
+   * Chỉ trả lời theo tài liệu (GĐ8.7 đợt D): với người không phải chủ, bot chỉ tra trong các thư mục nguồn của bộ não;
+   * không thấy thì trả `noInfo`.
+   */
+  docs: z.object({ on: z.boolean(), folders: z.array(z.string()), noInfo: z.string().optional() }).optional(),
   /** Zalo: bỏ qua các cuộc chat có nhãn này (tên nhãn đặt trên app Zalo). */
   skipLabels: z.array(z.string()).optional(),
   /** Zalo: tài khoản Zalo của bot này (khoá bản ghi `zalo-<bot>`; `tokenRef` trỏ dữ liệu đăng nhập trong kho khoá, `botOpenId` là mã Zalo của tài khoản). */

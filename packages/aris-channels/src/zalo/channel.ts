@@ -22,6 +22,7 @@ import type {
   MediaPort,
   SessionPort,
 } from '../hub.js'
+import { docsOn, type DocsGate } from '../docs.js'
 import { isOpen, nextOpen, validHours, wantsHuman } from '../hours.js'
 import { sttNotReady, transcribe, type SpeechToText } from '../media.js'
 import { accId, ChannelStore, newAccountId, normalizeCode, zaloKey, zaloThreadKey } from '../store.js'
@@ -51,6 +52,8 @@ export interface ZaloPending extends PendingBase {
   /** Người hỏi (để @nhắc thật khi trả lời trong nhóm). */
   senderId?: string
   senderName?: string
+  /** Trích câu hỏi (để báo chủ khi không có thông tin). */
+  ask?: string
 }
 
 export interface ZaloDeps {
@@ -70,6 +73,8 @@ export interface ZaloDeps {
   media?: () => MediaPort | undefined
   /** aris đang dừng khẩn cấp (@aris/guard): tin thường chỉ nhận câu báo, lệnh vẫn chạy. */
   stopped?: () => boolean
+  /** Chỉ trả lời theo tài liệu (GĐ8.7 đợt D); không có thì tắt. */
+  docs?: DocsGate | undefined
   /** Báo chủ nhân qua kênh khác (Telegram), vì Zalo có thể đang mất kết nối hay là nơi bị hạn chế gửi. */
   notify?: (markdown: string) => Promise<unknown>
   /** Chờ trước lần thử lại đầu khi mất kết nối (mặc định 2 phút, gấp đôi mỗi lần, tối đa 15 lần số đó = 30 phút). */
@@ -92,6 +97,8 @@ export interface ZaloAccountStatus {
   hours: BotRecord['hours'] | null
   /** Tên các nhãn Zalo bot bỏ qua. */
   skipLabels: string[]
+  /** Chỉ trả lời theo tài liệu; `null` là chưa đặt. */
+  docs: BotRecord['docs'] | null
   bot: string
   /** Mã Zalo của tài khoản. */
   id: string
@@ -284,6 +291,7 @@ export class ZaloChannel implements ChannelPeer {
         hand: rec.hand !== false,
         hours: rec.hours ?? null,
         skipLabels: rec.skipLabels ?? [],
+        docs: rec.docs ?? null,
         bot: rec.bot,
         id: rec.botOpenId ?? '',
         name: rec.name,
@@ -442,7 +450,7 @@ export class ZaloChannel implements ChannelPeer {
   /** Đổi bot trả lời, tên, chế độ của một tài khoản. */
   async updateAccount(
     account: string,
-    patch: Partial<Pick<BotRecord, 'bot' | 'label' | 'mode' | 'hand' | 'skipLabels'>> & {
+    patch: Partial<Pick<BotRecord, 'bot' | 'label' | 'mode' | 'hand' | 'skipLabels' | 'docs'>> & {
       /** `null`: bỏ giờ trực (trực cả ngày). */
       hours?: BotRecord['hours'] | null
     },
@@ -746,6 +754,18 @@ export class ZaloChannel implements ChannelPeer {
     for (const r of h.held) this.route(r)
   }
 
+  /** Tên các nhãn của tài khoản (đọc thẳng từ Zalo, cho giao diện chọn nhãn bỏ qua); chưa kết nối thì rỗng. */
+  async labelNames(account: string): Promise<string[]> {
+    const rt = this.apps.get(account)
+    if (!rt) return []
+    try {
+      return (await rt.api.labels()).map((l) => l.name)
+    } catch (e) {
+      this.d.logger.warn('aris-channels: zalo %s đọc nhãn: %s', account, msg(e))
+      return []
+    }
+  }
+
   /** Cuộc chat mang nhãn bỏ qua không (đọc lại nhãn mỗi `LABELS_MS`; đọc lỗi thì dùng bản cũ). */
   private async skipped(rt: ZaloRuntime, thread: string): Promise<boolean> {
     const names = rt.rec.skipLabels ?? []
@@ -955,7 +975,10 @@ export class ZaloChannel implements ChannelPeer {
    */
   async ping(sessionId: string, text: string): Promise<string | undefined> {
     const last = this.tracker.active(sessionId).at(-1)
-    if (!last) return undefined
+    return last ? this.pingLane(last, text) : undefined
+  }
+
+  private async pingLane(last: ZaloPending, text: string): Promise<string> {
     const prev = this.pinged.get(last.threadKey)
     if (prev !== undefined && this.now() - prev < PING_MS) return 'Đã báo chủ ít phút trước, chưa báo lại.'
     this.pinged.set(last.threadKey, this.now())
@@ -1133,6 +1156,10 @@ export class ZaloChannel implements ChannelPeer {
           'Lời nhắc riêng của nhóm',
         ),
       )
+    if (trust !== 'owner' && this.d.docs && docsOn(rt.rec.docs))
+      agent.inject(
+        this.d.sessions.notice(this.d.docs.begin(agent.session.id, rt.rec.docs), 'Chỉ trả lời theo tài liệu'),
+      )
     const message = this.d.sessions.message(content)
     this.tracker.expect({
       messageId: message.id,
@@ -1143,6 +1170,7 @@ export class ZaloChannel implements ChannelPeer {
       msgId: ev.messageId,
       senderId: ev.senderId,
       senderName: await this.nameOf(rt, ev.senderId, ev.senderName),
+      ask: parsed.text.slice(0, STRANGER_EXCERPT),
       group: ev.isGroup,
       trust,
     })
@@ -1194,8 +1222,15 @@ export class ZaloChannel implements ChannelPeer {
     if (r.reason.kind === 'aborted' && this.superseded.delete(r.sessionId)) return
     const ok = r.reason.kind === 'completed'
     if (ok) this.superseded.delete(r.sessionId)
+    // Chỉ trả lời theo tài liệu: lượt không tra thấy gì trong nguồn thì thay bằng câu "chưa có thông tin" và báo chủ.
+    const noInfo = this.d.docs?.end(r.sessionId)
     // Model chọn im lặng (công cụ "im lặng"): không gửi gì, kể cả ảnh.
     if (this.silenced.delete(r.sessionId)) return
+    if (noInfo !== undefined && ok) {
+      await this.pingLane(last, ZN.noInfo(last.ask ?? '')).catch(() => undefined)
+      await this.send(last, noInfo, last.group && last.senderId && last.senderName ? last : undefined)
+      return
+    }
     // Các đoạn theo người nói: chữ của bot của phiên gộp lại; câu trả lời chuyển giao là đoạn riêng.
     const segments: TurnPart[] = []
     for (const p of r.parts) {

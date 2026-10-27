@@ -44,6 +44,7 @@ import {
   type MemHit,
 } from './ask.js'
 import { Catalog, type Entry } from './catalog.js'
+import { brainFolders } from './folders.js'
 import { fold, keyTerms, linksOf, parsePage, snippetOf } from './page.js'
 import { kanbanOf, projectPageText, withKanban } from './project-page.js'
 import { buildGraph, linkMention, nodeType, unlinkedMention } from './graph.js'
@@ -536,6 +537,18 @@ export async function apply(ctx: Context): Promise<void> {
         .all()
         .filter((b) => b.status === 'cho-duyet')
         .map(cardOf),
+    /**
+     * Chỉ trả lời theo tài liệu (GĐ8.7 đợt D, @aris/channels): giới hạn `brain_search`, `brain_read` của phiên vào các
+     * thư mục nguồn; `undefined` là bỏ giới hạn. Đặt lại thì đếm lại số lần tra thấy.
+     */
+    scope: (sessionId: string, folders: readonly string[] | undefined) => {
+      if (folders) docScopes.set(sessionId, { folders: [...folders], hits: 0 })
+      else docScopes.delete(sessionId)
+    },
+    /** Số lần phiên tra thấy tài liệu trong nguồn kể từ lần `scope` gần nhất. */
+    hits: (sessionId: string) => docScopes.get(sessionId)?.hits ?? 0,
+    /** Các thư mục của bộ não (để chọn làm nguồn): đường dẫn, tên, số trang có chữ bên trong. */
+    folders: () => brainFolders(catalog.all()),
   })
 
   // --- Quyền ----------------------------------------------------------------------------------
@@ -579,6 +592,26 @@ export async function apply(ctx: Context): Promise<void> {
         (s.dept === 'chung'
           ? !e.dept
           : canRead({ id: 'pham-vi', role: 'member', department: s.dept }, e, rules())))
+  }
+
+  // --- Chỉ trả lời theo tài liệu (GĐ8.7 đợt D) ------------------------------------------------------
+  /** Phiên khách của kênh đang ở chế độ "chỉ trả lời theo tài liệu": thư mục nguồn và số lần tra thấy. */
+  const docScopes = new Map<string, { folders: string[]; hits: number }>()
+  const underFolder = (path: string, folder: string) => {
+    const f = folder.replace(/^\/+|\/+$/g, '')
+    return !!f && (path === f || path.startsWith(`${f}/`))
+  }
+  /** Phạm vi tra của phiên: phạm vi Hỏi bộ não, cộng giới hạn thư mục nguồn khi phiên ở chế độ chỉ theo tài liệu. */
+  const scopeOf = (sessionId: string | undefined) => {
+    const ask = askFilter(sessionId)
+    const d = sessionId ? docScopes.get(sessionId) : undefined
+    if (!d) return ask
+    return (e: Entry) =>
+      ask(e) && !!e.space && !e.name.startsWith('_') && d.folders.some((f) => underFolder(e.path, f))
+  }
+  const docHit = (sessionId: string | undefined) => {
+    const d = sessionId ? docScopes.get(sessionId) : undefined
+    if (d) d.hits++
   }
 
   ctx.on(
@@ -866,7 +899,7 @@ export async function apply(ctx: Context): Promise<void> {
         const space = SPACES.find((s) => s === args.khong_gian)
         const can = allows(reader)
         const ok = (e: Entry) => can(e) || granted(sid, e)
-        const inScope = askFilter(sid)
+        const inScope = scopeOf(sid)
         countLookup(sid, 'search')
         const limit = Math.min(20, Math.max(1, Math.round(Number(args.so_ket_qua) || 8)))
         const query = String(args.query ?? '')
@@ -877,6 +910,7 @@ export async function apply(ctx: Context): Promise<void> {
         )
         asks.step(sid, { kind: 'tim', text: query, n: hits.length })
         if (!hits.length) return 'Không thấy gì khớp trong phần bộ não bạn được đọc.'
+        docHit(sid)
         return [
           `Kết quả trong bộ não (${hits.length}):`,
           ...hits.map(
@@ -916,7 +950,7 @@ export async function apply(ctx: Context): Promise<void> {
         // Thủ thư đang nạp: trang đã ghi lên bản nháp thì đọc bản nháp.
         const draft = ingest.draftRead(sid, ten.includes('/') ? ten : '') ?? ingest.draftByName(sid, ten)
         if (draft) return `(bản nháp của lần nạp này)\n\n${draft}`
-        const inScope = askFilter(sid)
+        const inScope = scopeOf(sid)
         countLookup(sid, 'read')
         return readPage(
           reader,
@@ -924,7 +958,10 @@ export async function apply(ctx: Context): Promise<void> {
           SPACES.find((s) => s === args.khong_gian),
           inScope,
           sid,
-          (e) => asks.step(sid, { kind: 'doc', text: e.title }, { read: e.path }),
+          (e) => {
+            docHit(sid)
+            asks.step(sid, { kind: 'doc', text: e.title }, { read: e.path })
+          },
         )
       },
     }),

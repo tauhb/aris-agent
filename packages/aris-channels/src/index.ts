@@ -22,6 +22,7 @@ import type {} from '@deepseek-ai/dsh-user-approval'
 import type {} from '@deepseek-ai/dsh-user-questions'
 import type {} from '@deepseek-ai/dsh-workspace'
 import { handleApi } from './api.js'
+import { DOC_TOOLS, DocsGate, type DocsPort } from './docs.js'
 import { channelsDomain } from './domain.js'
 import { LarkChannel } from './lark/channel.js'
 import { larkCliProbe } from './lark/cli.js'
@@ -154,8 +155,11 @@ export async function apply(ctx: Context): Promise<void> {
         saveFile: (i: Parameters<AttachmentPort['saveFile']>[0]) => attachments.saveFile(i),
       }
     : undefined
+  // Chỉ trả lời theo tài liệu (GĐ8.7 đợt D): @aris/brain giới hạn tra cứu theo thư mục nguồn.
+  const docs = new DocsGate(() => ctx.get('arisBrain') as DocsPort | undefined)
   const hub = new ChannelHub({
     store,
+    docs,
     media,
     stopped,
     team,
@@ -185,6 +189,7 @@ export async function apply(ctx: Context): Promise<void> {
   // Kênh Zalo cá nhân (zca-js, không chính thức): báo chủ qua Telegram vì chính Zalo có thể đang mất kết nối.
   const zalo = new ZaloChannel({
     store,
+    docs,
     media,
     stopped,
     team,
@@ -311,6 +316,21 @@ export async function apply(ctx: Context): Promise<void> {
     }),
   )
 
+  // Chỉ trả lời theo tài liệu: lượt của khách chỉ được tra bộ não (trong nguồn), im lặng và báo chủ.
+  ctx.on(
+    'tools/pre-execute',
+    async (exec, next) => {
+      const sid = (exec.agent as { session: { id: string } } | undefined)?.session.id
+      if (docs.on(sid) && !DOC_TOOLS.has(exec.name))
+        return {
+          kind: 'deny',
+          reason:
+            'Cuộc chat này đang ở chế độ chỉ trả lời theo tài liệu: chỉ dùng brain_search, brain_read, channel_silence, channel_notify_owner.',
+        }
+      return next()
+    },
+    true,
+  )
   ctx.tools.register(
     defineTool({
       name: 'channel_silence',
@@ -369,6 +389,7 @@ export async function apply(ctx: Context): Promise<void> {
             lark,
             probeLarkCli,
             zalo,
+            docs,
           ),
       })
       return () => void dispose()

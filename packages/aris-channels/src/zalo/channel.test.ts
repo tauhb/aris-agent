@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { LiveAgent, SessionPort } from '../hub.js'
 import { zaloThreadKey } from '../store.js'
 import { memStore } from '../store.test.js'
+import { DocsGate, type DocsPort } from '../docs.js'
 import { ZALO_LIMITS } from './access.js'
 import { HAND_MS, PING_MS, ZaloChannel } from './channel.js'
 import {
@@ -190,7 +191,7 @@ afterEach(() => {
  * Dựng kênh. Mặc định đã có tài khoản và dữ liệu đăng nhập trong kho khoá (như sau một lần quét QR) và đã `start()`.
  * `sleep` giả cộng thẳng vào đồng hồ giả, nên giới hạn tần suất không chờ thật.
  */
-async function setup(opts: { account?: boolean; session?: boolean; retryMs?: number } = {}) {
+async function setup(opts: { account?: boolean; session?: boolean; retryMs?: number; docs?: DocsGate } = {}) {
   const zalo = new FakeZalo()
   const store = memStore(() => zalo.clock.t)
   const secrets = new Map<string, string>()
@@ -234,6 +235,7 @@ async function setup(opts: { account?: boolean; session?: boolean; retryMs?: num
     },
     notify: async (t) => void notices.push(t),
     ...(opts.retryMs ? { retryMs: opts.retryMs } : {}),
+    ...(opts.docs ? { docs: opts.docs } : {}),
   })
   channels.push(channel)
   await channel.start()
@@ -1188,5 +1190,55 @@ describe('kênh Zalo · bán hàng (GĐ8.7 đợt C)', () => {
     await settle()
     expect(s.zalo.sent).toHaveLength(n)
     expect(PING_MS).toBe(10 * 60_000)
+  })
+})
+
+describe('kênh Zalo · chỉ trả lời theo tài liệu (GĐ8.7 đợt D)', () => {
+  function brain() {
+    const scopes = new Map<string, readonly string[] | undefined>()
+    const hits = new Map<string, number>()
+    const port: DocsPort = {
+      scope: (sid, f) => {
+        scopes.set(sid, f)
+        hits.set(sid, 0)
+      },
+      hits: (sid) => hits.get(sid) ?? 0,
+      folders: () => [],
+    }
+    return { port, scopes, hits }
+  }
+
+  it('khách hỏi: phiên được giới hạn nguồn và dặn; tra thấy thì giữ câu trả lời, không thấy thì thay và báo chủ; chủ hỏi thì không giới hạn', async () => {
+    const b = brain()
+    const s = await setup({ docs: new DocsGate(() => b.port) })
+    await pair(s, OWNER)
+    await pair(s, OTHER, 'member')
+    await s.channel.updateAccount('aris', {
+      docs: { on: true, folders: ['cong-ty/wiki/san-pham'], noInfo: 'Chưa có thông tin ạ.' },
+    })
+    const sid = (await (async () => {
+      await s.zalo.push({ senderId: OTHER, text: 'khoá AI giá bao nhiêu' })
+      await settle()
+      return s.store.thread(zaloThreadKey('aris', OTHER))!.sessionId
+    })())!
+    expect(b.scopes.get(sid)).toEqual(['cong-ty/wiki/san-pham'])
+    b.hits.set(sid, 1)
+    finishTurn(s, sid, 'Khoá AI cơ bản giá 2 triệu.')
+    await settle()
+    expect(s.zalo.texts(OTHER).at(-1)).toBe('Khoá AI cơ bản giá 2 triệu.')
+    // Xong lượt thì bỏ giới hạn.
+    expect(b.scopes.get(sid)).toBeUndefined()
+
+    await s.zalo.push({ senderId: OTHER, text: 'có học bổng không' })
+    await settle()
+    finishTurn(s, sid, 'Có học bổng 50% (bịa).')
+    await settle()
+    expect(s.zalo.texts(OTHER).at(-1)).toBe('Chưa có thông tin ạ.')
+    expect(s.notices.at(-1)).toContain('chưa có thông tin')
+
+    await s.zalo.push({ senderId: OWNER, text: 'tóm tắt việc' })
+    await settle()
+    const own = s.store.thread(zaloThreadKey('aris', OWNER))!.sessionId
+    expect(b.scopes.has(own)).toBe(false)
   })
 })

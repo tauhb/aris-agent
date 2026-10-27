@@ -98,6 +98,8 @@ export const T = {
   human: (name: string, username: string | undefined, text: string) =>
     `<b>${h(name)}</b>${username ? ` (@${h(username)})` : ''} muốn gặp người thật: «${h(text.slice(0, 300))}»\n\nBot im cuộc chat này 2 giờ.`,
   humanAck: 'Đã báo người phụ trách, sẽ có người trả lời sớm.',
+  /** Chế độ chỉ theo tài liệu không tìm thấy thông tin (báo chủ). */
+  noInfo: 'Bot chưa có thông tin trong tài liệu nguồn để trả lời câu này.',
   /** Bot gọi công cụ "báo chủ". */
   ping: (who: string, text: string) => `Chat với <b>${h(who)}</b>: ${h(text)}`,
   strangerAllowed: (name: string) => `Đã cho phép ${h(name)} hỏi đáp (người được phép).`,
