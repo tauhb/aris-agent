@@ -59,7 +59,34 @@ export interface McpData {
   /** Mức hỏi riêng của bot (chỉ chặt hơn mức chung). */
   botAsk?: Record<string, 'write' | 'always' | 'never'>
   check?: { ok: boolean; at: string; error?: string; tools: { name: string; readOnly: boolean }[] }
+  /** Mục danh mục connector mà kết nối dựng từ đó (GĐ8.5). */
+  catalog?: string
+  /** Đăng nhập OAuth: `login` là chưa đăng nhập hay cần đăng nhập lại. */
+  oauth?: { state: 'ok' | 'login'; at: string; error?: string }
   createdAt: string
+}
+
+/** Một mục của danh mục connector (`@aris/bots` › `catalog.ts`). */
+export interface ConnectorData {
+  id: string
+  name: string
+  category:
+    'work' | 'sales' | 'content' | 'ads' | 'analytics' | 'commerce' | 'automation' | 'internal' | 'other'
+  vendor: string
+  official: boolean
+  status: 'verified' | 'unverified'
+  blurb: string
+  transport: 'stdio' | 'streamable-http'
+  url?: string
+  urlHint?: string
+  auth: 'oauth' | 'token' | 'none'
+  keys: string[]
+  needsClient?: boolean
+  docs: string
+  writes: boolean
+  defaultAsk: 'write' | 'always' | 'never'
+  notes?: string
+  preset?: 'github' | 'lark' | 'notion' | 'browser'
 }
 
 /** Chủ của kết nối dùng chung (như `TEAM_OWNER` của `@aris/bots`). */
@@ -164,6 +191,8 @@ export interface TeamSnapshot {
   spend?: Record<string, number>
   /** Kết nối nền tảng của mọi bot. */
   mcp?: McpData[]
+  /** Danh mục connector. */
+  connectors?: ConnectorData[]
 }
 
 export interface RolePreset {
@@ -387,6 +416,7 @@ export interface TeamView {
   /** Chi phí hôm nay theo phòng ban (USD). */
   spend: Record<string, number>
   mcp: McpData[]
+  connectors: ConnectorData[]
 }
 
 /** Gom đội theo phòng ban, dạng các thành phần hiện có đang dùng. */
@@ -406,6 +436,7 @@ export function teamView(d: TeamSnapshot | null, noDepartment = '', l: TeamLive 
       owner: {},
       spend: {},
       mcp: [],
+      connectors: [],
     }
   const cmd = d.bots.find((b) => b.kind === 'commander')
   const others = d.bots.filter((b) => b.kind !== 'commander')
@@ -430,6 +461,7 @@ export function teamView(d: TeamSnapshot | null, noDepartment = '', l: TeamLive 
     owner: d.owner ?? {},
     spend: d.spend ?? {},
     mcp: d.mcp ?? [],
+    connectors: d.connectors ?? [],
   }
 }
 

@@ -555,7 +555,9 @@ export function McpDialog({ t, nav, params }: PageProps) {
   const forTeam = params.team === '1' || (!!prev && isTeamMcp(prev))
   const who = bot?.name ?? t('conn.theTeam')
   const [scope, setScope] = useState<Scope>(prev?.scope ?? ALL_SCOPE)
-  const [preset, setPreset] = useState<Preset>(prev?.preset ?? 'github')
+  const [preset, setPreset] = useState<Preset>(
+    prev?.preset ?? (PRESETS.includes(params.preset as Preset) ? (params.preset as Preset) : 'github'),
+  )
   const [name, setName] = useState(prev?.preset === 'custom' ? prev.name : '')
   const [transport, setTransport] = useState<McpData['transport']>(prev?.transport ?? 'stdio')
   const [command, setCommand] = useState(

@@ -115,6 +115,35 @@ Kết nối MCP cấu hình một lần, nhiều bot dùng chung. Làm trên `mc
 - **Giao diện:** Cài đặt › Kết nối (`settings/Connections.tsx`, nhóm "Mở rộng"), hộp nhập (`team/McpImport.tsx`), chọn phạm vi (`team/ScopePicker.tsx`), hộp Thêm kết nối có chế độ đội (`McpDialog` với `team=1`), thẻ "Dùng chung từ đội" trong tab Skill & tool của hồ sơ bot (tắt riêng, mức hỏi chặt hơn).
 - **Chạy thử thật (26/10):** quét máy người dùng thấy 2 máy chủ dùng được (lark-base, heygen từ Codex), bỏ qua 2 (computer-use đang tắt, node_repl chỉ chạy trong ChatGPT); nhập heygen cho Minh và Khoa + phòng Kỹ thuật, kết nối báo lỗi đúng thực tế (HeyGen đòi token OAuth). Thêm máy chủ thử `echo` chỉ cho Khoa: Khoa gọi được `mcp__doi-echo_thu__echo`, Minh trả lời không có công cụ đó.
 
+## Danh mục connector và đăng nhập OAuth (giai đoạn 8, plan 8.5; bản vẽ `DanhMucConnector.dc.html`, 6.4)
+
+**Danh mục** (`src/catalog.ts`): mỗi mục có `id`, `name`, `category`, `vendor`, `official`, `status` (`verified` / `unverified`), cách chạy (`transport` và `url`, hay `command` + `args` ghim phiên bản), `auth` (`oauth` / `token` / `none`), `keys`, `needsClient`, `docs`, `writes`, `defaultAsk` (mặc định `write`), `notes`. Kiểm ngày 27/10/2026:
+
+| Mục | Địa chỉ | Đăng nhập | Ghi chú |
+|---|---|---|---|
+| Notion | `https://mcp.notion.com/mcp` | OAuth, aris tự đăng ký client | đã kiểm |
+| HubSpot | `https://mcp.hubspot.com` | OAuth, cần Client ID / Secret của "MCP auth app" | đã kiểm |
+| Canva | `https://mcp.canva.com/mcp` | OAuth, cần Client ID / Secret (Developer Portal) | đã kiểm |
+| Meta Ads | `https://mcp.facebook.com/ads` | OAuth, cần ứng dụng Meta riêng (Meta từ chối đăng ký tự động) | beta, đã kiểm |
+| Google Workspace | người dùng điền (mỗi sản phẩm một máy chủ) | OAuth, cần OAuth client của dự án Google Cloud | **chưa kiểm được địa chỉ** |
+| Slack, Atlassian, Figma, HighLevel, HeyGen, Rainmaker | có hay không có địa chỉ | xem từng mục | `unverified`, để đợt sau |
+
+Bốn mẫu cũ (GitHub, Lark, Notion trên máy, Trình duyệt) là các mục có `preset`; kết nối đã lưu theo mẫu cũ đọc như trước. Gói `npx` ghim phiên bản: `@larksuiteoapi/lark-mcp@0.5.1`, `@notionhq/notion-mcp-server@2.5.2`, `@playwright/mcp@0.0.83` (kết nối Lark, Notion đã lưu từ trước vẫn giữ lệnh cũ chưa ghim cho tới khi sửa).
+
+**Kết nối dựng từ danh mục**: bản ghi có `catalog` (mã mục), `preset: 'custom'`; cách chạy lấy từ mục, người dùng chỉ nhập khoá, địa chỉ (nếu mục không có) và phạm vi, mức hỏi như kết nối dùng chung (8.1 phần B). Khoá token (HighLevel…) đổi thành header theo mục. Client ID / Secret nằm trong `secrets` của bản ghi như khoá của các kết nối khác, **không bao giờ** gửi làm header.
+
+**OAuth** (`src/mcp-oauth.ts`), theo đặc tả uỷ quyền của MCP, dùng hàm `auth` của `@modelcontextprotocol/client@2.2.0`: tìm metadata tài nguyên và máy chủ uỷ quyền, đăng ký client động khi không có Client ID, PKCE S256, `state` ngẫu nhiên dùng một lần, hết hạn sau 10 phút, làm mới token khi còn dưới 60 giây.
+- Gọi về: `GET /api/aris/mcp/oauth/callback` trên web aris (cùng cổng với dsh). Hãng không nhận địa chỉ `127.0.0.1` thì lời báo nói rõ phải thêm địa chỉ gọi về vào ứng dụng ở hãng; giao diện hiện địa chỉ này ở mục cần Client ID.
+- Token và thông tin client đăng ký động: kho khoá, tên `MCP_<mã kết nối>_OAUTH`, JSON. Bảng kết nối chỉ giữ trạng thái `oauth: { state: 'ok' | 'login', at, error? }`. Gỡ kết nối thì xoá luôn khoá này.
+- **Cách truyền token**: `@deepseek-ai/dsh-mcp-client` 0.2.1-rc.2 không nhận `authProvider`, chỉ nhận `headers` cố định, nên aris làm mới token mỗi lần gắn kết nối vào phiên mới hay kiểm tra, rồi truyền `Authorization: Bearer`. Phiên đang mở rất lâu có thể gặp token hết hạn giữa chừng tới khi mở phiên mới (giới hạn đã biết).
+- Chưa có token, làm mới không được, hay máy chủ trả 401: kết nối chuyển "Cần đăng nhập lại", không gắn vào phiên, và báo chủ qua Telegram một lần mỗi lần chuyển.
+
+**API** (`/api/aris/bots`): ảnh chụp có thêm `connectors` (danh mục, bỏ hàm); `mcp-team-add` nhận `input.catalog`; kết nối OAuth mới thì chưa kiểm tra (chờ đăng nhập); `mcp-oauth-start { id }` trả `{ authUrl }` hay `{ authorized: true }`; `mcp-delete` xoá cả token OAuth.
+
+**Giao diện**: Cài đặt › Kết nối › "+ Kết nối" mở hộp `mcp-catalog`: ô tìm, tab nhóm, thẻ có logo chữ, pill "Chính thức" / "Chưa kiểm" / "Có ghi". Bấm thẻ: ô khoá (`type=password`), địa chỉ gọi về, phạm vi, mức hỏi, rồi "Đăng nhập <hãng>" (mở cửa sổ ngay khi bấm để không bị chặn, đọc lại trạng thái 3 giây một lần) hay "Kiểm tra". Thẻ mẫu cũ mở hộp `mcp-add` có điền sẵn mẫu. Danh sách kết nối của đội hiện "cần đăng nhập lại" kèm nút Đăng nhập. Hồ sơ bot hiện các kết nối bot dùng được như ở 8.1.
+
+**Chưa làm**: Connector API cho dịch vụ không có MCP (mục 4 của plan, Điểm dừng 3); tải gói `npx` lần đầu chưa có bước hỏi riêng cho mục mới.
+
 ## Hồ sơ bot · Quyền & kênh, cột phải (đợt 2)
 
 **Quyền riêng của bot** (trường `perms`, `assignable` của bot; tab Quyền & kênh):

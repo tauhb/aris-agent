@@ -57,6 +57,7 @@ export {
   type TeamLive,
   type BotData,
   type McpData,
+  type ConnectorData,
   TEAM_MCP_OWNER,
   isTeamMcp,
   mcpInScope,

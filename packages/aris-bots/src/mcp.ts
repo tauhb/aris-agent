@@ -6,6 +6,7 @@
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { z } from 'zod'
+import { catalogEntry, type CatalogEntry } from './catalog.js'
 import type { Table } from './domain.js'
 
 /** Mẫu điền sẵn; `custom` là tự thêm bằng lệnh hoặc URL. */
@@ -47,6 +48,15 @@ export const mcpRecord = z.object({
       bots: z.union([z.literal('all'), z.array(z.string())]),
       departments: z.array(z.string()).optional(),
     })
+    .optional(),
+  /** Mục của danh mục connector (GĐ8.5) mà kết nối dựng từ đó; `preset` của các kết nối này là `custom`. */
+  catalog: z.string().optional(),
+  /**
+   * Đăng nhập OAuth (mục danh mục có `auth: 'oauth'`): token nằm trong kho khoá (`MCP_<mã>_OAUTH`), ở đây chỉ có
+   * trạng thái. `login`: chưa đăng nhập hay làm mới token không được, phải đăng nhập lại.
+   */
+  oauth: z
+    .object({ state: z.enum(['ok', 'login']), at: z.string(), error: z.string().optional() })
     .optional(),
   /** Máy chủ nhập từ đâu (chỉ để hiện nhãn "từ Codex"). */
   from: z.enum(['claude-code', 'codex']).optional(),
@@ -116,14 +126,14 @@ export const PRESET_SPEC: Record<
     name: 'Lark',
     transport: 'stdio',
     command: 'npx',
-    args: ['-y', '@larksuiteoapi/lark-mcp', 'mcp'],
+    args: ['-y', '@larksuiteoapi/lark-mcp@0.5.1', 'mcp'],
     keys: ['APP_ID', 'APP_SECRET'],
   },
   notion: {
     name: 'Notion',
     transport: 'stdio',
     command: 'npx',
-    args: ['-y', '@notionhq/notion-mcp-server'],
+    args: ['-y', '@notionhq/notion-mcp-server@2.5.2'],
     keys: ['NOTION_TOKEN'],
   },
   // Trình duyệt tự động (giai đoạn 4, đợt 5): Playwright MCP bản ghim, chạy ẩn, hồ sơ trình duyệt
@@ -188,6 +198,8 @@ export function splitCommand(line: string): string[] {
 /** Dữ liệu từ hộp "Thêm kết nối". */
 export interface McpInput {
   preset: McpPreset
+  /** Dựng từ một mục của danh mục connector (khi đó `preset` bỏ qua, coi là `custom`). */
+  catalog?: string
   name?: string
   /** Tự thêm: `stdio` (lệnh trên máy) hay `streamable-http` (URL). */
   transport?: McpRecord['transport']
@@ -204,6 +216,8 @@ export function cleanMcp(
   input: McpInput,
   prev?: McpRecord,
 ): Omit<McpRecord, 'id' | 'bot' | 'serverName' | 'createdAt' | 'check'> {
+  const fromCatalog = input.catalog ?? prev?.catalog
+  if (fromCatalog) return cleanCatalog(fromCatalog, input, prev)
   const preset = (MCP_PRESETS as readonly string[]).includes(input.preset) ? input.preset : prev?.preset
   if (!preset) throw new McpError('Chọn một nền tảng.')
   const given = Object.fromEntries(
@@ -254,9 +268,60 @@ export function cleanMcp(
   return { name, preset, transport, url, secrets, ask, enabled }
 }
 
-/** Header gửi máy chủ HTTP: mẫu GitHub đổi token thành `Authorization: Bearer`. */
-function headersOf(r: McpRecord): Record<string, string> {
+/** Kết nối dựng từ danh mục: cách chạy và tên lấy từ mục, chỉ khoá và địa chỉ (nếu mục không có) do người dùng nhập. */
+function cleanCatalog(
+  id: string,
+  input: Partial<McpInput>,
+  prev?: McpRecord,
+): Omit<McpRecord, 'id' | 'bot' | 'serverName' | 'createdAt' | 'check'> {
+  const e = catalogEntry(id)
+  if (!e) throw new McpError('Không có connector này trong danh mục.')
+  if (e.preset) throw new McpError(`${e.name} dùng mẫu có sẵn.`)
+  const given = Object.fromEntries(
+    Object.entries(input.secrets ?? {}).map(([k, v]) => [k.trim(), String(v).trim()] as const),
+  )
+  const secrets: Record<string, string> = {}
+  for (const k of e.keys) {
+    const v = given[k] || prev?.secrets[k]
+    // OAuth không bắt buộc khoá trừ khi hãng không cho đăng ký client tự động.
+    if (!v && (e.auth === 'token' || e.needsClient)) throw new McpError(`Cần điền ${k}.`)
+    if (v) secrets[k] = v
+  }
+  const ask = (MCP_ASK as readonly string[]).includes(input.ask ?? '')
+    ? input.ask!
+    : (prev?.ask ?? e.defaultAsk)
+  const base = {
+    name: (input.name?.trim() || prev?.name || e.name).slice(0, 40),
+    preset: 'custom' as const,
+    catalog: e.id,
+    transport: e.transport,
+    secrets,
+    ask,
+    enabled: input.enabled ?? prev?.enabled ?? true,
+  }
+  if (e.transport === 'stdio') return { ...base, command: e.command ?? '', args: [...(e.args ?? [])] }
+  const url = (e.url ?? input.url ?? prev?.url ?? '').trim()
+  if (!/^https:\/\//.test(url)) throw new McpError('Địa chỉ máy chủ phải bắt đầu bằng https://')
+  return { ...base, url }
+}
+
+/** Mục danh mục của một kết nối (dựng từ danh mục, hay theo mẫu cũ). */
+export function entryOf(r: Pick<McpRecord, 'catalog' | 'preset'>): CatalogEntry | undefined {
+  return r.catalog ? catalogEntry(r.catalog) : undefined
+}
+
+/** Kết nối cần đăng nhập OAuth. */
+export const isOAuth = (r: Pick<McpRecord, 'catalog' | 'preset'>) => entryOf(r)?.auth === 'oauth'
+
+/**
+ * Header gửi máy chủ HTTP: mẫu GitHub đổi token thành `Authorization: Bearer`; mục danh mục dùng cách của mục;
+ * OAuth thì chỉ có token truy cập (`bearer`), không bao giờ gửi Client ID / Secret.
+ */
+function headersOf(r: McpRecord, bearer?: string): Record<string, string> {
   if (r.preset === 'github') return { Authorization: `Bearer ${r.secrets.token ?? ''}` }
+  const e = entryOf(r)
+  if (e?.auth === 'oauth') return bearer ? { Authorization: `Bearer ${bearer}` } : {}
+  if (e?.header) return e.header(r.secrets)
   return { ...r.secrets }
 }
 
@@ -271,9 +336,14 @@ function launchOf(r: McpRecord): { command: string; args: string[]; env: Record<
 }
 
 /** Cấu hình plugin `@deepseek-ai/dsh-mcp-client` cho một kết nối. */
-export function pluginConfig(r: McpRecord, cwd: string): Record<string, unknown> {
+export function pluginConfig(r: McpRecord, cwd: string, bearer?: string): Record<string, unknown> {
   if (r.transport === 'streamable-http')
-    return { transport: 'streamable-http', serverName: r.serverName, url: r.url, headers: headersOf(r) }
+    return {
+      transport: 'streamable-http',
+      serverName: r.serverName,
+      url: r.url,
+      headers: headersOf(r, bearer),
+    }
   return { transport: 'stdio', serverName: r.serverName, cwd, ...launchOf(r) }
 }
 
@@ -442,6 +512,17 @@ export class McpStore {
     return rec
   }
 
+  /** Ghi trạng thái đăng nhập OAuth (token ở kho khoá, không ở đây). */
+  async setOAuth(id: string, oauth: McpRecord['oauth'] | undefined): Promise<McpRecord | undefined> {
+    const prev = this.table.get(id)
+    if (!prev) return undefined
+    const rec = { ...prev }
+    if (oauth) rec.oauth = oauth
+    else delete rec.oauth
+    await this.table.put(id, rec)
+    return rec
+  }
+
   async setCheck(id: string, check: McpCheck): Promise<McpRecord | undefined> {
     const prev = this.table.get(id)
     if (!prev) return undefined
@@ -466,6 +547,8 @@ export async function checkConnection(
   cwd: string,
   env: () => Record<string, string>,
   timeoutMs = 60_000,
+  /** Token truy cập OAuth (kết nối OAuth). */
+  bearer?: string,
 ): Promise<McpCheck> {
   const at = new Date().toISOString()
   const { Client, StreamableHTTPClientTransport } = await import('@modelcontextprotocol/client')
@@ -473,7 +556,7 @@ export async function checkConnection(
   let transport: Parameters<typeof client.connect>[0]
   if (r.transport === 'streamable-http') {
     transport = new StreamableHTTPClientTransport(new URL(r.url ?? ''), {
-      requestInit: { headers: headersOf(r) },
+      requestInit: { headers: headersOf(r, bearer) },
     })
   } else {
     const { StdioClientTransport } = await import('@modelcontextprotocol/client/stdio')
