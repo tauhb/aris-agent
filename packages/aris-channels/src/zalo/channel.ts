@@ -113,11 +113,22 @@ interface ZaloRuntime {
   /** Mã tin aris vừa gửi, để bỏ qua nếu Zalo báo lại. */
   sent: Set<string>
   typingAt: Map<string, number>
+  /** Bộ canh mạng chết im: gọi nhẹ Zalo định kỳ. */
+  watch?: ReturnType<typeof setInterval> | undefined
+  /** Số lần canh lỗi liền nhau. */
+  watchFails: number
 }
 
 const MAX_FILE = 20 * 1024 * 1024
 /** Mã QR của Zalo sống khoảng 100 giây (thư viện không báo giờ hết hạn, đây là ước lượng để giao diện đếm ngược). */
 const QR_LIFETIME_MS = 100_000
+/** Bộ canh: 5 phút gọi nhẹ Zalo một lần; lỗi hai lần liền thì coi như mất kết nối. */
+const WATCH_MS = 5 * 60_000
+const WATCH_FAILS = 2
+/** Báo chủ "bị đá phiên" nhiều nhất 6 giờ một lần mỗi tài khoản. */
+const KICK_NOTIFY_MS = 6 * 3_600_000
+/** Gom tin dồn dập: đợi chừng này không có tin mới trong cuộc chat rồi mới trả lời (người không phải chủ). */
+export const GATHER_MS = 5000
 /** Kết nối sống quá chừng này thì coi là vững: lần mất kết nối kế tiếp lại chờ từ mức đầu. */
 const STABLE_MS = 10 * 60_000
 /** Báo "đang soạn tin" nhiều nhất mỗi 5 giây cho một cuộc trò chuyện. */
@@ -152,6 +163,11 @@ export class ZaloChannel implements ChannelPeer {
   /** Đã báo chủ "hết hạn mức ngày" hôm nay chưa, theo bot (giá trị: ngày đã báo). */
   private readonly limitNotified = new Map<string, string>()
   private readonly qrNotified = new Set<string>()
+  private readonly kickNotified = new Map<string, number>()
+  /** Giờ tin cuối của mỗi làn (cuộc chat), để gom tin dồn dập. */
+  private readonly lastAt = new Map<string, number>()
+  /** Phiên có lượt bị dừng vì khách nhắn thêm: lượt đó không gửi gì ra. */
+  private readonly superseded = new Set<string>()
   private readonly now: () => number
   private readonly sleep: (ms: number) => Promise<void>
   private readonly connector: ZaloConnector
@@ -194,7 +210,7 @@ export class ZaloChannel implements ChannelPeer {
     this.retries.clear()
     for (const l of this.logins.values()) l.login.abort()
     this.logins.clear()
-    for (const rt of this.apps.values()) rt.listener.close()
+    for (const rt of this.apps.values()) this.closeRuntime(rt)
     this.apps.clear()
   }
 
@@ -341,8 +357,16 @@ export class ZaloChannel implements ChannelPeer {
     if (t) clearTimeout(t)
     this.retries.delete(bot)
     this.delays.delete(bot)
-    this.apps.get(bot)?.listener.close()
+    this.closeRuntime(this.apps.get(bot))
     this.apps.delete(bot)
+  }
+
+  /** Đóng trình nghe và bộ canh của một tài khoản. */
+  private closeRuntime(rt: ZaloRuntime | undefined) {
+    if (!rt) return
+    if (rt.watch) clearInterval(rt.watch)
+    rt.watch = undefined
+    rt.listener.close()
   }
 
   private async setError(bot: string, e: string | undefined) {
@@ -373,6 +397,15 @@ export class ZaloChannel implements ChannelPeer {
       await this.setError(rec.bot, msg(e))
       this.scheduleRetry(rec.bot, 'retrying')
     }
+  }
+
+  /** Báo chủ bị đá phiên, nhiều nhất 6 giờ một lần mỗi tài khoản. */
+  private async notifyKicked(bot: string) {
+    const last = this.kickNotified.get(bot)
+    if (last !== undefined && this.now() - last < KICK_NOTIFY_MS) return
+    this.kickNotified.set(bot, this.now())
+    const name = this.store.zaloAccount(bot)?.name ?? bot
+    await this.d.notify?.(ZN.kicked(name)).catch(() => undefined)
   }
 
   private async needQr(bot: string, why: string) {
@@ -408,7 +441,10 @@ export class ZaloChannel implements ChannelPeer {
       throw new MissingSession()
     }
     const { api, listener } = await this.connector.open(session, this.d.logger)
+    // Không để hai trình nghe cùng tài khoản: trình nghe cũ (nếu còn) đóng trước.
+    this.closeRuntime(this.apps.get(rec.bot))
     const rt: ZaloRuntime = {
+      watchFails: 0,
       rec: this.store.zaloAccount(rec.bot) ?? rec,
       api,
       listener,
@@ -435,6 +471,7 @@ export class ZaloChannel implements ChannelPeer {
     if (this.apps.get(rt.rec.bot) !== rt) return
     rt.connectedAt = this.now()
     this.states.set(rt.rec.bot, 'listening')
+    this.startWatch(rt)
     await this.setError(rt.rec.bot, undefined)
     // Câu trả lời dở của lúc mất kết nối thì gửi nốt.
     for (const rec of this.store.zaloOutbox())
@@ -442,10 +479,32 @@ export class ZaloChannel implements ChannelPeer {
         void this.flush(rec)
   }
 
+  /**
+   * Bộ canh mạng chết im: thư viện có gửi ping nhưng không báo khi kết nối chết mà không đóng (rớt mạng, máy ngủ dậy).
+   * 5 phút gọi nhẹ Zalo một lần; lỗi hai lần liền thì coi như mất kết nối và thử lại theo lịch.
+   */
+  private startWatch(rt: ZaloRuntime) {
+    if (rt.watch) clearInterval(rt.watch)
+    rt.watchFails = 0
+    rt.watch = setInterval(() => {
+      if (this.apps.get(rt.rec.bot) !== rt) return
+      rt.api.profile().then(
+        () => void (rt.watchFails = 0),
+        (e: unknown) => {
+          rt.watchFails++
+          this.d.logger.warn('aris-channels: zalo %s canh lỗi (%d): %s', rt.rec.bot, rt.watchFails, msg(e))
+          if (rt.watchFails >= WATCH_FAILS) void this.onClosed(rt, 'other', 'không phản hồi')
+        },
+      )
+    }, WATCH_MS)
+    rt.watch.unref?.()
+  }
+
   private async onClosed(rt: ZaloRuntime, reason: 'duplicate' | 'other', detail: string) {
     if (this.apps.get(rt.rec.bot) !== rt) return
-    rt.listener.close()
+    this.closeRuntime(rt)
     this.apps.delete(rt.rec.bot)
+    if (reason === 'duplicate') await this.notifyKicked(rt.rec.bot)
     this.d.logger.warn('aris-channels: zalo %s ngắt kết nối (%s)', rt.rec.bot, detail)
     // Chỉ đặt lại thời gian chờ khi kết nối đã đứng vững; bị Zalo đá ra ngay sau khi nối (Zalo Web đang mở) thì chờ
     // lâu dần, không giành lại liên tục.
@@ -493,13 +552,32 @@ export class ZaloChannel implements ChannelPeer {
     const rt = this.apps.get(inbox.bot)
     if (!rt) return
     const lane = zaloThreadKey(inbox.bot, ev.threadId)
+    if (!resumed) this.lastAt.set(lane, this.now())
     const prev = this.lanes.get(lane) ?? Promise.resolve()
     const next = prev
+      .then(() => this.gather(lane, ev, resumed))
       .then(() => this.handle(rt, inbox, ev, resumed))
       .catch((e: unknown) =>
         this.d.logger.warn('aris-channels: zalo xử lý tin: %s', e instanceof Error ? e.stack : String(e)),
       )
     this.lanes.set(lane, next)
+  }
+
+  /**
+   * Gom tin dồn dập: tin của người không phải chủ đợi tới khi cuộc chat im `GATHER_MS` rồi mới xử lý, để khách gửi
+   * 3–4 tin liền thì bot trả lời một lần (các tin sau vào phiên ngay sau tin đầu, lượt cũ bị thay; xem `submit`).
+   * Tin của chủ, lệnh, mã ghép đôi và tin làm lại sau khởi động không đợi.
+   */
+  private async gather(lane: string, ev: ZaloInbound, resumed: boolean) {
+    if (resumed || this.store.zaloRoleOf(ev.senderId) === 'owner') return
+    // Lệnh và mã ghép đôi xử lý ngay.
+    const text = ev.msgType === 'webchat' ? ev.content.trim() : ''
+    if (text.startsWith('/') || normalizeCode(text)) return
+    for (;;) {
+      const wait = (this.lastAt.get(lane) ?? 0) + GATHER_MS - this.now()
+      if (wait <= 0) return
+      await this.sleep(wait)
+    }
   }
 
   private async handle(rt: ZaloRuntime, inbox: InboxRecord, ev: ZaloInbound, resumed: boolean) {
@@ -736,7 +814,12 @@ export class ZaloChannel implements ChannelPeer {
       trust,
     })
     const busy = this.store.settings().busy
-    if (agent.status === 'running' && busy === 'steer') agent.steer(message)
+    // Khách (không phải chủ) nhắn thêm khi bot đang soạn: dừng lượt cũ, không gửi câu trả lời đã cũ, làm lại với cả tin mới.
+    if (agent.status === 'running' && trust !== 'owner') {
+      this.superseded.add(agent.session.id)
+      agent.cancel({ kind: 'user' })
+      agent.followup(message)
+    } else if (agent.status === 'running' && busy === 'steer') agent.steer(message)
     else if (agent.status === 'running' && busy === 'interrupt') {
       agent.cancel({ kind: 'user' })
       agent.followup(message)
@@ -774,7 +857,10 @@ export class ZaloChannel implements ChannelPeer {
     if (r.reason.kind === 'interrupted') return
     const rt = this.apps.get(last.bot)
     for (const p of r.ours) await this.store.doneInbox(p.inboxId)
+    // Lượt bị thay vì khách nhắn thêm: không gửi gì, lượt mới sẽ trả lời cả loạt tin.
+    if (r.reason.kind === 'aborted' && this.superseded.delete(r.sessionId)) return
     const ok = r.reason.kind === 'completed'
+    if (ok) this.superseded.delete(r.sessionId)
     // Các đoạn theo người nói: chữ của bot của phiên gộp lại; câu trả lời chuyển giao là đoạn riêng.
     const segments: TurnPart[] = []
     for (const p of r.parts) {

@@ -71,8 +71,8 @@ export function parseZaloCommand(text: string): { name: string; args: string } |
 
 // --- Tin ra --------------------------------------------------------------------------------
 
-/** Zalo cho tối đa 2.000 ký tự mỗi tin. */
-export const ZALO_CHUNK = 2000
+/** Zalo cho tối đa 2.000 ký tự mỗi tin; cắt ở 1.500 để mỗi tin dễ đọc trên điện thoại (GĐ8.7 đợt A). */
+export const ZALO_CHUNK = 1500
 
 /** Dòng phân cách của bảng Markdown (`|---|---|`). */
 const TABLE_RULE = /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/

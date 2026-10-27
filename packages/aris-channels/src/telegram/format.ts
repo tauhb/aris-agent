@@ -150,8 +150,12 @@ function splitBlock(block: string, max: number): string[] {
   for (const line of body.split('\n')) {
     let rest = line
     while (rest.length > room) {
-      // Dòng đơn quá dài (hiếm): cắt cứng, tránh cắt giữa thực thể &amp;.
+      // Dòng đơn quá dài: cắt sau dấu kết câu gần nhất (nếu không quá ngắn), không thì cắt cứng, tránh cắt giữa
+      // thực thể &amp;.
       let cut = room
+      const head = rest.slice(0, room)
+      const end = Math.max(head.lastIndexOf('. '), head.lastIndexOf('! '), head.lastIndexOf('? '))
+      if (!pre && end > room / 2) cut = end + 2
       const amp = rest.lastIndexOf('&', cut)
       if (amp > cut - 6) cut = amp
       if (cur) parts.push(cur)

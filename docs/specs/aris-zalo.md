@@ -39,7 +39,7 @@ Khoá bản ghi: người `zc-<mã người dùng Zalo>`, nhóm `zc-<mã nhóm>`
 
 ## Gửi tin và giới hạn tần suất
 
-- Markdown của bot đổi sang chữ thường (bỏ `**`, `__`, `~~`, dấu mã, tiêu đề `#`; liên kết thành `chữ (địa chỉ)`; bảng thành các dòng gạch đầu dòng; khối mã giữ nội dung) rồi chia theo **2.000 ký tự**, ngắt ở ranh giới đoạn, rồi dòng, rồi câu.
+- Markdown của bot đổi sang chữ thường (bỏ `**`, `__`, `~~`, dấu mã, tiêu đề `#`; liên kết thành `chữ (địa chỉ)`; bảng thành các dòng gạch đầu dòng; khối mã giữ nội dung) rồi chia theo **1.500 ký tự** (Zalo cho tối đa 2.000; cắt sớm cho dễ đọc, GĐ8.7 đợt A), ngắt ở ranh giới đoạn, rồi dòng, rồi câu. Giữa các phần có nhịp nghỉ của giới hạn 3 giây.
 - Giới hạn là hằng số `ZALO_LIMITS` trong `zalo/access.ts`, áp dụng cho mọi tin gửi đi (trả lời, tin hệ thống, ảnh, tệp):
   - tối đa **1 tin mỗi 3 giây** cho một cuộc trò chuyện;
   - tối đa **20 tin mỗi phút** cho cả tài khoản;
@@ -56,6 +56,12 @@ Khoá bản ghi: người `zc-<mã người dùng Zalo>`, nhóm `zc-<mã nhóm>`
 | Trình nghe bị đóng với mã `DuplicateConnection` (thường do mở Zalo Web) | "Zalo Web đang mở, aris tạm ngừng nghe" | Thử lại sau 2 phút, gấp đôi mỗi lần, tối đa 30 phút |
 | Đóng vì lý do khác, lỗi mạng khi đăng nhập | "mất kết nối, đang thử lại" | Như trên |
 | Dữ liệu đăng nhập hết hạn hay bị Zalo từ chối, hoặc không còn trong Keychain | "Cần quét lại QR" | Không thử lại; báo chủ qua Telegram một lần |
+
+**GĐ8.7 đợt A:**
+- Bị đá phiên (`DuplicateConnection`): báo chủ qua Telegram, tối đa **6 giờ một lần** mỗi tài khoản.
+- **Mạng chết im** (kết nối không đóng nhưng không còn tin về): bộ canh 5 phút một lần gọi nhẹ Zalo (`fetchAccountInfo`); lỗi hai lần liền thì đóng trình nghe và thử lại theo lịch trên.
+- Mở trình nghe mới thì đóng trình nghe cũ của cùng tài khoản trước (không để hai trình nghe).
+- **Gom tin dồn dập**: tin của người không phải chủ đợi cuộc chat im 5 giây rồi mới vào phiên (lệnh, mã ghép đôi, tin của chủ không đợi). Khách nhắn thêm khi bot đang soạn thì dừng lượt cũ, lượt cũ không gửi gì ra (cả chữ dở lẫn "Đã dừng"), lượt mới trả lời cả loạt tin.
 
 Thời gian chờ chỉ đặt lại khi kết nối đã đứng vững ít nhất 10 phút, nên bị Zalo Web đá ra ngay sau khi nối thì chờ lâu dần, không giành lại liên tục. Câu trả lời dở trong hộp thư ra được gửi nốt khi nối lại, và khi khởi động lại.
 

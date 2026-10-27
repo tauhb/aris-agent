@@ -158,7 +158,7 @@ afterEach(() => {
   hubs = []
 })
 
-async function setup() {
+async function setup(over: { gatherMs?: number; partGapMs?: number } = {}) {
   const tg = new FakeTelegram()
   const store = memStore()
   const secrets = new Map<string, string>()
@@ -173,6 +173,9 @@ async function setup() {
     sessions: sessions.port,
     logger: { info() {}, warn() {} },
     fetchImpl: tg.fetch,
+    // Kiểm thử không đợi gom tin hay nghỉ giữa các phần (test riêng ở dưới bật lại).
+    gatherMs: over.gatherMs ?? 0,
+    partGapMs: over.partGapMs ?? 0,
   })
   hubs.push(hub)
   await hub.connect('aris', '123:TOKEN')
@@ -204,6 +207,8 @@ describe('trung tâm kênh', () => {
       sessions: s.sessions.port,
       logger: { info() {}, warn() {} },
       fetchImpl: flaky,
+      gatherMs: 0,
+      partGapMs: 0,
     })
     hubs.push(hub)
     vi.useFakeTimers()
@@ -916,5 +921,117 @@ describe('trung tâm kênh', () => {
     expect(texts).toContain('♻️ Câu trả lời khôi phục sau khi khởi động lại, có thể trùng.\n\nb')
     expect(texts).not.toContain('a')
     expect(s.store.outbox()).toHaveLength(0)
+  })
+})
+
+describe('trung tâm kênh · GĐ8.7 đợt A', () => {
+  /** Cho STRANGER thành người được phép (không phải chủ) bằng mã. */
+  async function pairMember(s: Awaited<ReturnType<typeof setup>>) {
+    const code = await s.store.createCode('member')
+    s.tg.push(dm(STRANGER, code.code))
+    await settle()
+  }
+
+  it('gom tin dồn dập: khách gửi nhiều tin liền thì đợi cuộc chat im rồi mới đưa vào phiên', async () => {
+    const s = await setup({ gatherMs: 120 })
+    await pairMember(s)
+    const t0 = Date.now()
+    s.tg.push(dm(STRANGER, 'chào shop'))
+    await new Promise((r) => setTimeout(r, 60))
+    s.tg.push(dm(STRANGER, 'cho hỏi giá'))
+    await new Promise((r) => setTimeout(r, 60))
+    s.tg.push(dm(STRANGER, 'khoá AI cơ bản'))
+    await settle()
+    // Chưa đủ 120 ms im lặng kể từ tin cuối: chưa có gì vào phiên.
+    expect(s.sessions.agents.size).toBe(0)
+    await new Promise((r) => setTimeout(r, 200))
+    const agent = [...s.sessions.agents.values()][0]!
+    expect(agent.inbox).toHaveLength(3)
+    expect(Date.now() - t0).toBeGreaterThanOrEqual(240)
+  })
+
+  it('chủ nhân không bị đợi gom tin', async () => {
+    const s = await setup({ gatherMs: 5000 })
+    await pairOwner(s)
+    s.tg.push(dm(OWNER, 'việc gấp'))
+    await settle()
+    expect(s.sessions.agents.get('s1')!.inbox).toHaveLength(1)
+  })
+
+  it('khách nhắn thêm khi bot đang soạn: dừng lượt cũ, không gửi câu trả lời cũ, lượt mới trả lời', async () => {
+    const s = await setup()
+    await pairMember(s)
+    s.tg.push(dm(STRANGER, 'câu một'))
+    await settle()
+    const agent = s.sessions.agents.get('s1')! as unknown as {
+      status: string
+      inbox: { id: string }[]
+      cancel(): void
+    }
+    let cancelled = 0
+    agent.cancel = () => void cancelled++
+    const first = agent.inbox[0]!
+    s.hub.onSessionEvent('s1', { type: 'turn/start' })
+    s.hub.onSessionEvent('s1', { type: 'user/message', data: { id: first.id } })
+    agent.status = 'running'
+    s.tg.push(dm(STRANGER, 'à mà thêm câu hai'))
+    await settle()
+    expect(cancelled).toBe(1)
+    expect(agent.inbox).toHaveLength(2)
+    const before = s.tg.sent().length
+    // Lượt cũ kết thúc vì bị dừng: không gửi "Đã dừng" hay chữ dở.
+    s.hub.onSessionEvent('s1', {
+      type: 'assistant/message',
+      data: { message: { content: [{ type: 'text', text: 'trả lời câu một (cũ)' }] } },
+    })
+    s.hub.onSessionEvent('s1', { type: 'turn/end', data: { reason: { kind: 'aborted' } } })
+    await settle()
+    expect(s.tg.sent().length).toBe(before)
+    agent.status = 'idle'
+    s.hub.onSessionEvent('s1', { type: 'turn/start' })
+    s.hub.onSessionEvent('s1', { type: 'user/message', data: { id: agent.inbox[1]!.id } })
+    s.hub.onSessionEvent('s1', {
+      type: 'assistant/message',
+      data: { message: { content: [{ type: 'text', text: 'trả lời cả hai câu' }] } },
+    })
+    s.hub.onSessionEvent('s1', { type: 'turn/end', data: { reason: { kind: 'completed' } } })
+    await settle()
+    expect(s.tg.sent().at(-1)!.text).toContain('trả lời cả hai câu')
+  })
+
+  it('câu trả lời dài cắt ở 1.500 ký tự theo đoạn, có nhịp nghỉ giữa các phần', async () => {
+    const s = await setup({ partGapMs: 40 })
+    await pairOwner(s)
+    s.tg.push(dm(OWNER, 'viết dài'))
+    await settle()
+    const agent = s.sessions.agents.get('s1')!
+    const msg = agent.inbox[0] as { id: string }
+    const para = (c: string) => c.repeat(900)
+    s.hub.onSessionEvent('s1', { type: 'turn/start' })
+    s.hub.onSessionEvent('s1', { type: 'user/message', data: { id: msg.id } })
+    s.hub.onSessionEvent('s1', {
+      type: 'assistant/message',
+      data: {
+        message: { content: [{ type: 'text', text: `${para('a')}\n\n${para('b')}\n\n${para('c')}` }] },
+      },
+    })
+    const before = s.tg.sent().length
+    const t0 = Date.now()
+    s.hub.onSessionEvent('s1', { type: 'turn/end', data: { reason: { kind: 'completed' } } })
+    await new Promise((r) => setTimeout(r, 200))
+    const parts = s.tg
+      .sent()
+      .slice(before)
+      .map((b) => String(b.text))
+    expect(parts).toEqual([para('a'), para('b'), para('c')])
+    expect(Date.now() - t0).toBeGreaterThanOrEqual(80)
+  })
+
+  it('đoạn rất dài không xuống dòng: cắt sau dấu kết câu chứ không cắt giữa câu', async () => {
+    const { toTelegramHtml } = await import('./telegram/format.js')
+    const sentence = `${'x'.repeat(80)}. `
+    const out = toTelegramHtml(sentence.repeat(40).trim(), 1500)
+    expect(out.length).toBeGreaterThan(1)
+    for (const p of out.slice(0, -1)) expect(p.trimEnd().endsWith('.')).toBe(true)
   })
 })

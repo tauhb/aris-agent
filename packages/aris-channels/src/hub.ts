@@ -7,7 +7,7 @@ import { commandAllowed, decide, type Trust } from './access.js'
 import { NOT_OWNER_NOTE, T } from './copy.js'
 import type { BotRecord, InboxRecord, OutboxRecord } from './domain.js'
 import { sttNotReady, textToVoice, transcribe, type SpeechToText } from './media.js'
-import { ChannelStore, keyNum, threadKey } from './store.js'
+import { ChannelStore, keyNum, normalizeCode, threadKey } from './store.js'
 import { TelegramApi, TelegramError, type Fetch } from './telegram/api.js'
 import {
   colorDot,
@@ -286,7 +286,17 @@ export interface HubDeps {
   media?: () => MediaPort | undefined
   /** aris đang dừng khẩn cấp (@aris/guard): tin thường chỉ nhận câu báo, lệnh vẫn chạy. */
   stopped?: () => boolean
+  /** Gom tin dồn dập của người không phải chủ (mặc định 5 giây; kiểm thử đặt 0). */
+  gatherMs?: number
+  /** Nhịp nghỉ giữa các phần của một câu trả lời dài (mặc định 0,6 giây; kiểm thử đặt 0). */
+  partGapMs?: number
+  sleep?: (ms: number) => Promise<void>
 }
+
+/** Câu trả lời cắt ở chừng này ký tự, theo đoạn rồi dòng rồi câu (GĐ8.7 đợt A). */
+export const REPLY_CHUNK = 1500
+/** Một lần `getUpdates` quá chừng này chưa về (mạng chết im) thì bỏ và gọi lại. */
+const POLL_DEADLINE_MS = 45_000
 
 /**
  * Kênh khác chạy cạnh Telegram (Lark, Zalo) mà các gói khác vẫn hỏi qua `arisChannels`: lượt đang chạy của phiên kênh đó có bị
@@ -377,9 +387,15 @@ export class ChannelHub {
   private readonly textWaiters = new Map<string, (text: string) => void>()
   private readonly strangers = new Map<number, { name: string; username?: string | undefined }>()
   private readonly now: () => number
+  private readonly sleep: (ms: number) => Promise<void>
+  /** Giờ tin cuối của mỗi làn (cuộc chat), để gom tin dồn dập. */
+  private readonly lastAt = new Map<string, number>()
+  /** Phiên có lượt bị dừng vì khách nhắn thêm: lượt đó không gửi gì ra. */
+  private readonly superseded = new Set<string>()
 
   constructor(private readonly d: HubDeps) {
     this.now = d.now ?? Date.now
+    this.sleep = d.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)))
   }
 
   private get store() {
@@ -555,7 +571,12 @@ export class ChannelHub {
       const rec = this.store.bot(rt.rec.bot)
       if (!rec) return
       try {
-        const updates = await rt.api.getUpdates(rec.offset, 25, abort.signal)
+        // Hạn chót cho mỗi lần gọi: mạng chết im (không lỗi, không trả) thì bỏ và gọi lại thay vì treo mãi.
+        const updates = await rt.api.getUpdates(
+          rec.offset,
+          25,
+          AbortSignal.any([abort.signal, AbortSignal.timeout(POLL_DEADLINE_MS)]),
+        )
         backoff = 1000
         for (const u of updates) {
           const inbox: InboxRecord = {
@@ -598,13 +619,34 @@ export class ChannelHub {
     const lane = m
       ? threadKey(rt.rec.tgId, m.chat.id, m.is_topic_message ? m.message_thread_id : undefined)
       : inbox.bot
+    if (!resumed && u.message) this.lastAt.set(lane, this.now())
     const prev = this.lanes.get(lane) ?? Promise.resolve()
     const next = prev
+      .then(() => this.gather(lane, u, resumed))
       .then(() => this.handle(rt, inbox, resumed))
       .catch((e: unknown) =>
         this.d.logger.warn('aris-channels: xử lý tin: %s', e instanceof Error ? e.stack : String(e)),
       )
     this.lanes.set(lane, next)
+  }
+
+  /**
+   * Gom tin dồn dập: tin của người không phải chủ đợi tới khi cuộc chat im `gatherMs` rồi mới xử lý, để khách gửi
+   * nhiều tin liền thì bot trả lời một lần (tin sau thay lượt cũ, xem `submit`). Tin của chủ, lệnh, mã ghép đôi, nút
+   * bấm, tin làm lại sau khởi động không đợi.
+   */
+  private async gather(lane: string, u: TgUpdate, resumed: boolean) {
+    const gap = this.d.gatherMs ?? 5000
+    const from = u.message?.from
+    if (resumed || gap <= 0 || !from || this.store.roleOf(from.id) === 'owner') return
+    // Lệnh và mã ghép đôi xử lý ngay.
+    const text = (u.message?.text ?? '').trim()
+    if (text.startsWith('/') || normalizeCode(text)) return
+    for (;;) {
+      const wait = (this.lastAt.get(lane) ?? 0) + gap - this.now()
+      if (wait <= 0) return
+      await this.sleep(wait)
+    }
   }
 
   private async handle(rt: BotRuntime, inbox: InboxRecord, resumed: boolean) {
@@ -892,7 +934,12 @@ export class ChannelHub {
     }
     this.tracker.expect(pending)
     const busy = this.store.settings().busy
-    if (agent.status === 'running' && busy === 'steer') agent.steer(message)
+    // Người không phải chủ nhắn thêm khi bot đang soạn: dừng lượt cũ, không gửi câu trả lời đã cũ, làm lại với cả tin mới.
+    if (agent.status === 'running' && trust !== 'owner') {
+      this.superseded.add(agent.session.id)
+      agent.cancel({ kind: 'user' })
+      agent.followup(message)
+    } else if (agent.status === 'running' && busy === 'steer') agent.steer(message)
     else if (agent.status === 'running' && busy === 'interrupt') {
       agent.cancel({ kind: 'user' })
       agent.followup(message)
@@ -996,7 +1043,10 @@ export class ChannelHub {
     if (r.reason.kind === 'interrupted') return
     const rt = this.runtimes.get(last.bot)
     for (const p of r.ours) await this.store.doneInbox(p.inboxId)
+    // Lượt bị thay vì khách nhắn thêm: không gửi gì, lượt mới sẽ trả lời cả loạt tin.
+    if (r.reason.kind === 'aborted' && this.superseded.delete(r.sessionId)) return
     const ok = r.reason.kind === 'completed'
+    if (ok) this.superseded.delete(r.sessionId)
     for (const p of r.ours)
       void rt?.api.setReaction(p.chatId, p.tgMessageId, ok ? '👍' : '😢').catch(() => undefined)
     // Các đoạn theo người nói: chữ của bot của phiên gộp lại; câu trả lời chuyển giao là đoạn riêng.
@@ -1073,7 +1123,7 @@ export class ChannelHub {
       chatId: last.chatId,
       ...(last.threadId ? { threadId: last.threadId } : {}),
       ...(last.group ? { replyTo: first.tgMessageId } : {}),
-      chunks: toTelegramHtml(this.named(md)),
+      chunks: toTelegramHtml(this.named(md), REPLY_CHUNK),
       sent: 0,
       state: 'pending',
       attempts: 0,
@@ -1093,6 +1143,8 @@ export class ChannelHub {
     let cur = rec
     try {
       for (let i = cur.sent; i < cur.chunks.length; i++) {
+        // Nghỉ một nhịp giữa các phần của câu trả lời dài, như người gõ từng đoạn.
+        if (i > rec.sent) await this.sleep(this.d.partGapMs ?? 600)
         cur = { ...cur, state: 'sending' }
         await this.store.putOutbox(cur)
         const html = recovered && i === cur.sent ? `${T.recovered}\n\n${cur.chunks[i]!}` : cur.chunks[i]!
@@ -2199,7 +2251,7 @@ export class ChannelHub {
       bot,
       chatId: home.chatId,
       ...(home.threadId ? { threadId: home.threadId } : {}),
-      chunks: toTelegramHtml(this.named(markdown)),
+      chunks: toTelegramHtml(this.named(markdown), REPLY_CHUNK),
       sent: 0,
       state: 'pending',
       attempts: 0,

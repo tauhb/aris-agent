@@ -106,27 +106,27 @@ describe('tin ra: Markdown thành chữ thường', () => {
   })
 })
 
-describe('chia tin theo 2.000 ký tự', () => {
+describe('chia tin theo 1.500 ký tự', () => {
   it('ngắn thì một tin', () => {
     expect(splitText('abc')).toEqual(['abc'])
     expect(splitText('  ')).toEqual([''])
   })
 
   it('ngắt ở ranh giới đoạn, rồi dòng, rồi câu; không tin nào quá giới hạn', () => {
-    const a = 'a'.repeat(1200)
-    const b = 'b'.repeat(1200)
+    const a = 'a'.repeat(1000)
+    const b = 'b'.repeat(1000)
     expect(splitText(`${a}\n\n${b}`)).toEqual([a, b])
     const lines = Array.from({ length: 50 }, (_, i) => `dòng ${i} ${'x'.repeat(60)}`).join('\n')
     const byLine = splitText(lines)
     expect(byLine.length).toBeGreaterThan(1)
     for (const c of byLine) {
-      expect(c.length).toBeLessThanOrEqual(2000)
+      expect(c.length).toBeLessThanOrEqual(1500)
       for (const l of c.split(/\n+/)) expect(l.startsWith('dòng ')).toBe(true)
     }
     const sentences = Array.from({ length: 80 }, (_, i) => `Câu số ${i} khá là dài dòng.`).join(' ')
     const bySentence = splitText(sentences)
     for (const c of bySentence) {
-      expect(c.length).toBeLessThanOrEqual(2000)
+      expect(c.length).toBeLessThanOrEqual(1500)
       expect(c.endsWith('.')).toBe(true)
     }
   })
@@ -134,7 +134,7 @@ describe('chia tin theo 2.000 ký tự', () => {
   it('một khối liền không có chỗ ngắt thì cắt cứng, không mất ký tự', () => {
     const long = 'z'.repeat(4500)
     const parts = splitText(long)
-    expect(parts.map((p) => p.length)).toEqual([2000, 2000, 500])
+    expect(parts.map((p) => p.length)).toEqual([1500, 1500, 1500])
     expect(parts.join('')).toBe(long)
   })
 

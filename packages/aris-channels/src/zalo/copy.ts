@@ -68,6 +68,9 @@ export const ZN = {
   stranger: (name: string, excerpt: string) => `${name} nhắn Zalo: «${excerpt}»\n\nBot chưa trả lời.`,
   needQr: (name: string) =>
     `Zalo ${name} cần quét lại mã QR: phiên đăng nhập đã hết hạn. Mở Cài đặt › Kênh và ghép đôi trên web, phần Zalo.`,
+  /** Bị đá phiên (thường do mở Zalo Web): báo tối đa 6 giờ một lần mỗi tài khoản. */
+  kicked: (name: string) =>
+    `Zalo ${name} vừa bị ngắt vì tài khoản đang mở ở nơi khác (thường là Zalo Web). Bot tạm ngừng nghe và tự thử lại sau; muốn bot nghe ngay thì đóng Zalo Web.`,
   dailyLimit: (limit: number) =>
     `Bot đã gửi ${limit} tin Zalo hôm nay, chạm giới hạn ngày nên dừng gửi tới hết ngày để tránh bị khoá tài khoản.`,
 }

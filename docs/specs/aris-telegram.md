@@ -113,6 +113,12 @@ Thêm bot Telegram (dán token), trạng thái và cảnh báo privacy mode; sin
 
 Kênh nghe hộp duyệt chung của `@aris/commander` (`arisApprovals`): yêu cầu quyền mới của bot ngoài hay bot trong đội thành thẻ theo bản vẽ 7.1, gửi tới chat chính (`home`) của bot Aris, không có thì tới chủ nhân: "🔐 CẦN DUYỆT · [chấm màu] Tên", việc xin làm, lệnh hoặc tệp, lý do, "Tự từ chối sau 15 phút", nút Cho phép / Từ chối (`ax:<mã>:y|n`, chỉ chủ nhân bấm). Yêu cầu xong ở đâu thì thẻ được sửa: "Đã cho phép trên web", "Đã từ chối", "Hết 15 phút, đã từ chối", "Việc đã dừng".
 
+## GĐ8.7 đợt A: tin dài, gom tin, mạng chết im
+
+- Câu trả lời cắt ở **1.500 ký tự** (`REPLY_CHUNK`; xem trước khi đang viết vẫn 3.800), theo đoạn rồi dòng; dòng quá dài cắt sau dấu kết câu gần nhất. Nghỉ 0,6 giây giữa các phần.
+- **Gom tin dồn dập**: tin của người không phải chủ đợi cuộc chat im 5 giây rồi mới vào phiên (lệnh, mã ghép đôi, nút bấm, tin của chủ không đợi). Người không phải chủ nhắn thêm khi bot đang soạn thì dừng lượt cũ (lượt đó không gửi gì ra), lượt mới trả lời cả loạt; chủ vẫn theo cài đặt "Khi bot đang làm mà {you} nhắn thêm".
+- Mỗi lần `getUpdates` có hạn chót 45 giây: mạng chết im thì bỏ và gọi lại (thử lại 1 giây, gấp đôi, tối đa 30 giây) thay vì treo mãi.
+
 ## Để sau
 
 Webhook thay long-polling (khi chạy trên server), tệp lớn hơn 20 MB (Bot API cục bộ), chủ đề riêng trong chat 1-1 (Bot API 9.4). Lark làm ở đợt 7d; Zalo cá nhân làm ở GĐ8.4, xem [aris-zalo.md](aris-zalo.md).

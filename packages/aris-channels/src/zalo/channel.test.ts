@@ -39,13 +39,18 @@ class FakeZalo {
   qr: ZaloQrHandlers | undefined
   qrDone: { resolve(r: ZaloQrResult): void; reject(e: Error): void } | undefined
   qrAborted = 0
+  /** Giả lập mạng chết im: kết nối vẫn mở nhưng gọi Zalo không được. */
+  profileDown = false
   /** Đồng hồ giả, đặt giữa trưa để một loạt tin trong test không vượt nửa đêm. */
   clock = { t: 1_700_049_600_000 }
   private n = 0
 
   api: ZaloApi = {
     selfId: () => SELF,
-    profile: async () => ({ id: SELF, name: 'Tài khoản phụ', avatar: 'https://a/b.png' }),
+    profile: async () => {
+      if (this.profileDown) throw new Error('mạng chết im')
+      return { id: SELF, name: 'Tài khoản phụ', avatar: 'https://a/b.png' }
+    },
     userName: async (id) => this.names[id],
     groupName: async (id) => (id === GROUP ? 'Marketing' : undefined),
     send: async (thread, isGroup, text) => {
@@ -678,23 +683,21 @@ describe('kênh Zalo · nhóm', () => {
 })
 
 describe('kênh Zalo · gửi tin và giới hạn tần suất', () => {
-  it('câu trả lời dài chia theo 2.000 ký tự, ngắt ở ranh giới đoạn', async () => {
+  it('câu trả lời dài chia theo 1.500 ký tự, ngắt ở ranh giới đoạn, mỗi phần cách một nhịp', async () => {
     const s = await setup()
     await pair(s, OWNER)
     await s.zalo.push({ text: 'viết dài đi' })
     await settle()
     const sid = s.store.thread(zaloThreadKey('aris', OWNER))!.sessionId
     const para = (c: string) => c.repeat(900)
+    s.waits.length = 0
     finishTurn(s, sid, `${para('a')}\n\n${para('b')}\n\n${para('c')}`)
     await settle()
-    const replies = s.zalo.texts(OWNER).slice(-2)
-    expect(replies).toHaveLength(2)
-    // Ranh giới đoạn được giữ: hai đoạn đầu chung một tin nếu vừa, không bao giờ cắt giữa một đoạn ngắn.
-    expect(replies[0]).toBe(
-      `${para('a')}\n\n${para('b')}`.length <= 2000 ? `${para('a')}\n\n${para('b')}` : para('a'),
-    )
-    expect(replies.join('')).toContain(para('c'))
-    for (const t of s.zalo.texts(OWNER)) expect(t.length).toBeLessThanOrEqual(2000)
+    // Ba đoạn 900 ký tự: không ghép được hai đoạn vào một tin 1.500, nên mỗi đoạn một tin, không cắt giữa đoạn.
+    expect(s.zalo.texts(OWNER).slice(-3)).toEqual([para('a'), para('b'), para('c')])
+    for (const t of s.zalo.texts(OWNER)) expect(t.length).toBeLessThanOrEqual(1500)
+    // Giữa các phần có nhịp nghỉ (giới hạn 3 giây một tin mỗi cuộc chat).
+    expect(s.waits.filter((w) => w > 0).length).toBeGreaterThanOrEqual(2)
   })
 
   it('cách nhau ít nhất 3 giây trong một cuộc trò chuyện (xếp hàng, không bỏ tin)', async () => {
@@ -760,5 +763,119 @@ describe('kênh Zalo · khởi động lại', () => {
     await s.channel.start()
     expect(s.zalo.texts(OWNER).at(-1)).toContain('trả lời dở')
     expect(s.store.zaloOutbox()).toHaveLength(0)
+  })
+})
+
+describe('kênh Zalo · GĐ8.7 đợt A', () => {
+  it('bị đá phiên (Zalo Web mở): báo chủ, tối đa 6 giờ một lần', async () => {
+    vi.useFakeTimers()
+    const s = await setup({ retryMs: 1000 })
+    const kicked = () => s.notices.filter((n) => n.includes('đang mở ở nơi khác')).length
+    s.zalo.handlers!.onClosed('duplicate', '3000')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(kicked()).toBe(1)
+    // Nối lại rồi lại bị đá trong vòng 6 giờ: không báo nữa.
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(s.zalo.opened).toHaveLength(2)
+    s.zalo.handlers!.onClosed('duplicate', '3000')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(kicked()).toBe(1)
+    // Hơn 6 giờ sau: báo lại.
+    s.zalo.clock.t += 6 * 3_600_000 + 1
+    await vi.advanceTimersByTimeAsync(2000)
+    s.zalo.handlers!.onClosed('duplicate', '3000')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(kicked()).toBe(2)
+  })
+
+  it('mạng chết im: bộ canh 5 phút một lần, lỗi hai lần liền thì đóng trình nghe cũ và thử lại', async () => {
+    vi.useFakeTimers()
+    const s = await setup({ retryMs: 120_000 })
+    s.zalo.profileDown = true
+    await vi.advanceTimersByTimeAsync(5 * 60_000)
+    expect(s.channel.status()[0]!.state).toBe('listening')
+    await vi.advanceTimersByTimeAsync(5 * 60_000)
+    expect(s.channel.status()[0]!.state).toBe('retrying')
+    expect(s.zalo.closed).toBe(1)
+    // Mạng về: lần thử lại sau 2 phút nghe được, bộ canh chạy lại từ đầu.
+    s.zalo.profileDown = false
+    await vi.advanceTimersByTimeAsync(120_000)
+    expect(s.zalo.opened).toHaveLength(2)
+    expect(s.channel.status()[0]!.state).toBe('listening')
+    await vi.advanceTimersByTimeAsync(20 * 60_000)
+    expect(s.channel.status()[0]!.state).toBe('listening')
+  })
+
+  it('một lần canh lỗi rồi lại được thì không coi là mất kết nối', async () => {
+    vi.useFakeTimers()
+    const s = await setup({ retryMs: 120_000 })
+    s.zalo.profileDown = true
+    await vi.advanceTimersByTimeAsync(5 * 60_000)
+    s.zalo.profileDown = false
+    await vi.advanceTimersByTimeAsync(5 * 60_000)
+    s.zalo.profileDown = true
+    await vi.advanceTimersByTimeAsync(5 * 60_000)
+    expect(s.channel.status()[0]!.state).toBe('listening')
+    expect(s.zalo.closed).toBe(0)
+  })
+
+  it('gom tin dồn dập: khách gửi 3 tin liền thì đợi 5 giây im lặng rồi mới vào phiên; chủ không bị đợi', async () => {
+    const s = await setup()
+    await pair(s, OTHER, 'member')
+    s.waits.length = 0
+    await s.zalo.push({ senderId: OTHER, text: 'chào shop' })
+    await s.zalo.push({ senderId: OTHER, text: 'cho hỏi giá' })
+    await s.zalo.push({ senderId: OTHER, text: 'khoá AI cơ bản' })
+    await settle()
+    expect(s.waits).toContain(5000)
+    const sid = s.store.thread(zaloThreadKey('aris', OTHER))!.sessionId
+    expect(s.sessions.agents.get(sid)!.inbox).toHaveLength(3)
+    // Chủ nhân: không đợi.
+    await pair(s, OWNER)
+    s.waits.length = 0
+    await s.zalo.push({ text: 'việc gấp' })
+    await settle()
+    expect(s.waits.filter((w) => w === 5000)).toHaveLength(0)
+  })
+
+  it('khách nhắn thêm khi bot đang soạn: dừng lượt cũ, không gửi câu trả lời cũ, lượt mới trả lời', async () => {
+    const s = await setup()
+    await pair(s, OTHER, 'member')
+    await s.zalo.push({ senderId: OTHER, text: 'câu một', createTime: s.zalo.clock.t + 1 })
+    await settle()
+    const sid = s.store.thread(zaloThreadKey('aris', OTHER))!.sessionId
+    const agent = s.sessions.agents.get(sid)! as unknown as {
+      status: string
+      inbox: { id: string }[]
+      cancelled: number
+    }
+    s.channel.onSessionEvent(sid, { type: 'turn/start' })
+    s.channel.onSessionEvent(sid, { type: 'user/message', data: { id: agent.inbox[0]!.id } })
+    agent.status = 'running'
+    await s.zalo.push({ senderId: OTHER, text: 'thêm câu hai', createTime: s.zalo.clock.t + 1 })
+    await settle()
+    expect(agent.cancelled).toBe(1)
+    expect(agent.inbox).toHaveLength(2)
+    const before = s.zalo.sent.length
+    s.channel.onSessionEvent(sid, {
+      type: 'assistant/message',
+      data: { message: { content: [{ type: 'text', text: 'trả lời câu một (cũ)' }] } },
+    })
+    s.channel.onSessionEvent(sid, { type: 'turn/end', data: { reason: { kind: 'aborted' } } })
+    await settle()
+    expect(s.zalo.sent.length).toBe(before)
+    agent.status = 'idle'
+    finishTurn(s, sid, 'trả lời cả hai câu')
+    await settle()
+    expect(s.zalo.texts(OTHER).at(-1)).toBe('trả lời cả hai câu')
+  })
+
+  it('mở trình nghe mới thì trình nghe cũ (nếu còn) đóng trước', async () => {
+    const s = await setup()
+    await s.channel.loginStart('aris')
+    s.zalo.qrDone!.resolve({ session: SESSION, profile: { id: SELF, name: 'A', avatar: '' } })
+    await settle()
+    expect(s.zalo.opened).toHaveLength(2)
+    expect(s.zalo.closed).toBe(1)
   })
 })
