@@ -69,3 +69,10 @@ Mỗi lần `node scripts/aris.mjs restart` thì mã đăng nhập đổi, phả
    - Lark có thể đang báo hết hạn mức API (lỗi `99991403`), đó là lỗi có sẵn.
 6. Thử trên web thật và gửi ảnh chụp cho người dùng.
 7. Ghi một đoạn nghiệm thu ngắn vào `docs/ke-hoach-trien-khai.md`, mục giai đoạn 8. Ghi đúng việc đã thử, không nói quá.
+
+## Tiến độ (27/10/2026)
+
+- 8.1 phần B (kết nối MCP dùng chung): xong, commit `012ca88`.
+- 8.1 phần A (kho skill chung, nhập skill, gán bot): xong, commit `7e83832` (máy chủ) và `6e2981e` (giao diện). Còn thiếu: kiểm tra bản mới tự động hằng tuần.
+- 8.6 đẩy dự án lên GitHub (repo private): xem `gd8-6-day-len-github.md`, chờ anh duyệt.
+- 8.2, 8.3, 8.4, 8.5: chưa bắt đầu.
