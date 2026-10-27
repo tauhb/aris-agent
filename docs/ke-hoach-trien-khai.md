@@ -450,3 +450,5 @@ Câu hỏi: người dùng chỉ dùng Aris, không tạo bot khác, thì có m�
 | Giai đoạn 2 | Agent ngoài muốn đưa vào đội (Claude Code, Codex, Hermes…) đã cài và đăng nhập |
 | Giai đoạn 6 | Buzz Desktop (đã cài) |
 | Giai đoạn 7 | Server; ứng dụng Lark; Zalo OA đã xác thực; chốt trần ngân sách ngày |
+
+**GĐ8.8 · Kho skill dựng sẵn tiếng Việt (27/10, phần máy chủ; giao diện chờ duyệt bản vẽ)** ([plan](plans/gd8-8-kho-skill-viet.md), [đặc tả](specs/aris-skills.md#đợt-88--kho-skill-dựng-sẵn-tiếng-việt)): 18 skill trong `packages/aris-skills/library/` (Bán hàng và chăm sóc khách, Nội dung mạng xã hội, Phễu và marketing), viết bằng tiếng Việt, không đại từ cứng, có các bước, khuôn trả lời, ví dụ tốt và chưa tốt, điều không được làm; mỗi skill 3 ca thử. Cài qua `importItems` với nguồn `library`, bật ngay không qua Hộp duyệt, skill người dùng đã sửa thì không ghi đè khi chưa đồng ý. **Đã kiểm bằng test tự động** (8 test: kho thật không lỗi bộ kiểm hay bộ quét nào, cài cả gói, cài một skill và gán bot, có bản mới, đã sửa, lấy lại skill đã cất, API). **Chưa thử**: chạy ca thử của từng skill với model mặc định, bot thật trả lời khách thật bằng các skill này.
