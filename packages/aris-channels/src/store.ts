@@ -12,6 +12,7 @@ import type {
   InboxRecord,
   OutboxRecord,
   PersonRecord,
+  RecordChannel,
   SettingsRecord,
   ThreadRecord,
 } from './domain.js'
@@ -43,6 +44,15 @@ export const keyNum = (n: number) => (n < 0 ? `n${-n}` : String(n))
  */
 export const larkKey = (id: string) => id.replace(/[^A-Za-z0-9]+/g, '-')
 
+/** Bản ghi chưa ghi kênh là Telegram: chỗ chỉ dành cho Telegram phải lọc ra bản ghi Lark và Zalo. */
+const isTelegram = (channel: RecordChannel | undefined) => (channel ?? 'telegram') === 'telegram'
+
+/** Mã người, mã nhóm Zalo (số dài) → phần khoá hợp lệ của storage dsh. */
+export const zaloKey = (id: string) => id.replace(/[^A-Za-z0-9]+/g, '-')
+
+/** Khoá cuộc trò chuyện Zalo: gồm mã bot của aris và mã người hay nhóm Zalo, nên hai bot không dùng chung phiên. */
+export const zaloThreadKey = (bot: string, id: string) => `zc-${bot}-${zaloKey(id)}`
+
 /** Khoá cuộc trò chuyện Lark: gồm mã bot của aris và `chat_id`, nên hai bot không dùng chung phiên. */
 export const larkThreadKey = (bot: string, chatId: string) => `lk-${bot}-${larkKey(chatId)}`
 
@@ -50,6 +60,12 @@ export const larkThreadKey = (bot: string, chatId: string) => `lk-${bot}-${larkK
 export function threadKey(tgBotId: number, chatId: number, threadId?: number): string {
   return `tg-${keyNum(tgBotId)}-${keyNum(chatId)}${threadId ? `-t${threadId}` : ''}`
 }
+
+/** Mã tài khoản kênh của một bản ghi: bản ghi cũ (trước GĐ8.7) chưa có `account` thì mã là `bot`. */
+export const accId = (rec: Pick<BotRecord, 'account' | 'bot'>) => rec.account ?? rec.bot
+
+/** Mã tài khoản mới (`acc-` và 6 ký tự). */
+export const newAccountId = () => `acc-${Math.random().toString(36).slice(2, 8)}`
 
 /** Mã ghép đôi: 8 ký tự dễ đọc (bỏ 0/O, 1/I/L), dạng `4KX7-29QM`. */
 const ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'
@@ -97,21 +113,30 @@ export class ChannelStore implements AccessState {
   }
 
   // --- Người -------------------------------------------------------------------------
-  roleOf(userId: number): Role | undefined {
-    return this.t.people.get(`tg-${keyNum(userId)}`)?.role
+  /**
+   * Vai của một người trên Telegram. Có `account` thì xét bản ghi riêng của tài khoản đó trước, rồi bản ghi dùng chung
+   * (chủ nhân, và người ghép đôi trước GĐ8.7).
+   */
+  roleOf(userId: number, account?: string): Role | undefined {
+    const own = account ? this.t.people.get(`tg-${account}-${keyNum(userId)}`) : undefined
+    return own?.role ?? this.t.people.get(`tg-${keyNum(userId)}`)?.role
   }
-  /** Người đã ghép đôi trên Telegram (người trên Lark nằm ở `larkPeople`). */
-  people(): PersonRecord[] {
+  /**
+   * Người đã ghép đôi trên Telegram (người trên Lark nằm ở `larkPeople`). Có `account` thì chỉ người dùng được trên
+   * tài khoản đó (riêng của nó, cộng người dùng chung).
+   */
+  people(account?: string): PersonRecord[] {
     return [...this.t.people.entries()]
       .map(([, p]) => p)
-      .filter((p) => p.channel !== 'lark')
+      .filter((p) => isTelegram(p.channel) && (!account || !p.account || p.account === account))
       .sort((a, b) => a.pairedAt.localeCompare(b.pairedAt))
   }
   owners(): PersonRecord[] {
     return this.people().filter((p) => p.role === 'owner')
   }
-  async revoke(userId: number) {
-    return this.t.people.delete(`tg-${keyNum(userId)}`)
+  /** Gỡ một người: có `account` thì gỡ bản ghi riêng của tài khoản đó, không thì bản ghi dùng chung. */
+  async revoke(userId: number, account?: string) {
+    return this.t.people.delete(account ? `tg-${account}-${keyNum(userId)}` : `tg-${keyNum(userId)}`)
   }
   /** Người đã ghép đôi trên Lark. */
   larkPeople(): PersonRecord[] {
@@ -130,10 +155,38 @@ export class ChannelStore implements AccessState {
     return this.t.people.delete(`lk-${larkKey(openId)}`)
   }
 
+  /** Người đã ghép đôi trên Zalo (nhận ra bằng mã người dùng Zalo, khoá `zc-<mã>`). */
+  zaloPeople(account?: string): PersonRecord[] {
+    return [...this.t.people.entries()]
+      .map(([, p]) => p)
+      .filter((p) => p.channel === 'zalo' && (!account || !p.account || p.account === account))
+      .sort((a, b) => a.pairedAt.localeCompare(b.pairedAt))
+  }
+  zaloOwners(): PersonRecord[] {
+    return this.zaloPeople().filter((p) => p.role === 'owner')
+  }
+  /** Vai của một người trên Zalo: bản ghi riêng của tài khoản trước, rồi bản ghi dùng chung (chủ nhân). */
+  zaloRoleOf(zaloId: string, account?: string): Role | undefined {
+    const own = account ? this.t.people.get(`zc-${zaloKey(account)}-${zaloKey(zaloId)}`) : undefined
+    return own?.role ?? this.t.people.get(`zc-${zaloKey(zaloId)}`)?.role
+  }
+  async revokeZalo(zaloId: string, account?: string) {
+    return this.t.people.delete(
+      account ? `zc-${zaloKey(account)}-${zaloKey(zaloId)}` : `zc-${zaloKey(zaloId)}`,
+    )
+  }
+
   // --- Mã ghép đôi ----------------------------------------------------------------------
-  async createCode(role: Role, channel: ChannelKind = 'telegram'): Promise<CodeRecord> {
+  /** Mã ghép đôi mới; có `account` thì mã chỉ dùng được trên tài khoản kênh đó (GĐ8.7). */
+  async createCode(role: Role, channel: ChannelKind = 'telegram', account?: string): Promise<CodeRecord> {
     await this.pruneCodes()
-    const rec: CodeRecord = { code: newCode(), role, expiresAt: this.now() + CODE_TTL_MS, channel }
+    const rec: CodeRecord = {
+      code: newCode(),
+      role,
+      expiresAt: this.now() + CODE_TTL_MS,
+      channel,
+      ...(account ? { account } : {}),
+    }
     await this.t.codes.put(rec.code.replace('-', ''), rec)
     return rec
   }
@@ -165,14 +218,16 @@ export class ChannelStore implements AccessState {
   }
   /**
    * Kiểm một mã người ta nhắn và dùng nó (mã dùng một lần). `lockKey` là người gửi để đếm nhập sai.
-   * Trả bản ghi mã khi dùng được, `'other-channel'` khi mã của kênh khác (không xoá mã, không tính là nhập
-   * sai), `undefined` khi không giống mã, sai hay hết hạn hay người gửi đang bị khoá.
+   * Trả bản ghi mã khi dùng được, `'other-channel'` khi mã của kênh khác và `'other-account'` khi mã của tài khoản
+   * khác cùng kênh (cả hai: không xoá mã, không tính là nhập sai), `undefined` khi không giống mã, sai hay hết hạn
+   * hay người gửi đang bị khoá.
    */
   private async takeCode(
     text: string,
     lockKey: number | string,
     channel: ChannelKind,
-  ): Promise<CodeRecord | 'other-channel' | undefined> {
+    account?: string,
+  ): Promise<CodeRecord | 'other-channel' | 'other-account' | undefined> {
     const code = normalizeCode(text)
     if (!code) return undefined
     // Thử sai nhiều lần thì khoá chat tới hết giờ, kể cả khi sau đó gõ đúng (chống dò mã).
@@ -185,6 +240,7 @@ export class ChannelStore implements AccessState {
     }
     // Mã cũ chưa ghi kênh là mã Telegram.
     if ((rec.channel ?? 'telegram') !== channel) return 'other-channel'
+    if (rec.account && account && rec.account !== account) return 'other-account'
     this.wrongCodes.delete(lockKey)
     await this.t.codes.delete(key)
     return rec
@@ -199,18 +255,23 @@ export class ChannelStore implements AccessState {
     text: string,
     user: { id: number; name: string; username?: string | undefined },
     channel: ChannelKind = 'telegram',
-  ): Promise<PersonRecord | 'other-channel' | undefined> {
-    const rec = await this.takeCode(text, user.id, channel)
-    if (!rec || rec === 'other-channel') return rec
+    account?: string,
+  ): Promise<PersonRecord | 'other-channel' | 'other-account' | undefined> {
+    const rec = await this.takeCode(text, user.id, channel, account)
+    if (!rec || typeof rec === 'string') return rec
+    // Đã là chủ nhân thì mã "người được phép" không hạ quyền.
+    const role = this.roleOf(user.id) === 'owner' ? 'owner' : rec.role
+    // Chủ nhân dùng chung mọi tài khoản; người được phép chỉ trên tài khoản của mã (GĐ8.7).
+    const scope = role === 'member' ? (rec.account ?? account) : undefined
     const person: PersonRecord = {
       userId: user.id,
       name: user.name,
       ...(user.username ? { username: user.username } : {}),
-      // Đã là chủ nhân thì mã "người được phép" không hạ quyền.
-      role: this.roleOf(user.id) === 'owner' ? 'owner' : rec.role,
+      role,
       pairedAt: new Date(this.now()).toISOString(),
+      ...(scope ? { account: scope } : {}),
     }
-    await this.t.people.put(`tg-${keyNum(user.id)}`, person)
+    await this.t.people.put(scope ? `tg-${scope}-${keyNum(user.id)}` : `tg-${keyNum(user.id)}`, person)
     return person
   }
 
@@ -220,7 +281,8 @@ export class ChannelStore implements AccessState {
     user: { openId: string; name: string },
   ): Promise<PersonRecord | 'other-channel' | undefined> {
     const rec = await this.takeCode(text, `lk-${user.openId}`, 'lark')
-    if (!rec || rec === 'other-channel') return rec
+    // Lark không có nhiều tài khoản nên không bao giờ là 'other-account'.
+    if (!rec || typeof rec === 'string') return rec === 'other-account' ? 'other-channel' : rec
     const person: PersonRecord = {
       userId: 0,
       name: user.name,
@@ -233,23 +295,62 @@ export class ChannelStore implements AccessState {
     return person
   }
 
-  // --- Nhóm --------------------------------------------------------------------------
-  group(chatId: number): GroupRecord | undefined {
-    return this.t.groups.get(`tg-${keyNum(chatId)}`)
+  /** Như `redeem` nhưng cho người trên Zalo; chỉ nhận mã của kênh Zalo. */
+  async redeemZalo(
+    text: string,
+    user: { zaloId: string; name: string },
+    account?: string,
+  ): Promise<PersonRecord | 'other-channel' | 'other-account' | undefined> {
+    const rec = await this.takeCode(text, `zc-${user.zaloId}`, 'zalo', account)
+    if (!rec || typeof rec === 'string') return rec
+    const role = this.zaloRoleOf(user.zaloId) === 'owner' ? 'owner' : rec.role
+    const scope = role === 'member' ? (rec.account ?? account) : undefined
+    const person: PersonRecord = {
+      userId: 0,
+      name: user.name,
+      role,
+      pairedAt: new Date(this.now()).toISOString(),
+      channel: 'zalo',
+      openId: user.zaloId,
+      ...(scope ? { account: scope } : {}),
+    }
+    await this.t.people.put(
+      scope ? `zc-${zaloKey(scope)}-${zaloKey(user.zaloId)}` : `zc-${zaloKey(user.zaloId)}`,
+      person,
+    )
+    return person
   }
-  groupRule(chatId: number): GroupRule | undefined {
-    const g = this.group(chatId)
+
+  // --- Nhóm --------------------------------------------------------------------------
+  /** Khoá của nhóm Telegram: bản ghi riêng của tài khoản nếu có, không thì bản ghi dùng chung (trước GĐ8.7). */
+  private groupKey(chatId: number, account?: string): string {
+    const own = account ? `tg-${account}-${keyNum(chatId)}` : undefined
+    if (own && this.t.groups.get(own)) return own
+    const shared = `tg-${keyNum(chatId)}`
+    if (this.t.groups.get(shared)) return shared
+    return own ?? shared
+  }
+  group(chatId: number, account?: string): GroupRecord | undefined {
+    return this.t.groups.get(this.groupKey(chatId, account))
+  }
+  groupRule(chatId: number, account?: string): GroupRule | undefined {
+    const g = this.group(chatId, account)
     return g && { allowed: g.allowed, who: g.who }
   }
-  /** Nhóm Telegram (nhóm Lark nằm ở `larkGroups`). */
-  groups(): GroupRecord[] {
+  /** Nhóm Telegram (nhóm Lark nằm ở `larkGroups`); có `account` thì chỉ nhóm của tài khoản đó và nhóm dùng chung. */
+  groups(account?: string): GroupRecord[] {
     return [...this.t.groups.entries()]
       .map(([, g]) => g)
-      .filter((g) => g.channel !== 'lark')
+      .filter((g) => isTelegram(g.channel) && (!account || !g.account || g.account === account))
       .sort((a, b) => a.title.localeCompare(b.title))
   }
-  async upsertGroup(chatId: number, patch: Partial<GroupRecord> & { title?: string }): Promise<GroupRecord> {
-    const cur = this.group(chatId)
+  async upsertGroup(
+    chatId: number,
+    patch: Partial<GroupRecord> & { title?: string },
+    account?: string,
+  ): Promise<GroupRecord> {
+    const key = this.groupKey(chatId, account)
+    const cur = this.t.groups.get(key)
     const next: GroupRecord = {
       chatId,
       title: patch.title ?? cur?.title ?? String(chatId),
@@ -260,13 +361,16 @@ export class ChannelStore implements AccessState {
         ? { notifiedAt: (patch.notifiedAt ?? cur?.notifiedAt)! }
         : {}),
       seenAt: new Date(this.now()).toISOString(),
+      ...((cur?.account ?? (key !== `tg-${keyNum(chatId)}` ? account : undefined))
+        ? { account: (cur?.account ?? account)! }
+        : {}),
     }
     if (patch.prompt === '') delete next.prompt
-    await this.t.groups.put(`tg-${keyNum(chatId)}`, next)
+    await this.t.groups.put(key, next)
     return next
   }
-  async removeGroup(chatId: number) {
-    return this.t.groups.delete(`tg-${keyNum(chatId)}`)
+  async removeGroup(chatId: number, account?: string) {
+    return this.t.groups.delete(this.groupKey(chatId, account))
   }
 
   // --- Nhóm Lark (nhận ra bằng chat_id) ----------------------------------------------------
@@ -315,40 +419,130 @@ export class ChannelStore implements AccessState {
     return true
   }
 
-  /** Có nên báo chủ nhân lần nữa không (tối đa một lần mỗi giờ cho mỗi người lạ/nhóm lạ). */
-  async shouldNotifyStranger(userId: number | string): Promise<boolean> {
+  // --- Nhóm Zalo (nhận ra bằng mã nhóm; mặc định tắt) ---------------------------------------
+  /** Khoá nhóm Zalo: bản ghi riêng của tài khoản nếu có (mặc định cho nhóm mới), không thì bản ghi dùng chung cũ. */
+  private zaloGroupKey(groupId: string, account?: string): string {
+    const own = account ? `zc-${zaloKey(account)}-${zaloKey(groupId)}` : undefined
+    if (own && this.t.groups.get(own)) return own
+    const shared = `zc-${zaloKey(groupId)}`
+    if (this.t.groups.get(shared)) return shared
+    return own ?? shared
+  }
+  zaloGroup(groupId: string, account?: string): GroupRecord | undefined {
+    return this.t.groups.get(this.zaloGroupKey(groupId, account))
+  }
+  zaloGroupRule(groupId: string, account?: string): GroupRule | undefined {
+    const g = this.zaloGroup(groupId, account)
+    return g && { allowed: g.allowed, who: g.who }
+  }
+  zaloGroups(account?: string): GroupRecord[] {
+    return [...this.t.groups.entries()]
+      .map(([, g]) => g)
+      .filter((g) => g.channel === 'zalo' && (!account || !g.account || g.account === account))
+      .sort((a, b) => a.title.localeCompare(b.title))
+  }
+  async upsertZaloGroup(
+    groupId: string,
+    patch: Partial<GroupRecord> & { title?: string },
+    account?: string,
+  ): Promise<GroupRecord> {
+    const key = this.zaloGroupKey(groupId, account)
+    const cur = this.t.groups.get(key)
+    const prompt = patch.prompt ?? cur?.prompt
+    const next: GroupRecord = {
+      chatId: 0,
+      title: patch.title ?? cur?.title ?? groupId,
+      allowed: patch.allowed ?? cur?.allowed ?? false,
+      who: patch.who ?? cur?.who ?? 'allowed',
+      ...(prompt ? { prompt } : {}),
+      seenAt: new Date(this.now()).toISOString(),
+      channel: 'zalo',
+      chatRef: groupId,
+      ...((cur?.account ?? (key !== `zc-${zaloKey(groupId)}` ? account : undefined))
+        ? { account: (cur?.account ?? account)! }
+        : {}),
+    }
+    if (patch.prompt === '') delete next.prompt
+    await this.t.groups.put(key, next)
+    return next
+  }
+  async removeZaloGroup(groupId: string, account?: string) {
+    return this.t.groups.delete(this.zaloGroupKey(groupId, account))
+  }
+
+  /**
+   * Có nên báo chủ nhân lần nữa không (mặc định tối đa một lần mỗi giờ cho mỗi người lạ/nhóm lạ; `windowMs` đổi
+   * khoảng đó, ví dụ Zalo báo một lần mỗi ngày).
+   */
+  async shouldNotifyStranger(userId: number | string, windowMs = 3_600_000): Promise<boolean> {
     const s = this.settings()
     const last = s.strangers[String(userId)]
-    if (last !== undefined && this.now() - last < 3_600_000) return false
+    if (last !== undefined && this.now() - last < windowMs) return false
     // Dọn người lạ đã báo quá 30 ngày để bảng không phình mãi.
     const keep = Object.entries(s.strangers).filter(([, at]) => this.now() - at < STRANGER_KEEP_MS)
     await this.updateSettings({ strangers: { ...Object.fromEntries(keep), [String(userId)]: this.now() } })
     return true
   }
-  async shouldNotifyGroup(chatId: number, title: string): Promise<boolean> {
-    const g = this.group(chatId)
+  async shouldNotifyGroup(chatId: number, title: string, account?: string): Promise<boolean> {
+    const g = this.group(chatId, account)
     if (g && g.notifiedAt !== undefined && this.now() - g.notifiedAt < 3_600_000) return false
-    await this.upsertGroup(chatId, { title, notifiedAt: this.now() })
+    await this.upsertGroup(chatId, { title, notifiedAt: this.now() }, account)
     return true
   }
 
   // --- Tài khoản bot -----------------------------------------------------------------
   /** Tài khoản bot Telegram (ứng dụng Lark nằm ở `larkApps`). */
   bots(): BotRecord[] {
-    return [...this.t.bots.entries()].map(([, b]) => b).filter((b) => b.channel !== 'lark')
+    return [...this.t.bots.entries()].map(([, b]) => b).filter((b) => isTelegram(b.channel))
   }
-  bot(bot: string): BotRecord | undefined {
-    return this.t.bots.get(bot)
+  /** Tài khoản Telegram theo mã tài khoản (bản ghi cũ: mã tài khoản là mã bot). */
+  bot(account: string): BotRecord | undefined {
+    const b = this.t.bots.get(account)
+    return b && isTelegram(b.channel) ? b : undefined
   }
   async putBot(rec: BotRecord) {
-    await this.t.bots.put(rec.bot, rec)
+    await this.t.bots.put(accId(rec), rec)
   }
-  async patchBot(bot: string, patch: Partial<BotRecord>) {
-    const cur = this.bot(bot)
-    if (cur) await this.t.bots.put(bot, { ...cur, ...patch })
+  async patchBot(account: string, patch: Partial<BotRecord>) {
+    const cur = this.bot(account)
+    if (cur) await this.t.bots.put(account, { ...cur, ...patch })
   }
-  async removeBot(bot: string) {
-    return this.t.bots.delete(bot)
+  async removeBot(account: string) {
+    return this.t.bots.delete(account)
+  }
+  /** Gỡ tài khoản: xoá người được phép, nhóm và mã ghép đôi riêng của tài khoản đó (bản ghi dùng chung giữ nguyên). */
+  async forgetAccount(channel: 'telegram' | 'zalo', account: string) {
+    const ours = (c: RecordChannel | undefined) => (channel === 'telegram' ? isTelegram(c) : c === 'zalo')
+    for (const [k, p] of [...this.t.people.entries()])
+      if (ours(p.channel) && p.account === account) await this.t.people.delete(k)
+    for (const [k, g] of [...this.t.groups.entries()])
+      if (ours(g.channel) && g.account === account) await this.t.groups.delete(k)
+    for (const [k, c] of [...this.t.codes.entries()])
+      if ((c.channel ?? 'telegram') === channel && c.account === account) await this.t.codes.delete(k)
+  }
+  /** Các tài khoản Telegram một bot của aris đang trả lời. */
+  botAccounts(bot: string): BotRecord[] {
+    return this.bots().filter((b) => b.bot === bot)
+  }
+  /** Tài khoản Telegram chính của một bot: bản ghi cũ mang mã bot, không thì tài khoản đầu tiên của bot. */
+  accountOf(bot: string): BotRecord | undefined {
+    return this.bot(bot) ?? this.botAccounts(bot)[0]
+  }
+
+  // --- Tài khoản Zalo: nhiều tài khoản, mỗi tài khoản một bot trả lời; khoá bản ghi `zalo-<mã tài khoản>` ----
+  zaloAccounts(): BotRecord[] {
+    return [...this.t.bots.entries()].map(([, b]) => b).filter((b) => b.channel === 'zalo')
+  }
+  /** Tài khoản Zalo theo mã tài khoản (khoá bản ghi `zalo-<mã>`; bản ghi cũ: mã tài khoản là mã bot). */
+  zaloAccount(account: string): BotRecord | undefined {
+    const b = this.t.bots.get(`zalo-${account}`)
+    return b?.channel === 'zalo' ? b : undefined
+  }
+  async putZaloAccount(rec: BotRecord) {
+    await this.t.bots.put(`zalo-${accId(rec)}`, { ...rec, channel: 'zalo' })
+  }
+  async removeZaloAccount(account: string) {
+    return this.t.bots.delete(`zalo-${account}`)
   }
 
   // --- Ứng dụng Lark: mỗi bot của aris tối đa một ứng dụng, khoá bản ghi `lark-<bot>` ---------
@@ -402,13 +596,19 @@ export class ChannelStore implements AccessState {
   inbox(): InboxRecord[] {
     return [...this.t.inbox.entries()]
       .map(([, r]) => r)
-      .filter((r) => r.channel !== 'lark')
+      .filter((r) => isTelegram(r.channel))
       .sort((a, b) => a.receivedAt - b.receivedAt)
   }
   larkInbox(): InboxRecord[] {
     return [...this.t.inbox.entries()]
       .map(([, r]) => r)
       .filter((r) => r.channel === 'lark')
+      .sort((a, b) => a.receivedAt - b.receivedAt)
+  }
+  zaloInbox(): InboxRecord[] {
+    return [...this.t.inbox.entries()]
+      .map(([, r]) => r)
+      .filter((r) => r.channel === 'zalo')
       .sort((a, b) => a.receivedAt - b.receivedAt)
   }
   async enqueue(rec: InboxRecord) {
@@ -425,13 +625,19 @@ export class ChannelStore implements AccessState {
   outbox(): OutboxRecord[] {
     return [...this.t.outbox.entries()]
       .map(([, r]) => r)
-      .filter((r) => r.channel !== 'lark')
+      .filter((r) => isTelegram(r.channel))
       .sort((a, b) => a.createdAt - b.createdAt)
   }
   larkOutbox(): OutboxRecord[] {
     return [...this.t.outbox.entries()]
       .map(([, r]) => r)
       .filter((r) => r.channel === 'lark')
+      .sort((a, b) => a.createdAt - b.createdAt)
+  }
+  zaloOutbox(): OutboxRecord[] {
+    return [...this.t.outbox.entries()]
+      .map(([, r]) => r)
+      .filter((r) => r.channel === 'zalo')
       .sort((a, b) => a.createdAt - b.createdAt)
   }
   async putOutbox(rec: OutboxRecord) {

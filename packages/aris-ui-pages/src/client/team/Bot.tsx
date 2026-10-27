@@ -22,36 +22,47 @@ import { BotMediaRows } from '../settings/Media.js'
 import { departmentOptions, modelOptions } from '../options.js'
 import { useChannels } from '../settings/channels-api.js'
 
-/** Kênh riêng của bot (bản vẽ 2.2): tài khoản Telegram gắn trên trang 6.3. */
+/**
+ * Kênh của bot (bản vẽ 2.2; GĐ8.7: một dòng "Kênh bot đang trả lời"): các tài khoản Telegram, Zalo cá nhân và ứng
+ * dụng Lark đang do bot này trả lời; gắn hay đổi tài khoản ở Cài đặt › Kênh và ghép đôi.
+ */
 function BotChannels({ t, botId, onConnect }: { t: PageProps['t']; botId: string; onConnect: () => void }) {
   const { data } = useChannels()
-  const tg = data?.bots.find((b) => b.bot === botId)
+  const items = [
+    ...(data?.bots ?? [])
+      .filter((b) => b.bot === botId)
+      .map((b) => ({ key: `tg-${b.account}`, text: `Telegram @${b.username}`, bad: !!b.error })),
+    ...(data?.zalo?.accounts ?? [])
+      .filter((a) => a.bot === botId)
+      .map((a) => ({ key: `zl-${a.account}`, text: `Zalo ${a.label}`, bad: a.state !== 'listening' })),
+    ...(data?.lark?.apps ?? [])
+      .filter((a) => a.bot === botId)
+      .map((a) => ({ key: `lk-${a.bot}`, text: `Lark ${a.name}`, bad: a.state === 'error' })),
+  ]
   return (
     <Card title={t('bot.channels')}>
-      <CardRow label="Telegram">
-        {tg ? (
-          <span style={{ fontSize: 12.5 }}>
-            <span className="a-mono">@{tg.username}</span> ·{' '}
-            <span style={{ fontWeight: 600, color: tg.error ? 'var(--a-danger)' : 'var(--a-ok)' }}>
-              {tg.error ? t('bot.channelError') : t('bot.connected')}
-            </span>
-          </span>
-        ) : (
+      <CardRow label={t('bot.answering')}>
+        <span
+          style={{ fontSize: 12.5, display: 'flex', flexWrap: 'wrap', gap: '4px 10px', alignItems: 'center' }}
+        >
+          {items.length ? (
+            items.map((i) => (
+              <span key={i.key} style={{ color: i.bad ? 'var(--a-warn)' : undefined }}>
+                {i.text}
+              </span>
+            ))
+          ) : (
+            <span className="a-muted">{t('bot.noChannel')}</span>
+          )}
           <Button size="sm" onClick={onConnect}>
-            {t('bot.connect')}
+            {t(items.length ? 'bot.manageChannels' : 'bot.connect')}
           </Button>
-        )}
+        </span>
       </CardRow>
-      <Later t={t} stage={7} row>
-        <CardRow label="Lark">
-          <Button size="sm" disabled>
-            {t('bot.connect')}
-          </Button>
-        </CardRow>
-      </Later>
     </Card>
   )
 }
+import { BotComputer } from '../computer/BotComputer.js'
 import { BotAside, PermsCard } from './BotPerms.js'
 import { SoulField } from './BotSoul.js'
 import { BotRoutineTab, useBotRoutines } from './BotRoutine.js'
@@ -414,6 +425,7 @@ export function BotProfile({ t, nav, params, plugins }: PageProps) {
           {tab === 'perms' && (
             <>
               <PermsCard t={t} bot={bot} />
+              {!bot.external && <BotComputer t={t} botId={bot.id} name={name} />}
               {!bot.external && (
                 <BotChannels
                   t={t}

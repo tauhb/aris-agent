@@ -871,6 +871,72 @@
       "w": 1440,
       "x": 3040,
       "y": 4960
+    },
+    "KenhZalo.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "6.3d · Kênh Zalo cá nhân (GĐ8.4) — chưa kết nối: cảnh báo cam, ô “Tôi hiểu”, chọn bot trả lời, “Hiện mã QR”; đang quét QR: mã kèm đếm ngược, “Tạo mã mới”; đã kết nối: ảnh và tên Zalo, trạng thái (đang nghe / Zalo Web mở / cần quét lại), mã ghép đôi riêng, người đã ghép, nhóm bật/tắt (mặc định tắt), giới hạn gửi tin",
+      "w": 1440,
+      "x": 1520,
+      "y": 9240
+    },
+    "DanhMucConnector.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "6.4 · Danh mục connector (GĐ8.5) — lưới thẻ có tìm kiếm và tab nhóm, pill Chính thức / Chưa kiểm / Có ghi; bấm thẻ: Đăng nhập OAuth hoặc nhập khoá, phạm vi (cả đội, phòng, bot), mức hỏi, Kiểm tra; danh sách kết nối của đội với trạng thái chạy được / cần đăng nhập lại / lỗi",
+      "w": 1440,
+      "x": 0,
+      "y": 11240
+    },
+    "KenhTaiKhoan.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "page": "g6",
+      "title": "6.3e · Kênh và ghép đôi (GĐ8.7 bản gọn) — danh sách tài khoản Telegram, Zalo, Lark; chi tiết một tài khoản: bot trả lời, ai được trả lời, nhường tay, giờ trực, nhãn bỏ qua, mã ghép đôi, người, nhóm, giới hạn; tab Trả lời theo tài liệu",
+      "w": 1440,
+      "x": 0,
+      "y": 12240
+    },
+    "KenhThemTaiKhoan.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "page": "g6",
+      "title": "6.3f · Thêm tài khoản kênh (GĐ8.7 bản gọn) — chọn kênh, tên, bot; Telegram dán token, Zalo cảnh báo + Tôi hiểu + mã QR",
+      "w": 1440,
+      "x": 1520,
+      "y": 12240
+    },
+    "MayChat.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "is_interactive": true,
+      "page": "g6",
+      "title": "6.6b · Điều khiển máy (GĐ8.3) — Văn phòng › chat với bot: khung màn hình mới nhất (đánh dấu chỗ vừa bấm, phóng to), thẻ duyệt thao tác, Cầm lái / Trả lại, tin bị hàng rào chặn",
+      "w": 1440,
+      "x": 0,
+      "y": 13360
+    },
+    "MayDuyet.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "is_interactive": true,
+      "page": "g6",
+      "title": "6.6c · Điều khiển máy (GĐ8.3) — chuông Cần anh: thẻ duyệt có ảnh cửa sổ và vùng đánh dấu, lần đầu xem màn hình, dòng vừa chặn",
+      "w": 1440,
+      "x": 1520,
+      "y": 13360
+    },
+    "HoSoBotMay.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "is_interactive": true,
+      "page": "g6",
+      "title": "2.2g · Hồ sơ bot › Quyền › Điều khiển máy (GĐ8.3) — bật/tắt, hỏi từng bước hay trong phạm vi, ứng dụng và loại thao tác được phép, luôn chặn, quyền của macOS",
+      "w": 1440,
+      "x": 3040,
+      "y": 13360
     }
   },
   "createdOnFiles": {
@@ -1051,6 +1117,7 @@
     "VanPhongPhongBan.dc.html",
     "VanPhongKanban.dc.html",
     "KenhLark.dc.html",
+    "KenhZalo.dc.html",
     "PhuKienLinhVat.dc.html",
     "PhuKien3D.dc.html",
     "VanPhongNhatKy.dc.html",
@@ -1058,13 +1125,19 @@
     "VanPhongChatAris.dc.html",
     "KetNoiDoi.dc.html",
     "NhapKetNoi.dc.html",
+    "DanhMucConnector.dc.html",
     "KetNoiDoiBot.dc.html",
     "NhapSkill.dc.html",
     "ThuVienSkillDoi.dc.html",
     "SkillDoiChiTiet.dc.html",
     "GoalCho.dc.html",
     "GopSkill.dc.html",
-    "GopSkillThuVien.dc.html"
+    "GopSkillThuVien.dc.html",
+    "KenhTaiKhoan.dc.html",
+    "KenhThemTaiKhoan.dc.html",
+    "MayChat.dc.html",
+    "MayDuyet.dc.html",
+    "HoSoBotMay.dc.html"
   ],
   "pages": [
     {

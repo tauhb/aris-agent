@@ -19,6 +19,7 @@ import {
 import { useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Logo, RowMenu, howOf, scopeText } from '../team/BotTools.js'
+import { ConnectorLogo, oauthLogin } from '../team/Catalog.js'
 import { ScopePicker, type Scope } from '../team/ScopePicker.js'
 
 /** Dải linh vật các bot được dùng (tối đa 4), theo phạm vi: bot nêu tên, và bot thuộc phòng đã chọn. */
@@ -77,7 +78,7 @@ export function Connections({ t, nav }: PageProps) {
           <Button size="sm" onClick={() => nav.go('mcp-import')}>
             {t('conn.import')}
           </Button>
-          <Button size="sm" variant="primary" onClick={() => nav.go('mcp-add', { team: '1' })}>
+          <Button size="sm" variant="primary" onClick={() => nav.go('mcp-catalog')}>
             {t('conn.add')}
           </Button>
         </>
@@ -92,12 +93,17 @@ export function Connections({ t, nav }: PageProps) {
           </CardRow>
         )}
         {list.map((c) => {
-          const ok = c.check?.ok
+          const login = c.oauth?.state === 'login'
+          const ok = c.check?.ok && !login
           const tools = c.check?.tools ?? []
           return (
             <div key={c.id}>
               <div className="a-row">
-                <Logo preset={c.preset} />
+                {c.catalog ? (
+                  <ConnectorLogo id={c.catalog} name={c.name} size={30} />
+                ) : (
+                  <Logo preset={c.preset} />
+                )}
                 <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     <b>{c.name}</b>{' '}
@@ -113,7 +119,12 @@ export function Connections({ t, nav }: PageProps) {
                       </>
                     )}
                   </span>
-                  {c.check && !ok ? (
+                  {login ? (
+                    <span style={{ fontSize: 12.5, color: 'var(--a-warn)' }}>
+                      {t(c.check ? 'cat.needLogin' : 'cat.notLogged')}
+                      {c.oauth?.error ? ` · ${c.oauth.error}` : ''}
+                    </span>
+                  ) : c.check && !ok ? (
                     <span style={{ fontSize: 12.5, color: 'var(--a-danger)' }}>
                       {t('mcp.failed', { error: c.check.error ?? '' })}
                     </span>
@@ -153,22 +164,37 @@ export function Connections({ t, nav }: PageProps) {
                     whiteSpace: 'nowrap',
                     color: !c.enabled
                       ? 'var(--a-muted)'
-                      : ok
-                        ? 'var(--a-ok)'
-                        : c.check
-                          ? 'var(--a-danger)'
-                          : 'var(--a-muted)',
+                      : login
+                        ? 'var(--a-warn)'
+                        : ok
+                          ? 'var(--a-ok)'
+                          : c.check
+                            ? 'var(--a-danger)'
+                            : 'var(--a-muted)',
                   }}
                 >
                   ●{' '}
                   {!c.enabled
                     ? t('mcp.off')
-                    : ok
-                      ? t('mcp.ok')
-                      : c.check
-                        ? t('mcp.error')
-                        : t('mcp.unchecked')}
+                    : login
+                      ? t('cat.needLoginShort')
+                      : ok
+                        ? t('mcp.ok')
+                        : c.check
+                          ? t('mcp.error')
+                          : t('mcp.unchecked')}
                 </span>
+                {login && (
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() =>
+                      void oauthLogin(c.id).catch((e: unknown) => setError((e as Error).message))
+                    }
+                  >
+                    {t('cat.relogin')}
+                  </Button>
+                )}
                 <Switch
                   checked={c.enabled}
                   label={t(c.enabled ? 'conn.turnOffAll' : 'conn.turnOnAll', { name: c.name })}
@@ -176,7 +202,15 @@ export function Connections({ t, nav }: PageProps) {
                     void teamAction({ op: 'mcp-update', id: c.id, input: { enabled: on } }).catch(() => {})
                   }
                 />
-                <RowMenu t={t} c={c} onEdit={() => nav.go('mcp-add', { team: '1', id: c.id })} />
+                <RowMenu
+                  t={t}
+                  c={c}
+                  onEdit={() =>
+                    c.catalog
+                      ? nav.go('mcp-catalog', { id: c.id })
+                      : nav.go('mcp-add', { team: '1', id: c.id })
+                  }
+                />
               </div>
               {editing === c.id && (
                 <div className="ap-sc-panel">
@@ -197,6 +231,7 @@ export function Connections({ t, nav }: PageProps) {
           )
         })}
       </Card>
+      {error && !editing && <div style={{ color: 'var(--a-danger)', fontSize: 13 }}>{error}</div>}
       <div className="ap-hint a-muted">ⓘ {t('conn.note')}</div>
     </PageShell>
   )

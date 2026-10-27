@@ -36,6 +36,15 @@ Chỉ đọc tài liệu và kiến trúc. **Không chép mã của Hermes.** Gh
    - Thao tác ở tiền cảnh (di chuyển con trỏ thật).
 4. **UI-TARS Desktop** và **Agent S** (Apache-2.0): chỉ dựa vào ảnh chụp, mặc định một màn hình. Chỉ tham khảo cách nhắc model và cách bám toạ độ, không dùng làm lõi.
 
+## Cập nhật 27/10 (kiểm lại trên npm)
+
+- `@trycua/cua-driver@0.37.0`: MIT, gói chính 1,1 MB. Tệp nhị phân Rust đi theo **gói phụ tuỳ chọn của npm** theo máy (`@trycua/cua-driver-darwin-arm64@0.37.0`: `MIT AND MPL-2.0`, 64,5 MB khi giải nén), tải từ npm lúc `pnpm install`, không tải thêm lúc chạy (cần xác nhận lại trên Mac). Kéo theo `@ubjs/core` và `@ubjs/node` bản `0.31.0-3` (MPL-2.0, có trong danh sách cho phép của `check:licenses`).
+- Peekaboo đã lên bản **4.9.7** (MIT), không còn là bản 3 beta.
+- **Chia việc theo nơi làm:**
+  - *Làm được trên Cloud* (không cần Mac): gói `@aris/computer` với `ComputerDriver` và bản giả, đổi toạ độ, phân tích phím tắt, lớp an toàn (chặn cứng, hai chế độ quyền, khoá một bot, trần thao tác, tạm dừng khi người dùng dùng máy), các công cụ `man_hinh_*`, thẻ duyệt có ảnh đánh dấu, phần logic của `computer doctor`, test, đặc tả, bản vẽ, giao diện.
+  - *Cần máy Mac của người dùng*: nối cua-driver thật, quyền Trợ năng và Ghi màn hình (macOS tính cho tiến trình nào), chế độ nền có thật không giành chuột, `computer doctor` thật, toàn bộ B-5.
+- **Thứ tự đợt:** (1) Cloud: lõi giả, an toàn, công cụ, test → (2) bản vẽ, chờ duyệt → (3) giao diện → (4) trên Mac: nối lõi thật, doctor, thử thật B-5.
+
 ## Điểm dừng 1 · Chọn lõi thao tác
 
 Trình bày cho người dùng, đề xuất **B1**, rồi chờ người dùng chọn:
@@ -123,3 +132,16 @@ Lời dặn trong mô tả công cụ: **ưu tiên bấm theo phần tử hay nh
 - Lỗi rõ ràng khi thiếu lõi hay thiếu quyền.
 - Một `ComputerDriver` giả để test lớp công cụ mà không đụng máy thật.
 - Viết `docs/specs/aris-computer.md`.
+
+## Tiến độ (27/10/2026)
+
+- **Điểm dừng 1**: người dùng chọn **B1 cua-driver** và đồng ý cài `@trycua/cua-driver@0.37.0`.
+- **Điểm dừng 2**: người dùng chốt theo đề xuất: bot luôn đọc danh sách phần tử (cây Trợ năng); ảnh chụp chỉ đính kèm khi model của phiên đọc được ảnh.
+- **Đợt 1 (Cloud) xong**: gói `@aris/computer` (lõi giả và bộ nối cua-driver, tám công cụ, chặn cứng, hai chế độ quyền, một bot một lúc, trần, cầm lái, tạm dừng khi người dùng dùng máy, API, `aris computer doctor`), test tự động, đặc tả `docs/specs/aris-computer.md`. Đã thử lõi thật trên màn hình ảo Linux (xterm). Khác plan:
+  - lõi chạy trong tiến trình aris, nên quyền macOS tính cho tiến trình aris (không cần CuaDriver.app);
+  - giao diện chung theo đúng cách cua-driver làm việc: theo cửa sổ (`pid:mã cửa sổ`), toạ độ là điểm ảnh của ảnh chụp cửa sổ; không có `elementAt` và `userIdleSeconds` trong lõi nên aris tự tính (`coords.ts`, `ioreg`);
+  - chặn cứng nằm trong `@aris/computer` (không trong `@aris/guard`), vì phải biết ứng dụng dưới chỗ bấm lúc chạy; chưa ghi vào nhật ký chặn của hàng rào.
+- **Đợt 2 (bản vẽ)**: ba khung `design/canvas/MayChat.dc.html` (chat với bot: màn hình mới nhất, thẻ duyệt, Cầm lái / Trả lại, tin bị chặn), `MayDuyet.dc.html` (chuông Cần anh: thẻ duyệt có ảnh và vùng đánh dấu, lần đầu xem màn hình, dòng vừa chặn), `HoSoBotMay.dc.html` (Hồ sơ bot › Quyền › Điều khiển máy). Thay cho bản vẽ cũ `ManHinhBot.dc.html` (desktop ảo trên máy chủ). Người dùng **duyệt 27/10**.
+- **Đợt 3 (giao diện) xong**: khung màn hình của bot và Cầm lái / Trả lại trong bảng chat của Văn phòng, thẻ duyệt có ảnh và viền cam ở chuông "Cần anh", bảng chat và Hộp duyệt, thẻ Điều khiển máy trong Hồ sơ bot › Quyền. Yêu cầu duyệt đi vào hộp duyệt chung của `@aris/commander` (thêm `arisApprovals.ask`), nên Telegram cũng nhận thẻ. Khác bản vẽ: hạn tự từ chối là 15 phút (hạn của hộp duyệt chung), không phải 30.
+- **Còn lại**: đợt 4 (thử thật trên Mac theo B-5).
+

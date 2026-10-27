@@ -139,7 +139,16 @@ export const commanderDesk = (team: TeamView, live: TeamLive | null): Desk =>
 // --- Việc chờ người dùng ---------------------------------------------------------------------------------------
 
 export type Need =
-  | { kind: 'approval'; id: string; bot: string; name: string; action: string; target: string }
+  | {
+      kind: 'approval'
+      id: string
+      bot: string
+      name: string
+      action: string
+      target: string
+      /** Điều khiển máy: thẻ duyệt có ảnh (GĐ8.3). */
+      computer?: PendingApproval | undefined
+    }
   | { kind: 'question'; bot: string; name: string; session: string }
 
 /**
@@ -158,6 +167,7 @@ export function needsYou(
     name: a.name,
     action: a.kind,
     target: a.target ?? a.tool ?? '',
+    ...(a.source === 'computer' ? { computer: a } : {}),
   }))
   const asking = new Set(approvals.map((a) => a.bot))
   for (const b of bots) {

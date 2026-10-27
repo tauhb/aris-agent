@@ -21,6 +21,8 @@ export interface AccessState {
   groupRule(chatId: number): GroupRule | undefined
   /** Nhóm lạ vẫn trả lời khi được @ đích danh. */
   guestMode: boolean
+  /** Tài khoản đặt "mọi người nhắn riêng là khách" (GĐ8.7): người lạ nhắn riêng thành khách, chỉ hỏi đáp. */
+  guests?: boolean | undefined
 }
 
 export interface BotIdentity {
@@ -110,7 +112,7 @@ export function decide(m: TgMessage, bot: BotIdentity, state: AccessState): Deci
   const role = state.roleOf(from.id)
 
   if (m.chat.type === 'private') {
-    if (!role) return { kind: 'stranger' }
+    if (!role) return state.guests ? { kind: 'accept', trust: 'guest', text, command } : { kind: 'stranger' }
     return { kind: 'accept', trust: role, text, command }
   }
   if (m.chat.type === 'channel') return { kind: 'ignore', reason: 'kênh phát' }

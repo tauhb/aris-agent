@@ -1433,6 +1433,15 @@ export async function apply(ctx: Context): Promise<void> {
     list: (parentSession?: string) => center.list(parentSession),
     answer: (id: string, allow: boolean, by: 'user' | 'telegram' = 'user') => hub.answer(id, allow, by),
     on: (fn: (e: ApprovalEvent) => void) => center.on(fn),
+    /**
+     * Plugin khác mở một yêu cầu trong hộp duyệt chung (web, Telegram cùng thấy) và chờ trả lời. `run` riêng cho mỗi
+     * yêu cầu (`computer:<mã lời gọi>`); `signal` huỷ thì yêu cầu bị đóng là từ chối.
+     */
+    ask: (o: { run: string; tool: string; input: unknown }, signal?: AbortSignal) => {
+      const onAbort = () => hub.endRun(o.run)
+      signal?.addEventListener('abort', onAbort, { once: true })
+      return hub.request(o.run, o.tool, o.input).finally(() => signal?.removeEventListener('abort', onAbort))
+    },
   })
   /** Phiên con của bot trong đội đang làm việc được giao: bot nào, phiên giao việc nào. */
   const members = new Map<string, { bot: string; name: string; handle: string; parent: string }>()
@@ -1440,6 +1449,30 @@ export async function apply(ctx: Context): Promise<void> {
   const calls = new Map<string, { name: string; args: unknown }>()
   const hub = new ApprovalHub({
     opened(req) {
+      // Điều khiển máy (@aris/computer): plugin đó đưa sẵn mô tả và mã ảnh xem trước.
+      if (req.run.startsWith('computer:')) {
+        const i = req.input as {
+          bot: string
+          name: string
+          parentSession?: string
+          describe: string
+          preview?: string
+        }
+        center.open({
+          id: req.id,
+          source: 'computer',
+          run: req.run,
+          bot: i.bot,
+          name: i.name,
+          parentSession: i.parentSession,
+          kind: 'other',
+          target: i.describe,
+          tool: req.tool,
+          preview: i.preview,
+          at: req.at,
+        })
+        return
+      }
       if (req.run.startsWith('member:')) {
         const m = members.get(req.run.slice(7))
         const input = req.input as { call?: { name: string; args: unknown }; reason?: string }
@@ -1486,7 +1519,7 @@ export async function apply(ctx: Context): Promise<void> {
     },
     closed(req, allow, by) {
       center.close(req.id, allow, by)
-      if (req.run.startsWith('member:')) return
+      if (req.run.startsWith('member:') || req.run.startsWith('computer:')) return
       const r = externals.get(req.run)
       if (!r) return
       void updateRun(req.run, (cur) => ({

@@ -21,31 +21,44 @@ const GROUP = -100
 
 /** Telegram giả: trả getUpdates từ hàng đợi, ghi lại mọi lời gọi. */
 class FakeTelegram {
-  calls: { method: string; body: Record<string, unknown> }[] = []
-  private queue: TgUpdate[] = []
-  private wake?: () => void
+  calls: { method: string; body: Record<string, unknown>; token: string }[] = []
+  /** Hàng chờ tin theo token (mỗi tài khoản bot một hàng). */
+  private queues = new Map<string, TgUpdate[]>()
+  private wakes = new Map<string, () => void>()
   private nextId = 1
   private msgId = 100
   /** Độ trễ của sendMessage (ms), để thử lúc tin còn đang gửi. */
   slowSend = 0
 
-  push(u: Omit<TgUpdate, 'update_id'>) {
-    this.queue.push({ update_id: this.nextId++, ...u })
-    this.wake?.()
+  /** Một tin tới tài khoản bot có `token` (mặc định tài khoản đầu `123:TOKEN`). */
+  push(u: Omit<TgUpdate, 'update_id'>, token = '123:TOKEN') {
+    const q = this.queues.get(token) ?? []
+    q.push({ update_id: this.nextId++, ...u })
+    this.queues.set(token, q)
+    this.wakes.get(token)?.()
   }
 
-  sent(method = 'sendMessage') {
-    return this.calls.filter((c) => c.method === method).map((c) => c.body)
+  sent(method = 'sendMessage', token?: string) {
+    return this.calls.filter((c) => c.method === method && (!token || c.token === token)).map((c) => c.body)
   }
 
   fetch: Fetch = async (url, init) => {
     const method = url.split('/').pop()!
+    const token = url.split('/bot')[1]!.split('/')[0]!
     const body = typeof init.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : {}
-    this.calls.push({ method, body })
+    this.calls.push({ method, body, token })
     const ok = (result: unknown) => new Response(JSON.stringify({ ok: true, result }))
     switch (method) {
       case 'getMe':
-        // Token bắt đầu bằng 456 là bot riêng của Thơ, còn lại là bot của Aris.
+        // Token bắt đầu bằng 789 là tài khoản thứ hai (CSKH); 456 là bot riêng của Thơ; còn lại là bot của Aris.
+        if (url.includes('/bot789:'))
+          return ok({
+            id: 902,
+            is_bot: true,
+            first_name: 'CSKH',
+            username: 'cskh_shop_bot',
+            can_read_all_group_messages: true,
+          })
         return url.includes('/bot456:')
           ? ok({
               id: 901,
@@ -62,14 +75,14 @@ class FakeTelegram {
               can_read_all_group_messages: true,
             })
       case 'getUpdates': {
-        if (!this.queue.length)
+        if (!this.queues.get(token)?.length)
           await new Promise<void>((r) => {
-            this.wake = r
+            this.wakes.set(token, r)
             init.signal?.addEventListener('abort', () => r())
           })
         if (init.signal?.aborted) throw new DOMException('aborted', 'AbortError')
-        const out = this.queue
-        this.queue = []
+        const out = this.queues.get(token) ?? []
+        this.queues.set(token, [])
         return ok(out)
       }
       case 'getFile':
@@ -158,7 +171,7 @@ afterEach(() => {
   hubs = []
 })
 
-async function setup() {
+async function setup(over: { gatherMs?: number; partGapMs?: number } = {}) {
   const tg = new FakeTelegram()
   const store = memStore()
   const secrets = new Map<string, string>()
@@ -173,6 +186,9 @@ async function setup() {
     sessions: sessions.port,
     logger: { info() {}, warn() {} },
     fetchImpl: tg.fetch,
+    // Kiểm thử không đợi gom tin hay nghỉ giữa các phần (test riêng ở dưới bật lại).
+    gatherMs: over.gatherMs ?? 0,
+    partGapMs: over.partGapMs ?? 0,
   })
   hubs.push(hub)
   await hub.connect('aris', '123:TOKEN')
@@ -204,6 +220,8 @@ describe('trung tâm kênh', () => {
       sessions: s.sessions.port,
       logger: { info() {}, warn() {} },
       fetchImpl: flaky,
+      gatherMs: 0,
+      partGapMs: 0,
     })
     hubs.push(hub)
     vi.useFakeTimers()
@@ -364,7 +382,9 @@ describe('trung tâm kênh', () => {
       },
     })
     await settle()
-    expect(s.store.roleOf(STRANGER)).toBe('member')
+    // Người được phép chỉ trên tài khoản đã báo (tài khoản cũ mang mã bot `aris`).
+    expect(s.store.roleOf(STRANGER, 'aris')).toBe('member')
+    expect(s.store.roleOf(STRANGER)).toBeUndefined()
   })
 
   it('người lạ bấm nút của chủ nhân: bị chặn', async () => {
@@ -916,5 +936,252 @@ describe('trung tâm kênh', () => {
     expect(texts).toContain('♻️ Câu trả lời khôi phục sau khi khởi động lại, có thể trùng.\n\nb')
     expect(texts).not.toContain('a')
     expect(s.store.outbox()).toHaveLength(0)
+  })
+})
+
+describe('trung tâm kênh · GĐ8.7 đợt A', () => {
+  /** Cho STRANGER thành người được phép (không phải chủ) bằng mã. */
+  async function pairMember(s: Awaited<ReturnType<typeof setup>>) {
+    const code = await s.store.createCode('member')
+    s.tg.push(dm(STRANGER, code.code))
+    await settle()
+  }
+
+  it('gom tin dồn dập: khách gửi nhiều tin liền thì đợi cuộc chat im rồi mới đưa vào phiên', async () => {
+    const s = await setup({ gatherMs: 120 })
+    await pairMember(s)
+    const t0 = Date.now()
+    s.tg.push(dm(STRANGER, 'chào shop'))
+    await new Promise((r) => setTimeout(r, 60))
+    s.tg.push(dm(STRANGER, 'cho hỏi giá'))
+    await new Promise((r) => setTimeout(r, 60))
+    s.tg.push(dm(STRANGER, 'khoá AI cơ bản'))
+    await settle()
+    // Chưa đủ 120 ms im lặng kể từ tin cuối: chưa có gì vào phiên.
+    expect(s.sessions.agents.size).toBe(0)
+    await new Promise((r) => setTimeout(r, 200))
+    const agent = [...s.sessions.agents.values()][0]!
+    expect(agent.inbox).toHaveLength(3)
+    expect(Date.now() - t0).toBeGreaterThanOrEqual(240)
+  })
+
+  it('chủ nhân không bị đợi gom tin', async () => {
+    const s = await setup({ gatherMs: 5000 })
+    await pairOwner(s)
+    s.tg.push(dm(OWNER, 'việc gấp'))
+    await settle()
+    expect(s.sessions.agents.get('s1')!.inbox).toHaveLength(1)
+  })
+
+  it('đợt C · gặp nhân viên: báo chủ, trả một câu, rồi bot im cuộc chat đó', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    await pairMember(s)
+    s.tg.push(dm(STRANGER, 'cho mình gặp nhân viên'))
+    await settle()
+    const texts = s.tg.sent().map((b) => String(b.text))
+    expect(texts.some((t) => t.includes('muốn gặp người thật'))).toBe(true)
+    expect(texts.at(-1)).toBe('Đã báo người phụ trách, sẽ có người trả lời sớm.')
+    const n = s.tg.sent().length
+    s.tg.push(dm(STRANGER, 'alo'))
+    await settle()
+    expect(s.tg.sent()).toHaveLength(n)
+    expect(s.sessions.agents.size).toBe(0)
+  })
+
+  it('đợt C · im lặng: lượt không gửi gì; báo chủ: nhiều nhất 10 phút một lần mỗi cuộc chat', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    await pairMember(s)
+    s.tg.push(dm(STRANGER, 'ok cảm ơn'))
+    await settle()
+    const agent = s.sessions.agents.get('s1')! as unknown as { inbox: { id: string }[] }
+    s.hub.onSessionEvent('s1', { type: 'turn/start' })
+    s.hub.onSessionEvent('s1', { type: 'user/message', data: { id: agent.inbox[0]!.id } })
+    expect(s.hub.silence('khác')).toBe(false)
+    expect(s.hub.silence('s1')).toBe(true)
+    expect(await s.hub.ping('s1', 'Khách hỏi giá sỉ')).toBe('Đã báo chủ.')
+    expect(String(s.tg.sent().at(-1)!.text)).toContain('Khách hỏi giá sỉ')
+    expect(await s.hub.ping('s1', 'lần nữa')).toContain('chưa báo lại')
+    const n = s.tg.sent().length
+    s.hub.onSessionEvent('s1', {
+      type: 'assistant/message',
+      data: { message: { content: [{ type: 'text', text: 'Không có gì!' }] } },
+    })
+    s.hub.onSessionEvent('s1', { type: 'turn/end', data: { reason: { kind: 'completed' } } })
+    await settle()
+    expect(s.tg.sent().map((b) => String(b.text))).not.toContain('Không có gì!')
+    expect(s.tg.sent().length).toBe(n)
+  })
+
+  it('khách nhắn thêm khi bot đang soạn: dừng lượt cũ, không gửi câu trả lời cũ, lượt mới trả lời', async () => {
+    const s = await setup()
+    await pairMember(s)
+    s.tg.push(dm(STRANGER, 'câu một'))
+    await settle()
+    const agent = s.sessions.agents.get('s1')! as unknown as {
+      status: string
+      inbox: { id: string }[]
+      cancel(): void
+    }
+    let cancelled = 0
+    agent.cancel = () => void cancelled++
+    const first = agent.inbox[0]!
+    s.hub.onSessionEvent('s1', { type: 'turn/start' })
+    s.hub.onSessionEvent('s1', { type: 'user/message', data: { id: first.id } })
+    agent.status = 'running'
+    s.tg.push(dm(STRANGER, 'à mà thêm câu hai'))
+    await settle()
+    expect(cancelled).toBe(1)
+    expect(agent.inbox).toHaveLength(2)
+    const before = s.tg.sent().length
+    // Lượt cũ kết thúc vì bị dừng: không gửi "Đã dừng" hay chữ dở.
+    s.hub.onSessionEvent('s1', {
+      type: 'assistant/message',
+      data: { message: { content: [{ type: 'text', text: 'trả lời câu một (cũ)' }] } },
+    })
+    s.hub.onSessionEvent('s1', { type: 'turn/end', data: { reason: { kind: 'aborted' } } })
+    await settle()
+    expect(s.tg.sent().length).toBe(before)
+    agent.status = 'idle'
+    s.hub.onSessionEvent('s1', { type: 'turn/start' })
+    s.hub.onSessionEvent('s1', { type: 'user/message', data: { id: agent.inbox[1]!.id } })
+    s.hub.onSessionEvent('s1', {
+      type: 'assistant/message',
+      data: { message: { content: [{ type: 'text', text: 'trả lời cả hai câu' }] } },
+    })
+    s.hub.onSessionEvent('s1', { type: 'turn/end', data: { reason: { kind: 'completed' } } })
+    await settle()
+    expect(s.tg.sent().at(-1)!.text).toContain('trả lời cả hai câu')
+  })
+
+  it('câu trả lời dài cắt ở 1.500 ký tự theo đoạn, có nhịp nghỉ giữa các phần', async () => {
+    const s = await setup({ partGapMs: 40 })
+    await pairOwner(s)
+    s.tg.push(dm(OWNER, 'viết dài'))
+    await settle()
+    const agent = s.sessions.agents.get('s1')!
+    const msg = agent.inbox[0] as { id: string }
+    const para = (c: string) => c.repeat(900)
+    s.hub.onSessionEvent('s1', { type: 'turn/start' })
+    s.hub.onSessionEvent('s1', { type: 'user/message', data: { id: msg.id } })
+    s.hub.onSessionEvent('s1', {
+      type: 'assistant/message',
+      data: {
+        message: { content: [{ type: 'text', text: `${para('a')}\n\n${para('b')}\n\n${para('c')}` }] },
+      },
+    })
+    const before = s.tg.sent().length
+    const t0 = Date.now()
+    s.hub.onSessionEvent('s1', { type: 'turn/end', data: { reason: { kind: 'completed' } } })
+    await new Promise((r) => setTimeout(r, 200))
+    const parts = s.tg
+      .sent()
+      .slice(before)
+      .map((b) => String(b.text))
+    expect(parts).toEqual([para('a'), para('b'), para('c')])
+    expect(Date.now() - t0).toBeGreaterThanOrEqual(80)
+  })
+
+  it('đoạn rất dài không xuống dòng: cắt sau dấu kết câu chứ không cắt giữa câu', async () => {
+    const { toTelegramHtml } = await import('./telegram/format.js')
+    const sentence = `${'x'.repeat(80)}. `
+    const out = toTelegramHtml(sentence.repeat(40).trim(), 1500)
+    expect(out.length).toBeGreaterThan(1)
+    for (const p of out.slice(0, -1)) expect(p.trimEnd().endsWith('.')).toBe(true)
+  })
+})
+
+describe('trung tâm kênh · GĐ8.7 nhiều tài khoản Telegram cho một bot', () => {
+  const CSKH = '789:CSKH_TOKEN_xxxxxxxxxxxxxxxx'
+  const CUSTOMER = 7
+
+  it('thêm tài khoản thứ hai cho một bot: mã tài khoản riêng, token riêng trong kho khoá, chạy song song', async () => {
+    const s = await setup()
+    const rec = await s.hub.connect('mai', CSKH, 'new', 'CSKH 1')
+    expect(rec.account).toMatch(/^acc-/)
+    expect(rec).toMatchObject({ bot: 'mai', label: 'CSKH 1', username: 'cskh_shop_bot' })
+    expect(s.secrets.get(rec.tokenRef)).toBe(CSKH)
+    expect(
+      s.store
+        .bots()
+        .map((b) => b.bot)
+        .sort(),
+    ).toEqual(['aris', 'mai'])
+    expect(s.hub.status()).toHaveLength(2)
+    // Cùng token gắn lần nữa vào tài khoản khác: từ chối.
+    await expect(s.hub.connect('tho', CSKH, 'new')).rejects.toThrow('đã gắn')
+  })
+
+  it('người được phép, mã ghép đôi, phiên theo tài khoản; chủ nhân dùng chung; trả lời ra đúng tài khoản', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    const acc = (await s.hub.connect('mai', CSKH, 'new')).account!
+    await settle()
+    // Mã của tài khoản CSKH nhắn sang tài khoản Aris: báo mã của tài khoản khác.
+    const code = await s.store.createCode('member', 'telegram', acc)
+    s.tg.push(dm(CUSTOMER, code.code))
+    await settle()
+    expect(s.tg.sent('sendMessage', '123:TOKEN').at(-1)!.text).toBe('Mã này dành cho tài khoản khác.')
+    s.tg.push(dm(CUSTOMER, code.code), CSKH)
+    await settle()
+    expect(s.store.roleOf(CUSTOMER, acc)).toBe('member')
+    expect(s.store.roleOf(CUSTOMER, 'aris')).toBeUndefined()
+    // Khách nhắn tài khoản Aris: vẫn là người lạ ở đó.
+    const before = s.sessions.agents.size
+    s.tg.push(dm(CUSTOMER, 'chào Aris'))
+    await settle()
+    expect(s.sessions.agents.size).toBe(before)
+    // Khách nhắn tài khoản CSKH: vào phiên của bot Mai, khoá cuộc chat theo tài khoản CSKH.
+    s.tg.push(dm(CUSTOMER, 'cho hỏi giá'), CSKH)
+    await settle()
+    const t = s.store.thread(`tg-902-${CUSTOMER}`)!
+    expect(t.bot).toBe('mai')
+    const agent = s.sessions.agents.get(t.sessionId)!
+    const msg = agent.inbox.at(-1) as { id: string }
+    s.hub.onSessionEvent(t.sessionId, { type: 'turn/start' })
+    s.hub.onSessionEvent(t.sessionId, { type: 'user/message', data: { id: msg.id } })
+    s.hub.onSessionEvent(t.sessionId, {
+      type: 'assistant/message',
+      data: { message: { content: [{ type: 'text', text: 'Dạ giá 990k ạ' }] } },
+    })
+    s.hub.onSessionEvent(t.sessionId, { type: 'turn/end', data: { reason: { kind: 'completed' } } })
+    await settle()
+    expect(s.tg.sent('sendMessage', CSKH).at(-1)).toMatchObject({ chat_id: CUSTOMER, text: 'Dạ giá 990k ạ' })
+    // Chủ nhân (dùng chung) nhắn tài khoản CSKH cũng được nhận là chủ.
+    s.tg.push(dm(OWNER, 'việc của tôi'), CSKH)
+    await settle()
+    const ot = s.store.thread(`tg-902-${OWNER}`)!
+    const om = s.sessions.agents.get(ot.sessionId)!.inbox[0] as { content: { text: string }[] }
+    expect(om.content[0]!.text).toBe('việc của tôi')
+  })
+
+  it('đổi bot trả lời và chế độ "mọi người là khách" của một tài khoản; gỡ tài khoản xoá người riêng của nó', async () => {
+    const s = await setup()
+    const acc = (await s.hub.connect('mai', CSKH, 'new')).account!
+    await s.hub.updateAccount(acc, { bot: 'tho', mode: 'guests' })
+    expect(s.store.bot(acc)).toMatchObject({ bot: 'tho', mode: 'guests', account: acc })
+    await settle()
+    s.tg.push(dm(CUSTOMER, 'chào shop'), CSKH)
+    await settle()
+    const t = s.store.thread(`tg-902-${CUSTOMER}`)!
+    expect(t.bot).toBe('tho')
+    const sent = s.sessions.agents.get(t.sessionId)!.inbox[0] as { content: { text: string }[] }
+    expect(sent.content[0]!.text).toContain('không phải người dùng chính')
+    const code = await s.store.createCode('member', 'telegram', acc)
+    await s.store.redeem(code.code, { id: 8, name: 'B' }, 'telegram', acc)
+    await s.hub.disconnect(acc)
+    expect(s.store.bot(acc)).toBeUndefined()
+    expect(s.store.roleOf(8, acc)).toBeUndefined()
+    expect(s.secrets.has(`TELEGRAM_${acc.toUpperCase().replace(/[^A-Z0-9]+/g, '_')}_BOT_TOKEN`)).toBe(false)
+  })
+
+  it('tin chủ động (sendHome) của một bot đi bằng tài khoản chính của bot đó', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    await s.hub.connect('mai', CSKH, 'new')
+    await settle()
+    expect(await s.hub.sendHome('mai', 'báo cáo')).toBe('Đã gửi.')
+    expect(s.tg.sent('sendMessage', CSKH).at(-1)).toMatchObject({ chat_id: OWNER })
   })
 })

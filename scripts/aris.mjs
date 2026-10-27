@@ -183,6 +183,7 @@ const HELP = `aris — điều khiển aris chạy ngầm
   aris open | url       mở web đã đăng nhập / in đường đăng nhập
   aris send "…"         gửi Telegram tới nơi nhận (/sethome)
   aris ask "…" [--json] giao một việc cho Aris và in câu trả lời cuối
+  aris computer doctor  kiểm lõi và quyền điều khiển máy (Trợ năng, Ghi màn hình)
   aris restore <tệp>    khôi phục đè từ bản sao lưu .aris (aris phải dừng; dữ liệu cũ được cất sang bên)`
 
 async function main(argv) {
@@ -267,6 +268,15 @@ async function main(argv) {
         console.log(
           `Lark: ${b.name} (${b.appId}) ${larkState[b.state] ?? `dừng${b.error ? ` — ${b.error}` : ''}`}`,
         )
+      const zaloState = {
+        listening: 'đang nghe',
+        connecting: 'đang kết nối',
+        web: 'Zalo Web đang mở, aris tạm ngừng nghe',
+        retrying: 'mất kết nối, đang thử lại',
+        'needs-qr': 'Cần quét lại QR',
+      }
+      for (const b of s.zalo ?? [])
+        console.log(`Zalo: ${b.name} ${zaloState[b.state] ?? `dừng${b.error ? ` — ${b.error}` : ''}`}`)
       return
     }
     case 'logs': {
@@ -299,6 +309,12 @@ async function main(argv) {
       console.log(json ? JSON.stringify(r) : r.text)
       process.exitCode = r.reason === 'completed' ? 0 : 1
       return
+    }
+    case 'computer': {
+      if (text !== 'doctor') return console.error('Dùng: aris computer doctor')
+      const r = await callSocket('POST', '/computer-doctor')
+      if (!r) return notRunning()
+      return console.log(r.text)
     }
     case 'restore':
       return restore(text, flags.has('--yes'))

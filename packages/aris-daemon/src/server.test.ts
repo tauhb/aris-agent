@@ -103,4 +103,14 @@ describe('socket cục bộ', () => {
     await new Promise((r) => setTimeout(r, 150))
     expect(s.stopped()).toBe(true)
   })
+
+  it('aris computer doctor: trả báo cáo của gói điều khiển máy; gói chưa bật thì 404', async () => {
+    const on = await start({ computerDoctor: async () => ({ text: '✓ Lõi cua-driver' }) })
+    expect(await call(on.path, 'POST', '/computer-doctor')).toEqual({
+      status: 200,
+      body: { text: '✓ Lõi cua-driver' },
+    })
+    const off = await start()
+    expect((await call(off.path, 'POST', '/computer-doctor')).status).toBe(404)
+  })
 })

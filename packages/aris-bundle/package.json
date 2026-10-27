@@ -27,6 +27,7 @@
     "@aris/channels": "workspace:*",
     "@aris/checkpoints": "workspace:*",
     "@aris/commander": "workspace:*",
+    "@aris/computer": "workspace:*",
     "@aris/daemon": "workspace:*",
     "@aris/home": "workspace:*",
     "@aris/memory": "workspace:*",

@@ -455,6 +455,16 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
   ghép rồi xoá ký ức gốc, ngữ cảnh dự án có tóm tắt trang (có kiểm thử đơn vị).
 - Còn: ghi nhanh sau 23:00 nằm trong nhật ký đã tự nạp của ngày đó nên không được nạp (có từ trước, cả `/note`).
 
+## Phạm vi theo phiên cho kênh: chỉ trả lời theo tài liệu (GĐ8.7 đợt D, 27/10)
+
+`@aris/channels` bật chế độ này theo tài khoản kênh cho khách. Dịch vụ `arisBrain` thêm ba hàm:
+
+- `scope(sessionId, folders | undefined)`: giới hạn `brain_search`, `brain_read` của phiên vào các thư mục nguồn (đường dẫn trong kho, tính cả thư mục con; bỏ mục lục, mẫu trang); `undefined` là bỏ giới hạn. Giới hạn cộng thêm vào quyền đọc sẵn có của bot, không mở rộng quyền.
+- `hits(sessionId)`: số lần phiên tra thấy (tìm có kết quả, đọc được trang) trong nguồn kể từ lần `scope` gần nhất. Kênh dùng để thay câu trả lời bằng câu "chưa có thông tin" khi lượt không tra thấy gì.
+- `folders()`: các thư mục của bộ não (từ cấp dưới không gian), kèm số trang có chữ, để giao diện chọn nguồn (`src/folders.ts`).
+
+Giới hạn chỉ nằm trong bộ nhớ, đặt mỗi lượt của khách và bỏ khi lượt xong.
+
 ## Đã chốt (25/10)
 
 - Duyệt khi nạp: mặc định {you} duyệt ở Hộp thư vào; `/note` và nhật ký của {you} tự nạp.

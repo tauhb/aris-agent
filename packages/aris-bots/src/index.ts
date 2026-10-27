@@ -12,6 +12,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-api-session-controller'
 import type {} from '@deepseek-ai/dsh-client-connection'
+import { credentialRef } from '@deepseek-ai/dsh-credentials'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-storage-domain'
 import type {} from '@deepseek-ai/dsh-system-prompt'
@@ -23,7 +24,24 @@ import { handleApi, type MemoryPort } from './api.js'
 import { botsDomain, type ActivityRecord, type Table, type Tables } from './domain.js'
 import { pickSessions, type SessionRow } from './sessions.js'
 import { botStats, LiveTracker } from './live.js'
-import { checkConnection, connectionOf, McpStore, needsAsk, pluginConfig, type McpRecord } from './mcp.js'
+import { catalogView } from './catalog.js'
+import {
+  checkConnection,
+  connectionOf,
+  isOAuth,
+  McpStore,
+  needsAsk,
+  pluginConfig,
+  type McpCheck,
+  type McpRecord,
+} from './mcp.js'
+import {
+  callbackPage,
+  McpOAuth,
+  OAUTH_CALLBACK_PATH,
+  OAuthLoginNeeded,
+  type OAuthTarget,
+} from './mcp-oauth.js'
 import { renderPersona } from './persona.js'
 import { botDenyReason, botToolOf, denyReason, insideDir, needOf, writeTarget } from './policy.js'
 import { SoulHistory, type SoulRecord } from './soul.js'
@@ -50,7 +68,14 @@ export * from './mcp-import.js'
 export * from './soul.js'
 
 export const name = 'aris-bots'
-export const inject = ['storageDomain', 'systemPrompt', 'sessionController', 'workspaceRegistry', 'tools']
+export const inject = [
+  'storageDomain',
+  'systemPrompt',
+  'sessionController',
+  'workspaceRegistry',
+  'tools',
+  'credentials',
+]
 
 /** Ngữ cảnh tính cách: trước ký ức lõi (300) để model đọc "mình là ai" trước. */
 export const CONTEXT_ORDER = 290
@@ -80,6 +105,47 @@ export async function apply(ctx: Context): Promise<void> {
   ) as unknown as Tables
   const store = new BotStore(tables)
   const mcp = new McpStore(domain.table('mcp') as unknown as Table<McpRecord>)
+  // Đăng nhập OAuth cho MCP hosted (GĐ8.5): token ở kho khoá, gọi về qua web aris.
+  const webUrl = () => (ctx.get('webApp') as { getAdvertisedUrl(): string } | undefined)?.getAdvertisedUrl()
+  const oauth = new McpOAuth({
+    keys: {
+      resolve: async (ref) => (await ctx.credentials.resolve(credentialRef(ref)))?.value,
+      set: (ref, value) => ctx.credentials.set(credentialRef(ref), value),
+      unset: (ref) => ctx.credentials.unset(credentialRef(ref)),
+    },
+    redirectUrl: () => {
+      const w = webUrl()
+      return w ? new URL(OAUTH_CALLBACK_PATH, w).toString() : undefined
+    },
+  })
+  const targetOf = (r: McpRecord): OAuthTarget => ({
+    id: r.id,
+    url: r.url ?? '',
+    clientId: r.secrets.CLIENT_ID,
+    clientSecret: r.secrets.CLIENT_SECRET,
+  })
+  /** Báo chủ một lần mỗi lần kết nối chuyển sang "Cần đăng nhập lại" (qua Telegram nếu có). */
+  const needLogin = async (r: McpRecord, why: string) => {
+    const was = mcp.get(r.id)?.oauth?.state
+    await mcp.setOAuth(r.id, { state: 'login', at: new Date().toISOString(), error: why })
+    if (was === 'ok')
+      await (ctx.get('arisChannels') as { sendHome?(bot: string, md: string): Promise<unknown> } | undefined)
+        ?.sendHome?.(
+          'aris',
+          `Kết nối **${r.name}** cần đăng nhập lại (${why}). Mở Cài đặt › Kết nối trên web.`,
+        )
+        .catch(() => undefined)
+  }
+  /** Token truy cập của kết nối OAuth; không có thì chuyển "Cần đăng nhập lại" và trả undefined. */
+  const bearerOf = async (r: McpRecord): Promise<string | undefined> => {
+    try {
+      return await oauth.token(targetOf(r))
+    } catch (e) {
+      if (e instanceof OAuthLoginNeeded) await needLogin(r, e.message)
+      else logger.warn('token %s: %s', r.name, String(e))
+      return undefined
+    }
+  }
   const souls = new SoulHistory(domain.table('souls') as unknown as Table<SoulRecord>)
   await store.ensureCommander()
   await store.ensurePolicies(await loadTemplates())
@@ -241,10 +307,13 @@ export async function apply(ctx: Context): Promise<void> {
     const dir = await cwd()
     for (const r of list) {
       if (have.has(r.id)) continue
+      // Kết nối OAuth: làm mới token trước khi gắn; chưa đăng nhập thì bỏ qua (công cụ không hiện).
+      const bearer = isOAuth(r) ? await bearerOf(r) : undefined
+      if (isOAuth(r) && !bearer) continue
       try {
         const fiber = (agent.ctx as { plugin(p: unknown, c: unknown): { dispose(): unknown } }).plugin(
           mod,
-          pluginConfig(r, dir),
+          pluginConfig(r, dir, bearer),
         )
         have.set(r.id, () => void fiber.dispose())
       } catch (e) {
@@ -265,9 +334,16 @@ export async function apply(ctx: Context): Promise<void> {
     const a = agent as unknown as AgentLike
     if (agents.get(a.session.id) === a) agents.delete(a.session.id)
   })
-  const checkMcp = async (r: McpRecord) => {
+  const checkMcp = async (r: McpRecord): Promise<McpCheck> => {
     const { scrubbedParentEnv } = await import('@deepseek-ai/dsh-subprocess')
-    return checkConnection(r, await cwd(), scrubbedParentEnv)
+    if (!isOAuth(r)) return checkConnection(r, await cwd(), scrubbedParentEnv)
+    const bearer = await bearerOf(r)
+    if (!bearer) return { ok: false, at: new Date().toISOString(), error: 'Cần đăng nhập', tools: [] }
+    const c = await checkConnection(r, await cwd(), scrubbedParentEnv, 60_000, bearer)
+    // Máy chủ từ chối token còn hạn (bị thu hồi): phải đăng nhập lại.
+    if (!c.ok && /401|Unauthorized/i.test(c.error ?? '')) await needLogin(r, 'máy chủ từ chối token')
+    else if (c.ok) await mcp.setOAuth(r.id, { state: 'ok', at: c.at })
+    return c
   }
 
   // Trạng thái trực tiếp: lượt bắt đầu, kết thúc; đợi anh duyệt hoặc trả lời.
@@ -563,6 +639,11 @@ export async function apply(ctx: Context): Promise<void> {
               sessions: (bot) => botSessions(bot),
               mcp,
               checkMcp,
+              connectors: catalogView,
+              oauth: {
+                start: (r) => oauth.begin(targetOf(r)),
+                forget: (id) => oauth.forget(id),
+              },
               souls,
               rewrite,
               spend: () =>
@@ -573,5 +654,32 @@ export async function apply(ctx: Context): Promise<void> {
       })
       return () => void dispose()
     }, 'aris-bots: /api/aris/bots')
+    // Trang gọi về của OAuth: kiểm state, đổi mã lấy token, kiểm tra kết nối, rồi báo trong cửa sổ đăng nhập.
+    ctx.effect(() => {
+      const dispose = ctx.connection.fetch.register({
+        path: OAUTH_CALLBACK_PATH,
+        methods: ['GET'],
+        requestBody: 'buffered',
+        fetch: async (request) => {
+          try {
+            const id = await oauth.finish(new URL(request.url).searchParams)
+            const r = mcp.get(id)
+            if (!r) return callbackPage(false, 'Kết nối đã bị gỡ.')
+            await mcp.setOAuth(id, { state: 'ok', at: new Date().toISOString() })
+            const c = await checkMcp(mcp.get(id)!)
+            await mcp.setCheck(id, c)
+            return callbackPage(
+              true,
+              c.ok
+                ? `Đã đăng nhập ${r.name} · ${c.tools.length} công cụ. Có thể đóng cửa sổ này.`
+                : `Đã đăng nhập ${r.name}, nhưng kiểm tra chưa được: ${c.error ?? ''}`,
+            )
+          } catch (e) {
+            return callbackPage(false, `Đăng nhập chưa được: ${e instanceof Error ? e.message : String(e)}`)
+          }
+        },
+      })
+      return () => void dispose()
+    }, 'aris-bots: gọi về OAuth')
   })
 }

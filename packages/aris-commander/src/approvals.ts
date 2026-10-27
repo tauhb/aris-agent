@@ -11,8 +11,8 @@ export type AnsweredBy = 'user' | 'telegram' | 'timeout' | 'ended'
 
 export interface CentralApproval {
   id: string
-  /** Bot ngoài (lần chạy CLI) hay bot trong đội (phiên con). */
-  source: 'external' | 'member'
+  /** Bot ngoài (lần chạy CLI), bot trong đội (phiên con), hay bot điều khiển máy (@aris/computer). */
+  source: 'external' | 'member' | 'computer'
   /** Mã lần chạy (bot ngoài) hoặc `member:<phiên con>`. */
   run: string
   bot: string
@@ -25,6 +25,8 @@ export interface CentralApproval {
   target?: string | undefined
   tool?: string | undefined
   reason?: string | undefined
+  /** Điều khiển máy: mã lời gọi để lấy ảnh cửa sổ và chỗ đánh dấu (`/api/aris/computer?preview=`). */
+  preview?: string | undefined
   at: string
 }
 

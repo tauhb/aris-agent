@@ -35,6 +35,7 @@ function setup(extra: Record<string, unknown> = {}) {
     librarian: new Set<string>(),
     channel: new Set<string>(),
     lark: new Set<string>(),
+    zalo: new Set<string>(),
   }
   const services: Record<string, unknown> = {
     arisSpend: {
@@ -73,6 +74,7 @@ function setup(extra: Record<string, unknown> = {}) {
     arisChannels: {
       isChannelSession: (s: string) => flags.channel.has(s),
       isLarkSession: (s: string) => flags.lark.has(s),
+      isZaloSession: (s: string) => flags.zalo.has(s),
     },
     arisJobs: { list: () => [{ session: 's-job', parentSession: 's-chat' }] },
     arisApprovals: { list: () => [] as Rec[] },
@@ -181,7 +183,10 @@ describe('ghi từng lần gọi', () => {
     s.flags.channel.add('s-lk')
     s.flags.lark.add('s-lk')
     s.call({ session: 's-lk' })
-    await vi.waitFor(() => expect(s.tables.calls!.size).toBe(6))
+    s.flags.channel.add('s-zl')
+    s.flags.zalo.add('s-zl')
+    s.call({ session: 's-zl' })
+    await vi.waitFor(() => expect(s.tables.calls!.size).toBe(7))
     const rows = Object.fromEntries([...s.tables.sessions!.values()].map((r: Rec) => [r.session, r]))
     expect(rows['s-chat']).toMatchObject({
       kind: 'chat',
@@ -195,6 +200,7 @@ describe('ghi từng lần gọi', () => {
     expect(rows['s-rt']).toMatchObject({ kind: 'routine', source: 'lich' })
     expect(rows['s-tg']).toMatchObject({ kind: 'chat', source: 'telegram' })
     expect(rows['s-lk']).toMatchObject({ kind: 'chat', source: 'lark' })
+    expect(rows['s-zl']).toMatchObject({ kind: 'chat', source: 'zalo' })
     // 9.000 token đọc cache ở giá 0,028 thay vì 0,28 USD cho 1 triệu token.
     expect(rows['s-chat'].saveUsd).toBeCloseTo(2 * ((9000 * 0.252) / 1e6), 9)
     expect(rows['s-chat'].asked).toBe(false)

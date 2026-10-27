@@ -89,7 +89,7 @@ Vẽ khung `DanhMucConnector.dc.html` trên trang `g2` hoặc `g6`:
 - **Có đặc tả OpenAPI:** aris tự tạo công cụ cho từng thao tác (tối đa 40 thao tác; nhiều hơn thì cho người dùng chọn). Thao tác GET là chỉ đọc; POST, PUT, PATCH, DELETE thì hỏi trước.
 - **Không có đặc tả:** chỉ có một công cụ `api_goi` với phương thức, đường dẫn tương đối và thân bài. Mọi lệnh gọi không phải GET đều hỏi.
 - Chạy trong tiến trình aris, như một máy chủ MCP nội bộ, để dùng chung lớp kết nối, phạm vi và hỏi duyệt.
-- **Điểm dừng 3:** việc này lớn. Hỏi người dùng có làm trong đợt này không, hay để sau.
+- **Điểm dừng 3:** việc này lớn. Hỏi người dùng có làm trong đợt này không, hay để sau. → 27/10: người dùng chọn **để sau**.
 
 ## 5. Thử thật
 

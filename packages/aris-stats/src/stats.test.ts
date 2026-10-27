@@ -35,6 +35,7 @@ describe('phân loại loại việc và nguồn', () => {
     expect(classify({ parent: true, via: 'open' })).toEqual({ kind: 'giao', source: 'giao' })
     expect(classify({ channel: true, via: 'open' })).toEqual({ kind: 'chat', source: 'telegram' })
     expect(classify({ channel: true, lark: true, via: 'open' })).toEqual({ kind: 'chat', source: 'lark' })
+    expect(classify({ channel: true, zalo: true, via: 'open' })).toEqual({ kind: 'chat', source: 'zalo' })
     expect(classify({ via: 'open' })).toEqual({ kind: 'chat', source: 'web' })
     expect(classify({})).toEqual({ kind: 'chat', source: 'web' })
   })

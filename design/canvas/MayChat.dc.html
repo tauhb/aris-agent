@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Bot điều khiển máy · chat</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#A14A07;--warnSoft:#FCEFDF;--danger:#B42318;--dangerSoft:#FCEBE9;--mac:#ECECEC;--macbar:#DCDCDC;--note:#FFF8D6}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614;--danger:#F97066;--dangerSoft:#3A1A18;--mac:#2B2D31;--macbar:#3A3C41;--note:#3A3622}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:var(--accent)}a:hover{color:var(--ink)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 1000px; display: flex; flex-wrap: wrap; box-sizing: border-box">
+
+  <main style="flex: 1 1 520px; min-width: 0; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box">
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+      <b style="font-size: 18px; flex: 1">Văn phòng</b>
+      <button type="button" style="min-height: 40px; padding: 0 14px; border: 1px solid var(--warn); border-radius: 999px; background: var(--warnSoft); color: var(--warn); font-weight: 600; font-size: 13px">Cần {{you}} · 1</button>
+      <button type="button" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="width: 44px; height: 44px; border: 0; border-radius: 9px; background: transparent; color: var(--muted)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px">
+      <sc-for list="{{desks}}" as="d" hint-placeholder-count="6">
+        <div style="{{d.style}}">
+          <span style="display: flex; align-items: center; gap: 8px"><span aria-hidden="true" style="{{d.dot}}">{{d.letter}}</span><b>{{d.name}}</b></span>
+          <span style="font-size: 12.5px; color: var(--muted)">{{d.doing}}</span>
+        </div>
+      </sc-for>
+    </div>
+    <p style="margin: 0; font-size: 12.5px; color: var(--muted)">Bấm bot để mở bảng chat gọn bên phải. Bot đang điều khiển máy có dòng “đang dùng máy”.</p>
+  </main>
+
+  <aside aria-label="Chat với Khoa" style="flex: 0 1 420px; min-width: 300px; border-left: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; min-height: 1000px; box-sizing: border-box">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line)">
+      <span aria-hidden="true" style="width: 34px; height: 34px; border-radius: 50%; background: #7C5CFF; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700">K</span>
+      <span style="flex: 1; min-width: 0"><b style="display: block">Khoa</b><span style="font-size: 12px; color: var(--muted)">{{headSub}}</span></span>
+      <button type="button" onClick="{{stop}}" style="min-height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); font-size: 13px">Dừng</button>
+    </div>
+
+    <div style="flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px">
+      <div style="align-self: flex-end; max-width: 85%; background: var(--ink); color: var(--panel); border-radius: 14px 14px 4px 14px; padding: 8px 12px; font-size: 13.5px">Mở Ghi chú, tạo ghi chú “aris thử điều khiển máy”.</div>
+      <div style="max-width: 90%; background: var(--panel2); border-radius: 14px 14px 14px 4px; padding: 8px 12px; font-size: 13.5px">Mở Notes rồi tạo ghi chú mới. Mỗi bước sẽ xin duyệt.</div>
+
+      <button type="button" onClick="{{toggleSteps}}" aria-expanded="{{stepsOpen}}" style="display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 8px 10px; font-size: 13px; text-align: left; min-height: 44px">
+        <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none"></span>
+        <span style="flex: 1">Đang điều khiển máy · {{stepCount}} bước</span>
+        <span style="font-size: 12px; color: var(--muted)">ảnh 3/40 · thao tác 2/150</span>
+      </button>
+      <sc-if value="{{stepsOpen}}" hint-placeholder-val="{{ false }}">
+        <ol style="margin: -4px 0 0 18px; padding-left: 12px; border-left: 1px solid var(--line); font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 3px">
+          <li>Mở ứng dụng Notes</li>
+          <li>Chụp cửa sổ Notes</li>
+          <li>Bấm “Ghi chú mới”</li>
+          <li style="color: var(--accent)">{{lastStep}}</li>
+        </ol>
+      </sc-if>
+
+      <section aria-label="Màn hình của Khoa" style="border: 1px solid var(--line); border-radius: 12px; overflow: hidden">
+        <div style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: 12.5px">
+          <b style="flex: 1">Màn hình của Khoa</b>
+          <span style="color: var(--muted)" class="mono">Notes · 10:52</span>
+        </div>
+        <button type="button" onClick="{{zoom}}" aria-label="Phóng to ảnh màn hình" style="display: block; width: 100%; border: 0; padding: 10px; background: var(--panel2)">
+          <div style="position: relative; border-radius: 8px; overflow: hidden; background: var(--mac); height: 190px; display: flex; flex-direction: column; text-align: left; font-size: 10px">
+            <div style="height: 20px; background: var(--macbar); display: flex; align-items: center; gap: 4px; padding: 0 8px"><span style="width: 7px; height: 7px; border-radius: 50%; background: #FF5F57"></span><span style="width: 7px; height: 7px; border-radius: 50%; background: #FEBC2E"></span><span style="width: 7px; height: 7px; border-radius: 50%; background: #28C840"></span><span style="flex: 1"></span><span style="{{newBtn}}">✎</span></div>
+            <div style="flex: 1; display: flex">
+              <div style="width: 26%; border-right: 1px solid var(--macbar); padding: 6px; display: flex; flex-direction: column; gap: 4px"><span>iCloud</span><span style="background: var(--macbar); border-radius: 3px; padding: 1px 3px">Ghi chú</span><span>Công việc</span></div>
+              <div style="width: 30%; border-right: 1px solid var(--macbar); padding: 6px; display: flex; flex-direction: column; gap: 6px"><span style="{{noteRow}}">{{noteTitle}}</span><span>Họp đội thứ Hai</span><span>Ý tưởng bài viết</span></div>
+              <div style="flex: 1; background: var(--note); padding: 8px; font-size: 11px">{{noteBody}}</div>
+            </div>
+          </div>
+        </button>
+        <div style="display: flex; gap: 8px; padding: 8px 10px; flex-wrap: wrap; align-items: center">
+          <span style="flex: 1; font-size: 12px; color: var(--muted)">Viền xanh: chỗ Khoa vừa bấm. Bấm ảnh để phóng to.</span>
+          <sc-if value="{{notHeld}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{take}}" style="min-height: 40px; padding: 0 14px; border: 0; border-radius: 9px; background: var(--ink); color: var(--panel); font-size: 13px; font-weight: 600">Cầm lái</button></sc-if>
+        </div>
+      </section>
+
+      <sc-if value="{{held}}" hint-placeholder-val="{{ false }}">
+        <div role="status" style="border: 1px solid var(--accent); background: var(--accentSoft); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px">
+          <b style="font-size: 13.5px">{{you}} đang cầm lái</b>
+          <span style="font-size: 13px">Khoa chờ, không bấm hay gõ gì. Làm xong (ví dụ đăng nhập, nhập mã 2 bước) thì trả lại để Khoa làm tiếp.</span>
+          <button type="button" onClick="{{give}}" style="align-self: flex-start; min-height: 40px; padding: 0 14px; border: 0; border-radius: 9px; background: var(--ink); color: var(--panel); font-size: 13px; font-weight: 600">Trả lại cho Khoa</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{asking}}" hint-placeholder-val="{{ true }}">
+        <section aria-label="Khoa xin duyệt" style="border: 1px solid var(--warn); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 12px; font-weight: 600; color: var(--warn)">CẦN DUYỆT · điều khiển máy</span>
+          <b style="font-size: 13.5px">Khoa muốn gõ “aris thử điều khiển máy” vào ô nội dung trong Notes</b>
+          <div style="position: relative; height: 96px; border-radius: 8px; background: var(--note); border: 1px solid var(--line)">
+            <span style="position: absolute; left: 10px; top: 10px; right: 10px; bottom: 30px; border: 2px solid var(--warn); border-radius: 6px"></span>
+            <span style="position: absolute; left: 12px; bottom: 6px; font-size: 11px; color: var(--muted)">Ô nội dung (vùng viền cam)</span>
+          </div>
+          <span style="font-size: 12px; color: var(--muted)">Tự từ chối sau 30 phút nếu chưa duyệt.</span>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <button type="button" onClick="{{allow}}" style="min-height: 40px; padding: 0 16px; border: 0; border-radius: 9px; background: var(--ink); color: var(--panel); font-size: 13px; font-weight: 600">Cho phép</button>
+            <button type="button" onClick="{{deny}}" style="min-height: 40px; padding: 0 16px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); font-size: 13px">Từ chối</button>
+          </div>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{denied}}" hint-placeholder-val="{{ false }}">
+        <div style="max-width: 90%; background: var(--panel2); border-radius: 14px 14px 14px 4px; padding: 8px 12px; font-size: 13.5px">Đã không gõ vào ghi chú vì {{you}} từ chối. Cần đổi nội dung thì nhắn lại.</div>
+      </sc-if>
+
+      <sc-if value="{{blocked}}" hint-placeholder-val="{{ false }}">
+        <div style="max-width: 90%; background: var(--panel2); border-radius: 14px 14px 14px 4px; padding: 8px 12px; font-size: 13.5px; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 12px; font-weight: 600; color: var(--danger)">Hàng rào đã chặn: mở Cài đặt hệ thống</span>
+          <span>Việc bật Bluetooth cần vào Cài đặt hệ thống, mà bot không được thao tác ở đó. {{you}} tự bật giúp nhé.</span>
+        </div>
+      </sc-if>
+    </div>
+
+    <form style="border-top: 1px solid var(--line); padding: 10px 12px; display: flex; gap: 8px">
+      <label style="flex: 1; display: flex"><span style="position: absolute; left: -9999px">Nhắn Khoa</span><input placeholder="Nhắn Khoa…" style="flex: 1; min-height: 44px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); padding: 0 12px; font-family: inherit; font-size: 14px"></label>
+      <button type="button" style="min-height: 44px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--ink); color: var(--panel); font-weight: 600">Gửi</button>
+    </form>
+  </aside>
+
+  <sc-if value="{{zoomed}}" hint-placeholder-val="{{ false }}">
+    <div role="dialog" aria-label="Ảnh màn hình của Khoa" style="position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 10">
+      <div style="width: 100%; max-width: 980px; background: var(--panel); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line)"><b style="flex: 1">Notes · ảnh lúc 10:52 · 1280×800</b><button type="button" onClick="{{unzoom}}" aria-label="Đóng" style="width: 44px; height: 44px; border: 0; border-radius: 9px; background: transparent; font-size: 20px">×</button></div>
+        <div style="position: relative; background: var(--mac); height: 540px; display: flex; flex-direction: column; font-size: 14px">
+          <div style="height: 34px; background: var(--macbar); display: flex; align-items: center; gap: 8px; padding: 0 14px"><span style="width: 12px; height: 12px; border-radius: 50%; background: #FF5F57"></span><span style="width: 12px; height: 12px; border-radius: 50%; background: #FEBC2E"></span><span style="width: 12px; height: 12px; border-radius: 50%; background: #28C840"></span><span style="flex: 1"></span><span style="border: 2px solid var(--accent); border-radius: 6px; padding: 1px 8px">✎ Ghi chú mới</span></div>
+          <div style="flex: 1; display: flex">
+            <div style="width: 22%; border-right: 1px solid var(--macbar); padding: 12px; display: flex; flex-direction: column; gap: 8px"><span>iCloud</span><span style="background: var(--macbar); border-radius: 5px; padding: 2px 6px">Ghi chú</span><span>Công việc</span></div>
+            <div style="width: 28%; border-right: 1px solid var(--macbar); padding: 12px; display: flex; flex-direction: column; gap: 10px"><b>{{noteTitle}}</b><span>Họp đội thứ Hai</span><span>Ý tưởng bài viết</span></div>
+            <div style="flex: 1; background: var(--note); padding: 16px">{{noteBody}}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"state":{"editor":"enum","options":["ask","held","blocked","denied","done"],"default":"ask"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const theme = s.theme || this.props.theme || 'light';
+    const st = s.st || this.props.state || 'ask';
+    const you = 'anh Tầu';
+    const desk = (name, letter, color, doing, on) => ({
+      name, letter, doing,
+      dot: 'width: 26px; height: 26px; border-radius: 50%; color: #fff; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; background: ' + color,
+      style: 'border: 1px solid ' + (on ? 'var(--accent)' : 'var(--line)') + '; border-radius: 14px; background: var(--panel); padding: 12px; display: flex; flex-direction: column; gap: 6px',
+    });
+    const typed = st === 'done';
+    return {
+      themeClass: 't-' + theme, you,
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      desks: [
+        desk('Aris', 'A', '#1D6FE0', 'Rảnh', false),
+        desk('Khoa', 'K', '#7C5CFF', st === 'held' ? 'Chờ ' + you + ' trả lại máy' : 'Đang dùng máy · Notes', true),
+        desk('Mai', 'M', '#E5484D', 'Trả lời khách Zalo', false),
+        desk('Thơ', 'T', '#12A594', 'Viết bài Facebook', false),
+        desk('Lâm', 'L', '#F59E0B', 'Rảnh', false),
+        desk('Dev', 'D', '#64748B', 'Chạy test', false),
+      ],
+      headSub: st === 'held' ? you + ' đang cầm lái' : st === 'blocked' ? 'vừa bị hàng rào chặn một việc' : 'đang dùng máy · Notes',
+      stepsOpen: !!s.steps, toggleSteps: () => this.setState({ steps: !s.steps }),
+      stepCount: typed ? 4 : 3,
+      lastStep: typed ? 'Gõ “aris thử điều khiển máy”' : 'Chờ duyệt: gõ vào ô nội dung',
+      newBtn: 'border: 2px solid var(--accent); border-radius: 4px; padding: 0 4px',
+      noteRow: 'background: var(--accentSoft); border-radius: 3px; padding: 1px 3px',
+      noteTitle: typed ? 'aris thử điều khiển máy' : 'Ghi chú mới',
+      noteBody: typed ? 'aris thử điều khiển máy' : '',
+      zoomed: !!s.zoom, zoom: () => this.setState({ zoom: true }), unzoom: () => this.setState({ zoom: false }),
+      held: st === 'held', notHeld: st !== 'held',
+      take: () => this.setState({ st: 'held' }), give: () => this.setState({ st: 'ask' }),
+      asking: st === 'ask', blocked: st === 'blocked', denied: st === 'denied',
+      allow: () => this.setState({ st: 'done' }), deny: () => this.setState({ st: 'denied' }),
+      stop: () => this.setState({ st: 'done' }),
+    };
+  }
+}
+</script>
+</body>
+</html>

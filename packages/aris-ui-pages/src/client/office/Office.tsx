@@ -17,6 +17,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Kanban } from '../auto/Kanban.js'
 import type { PageProps } from '../page.js'
 import { clockSec } from '../settings/stats-format.js'
+import { ComputerApproval } from '../computer/ChatScreen.js'
 import { Departments } from './Departments.js'
 import { Overview } from './Overview.js'
 import { needsYou, type Face, type Need } from './model.js'
@@ -111,7 +112,12 @@ function NeedBell({
           {needs.map((n) => (
             <div key={n.kind === 'approval' ? n.id : `q-${n.bot}`}>
               <Mascot {...faceOf(n.bot)} size={26} />
-              {n.kind === 'approval' ? (
+              {n.kind === 'approval' && n.computer ? (
+                <span className="t">
+                  <span>{n.name}</span>
+                  <ComputerApproval t={t} item={n.computer} onDone={reload} compact />
+                </span>
+              ) : n.kind === 'approval' ? (
                 <>
                   <span className="t" title={n.target}>
                     {t('of.need.asks', { name: n.name, action: action(n) })}

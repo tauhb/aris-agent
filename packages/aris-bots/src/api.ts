@@ -6,6 +6,7 @@ import { candidateInput, candidateView, discoverMcp, sameServer, type ImportScan
 import {
   cleanMcp,
   cleanScope,
+  isOAuth,
   McpError,
   MCP_ASK,
   viewOf,
@@ -59,6 +60,13 @@ export interface ApiDeps {
   checkMcp?: (r: McpRecord) => Promise<McpCheck>
   /** Quét cấu hình MCP của Claude Code và Codex trên máy (thay được khi thử). */
   scanMcp?: () => Promise<ImportScan>
+  /** Danh mục connector (GĐ8.5), gửi giao diện. */
+  connectors?: () => unknown
+  /** Đăng nhập OAuth của kết nối dựng từ danh mục. */
+  oauth?: {
+    start(r: McpRecord): Promise<{ authUrl: string } | { authorized: true }>
+    forget(id: string): Promise<void>
+  }
 }
 
 /** Kết quả quét giữ trong bộ nhớ 15 phút để bước nhập không phải gửi lại khoá qua giao diện. */
@@ -88,6 +96,7 @@ async function snapshot(d: ApiDeps) {
     // Model đang phục vụ, để chọn model riêng của bot và model mặc định của phòng.
     catalog: (await d.catalog?.().catch(() => undefined)) ?? [],
     mcp: d.mcp?.list().map(viewOf) ?? [],
+    connectors: d.connectors?.() ?? [],
     templates: templates.map((t) => ({
       id: t.id,
       name: t.name,
@@ -247,14 +256,29 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
           await d.mcp.setCheck(rec.id, await d.checkMcp(rec))
         return json({ ...(await snapshot(d)), connection: rec.id })
       }
-      case 'mcp-delete':
+      case 'mcp-delete': {
+        const prev = d.mcp?.get(String(body.id))
         await d.mcp?.remove(String(body.id))
+        // Kết nối OAuth: xoá luôn token trong kho khoá.
+        if (prev && isOAuth(prev)) await d.oauth?.forget(prev.id)
         break
+      }
+      case 'mcp-oauth-start': {
+        // "Đăng nhập <hãng>": trả trang đăng nhập để giao diện mở cửa sổ mới.
+        if (!d.mcp || !d.oauth) return json({ error: 'Chưa bật đăng nhập OAuth.' }, 400)
+        const rec = d.mcp.get(String(body.id))
+        if (!rec || !isOAuth(rec)) return json({ error: 'Kết nối này không đăng nhập bằng OAuth.' }, 400)
+        const r = await d.oauth.start(rec)
+        if ('authorized' in r && d.checkMcp) await d.mcp.setCheck(rec.id, await d.checkMcp(rec))
+        return json({ ...(await snapshot(d)), ...r })
+      }
       case 'mcp-team-add': {
         // Kết nối dùng chung của đội: khoá nhập một lần, mọi bot trong phạm vi cùng dùng.
         if (!d.mcp || !d.checkMcp) return json({ error: 'Chưa bật kết nối nền tảng.' }, 400)
         const rec = await d.mcp.addTeam(body.input as McpInput, body.scope as NonNullable<McpRecord['scope']>)
-        await d.mcp.setCheck(rec.id, await d.checkMcp(rec))
+        // Kết nối OAuth chưa có token: chờ người dùng đăng nhập rồi mới kiểm tra.
+        if (isOAuth(rec)) await d.mcp.setOAuth(rec.id, { state: 'login', at: new Date().toISOString() })
+        else await d.mcp.setCheck(rec.id, await d.checkMcp(rec))
         return json({ ...(await snapshot(d)), connection: rec.id })
       }
       case 'mcp-team-scope': {

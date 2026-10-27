@@ -47,6 +47,8 @@ export const T = {
       : `Chào ${h(name)}! Tài khoản này đã là <b>người được phép</b>: hỏi đáp được với bot, nhưng bot không làm việc có tác động (gửi thư, chạy lệnh…) theo lời người được phép.`,
   /** Người nhắn mã ghép đôi do kênh khác tạo (ví dụ mã của Lark gõ vào Telegram). */
   codeOtherChannel: 'Mã này dành cho kênh khác.',
+  /** Mã của một tài khoản khác cùng kênh (GĐ8.7: mỗi tài khoản một mã). */
+  codeOtherAccount: 'Mã này dành cho tài khoản khác.',
   help: (trust: Trust) =>
     [
       `<b>Lệnh</b> (vai: ${ROLE_LABEL[trust]})`,
@@ -92,6 +94,14 @@ export const T = {
   modelFail: (e: string) => `Không đổi được model: ${h(e)}`,
   stranger: (name: string, username: string | undefined, id: number, text: string) =>
     `Có người lạ nhắn bot: <b>${h(name)}</b>${username ? ` (@${h(username)})` : ''}, mã <code>${id}</code>\n«${h(text.slice(0, 300))}»\n\nBot chưa trả lời. Cho phép người này hỏi đáp với bot?`,
+  /** Khách xin gặp người thật (GĐ8.7): bot im cuộc chat đó 2 giờ. */
+  human: (name: string, username: string | undefined, text: string) =>
+    `<b>${h(name)}</b>${username ? ` (@${h(username)})` : ''} muốn gặp người thật: «${h(text.slice(0, 300))}»\n\nBot im cuộc chat này 2 giờ.`,
+  humanAck: 'Đã báo người phụ trách, sẽ có người trả lời sớm.',
+  /** Chế độ chỉ theo tài liệu không tìm thấy thông tin (báo chủ). */
+  noInfo: 'Bot chưa có thông tin trong tài liệu nguồn để trả lời câu này.',
+  /** Bot gọi công cụ "báo chủ". */
+  ping: (who: string, text: string) => `Chat với <b>${h(who)}</b>: ${h(text)}`,
   strangerAllowed: (name: string) => `Đã cho phép ${h(name)} hỏi đáp (người được phép).`,
   strangerIgnored: 'Đã bỏ qua.',
   welcomeMember: 'Tài khoản này đã được cho phép hỏi đáp với bot. Cứ nhắn nhé!',
