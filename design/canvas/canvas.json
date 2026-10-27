@@ -871,6 +871,15 @@
       "w": 1440,
       "x": 3040,
       "y": 4960
+    },
+    "KenhZalo.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "g6",
+      "title": "6.3d · Kênh Zalo cá nhân (GĐ8.4) — chưa kết nối: cảnh báo cam, ô “Tôi hiểu”, chọn bot trả lời, “Hiện mã QR”; đang quét QR: mã kèm đếm ngược, “Tạo mã mới”; đã kết nối: ảnh và tên Zalo, trạng thái (đang nghe / Zalo Web mở / cần quét lại), mã ghép đôi riêng, người đã ghép, nhóm bật/tắt (mặc định tắt), giới hạn gửi tin",
+      "w": 1440,
+      "x": 1520,
+      "y": 9240
     }
   },
   "createdOnFiles": {
@@ -1051,6 +1060,7 @@
     "VanPhongPhongBan.dc.html",
     "VanPhongKanban.dc.html",
     "KenhLark.dc.html",
+    "KenhZalo.dc.html",
     "PhuKienLinhVat.dc.html",
     "PhuKien3D.dc.html",
     "VanPhongNhatKy.dc.html",

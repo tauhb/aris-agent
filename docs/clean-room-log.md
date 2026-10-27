@@ -47,3 +47,7 @@ Kết quả: chỉ rút ra danh mục năng lực (mục 15 của `tinh-nang-ari
 ## 26/10/2026 — GĐ8, lên plan 8.3 (điều khiển màn hình)
 
 Đọc bài so sánh của bên thứ ba (codenote.net, tháng 9/2026) có mô tả kiến trúc computer-use của Hermes Agent: bộ công cụ `computer_use` gọi cua-driver qua MCP, ba chế độ quyền (hỏi từng thao tác / trong phạm vi khai báo / không hỏi), lệnh install/status/doctor. Chỉ rút ý tưởng kiến trúc và chính sách quyền để ghi vào `docs/plans/gd8-3-dieu-khien-man-hinh.md`. Không đọc mã nguồn Hermes, không sao chép gì. Cũng đọc mô tả công khai của cua-driver (trycua, MIT), Peekaboo (MIT), và tài liệu kênh Zalo của OpenClaw cho plan 8.4.
+
+## 27/10/2026 — GĐ8, làm plan 8.4 (kênh Zalo cá nhân)
+
+Đọc kiểu dữ liệu (`.d.ts`) của gói `zca-js@2.2.0` (MIT) đã cài để bọc thư viện sau một giao diện nhỏ: đăng nhập QR, trình nghe, gửi tin, mã đóng kết nối. Tài liệu kênh `zalouser` của OpenClaw và README của `zca-js` (đã đọc từ 26/10 khi lên plan) chỉ cho biết cách chạy, giới hạn và cảnh báo khoá tài khoản. Không đọc mã của Hermes Agent, không sao chép mã của OpenClaw hay của `zca-js`.

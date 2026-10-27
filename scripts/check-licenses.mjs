@@ -25,6 +25,8 @@ export const EXCEPTIONS = {
   '@img/sharp-libvips-darwin-arm64': 'LGPL-3.0-or-later, liên kết động qua sharp',
   '@img/sharp-libvips-linux-x64': 'LGPL-3.0-or-later, liên kết động qua sharp',
   '@img/sharp-libvips-linuxmusl-x64': 'LGPL-3.0-or-later, liên kết động qua sharp',
+  // Do zca-js (kênh Zalo) kéo vào. Zlib là giấy phép dễ dãi, cùng loại với MIT.
+  pako: '(MIT AND Zlib), nén dữ liệu cho zca-js',
 }
 
 /** Một biểu thức SPDX hợp lệ khi có ít nhất một nhánh OR mà mọi phần AND đều được phép. */

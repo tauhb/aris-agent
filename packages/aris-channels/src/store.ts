@@ -12,6 +12,7 @@ import type {
   InboxRecord,
   OutboxRecord,
   PersonRecord,
+  RecordChannel,
   SettingsRecord,
   ThreadRecord,
 } from './domain.js'
@@ -42,6 +43,15 @@ export const keyNum = (n: number) => (n < 0 ? `n${-n}` : String(n))
  * Bản ghi giữ mã gốc trong trường riêng (`openId`, `chatRef`), nên khoá không cần đảo ngược được.
  */
 export const larkKey = (id: string) => id.replace(/[^A-Za-z0-9]+/g, '-')
+
+/** Bản ghi chưa ghi kênh là Telegram: chỗ chỉ dành cho Telegram phải lọc ra bản ghi Lark và Zalo. */
+const isTelegram = (channel: RecordChannel | undefined) => (channel ?? 'telegram') === 'telegram'
+
+/** Mã người, mã nhóm Zalo (số dài) → phần khoá hợp lệ của storage dsh. */
+export const zaloKey = (id: string) => id.replace(/[^A-Za-z0-9]+/g, '-')
+
+/** Khoá cuộc trò chuyện Zalo: gồm mã bot của aris và mã người hay nhóm Zalo, nên hai bot không dùng chung phiên. */
+export const zaloThreadKey = (bot: string, id: string) => `zc-${bot}-${zaloKey(id)}`
 
 /** Khoá cuộc trò chuyện Lark: gồm mã bot của aris và `chat_id`, nên hai bot không dùng chung phiên. */
 export const larkThreadKey = (bot: string, chatId: string) => `lk-${bot}-${larkKey(chatId)}`
@@ -104,7 +114,7 @@ export class ChannelStore implements AccessState {
   people(): PersonRecord[] {
     return [...this.t.people.entries()]
       .map(([, p]) => p)
-      .filter((p) => p.channel !== 'lark')
+      .filter((p) => isTelegram(p.channel))
       .sort((a, b) => a.pairedAt.localeCompare(b.pairedAt))
   }
   owners(): PersonRecord[] {
@@ -128,6 +138,23 @@ export class ChannelStore implements AccessState {
   }
   async revokeLark(openId: string) {
     return this.t.people.delete(`lk-${larkKey(openId)}`)
+  }
+
+  /** Người đã ghép đôi trên Zalo (nhận ra bằng mã người dùng Zalo, khoá `zc-<mã>`). */
+  zaloPeople(): PersonRecord[] {
+    return [...this.t.people.entries()]
+      .map(([, p]) => p)
+      .filter((p) => p.channel === 'zalo')
+      .sort((a, b) => a.pairedAt.localeCompare(b.pairedAt))
+  }
+  zaloOwners(): PersonRecord[] {
+    return this.zaloPeople().filter((p) => p.role === 'owner')
+  }
+  zaloRoleOf(zaloId: string): Role | undefined {
+    return this.t.people.get(`zc-${zaloKey(zaloId)}`)?.role
+  }
+  async revokeZalo(zaloId: string) {
+    return this.t.people.delete(`zc-${zaloKey(zaloId)}`)
   }
 
   // --- Mã ghép đôi ----------------------------------------------------------------------
@@ -233,6 +260,25 @@ export class ChannelStore implements AccessState {
     return person
   }
 
+  /** Như `redeem` nhưng cho người trên Zalo; chỉ nhận mã của kênh Zalo. */
+  async redeemZalo(
+    text: string,
+    user: { zaloId: string; name: string },
+  ): Promise<PersonRecord | 'other-channel' | undefined> {
+    const rec = await this.takeCode(text, `zc-${user.zaloId}`, 'zalo')
+    if (!rec || rec === 'other-channel') return rec
+    const person: PersonRecord = {
+      userId: 0,
+      name: user.name,
+      role: this.zaloRoleOf(user.zaloId) === 'owner' ? 'owner' : rec.role,
+      pairedAt: new Date(this.now()).toISOString(),
+      channel: 'zalo',
+      openId: user.zaloId,
+    }
+    await this.t.people.put(`zc-${zaloKey(user.zaloId)}`, person)
+    return person
+  }
+
   // --- Nhóm --------------------------------------------------------------------------
   group(chatId: number): GroupRecord | undefined {
     return this.t.groups.get(`tg-${keyNum(chatId)}`)
@@ -245,7 +291,7 @@ export class ChannelStore implements AccessState {
   groups(): GroupRecord[] {
     return [...this.t.groups.entries()]
       .map(([, g]) => g)
-      .filter((g) => g.channel !== 'lark')
+      .filter((g) => isTelegram(g.channel))
       .sort((a, b) => a.title.localeCompare(b.title))
   }
   async upsertGroup(chatId: number, patch: Partial<GroupRecord> & { title?: string }): Promise<GroupRecord> {
@@ -315,11 +361,52 @@ export class ChannelStore implements AccessState {
     return true
   }
 
-  /** Có nên báo chủ nhân lần nữa không (tối đa một lần mỗi giờ cho mỗi người lạ/nhóm lạ). */
-  async shouldNotifyStranger(userId: number | string): Promise<boolean> {
+  // --- Nhóm Zalo (nhận ra bằng mã nhóm; mặc định tắt) ---------------------------------------
+  zaloGroup(groupId: string): GroupRecord | undefined {
+    return this.t.groups.get(`zc-${zaloKey(groupId)}`)
+  }
+  zaloGroupRule(groupId: string): GroupRule | undefined {
+    const g = this.zaloGroup(groupId)
+    return g && { allowed: g.allowed, who: g.who }
+  }
+  zaloGroups(): GroupRecord[] {
+    return [...this.t.groups.entries()]
+      .map(([, g]) => g)
+      .filter((g) => g.channel === 'zalo')
+      .sort((a, b) => a.title.localeCompare(b.title))
+  }
+  async upsertZaloGroup(
+    groupId: string,
+    patch: Partial<GroupRecord> & { title?: string },
+  ): Promise<GroupRecord> {
+    const cur = this.zaloGroup(groupId)
+    const prompt = patch.prompt ?? cur?.prompt
+    const next: GroupRecord = {
+      chatId: 0,
+      title: patch.title ?? cur?.title ?? groupId,
+      allowed: patch.allowed ?? cur?.allowed ?? false,
+      who: patch.who ?? cur?.who ?? 'allowed',
+      ...(prompt ? { prompt } : {}),
+      seenAt: new Date(this.now()).toISOString(),
+      channel: 'zalo',
+      chatRef: groupId,
+    }
+    if (patch.prompt === '') delete next.prompt
+    await this.t.groups.put(`zc-${zaloKey(groupId)}`, next)
+    return next
+  }
+  async removeZaloGroup(groupId: string) {
+    return this.t.groups.delete(`zc-${zaloKey(groupId)}`)
+  }
+
+  /**
+   * Có nên báo chủ nhân lần nữa không (mặc định tối đa một lần mỗi giờ cho mỗi người lạ/nhóm lạ; `windowMs` đổi
+   * khoảng đó, ví dụ Zalo báo một lần mỗi ngày).
+   */
+  async shouldNotifyStranger(userId: number | string, windowMs = 3_600_000): Promise<boolean> {
     const s = this.settings()
     const last = s.strangers[String(userId)]
-    if (last !== undefined && this.now() - last < 3_600_000) return false
+    if (last !== undefined && this.now() - last < windowMs) return false
     // Dọn người lạ đã báo quá 30 ngày để bảng không phình mãi.
     const keep = Object.entries(s.strangers).filter(([, at]) => this.now() - at < STRANGER_KEEP_MS)
     await this.updateSettings({ strangers: { ...Object.fromEntries(keep), [String(userId)]: this.now() } })
@@ -335,7 +422,7 @@ export class ChannelStore implements AccessState {
   // --- Tài khoản bot -----------------------------------------------------------------
   /** Tài khoản bot Telegram (ứng dụng Lark nằm ở `larkApps`). */
   bots(): BotRecord[] {
-    return [...this.t.bots.entries()].map(([, b]) => b).filter((b) => b.channel !== 'lark')
+    return [...this.t.bots.entries()].map(([, b]) => b).filter((b) => isTelegram(b.channel))
   }
   bot(bot: string): BotRecord | undefined {
     return this.t.bots.get(bot)
@@ -349,6 +436,21 @@ export class ChannelStore implements AccessState {
   }
   async removeBot(bot: string) {
     return this.t.bots.delete(bot)
+  }
+
+  // --- Tài khoản Zalo: mỗi bot của aris tối đa một tài khoản, khoá bản ghi `zalo-<bot>` ---------
+  zaloAccounts(): BotRecord[] {
+    return [...this.t.bots.entries()].map(([, b]) => b).filter((b) => b.channel === 'zalo')
+  }
+  zaloAccount(bot: string): BotRecord | undefined {
+    const b = this.t.bots.get(`zalo-${bot}`)
+    return b?.channel === 'zalo' ? b : undefined
+  }
+  async putZaloAccount(rec: BotRecord) {
+    await this.t.bots.put(`zalo-${rec.bot}`, { ...rec, channel: 'zalo' })
+  }
+  async removeZaloAccount(bot: string) {
+    return this.t.bots.delete(`zalo-${bot}`)
   }
 
   // --- Ứng dụng Lark: mỗi bot của aris tối đa một ứng dụng, khoá bản ghi `lark-<bot>` ---------
@@ -402,13 +504,19 @@ export class ChannelStore implements AccessState {
   inbox(): InboxRecord[] {
     return [...this.t.inbox.entries()]
       .map(([, r]) => r)
-      .filter((r) => r.channel !== 'lark')
+      .filter((r) => isTelegram(r.channel))
       .sort((a, b) => a.receivedAt - b.receivedAt)
   }
   larkInbox(): InboxRecord[] {
     return [...this.t.inbox.entries()]
       .map(([, r]) => r)
       .filter((r) => r.channel === 'lark')
+      .sort((a, b) => a.receivedAt - b.receivedAt)
+  }
+  zaloInbox(): InboxRecord[] {
+    return [...this.t.inbox.entries()]
+      .map(([, r]) => r)
+      .filter((r) => r.channel === 'zalo')
       .sort((a, b) => a.receivedAt - b.receivedAt)
   }
   async enqueue(rec: InboxRecord) {
@@ -425,13 +533,19 @@ export class ChannelStore implements AccessState {
   outbox(): OutboxRecord[] {
     return [...this.t.outbox.entries()]
       .map(([, r]) => r)
-      .filter((r) => r.channel !== 'lark')
+      .filter((r) => isTelegram(r.channel))
       .sort((a, b) => a.createdAt - b.createdAt)
   }
   larkOutbox(): OutboxRecord[] {
     return [...this.t.outbox.entries()]
       .map(([, r]) => r)
       .filter((r) => r.channel === 'lark')
+      .sort((a, b) => a.createdAt - b.createdAt)
+  }
+  zaloOutbox(): OutboxRecord[] {
+    return [...this.t.outbox.entries()]
+      .map(([, r]) => r)
+      .filter((r) => r.channel === 'zalo')
       .sort((a, b) => a.createdAt - b.createdAt)
   }
   async putOutbox(rec: OutboxRecord) {

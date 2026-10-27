@@ -267,6 +267,15 @@ async function main(argv) {
         console.log(
           `Lark: ${b.name} (${b.appId}) ${larkState[b.state] ?? `dừng${b.error ? ` — ${b.error}` : ''}`}`,
         )
+      const zaloState = {
+        listening: 'đang nghe',
+        connecting: 'đang kết nối',
+        web: 'Zalo Web đang mở, aris tạm ngừng nghe',
+        retrying: 'mất kết nối, đang thử lại',
+        'needs-qr': 'Cần quét lại QR',
+      }
+      for (const b of s.zalo ?? [])
+        console.log(`Zalo: ${b.name} ${zaloState[b.state] ?? `dừng${b.error ? ` — ${b.error}` : ''}`}`)
       return
     }
     case 'logs': {

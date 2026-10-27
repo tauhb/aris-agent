@@ -115,4 +115,4 @@ Kênh nghe hộp duyệt chung của `@aris/commander` (`arisApprovals`): yêu c
 
 ## Để sau
 
-Webhook thay long-polling (khi chạy trên server), tệp lớn hơn 20 MB (Bot API cục bộ), chủ đề riêng trong chat 1-1 (Bot API 9.4), Lark và Zalo.
+Webhook thay long-polling (khi chạy trên server), tệp lớn hơn 20 MB (Bot API cục bộ), chủ đề riêng trong chat 1-1 (Bot API 9.4). Lark làm ở đợt 7d; Zalo cá nhân làm ở GĐ8.4, xem [aris-zalo.md](aris-zalo.md).

@@ -252,3 +252,86 @@ describe('kho kênh', () => {
     expect(s.larkOutbox().map((r) => r.id)).toEqual(['y'])
   })
 })
+
+describe('kho kênh · Zalo', () => {
+  it('người, nhóm, tài khoản, hàng đợi của Zalo nằm riêng, không lẫn Telegram và Lark', async () => {
+    const s = memStore()
+    const zalo = await s.redeemZalo((await s.createCode('owner', 'zalo')).code, { zaloId: '2001', name: 'A' })
+    expect(zalo).toMatchObject({ channel: 'zalo', openId: '2001', role: 'owner' })
+    await s.redeemLark((await s.createCode('owner', 'lark')).code, { openId: 'ou_a', name: 'B' })
+    await s.redeem((await s.createCode('owner')).code, { id: 7, name: 'C' })
+    expect(s.zaloPeople().map((p) => p.openId)).toEqual(['2001'])
+    expect(s.larkPeople().map((p) => p.openId)).toEqual(['ou_a'])
+    expect(s.people().map((p) => p.userId)).toEqual([7])
+    expect(s.zaloRoleOf('2001')).toBe('owner')
+    expect(s.zaloOwners()).toHaveLength(1)
+
+    await s.upsertZaloGroup('5001', { title: 'Z' })
+    await s.upsertLarkGroup('oc_g', { title: 'L' })
+    await s.upsertGroup(-100, { title: 'T' })
+    expect(s.zaloGroups().map((g) => g.title)).toEqual(['Z'])
+    expect(s.larkGroups().map((g) => g.title)).toEqual(['L'])
+    expect(s.groups().map((g) => g.title)).toEqual(['T'])
+    // Nhóm Zalo mặc định tắt.
+    expect(s.zaloGroupRule('5001')).toEqual({ allowed: false, who: 'allowed' })
+
+    for (const [i, channel] of (['zalo', 'lark', undefined] as const).entries()) {
+      await s.enqueue({ id: `i${i}`, bot: 'aris', update: {}, state: 'queued', receivedAt: i, channel })
+      await s.putOutbox({
+        id: `o${i}`,
+        bot: 'aris',
+        chatId: 0,
+        chunks: [],
+        sent: 0,
+        state: 'pending',
+        attempts: 0,
+        createdAt: i,
+        channel,
+      })
+    }
+    expect(s.zaloInbox().map((r) => r.id)).toEqual(['i0'])
+    expect(s.larkInbox().map((r) => r.id)).toEqual(['i1'])
+    expect(s.inbox().map((r) => r.id)).toEqual(['i2'])
+    expect(s.zaloOutbox().map((r) => r.id)).toEqual(['o0'])
+    expect(s.larkOutbox().map((r) => r.id)).toEqual(['o1'])
+    expect(s.outbox().map((r) => r.id)).toEqual(['o2'])
+
+    const base = {
+      tgId: 0,
+      username: 'u',
+      name: 'n',
+      tokenRef: 'r',
+      canReadAll: true,
+      offset: 0,
+      voice: false,
+      addedAt: 'x',
+    }
+    await s.putZaloAccount({ ...base, bot: 'aris', channel: 'zalo' })
+    await s.putLarkApp({ ...base, bot: 'aris', channel: 'lark' })
+    expect(s.zaloAccounts()).toHaveLength(1)
+    expect(s.larkApps()).toHaveLength(1)
+    expect(s.bots()).toEqual([])
+    expect(s.zaloAccount('aris')?.channel).toBe('zalo')
+    await s.removeZaloAccount('aris')
+    expect(s.zaloAccount('aris')).toBeUndefined()
+  })
+
+  it('mã Zalo chỉ dùng được trên Zalo; sai mã nhiều lần thì khoá người đó', async () => {
+    const s = memStore()
+    const code = await s.createCode('member', 'zalo')
+    expect(await s.redeem(code.code, { id: 1, name: 'x' })).toBe('other-channel')
+    expect(await s.redeemZalo(code.code, { zaloId: '9', name: 'x' })).toMatchObject({ role: 'member' })
+    expect(await s.redeemZalo(code.code, { zaloId: '9', name: 'x' })).toBeUndefined()
+  })
+
+  it('báo người lạ theo cửa sổ riêng: mặc định 1 giờ, Zalo 24 giờ', async () => {
+    let now = 1_000_000
+    const s = memStore(() => now)
+    expect(await s.shouldNotifyStranger('zc-1', 24 * 3_600_000)).toBe(true)
+    now += 3_600_001
+    expect(await s.shouldNotifyStranger('zc-1', 24 * 3_600_000)).toBe(false)
+    expect(await s.shouldNotifyStranger('zc-1')).toBe(true)
+    now += 24 * 3_600_000
+    expect(await s.shouldNotifyStranger('zc-1', 24 * 3_600_000)).toBe(true)
+  })
+})

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>aris · Kênh · Zalo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+h1,h2{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+.t-light{--bg:#F6F5F2;--panel:#FFFFFF;--panel2:#F0EFEB;--hover:#EAE9E4;--ink:#16171B;--muted:#5C616C;--line:#E4E2DC;--accent:#1D6FE0;--accentSoft:#E6F0FE;--ok:#15803D;--okSoft:#E2F3E9;--warn:#B45309;--warnSoft:#FCEFDF}
+.t-dark{--bg:#0F1013;--panel:#17191E;--panel2:#1E2127;--hover:#252830;--ink:#EDEEF1;--muted:#9CA3B0;--line:#2A2D35;--accent:#5AA5FF;--accentSoft:#16263F;--ok:#4ADE9B;--okSoft:#15302A;--warn:#F5A35C;--warnSoft:#3A2614}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ib{width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.b1{height:34px;padding:0 12px;border:0;border-radius:9px;background:var(--ink);color:var(--panel);font-size:13px;font-weight:600}
+.b2{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:12.5px}
+.m{color:var(--muted)}
+.mono{font-family:'JetBrains Mono',monospace}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.sn{display:block;border-radius:8px;padding:7px 10px;font-size:13.5px;color:var(--ink);text-decoration:none}
+.r{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.av{flex:none;width:22px;height:22px;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:600}
+.ok{font-size:12px;font-weight:600;color:var(--ok);background:var(--okSoft);border-radius:999px;padding:1px 9px}
+.seg{border:0;border-radius:7px;padding:4px 10px;background:transparent;font-size:12.5px;color:var(--muted)}
+.seg.on{background:var(--hover);color:var(--ink);font-weight:600}
+.tg{width:38px;height:22px;border:0;border-radius:999px;background:var(--hover);position:relative;padding:0}
+.tg.on{background:var(--accent)}
+.tg .knob{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
+.tg.on .knob{left:19px}
+.b1[disabled]{opacity:.45;cursor:not-allowed}
+.warn{font-size:12px;font-weight:600;color:var(--warn);background:var(--warnSoft);border-radius:999px;padding:1px 9px}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="background: var(--bg); color: var(--ink); font-family: 'Be Vietnam Pro', system-ui, sans-serif; font-size: 14px; line-height: 1.5; min-height: 900px; display: flex; flex-wrap: wrap">
+  <dc-import name="Sidebar" active="settings" bot="none" hint-size="260px,900px"></dc-import>
+  <nav aria-label="Cài đặt" style="flex: 0 1 210px; min-width: 190px; border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px">
+    <a class="sn" href="#">Chung</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Model và kết nối</div>
+    <a class="sn" href="Provider.dc.html">Provider và khoá</a>
+    <a class="sn" href="ModelViec.dc.html">Model</a>
+    <a class="sn" href="TimTheoNghia.dc.html">Tìm theo nghĩa</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Kênh</div>
+    <a class="sn" href="Kenh.dc.html" aria-current="page" style="background: var(--hover); font-weight: 600">Kênh và ghép đôi</a>
+    <a class="sn" href="MatTichHop.dc.html">Ứng dụng khác</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Vận hành an toàn</div>
+    <a class="sn" href="BaoMat.dc.html">Ngân sách, duyệt, an toàn</a>
+    <a class="sn" href="SaoLuu.dc.html">Sao lưu</a>
+    <a class="sn" href="ThongKe.dc.html">Thống kê và nhật ký</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Đội bot</div>
+    <a class="sn" href="Commander.dc.html">Commander</a>
+    <a class="sn" href="#">Mẫu bot</a>
+    <div class="m" style="padding: 12px 10px 4px; font-weight: 600; font-size: 11.5px">Mở rộng</div>
+    <a class="sn" href="KetNoiDoi.dc.html">Kết nối</a>
+    <a class="sn" href="Plugin.dc.html">Plugin</a>
+  </nav>
+  <main style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line)">
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600">Kênh và ghép đôi</span><span class="m" style="font-size: 12px">Mỗi kênh một phần: tài khoản bot, mã ghép đôi riêng của kênh, người đã ghép đôi</span></div>
+      <button type="button" class="ib" onClick="{{toggleTheme}}" aria-label="Đổi giao diện sáng/tối" style="margin-left: auto"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+    <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 16px">
+      <section class="card"><div style="padding: 12px 16px; display: flex; align-items: center; gap: 8px"><b style="font-size: 15px">Telegram</b><span class="ok">1 tài khoản</span><span class="m" style="font-size: 12.5px">· 1 người đã ghép</span><span class="m" style="margin-left: auto">›</span></div></section>
+      <section class="card"><div style="padding: 12px 16px; display: flex; align-items: center; gap: 8px"><b style="font-size: 15px">Lark</b><span class="ok">1 ứng dụng</span><span class="m" style="font-size: 12.5px">· 1 người đã ghép</span><span class="m" style="margin-left: auto">›</span></div></section>
+      <section class="card">
+        <div style="padding: 12px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); flex-wrap: wrap"><b style="font-size: 15px">Zalo cá nhân</b><span class="{{zaloCls}}">{{zaloText}}</span><span role="group" aria-label="Xem trạng thái (chỉ trên bản vẽ)" style="margin-left: auto; display: inline-flex; border: 1px dashed var(--line); border-radius: 8px; padding: 2px"><button type="button" class="{{vNew}}" onClick="{{toNew}}">Chưa kết nối</button><button type="button" class="{{vQr}}" onClick="{{toQr}}">Đang quét QR</button><button type="button" class="{{vOn}}" onClick="{{toOn}}">Đã kết nối</button></span></div>
+
+        <sc-if value="{{isNew}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-wrap: wrap">
+          <div style="flex: 1.2 1 420px; min-width: 0; border-right: 1px solid var(--line); padding: 14px 16px; display: flex; flex-direction: column; gap: 12px">
+            <div style="background: var(--warnSoft); color: var(--warn); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; font-weight: 600; display: flex; gap: 8px; align-items: flex-start"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M12 3 2 20h20L12 3z"></path><path d="M12 10v4M12 17.5v.01"></path></svg><span>Không chính thức, tài khoản Zalo có thể bị khoá. Nên thử bằng tài khoản phụ.</span></div>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px"><input type="checkbox" checked="{{understood}}" onChange="{{toggleUnderstood}}" style="width: 16px; height: 16px; accent-color: var(--accent)"><span>Tôi hiểu</span></label>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap"><span class="m" style="font-size: 13px">Bot trả lời trên Zalo này</span><span role="group" aria-label="Bot trả lời" style="display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 2px"><button type="button" class="seg on">Aris</button><button type="button" class="seg">Khoa</button><button type="button" class="seg">Thơ</button></span></div>
+            <div><button type="button" class="{{qrBtn}}" onClick="{{showQr}}" disabled="{{qrOff}}">Hiện mã QR</button></div>
+            <span class="m" style="font-size: 12px">Dữ liệu đăng nhập cất trong Keychain, không hiện lại.</span>
+          </div>
+          <div style="flex: 1 1 300px; min-width: 0">
+            <div class="r" style="border-top: 0; align-items: flex-start"><span style="width: 22px; height: 22px; border-radius: 50%; background: var(--panel2); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex: none">1</span><span style="flex: 1; min-width: 0"><b style="font-size: 13.5px">Chỉ trả lời người đã ghép đôi</b><span class="m" style="display: block; font-size: 12.5px">Người lạ nhắn thì bot im lặng, chỉ báo {{you}} một lần mỗi ngày</span></span></div>
+            <div class="r" style="align-items: flex-start"><span style="width: 22px; height: 22px; border-radius: 50%; background: var(--panel2); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex: none">2</span><span style="flex: 1; min-width: 0"><b style="font-size: 13.5px">Nhóm mặc định tắt</b><span class="m" style="display: block; font-size: 12.5px">Bật từng nhóm; trong nhóm chỉ trả lời khi tài khoản được @nhắc</span></span></div>
+            <div class="r" style="align-items: flex-start"><span style="width: 22px; height: 22px; border-radius: 50%; background: var(--panel2); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex: none">3</span><span style="flex: 1; min-width: 0"><b style="font-size: 13.5px">Gửi chậm, có giới hạn</b><span class="m" style="display: block; font-size: 12.5px">3 giây một tin mỗi cuộc · 20 tin mỗi phút · 300 tin mỗi ngày</span></span></div>
+            <div class="r" style="align-items: flex-start"><span style="width: 22px; height: 22px; border-radius: 50%; background: var(--panel2); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex: none">4</span><span style="flex: 1; min-width: 0"><b style="font-size: 13.5px">Mở Zalo Web thì bot tạm ngừng nghe</b><span class="m" style="display: block; font-size: 12.5px">Mỗi tài khoản chỉ nghe được ở một nơi</span></span></div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isQr}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-wrap: wrap">
+          <div style="flex: 1 1 320px; min-width: 0; border-right: 1px solid var(--line); padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 10px">
+            <div style="padding: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; position: relative"><svg width="175" height="175" viewBox="0 0 175 175" role="img" aria-label="Mã QR (bản vẽ)" style="background:var(--panel);border-radius:6px"><rect x="0" y="0" width="49" height="49" fill="var(--ink)"/><rect x="7" y="7" width="35" height="35" fill="var(--panel)"/><rect x="14" y="14" width="21" height="21" fill="var(--ink)"/><rect x="126" y="0" width="49" height="49" fill="var(--ink)"/><rect x="133" y="7" width="35" height="35" fill="var(--panel)"/><rect x="140" y="14" width="21" height="21" fill="var(--ink)"/><rect x="0" y="126" width="49" height="49" fill="var(--ink)"/><rect x="7" y="133" width="35" height="35" fill="var(--panel)"/><rect x="14" y="140" width="21" height="21" fill="var(--ink)"/><rect x="56" y="0" width="7" height="7" fill="var(--ink)"/><rect x="63" y="0" width="7" height="7" fill="var(--ink)"/><rect x="77" y="0" width="7" height="7" fill="var(--ink)"/><rect x="91" y="0" width="7" height="7" fill="var(--ink)"/><rect x="98" y="0" width="7" height="7" fill="var(--ink)"/><rect x="112" y="0" width="7" height="7" fill="var(--ink)"/><rect x="56" y="7" width="7" height="7" fill="var(--ink)"/><rect x="63" y="7" width="7" height="7" fill="var(--ink)"/><rect x="70" y="7" width="7" height="7" fill="var(--ink)"/><rect x="77" y="7" width="7" height="7" fill="var(--ink)"/><rect x="91" y="7" width="7" height="7" fill="var(--ink)"/><rect x="98" y="7" width="7" height="7" fill="var(--ink)"/><rect x="63" y="14" width="7" height="7" fill="var(--ink)"/><rect x="77" y="14" width="7" height="7" fill="var(--ink)"/><rect x="91" y="14" width="7" height="7" fill="var(--ink)"/><rect x="98" y="14" width="7" height="7" fill="var(--ink)"/><rect x="105" y="14" width="7" height="7" fill="var(--ink)"/><rect x="112" y="14" width="7" height="7" fill="var(--ink)"/><rect x="63" y="21" width="7" height="7" fill="var(--ink)"/><rect x="84" y="21" width="7" height="7" fill="var(--ink)"/><rect x="98" y="21" width="7" height="7" fill="var(--ink)"/><rect x="105" y="21" width="7" height="7" fill="var(--ink)"/><rect x="112" y="21" width="7" height="7" fill="var(--ink)"/><rect x="63" y="28" width="7" height="7" fill="var(--ink)"/><rect x="70" y="28" width="7" height="7" fill="var(--ink)"/><rect x="84" y="28" width="7" height="7" fill="var(--ink)"/><rect x="91" y="28" width="7" height="7" fill="var(--ink)"/><rect x="112" y="28" width="7" height="7" fill="var(--ink)"/><rect x="84" y="35" width="7" height="7" fill="var(--ink)"/><rect x="98" y="35" width="7" height="7" fill="var(--ink)"/><rect x="105" y="35" width="7" height="7" fill="var(--ink)"/><rect x="56" y="42" width="7" height="7" fill="var(--ink)"/><rect x="70" y="42" width="7" height="7" fill="var(--ink)"/><rect x="105" y="42" width="7" height="7" fill="var(--ink)"/><rect x="70" y="49" width="7" height="7" fill="var(--ink)"/><rect x="91" y="49" width="7" height="7" fill="var(--ink)"/><rect x="105" y="49" width="7" height="7" fill="var(--ink)"/><rect x="21" y="56" width="7" height="7" fill="var(--ink)"/><rect x="28" y="56" width="7" height="7" fill="var(--ink)"/><rect x="42" y="56" width="7" height="7" fill="var(--ink)"/><rect x="49" y="56" width="7" height="7" fill="var(--ink)"/><rect x="56" y="56" width="7" height="7" fill="var(--ink)"/><rect x="63" y="56" width="7" height="7" fill="var(--ink)"/><rect x="70" y="56" width="7" height="7" fill="var(--ink)"/><rect x="84" y="56" width="7" height="7" fill="var(--ink)"/><rect x="91" y="56" width="7" height="7" fill="var(--ink)"/><rect x="98" y="56" width="7" height="7" fill="var(--ink)"/><rect x="112" y="56" width="7" height="7" fill="var(--ink)"/><rect x="119" y="56" width="7" height="7" fill="var(--ink)"/><rect x="154" y="56" width="7" height="7" fill="var(--ink)"/><rect x="161" y="56" width="7" height="7" fill="var(--ink)"/><rect x="168" y="56" width="7" height="7" fill="var(--ink)"/><rect x="14" y="63" width="7" height="7" fill="var(--ink)"/><rect x="21" y="63" width="7" height="7" fill="var(--ink)"/><rect x="28" y="63" width="7" height="7" fill="var(--ink)"/><rect x="35" y="63" width="7" height="7" fill="var(--ink)"/><rect x="56" y="63" width="7" height="7" fill="var(--ink)"/><rect x="63" y="63" width="7" height="7" fill="var(--ink)"/><rect x="70" y="63" width="7" height="7" fill="var(--ink)"/><rect x="77" y="63" width="7" height="7" fill="var(--ink)"/><rect x="126" y="63" width="7" height="7" fill="var(--ink)"/><rect x="161" y="63" width="7" height="7" fill="var(--ink)"/><rect x="168" y="63" width="7" height="7" fill="var(--ink)"/><rect x="0" y="70" width="7" height="7" fill="var(--ink)"/><rect x="14" y="70" width="7" height="7" fill="var(--ink)"/><rect x="21" y="70" width="7" height="7" fill="var(--ink)"/><rect x="28" y="70" width="7" height="7" fill="var(--ink)"/><rect x="35" y="70" width="7" height="7" fill="var(--ink)"/><rect x="42" y="70" width="7" height="7" fill="var(--ink)"/><rect x="49" y="70" width="7" height="7" fill="var(--ink)"/><rect x="56" y="70" width="7" height="7" fill="var(--ink)"/><rect x="63" y="70" width="7" height="7" fill="var(--ink)"/><rect x="70" y="70" width="7" height="7" fill="var(--ink)"/><rect x="77" y="70" width="7" height="7" fill="var(--ink)"/><rect x="84" y="70" width="7" height="7" fill="var(--ink)"/><rect x="105" y="70" width="7" height="7" fill="var(--ink)"/><rect x="112" y="70" width="7" height="7" fill="var(--ink)"/><rect x="119" y="70" width="7" height="7" fill="var(--ink)"/><rect x="126" y="70" width="7" height="7" fill="var(--ink)"/><rect x="133" y="70" width="7" height="7" fill="var(--ink)"/><rect x="154" y="70" width="7" height="7" fill="var(--ink)"/><rect x="168" y="70" width="7" height="7" fill="var(--ink)"/><rect x="0" y="77" width="7" height="7" fill="var(--ink)"/><rect x="7" y="77" width="7" height="7" fill="var(--ink)"/><rect x="14" y="77" width="7" height="7" fill="var(--ink)"/><rect x="28" y="77" width="7" height="7" fill="var(--ink)"/><rect x="35" y="77" width="7" height="7" fill="var(--ink)"/><rect x="56" y="77" width="7" height="7" fill="var(--ink)"/><rect x="70" y="77" width="7" height="7" fill="var(--ink)"/><rect x="105" y="77" width="7" height="7" fill="var(--ink)"/><rect x="112" y="77" width="7" height="7" fill="var(--ink)"/><rect x="119" y="77" width="7" height="7" fill="var(--ink)"/><rect x="147" y="77" width="7" height="7" fill="var(--ink)"/><rect x="154" y="77" width="7" height="7" fill="var(--ink)"/><rect x="28" y="84" width="7" height="7" fill="var(--ink)"/><rect x="42" y="84" width="7" height="7" fill="var(--ink)"/><rect x="49" y="84" width="7" height="7" fill="var(--ink)"/><rect x="56" y="84" width="7" height="7" fill="var(--ink)"/><rect x="63" y="84" width="7" height="7" fill="var(--ink)"/><rect x="70" y="84" width="7" height="7" fill="var(--ink)"/><rect x="91" y="84" width="7" height="7" fill="var(--ink)"/><rect x="119" y="84" width="7" height="7" fill="var(--ink)"/><rect x="126" y="84" width="7" height="7" fill="var(--ink)"/><rect x="133" y="84" width="7" height="7" fill="var(--ink)"/><rect x="140" y="84" width="7" height="7" fill="var(--ink)"/><rect x="147" y="84" width="7" height="7" fill="var(--ink)"/><rect x="0" y="91" width="7" height="7" fill="var(--ink)"/><rect x="21" y="91" width="7" height="7" fill="var(--ink)"/><rect x="56" y="91" width="7" height="7" fill="var(--ink)"/><rect x="63" y="91" width="7" height="7" fill="var(--ink)"/><rect x="77" y="91" width="7" height="7" fill="var(--ink)"/><rect x="98" y="91" width="7" height="7" fill="var(--ink)"/><rect x="105" y="91" width="7" height="7" fill="var(--ink)"/><rect x="126" y="91" width="7" height="7" fill="var(--ink)"/><rect x="133" y="91" width="7" height="7" fill="var(--ink)"/><rect x="140" y="91" width="7" height="7" fill="var(--ink)"/><rect x="161" y="91" width="7" height="7" fill="var(--ink)"/><rect x="14" y="98" width="7" height="7" fill="var(--ink)"/><rect x="28" y="98" width="7" height="7" fill="var(--ink)"/><rect x="35" y="98" width="7" height="7" fill="var(--ink)"/><rect x="70" y="98" width="7" height="7" fill="var(--ink)"/><rect x="91" y="98" width="7" height="7" fill="var(--ink)"/><rect x="98" y="98" width="7" height="7" fill="var(--ink)"/><rect x="105" y="98" width="7" height="7" fill="var(--ink)"/><rect x="112" y="98" width="7" height="7" fill="var(--ink)"/><rect x="126" y="98" width="7" height="7" fill="var(--ink)"/><rect x="133" y="98" width="7" height="7" fill="var(--ink)"/><rect x="140" y="98" width="7" height="7" fill="var(--ink)"/><rect x="154" y="98" width="7" height="7" fill="var(--ink)"/><rect x="161" y="98" width="7" height="7" fill="var(--ink)"/><rect x="7" y="105" width="7" height="7" fill="var(--ink)"/><rect x="42" y="105" width="7" height="7" fill="var(--ink)"/><rect x="49" y="105" width="7" height="7" fill="var(--ink)"/><rect x="56" y="105" width="7" height="7" fill="var(--ink)"/><rect x="63" y="105" width="7" height="7" fill="var(--ink)"/><rect x="77" y="105" width="7" height="7" fill="var(--ink)"/><rect x="84" y="105" width="7" height="7" fill="var(--ink)"/><rect x="105" y="105" width="7" height="7" fill="var(--ink)"/><rect x="133" y="105" width="7" height="7" fill="var(--ink)"/><rect x="147" y="105" width="7" height="7" fill="var(--ink)"/><rect x="154" y="105" width="7" height="7" fill="var(--ink)"/><rect x="21" y="112" width="7" height="7" fill="var(--ink)"/><rect x="56" y="112" width="7" height="7" fill="var(--ink)"/><rect x="70" y="112" width="7" height="7" fill="var(--ink)"/><rect x="105" y="112" width="7" height="7" fill="var(--ink)"/><rect x="133" y="112" width="7" height="7" fill="var(--ink)"/><rect x="140" y="112" width="7" height="7" fill="var(--ink)"/><rect x="147" y="112" width="7" height="7" fill="var(--ink)"/><rect x="154" y="112" width="7" height="7" fill="var(--ink)"/><rect x="161" y="112" width="7" height="7" fill="var(--ink)"/><rect x="168" y="112" width="7" height="7" fill="var(--ink)"/><rect x="77" y="119" width="7" height="7" fill="var(--ink)"/><rect x="98" y="119" width="7" height="7" fill="var(--ink)"/><rect x="119" y="119" width="7" height="7" fill="var(--ink)"/><rect x="133" y="119" width="7" height="7" fill="var(--ink)"/><rect x="161" y="119" width="7" height="7" fill="var(--ink)"/><rect x="168" y="119" width="7" height="7" fill="var(--ink)"/><rect x="63" y="126" width="7" height="7" fill="var(--ink)"/><rect x="70" y="126" width="7" height="7" fill="var(--ink)"/><rect x="77" y="126" width="7" height="7" fill="var(--ink)"/><rect x="91" y="126" width="7" height="7" fill="var(--ink)"/><rect x="105" y="126" width="7" height="7" fill="var(--ink)"/><rect x="112" y="126" width="7" height="7" fill="var(--ink)"/><rect x="119" y="126" width="7" height="7" fill="var(--ink)"/><rect x="140" y="126" width="7" height="7" fill="var(--ink)"/><rect x="168" y="126" width="7" height="7" fill="var(--ink)"/><rect x="56" y="133" width="7" height="7" fill="var(--ink)"/><rect x="63" y="133" width="7" height="7" fill="var(--ink)"/><rect x="77" y="133" width="7" height="7" fill="var(--ink)"/><rect x="84" y="133" width="7" height="7" fill="var(--ink)"/><rect x="91" y="133" width="7" height="7" fill="var(--ink)"/><rect x="112" y="133" width="7" height="7" fill="var(--ink)"/><rect x="119" y="133" width="7" height="7" fill="var(--ink)"/><rect x="147" y="133" width="7" height="7" fill="var(--ink)"/><rect x="154" y="133" width="7" height="7" fill="var(--ink)"/><rect x="168" y="133" width="7" height="7" fill="var(--ink)"/><rect x="56" y="140" width="7" height="7" fill="var(--ink)"/><rect x="84" y="140" width="7" height="7" fill="var(--ink)"/><rect x="98" y="140" width="7" height="7" fill="var(--ink)"/><rect x="112" y="140" width="7" height="7" fill="var(--ink)"/><rect x="119" y="140" width="7" height="7" fill="var(--ink)"/><rect x="140" y="140" width="7" height="7" fill="var(--ink)"/><rect x="147" y="140" width="7" height="7" fill="var(--ink)"/><rect x="161" y="140" width="7" height="7" fill="var(--ink)"/><rect x="168" y="140" width="7" height="7" fill="var(--ink)"/><rect x="56" y="147" width="7" height="7" fill="var(--ink)"/><rect x="63" y="147" width="7" height="7" fill="var(--ink)"/><rect x="70" y="147" width="7" height="7" fill="var(--ink)"/><rect x="77" y="147" width="7" height="7" fill="var(--ink)"/><rect x="84" y="147" width="7" height="7" fill="var(--ink)"/><rect x="98" y="147" width="7" height="7" fill="var(--ink)"/><rect x="112" y="147" width="7" height="7" fill="var(--ink)"/><rect x="119" y="147" width="7" height="7" fill="var(--ink)"/><rect x="126" y="147" width="7" height="7" fill="var(--ink)"/><rect x="133" y="147" width="7" height="7" fill="var(--ink)"/><rect x="140" y="147" width="7" height="7" fill="var(--ink)"/><rect x="161" y="147" width="7" height="7" fill="var(--ink)"/><rect x="168" y="147" width="7" height="7" fill="var(--ink)"/><rect x="63" y="154" width="7" height="7" fill="var(--ink)"/><rect x="77" y="154" width="7" height="7" fill="var(--ink)"/><rect x="98" y="154" width="7" height="7" fill="var(--ink)"/><rect x="126" y="154" width="7" height="7" fill="var(--ink)"/><rect x="154" y="154" width="7" height="7" fill="var(--ink)"/><rect x="161" y="154" width="7" height="7" fill="var(--ink)"/><rect x="168" y="154" width="7" height="7" fill="var(--ink)"/><rect x="56" y="161" width="7" height="7" fill="var(--ink)"/><rect x="63" y="161" width="7" height="7" fill="var(--ink)"/><rect x="77" y="161" width="7" height="7" fill="var(--ink)"/><rect x="84" y="161" width="7" height="7" fill="var(--ink)"/><rect x="91" y="161" width="7" height="7" fill="var(--ink)"/><rect x="119" y="161" width="7" height="7" fill="var(--ink)"/><rect x="126" y="161" width="7" height="7" fill="var(--ink)"/><rect x="133" y="161" width="7" height="7" fill="var(--ink)"/><rect x="140" y="161" width="7" height="7" fill="var(--ink)"/><rect x="147" y="161" width="7" height="7" fill="var(--ink)"/><rect x="154" y="161" width="7" height="7" fill="var(--ink)"/><rect x="161" y="161" width="7" height="7" fill="var(--ink)"/><rect x="70" y="168" width="7" height="7" fill="var(--ink)"/><rect x="84" y="168" width="7" height="7" fill="var(--ink)"/><rect x="91" y="168" width="7" height="7" fill="var(--ink)"/><rect x="98" y="168" width="7" height="7" fill="var(--ink)"/><rect x="105" y="168" width="7" height="7" fill="var(--ink)"/><rect x="112" y="168" width="7" height="7" fill="var(--ink)"/><rect x="126" y="168" width="7" height="7" fill="var(--ink)"/><rect x="140" y="168" width="7" height="7" fill="var(--ink)"/><rect x="147" y="168" width="7" height="7" fill="var(--ink)"/><rect x="154" y="168" width="7" height="7" fill="var(--ink)"/><rect x="161" y="168" width="7" height="7" fill="var(--ink)"/><rect x="168" y="168" width="7" height="7" fill="var(--ink)"/></svg></div>
+            <span class="mono" style="font-size: 13px">{{countdown}}</span>
+            <span style="display: flex; gap: 8px"><button type="button" class="b2">Tạo mã mới</button><button type="button" class="b2" onClick="{{toNew}}">Huỷ</button></span>
+          </div>
+          <div style="flex: 1 1 300px; min-width: 0">
+            <div class="r" style="border-top: 0; align-items: flex-start"><span style="width: 22px; height: 22px; border-radius: 50%; background: var(--panel2); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex: none">1</span><span style="flex: 1; min-width: 0"><b style="font-size: 13.5px">Mở Zalo trên điện thoại</b><span class="m" style="display: block; font-size: 12.5px">Nên dùng tài khoản phụ</span></span></div>
+            <div class="r" style="align-items: flex-start"><span style="width: 22px; height: 22px; border-radius: 50%; background: var(--panel2); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex: none">2</span><span style="flex: 1; min-width: 0"><b style="font-size: 13.5px">Quét mã QR</b><span class="m" style="display: block; font-size: 12.5px">Zalo › biểu tượng quét mã ở thanh tìm kiếm</span></span></div>
+            <div class="r" style="align-items: flex-start"><span style="width: 22px; height: 22px; border-radius: 50%; background: var(--panel2); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex: none">3</span><span style="flex: 1; min-width: 0"><b style="font-size: 13.5px">Bấm Đồng ý trên điện thoại</b><span class="m" style="display: block; font-size: 12.5px">Trang này tự cập nhật sau vài giây</span></span></div>
+            <div class="r"><span class="m" style="flex: 1; font-size: 12.5px">Trạng thái</span><span class="m">đang chờ quét</span></div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isOn}}" hint-placeholder-val="{{ false }}">
+        <div class="r" style="border-top: 0; flex-wrap: wrap"><span class="av" style="width: 34px; height: 34px; background: #3B82F6; font-size: 13px">TK</span><span style="flex: 1; min-width: 200px"><b>Tài khoản phụ</b><span class="m" style="display: block; font-size: 12.5px">Bot trả lời: Aris</span></span><span class="{{stCls}}">{{stText}}</span><button type="button" class="{{reBtnCls}}">Quét lại QR</button><button type="button" class="b2">Đăng xuất</button></div>
+        <div class="r" style="flex-wrap: wrap;"><span role="group" aria-label="Trạng thái kết nối (chỉ trên bản vẽ)" style="display: inline-flex; border: 1px dashed var(--line); border-radius: 8px; padding: 2px"><button type="button" class="{{sListen}}" onClick="{{toListen}}">Đang nghe</button><button type="button" class="{{sWeb}}" onClick="{{toWeb}}">Zalo Web mở</button><button type="button" class="{{sQr}}" onClick="{{toNeedQr}}">Cần quét lại</button></span><span class="m" style="font-size: 12px">chỉ trên bản vẽ</span></div>
+        <div style="display: flex; flex-wrap: wrap; border-top: 1px solid var(--line)">
+          <div style="flex: 1 1 260px; min-width: 0; border-right: 1px solid var(--line); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
+            <b style="font-size: 13px">Ghép đôi</b>
+            <span role="group" style="display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 2px; align-self: flex-start"><button type="button" class="{{segOwner}}" onClick="{{toOwner}}">Mã cho {{you}}</button><button type="button" class="{{segOther}}" onClick="{{toOther}}">Mã cho người khác</button></span>
+            <div class="mono" style="font-size: 24px; font-weight: 600; letter-spacing: .12em; text-align: center; padding: 8px; border: 1px dashed var(--line); border-radius: 10px">{{code}}</div>
+            <div class="m" style="font-size: 12px">Nhắn mã này cho tài khoản Zalo này (từ Zalo khác) · chỉ dùng được trên Zalo</div>
+          </div>
+          <div style="flex: 1 1 260px; min-width: 0; border-right: 1px solid var(--line)">
+            <div class="r" style="border-top: 0"><b style="flex: 1; font-size: 13px">Người đã ghép đôi trên Zalo</b></div>
+            <div class="r"><span style="flex: 1">Hoàng Bá Tầu</span><span class="ok">chủ nhân</span><button type="button" class="b2" style="height: 26px">Gỡ</button></div>
+            <div class="r"><span style="flex: 1">Thơ</span><span class="m" style="font-size: 12px">người được phép</span><button type="button" class="b2" style="height: 26px">Gỡ</button></div>
+            <div class="r m" style="font-size: 12.5px">Người lạ nhắn: bot im lặng, chỉ báo {{you}} một lần mỗi ngày</div>
+          </div>
+          <div style="flex: 1 1 280px; min-width: 0">
+            <div class="r" style="border-top: 0"><b style="flex: 1; font-size: 13px">Nhóm</b><span class="m" style="font-size: 12px">mặc định tắt · chỉ trả lời khi được @nhắc</span></div>
+            <div class="r"><span style="flex: 1">Marketing</span><button type="button" role="switch" aria-checked="{{g1}}" aria-label="Bật nhóm Marketing" class="{{g1Cls}}" onClick="{{toggleG1}}"><span class="knob"></span></button></div>
+            <div class="r"><span style="flex: 1">Lớp AI tối thứ ba</span><button type="button" role="switch" aria-checked="{{g2}}" aria-label="Bật nhóm Lớp AI tối thứ ba" class="{{g2Cls}}" onClick="{{toggleG2}}"><span class="knob"></span></button></div>
+            <div class="r"><span style="flex: 1">Gia đình</span><button type="button" role="switch" aria-checked="{{g3}}" aria-label="Bật nhóm Gia đình" class="{{g3Cls}}" onClick="{{toggleG3}}"><span class="knob"></span></button></div>
+          </div>
+        </div>
+        <div class="r" style="flex-wrap: wrap"><b style="font-size: 13px">Giới hạn gửi tin</b><span class="m" style="flex: 1; font-size: 12.5px">3 giây một tin mỗi cuộc · 20 tin mỗi phút · 300 tin mỗi ngày · không sửa được</span><span class="mono" style="font-size: 12.5px">hôm nay còn 287</span></div>
+        </sc-if>
+      </section>
+      <div class="card">
+        <div class="r" style="border-top: 0; flex-wrap: wrap"><span style="flex: 1; min-width: 220px"><b>Khi bot đang làm mà {{you}} nhắn thêm</b><span class="m" style="display: block; font-size: 12.5px">Áp cho mọi kênh</span></span><span role="group" aria-label="Cách xử lý mặc định" style="display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 2px"><button type="button" class="seg" style="background: var(--hover); color: var(--ink); font-weight: 600">Chèn vào việc</button><button type="button" class="seg">Xếp hàng</button><button type="button" class="seg">Dừng và làm mới</button></span></div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = (this.state && this.state.theme) || this.props.theme || 'dark';
+    const view = (this.state && this.state.view) || 'new';
+    const other = !!(this.state && this.state.other);
+    const understood = this.state && this.state.understood !== undefined ? this.state.understood : true;
+    const st = (this.state && this.state.st) || 'listen';
+    const g = (this.state && this.state.g) || [false, true, false];
+    const set = (patch) => () => this.setState(patch);
+    const tg = (i) => () => { const n = g.slice(); n[i] = !n[i]; this.setState({ g: n }); };
+    const stText = { listen: 'đang nghe', web: 'Zalo Web đang mở, aris tạm ngừng nghe', needqr: 'Cần quét lại QR' }[st];
+    return {
+      themeClass: 't-' + theme, toggleTheme: set({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      you: 'anh Tầu',
+      vNew: 'seg' + (view === 'new' ? ' on' : ''), vQr: 'seg' + (view === 'qr' ? ' on' : ''), vOn: 'seg' + (view === 'on' ? ' on' : ''),
+      toNew: set({ view: 'new' }), toQr: set({ view: 'qr' }), toOn: set({ view: 'on' }),
+      isNew: view === 'new', isQr: view === 'qr', isOn: view === 'on',
+      zaloCls: view === 'on' ? (st === 'listen' ? 'ok' : 'warn') : 'm',
+      zaloText: view === 'on' ? stText : view === 'qr' ? 'đang chờ quét' : 'chưa kết nối',
+      understood, toggleUnderstood: set({ understood: !understood }),
+      qrBtn: 'b1', qrOff: !understood, showQr: set({ view: 'qr' }),
+      countdown: 'Hết hạn sau 1:24',
+      stCls: st === 'listen' ? 'ok' : 'warn', stText,
+      reBtnCls: st === 'needqr' ? 'b1' : 'b2',
+      sListen: 'seg' + (st === 'listen' ? ' on' : ''), sWeb: 'seg' + (st === 'web' ? ' on' : ''), sQr: 'seg' + (st === 'needqr' ? ' on' : ''),
+      toListen: set({ st: 'listen' }), toWeb: set({ st: 'web' }), toNeedQr: set({ st: 'needqr' }),
+      segOwner: 'seg' + (other ? '' : ' on'), segOther: 'seg' + (other ? ' on' : ''),
+      toOwner: set({ other: false }), toOther: set({ other: true }),
+      code: other ? 'P7QH-3XKA' : '4KX7-29QM',
+      g1: g[0], g2: g[1], g3: g[2],
+      g1Cls: 'tg' + (g[0] ? ' on' : ''), g2Cls: 'tg' + (g[1] ? ' on' : ''), g3Cls: 'tg' + (g[2] ? ' on' : ''),
+      toggleG1: tg(0), toggleG2: tg(1), toggleG3: tg(2),
+    };
+  }
+}
+</script>
+</body>
+</html>

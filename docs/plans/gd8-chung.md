@@ -76,4 +76,6 @@ Mỗi lần `node scripts/aris.mjs restart` thì mã đăng nhập đổi, phả
 - 8.1 phần A (kho skill chung, nhập skill, gán bot): xong, commit `7e83832` (máy chủ) và `6e2981e` (giao diện). Còn thiếu: kiểm tra bản mới tự động hằng tuần.
 - 8.6 đã đẩy lên github.com/tauhb/aris-agent (private).
 - 8.2 (`/goal` chờ, gộp skill trùng): xong 27/10, nghiệm thu ở `docs/ke-hoach-trien-khai.md`.
-- 8.3, 8.4, 8.5: chưa bắt đầu.
+- 8.3 (điều khiển màn hình): tạm hoãn, cần máy Mac của người dùng.
+- 8.4 (Zalo cá nhân), cập nhật 27/10: đã cài `zca-js@2.2.0` (người dùng đồng ý), bộ nối, API, kho, Thống kê và test xong, đặc tả ở `docs/specs/aris-zalo.md`. **Đang dừng ở Điểm dừng 2**: chờ người dùng duyệt bản vẽ `design/canvas/KenhZalo.dc.html` rồi mới viết giao diện. Phần thử thật (quét QR, nhắn tin thật) cần tài khoản Zalo của người dùng, chưa làm.
+- 8.5: chưa bắt đầu.

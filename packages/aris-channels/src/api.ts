@@ -13,12 +13,20 @@
  *   POST { op: 'disconnect-lark', bot } | { op: 'revoke-lark', openId }
  *   POST { op: 'lark-group', chatId, allowed?, who?, prompt? } | { op: 'lark-group-remove', chatId }
  *   (mã ghép đôi Lark: op 'code' với channel 'lark')
+ *   Zalo cá nhân (zca-js, không chính thức; dữ liệu đăng nhập chỉ vào kho khoá, không bao giờ trả ra):
+ *   POST { op: 'zalo-login-start', bot } → { qrPng (base64), expiresAt }; quét xong kênh tự bắt đầu nghe
+ *   POST { op: 'zalo-login-status', bot } → trạng thái lần đăng nhập QR gần nhất (chờ quét, đã quét, đã đăng nhập, hết hạn…)
+ *   POST { op: 'zalo-logout', bot } | { op: 'revoke-zalo', zaloId }
+ *   POST { op: 'zalo-group', groupId, allowed?, who?, prompt? } | { op: 'zalo-group-remove', groupId }
+ *   (mã ghép đôi Zalo: op 'code' với channel 'zalo')
  */
 import { CHANNEL_KINDS, type ChannelKind } from './domain.js'
 import type { ChannelHub } from './hub.js'
 import type { LarkChannel } from './lark/channel.js'
 import type { LarkCliInfo } from './lark/cli.js'
 import type { ChannelStore } from './store.js'
+import { ZALO_LIMITS } from './zalo/access.js'
+import type { ZaloChannel } from './zalo/channel.js'
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -58,10 +66,50 @@ export function larkSnapshot(store: ChannelStore, lark: LarkChannel | undefined,
   }
 }
 
+/** Phần Zalo của ảnh chụp trạng thái cho trang Kênh. */
+export function zaloSnapshot(store: ChannelStore, zalo: ZaloChannel | undefined, bot = 'aris') {
+  return {
+    accounts:
+      zalo?.status() ??
+      store.zaloAccounts().map((a) => ({
+        bot: a.bot,
+        id: a.botOpenId ?? '',
+        name: a.name,
+        avatar: a.avatar ?? '',
+        state: a.error ? 'needs-qr' : 'connecting',
+        error: a.error ?? null,
+        running: false,
+        leftToday: ZALO_LIMITS.perDay,
+      })),
+    /** Lần đăng nhập QR gần nhất của bot (có ảnh QR khi đang chờ quét). */
+    login: zalo?.loginStatus(bot) ?? null,
+    people: store.zaloPeople().map((p) => ({
+      zaloId: p.openId ?? '',
+      name: p.name,
+      role: p.role,
+      pairedAt: p.pairedAt,
+    })),
+    groups: store.zaloGroups().map((g) => ({
+      groupId: g.chatRef ?? '',
+      title: g.title,
+      allowed: g.allowed,
+      who: g.who,
+      ...(g.prompt ? { prompt: g.prompt } : {}),
+    })),
+    /** Giới hạn tần suất gửi tin: chỉ hiện, không sửa. */
+    limits: ZALO_LIMITS,
+  }
+}
+
 export function snapshot(
   store: ChannelStore,
   hub: ChannelHub,
-  extra: { lark?: LarkChannel | undefined; larkCli?: LarkCliInfo | null } = {},
+  extra: {
+    lark?: LarkChannel | undefined
+    larkCli?: LarkCliInfo | null
+    zalo?: ZaloChannel | undefined
+    bot?: string
+  } = {},
 ) {
   return {
     bots: store.bots().map((b) => ({
@@ -79,6 +127,7 @@ export function snapshot(
     codes: store.activeCodes(),
     settings: { busy: store.settings().busy, guestMode: store.settings().guestMode },
     lark: larkSnapshot(store, extra.lark, extra.larkCli ?? null),
+    zalo: zaloSnapshot(store, extra.zalo, extra.bot),
   }
 }
 
@@ -93,8 +142,12 @@ export async function handleApi(
   /** Kênh Lark (không có thì các thao tác Lark báo lỗi) và hàm dò `lark-cli`. */
   lark?: LarkChannel,
   probeLarkCli?: () => Promise<LarkCliInfo | null>,
+  /** Kênh Zalo cá nhân (không có thì các thao tác Zalo báo lỗi). */
+  zalo?: ZaloChannel,
 ): Promise<Response> {
-  const snap = async () => snapshot(store, hub, { lark, larkCli: (await probeLarkCli?.()) ?? null })
+  let current = 'aris'
+  const snap = async () =>
+    snapshot(store, hub, { lark, larkCli: (await probeLarkCli?.()) ?? null, zalo, bot: current })
   if (request.method === 'GET' || request.method === 'HEAD') return json(await snap())
   let body: Record<string, unknown>
   try {
@@ -103,6 +156,7 @@ export async function handleApi(
     return json({ error: 'JSON không hợp lệ' }, 400)
   }
   const bot = typeof body.bot === 'string' && BOT_RE.test(body.bot) ? body.bot : 'aris'
+  current = bot
   try {
     switch (body.op) {
       case 'connect': {
@@ -182,6 +236,37 @@ export async function handleApi(
       case 'lark-group-remove':
         if (typeof body.chatId !== 'string' || !body.chatId) return json({ error: 'thiếu chatId' }, 400)
         await store.removeLarkGroup(body.chatId)
+        break
+      case 'zalo-login-start': {
+        if (!zalo) return json({ error: 'kênh Zalo chưa bật' }, 400)
+        if (canHaveChannel && !canHaveChannel(bot))
+          return json({ error: 'bot này không có trong đội, hoặc là bot ngoài (không có kênh riêng)' }, 400)
+        const qr = await zalo.loginStart(bot)
+        return json({ ...(await snap()), qr })
+      }
+      case 'zalo-login-status':
+        // Chỉ đọc: giao diện hỏi lại vài giây một lần trong lúc chờ quét.
+        break
+      case 'zalo-logout':
+        if (!zalo) return json({ error: 'kênh Zalo chưa bật' }, 400)
+        await zalo.logout(bot)
+        break
+      case 'revoke-zalo':
+        if (typeof body.zaloId !== 'string' || !body.zaloId) return json({ error: 'thiếu zaloId' }, 400)
+        await store.revokeZalo(body.zaloId)
+        break
+      case 'zalo-group': {
+        if (typeof body.groupId !== 'string' || !body.groupId) return json({ error: 'thiếu groupId' }, 400)
+        await store.upsertZaloGroup(body.groupId, {
+          ...(typeof body.allowed === 'boolean' ? { allowed: body.allowed } : {}),
+          ...(body.who === 'allowed' || body.who === 'everyone' ? { who: body.who } : {}),
+          ...(typeof body.prompt === 'string' ? { prompt: body.prompt.slice(0, 2000) } : {}),
+        })
+        break
+      }
+      case 'zalo-group-remove':
+        if (typeof body.groupId !== 'string' || !body.groupId) return json({ error: 'thiếu groupId' }, 400)
+        await store.removeZaloGroup(body.groupId)
         break
       default:
         return json({ error: 'thao tác không hợp lệ' }, 400)

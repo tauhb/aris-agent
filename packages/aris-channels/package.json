@@ -38,6 +38,7 @@
     "@aris/shell": "workspace:*",
     "@aris/ui-kit": "workspace:*",
     "@larksuiteoapi/node-sdk": "1.75.0",
+    "zca-js": "2.2.0",
     "zod": "4.4.3"
   },
   "devDependencies": {

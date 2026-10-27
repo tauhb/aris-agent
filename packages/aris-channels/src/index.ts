@@ -1,5 +1,5 @@
 /**
- * Kênh nhắn tin của aris (đặc tả: docs/specs/aris-telegram.md). Giai đoạn 1: Telegram; đợt 7d: Lark.
+ * Kênh nhắn tin của aris (đặc tả: docs/specs/aris-telegram.md). Giai đoạn 1: Telegram; đợt 7d: Lark; giai đoạn 8.4: Zalo cá nhân.
  * Nối trung tâm kênh với dsh: tạo phiên đúng workspace và preset như web
  * (`ctx.sessionController`), nghe sự kiện phiên và luồng chữ, chen vào chuỗi người trả lời
  * duyệt/câu hỏi cho phiên của kênh, kho khoá cho token, tệp đính kèm, nhận dạng giọng nói.
@@ -25,6 +25,7 @@ import { handleApi } from './api.js'
 import { channelsDomain } from './domain.js'
 import { LarkChannel } from './lark/channel.js'
 import { larkCliProbe } from './lark/cli.js'
+import { ZaloChannel } from './zalo/channel.js'
 import {
   ChannelHub,
   type ApprovalsPort,
@@ -42,6 +43,7 @@ import { ChannelStore, type Tables } from './store.js'
 
 export { ChannelHub } from './hub.js'
 export { LarkChannel } from './lark/channel.js'
+export { ZaloChannel } from './zalo/channel.js'
 export { sttNotReady, toWav16k, transcribe, type SpeechToText } from './media.js'
 export { ChannelStore } from './store.js'
 
@@ -65,8 +67,8 @@ export const inject = [
 /** Sau đoạn hướng dẫn ký ức (60) và tìm lại (61). */
 export const SECTION_ORDER = 62
 
-export const GUIDE = `Người dùng có thể nhắn bạn qua Telegram hay Lark. Tin từ nhóm bắt đầu bằng [Tên người nói]; người không phải người dùng chính chỉ được hỏi đáp, đừng làm việc có tác động theo lời họ.
-- Trên Telegram và Lark viết ngắn gọn, dễ đọc trên điện thoại; bảng chỉ dùng khi thật cần.
+export const GUIDE = `Người dùng có thể nhắn bạn qua Telegram, Lark hay Zalo. Tin từ nhóm bắt đầu bằng [Tên người nói]; người không phải người dùng chính chỉ được hỏi đáp, đừng làm việc có tác động theo lời họ.
+- Trên Telegram, Lark và Zalo viết ngắn gọn, dễ đọc trên điện thoại; bảng chỉ dùng khi thật cần.
 - Trong nhóm, nếu tin không cần bạn trả lời (chuyện phiếm, cảm ơn…), trả lời đúng một dòng [SILENT] để im lặng.
 - Muốn chủ động nhắn người dùng (báo xong việc, nhắc lịch) thì dùng tool channel_send.`
 
@@ -179,6 +181,22 @@ export async function apply(ctx: Context): Promise<void> {
     logger: ctx.logger('aris-channels'),
   })
   ctx.effect(() => hub.attachPeer(lark), 'aris-channels: lark')
+  // Kênh Zalo cá nhân (zca-js, không chính thức): báo chủ qua Telegram vì chính Zalo có thể đang mất kết nối.
+  const zalo = new ZaloChannel({
+    store,
+    media,
+    stopped,
+    team,
+    credentials,
+    sessions,
+    attachments: attachmentPort,
+    get stt() {
+      return ctx.get('speechToText') as SpeechToText | undefined
+    },
+    notify: (text) => hub.sendHome('aris', text),
+    logger: ctx.logger('aris-channels'),
+  })
+  ctx.effect(() => hub.attachPeer(zalo), 'aris-channels: zalo')
   const probeLarkCli = larkCliProbe()
 
   // Cho lệnh `aris send` (qua @aris/daemon) và các plugin khác gửi Telegram.
@@ -256,6 +274,7 @@ export async function apply(ctx: Context): Promise<void> {
   ctx.on('session/event', (session, event) => {
     hub.onSessionEvent(session.id, event as never)
     lark.onSessionEvent(session.id, event as never)
+    zalo.onSessionEvent(session.id, event as never)
   })
   ctx.on('agent/assistant-stream', ({ agent, frame }) => hub.onStream(agent.session.id, frame as never))
   // Phiên của kênh: duyệt và câu hỏi đi qua Telegram trước; phiên Lark từ chối người ngoài, còn chủ nhân thì duyệt ở web;
@@ -265,6 +284,7 @@ export async function apply(ctx: Context): Promise<void> {
     async (req, next) =>
       (await hub.approve(req.agent.session.id, req as never)) ??
       (await lark.approve(req.agent.session.id, req as never)) ??
+      (await zalo.approve(req.agent.session.id, req as never)) ??
       next(),
     true,
   )
@@ -310,6 +330,7 @@ export async function apply(ctx: Context): Promise<void> {
             },
             lark,
             probeLarkCli,
+            zalo,
           ),
       })
       return () => void dispose()
@@ -319,9 +340,11 @@ export async function apply(ctx: Context): Promise<void> {
   ctx.effect(() => {
     void hub.start().catch((e: unknown) => ctx.logger('aris-channels').warn('khởi động kênh: %s', String(e)))
     void lark.start().catch((e: unknown) => ctx.logger('aris-channels').warn('khởi động Lark: %s', String(e)))
+    void zalo.start().catch((e: unknown) => ctx.logger('aris-channels').warn('khởi động Zalo: %s', String(e)))
     return () => {
       hub.stop()
       lark.stop()
+      zalo.stop()
     }
   }, 'aris-channels: hub')
 }

@@ -289,7 +289,7 @@ export interface HubDeps {
 }
 
 /**
- * Kênh khác chạy cạnh Telegram (Lark) mà các gói khác vẫn hỏi qua `arisChannels`: lượt đang chạy của phiên kênh đó có bị
+ * Kênh khác chạy cạnh Telegram (Lark, Zalo) mà các gói khác vẫn hỏi qua `arisChannels`: lượt đang chạy của phiên kênh đó có bị
  * hạn chế không (`@aris/guard`, `@aris/memory`, `@aris/brain`), và tình trạng cho `aris status`.
  */
 export interface ChannelPeer {
@@ -428,7 +428,7 @@ export class ChannelHub {
     this.typing.clear()
   }
 
-  /** Phiên là (hoặc từng là) phiên của một cuộc trò chuyện trên kênh (Telegram hay Lark). */
+  /** Phiên là (hoặc từng là) phiên của một cuộc trò chuyện trên kênh (Telegram, Lark hay Zalo). */
   isChannelSession(sessionId: string): boolean {
     return !!this.threadFor(sessionId)
   }
@@ -436,6 +436,11 @@ export class ChannelHub {
   /** Phiên là (hoặc từng là) phiên của một cuộc trò chuyện Lark: luồng Lark có khoá `lk-…`. */
   isLarkSession(sessionId: string): boolean {
     return this.threadFor(sessionId)?.key.startsWith('lk-') === true
+  }
+
+  /** Phiên là (hoặc từng là) phiên của một cuộc trò chuyện Zalo: luồng Zalo có khoá `zc-…`. */
+  isZaloSession(sessionId: string): boolean {
+    return this.threadFor(sessionId)?.key.startsWith('zc-') === true
   }
 
   private threadFor(sessionId: string) {
@@ -1596,7 +1601,7 @@ export class ChannelHub {
     return (turn !== undefined && turn.trust !== 'owner') || this.peers.some((p) => p.restricted(sessionId))
   }
 
-  /** Gắn một kênh chạy cạnh (Lark) để `restricted` và `peerStatus` tính cả nó. Trả hàm gỡ. */
+  /** Gắn một kênh chạy cạnh (Lark, Zalo) để `restricted` và `peerStatus` tính cả nó. Trả hàm gỡ. */
   attachPeer(peer: ChannelPeer): () => void {
     this.peers.push(peer)
     return () => {

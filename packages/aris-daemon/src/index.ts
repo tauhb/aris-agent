@@ -99,6 +99,7 @@ export function apply(ctx: Context): void {
         web: webUrl() ?? null,
         telegram: channels?.status?.() ?? null,
         lark: channels?.peerStatus?.().lark ?? null,
+        zalo: channels?.peerStatus?.().zalo ?? null,
       }
     },
     loginUrl() {

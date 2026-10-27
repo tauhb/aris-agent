@@ -7,9 +7,9 @@ import { z } from 'zod'
 
 /**
  * Kênh của một bản ghi dùng chung bảng với Telegram. Bản ghi cũ chưa có trường này là Telegram, nên mọi mã
- * Telegram hiện có đọc bản ghi như trước; bản ghi Lark phải bị lọc ra ở những chỗ chỉ dành cho Telegram.
+ * Telegram hiện có đọc bản ghi như trước; bản ghi Lark và Zalo phải bị lọc ra ở những chỗ chỉ dành cho Telegram.
  */
-export const recordChannel = z.enum(['telegram', 'lark'])
+export const recordChannel = z.enum(['telegram', 'lark', 'zalo'])
 export type RecordChannel = z.infer<typeof recordChannel>
 
 export const botRecord = z.object({
@@ -36,6 +36,8 @@ export const botRecord = z.object({
   domain: z.enum(['lark', 'feishu']).optional(),
   /** Lark: `open_id` của chính bot, để nhận ra lúc người ta @ nó trong nhóm. */
   botOpenId: z.string().optional(),
+  /** Zalo: tài khoản Zalo của bot này (khoá bản ghi `zalo-<bot>`; `tokenRef` trỏ dữ liệu đăng nhập trong kho khoá, `botOpenId` là mã Zalo của tài khoản). */
+  avatar: z.string().optional(),
 })
 export type BotRecord = z.infer<typeof botRecord>
 
@@ -139,6 +141,8 @@ export const outboxRecord = z.object({
   toOpenId: z.boolean().optional(),
   /** Lark: mã tin (`om_…`) để trả lời vào. */
   replyRef: z.string().optional(),
+  /** Zalo: `chatRef` là mã nhóm Zalo (không phải mã người). */
+  isGroup: z.boolean().optional(),
 })
 export type OutboxRecord = z.infer<typeof outboxRecord>
 

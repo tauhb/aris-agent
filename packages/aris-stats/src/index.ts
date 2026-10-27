@@ -158,6 +158,7 @@ export async function apply(ctx: Context): Promise<void> {
     parent: !!parent,
     channel: has('arisChannels', 'isChannelSession', sid),
     lark: has('arisChannels', 'isLarkSession', sid),
+    zalo: has('arisChannels', 'isZaloSession', sid),
   })
   const botName = (sid: string | undefined) => bots()?.botOf(sid).name ?? ''
   /** Tên bot giao việc: bot của phiên cha, hay bot của phiên Commander đã giao việc lớn này. */

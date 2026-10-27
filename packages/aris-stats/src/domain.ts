@@ -6,7 +6,7 @@ export const KINDS = ['chat', 'giao', 'routine', 'hoc'] as const
 /** Loại việc, khớp bốn màu của biểu đồ: chat, việc được giao, routine, vòng học và kiểm thử. */
 export type Kind = (typeof KINDS)[number]
 
-export const SOURCES = ['web', 'telegram', 'lark', 'lich', 'commander', 'app', 'nen', 'giao'] as const
+export const SOURCES = ['web', 'telegram', 'lark', 'zalo', 'lich', 'commander', 'app', 'nen', 'giao'] as const
 /** Nơi việc bắt nguồn (cột Nguồn của nhật ký). */
 export type Source = (typeof SOURCES)[number]
 
