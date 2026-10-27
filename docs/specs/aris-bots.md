@@ -142,7 +142,7 @@ Bốn mẫu cũ (GitHub, Lark, Notion trên máy, Trình duyệt) là các mục
 
 **Giao diện**: Cài đặt › Kết nối › "+ Kết nối" mở hộp `mcp-catalog`: ô tìm, tab nhóm, thẻ có logo chữ, pill "Chính thức" / "Chưa kiểm" / "Có ghi". Bấm thẻ: ô khoá (`type=password`), địa chỉ gọi về, phạm vi, mức hỏi, rồi "Đăng nhập <hãng>" (mở cửa sổ ngay khi bấm để không bị chặn, đọc lại trạng thái 3 giây một lần) hay "Kiểm tra". Thẻ mẫu cũ mở hộp `mcp-add` có điền sẵn mẫu. Danh sách kết nối của đội hiện "cần đăng nhập lại" kèm nút Đăng nhập. Hồ sơ bot hiện các kết nối bot dùng được như ở 8.1.
 
-**Chưa làm**: Connector API cho dịch vụ không có MCP (mục 4 của plan, Điểm dừng 3); tải gói `npx` lần đầu chưa có bước hỏi riêng cho mục mới.
+**Chưa làm**: Connector API cho dịch vụ không có MCP (mục 4 của plan; người dùng chọn để sau ở Điểm dừng 3); tải gói `npx` lần đầu chưa có bước hỏi riêng cho mục mới.
 
 ## Hồ sơ bot · Quyền & kênh, cột phải (đợt 2)
 
