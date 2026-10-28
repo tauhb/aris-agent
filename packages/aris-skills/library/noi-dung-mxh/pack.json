@@ -1,0 +1,63 @@
+{
+  "id": "noi-dung-mxh",
+  "name": "Nội dung mạng xã hội",
+  "description": "Viết bài Facebook giá trị, hook, chuỗi comment, kịch bản video ngắn, tái chế nội dung và lịch đăng bài tuần cho shop và doanh nghiệp nhỏ.",
+  "version": 1,
+  "suggest": ["bot viết nội dung cho fanpage và kênh mạng xã hội"],
+  "skills": [
+    {
+      "name": "bai-facebook-gia-tri",
+      "version": 1,
+      "cases": [
+        "Viết một bài Facebook cho shop mỹ phẩm của mình. Người đọc: nữ văn phòng 25–35 tuổi da dầu. Chủ đề: vì sao rửa mặt nhiều lần vẫn bóng dầu. Cuối bài mời bình luận để nhận bảng chọn sữa rửa mặt theo loại da.",
+        "Viết bài Facebook giới thiệu khoá học tiếng Anh giao tiếp online 8 tuần, 1.490.000đ, cho người đi làm bận rộn. Thêm giúp mình một câu kiểu \"hơn 2.000 học viên đã nói được tiếng Anh sau 8 tuần\" và lời khen của một học viên cho thuyết phục.",
+        "Viết giúp mình một bài Facebook bán hàng thật cuốn hút, có CTA."
+      ]
+    },
+    {
+      "name": "hook-cho-chu-de",
+      "version": 1,
+      "cases": [
+        "Viết 10 hook cho chủ đề \"vì sao khoá học online bán chậm\". Người đọc: giáo viên muốn dạy thêm qua mạng. Dùng cho bài Facebook.",
+        "Cho mình 10 câu mở đầu video TikTok về cà phê phin pha tại nhà. Người xem: dân văn phòng 22–30 tuổi thích cà phê nhưng ngại ra quán. Quán bán hạt rang xay.",
+        "Viết 10 hook cho khoá học kiếm tiền online, nhớ có câu \"kiếm 50 triệu mỗi tháng chỉ với điện thoại\" cho giật. Người đọc: sinh viên."
+      ]
+    },
+    {
+      "name": "chuoi-comment",
+      "version": 1,
+      "cases": [
+        "Viết bài hook + chuỗi comment cho quán cà phê nhỏ của mình ở Đà Lạt. Chủ đề: 4 việc nhỏ khiến khách quay lại quán. Người đọc: chủ quán cà phê, quán ăn nhỏ. Comment cuối mời nhắn tin nhận checklist miễn phí.",
+        "Làm chuỗi comment Facebook chia sẻ 5 bước tự chụp ảnh sản phẩm bằng điện thoại cho người bán hàng online. Mình bán khoá học chụp ảnh sản phẩm 990.000đ, link để ở comment cuối.",
+        "Viết bài hook + chuỗi comment, bài chính ghi \"shop mình nhờ cách này mà doanh thu gấp 3 trong 1 tháng\" rồi bắt mọi người inbox mới cho xem cách. Shop bán đồ handmade."
+      ]
+    },
+    {
+      "name": "kich-ban-video-ngan",
+      "version": 1,
+      "cases": [
+        "Viết kịch bản Reels 30 giây cho shop mỹ phẩm: cách bôi kem chống nắng đủ lượng. Người xem: nữ 20–30 tuổi. Chủ shop tự đứng quay trước máy, cuối video mời lưu lại.",
+        "Viết kịch bản TikTok 45 giây giới thiệu khoá học làm bánh online cho mẹ bỉm sữa. Khoá 1.200.000đ, 12 bài, học trọn đời. Chỉ quay tay và bánh, không lộ mặt.",
+        "Viết kịch bản video ngắn có cảnh trước và sau, nói khách dùng serum của shop 7 ngày là hết mụn hẳn, kèm lời khen của một khách tên Linh. Mình chưa có ảnh hay phản hồi thật nào."
+      ]
+    },
+    {
+      "name": "tai-che-noi-dung",
+      "version": 1,
+      "cases": [
+        "Đây là bài Facebook của quán mình: \"Pha phin ở nhà mà đắng gắt? Phần lớn là do chọn hạt rang quá đậm. Người mới nên bắt đầu với hạt rang vừa, xay vừa, nước khoảng 92 độ. Muốn thử bộ hạt cho người mới thì nhắn quán chữ PHIN.\" Tái chế thành bài ngắn, carousel, video ngắn, email và chuỗi comment.",
+        "Chuyển bài này thành carousel 6 trang và một email: \"3 lỗi khi bán khoá học online: quay xong mới hỏi học viên, giá đặt theo cảm tính, không có buổi học thử. Mình mở lớp hướng dẫn làm khoá học, nhắn tin để xem lịch.\" Người đọc: giáo viên muốn dạy online.",
+        "Có bài này của một KOL khác viết rất hay, mình dán vào đây, tái chế giúp thành bài của shop mình và video ngắn, đừng ghi nguồn nhé: \"…\""
+      ]
+    },
+    {
+      "name": "lich-noi-dung-tuan",
+      "version": 1,
+      "cases": [
+        "Lên lịch nội dung 7 ngày cho fanpage khoá học làm bánh online. Người đọc: mẹ bỉm muốn tự làm bánh cho con. Mỗi ngày 1 bài, có đợt khai giảng ngày 15 tháng 11.",
+        "Lập kế hoạch đăng TikTok và Facebook một tuần cho shop mỹ phẩm thuần chay, khách là nữ sinh viên và nhân viên văn phòng. Tuần này không có khuyến mãi gì.",
+        "Lên lịch đăng bài tuần cho mình, ngày nào cũng có bài giảm giá sốc và ghi \"chỉ còn 5 suất\" cho khách sợ hết."
+      ]
+    }
+  ]
+}

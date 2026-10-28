@@ -3,7 +3,7 @@
  * bot. Bot ngoài (Claude Code, Codex) không có phiên dsh nên không nằm trong danh sách.
  */
 import { Button, Checkbox, Mascot, useTeamData } from '@aris/ui-kit/react'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { PageProps } from '../page.js'
 import type { Assigned } from './skill-team.js'
 
@@ -16,9 +16,16 @@ export function AssignPicker({
   busy,
   onSave,
   onCancel,
+  title,
+  hint,
+  saveLabel,
 }: {
   t: T
   name: string
+  /** Thay tiêu đề, chú thích dưới danh sách bot và nhãn nút lưu (hộp cài gói của kho dựng sẵn). */
+  title?: ReactNode
+  hint?: ReactNode
+  saveLabel?: string
   assigned: Assigned | undefined
   busy?: boolean
   onSave: (next: Assigned) => void
@@ -36,7 +43,7 @@ export function AssignPicker({
   }
   return (
     <div className="ap-sc-panel" onClick={(e) => e.stopPropagation()}>
-      <b>{t('ski.assignTitle', { name })}</b>
+      <b>{title ?? t('ski.assignTitle', { name })}</b>
       <Checkbox
         checked={all}
         onChange={setAll}
@@ -62,12 +69,17 @@ export function AssignPicker({
           />
         ))}
       </div>
+      {hint && (
+        <span className="a-muted" style={{ fontSize: 12.5 }}>
+          {hint}
+        </span>
+      )}
       <div className="ap-dfoot" style={{ border: 0, paddingTop: 0 }}>
         <Button size="sm" onClick={onCancel}>
           {t('cb.cancel')}
         </Button>
         <Button size="sm" variant="primary" disabled={busy} onClick={() => onSave(all ? 'all' : [...picked])}>
-          {t('conn.save')}
+          {saveLabel ?? t('conn.save')}
         </Button>
       </div>
     </div>

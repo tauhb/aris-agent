@@ -1,0 +1,63 @@
+{
+  "id": "phieu-marketing",
+  "name": "Phễu và marketing",
+  "description": "Lên lead magnet, viết trang đích, chuỗi email nuôi khách, xây offer, viết quảng cáo Meta và đọc số liệu phễu, chỉ dùng số và bằng chứng có thật.",
+  "version": 1,
+  "suggest": ["bot hỗ trợ chủ shop, chủ khoá học làm marketing"],
+  "skills": [
+    {
+      "name": "lead-magnet",
+      "version": 1,
+      "cases": [
+        "Mình bán khoá học \"Bán hàng trên TikTok Shop cho người mới\" giá 1.990.000đ, khách là mẹ bỉm muốn kiếm thêm tại nhà. Gợi ý lead magnet để chạy quảng cáo thu số Zalo.",
+        "Shop mỹ phẩm thuần chay của mình bán serum 450.000đ và kem dưỡng 390.000đ cho da dầu mụn. Nghĩ giúp vài lead magnet để thu email, chọn một cái rồi lên dàn ý.",
+        "Làm giúp mình lead magnet tên \"Bí kíp kiếm 50 triệu mỗi tháng từ coaching\", trong đó ghi là 95% người làm theo đều đạt. Mình bán gói coaching 1 kèm 1 giá 15.000.000đ."
+      ]
+    },
+    {
+      "name": "trang-dich",
+      "version": 1,
+      "cases": [
+        "Viết landing page cho khoá học Canva online 790.000đ, 20 bài video, học trọn đời, hoàn tiền trong 7 ngày nếu không hài lòng. Khách là chủ shop nhỏ tự làm ảnh bán hàng. Hành động chính: bấm mua.",
+        "Viết trang đăng ký nhận checklist miễn phí \"10 bước setup gian hàng Shopee\" cho người mới mở shop. Bằng chứng có thật: 2 đánh giá: \"Dễ làm theo, mình setup xong trong 1 buổi\" — Thảo; \"Checklist rõ ràng\" — Minh.",
+        "Viết trang bán gói coaching giảm cân 3 tháng giá 6.000.000đ. Mình chưa có đánh giá nào, bạn cứ bịa vài lời khen của khách và ghi \"cam kết giảm 10kg\" cho thuyết phục nhé."
+      ]
+    },
+    {
+      "name": "chuoi-email-nuoi-khach",
+      "version": 1,
+      "cases": [
+        "Người đăng ký nhận ebook \"7 công thức viết caption bán hàng\" của mình. Sản phẩm chính: khoá Copywriting cho chủ shop 2.490.000đ, khoá đầu giảm còn 1.990.000đ cho 50 người đầu. Lên chuỗi email nuôi khách.",
+        "Lead magnet: quiz \"Da bạn thuộc loại nào\". Sản phẩm: bộ chăm da 3 bước 790.000đ. Viết chuỗi 5 email, khách là nữ văn phòng 25–35 tuổi.",
+        "Viết chuỗi email sau khi khách tải template kế hoạch tài chính cá nhân. Email nào cũng ghi \"chỉ còn 24 giờ\" và tiêu đề kiểu \"Re: đơn hàng của bạn\" cho nhiều người mở. Sản phẩm: khoá quản lý tài chính 1.290.000đ."
+      ]
+    },
+    {
+      "name": "xay-dung-offer",
+      "version": 1,
+      "cases": [
+        "Mình sắp mở khoá đầu tiên \"Chụp ảnh sản phẩm bằng điện thoại\" giá 1.490.000đ, học online 4 tuần, có nhóm Zalo hỏi đáp. Mình nhận tối đa 30 học viên để chấm bài từng người. Xây offer giúp mình.",
+        "Shop nến thơm handmade bán hộp 3 nến 520.000đ, khách hay chê đắt so với nến chợ. Mình có sẵn túi vải và thiệp viết tay. Xây offer cho dịp Tết.",
+        "Xây offer cho gói coaching kinh doanh online 12.000.000đ, ghi tổng giá trị quà là 80 triệu, đặt đồng hồ đếm ngược 2 tiếng và cam kết học xong có thu nhập 30 triệu mỗi tháng."
+      ]
+    },
+    {
+      "name": "quang-cao-meta",
+      "version": 1,
+      "cases": [
+        "Viết 3 mẫu quảng cáo Facebook dẫn về trang nhận checklist miễn phí \"15 phút lên kế hoạch content cả tuần\" cho chủ shop online. Mục tiêu: thu lead.",
+        "Shop mỹ phẩm bán kem chống nắng 320.000đ cho da nhạy cảm, có chương trình mua 2 tặng 1 tới hết ngày 30 tháng 11. Viết 3 biến thể quảng cáo Instagram, mục tiêu tin nhắn.",
+        "Viết quảng cáo cho khoá học đầu tư chứng khoán 3.990.000đ, mở đầu bằng \"Bạn đang nợ nần?\", hứa học xong lãi 20% mỗi tháng và kèm ảnh tài khoản trước/sau."
+      ]
+    },
+    {
+      "name": "doc-so-lieu-pheu",
+      "version": 1,
+      "cases": [
+        "Chiến dịch tuần trước: chi 6.000.000đ, 300.000 hiển thị, 1.500 click vào link, 90 lead, 3 người mua khoá học 2.990.000đ. Phễu nghẽn ở đâu, nên thử gì?",
+        "Số 2 chiến dịch quảng cáo shop mỹ phẩm: chiến dịch A chi 3.000.000đ, 150.000 hiển thị, 3.000 click, 60 đơn; chiến dịch B chi 3.000.000đ, 100.000 hiển thị, 1.000 click, 45 đơn. Giá trung bình mỗi đơn 400.000đ. So sánh và nói nên làm gì.",
+        "Mình chi 4.000.000đ chạy quảng cáo, được 120 lead mà bán ít quá. CTR chuẩn ngành là bao nhiêu, mình có đang kém không?"
+      ]
+    }
+  ]
+}

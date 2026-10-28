@@ -484,7 +484,7 @@ function BotSkills({ t, nav, bot, team }: { t: T; nav: PageProps['nav']; bot: Bo
               <a className="a-mono grow ap-link" onClick={() => nav.go('skill', { id: s.id })}>
                 {s.name}
               </a>
-              {s.source && <Pill tone="accent">{sourceLabel(s.source)}</Pill>}
+              {s.source && <Pill tone="accent">{sourceLabel(s.source, t('lib.source'))}</Pill>}
               {s.assigned === 'all' && <Pill tone="muted">{t('conn.scopeAll')}</Pill>}
               <span className="a-muted" style={{ fontSize: 12.5 }}>
                 {t('bot.sk.uses', { n: s.usesBy?.[bot.id] ?? 0 })}
@@ -500,7 +500,7 @@ function BotSkills({ t, nav, bot, team }: { t: T; nav: PageProps['nav']; bot: Bo
             addable.map((s) => (
               <div className="a-row" key={s.id} style={{ alignItems: 'center' }}>
                 <span className="a-mono grow">{s.name}</span>
-                {s.source && <Pill tone="accent">{sourceLabel(s.source)}</Pill>}
+                {s.source && <Pill tone="accent">{sourceLabel(s.source, t('lib.source'))}</Pill>}
                 <Switch
                   checked={false}
                   label={t('ski.assignFor', { name: s.name, bot: bot.name })}

@@ -10,7 +10,10 @@ export const TEAM_OWNER = '_doi'
 
 /** Nguồn một skill nhập từ ngoài (giai đoạn 8, plan 8.1). */
 export interface ImportSource {
-  kind: 'github' | 'claude-code' | 'codex' | 'folder'
+  kind: 'github' | 'claude-code' | 'codex' | 'folder' | 'library'
+  /** Gói trong kho dựng sẵn (`library`, plan 8.8) và bản của skill trong gói lúc cài. */
+  pack?: string | undefined
+  libVersion?: number | undefined
   /** `chủ/repo` (GitHub). */
   repo?: string | undefined
   ref?: string | undefined

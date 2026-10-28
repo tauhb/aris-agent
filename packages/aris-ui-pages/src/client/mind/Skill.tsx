@@ -427,7 +427,7 @@ export function Skill({ t, nav, params }: PageProps) {
                 <b>{t('ski.source')}</b>
                 <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <span>
-                    <Pill tone="accent">{sourceLabel(src)}</Pill>{' '}
+                    <Pill tone="accent">{sourceLabel(src, t('lib.source'))}</Pill>{' '}
                     {src.sha &&
                       (link ? (
                         <a className="ap-link a-mono" href={link} target="_blank" rel="noreferrer">
