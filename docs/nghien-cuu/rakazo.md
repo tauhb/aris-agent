@@ -47,6 +47,8 @@ Ký hiệu cột cuối: **Giữ** (aris đang hơn, giữ nguyên), **Học** (
 
 ## 4. Lộ trình đề xuất (GĐ9 · aris thành Rakazo cho công ty)
 
+Điểm mạnh lấy thêm từ OpenMausBot cho từng mục: xem [openmausbot.md](openmausbot.md) mục 3.
+
 Thứ tự theo giá trị và theo phụ thuộc. 9.3 và 9.4 phải xong cùng nhau trước khi cho nhân sự vào: server mở ra ngoài thì phải có tài khoản và quyền.
 
 1. **9.1 Chạy bền.** Đọc dsh xem đã có gì: dừng chờ người, lưu và khôi phục lượt, chen lời giữa lượt, cache. Làm phần thiếu bằng gói của aris, không sửa dsh nếu tránh được. Thêm mô hình "lượt bị nhiễm".

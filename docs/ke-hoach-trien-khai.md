@@ -412,7 +412,7 @@ Code, Codex làm bot ngoài: cùng một lõi, một bộ dữ liệu.
 
 ## Giai đoạn 9 · aris thành Rakazo cho công ty (đề xuất 31/10, chưa bắt đầu)
 
-Người dùng muốn giữ aris và lõi dsh, đắp những gì Rakazo (bản mã nguồn mở của Grok Bot) có, giữ chỗ aris hơn, và **cho công ty dùng**: dựng trên server của công ty, chạy 24/7, cấp tài khoản cho nhân sự tạo bot và làm việc. Nghiên cứu và lộ trình: [nghien-cuu/rakazo.md](nghien-cuu/rakazo.md).
+Người dùng muốn giữ aris và lõi dsh, đắp những gì Rakazo (bản mã nguồn mở của Grok Bot) có, giữ chỗ aris hơn, và **cho công ty dùng**: dựng trên server của công ty, chạy 24/7, cấp tài khoản cho nhân sự tạo bot và làm việc. Nghiên cứu và lộ trình: [nghien-cuu/rakazo.md](nghien-cuu/rakazo.md). Đọc thêm OpenMausBot (31/10) để lấy điểm mạnh Rakazo còn mỏng: [nghien-cuu/openmausbot.md](nghien-cuu/openmausbot.md).
 
 Lộ trình đề xuất: 9.1 Chạy bền → 9.2 Máy riêng cho bot (Docker) → 9.3 Công ty nhiều nhân sự → 9.4 Lên server → 9.5 Đội tự vận hành → 9.6 Giọng nói → 9.7 App điện thoại → 9.8 Connector lớn. Chốt 31/10: một công ty trên một server, nhiều nhân sự. Còn chờ người dùng: thứ tự, cách lấy mã từ Rakazo (Apache-2.0), máy của bot chạy trên Mac hay VPS trước.
 

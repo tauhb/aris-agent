@@ -59,3 +59,7 @@ Kết quả: chỉ rút ra danh mục năng lực (mục 15 của `tinh-nang-ari
 ## 31/10/2026 — Nghiên cứu Rakazo (người dùng yêu cầu)
 
 Clone nông `github.com/elie222/rakazo` (Apache-2.0, commit `beaed0c`) vào thư mục tạm, bốn sub agent chỉ đọc mã và tài liệu, không chạy gì trong repo. Kết quả ở `docs/nghien-cuu/rakazo.md` và bốn báo cáo trong `docs/nghien-cuu/rakazo/`. Chưa chép mã nào vào aris. Rakazo không phải Hermes nên không thuộc luật cấm chép, nhưng giấy phép Apache-2.0 đòi giữ ghi công nếu chép; cách lấy mã chờ người dùng quyết (mục 5 của tài liệu nghiên cứu).
+
+## 31/10/2026 — Nghiên cứu OpenMausBot (người dùng yêu cầu)
+
+Clone nông `github.com/milind-soni/OpenMausBot` (commit `80012e6`) vào thư mục tạm, ba sub agent chỉ đọc. Giấy phép Apache-2.0 trừ `enterprise/` (chỉ được đọc, chạy thật cần khoá, cấm phân phối); tên và linh vật là nhãn hiệu. Repo có tệp chép từ Hermes (soát skill chạy nền): theo luật của aris, không lấy các tệp đó. Kết quả ở `docs/nghien-cuu/openmausbot.md`. Chưa chép mã nào vào aris.
