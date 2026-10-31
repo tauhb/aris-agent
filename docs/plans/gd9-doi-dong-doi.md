@@ -30,6 +30,8 @@
    - **Quản đội**: tạo bot mới, sửa lời dặn và model của bot (luôn hỏi người duyệt), xem danh sách đội.
    - Bot khác vẫn nhờ nhau trực tiếp được; Aris không phải trạm trung chuyển bắt buộc.
    - Aris đứng đầu danh bạ bot.
+   - **Aris tạo bot mới cho người dùng** (như Chief của Rakazo): lần đầu dùng, Aris chào, hỏi người dùng cần giúp việc gì (thẻ câu hỏi A/B/C), rồi đề xuất và tạo các bot hợp việc (tên, vai trò, lời dặn, linh vật), người dùng duyệt từng bot. Về sau chỉ cần nhắn "tạo cho anh một bot chăm sóc khách Zalo" là Aris tạo, gắn skill từ kho dựng sẵn và hỏi gắn kênh.
+   - **Mỗi không gian làm việc có một Aris riêng sẵn sàng nhận việc** (xem mục 9).
 7. **Chặn vòng lặp và chi phí** (học cả hai bên, và làm hơn cả hai):
    - tối đa 6 bước nhờ nối tiếp (như Rakazo); độ sâu cây tối đa 4, mỗi chuỗi tối đa 24 lần nhờ (như OpenMausBot);
    - **trần tiền cho cả chuỗi** (cả hai sản phẩm đều chưa có): mặc định 1 USD, quá trần thì dừng và hỏi người;
@@ -131,3 +133,10 @@ Sau 9.6 mới tới: máy riêng cho bot, công ty nhiều nhân sự, lên serv
 ## 7. Kiểm tra
 
 Theo `gd8-chung.md`. Thêm: test luật chặn vòng lặp và trần chuỗi; test không gửi trùng khi thử lại; test kết quả việc quay về sau khởi động lại; thử thật một buổi với Telegram và Zalo của người dùng trước Điểm dừng 4.
+
+## 9. Chief của Rakazo thực chất là gì (đọc mã 31/10)
+
+- **Chief là một bot bình thường**, không có gì đặc biệt trong kiến trúc: tạo lúc onboarding với tên "Chief", lời dặn và mô tả để trống, khoá `spawnKey = "onboarding:first"` (duy nhất theo từng không gian) (`apps/web/src/pages/Onboarding.tsx`). Bot nào cũng có `fleetManagement` mặc định bật (`packages/db/prisma/schema.prisma`), nên Chief tạo được bot khác chỉ vì công tắc này và lời mời của onboarding (chào, rồi hỏi người dùng muốn được giúp việc gì).
+- **Không gian mới không tự có Chief** trong mã hiện tại: máy chủ tạo không gian với 0 bot (`apps/api/src/routes/spaces.ts`), và giao diện chỉ đưa vào onboarding (tạo Chief) khi **cả tài khoản chưa có nội dung ở đâu cả** (`apps/web/src/pages/shell/use-space-roster.ts`: "Only the very first bot everywhere needs onboarding"). Điều người dùng thấy (không gian mới có sẵn Chief) có thể là bản dịch vụ trên app.rakazo.com, bản cũ hơn, hay lần đầu dùng; **chưa xác nhận được bằng chạy thật** (xem dưới).
+- **aris làm khác và rõ ràng hơn**: mỗi không gian (sau này: mỗi công ty hay phòng ban có không gian riêng) tạo sẵn một bot Aris với vai `coordinator` và `canManageTeam`, có lời dặn đầy đủ bằng tiếng Việt; không phụ thuộc giao diện có chạy onboarding hay không. Bot do người dùng tự tạo thì `canManageTeam` mặc định **tắt** (Rakazo để bật cho mọi bot).
+- **Chưa chạy thử Rakazo**: dựng từ mã nguồn cần cài gói và chạy mã của Rakazo, bị chặn trong phiên này; dùng ảnh Docker đóng gói thì mạng của phiên chặn máy chủ `pkg-containers.githubusercontent.com`.
