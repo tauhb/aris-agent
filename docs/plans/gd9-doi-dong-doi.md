@@ -12,7 +12,8 @@
 ## 1. Người dùng đã chốt
 
 - Giao diện kiểu **OpenMausBot**, kiến trúc kiểu **Rakazo**, lõi giữ **dsh**.
-- **Bot là đồng đội ngang hàng của nhau**; không còn "Aris chỉ huy" như một kiến trúc riêng. Chấp nhận bỏ tính năng cũ không hợp.
+- **Bot là đồng đội ngang hàng của nhau**; chấp nhận bỏ tính năng cũ không hợp.
+- **Sửa 31/10**: **Aris vẫn là bot điều phối (Commander)**: hiểu rõ bot nào hợp việc nào, người dùng nhắn Aris thì Aris chia việc cho đúng đồng đội. Aris làm việc này **bằng chính cơ chế đồng đội ngang hàng** (`ask_teammate`, `hand_off_to_teammate`, bản ghi `tasks`), không còn đường giao việc qua đội dsh.
 - Mỗi người một luồng với mỗi bot, gộp mọi kênh của người đó; việc dài và routine chạy ở phiên phụ, đăng thẻ kết quả; bỏ "Việc mới" và `/new`.
 - Sau này: một công ty trên một server, nhiều nhân sự.
 
@@ -23,7 +24,12 @@
 3. **Việc** = công việc chạy ở phiên phụ, có bản ghi bền của aris (ai nhờ, ai làm, điều kiện xong, trần tiền, trạng thái), xong thì **tự gửi kết quả về** nơi nhờ.
 4. **Bot nhờ bot** (`ask_teammate`): tạo một việc cho đồng đội; luồng người nhờ hiện chip "Đã nhờ Mai…", luồng của Mai hiện thẻ "Lâm nhờ: …"; kết quả tự quay về và **gấp gọn dưới chip**. Không đi qua đội dsh.
 5. **Chuyển hẳn cho đồng đội** (`hand_off_to_teammate`): người dùng hỏi nhầm bot thì bot chuyển, bot kia trả lời thẳng người dùng; cấm chuyển ngược lại cho người vừa chuyển.
-6. **Không có chỉ huy về mặt kiến trúc.** Bot **Aris vẫn còn** (linh vật, tên quen thuộc) nhưng là bot bình thường được bật công tắc **"Quản đội"** (`canManageTeam`): tạo bot mới, sửa lời dặn và model của bot do nó tạo (luôn hỏi người duyệt), xem danh sách đội. Công tắc tắt mặc định ở bot khác, chỉ dùng trong lượt do người bắt đầu.
+6. **Aris là bot điều phối, đứng trên cơ chế ngang hàng.** Aris có vai `coordinator` và công tắc **"Quản đội"** (`canManageTeam`):
+   - **Hiểu đội**: đọc mô tả công khai của từng bot, kèm **sổ năng lực** do aris tự ghi từ kết quả các việc (bot × loại việc: số việc, tỉ lệ xong, thời gian, chi phí, người dùng khen hay sửa). Đây là tính năng "Commander tự học" hôm nay, chuyển sang ghi trên bản ghi `tasks`.
+   - **Điều phối**: người dùng nhắn Aris → Aris tự làm nếu việc nhỏ; **chuyển hẳn** cho một bot nếu rõ người hợp; **nhờ một hay nhiều bot** rồi tổng hợp nếu việc cần nhiều người (thay `giao_viec` song song).
+   - **Quản đội**: tạo bot mới, sửa lời dặn và model của bot (luôn hỏi người duyệt), xem danh sách đội.
+   - Bot khác vẫn nhờ nhau trực tiếp được; Aris không phải trạm trung chuyển bắt buộc.
+   - Aris đứng đầu danh bạ bot.
 7. **Chặn vòng lặp và chi phí** (học cả hai bên, và làm hơn cả hai):
    - tối đa 6 bước nhờ nối tiếp (như Rakazo); độ sâu cây tối đa 4, mỗi chuỗi tối đa 24 lần nhờ (như OpenMausBot);
    - **trần tiền cho cả chuỗi** (cả hai sản phẩm đều chưa có): mặc định 1 USD, quá trần thì dừng và hỏi người;
@@ -35,11 +41,11 @@
 
 | # | Tính năng hôm nay (chỉ có nghĩa khi có chỉ huy) | Đề xuất |
 |---|---|---|
-| 1 | Giao song song 4 bot trong một lời gọi, gom kết quả (`giao_viec`) | **Đổi**: bot nhờ nhiều đồng đội, kết quả tự quay về; bot nhờ tự tổng hợp |
+| 1 | Giao song song 4 bot trong một lời gọi, gom kết quả (`giao_viec`) | **Đổi**: Aris (hay bot bất kỳ) nhờ nhiều đồng đội cùng lúc, kết quả tự quay về, Aris tổng hợp |
 | 2 | Giao việc cho cả phòng ban (`giao_phong`, trưởng nhóm lập đội lồng) | **Bỏ** |
 | 3 | Phòng nhóm dự án (`moi_noi`, Aris tóm tắt) | **Đổi về sau** thành **Nhóm bot** (luồng loại phòng, ai được nhắc tên thì trả lời), làm ở giai đoạn sau |
 | 4 | Driver Kanban tự đẩy thẻ, Aris tự chia thẻ | **Bỏ driver**; giữ **Bảng việc** cho người và bot nhận việc, làm sau |
-| 5 | Commander tự học "bot nào hợp việc nào" | **Bỏ** (mô tả công khai của bot thay thế) |
+| 5 | Commander tự học "bot nào hợp việc nào" | **Giữ** (người dùng chốt 31/10): chuyển thành sổ năng lực ghi từ bản ghi `tasks`, Aris dùng để chọn người |
 | 6 | Trợ lý ẩn danh của Commander | **Đổi**: mọi bot dùng bot phụ của dsh (`run_subagent`, một tầng) |
 | 7 | Duyệt mỗi lần giao việc cho bot X | **Đổi**: công tắc theo bot "nhận việc từ đồng đội phải hỏi người" |
 | 8 | Trần tiền mỗi việc (tính theo phiên đội dsh) | **Đổi**: trần trên bản ghi việc + trần cả chuỗi |
@@ -47,7 +53,7 @@
 | 10 | Cuộc trò chuyện "chính" với Aris; `/ask`, `aris send` luôn qua Aris; routine gửi kết quả qua Telegram của Aris | **Đổi**: mỗi bot có luồng riêng; `/ask` và `aris send` nhận tham số `--bot` (mặc định Aris); kết quả gửi về kênh người dùng dùng gần nhất |
 | 11 | Chỉ Aris được tạo và bật routine | **Đổi**: mỗi bot tạo routine của chính nó (người duyệt) |
 | 12 | Bot thường không được lập đội | **Thay** bằng luật chặn vòng lặp và trần chuỗi ở mục 2.7 |
-| 13 | Trang Commander, Cài đặt › Commander, cây đội có Commander ở giữa, nút "Aris" ở đầu thanh bên | **Bỏ**; thanh bên là danh bạ bot phẳng (bản vẽ kiểu OpenMausBot) |
+| 13 | Trang Commander, Cài đặt › Commander, cây đội có Commander ở giữa, nút "Aris" ở đầu thanh bên | **Đổi**: thanh bên là danh bạ bot (bản vẽ kiểu OpenMausBot), Aris ghim đầu danh bạ; trang Commander gọn lại thành phần "Điều phối" trong hồ sơ của Aris (sổ năng lực, giới hạn chuỗi, ai được nhờ) |
 | 14 | Ký ức "hồ sơ chủ" lưu dưới bot Aris, mọi bot đọc | **Đổi**: ký ức của từng người, chuyển dữ liệu cũ sang người "chủ"; đọc cả hai nơi trong lúc chuyển |
 | 15 | Aris được miễn một số quyền (`policyOf`, quyền ghi) | **Đổi**: miễn trừ theo công tắc `canManageTeam`, không theo tên bot |
 | 16 | Bộ não: vai chỉ huy được đọc toàn bộ | **Đổi**: quyền đọc theo bot và người, có cấu hình |
@@ -90,7 +96,8 @@ Hai công tắc: `threads.v1` theo từng bot (luồng), `teammates.v1` cho cả
 **9.3 Đồng đội ngang hàng đầy đủ.**
 - `ask_teammate` thêm chế độ `work` và `notify`; `hand_off_to_teammate`; mở cho lượt của nhân sự và kênh khi ký ức theo người đã có.
 - Giới hạn chuỗi: **một** giới hạn độ sâu (≤ 3), trần số việc mỗi gốc, trần tiền mỗi gốc tính từ sự kiện chi phí; kết quả quay về được miễn giới hạn; bot được nhờ thiếu thông tin thì trả `needs_input` chứ không hỏi ngược lên chuỗi.
-- Bỏ đường giao việc qua đội dsh; tắt `giao_viec`, `giao_phong`, `moi_noi`, Driver sau công tắc. Bot Aris thành bot thường + `canManageTeam` (tạo bot, sửa bot con luôn duyệt). Bot ngoài tách thành gói riêng.
+- Bỏ đường giao việc qua đội dsh; tắt `giao_viec`, `giao_phong`, `moi_noi`, Driver sau công tắc. Bot ngoài tách thành gói riêng.
+- **Aris điều phối trên cơ chế mới**: vai `coordinator` + `canManageTeam`; sổ năng lực (bot × loại việc) ghi từ `tasks`; Aris tự làm, chuyển hẳn, hay nhờ nhiều bot rồi tổng hợp; giữ giới hạn số bot bận cùng lúc (hôm nay 6) ở cấp đội.
 
 **9.4 Việc và sang trang.**
 - Routine, `/goal`, ACP, `/ask`, việc của dự án là việc gắn luồng, đăng thẻ kết quả; bỏ nút routine gắn lại cuộc chat Telegram; tự đẩy thành việc khi lượt quá khoảng 2 phút (`start_task`).
@@ -116,7 +123,7 @@ Sau 9.6 mới tới: máy riêng cho bot, công ty nhiều nhân sự, lên serv
 
 ## 6. Điểm dừng
 
-1. Người dùng xác nhận bảng "bỏ hay đổi" (mục 3), cách giữ bot Aris là bot thường có `canManageTeam`, và lát cắt đầu 9.1a.
+1. ~~Người dùng xác nhận bảng "bỏ hay đổi", vai của Aris, lát cắt 9.1a~~: **đã chốt 31/10**: Aris giữ vai điều phối (biết bot nào hợp việc nào), phần còn lại theo đề xuất.
 2. Kết quả spike.
 3. Duyệt bản vẽ các màn còn thiếu của 9.5.
 4. Trước khi gỡ đường cũ.
