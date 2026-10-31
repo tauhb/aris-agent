@@ -5,6 +5,8 @@ Người dùng chốt: **giao diện theo OpenMausBot, kiến trúc theo Rakazo,
 1. [aris hiện tại](kien-truc/1-aris-hien-tai.md): bot, phiên, từng lối vào tạo phiên thế nào.
 2. [dsh cho bot liên tục](kien-truc/2-dsh-cho-bot-lien-tuc.md): dsh có gì, thiếu gì, bù bằng plugin ra sao.
 3. [Mô hình bot của Rakazo](kien-truc/3-rakazo-mo-hinh-bot.md): phần nào tạo cảm giác "đồng đội", phần nào độc lập với vòng gọi model.
+> **Sửa lần 2 (31/10)**: người dùng bỏ mô hình chỉ huy, mọi bot là đồng đội ngang hàng. Plan hiện hành: [plans/gd9-doi-dong-doi.md](../plans/gd9-doi-dong-doi.md).
+
 4. [Bản soát độc lập](kien-truc/4-opus-soat.md) (31/10): kết luận **duyệt có sửa**; mục 9 dưới đây là bản sửa và **thay cho các chỗ mâu thuẫn ở mục 1–6**.
 
 ## 1. Chẩn đoán: vì sao aris "theo phiên"
