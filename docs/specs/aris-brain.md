@@ -316,7 +316,7 @@ có thể "tốt nghiệp" thành trang wiki qua bước Nạp.
   từ 2 chữ): ô nhập của dsh chỉ nhận ký tự gợi ý `/` và `@` nên không làm được "gõ `[[`" như bản vẽ.
 - Cấp quyền theo lượt: tin của người dùng có `[[...]]` thì bot được đọc các trang đó (`brain_search`,
   `brain_read`) tới hết lượt, kể cả ngoài quyền. Tin của người không phải người dùng chính trên Telegram (có dòng
-  "Người này không phải người dùng chính") không cấp. Lời Aris giao việc cho bot (`giao_viec`) có `[[...]]` cũng
+  "Người này không phải người dùng chính") không cấp. Lời Aris giao việc cho bot (`assign_task`) có `[[...]]` cũng
   cấp, vì Aris đọc được mọi trang và người dùng tin Aris.
 - Tầng 1: mọi bot có lời dặn ngắn và bản đồ thu gọn (15 trang wiki bot đọc được, mới sửa trước, bỏ trang tóm tắt);
   Aris giữ lời dặn riêng cộng bản đồ; phiên của Thủ thư không có (đã có lời nhờ riêng).

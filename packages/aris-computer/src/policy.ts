@@ -7,30 +7,73 @@ import { dangerousCombo, type Combo } from './keys.js'
 import type { El } from './types.js'
 
 /** Loại thao tác, để chọn trong chế độ "trong phạm vi". */
-export const ACTIONS = ['xem', 'bam', 'go', 'phim', 'mo'] as const
+export const ACTIONS = ['view', 'click', 'type', 'key', 'open'] as const
 export type Action = (typeof ACTIONS)[number]
 
 export const ACTION_TEXT: Record<Action, string> = {
-  xem: 'xem màn hình, tìm phần tử',
-  bam: 'bấm, kéo, cuộn',
-  go: 'gõ chữ',
-  phim: 'bấm phím tắt',
-  mo: 'mở ứng dụng',
+  view: 'xem màn hình, tìm phần tử',
+  click: 'bấm, kéo, cuộn',
+  type: 'gõ chữ',
+  key: 'bấm phím tắt',
+  open: 'mở ứng dụng',
 }
 
 /** Công cụ của bot → loại thao tác. */
 export const TOOL_ACTION: Record<string, Action> = {
-  man_hinh_xem: 'xem',
-  man_hinh_tim: 'xem',
-  man_hinh_bam: 'bam',
-  man_hinh_keo: 'bam',
-  man_hinh_cuon: 'bam',
-  man_hinh_go: 'go',
-  man_hinh_phim: 'phim',
-  ung_dung_mo: 'mo',
+  screen_view: 'view',
+  screen_find: 'view',
+  screen_click: 'click',
+  screen_drag: 'click',
+  screen_scroll: 'click',
+  screen_type: 'type',
+  screen_key: 'key',
+  open_app: 'open',
 }
 
-export const COMPUTER_TOOLS: ReadonlySet<string> = new Set(Object.keys(TOOL_ACTION))
+/**
+ * Tên cũ (tiếng Việt) của các công cụ, còn trong log phiên cũ: đọc lịch sử thì quy về tên mới. Không đăng ký lại tên cũ.
+ */
+export const LEGACY_TOOL_NAMES: Readonly<Record<string, string>> = {
+  man_hinh_xem: 'screen_view',
+  man_hinh_tim: 'screen_find',
+  man_hinh_bam: 'screen_click',
+  man_hinh_keo: 'screen_drag',
+  man_hinh_cuon: 'screen_scroll',
+  man_hinh_go: 'screen_type',
+  man_hinh_phim: 'screen_key',
+  ung_dung_mo: 'open_app',
+}
+
+/** Tên công cụ hiện hành: tên cũ quy về tên mới, tên khác giữ nguyên. */
+export const toolName = (tool: string): string => LEGACY_TOOL_NAMES[tool] ?? tool
+
+/** Loại thao tác của một công cụ (nhận cả tên cũ). */
+export const actionOf = (tool: string): Action | undefined => TOOL_ACTION[toolName(tool)]
+
+/** Công cụ điều khiển máy, cả tên cũ. */
+export const COMPUTER_TOOLS: ReadonlySet<string> = new Set([
+  ...Object.keys(TOOL_ACTION),
+  ...Object.keys(LEGACY_TOOL_NAMES),
+])
+
+/** Giá trị cũ (tiếng Việt) của loại thao tác, còn trong cài đặt đã lưu: đọc thì quy về giá trị mới. */
+export const LEGACY_ACTIONS: Readonly<Record<string, Action>> = {
+  xem: 'view',
+  bam: 'click',
+  go: 'type',
+  phim: 'key',
+  mo: 'open',
+}
+
+/** Danh sách loại thao tác từ dữ liệu đã lưu hay gửi lên: quy giá trị cũ về mới, bỏ giá trị lạ và trùng. */
+export function cleanActions(input: readonly unknown[]): Action[] {
+  const want = new Set(
+    input
+      .map((a) => (typeof a === 'string' ? (LEGACY_ACTIONS[a] ?? a) : a))
+      .filter((a) => typeof a === 'string'),
+  )
+  return ACTIONS.filter((a) => want.has(a))
+}
 
 /** Cài đặt điều khiển máy của một bot. Mặc định tắt. */
 export interface ComputerSettings {
@@ -47,7 +90,7 @@ export const DEFAULT_SETTINGS: ComputerSettings = {
   on: false,
   mode: 'ask',
   apps: [],
-  actions: ['xem', 'bam', 'go'],
+  actions: ['view', 'click', 'type'],
 }
 
 /** Cài đặt từ dữ liệu gửi lên; trường thiếu hay sai giữ giá trị cũ. */
@@ -63,9 +106,7 @@ export function cleanSettings(input: unknown, prev: ComputerSettings = DEFAULT_S
         ),
       ].slice(0, 50)
     : prev.apps
-  const actions = Array.isArray(r.actions)
-    ? ACTIONS.filter((a) => (r.actions as unknown[]).includes(a))
-    : prev.actions
+  const actions = Array.isArray(r.actions) ? cleanActions(r.actions as unknown[]) : cleanActions(prev.actions)
   return {
     on: typeof r.on === 'boolean' ? r.on : prev.on,
     mode: r.mode === 'ask' || r.mode === 'bounded' ? r.mode : prev.mode,
@@ -150,9 +191,9 @@ export function hardVerdict(c: ActContext): Verdict {
   if (c.locked) return deny('thao tác khi màn hình đang khoá')
   const app = c.app ? blockedApp(c.app) : undefined
   if (app) return deny(`thao tác trong ${app}`)
-  if ((c.action === 'go' || c.action === 'bam') && secureField(c.element))
+  if ((c.action === 'type' || c.action === 'click') && secureField(c.element))
     return deny('gõ hay bấm vào ô mật khẩu')
-  if (c.action === 'bam' && trashTarget(c.dropOn)) return deny('kéo thả vào Thùng rác')
+  if (c.action === 'click' && trashTarget(c.dropOn)) return deny('kéo thả vào Thùng rác')
   if (c.combo) {
     const d = dangerousCombo(c.combo)
     if (d) return deny(`phím tắt ${d}`)

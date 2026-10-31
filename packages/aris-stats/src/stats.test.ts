@@ -26,13 +26,13 @@ const at = (day: number, h = 10, m = 0) => new Date(2026, 9, day, h, m).getTime(
 
 describe('phân loại loại việc và nguồn', () => {
   it('routine, vòng học, kiểm thử, ứng dụng khác, việc được giao, Telegram, web', () => {
-    expect(classify({ routine: true })).toEqual({ kind: 'routine', source: 'lich' })
-    expect(classify({ librarian: true })).toEqual({ kind: 'hoc', source: 'nen' })
-    expect(classify({ eval: true, via: 'dispatch' })).toEqual({ kind: 'hoc', source: 'nen' })
-    expect(classify({ guest: true, via: 'acp' })).toEqual({ kind: 'giao', source: 'app' })
-    expect(classify({ via: 'dispatch' })).toEqual({ kind: 'giao', source: 'commander' })
-    expect(classify({ via: 'team' })).toEqual({ kind: 'giao', source: 'giao' })
-    expect(classify({ parent: true, via: 'open' })).toEqual({ kind: 'giao', source: 'giao' })
+    expect(classify({ routine: true })).toEqual({ kind: 'routine', source: 'schedule' })
+    expect(classify({ librarian: true })).toEqual({ kind: 'learning', source: 'background' })
+    expect(classify({ eval: true, via: 'dispatch' })).toEqual({ kind: 'learning', source: 'background' })
+    expect(classify({ guest: true, via: 'acp' })).toEqual({ kind: 'delegated', source: 'app' })
+    expect(classify({ via: 'dispatch' })).toEqual({ kind: 'delegated', source: 'commander' })
+    expect(classify({ via: 'team' })).toEqual({ kind: 'delegated', source: 'bot' })
+    expect(classify({ parent: true, via: 'open' })).toEqual({ kind: 'delegated', source: 'bot' })
     expect(classify({ channel: true, via: 'open' })).toEqual({ kind: 'chat', source: 'telegram' })
     expect(classify({ channel: true, lark: true, via: 'open' })).toEqual({ kind: 'chat', source: 'lark' })
     expect(classify({ channel: true, zalo: true, via: 'open' })).toEqual({ kind: 'chat', source: 'zalo' })
@@ -41,21 +41,21 @@ describe('phân loại loại việc và nguồn', () => {
   })
 
   it('routine thắng Telegram; việc giao thắng Telegram (phiên con của cuộc trò chuyện kênh)', () => {
-    expect(classify({ routine: true, channel: true })).toEqual({ kind: 'routine', source: 'lich' })
-    expect(classify({ parent: true, channel: true })).toEqual({ kind: 'giao', source: 'giao' })
+    expect(classify({ routine: true, channel: true })).toEqual({ kind: 'routine', source: 'schedule' })
+    expect(classify({ parent: true, channel: true })).toEqual({ kind: 'delegated', source: 'bot' })
   })
 
   it('lần gọi ngoài phiên: vòng học hồ sơ, ký ức là học; còn lại là chat', () => {
-    expect(classifyNoSession(['reflect', 'bot:tin'])).toEqual({ kind: 'hoc', source: 'nen' })
-    expect(classifyNoSession(['profile', 'bot:aris'])).toEqual({ kind: 'hoc', source: 'nen' })
+    expect(classifyNoSession(['reflect', 'bot:tin'])).toEqual({ kind: 'learning', source: 'background' })
+    expect(classifyNoSession(['profile', 'bot:aris'])).toEqual({ kind: 'learning', source: 'background' })
     expect(classifyNoSession(['media-image'])).toEqual({ kind: 'chat', source: 'web' })
   })
 
   it('phân loại việc nền không tụt về chat khi tag đến chậm', () => {
-    const giao = { kind: 'giao', source: 'commander' } as const
+    const delegated = { kind: 'delegated', source: 'commander' } as const
     const chat = { kind: 'chat', source: 'web' } as const
-    expect(keepSpecific(giao, chat)).toEqual(giao)
-    expect(keepSpecific(chat, giao)).toEqual(giao)
+    expect(keepSpecific(delegated, chat)).toEqual(delegated)
+    expect(keepSpecific(chat, delegated)).toEqual(delegated)
     expect(keepSpecific(undefined, chat)).toEqual(chat)
   })
 })
@@ -127,7 +127,7 @@ describe('gộp theo ngày, cache, tự chủ, nhật ký', () => {
       day: '2026-10-26',
       session: 's2',
       bot: 'lam',
-      kind: 'giao',
+      kind: 'delegated',
       source: 'commander',
       by: 'Aris',
       usd: 0.11,
@@ -142,14 +142,14 @@ describe('gộp theo ngày, cache, tự chủ, nhật ký', () => {
     rec({
       day: '2026-10-25',
       session: 's2',
-      kind: 'giao',
+      kind: 'delegated',
       usd: 0.5,
       firstAt: at(25, 9),
       lastAt: at(25, 9, 30),
     }),
-    rec({ day: '2026-10-25', session: 's3', kind: 'routine', source: 'lich', usd: 0.03 }),
+    rec({ day: '2026-10-25', session: 's3', kind: 'routine', source: 'schedule', usd: 0.03 }),
     // Gom ngoài phiên: vào biểu đồ và cache, không vào nhật ký, không tính việc.
-    rec({ day: '2026-10-25', session: '', kind: 'hoc', source: 'nen', usd: 0.02, calls: 3 }),
+    rec({ day: '2026-10-25', session: '', kind: 'learning', source: 'background', usd: 0.02, calls: 3 }),
     rec({ day: '2026-10-10', session: 's9', usd: 99 }),
     // Chỉ có dấu đã hỏi, chưa có lần gọi: không tính vào tổng số việc.
     rec({ day: '2026-10-26', session: 's5', calls: 0, asked: true }),
@@ -158,9 +158,15 @@ describe('gộp theo ngày, cache, tự chủ, nhật ký', () => {
   it('mỗi ngày đủ bốn loại, ngày trống là 0, ngoài khoảng bị bỏ', () => {
     const o = overview(records, '7d', NOW)
     expect(o.days).toHaveLength(7)
-    expect(o.days.at(-1)).toMatchObject({ day: '2026-10-26', chat: 0.19, giao: 0.11, routine: 0, hoc: 0 })
-    expect(o.days.at(-2)).toMatchObject({ day: '2026-10-25', giao: 0.5, routine: 0.03, hoc: 0.02 })
-    expect(o.days[0]).toEqual({ day: '2026-10-20', chat: 0, giao: 0, routine: 0, hoc: 0 })
+    expect(o.days.at(-1)).toMatchObject({
+      day: '2026-10-26',
+      chat: 0.19,
+      delegated: 0.11,
+      routine: 0,
+      learning: 0,
+    })
+    expect(o.days.at(-2)).toMatchObject({ day: '2026-10-25', delegated: 0.5, routine: 0.03, learning: 0.02 })
+    expect(o.days[0]).toEqual({ day: '2026-10-20', chat: 0, delegated: 0, routine: 0, learning: 0 })
     expect(o.total).toBeCloseTo(0.19 + 0.11 + 0.5 + 0.03 + 0.02, 6)
     const today = overview(records, 'today', NOW)
     expect(today.days).toHaveLength(1)
@@ -361,7 +367,7 @@ const calls: CallRecord[] = [
     at: T0 + 1200,
     day: '2026-10-26',
     session: 's',
-    kind: 'giao',
+    kind: 'delegated',
     source: 'commander',
     provider: 'deepseek-official',
     model: 'deepseek-v4-flash',
@@ -376,7 +382,7 @@ const calls: CallRecord[] = [
     at: T0 + 3000,
     day: '2026-10-26',
     session: 's',
-    kind: 'giao',
+    kind: 'delegated',
     source: 'commander',
     provider: 'x',
     model: 'img',
@@ -390,7 +396,7 @@ const calls: CallRecord[] = [
     at: T0 + 22_000,
     day: '2026-10-26',
     session: 's',
-    kind: 'giao',
+    kind: 'delegated',
     source: 'commander',
     provider: 'deepseek-official',
     model: 'deepseek-v4-pro',
@@ -498,7 +504,7 @@ describe('dựng các bước phát lại', () => {
       {
         at: T0 + 1301,
         session: 's',
-        type: 'duyet',
+        type: 'approval',
         tool: 'web_fetch',
         callId: 'c2',
         what: 'https://hocvienb.vn/khoa-hoc',
@@ -507,7 +513,7 @@ describe('dựng các bước phát lại', () => {
       },
     ]
     const s = buildSteps(entries, calls, events, [])
-    expect(s.map((x) => x.type)).toEqual(['user', 'tool', 'duyet', 'tool', 'thinking', 'assistant'])
+    expect(s.map((x) => x.type)).toEqual(['user', 'tool', 'approval', 'tool', 'thinking', 'assistant'])
     expect(s[2]).toMatchObject({
       title: 'web_fetch https://hocvienb.vn/khoa-hoc',
       outLabel: 'decision',
@@ -516,7 +522,7 @@ describe('dựng các bước phát lại', () => {
     })
     // Không có bản ghi events: lấy thời gian chờ từ log.
     const only = buildSteps(entries, calls, [], [])
-    expect(only[2]).toMatchObject({ type: 'duyet', ms: 41_000, out: 'allowed-once' })
+    expect(only[2]).toMatchObject({ type: 'approval', ms: 41_000, out: 'allowed-once' })
   })
 
   it('bản ghi events không có trong log vẫn thành bước, đứng theo thời gian', () => {
@@ -524,7 +530,7 @@ describe('dựng các bước phát lại', () => {
       {
         at: T0 + 3000,
         session: 's',
-        type: 'duyet',
+        type: 'approval',
         tool: 'bash',
         what: 'ls',
         decision: 'rejected',
@@ -532,14 +538,14 @@ describe('dựng các bước phát lại', () => {
       },
     ]
     const s = buildSteps(log, calls, events, [])
-    expect(s.map((x) => x.type)).toEqual(['user', 'tool', 'tool', 'duyet', 'thinking', 'assistant'])
+    expect(s.map((x) => x.type)).toEqual(['user', 'tool', 'tool', 'approval', 'thinking', 'assistant'])
     expect(s[3]).toMatchObject({ title: 'bash ls', out: 'rejected' })
   })
 
   it('hàng rào chặn đánh dấu bước công cụ trùng tên, không có thì thêm bước riêng', () => {
     const blocked = [{ at: new Date(T0 + 1300).toISOString(), tool: 'web_fetch', what: 'mạng lạ' }]
     const s = buildSteps(log, calls, [], blocked)
-    expect(s[2]).toMatchObject({ type: 'chan', error: true, outLabel: 'rule' })
+    expect(s[2]).toMatchObject({ type: 'blocked', error: true, outLabel: 'rule' })
     expect(s[2]!.out).toMatch(/^mạng lạ/)
     const lone = buildSteps(
       log,
@@ -547,7 +553,7 @@ describe('dựng các bước phát lại', () => {
       [],
       [{ at: new Date(T0 + 3000).toISOString(), tool: 'bash', what: 'sudo' }],
     )
-    expect(lone.map((x) => x.type)).toEqual(['user', 'tool', 'tool', 'chan', 'thinking', 'assistant'])
+    expect(lone.map((x) => x.type)).toEqual(['user', 'tool', 'tool', 'blocked', 'thinking', 'assistant'])
     expect(lone[3]).toMatchObject({ tool: 'bash', body: 'sudo' })
   })
 
@@ -586,7 +592,7 @@ describe('dựng các bước phát lại', () => {
     ]
     const s = buildSteps(entries, [], [], [])
     expect(s[0]).toMatchObject({
-      type: 'hoi',
+      type: 'question',
       title: 'ask_user_question Chọn hướng nào?',
       ms: 9000,
       outLabel: 'answer',

@@ -10,7 +10,7 @@ type Owner = Omit<OwnerRecord, 'updatedAt'>
 
 /**
  * Cách xưng hô với người dùng. Không viết cứng "anh", "chị", "chủ nhân": đã biết thì theo hồ sơ;
- * chưa biết thì hỏi một lần rồi lưu bằng tool `xung_ho`.
+ * chưa biết thì hỏi một lần rồi lưu bằng tool `save_address_style`.
  */
 export function renderAddress(o: Owner): string[] {
   const known = [
@@ -21,7 +21,7 @@ export function renderAddress(o: Owner): string[] {
   const lines = known.length ? [`Người dùng: ${known.join(', ')}.`] : []
   if (!o.call || !o.self)
     lines.push(
-      'Chưa biết đủ cách xưng hô với người dùng. Ở câu trả lời đầu tiên của cuộc trò chuyện này, vẫn làm việc được nhờ, rồi hỏi ngắn một lần: người dùng tên gì, muốn được gọi thế nào, và muốn bạn xưng thế nào. Nhận được câu trả lời thì lưu ngay bằng tool xung_ho. Người dùng không muốn trả lời thì thôi, đừng hỏi lại. Trong lúc chưa biết, dùng cách gọi trung tính hợp với ngôn ngữ người dùng đang viết.',
+      'Chưa biết đủ cách xưng hô với người dùng. Ở câu trả lời đầu tiên của cuộc trò chuyện này, vẫn làm việc được nhờ, rồi hỏi ngắn một lần: người dùng tên gì, muốn được gọi thế nào, và muốn bạn xưng thế nào. Nhận được câu trả lời thì lưu ngay bằng tool save_address_style. Người dùng không muốn trả lời thì thôi, đừng hỏi lại. Trong lúc chưa biết, dùng cách gọi trung tính hợp với ngôn ngữ người dùng đang viết.',
     )
   return lines
 }

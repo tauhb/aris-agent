@@ -11,7 +11,7 @@ describe('cấu hình Commander', () => {
       helpers: true,
       approve: ['b-1'],
     })
-    expect(cleanSettings({ nested: 0, helpers: false, khac: 1 }, DEFAULT_SETTINGS)).toEqual({
+    expect(cleanSettings({ nested: 0, helpers: false, other: 1 }, DEFAULT_SETTINGS)).toEqual({
       ...DEFAULT_SETTINGS,
       nested: 0,
       helpers: false,

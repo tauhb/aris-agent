@@ -45,7 +45,7 @@ export function jobBrief(
     members.length
       ? `Thành viên phòng có thể giao: ${members.map((m) => `@${m.handle} (${m.name}, ${m.role || 'thành viên'})`).join('; ')}.`
       : 'Phòng chưa có thành viên nào khác: tự làm.',
-    'Cách làm: việc nhiều phần thì chia thẻ bằng tao_the, giao từng phần cho thành viên phòng bằng giao_viec (chỉ thành viên phòng), đợi bằng wait_agent, phần hợp với bạn thì tự làm. Xong hết thì viết câu trả lời cuối là báo cáo nộp Aris: đủ kết quả, ai làm phần nào, điều còn chưa chắc.',
+    'Cách làm: việc nhiều phần thì chia thẻ bằng create_cards, giao từng phần cho thành viên phòng bằng assign_task (chỉ thành viên phòng), đợi bằng wait_agent, phần hợp với bạn thì tự làm. Xong hết thì viết câu trả lời cuối là báo cáo nộp Aris: đủ kết quả, ai làm phần nào, điều còn chưa chắc.',
   ].join('\n')
 }
 

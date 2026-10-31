@@ -2,6 +2,7 @@
  * Bộ não trong khung chat (giai đoạn 5, đợt 3b; bản vẽ 5.7): nhãn trang trong tin của người dùng, dòng
  * công cụ "Tra bộ não" / "Đọc trang", nút "Từ Brain" ở ô nhập, nhóm "Trang bộ não" trong menu `@`.
  */
+import { argOf } from '@aris/ui-kit'
 import { IconButton } from '@aris/ui-kit/react'
 import { useEffect, useRef, useState, type ComponentType } from 'react'
 import {
@@ -146,17 +147,18 @@ export function BrainSearchCall(props: SubagentCall & { t: Translate }) {
 export function BrainReadCall(props: SubagentCall & { t: Translate }) {
   const { t } = props
   const pages = usePages()
-  const ten = String(argsOf(props).ten ?? '').replace(/^\[\[|\]\]$/g, '')
+  // Log cũ ghi tham số `ten`: đọc cả hai.
+  const name = String(argOf(argsOf(props), 'name', 'ten') ?? '').replace(/^\[\[|\]\]$/g, '')
   const text = resultText(props)
   const title = /^# (.+)$/m.exec(text)?.[1]
   const path = /^Đường dẫn: (\S+)/m.exec(text)?.[1]
-  const page = (path && pages.find((p) => p.path === path)) || findPage(pages, ten)
+  const page = (path && pages.find((p) => p.path === path)) || findPage(pages, name)
   return (
     <div className="aris aris-bcall">
       <div className="h">
         <PageIcon size={15} />
         <b>{t('brain.tool.read')}</b>
-        <PageChip page={page} text={title ?? page?.title ?? ten} />
+        <PageChip page={page} text={title ?? page?.title ?? name} />
       </div>
     </div>
   )

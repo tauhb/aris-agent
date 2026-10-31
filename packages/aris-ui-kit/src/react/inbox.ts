@@ -13,12 +13,12 @@ export interface InboxCount {
   /** Đề xuất skill. */
   skills: number
   /** Số phát hiện của soát bộ não chưa xử lý (cả loạt tính là một thẻ). */
-  soatOpen: number
+  auditOpen: number
 }
 
 /** Tổng số thẻ trong Hộp duyệt: ba loại đề xuất cộng một thẻ soát bộ não khi còn phát hiện. */
 export const inboxTotal = (c: InboxCount): number =>
-  c.actions + c.memories + c.skills + (c.soatOpen > 0 ? 1 : 0)
+  c.actions + c.memories + c.skills + (c.auditOpen > 0 ? 1 : 0)
 
 const url = (query: string) => {
   const u = new URL('api/aris/', document.baseURI)
@@ -43,17 +43,17 @@ export async function fetchInboxCount(prev: InboxCount): Promise<InboxCount> {
     get<{ approvals: unknown[] }>('commander?approvals=all'),
     get<{ pending: unknown[] }>('memory?pending=all'),
     get<{ pending: unknown[] }>('skills?pending=all'),
-    get<{ open: number }>('brain?soat=summary'),
+    get<{ open: number }>('brain?audit=summary'),
   ])
   return {
     actions: a?.approvals.length ?? prev.actions,
     memories: m?.pending.length ?? prev.memories,
     skills: s?.pending.length ?? prev.skills,
-    soatOpen: b?.open ?? prev.soatOpen,
+    auditOpen: b?.open ?? prev.auditOpen,
   }
 }
 
-const ZERO: InboxCount = { actions: 0, memories: 0, skills: 0, soatOpen: 0 }
+const ZERO: InboxCount = { actions: 0, memories: 0, skills: 0, auditOpen: 0 }
 
 /** Số việc chờ duyệt trong Hộp duyệt, đọc lại mỗi 5 giây. */
 export function useInboxCount(): number {

@@ -14,7 +14,7 @@ describe('điều khiển máy · duyệt trước khi chạy', () => {
       bot: 'Khoa',
       runtime: rt,
       sessionId: 'p1',
-      tool: 'man_hinh_xem',
+      tool: 'screen_view',
       args: {},
       viewed: new Set(),
     })
@@ -30,12 +30,12 @@ describe('điều khiển máy · duyệt trước khi chạy', () => {
       bot: 'Khoa',
       runtime: rt,
       sessionId: 'p1',
-      tool: 'man_hinh_xem',
-      args: { ung_dung: 'Notes' },
+      tool: 'screen_view',
+      args: { app: 'Notes' },
       viewed,
     })
     expect(first).toMatchObject({ kind: 'ask', reason: 'Khoa muốn xem màn hình: Chụp cửa sổ Notes' })
-    await rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Notes' })
+    await rt.run('p1', 'Khoa', 'screen_view', { app: 'Notes' })
     viewed.add('p1')
     expect(
       (
@@ -44,7 +44,7 @@ describe('điều khiển máy · duyệt trước khi chạy', () => {
           bot: 'Khoa',
           runtime: rt,
           sessionId: 'p1',
-          tool: 'man_hinh_xem',
+          tool: 'screen_view',
           args: {},
           viewed,
         })
@@ -55,8 +55,8 @@ describe('điều khiển máy · duyệt trước khi chạy', () => {
       bot: 'Khoa',
       runtime: rt,
       sessionId: 'p1',
-      tool: 'man_hinh_bam',
-      args: { phan_tu: 's1:1' },
+      tool: 'screen_click',
+      args: { element: 's1:1' },
       viewed,
     })
     expect(click).toMatchObject({
@@ -73,15 +73,15 @@ describe('điều khiển máy · duyệt trước khi chạy', () => {
       on: true,
       mode: 'bounded',
       apps: ['Terminal'],
-      actions: ['xem', 'bam', 'go', 'phim', 'mo'],
+      actions: ['view', 'click', 'type', 'key', 'open'],
     })
     const t = await decide({
       settings: bounded,
       bot: 'Khoa',
       runtime: rt,
       sessionId: 'p1',
-      tool: 'man_hinh_xem',
-      args: { ung_dung: 'Terminal' },
+      tool: 'screen_view',
+      args: { app: 'Terminal' },
       viewed: new Set(),
     })
     expect(t).toMatchObject({ kind: 'deny', what: 'thao tác trong Terminal' })
@@ -90,8 +90,8 @@ describe('điều khiển máy · duyệt trước khi chạy', () => {
       bot: 'Khoa',
       runtime: rt,
       sessionId: 'p1',
-      tool: 'man_hinh_bam',
-      args: { phan_tu: 'cu:1', ung_dung: 'Notes' },
+      tool: 'screen_click',
+      args: { element: 'cu:1', app: 'Notes' },
       viewed: new Set(),
     })
     expect(stale).toMatchObject({ kind: 'deny', what: 'stale' })
@@ -99,16 +99,21 @@ describe('điều khiển máy · duyệt trước khi chạy', () => {
 
   it('trong phạm vi: trong phạm vi thì tự làm (không hỏi), ngoài phạm vi thì từ chối', async () => {
     const { rt } = setup()
-    const s = cleanSettings({ on: true, mode: 'bounded', apps: ['Notes'], actions: ['xem', 'bam', 'mo'] })
+    const s = cleanSettings({
+      on: true,
+      mode: 'bounded',
+      apps: ['Notes'],
+      actions: ['view', 'click', 'open'],
+    })
     const base = { settings: s, bot: 'Khoa', runtime: rt, sessionId: 'p1', viewed: new Set<string>() }
-    expect((await decide({ ...base, tool: 'man_hinh_xem', args: { ung_dung: 'Notes' } })).kind).toBe('allow')
-    expect((await decide({ ...base, tool: 'ung_dung_mo', args: { ten: 'Notes' } })).kind).toBe('allow')
-    expect(await decide({ ...base, tool: 'ung_dung_mo', args: { ten: 'Safari' } })).toMatchObject({
+    expect((await decide({ ...base, tool: 'screen_view', args: { app: 'Notes' } })).kind).toBe('allow')
+    expect((await decide({ ...base, tool: 'open_app', args: { name: 'Notes' } })).kind).toBe('allow')
+    expect(await decide({ ...base, tool: 'open_app', args: { name: 'Safari' } })).toMatchObject({
       kind: 'deny',
       what: 'Safari ngoài phạm vi',
     })
     expect(
-      await decide({ ...base, tool: 'man_hinh_phim', args: { phim: 'cmd+n', ung_dung: 'Notes' } }),
+      await decide({ ...base, tool: 'screen_key', args: { keys: 'cmd+n', app: 'Notes' } }),
     ).toMatchObject({
       kind: 'deny',
       what: 'bấm phím tắt ngoài phạm vi',
@@ -119,20 +124,20 @@ describe('điều khiển máy · duyệt trước khi chạy', () => {
 describe('điều khiển máy · công cụ cho bot', () => {
   it('tám công cụ tên tiếng Việt; kết quả có ảnh thì kèm khối ảnh, không có thì chỉ chữ', async () => {
     const tools = makeTools(async (name) =>
-      name === 'man_hinh_xem'
+      name === 'screen_view'
         ? { text: 'ảnh', image: { attachmentId: 'a1', mediaType: 'image/png' } }
         : { text: 'xong' },
     )
     expect(tools.map((t) => t.name)).toEqual(TOOL_SPECS.map((s) => s.name))
     expect(tools.map((t) => t.name)).toEqual([
-      'man_hinh_xem',
-      'man_hinh_tim',
-      'man_hinh_bam',
-      'man_hinh_go',
-      'man_hinh_phim',
-      'man_hinh_cuon',
-      'man_hinh_keo',
-      'ung_dung_mo',
+      'screen_view',
+      'screen_find',
+      'screen_click',
+      'screen_type',
+      'screen_key',
+      'screen_scroll',
+      'screen_drag',
+      'open_app',
     ])
     const xem = tools[0]!
     const exec = { signal: new AbortController().signal } as never
@@ -143,6 +148,6 @@ describe('điều khiển máy · công cụ cho bot', () => {
       { type: 'text', text: 'ảnh' },
       { type: 'image', attachment: { attachmentId: 'a1', mediaType: 'image/png' } },
     ])
-    expect(await tools[2]!.execute({ phan_tu: 's1:1' }, exec)).toEqual({ text: 'xong' })
+    expect(await tools[2]!.execute({ element: 's1:1' }, exec)).toEqual({ text: 'xong' })
   })
 })

@@ -239,10 +239,10 @@ function TeamMcpCard({ t, nav, bot, team }: { t: T; nav: PageProps['nav']; bot: 
     )
   }
   const askOptions = (c: McpData): { id: string; name: string }[] => {
-    const chung = { id: 'team', name: t('conn.askTeam') }
+    const teamOption = { id: 'team', name: t('conn.askTeam') }
     // Chỉ liệt kê những mức chặt hơn mức của đội: bot không tự nới quyền.
     return [
-      chung,
+      teamOption,
       ...(['write', 'always'] as const)
         .filter((a) => a !== c.ask && stricterMcpAsk(c.ask, a) === a)
         .map((a) => ({ id: a, name: t(a === 'write' ? 'conn.askWriteStricter' : 'conn.askAlwaysStricter') })),

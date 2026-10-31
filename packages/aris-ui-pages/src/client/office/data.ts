@@ -1,5 +1,6 @@
 /** Dữ liệu sống của Văn phòng: gọi các API có sẵn của aris, đọc lại định kỳ, giữ bản tốt gần nhất khi một lần lỗi. */
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { currentToolName } from '@aris/ui-kit'
 import type { ConvStep, JobLike } from './chatModel.js'
 import type { FeedItem } from './model.js'
 
@@ -162,6 +163,9 @@ export function useBotSessions(bot: string, enabled: boolean): RecentSession[] |
   return data?.sessions ?? null
 }
 
+/** Log phiên cũ ghi tên công cụ cũ (tiếng Việt, ví dụ `giao_viec`): quy về tên mới để mọi chỗ so tên một lần. */
+const currentStep = (s: ConvStep): ConvStep => (s.tool ? { ...s, tool: currentToolName(s.tool) } : s)
+
 /** Hội thoại của một phiên (`/api/aris/stats?replay=<phiên>&text=full`). */
 export interface Conversation {
   session: string
@@ -182,22 +186,23 @@ export function useConversation(session: string | undefined, ms: number): Conver
     const conv = await getJson<Conversation>('api/aris/stats', { replay: session, text: 'full' })
     if (!conv) return null
     const steps = await Promise.all(
-      conv.steps.map(async (s) => {
+      conv.steps.map(currentStep).map(async (s) => {
         if (
           s.type !== 'tool' ||
-          !(s.tool === 'giao_viec' || s.tool === 'giao_phong') ||
+          !(s.tool === 'assign_task' || s.tool === 'assign_department') ||
           (s.bodyFull && s.outFull !== false)
         )
           return s
         const key = `${session}:${s.n}`
         const cached = full.current.get(key)
         if (cached) return cached
-        const whole = await getJson<ConvStep>('api/aris/stats', {
+        let whole = await getJson<ConvStep>('api/aris/stats', {
           replay: session,
           step: String(s.n),
           full: '1',
         })
         if (!whole) return s
+        whole = currentStep(whole)
         // Lần gọi còn chạy (chưa có kết quả) thì đọc lại ở lần sau.
         if (whole.out !== undefined) full.current.set(key, whole)
         return whole

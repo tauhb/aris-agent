@@ -48,11 +48,11 @@ Dữ liệu thật: tên và lời việc, lịch đọc được ("Thứ 2–6,
 - Gửi về Telegram **chỉ khi lệnh in ra gì đó** (để "chỉ báo khi số dư dưới 2 triệu" nằm trong chính lệnh). Đầu ra cắt 3.500 ký tự.
 - Bản nháp chỉ đặt chế độ script khi người dùng đưa nguyên lệnh; người dùng tự xem lệnh trước khi lưu. Commander không tạo được routine script.
 
-### Công cụ `tao_routine` (chỉ Commander)
+### Công cụ `create_routine` (chỉ Commander)
 
-- Commander điền: tên, bot, lịch cron, việc, gửi về, quyền, chạy bù. aris kiểm như khi tạo trên web.
-- Mặc định lưu ở trạng thái **tắt** và trả lời lịch đọc được, 3 lần chạy tới; người dùng bật ở màn 4.1. `bat: true` thì công cụ thành **hỏi duyệt** (web hay Telegram, như mọi yêu cầu quyền) với tóm tắt routine; được cho phép mới lưu ở trạng thái bật.
-- `bat_routine` (chỉ Commander): bật hay tắt routine đã có theo mã (câu trả lời của `tao_routine` có mã); bật thì hỏi duyệt, tắt thì không.
+- Commander điền (tham số): `title`, `bot`, `cron`, `task`, `deliver`, `perms`, `catchup_hours`, `enabled`. aris kiểm như khi tạo trên web.
+- Mặc định lưu ở trạng thái **tắt** và trả lời lịch đọc được, 3 lần chạy tới; người dùng bật ở màn 4.1. `enabled: true` thì công cụ thành **hỏi duyệt** (web hay Telegram, như mọi yêu cầu quyền) với tóm tắt routine; được cho phép mới lưu ở trạng thái bật.
+- `set_routine_enabled` (chỉ Commander): bật hay tắt routine đã có theo mã (`id`, `enabled`; câu trả lời của `create_routine` có mã); bật thì hỏi duyệt, tắt thì không.
 
 ## Đợt 3 · Thẻ báo cáo 7.2 trên Telegram, tab Routine của hồ sơ bot (2.2e)
 

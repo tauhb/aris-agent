@@ -164,75 +164,75 @@ const err = async (p: Promise<unknown>) => {
 describe('điều khiển máy · phần chạy', () => {
   it('xem màn hình: chụp cửa sổ của ứng dụng, liệt kê phần tử có mã và tâm trên ảnh, nhớ cửa sổ cho lần sau', async () => {
     const { drv, rt } = setup()
-    const r = await rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'notes' })
-    expect(r.text).toContain('Cửa sổ: Notes — "Ghi chú" (cua_so: 10:100) · ảnh 1280×960')
+    const r = await rt.run('p1', 'Khoa', 'screen_view', { app: 'notes' })
+    expect(r.text).toContain('Cửa sổ: Notes — "Ghi chú" (window: 10:100) · ảnh 1280×960')
     expect(r.text).toContain('[s1:1] AXButton "Ghi chú mới" @48,32')
     expect(r.image).toMatchObject({ width: 1280, height: 960 })
     // Lần sau không nói ứng dụng: dùng cửa sổ vừa làm.
-    await rt.run('p1', 'Khoa', 'man_hinh_bam', { phan_tu: 's1:1' })
+    await rt.run('p1', 'Khoa', 'screen_click', { element: 's1:1' })
     expect(drv.calls).toEqual(['click 10:100 s1:1 leftx1'])
   })
 
   it('tra bối cảnh cho hộp duyệt: bấm theo mã hay toạ độ ra đúng phần tử và chỗ đánh dấu; gõ đoán ô vừa bấm', async () => {
     const { rt } = setup()
-    await rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Notes' })
-    const byToken = await rt.inspect('p1', 'man_hinh_bam', { phan_tu: 's1:2' })
-    expect(byToken).toMatchObject({ action: 'bam', app: { name: 'Notes' }, element: { label: 'Nội dung' } })
+    await rt.run('p1', 'Khoa', 'screen_view', { app: 'Notes' })
+    const byToken = await rt.inspect('p1', 'screen_click', { element: 's1:2' })
+    expect(byToken).toMatchObject({ action: 'click', app: { name: 'Notes' }, element: { label: 'Nội dung' } })
     expect(byToken.describe).toBe('Bấm AXTextArea "Nội dung" trong Notes')
     expect(byToken.mark).toEqual({ x: 160, y: 120, width: 960, height: 640 })
-    const byPoint = await rt.inspect('p1', 'man_hinh_bam', { x: 60, y: 30 })
+    const byPoint = await rt.inspect('p1', 'screen_click', { x: 60, y: 30 })
     expect(byPoint.element?.label).toBe('Ghi chú mới')
     expect(byPoint.mark).toEqual({ x: 60, y: 30 })
-    await rt.run('p1', 'Khoa', 'man_hinh_bam', { phan_tu: 's1:2' })
-    expect((await rt.inspect('p1', 'man_hinh_go', { chu: 'dòng 1\ndòng 2' })).describe).toContain(
+    await rt.run('p1', 'Khoa', 'screen_click', { element: 's1:2' })
+    expect((await rt.inspect('p1', 'screen_type', { text: 'dòng 1\ndòng 2' })).describe).toContain(
       '"dòng 1↵dòng 2"',
     )
-    const typing = await rt.inspect('p1', 'man_hinh_go', { chu: 'xin chào' })
+    const typing = await rt.inspect('p1', 'screen_type', { text: 'xin chào' })
     expect(typing.element?.label).toBe('Nội dung')
     expect(typing.describe).toBe('Gõ "xin chào" vào AXTextArea "Nội dung" trong Notes')
   })
 
   it('lỗi rõ ràng: mã phần tử cũ, toạ độ ngoài ảnh, bấm toạ độ khi chưa chụp, cửa sổ sai dạng, thiếu lõi', async () => {
     const { rt } = setup()
-    expect((await err(rt.inspect('p1', 'man_hinh_bam', { phan_tu: 's9:1', ung_dung: 'Notes' }))).code).toBe(
+    expect((await err(rt.inspect('p1', 'screen_click', { element: 's9:1', app: 'Notes' }))).code).toBe(
       'stale',
     )
-    expect(
-      (await err(rt.inspect('p1', 'man_hinh_bam', { x: 5, y: 5, ung_dung: 'Notes' }))).message,
-    ).toContain('cần ảnh chụp')
-    await rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Notes' })
-    expect((await err(rt.inspect('p1', 'man_hinh_bam', { x: 5000, y: 5 }))).message).toContain(
+    expect((await err(rt.inspect('p1', 'screen_click', { x: 5, y: 5, app: 'Notes' }))).message).toContain(
+      'cần ảnh chụp',
+    )
+    await rt.run('p1', 'Khoa', 'screen_view', { app: 'Notes' })
+    expect((await err(rt.inspect('p1', 'screen_click', { x: 5000, y: 5 }))).message).toContain(
       'ngoài ảnh chụp',
     )
-    expect((await err(rt.inspect('p1', 'man_hinh_bam', { cua_so: 'abc', x: 1, y: 1 }))).code).toBe(
+    expect((await err(rt.inspect('p1', 'screen_click', { window: 'abc', x: 1, y: 1 }))).code).toBe(
       'bad-input',
     )
     const none = new ComputerRuntime({ driver: () => undefined })
-    const e = await err(none.run('p1', 'Khoa', 'man_hinh_xem', {}))
+    const e = await err(none.run('p1', 'Khoa', 'screen_view', {}))
     expect(e.code).toBe('unavailable')
     expect(e.message).toContain('computer doctor')
   })
 
   it('chặn cứng xét lại ngay trước khi làm: ô mật khẩu, Terminal, kéo vào Thùng rác, phím khoá máy, màn hình khoá', async () => {
     const { drv, rt } = setup()
-    await rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Notes' })
-    expect((await err(rt.run('p1', 'Khoa', 'man_hinh_go', { chu: 'abc', phan_tu: 's1:3' }))).code).toBe(
+    await rt.run('p1', 'Khoa', 'screen_view', { app: 'Notes' })
+    expect((await err(rt.run('p1', 'Khoa', 'screen_type', { text: 'abc', element: 's1:3' }))).code).toBe(
       'blocked',
     )
-    expect((await err(rt.run('p1', 'Khoa', 'man_hinh_bam', { phan_tu: 's1:4' }))).code).toBe('blocked')
+    expect((await err(rt.run('p1', 'Khoa', 'screen_click', { element: 's1:4' }))).code).toBe('blocked')
     expect(
-      (await err(rt.run('p1', 'Khoa', 'man_hinh_keo', { tu: { x: 100, y: 200 }, den: { x: 1150, y: 890 } })))
+      (await err(rt.run('p1', 'Khoa', 'screen_drag', { from: { x: 100, y: 200 }, to: { x: 1150, y: 890 } })))
         .message,
     ).toContain('Thùng rác')
-    expect((await err(rt.run('p1', 'Khoa', 'man_hinh_phim', { phim: 'ctrl+cmd+q' }))).message).toContain(
+    expect((await err(rt.run('p1', 'Khoa', 'screen_key', { keys: 'ctrl+cmd+q' }))).message).toContain(
       'khoá máy',
     )
-    expect((await err(rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Terminal' }))).message).toContain(
+    expect((await err(rt.run('p1', 'Khoa', 'screen_view', { app: 'Terminal' }))).message).toContain(
       'Terminal',
     )
-    expect((await err(rt.run('p1', 'Khoa', 'ung_dung_mo', { ten: 'Keychain Access' }))).code).toBe('blocked')
+    expect((await err(rt.run('p1', 'Khoa', 'open_app', { name: 'Keychain Access' }))).code).toBe('blocked')
     drv.locked = true
-    expect((await err(rt.run('p1', 'Khoa', 'man_hinh_phim', { phim: 'cmd+n' }))).message).toContain(
+    expect((await err(rt.run('p1', 'Khoa', 'screen_key', { keys: 'cmd+n' }))).message).toContain(
       'màn hình đang khoá',
     )
     expect(drv.calls).toEqual([])
@@ -240,30 +240,30 @@ describe('điều khiển máy · phần chạy', () => {
 
   it('trần mỗi lượt: 40 ảnh chụp và 150 thao tác; lượt mới thì đếm lại', async () => {
     const { rt } = setup()
-    for (let i = 0; i < 40; i++) await rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Notes' })
-    expect((await err(rt.run('p1', 'Khoa', 'man_hinh_xem', {}))).code).toBe('cap')
+    for (let i = 0; i < 40; i++) await rt.run('p1', 'Khoa', 'screen_view', { app: 'Notes' })
+    expect((await err(rt.run('p1', 'Khoa', 'screen_view', {}))).code).toBe('cap')
     // Đọc cây không tính là ảnh chụp.
-    await rt.run('p1', 'Khoa', 'man_hinh_tim', { tu_khoa: 'Ghi chú' })
-    for (let i = 0; i < 150; i++) await rt.run('p1', 'Khoa', 'man_hinh_phim', { phim: 'down' })
-    expect((await err(rt.run('p1', 'Khoa', 'man_hinh_phim', { phim: 'down' }))).message).toContain(
+    await rt.run('p1', 'Khoa', 'screen_find', { query: 'Ghi chú' })
+    for (let i = 0; i < 150; i++) await rt.run('p1', 'Khoa', 'screen_key', { keys: 'down' })
+    expect((await err(rt.run('p1', 'Khoa', 'screen_key', { keys: 'down' }))).message).toContain(
       '150 thao tác',
     )
     rt.turnStart('p1')
-    await rt.run('p1', 'Khoa', 'man_hinh_xem', {})
+    await rt.run('p1', 'Khoa', 'screen_view', {})
   })
 
   it('một bot một lúc: phiên khác chờ tới khi lượt của bot đang làm xong; giữ máy quá lâu không làm gì thì tự nhả', async () => {
     const { drv, rt, clock } = setup()
-    await rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Notes' })
+    await rt.run('p1', 'Khoa', 'screen_view', { app: 'Notes' })
     expect(rt.holder()).toEqual({ session: 'p1', bot: 'Khoa' })
     // Phiên p2 chờ; trong lúc chờ thì lượt của p1 xong.
-    const waiting = rt.run('p2', 'Mai', 'man_hinh_xem', { ung_dung: 'Safari' })
+    const waiting = rt.run('p2', 'Mai', 'screen_view', { app: 'Safari' })
     rt.turnEnd('p1')
     await waiting
     expect(rt.holder()).toEqual({ session: 'p2', bot: 'Mai' })
     // p2 giữ máy rồi im 2 phút: p3 lấy được.
     clock.t += 2 * 60_000 + 1
-    await rt.run('p3', 'Thơ', 'man_hinh_xem', { ung_dung: 'Notes' })
+    await rt.run('p3', 'Thơ', 'screen_view', { app: 'Notes' })
     expect(rt.holder()?.bot).toBe('Thơ')
     expect(drv.snapshots).toBe(3)
   })
@@ -276,8 +276,8 @@ describe('điều khiển máy · phần chạy', () => {
       sleep: async () => undefined,
       limits: { queueWaitMs: 0 },
     })
-    await busy.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Notes' })
-    expect((await err(busy.run('p2', 'Mai', 'man_hinh_xem', { ung_dung: 'Notes' }))).message).toContain(
+    await busy.run('p1', 'Khoa', 'screen_view', { app: 'Notes' })
+    expect((await err(busy.run('p2', 'Mai', 'screen_view', { app: 'Notes' }))).message).toContain(
       'Khoa đang điều khiển máy',
     )
     expect(rt.holder()).toBeUndefined()
@@ -285,54 +285,54 @@ describe('điều khiển máy · phần chạy', () => {
 
   it('người dùng cầm lái: bot chờ tới khi trả lại; quá 30 phút thì dừng', async () => {
     const { drv, rt, clock } = setup()
-    await rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Notes' })
+    await rt.run('p1', 'Khoa', 'screen_view', { app: 'Notes' })
     rt.pause('p1')
     const start = clock.t
-    const e = await err(rt.run('p1', 'Khoa', 'man_hinh_phim', { phim: 'cmd+n' }))
+    const e = await err(rt.run('p1', 'Khoa', 'screen_key', { keys: 'cmd+n' }))
     expect(e.code).toBe('paused')
     expect(clock.t - start).toBeGreaterThanOrEqual(30 * 60_000)
     rt.resume('p1')
-    await rt.run('p1', 'Khoa', 'man_hinh_phim', { phim: 'cmd+n' })
+    await rt.run('p1', 'Khoa', 'screen_key', { keys: 'cmd+n' })
     expect(drv.calls).toEqual(['keys 10:100 cmd+n'])
   })
 
   it('người dùng đang dùng máy: lõi nền chỉ nhường khi người dùng ở đúng ứng dụng; lõi tiền cảnh luôn nhường', async () => {
     const { drv, rt } = setup()
-    await rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Safari' })
+    await rt.run('p1', 'Khoa', 'screen_view', { app: 'Safari' })
     drv.idle = 0.5
     // Lõi nền, người dùng ở Notes (đang ở trước), bot làm Safari: không cần chờ.
-    await rt.run('p1', 'Khoa', 'man_hinh_phim', { phim: 'cmd+l' })
+    await rt.run('p1', 'Khoa', 'screen_key', { keys: 'cmd+l' })
     // Bot làm Notes (người dùng đang ở đó): chờ rồi báo.
-    await rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Notes' })
-    expect((await err(rt.run('p1', 'Khoa', 'man_hinh_phim', { phim: 'cmd+n' }))).message).toContain(
+    await rt.run('p1', 'Khoa', 'screen_view', { app: 'Notes' })
+    expect((await err(rt.run('p1', 'Khoa', 'screen_key', { keys: 'cmd+n' }))).message).toContain(
       'đang dùng máy',
     )
     // Lõi tiền cảnh: luôn chờ.
     drv.background = false
-    await rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Safari' })
-    expect((await err(rt.run('p1', 'Khoa', 'man_hinh_phim', { phim: 'cmd+l' }))).code).toBe('paused')
+    await rt.run('p1', 'Khoa', 'screen_view', { app: 'Safari' })
+    expect((await err(rt.run('p1', 'Khoa', 'screen_key', { keys: 'cmd+l' }))).code).toBe('paused')
     // Người dùng thôi động máy: làm tiếp.
     drv.idle = 5
-    await rt.run('p1', 'Khoa', 'man_hinh_phim', { phim: 'cmd+l' })
+    await rt.run('p1', 'Khoa', 'screen_key', { keys: 'cmd+l' })
     expect(drv.calls).toEqual(['keys 20:200 cmd+l', 'keys 20:200 cmd+l'])
   })
 
   it('dừng khẩn cấp của aris: không điều khiển máy', async () => {
     let stopped = false
     const { rt } = setup({ stopped: () => stopped })
-    await rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Notes' })
+    await rt.run('p1', 'Khoa', 'screen_view', { app: 'Notes' })
     stopped = true
-    expect((await err(rt.run('p1', 'Khoa', 'man_hinh_xem', {}))).message).toContain('dừng khẩn cấp')
+    expect((await err(rt.run('p1', 'Khoa', 'screen_view', {}))).message).toContain('dừng khẩn cấp')
   })
 
   it('gõ có mã phần tử thì bấm vào ô trước; cuộn, kéo, mở ứng dụng gọi đúng lõi', async () => {
     const { drv, rt } = setup()
-    await rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Notes' })
-    await rt.run('p1', 'Khoa', 'man_hinh_go', { chu: 'aris thử', phan_tu: 's1:2' })
-    await rt.run('p1', 'Khoa', 'man_hinh_cuon', { huong: 'xuống', so_buoc: 50 })
-    await rt.run('p1', 'Khoa', 'man_hinh_keo', { tu: { x: 100, y: 200 }, den: { x: 300, y: 200 } })
-    await rt.run('p1', 'Khoa', 'man_hinh_bam', { x: 60, y: 30, nut: 'phai', so_lan: 2 })
-    const r = await rt.run('p1', 'Khoa', 'ung_dung_mo', { ten: 'Calendar' })
+    await rt.run('p1', 'Khoa', 'screen_view', { app: 'Notes' })
+    await rt.run('p1', 'Khoa', 'screen_type', { text: 'aris thử', element: 's1:2' })
+    await rt.run('p1', 'Khoa', 'screen_scroll', { direction: 'xuống', steps: 50 })
+    await rt.run('p1', 'Khoa', 'screen_drag', { from: { x: 100, y: 200 }, to: { x: 300, y: 200 } })
+    await rt.run('p1', 'Khoa', 'screen_click', { x: 60, y: 30, button: 'phai', count: 2 })
+    const r = await rt.run('p1', 'Khoa', 'open_app', { name: 'Calendar' })
     expect(r.text).toContain('đã mở Calendar')
     expect(drv.calls).toEqual([
       'click 10:100 s1:2 leftx1',
@@ -346,21 +346,21 @@ describe('điều khiển máy · phần chạy', () => {
 
   it('tìm phần tử theo từ khoá: không chụp ảnh, không thay ảnh chụp đã nhớ', async () => {
     const { rt } = setup()
-    await rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Notes' })
-    const r = await rt.run('p1', 'Khoa', 'man_hinh_tim', { tu_khoa: 'Nội dung' })
+    await rt.run('p1', 'Khoa', 'screen_view', { app: 'Notes' })
+    const r = await rt.run('p1', 'Khoa', 'screen_find', { query: 'Nội dung' })
     expect(r.image).toBeUndefined()
     expect(r.text).toContain('[s2:2] AXTextArea "Nội dung"')
     expect(r.text).not.toContain('Ghi chú mới')
     // Mã của lần chụp đầu vẫn dùng được, toạ độ vẫn theo ảnh đầu.
-    expect((await rt.inspect('p1', 'man_hinh_bam', { phan_tu: 's1:1' })).element?.label).toBe('Ghi chú mới')
-    expect((await rt.inspect('p1', 'man_hinh_bam', { phan_tu: 's2:2' })).element?.label).toBe('Nội dung')
+    expect((await rt.inspect('p1', 'screen_click', { element: 's1:1' })).element?.label).toBe('Ghi chú mới')
+    expect((await rt.inspect('p1', 'screen_click', { element: 's2:2' })).element?.label).toBe('Nội dung')
   })
 
   it('tình trạng cho giao diện: ảnh mới nhất, chỗ vừa bấm, các bước, trần, cầm lái', async () => {
     const { rt } = setup()
     expect(rt.screenView('p1')).toBeUndefined()
-    await rt.run('p1', 'Khoa', 'man_hinh_xem', { ung_dung: 'Notes' })
-    await rt.run('p1', 'Khoa', 'man_hinh_bam', { phan_tu: 's1:1' })
+    await rt.run('p1', 'Khoa', 'screen_view', { app: 'Notes' })
+    await rt.run('p1', 'Khoa', 'screen_click', { element: 's1:1' })
     rt.pause('p1')
     const v = rt.screenView('p1')!
     expect(v.screen).toMatchObject({

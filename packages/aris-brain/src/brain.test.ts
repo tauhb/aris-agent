@@ -19,8 +19,8 @@ import {
   undatedLines,
   weekKey,
   type Finding,
-  type SoatPage,
-} from './soat.js'
+  type AuditPage,
+} from './audit.js'
 import { buildGraph, linkMention, nodeType, unlinkedMention, type GraphPage } from './graph.js'
 import { fold, keyTerms, linksOf, parsePage, snippetOf } from './page.js'
 import { kanbanOf, projectPageText, withKanban } from './project-page.js'
@@ -305,7 +305,7 @@ describe('chỉ dẫn tra bộ não', () => {
 
 describe('soát bộ não', () => {
   const day = 86_400_000
-  const pg = (path: string, body: string, extra: Partial<SoatPage> = {}): SoatPage => {
+  const pg = (path: string, body: string, extra: Partial<AuditPage> = {}): AuditPage => {
     const place = placeOf(path)
     const name = path.split('/').pop()!.replace(/\.md$/, '')
     return {
@@ -406,7 +406,7 @@ describe('soát bộ não', () => {
 
 describe('ranh giới ba kho và số liệu có ngày (5.5b)', () => {
   const day = 86_400_000
-  const pg = (path: string, body: string, mtime = 100 * day): SoatPage => {
+  const pg = (path: string, body: string, mtime = 100 * day): AuditPage => {
     const place = placeOf(path)
     const name = path.split('/').pop()!.replace(/\.md$/, '')
     return {
@@ -425,15 +425,15 @@ describe('ranh giới ba kho và số liệu có ngày (5.5b)', () => {
     'ca-nhan/wiki/nguoi/chi-ha.md',
     '---\nloai: nguoi\n---\n# Chị Hà\n\n## Ghi nhận\n\n- Chị Hà dựng video cho kênh, giao trong 3 ngày.\n',
   )
-  const kenh = pg(
+  const channel = pg(
     'ca-nhan/wiki/du-an/kenh-youtube-q4.md',
     '---\nloai: du-an\n---\n# Kênh YouTube Q4\n\nTháng 11: 8 video, ngân sách 15 triệu.[^1]\nĐăng thứ Ba (tính đến 2026-10-14): 2.000 người đăng ký.\n\n## Lịch sử\n\n- Giá cũ 1,5 triệu mỗi video.\n\n## Nguồn\n\n[^1]: [[goi-21-10]] giá 300 nghìn\n',
   )
-  const nguon = pg('ca-nhan/nguon/2026-10/goi-21-10.md', '# Gọi 21/10', 120 * day)
+  const source = pg('ca-nhan/nguon/2026-10/goi-21-10.md', '# Gọi 21/10', 120 * day)
   const tap = pg('ca-nhan/wiki/chu-de/lich-tap.md', '# Lịch tập\n\nChạy 5 người, 10%.')
   it('ký ức nhắc tên trang Người, Dự án; trang đã có câu gần giống thì gợi ý xoá ký ức', () => {
     const f = memoryFindings(
-      [ha, kenh, tap],
+      [ha, channel, tap],
       [
         {
           id: 'm1',
@@ -460,13 +460,13 @@ describe('ranh giới ba kho và số liệu có ngày (5.5b)', () => {
     ).toContain('Ký ức của aris')
   })
   it('số liệu chưa ghi ngày: bỏ dòng đã có ngày, mục Lịch sử, Nguồn; ngày gợi ý theo nguồn mới nhất', () => {
-    expect(undatedLines(kenh.body)).toEqual(['Tháng 11: 8 video, ngân sách 15 triệu.[^1]'])
-    const f = figureFindings([ha, kenh, tap], [ha, kenh, nguon, tap])
+    expect(undatedLines(channel.body)).toEqual(['Tháng 11: 8 video, ngân sách 15 triệu.[^1]'])
+    const f = figureFindings([ha, channel, tap], [ha, channel, source, tap])
     expect(f.map((x) => [x.title, x.count, x.target])).toEqual([['Kênh YouTube Q4', 1, 'nguon']])
     expect(f[0]!.detail).toBe(new Date(120 * day).toISOString().slice(0, 10))
   })
   it('ghi ngày trước dấu chấm và chú thích nguồn', () => {
-    const r = stampDates(kenh.body, '2026-10-21')
+    const r = stampDates(channel.body, '2026-10-21')
     expect(r.n).toBe(1)
     expect(r.text).toContain('ngân sách 15 triệu (tính đến 2026-10-21).[^1]')
     expect(undatedLines(r.text)).toEqual([])

@@ -738,7 +738,7 @@ export function Notes({
         type="button"
         className="ap-link"
         style={{ alignSelf: 'flex-start' }}
-        onClick={() => nav.go('brain', { view: 'soat' })}
+        onClick={() => nav.go('brain', { view: 'audit' })}
       >
         {t('nb.toSoat')}
       </button>

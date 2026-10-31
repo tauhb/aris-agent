@@ -13,7 +13,7 @@
  */
 import { center, elementAt, insideImage } from './coords.js'
 import { comboKeys, comboText, parseCombo, type Combo } from './keys.js'
-import { hardVerdict, TOOL_ACTION, type Action, type ActContext } from './policy.js'
+import { actionOf, hardVerdict, toolName, type Action, type ActContext } from './policy.js'
 import {
   ComputerError,
   type App,
@@ -110,7 +110,7 @@ export interface RunResult {
 
 const winKey = (w: WinRef) => `${w.pid}:${w.windowId}`
 
-/** `cua_so` bot gửi: `pid:windowId`. */
+/** `window` bot gửi: `pid:windowId`. */
 export function parseWin(v: unknown): WinRef | undefined {
   if (typeof v !== 'string') return undefined
   const m = /^\s*(\d+):(\d+)\s*$/.exec(v)
@@ -333,23 +333,20 @@ export class ComputerRuntime {
   }
 
   /**
-   * Cửa sổ của lời gọi: `cua_so` nếu có; không thì ứng dụng `ung_dung`; không thì cửa sổ bot làm gần nhất; không thì
+   * Cửa sổ của lời gọi: `window` nếu có; không thì ứng dụng `app`; không thì cửa sổ bot làm gần nhất; không thì
    * cửa sổ của ứng dụng đang ở tiền cảnh.
    */
   private async resolveWin(sessionId: string, args: Record<string, unknown>): Promise<WinRef> {
-    const explicit = parseWin(args.cua_so)
+    const explicit = parseWin(args.window)
     if (explicit) return explicit
-    if (args.cua_so !== undefined && args.cua_so !== '')
-      throw new ComputerError(
-        '`cua_so` phải có dạng pid:mã_cửa_sổ, lấy từ kết quả man_hinh_xem.',
-        'bad-input',
-      )
-    const appName = str(args.ung_dung)
+    if (args.window !== undefined && args.window !== '')
+      throw new ComputerError('`window` phải có dạng pid:mã_cửa_sổ, lấy từ kết quả screen_view.', 'bad-input')
+    const appName = str(args.app)
     if (appName) {
       const app = await this.findApp(appName)
       if (!app)
         throw new ComputerError(
-          `Không thấy ứng dụng "${appName}" đang chạy. Mở bằng ung_dung_mo trước.`,
+          `Không thấy ứng dụng "${appName}" đang chạy. Mở bằng open_app trước.`,
           'bad-input',
         )
       const w = await this.mainWindow(app.pid)
@@ -360,8 +357,7 @@ export class ComputerRuntime {
     if (last) return parseWin(last)!
     const front = (await this.driver().apps()).find((a) => a.active)
     const w = front ? await this.mainWindow(front.pid) : undefined
-    if (!w)
-      throw new ComputerError('Không xác định được cửa sổ: gọi man_hinh_xem với ung_dung trước.', 'bad-input')
+    if (!w) throw new ComputerError('Không xác định được cửa sổ: gọi screen_view với app trước.', 'bad-input')
     return w
   }
 
@@ -413,15 +409,16 @@ export class ComputerRuntime {
   // ======================================================================================
 
   /** Bối cảnh của lời gọi `tool`: ứng dụng đích, phần tử, phím; dùng cho chặn cứng, phạm vi và hộp duyệt. */
-  async inspect(sessionId: string, tool: string, rawArgs: unknown): Promise<Inspected> {
-    const action: Action | undefined = TOOL_ACTION[tool]
+  async inspect(sessionId: string, rawTool: string, rawArgs: unknown): Promise<Inspected> {
+    const tool = toolName(rawTool)
+    const action: Action | undefined = actionOf(tool)
     if (!action) throw new ComputerError(`Không biết công cụ ${tool}.`, 'bad-input')
     const args = (rawArgs && typeof rawArgs === 'object' ? rawArgs : {}) as Record<string, unknown>
     const drv = this.driver()
     const locked = await drv.screenLocked().catch(() => undefined)
 
-    if (action === 'mo') {
-      const name = str(args.ten).trim()
+    if (action === 'open') {
+      const name = str(args.name).trim()
       if (!name) throw new ComputerError('Thiếu tên ứng dụng.', 'bad-input')
       const known = (await drv.apps()).find(
         (a) =>
@@ -441,17 +438,17 @@ export class ComputerRuntime {
     const win = this.cached(sessionId, w)
     const where = app?.name ?? `tiến trình ${w.pid}`
 
-    if (action === 'xem')
+    if (action === 'view')
       return {
         action,
         locked,
         app: appRef,
         win,
-        describe: tool === 'man_hinh_tim' ? `Đọc các phần tử trên cửa sổ ${where}` : `Chụp cửa sổ ${where}`,
+        describe: tool === 'screen_find' ? `Đọc các phần tử trên cửa sổ ${where}` : `Chụp cửa sổ ${where}`,
       }
 
-    if (action === 'phim') {
-      const combo = parseCombo(str(args.phim))
+    if (action === 'key') {
+      const combo = parseCombo(str(args.keys))
       return {
         action,
         locked,
@@ -462,9 +459,9 @@ export class ComputerRuntime {
       }
     }
 
-    if (action === 'go') {
-      const text = str(args.chu)
-      const token = str(args.phan_tu)
+    if (action === 'type') {
+      const text = str(args.text)
+      const token = str(args.element)
       const el = token
         ? this.elementByToken(sessionId, token)?.el
         : this.state(sessionId).focus.get(winKey(w))
@@ -480,9 +477,9 @@ export class ComputerRuntime {
     }
 
     // Bấm, kéo, cuộn.
-    if (tool === 'man_hinh_keo') {
-      const from = this.point(args.tu, 'tu')
-      const to = this.point(args.den, 'den')
+    if (tool === 'screen_drag') {
+      const from = this.point(args.from, 'from')
+      const to = this.point(args.to, 'to')
       const el = win ? elementAt(win.elements, from) : undefined
       const dropOn = win ? elementAt(win.elements, to) : undefined
       return {
@@ -496,17 +493,17 @@ export class ComputerRuntime {
         describe: `Kéo từ (${from.x}, ${from.y}) tới (${to.x}, ${to.y})${dropOn ? ` thả vào ${elText(dropOn)}` : ''} trong ${where}`,
       }
     }
-    if (tool === 'man_hinh_cuon') {
-      const dir = DIRS[str(args.huong).toLowerCase()]
-      if (!dir) throw new ComputerError('`huong` phải là len, xuong, trai hay phai.', 'bad-input')
-      return { action, locked, app: appRef, win, describe: `Cuộn ${str(args.huong)} trong ${where}` }
+    if (tool === 'screen_scroll') {
+      const dir = DIRS[str(args.direction).toLowerCase()]
+      if (!dir) throw new ComputerError('`direction` phải là up, down, left hay right.', 'bad-input')
+      return { action, locked, app: appRef, win, describe: `Cuộn ${str(args.direction)} trong ${where}` }
     }
-    const token = str(args.phan_tu)
+    const token = str(args.element)
     if (token) {
       const hit = this.elementByToken(sessionId, token)
       if (!hit)
         throw new ComputerError(
-          `Mã phần tử ${token} đã cũ hay không có. Gọi man_hinh_xem hay man_hinh_tim để lấy mã mới.`,
+          `Mã phần tử ${token} đã cũ hay không có. Gọi screen_view hay screen_find để lấy mã mới.`,
           'stale',
         )
       return {
@@ -521,7 +518,7 @@ export class ComputerRuntime {
     }
     const p = this.point(args, '')
     if (!win?.image)
-      throw new ComputerError('Bấm theo toạ độ cần ảnh chụp cửa sổ trước: gọi man_hinh_xem.', 'bad-input')
+      throw new ComputerError('Bấm theo toạ độ cần ảnh chụp cửa sổ trước: gọi screen_view.', 'bad-input')
     if (!insideImage(p, win.image))
       throw new ComputerError(
         `Điểm (${p.x}, ${p.y}) nằm ngoài ảnh chụp ${win.image.width}×${win.image.height} của cửa sổ.`,
@@ -547,7 +544,7 @@ export class ComputerRuntime {
       throw new ComputerError(
         name
           ? `Thiếu toạ độ \`${name}\` ({ x, y } theo ảnh chụp).`
-          : 'Cần `phan_tu` (ưu tiên) hoặc `x`, `y` theo ảnh chụp.',
+          : 'Cần `element` (ưu tiên) hoặc `x`, `y` theo ảnh chụp.',
         'bad-input',
       )
     return { x, y }
@@ -568,6 +565,7 @@ export class ComputerRuntime {
     rawArgs: unknown,
     signal?: AbortSignal,
   ): Promise<RunResult> {
+    tool = toolName(tool)
     const args = (rawArgs && typeof rawArgs === 'object' ? rawArgs : {}) as Record<string, unknown>
     if (this.d.stopped?.())
       throw new ComputerError('aris đang dừng khẩn cấp: không điều khiển máy.', 'paused')
@@ -577,10 +575,10 @@ export class ComputerRuntime {
     const v = hardVerdict(ctx)
     if (v) throw new ComputerError(v.reason, 'blocked')
     const drv = this.driver()
-    if (ctx.action !== 'xem') {
+    if (ctx.action !== 'view') {
       this.gate(sessionId, 'act')
       const target =
-        ctx.action === 'mo' ? undefined : await this.appOf((await this.resolveWin(sessionId, args)).pid)
+        ctx.action === 'open' ? undefined : await this.appOf((await this.resolveWin(sessionId, args)).pid)
       await this.waitIdle(target, signal)
       this.state(sessionId).actions++
     }
@@ -590,8 +588,8 @@ export class ComputerRuntime {
     if (st.steps.length > 20) st.steps.shift()
     // Chỗ vừa bấm, gõ, kéo: đánh dấu trên ảnh mới nhất nếu cùng cửa sổ.
     if (
-      ctx.action !== 'xem' &&
-      ctx.action !== 'mo' &&
+      ctx.action !== 'view' &&
+      ctx.action !== 'open' &&
       st.screen &&
       ctx.win &&
       st.screen.window === winKey(ctx.win)
@@ -599,55 +597,55 @@ export class ComputerRuntime {
       st.screen = { ...st.screen, mark: ctx.mark }
 
     switch (tool) {
-      case 'man_hinh_xem':
+      case 'screen_view':
         return this.view(sessionId, args)
-      case 'man_hinh_tim':
+      case 'screen_find':
         return this.find(sessionId, args)
-      case 'ung_dung_mo': {
-        const out = await drv.launch({ name: str(args.ten).trim() })
-        return { text: `${out}\nGọi man_hinh_xem với ung_dung để xem cửa sổ.` }
+      case 'open_app': {
+        const out = await drv.launch({ name: str(args.name).trim() })
+        return { text: `${out}\nGọi screen_view với app để xem cửa sổ.` }
       }
     }
     const w = await this.resolveWin(sessionId, args)
     const done = (line: string) => ({
-      text: `${line}\nMàn hình đã đổi: gọi man_hinh_xem lại trước thao tác kế tiếp.`,
+      text: `${line}\nMàn hình đã đổi: gọi screen_view lại trước thao tác kế tiếp.`,
     })
     switch (tool) {
-      case 'man_hinh_bam': {
-        const token = str(args.phan_tu)
-        const button = /phai|phải|right/i.test(str(args.nut)) ? 'right' : 'left'
-        const count = Math.min(3, Math.max(1, num(args.so_lan) ?? 1))
+      case 'screen_click': {
+        const token = str(args.element)
+        const button = /phai|phải|right/i.test(str(args.button)) ? 'right' : 'left'
+        const count = Math.min(3, Math.max(1, num(args.count) ?? 1))
         const out = await drv.click(w, token ? { token } : this.point(args, ''), { button, count })
         if (ctx.element) this.state(sessionId).focus.set(winKey(w), ctx.element)
         return done(`${ctx.describe}: ${out}`)
       }
-      case 'man_hinh_go': {
-        const token = str(args.phan_tu)
+      case 'screen_type': {
+        const token = str(args.element)
         // Có mã phần tử thì bấm vào đó trước để đặt con trỏ gõ.
         if (token) await drv.click(w, { token }, { button: 'left', count: 1 })
-        const out = await drv.type(w, str(args.chu))
+        const out = await drv.type(w, str(args.text))
         return done(`${ctx.describe}: ${out}`)
       }
-      case 'man_hinh_phim': {
+      case 'screen_key': {
         const out = await drv.keys(w, comboKeys(ctx.combo as Combo))
         return done(`${ctx.describe}: ${out}`)
       }
-      case 'man_hinh_cuon': {
-        const dir = DIRS[str(args.huong).toLowerCase()]!
-        const amount = Math.min(20, Math.max(1, num(args.so_buoc) ?? 3))
+      case 'screen_scroll': {
+        const dir = DIRS[str(args.direction).toLowerCase()]!
+        const amount = Math.min(20, Math.max(1, num(args.steps) ?? 3))
         const at = num(args.x) !== undefined && num(args.y) !== undefined ? this.point(args, '') : undefined
         const out = await drv.scroll(w, at, dir, amount)
         return done(`${ctx.describe}: ${out}`)
       }
-      case 'man_hinh_keo': {
-        const out = await drv.drag(w, this.point(args.tu, 'tu'), this.point(args.den, 'den'))
+      case 'screen_drag': {
+        const out = await drv.drag(w, this.point(args.from, 'from'), this.point(args.to, 'to'))
         return done(`${ctx.describe}: ${out}`)
       }
     }
     throw new ComputerError(`Không biết công cụ ${tool}.`, 'bad-input')
   }
 
-  /** `man_hinh_xem`: ảnh chụp cửa sổ, danh sách cửa sổ, các phần tử bấm được. */
+  /** `screen_view`: ảnh chụp cửa sổ, danh sách cửa sổ, các phần tử bấm được. */
   private async view(sessionId: string, args: Record<string, unknown>): Promise<RunResult> {
     const w = await this.resolveWin(sessionId, args)
     const snap = await this.take(sessionId, w, { screenshot: true })
@@ -658,15 +656,15 @@ export class ComputerRuntime {
         ? `Cửa sổ đang mở: ${wins.map((x) => `${x.app}${x.title ? ` ${quote(x.title)}` : ''} (${x.pid}:${x.windowId})`).join(' · ')}`
         : '',
       listElements(snap.elements, 120),
-      snap.truncated ? '(Danh sách phần tử bị cắt: dùng man_hinh_tim với tu_khoa để tìm phần còn lại.)' : '',
+      snap.truncated ? '(Danh sách phần tử bị cắt: dùng screen_find với query để tìm phần còn lại.)' : '',
     ]
     return { text: lines.filter(Boolean).join('\n'), image: snap.image }
   }
 
-  /** `man_hinh_tim`: chỉ cây Trợ năng (có lọc theo từ khoá), không chụp ảnh. */
+  /** `screen_find`: chỉ cây Trợ năng (có lọc theo từ khoá), không chụp ảnh. */
   private async find(sessionId: string, args: Record<string, unknown>): Promise<RunResult> {
     const w = await this.resolveWin(sessionId, args)
-    const query = str(args.tu_khoa).trim() || undefined
+    const query = str(args.query).trim() || undefined
     const snap = await this.take(sessionId, w, { screenshot: false, query })
     const els = query
       ? snap.elements.filter((e) =>
@@ -687,7 +685,7 @@ export class ComputerRuntime {
 
 function header(s: Snapshot): string {
   const img = s.image ? ` · ảnh ${s.image.width}×${s.image.height}` : ''
-  return `Cửa sổ: ${s.app}${s.title ? ` — ${quote(s.title)}` : ''} (cua_so: ${s.pid}:${s.windowId})${img}`
+  return `Cửa sổ: ${s.app}${s.title ? ` — ${quote(s.title)}` : ''} (window: ${s.pid}:${s.windowId})${img}`
 }
 
 /** Danh sách phần tử cho bot: mã, vai, nhãn, giá trị, tâm trên ảnh chụp. */
@@ -699,7 +697,7 @@ export function listElements(els: readonly El[], limit: number): string {
     return `[${e.token}] ${e.role}${e.label ? ` ${quote(e.label)}` : ''}${e.value ? ` = ${quote(e.value)}` : ''}${e.enabled === false ? ' (tắt)' : ''}${c ? ` @${c.x},${c.y}` : ''}`
   })
   return [
-    'Phần tử (bấm bằng phan_tu = mã trong ngoặc vuông):',
+    'Phần tử (bấm bằng element = mã trong ngoặc vuông):',
     ...rows,
     els.length > limit ? `… và ${els.length - limit} phần tử nữa.` : '',
   ]

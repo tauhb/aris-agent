@@ -157,7 +157,7 @@ const slug = (s: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-    .slice(0, 32) || 'viec'
+    .slice(0, 32) || 'task'
 
 /** Nhánh và thư mục worktree cho một việc của bot ngoài (ngoài repo, dưới ~/.aris/worktrees). */
 export function worktreePlan(repo: string, handle: string, title: string, id: string, home = homedir()) {
@@ -197,7 +197,7 @@ async function dirOf(path: string): Promise<string | undefined> {
 
 /**
  * Thư mục làm việc cho một việc của bot ngoài, theo thứ tự:
- * 1. `explicit`: thư mục Commander nêu khi giao (tham số `thu_muc`), phải có thật;
+ * 1. `explicit`: thư mục Commander nêu khi giao (tham số `dir`), phải có thật;
  * 2. phiên giao việc không ở trong repo nào: repo đầu tiên nhắc trong nội dung việc (gốc repo);
  * 3. thư mục của phiên giao việc.
  * `root` là gốc repo của thư mục chọn được (để tạo worktree), không có khi không phải repo.

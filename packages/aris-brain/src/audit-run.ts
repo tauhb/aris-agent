@@ -26,10 +26,10 @@ import {
   type Finding,
   type FindingKind,
   type NewFinding,
-  type SoatMemory,
-  type SoatPage,
-  type SoatRun,
-} from './soat.js'
+  type AuditMemory,
+  type AuditPage,
+  type AuditRun,
+} from './audit.js'
 import type { Space } from './vault.js'
 
 /** Trần tiền một lần Thủ thư soát sâu (USD). */
@@ -40,7 +40,7 @@ export const DEEP_HOUR = 21
 const DEEP_TIMEOUT_MS = 15 * 60_000
 const DEEP_MAX_PAGES = 30
 
-export interface SoatState {
+export interface AuditState {
   soatDay?: string | undefined
   soatWeek?: string | undefined
 }
@@ -54,16 +54,16 @@ interface SessionPort {
   cancel?(req: { sessionId: string }): unknown
 }
 
-export interface SoatDeps {
+export interface AuditDeps {
   ctx: Context
   logger: { warn(...a: unknown[]): void }
   root: string
   git: VaultGit
   hasGit: boolean
   findings: Table<Finding>
-  runs: Table<SoatRun>
-  state: () => SoatState
-  saveState: (patch: SoatState) => Promise<void>
+  runs: Table<AuditRun>
+  state: () => AuditState
+  saveState: (patch: AuditState) => Promise<void>
   catalog: {
     all(): Entry[]
     get(path: string): (Entry & { body: string }) | undefined
@@ -78,23 +78,23 @@ export interface SoatDeps {
   librarian: string
   who: () => string
   ingest: {
-    addSoat(i: { space: Space; title: string; task: string }): Promise<{ id: string }>
+    addAudit(i: { space: Space; title: string; task: string }): Promise<{ id: string }>
     rebuildIndex(space: Space): Promise<string>
     appendLog(space: Space, kind: string, text: string): Promise<string>
   }
   notify: (markdown: string) => Promise<unknown>
   today: () => string
   /** Ký ức đang hiệu lực của mọi bot (@aris/memory); không có dịch vụ thì undefined. */
-  memories: () => SoatMemory[] | undefined
+  memories: () => AuditMemory[] | undefined
   /** Xoá một ký ức (@aris/memory). */
   forgetMemory: (id: string) => Promise<unknown>
   /** Bản nạp đổi trạng thái: ký ức gốc xoá khi bản nạp "đưa vào bộ não" đã ghép. */
   onBatch: (fn: (batch: { id: string; status: string }) => void) => () => void
 }
 
-export class SoatError extends Error {}
+export class AuditError extends Error {}
 
-export function startSoat(d: SoatDeps) {
+export function startAudit(d: AuditDeps) {
   const { ctx, findings, runs } = d
   const sessions = () => ctx.get('sessionController') as SessionPort | undefined
   const iso = () => new Date().toISOString()
@@ -117,7 +117,7 @@ export function startSoat(d: SoatDeps) {
   }
 
   /** Trang `.md` của người dùng kèm toàn văn trên đĩa (chỉ mục bỏ nhãn đầu trang). */
-  const userPages = async (): Promise<SoatPage[]> => {
+  const userPages = async (): Promise<AuditPage[]> => {
     const list = d.catalog
       .all()
       .filter(
@@ -143,8 +143,8 @@ export function startSoat(d: SoatDeps) {
   }
 
   // --- Máy soát -----------------------------------------------------------------------------------
-  async function machine(): Promise<SoatRun> {
-    const run: SoatRun = {
+  async function machine(): Promise<AuditRun> {
+    const run: AuditRun = {
       id: `r-${Date.now().toString(36)}`,
       at: iso(),
       by: 'may',
@@ -215,12 +215,12 @@ export function startSoat(d: SoatDeps) {
   }
 
   let deepBusy = false
-  async function deep(): Promise<SoatRun> {
-    if (deepBusy) throw new SoatError('Thủ thư đang soát, chờ xong đã.')
+  async function deep(): Promise<AuditRun> {
+    if (deepBusy) throw new AuditError('Thủ thư đang soát, chờ xong đã.')
     const sc = sessions()
-    if (!sc) throw new SoatError('Chưa có bộ điều khiển phiên.')
+    if (!sc) throw new AuditError('Chưa có bộ điều khiển phiên.')
     const pages = deepPages()
-    const run: SoatRun = {
+    const run: AuditRun = {
       id: `r-${Date.now().toString(36)}t`,
       at: iso(),
       by: 'thu-thu',
@@ -263,7 +263,7 @@ export function startSoat(d: SoatDeps) {
       deepRuns.delete(session)
       const cur = runs.get(run.id) ?? run
       const n = await store(found, 'thu-thu')
-      const done: SoatRun = {
+      const done: AuditRun = {
         ...cur,
         found: n,
         status: reason === 'completed' ? 'xong' : reason === 'cap' ? 'dung' : 'loi',
@@ -296,14 +296,14 @@ export function startSoat(d: SoatDeps) {
       description:
         'Chỉ dùng khi đang soát bộ não: ghi một mâu thuẫn giữa các trang hay một nhận định đã cũ, kèm trích nguyên văn.',
       parameters: {
-        loai: { type: 'string', enum: ['mau-thuan', 'nhan-dinh-cu'], required: true },
-        trang: {
+        kind: { type: 'string', enum: ['mau-thuan', 'nhan-dinh-cu'], required: true },
+        pages: {
           type: 'string',
           required: true,
           description: 'Tên các trang liên quan, cách nhau dấu phẩy.',
         },
-        mo_ta: { type: 'string', required: true, description: 'Một câu: điều gì lệch, nên theo bên nào.' },
-        trich: {
+        note: { type: 'string', required: true, description: 'Một câu: điều gì lệch, nên theo bên nào.' },
+        quotes: {
           type: 'string',
           description: 'Mỗi dòng một đoạn trích: tên-trang: nguyên văn đoạn liên quan.',
         },
@@ -313,7 +313,7 @@ export function startSoat(d: SoatDeps) {
         const sid = (exec.agent as { session: { id: string } } | undefined)?.session.id
         const t = sid ? deepRuns.get(sid) : undefined
         if (!t) return 'Không dùng được ở đây: chỉ dùng khi đang soát bộ não.'
-        const names = String(args.trang ?? '')
+        const names = String(args.pages ?? '')
           .split(/[,\n]/)
           .map((x) => x.trim().replace(/^\[\[|\]\]$/g, ''))
           .filter(Boolean)
@@ -326,8 +326,8 @@ export function startSoat(d: SoatDeps) {
           .filter((e): e is Entry => !!e)
         if (entries.length < 1)
           return 'Không thấy trang nào trong danh sách tên; dùng đúng tên trong [[...]].'
-        const kind = (args.loai === 'nhan-dinh-cu' ? 'nhan-dinh-cu' : 'mau-thuan') as FindingKind
-        const quotes = String(args.trich ?? '')
+        const kind = (args.kind === 'nhan-dinh-cu' ? 'nhan-dinh-cu' : 'mau-thuan') as FindingKind
+        const quotes = String(args.quotes ?? '')
           .split('\n')
           .map((l) => /^\s*-?\s*([^:]+):\s*(.+)$/.exec(l))
           .filter((m): m is RegExpExecArray => !!m)
@@ -343,7 +343,7 @@ export function startSoat(d: SoatDeps) {
           ...(entries[0]!.space ? { space: entries[0]!.space } : {}),
           title: entries.map((e) => e.title).join(' ↔ '),
           pages: entries.map((e) => e.path),
-          note: String(args.mo_ta ?? '').slice(0, 600),
+          note: String(args.note ?? '').slice(0, 600),
           quotes: quotes.slice(0, 6),
         })
         return 'Đã ghi.'
@@ -420,7 +420,7 @@ export function startSoat(d: SoatDeps) {
   // --- Nút xử lý ----------------------------------------------------------------------------------
   const get = (id: string) => {
     const f = findings.get(id)
-    if (!f) throw new SoatError('Không còn phát hiện này (có thể đã sửa).')
+    if (!f) throw new AuditError('Không còn phát hiện này (có thể đã sửa).')
     return f
   }
   const nameOf = (path: string) => d.catalog.get(path)?.name ?? path.split('/').pop()!.replace(/\.md$/, '')
@@ -441,7 +441,7 @@ export function startSoat(d: SoatDeps) {
   async function fix(id: string, forget = false) {
     const f = get(id)
     const space = f.space ?? (f.pages[0]?.startsWith('cong-ty/') ? 'cong-ty' : 'ca-nhan')
-    const b = await d.ingest.addSoat({ space, title: f.title, task: fixTask(f, nameOf) })
+    const b = await d.ingest.addAudit({ space, title: f.title, task: fixTask(f, nameOf) })
     await findings.put(id, {
       ...f,
       status: 'xu-ly',
@@ -454,14 +454,14 @@ export function startSoat(d: SoatDeps) {
   /** Bỏ hay giữ việc xoá ký ức gốc khi bản nạp ghép (ô đánh dấu dưới phát hiện đang xử lý). */
   async function setForget(id: string, on: boolean) {
     const f = get(id)
-    if (f.kind !== 'ky-uc-nen-vao') throw new SoatError('Phát hiện này không phải ký ức.')
+    if (f.kind !== 'ky-uc-nen-vao') throw new AuditError('Phát hiện này không phải ký ức.')
     await findings.put(id, { ...f, forget: on })
   }
 
   /** Xoá ký ức thừa (trang đã có ý này). */
   async function forgetNow(id: string) {
     const f = get(id)
-    if (f.kind !== 'ky-uc-nen-vao' || !f.memory) throw new SoatError('Phát hiện này không phải ký ức.')
+    if (f.kind !== 'ky-uc-nen-vao' || !f.memory) throw new AuditError('Phát hiện này không phải ký ức.')
     await d.forgetMemory(f.memory.id)
     await findings.delete(id)
   }
@@ -489,14 +489,14 @@ export function startSoat(d: SoatDeps) {
   /** Ghi ngày cho số liệu chưa ghi ngày của một trang (sửa ngay, có commit). */
   async function stamp(id: string, date?: string) {
     const f = get(id)
-    if (f.kind !== 'so-lieu-chua-ngay') throw new SoatError('Phát hiện này không phải số liệu.')
+    if (f.kind !== 'so-lieu-chua-ngay') throw new AuditError('Phát hiện này không phải số liệu.')
     const day = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : f.detail
-    if (!day) throw new SoatError('Thiếu ngày.')
+    if (!day) throw new AuditError('Thiếu ngày.')
     const path = f.pages[0]!
     const body = await readFile(join(d.root, path), 'utf8').catch(() => undefined)
-    if (body === undefined) throw new SoatError('Không còn trang này.')
+    if (body === undefined) throw new AuditError('Không còn trang này.')
     const r = stampDates(body, day)
-    if (!r.n) throw new SoatError('Trang không còn số liệu chưa ghi ngày.')
+    if (!r.n) throw new AuditError('Trang không còn số liệu chưa ghi ngày.')
     await writeFile(join(d.root, path), r.text)
     await d.indexFile(path)
     await commit(`${d.who()} ghi ngày số liệu ở [[${nameOf(path)}]]`, [path])
@@ -508,9 +508,9 @@ export function startSoat(d: SoatDeps) {
   async function relinkTo(id: string, to: string) {
     const f = get(id)
     if (!f.target || (f.kind !== 'lien-ket-gay' && f.kind !== 'chua-co-trang'))
-      throw new SoatError('Phát hiện này không phải liên kết gãy.')
+      throw new AuditError('Phát hiện này không phải liên kết gãy.')
     const dest = d.catalog.byName(f.space, to.trim())
-    if (!dest) throw new SoatError('Không có trang này.')
+    if (!dest) throw new AuditError('Không có trang này.')
     const changed: string[] = []
     for (const p of f.pages) {
       const body = await readFile(join(d.root, p), 'utf8').catch(() => undefined)
@@ -521,7 +521,7 @@ export function startSoat(d: SoatDeps) {
       await d.indexFile(p)
       changed.push(p)
     }
-    if (!changed.length) throw new SoatError('Không còn chỗ nào trỏ tới trang này.')
+    if (!changed.length) throw new AuditError('Không còn chỗ nào trỏ tới trang này.')
     await commit(`${d.who()} sửa liên kết [[${f.target}]] → [[${dest.name}]]`, changed)
     await findings.delete(id)
     return changed.length
@@ -530,9 +530,9 @@ export function startSoat(d: SoatDeps) {
   /** Dời trang của phòng đã xoá sang phần chung hay một phòng khác (một commit, hoàn tác được). */
   async function move(id: string, to: string) {
     const f = get(id)
-    if (f.kind !== 'phong-da-xoa' || !f.target) throw new SoatError('Phát hiện này không phải phòng đã xoá.')
+    if (f.kind !== 'phong-da-xoa' || !f.target) throw new AuditError('Phát hiện này không phải phòng đã xoá.')
     const target = to === 'chung' ? 'cong-ty/wiki/chung/' : `cong-ty/wiki/phong-ban/${to}/`
-    if (to !== 'chung' && !d.depts().some((x) => x.id === to)) throw new SoatError('Không có phòng này.')
+    if (to !== 'chung' && !d.depts().some((x) => x.id === to)) throw new AuditError('Không có phòng này.')
     const from = `cong-ty/wiki/phong-ban/${f.target}/`
     const paths: string[] = []
     for (const p of f.pages) {

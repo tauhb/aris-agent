@@ -55,7 +55,7 @@ export const cardRecord = z.object({
 })
 export type CardRecord = z.infer<typeof cardRecord>
 
-/** Bot dự kiến cho một thẻ của Team (`tao_the` ghi lúc chia thẻ); Driver giao cho bot này khi thẻ sẵn sàng. */
+/** Bot dự kiến cho một thẻ của Team (`create_cards` ghi lúc chia thẻ); Driver giao cho bot này khi thẻ sẵn sàng. */
 export const planRecord = z.object({
   workspace: z.string(),
   taskId: z.string(),

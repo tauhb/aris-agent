@@ -2,16 +2,42 @@
 import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 import { z } from 'zod'
 
-export const KINDS = ['chat', 'giao', 'routine', 'hoc'] as const
+export const KINDS = ['chat', 'delegated', 'routine', 'learning'] as const
 /** Loại việc, khớp bốn màu của biểu đồ: chat, việc được giao, routine, vòng học và kiểm thử. */
 export type Kind = (typeof KINDS)[number]
 
-export const SOURCES = ['web', 'telegram', 'lark', 'zalo', 'lich', 'commander', 'app', 'nen', 'giao'] as const
+export const SOURCES = [
+  'web',
+  'telegram',
+  'lark',
+  'zalo',
+  'schedule',
+  'commander',
+  'app',
+  'background',
+  'bot',
+] as const
 /** Nơi việc bắt nguồn (cột Nguồn của nhật ký). */
 export type Source = (typeof SOURCES)[number]
 
-const kind = z.enum(KINDS)
-const source = z.enum(SOURCES)
+/** Giá trị cũ (tiếng Việt) còn trong bản ghi đã lưu: đọc thì quy về giá trị mới. */
+export const LEGACY_KINDS: Readonly<Record<string, Kind>> = { giao: 'delegated', hoc: 'learning' }
+export const LEGACY_SOURCES: Readonly<Record<string, Source>> = {
+  lich: 'schedule',
+  nen: 'background',
+  giao: 'bot',
+}
+export const LEGACY_EVENT_TYPES: Readonly<Record<string, 'approval' | 'question'>> = {
+  duyet: 'approval',
+  hoi: 'question',
+}
+const legacy =
+  <T extends string>(map: Readonly<Record<string, T>>) =>
+  (v: unknown) =>
+    typeof v === 'string' ? (map[v] ?? v) : v
+
+const kind = z.preprocess(legacy(LEGACY_KINDS), z.enum(KINDS))
+const source = z.preprocess(legacy(LEGACY_SOURCES), z.enum(SOURCES))
 
 export const callRecord = z.object({
   /** Lúc gọi (ms). */
@@ -62,7 +88,7 @@ export type SessionRecord = z.infer<typeof sessionRecord>
 export const eventRecord = z.object({
   at: z.number(),
   session: z.string(),
-  type: z.enum(['duyet', 'hoi']),
+  type: z.preprocess(legacy(LEGACY_EVENT_TYPES), z.enum(['approval', 'question'])),
   tool: z.string().optional(),
   /** Mã lời gọi công cụ, để ghép với bước công cụ khi phát lại. */
   callId: z.string().optional(),

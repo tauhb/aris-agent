@@ -37,7 +37,7 @@ export interface GuestRules {
 
 export const DEFAULT_RULES: GuestRules = { ask: true, untrusted: true, nomem: true, notools: true }
 
-export type Verdict = { code: 'cam' | 'ky-uc' | 'doi'; reason: string; what: string } | undefined
+export type Verdict = { code: 'forbidden' | 'memory' | 'team'; reason: string; what: string } | undefined
 
 const SHELL_TOOLS = new Set(['bash', 'pwsh', 'terminal_send', 'terminal_open'])
 const WRITE_TOOLS = new Set(['write', 'edit'])
@@ -48,18 +48,18 @@ const SEND_TOOLS = new Set(['channel_send'])
 const MEMORY_TOOLS = new Set(['memory', 'brain_note', 'brain_capture', 'brain_draft'])
 /** Công cụ của đội. */
 const TEAM_TOOLS = new Set([
-  'giao_viec',
-  'giao_phong',
-  'chuyen_giao',
-  'moi_noi',
-  'tao_the',
-  'tao_routine',
-  'bat_routine',
+  'assign_task',
+  'assign_department',
+  'hand_off',
+  'start_room_round',
+  'create_cards',
+  'create_routine',
+  'set_routine_enabled',
   'heartbeat',
   'loop',
   'subgoal',
   'learn',
-  'xung_ho',
+  'save_address_style',
   'schedule_create',
   'schedule_update',
   'schedule_delete',
@@ -154,50 +154,51 @@ export function guestVerdict(
   home = homedir(),
 ): Verdict {
   const args = (rawArgs && typeof rawArgs === 'object' ? rawArgs : {}) as Record<string, unknown>
-  const cam = (what: string): Verdict => ({
-    code: 'cam',
+  const forbid = (what: string): Verdict => ({
+    code: 'forbidden',
     what,
     reason: `aris từ chối: ${what} nằm trong danh sách cấm của người dùng. ${DENY_TAIL}`,
   })
   // ACP không có câu hỏi dạng chọn: lời gọi này sẽ chờ mãi.
   if (tool === 'ask_user_question')
     return {
-      code: 'doi',
+      code: 'team',
       what: 'hỏi người dùng trong aris',
       reason:
         'Ứng dụng gọi bạn qua ACP không trả lời được câu hỏi dạng chọn. Hỏi bằng lời ngay trong câu trả lời rồi dừng lượt, chờ ứng dụng nhắn lại.',
     }
-  if (SEND_TOOLS.has(tool)) return cam('gửi tin thay người dùng')
+  if (SEND_TOOLS.has(tool)) return forbid('gửi tin thay người dùng')
   // Tác nhân con, bot ngoài (Claude Code, Codex) chạy ngoài tầm danh sách cấm của aris: không giao cho chúng.
   if (/^subagent(_|$)/.test(tool) || tool === 'spawn_teammate')
-    return cam('giao việc cho tác nhân con, bot ngoài')
+    return forbid('giao việc cho tác nhân con, bot ngoài')
   if (SHELL_TOOLS.has(tool)) {
     const what = shellDenial(str(args.command) || str(args.input) || str(args.text), cwd, home)
-    if (what) return cam(what)
+    if (what) return forbid(what)
   }
   const w = writePath(tool, args)
   if (w !== undefined) {
     // Giải liên kết mềm: `link/x` trong thư mục được đưa mà trỏ ra ngoài thì vẫn là ghi ra ngoài.
     const abs = resolve(cwd ?? '/', w.replace(/^~(?=$|\/)/, home))
     const real = realResolve(abs)
-    if (w && (secretPath(abs, home) || secretPath(real, home))) return cam('sửa khoá, mật khẩu')
-    if (w && (!cwd || !insideDir(real, realResolve(cwd), home))) return cam('sửa tệp ngoài thư mục được đưa')
+    if (w && (secretPath(abs, home) || secretPath(real, home))) return forbid('sửa khoá, mật khẩu')
+    if (w && (!cwd || !insideDir(real, realResolve(cwd), home)))
+      return forbid('sửa tệp ngoài thư mục được đưa')
   }
   const r = readPath(tool, args)
   if (r) {
     const abs = resolve(cwd ?? '/', r.replace(/^~(?=$|\/)/, home))
-    if (secretPath(abs, home) || secretPath(realResolve(abs), home)) return cam('đọc khoá, mật khẩu')
+    if (secretPath(abs, home) || secretPath(realResolve(abs), home)) return forbid('đọc khoá, mật khẩu')
   }
   if (rules.nomem && MEMORY_TOOLS.has(tool) && !(tool === 'memory' && args.action === 'search'))
     return {
-      code: 'ky-uc',
+      code: 'memory',
       what: 'ghi ký ức, bộ não',
       reason:
         'Bạn đang làm khách cho một ứng dụng khác: không ghi ký ức, hồ sơ, bộ não của người dùng. Đọc, tìm thì được.',
     }
   if (rules.notools && TEAM_TOOLS.has(tool))
     return {
-      code: 'doi',
+      code: 'team',
       what: 'công cụ của đội',
       reason:
         'Bạn đang làm khách cho một ứng dụng khác: không giao việc cho bot khác, không đặt lịch, routine, không dùng đội. Tự làm phần được nhờ.',

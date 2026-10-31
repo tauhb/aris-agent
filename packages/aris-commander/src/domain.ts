@@ -74,7 +74,7 @@ export const roomEntry = z.object({
 export type RoomEntry = z.infer<typeof roomEntry>
 
 /**
- * Một vòng của phòng nhóm (bước 3e): một lần Aris gọi `moi_noi` trong phiên chính của dự án, khoá
+ * Một vòng của phòng nhóm (bước 3e): một lần Aris gọi `start_room_round` trong phiên chính của dự án, khoá
  * theo mã lần gọi công cụ để khung chat vẽ đúng chỗ.
  */
 export const roundRecord = z.object({

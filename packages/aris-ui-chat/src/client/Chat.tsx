@@ -196,7 +196,7 @@ function DispatchBranch(props: {
   )
 }
 
-/** Lần gọi `giao_viec` của Commander vẽ thành các nhánh song song, mỗi bot một nhánh. */
+/** Lần gọi `assign_task` của Commander vẽ thành các nhánh song song, mỗi bot một nhánh. */
 export function DispatchBranches(
   props: SubagentCall & {
     callId: string

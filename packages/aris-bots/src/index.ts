@@ -207,20 +207,20 @@ export async function apply(ctx: Context): Promise<void> {
   // Cách xưng hô: bot hỏi người dùng lần đầu rồi lưu ở đây.
   ctx.tools.register(
     defineTool({
-      name: 'xung_ho',
+      name: 'save_address_style',
       description:
         'Lưu cách xưng hô với người dùng sau khi hỏi: tên, người dùng muốn được gọi là gì, bạn xưng là gì. Chỉ điền phần người dùng vừa nói; cả đội bot dùng chung.',
       parameters: {
-        ten: { type: 'string', description: 'Tên người dùng.' },
-        goi: { type: 'string', description: 'Gọi người dùng là gì, ví dụ "anh", "chị Hà", "bạn", "sếp".' },
-        xung: { type: 'string', description: 'Bạn tự xưng là gì, ví dụ "em", "tôi", "mình".' },
+        name: { type: 'string', description: 'Tên người dùng.' },
+        call: { type: 'string', description: 'Gọi người dùng là gì, ví dụ "anh", "chị Hà", "bạn", "sếp".' },
+        self: { type: 'string', description: 'Bạn tự xưng là gì, ví dụ "em", "tôi", "mình".' },
       },
       output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
       async execute(args) {
         const o = await store.setOwner({
-          ...(args.ten !== undefined ? { name: args.ten } : {}),
-          ...(args.goi !== undefined ? { call: args.goi } : {}),
-          ...(args.xung !== undefined ? { self: args.xung } : {}),
+          ...(args.name !== undefined ? { name: args.name } : {}),
+          ...(args.call !== undefined ? { call: args.call } : {}),
+          ...(args.self !== undefined ? { self: args.self } : {}),
         })
         return `Đã lưu: ${[o.name && `tên ${o.name}`, o.call && `gọi «${o.call}»`, o.self && `xưng «${o.self}»`].filter(Boolean).join(', ') || 'chưa có gì'}.`
       },

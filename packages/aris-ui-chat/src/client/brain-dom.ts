@@ -62,13 +62,13 @@ export function openPeek(
   head.className = 'hd'
   const b = doc.createElement('b')
   b.textContent = page.title
-  const lay = doc.createElement('span')
-  lay.className = `lay ${layerClass(page.layer)}`.trim()
-  lay.textContent = text.layer(page.layer)
+  const layerEl = doc.createElement('span')
+  layerEl.className = `lay ${layerClass(page.layer)}`.trim()
+  layerEl.textContent = text.layer(page.layer)
   const where = doc.createElement('span')
   where.className = 'mut'
   where.textContent = text.space(page.space)
-  head.append(b, lay, where)
+  head.append(b, layerEl, where)
   const sum = doc.createElement('div')
   sum.className = 'sum'
   sum.textContent = '…'

@@ -1,13 +1,13 @@
 /**
  * `/learn` (giai đoạn 3, đợt 6; đặc tả: docs/specs/aris-skills.md): lời nhắc gửi cho bot để tự gom
- * tài liệu bằng công cụ sẵn có rồi viết một skill theo chuẩn của aris, nộp bằng `luu_skill`. Thuần.
+ * tài liệu bằng công cụ sẵn có rồi viết một skill theo chuẩn của aris, nộp bằng `save_skill`. Thuần.
  */
 import { MAX_BODY, MAX_DESCRIPTION } from './lint.js'
 
 /** Tên công cụ bot dùng để nộp skill vừa học. */
-export const LEARN_TOOL = 'luu_skill'
+export const LEARN_TOOL = 'save_skill'
 
-/** Một lượt `/learn` mở cửa cho `luu_skill` tối đa chừng này (bot tự gom tài liệu có thể lâu). */
+/** Một lượt `/learn` mở cửa cho `save_skill` tối đa chừng này (bot tự gom tài liệu có thể lâu). */
 export const LEARN_WINDOW_MS = 30 * 60_000
 
 /** Số ca thử bot viết kèm skill. */

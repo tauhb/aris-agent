@@ -39,7 +39,7 @@ import {
   type OpKind,
 } from './ingest.js'
 import { parsePage } from './page.js'
-import { soatPrompt } from './soat.js'
+import { auditPrompt } from './audit.js'
 import { dayKey, SPACES, type Space } from './vault.js'
 
 /** Tệp gửi vào lớn hơn chừng này thì từ chối. */
@@ -400,7 +400,7 @@ export function startIngest(d: IngestDeps) {
   }
 
   /** Bản nạp loại "soát" (đợt 4a): Thủ thư sửa wiki theo một phát hiện; duyệt, ghép, hoàn tác như mọi bản nạp. */
-  async function addSoat(input: { space: Space; title: string; task: string }) {
+  async function addAudit(input: { space: Space; title: string; task: string }) {
     const at = now()
     const title = `Soát: ${input.title}`.slice(0, 120)
     const rel = `hop-thu-vao/soat-${inboxName(at, input.title)}`
@@ -504,7 +504,7 @@ export function startIngest(d: IngestDeps) {
             type: 'text',
             text:
               b.source.kind === 'soat'
-                ? soatPrompt({
+                ? auditPrompt({
                     rules: await readText('AGENTS.md'),
                     spaceRules: await readText(`${space}/AGENTS.md`),
                     index: await readText(`${space}/index.md`),
@@ -587,24 +587,24 @@ export function startIngest(d: IngestDeps) {
       description:
         'Chỉ dùng khi đang nạp một nguồn vào bộ não: ghi toàn bộ nội dung mới của một trang wiki lên bản nháp (chưa đổi kho thật; người dùng duyệt rồi mới ghép). Gọi một lần cho mỗi trang; gọi lại cùng đường dẫn là thay bản trước.',
       parameters: {
-        duong_dan: {
+        path: {
           type: 'string',
           required: true,
           description: 'Đường dẫn trang, ví dụ ca-nhan/wiki/nguoi/chi-ha.md.',
         },
-        noi_dung: {
+        content: {
           type: 'string',
           required: true,
           description: 'Toàn bộ nội dung trang (Markdown, có nhãn đầu trang).',
         },
-        loai: {
+        kind: {
           type: 'string',
           enum: [...OP_KINDS],
           required: true,
           description: 'moi, bo-sung, lien-ket hay sua-y.',
         },
-        tom_tat: { type: 'string', required: true, description: 'Một câu tóm tắt trang, cho mục lục.' },
-        canh_bao: { type: 'string', description: 'Có mâu thuẫn hay điều người dùng cần xem: nói rõ.' },
+        summary: { type: 'string', required: true, description: 'Một câu tóm tắt trang, cho mục lục.' },
+        warning: { type: 'string', description: 'Có mâu thuẫn hay điều người dùng cần xem: nói rõ.' },
       },
       output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
       async execute(args, exec) {
@@ -612,18 +612,18 @@ export function startIngest(d: IngestDeps) {
         const t = sid ? drafting.get(sid) : undefined
         const b = t ? batches.get(t.batch) : undefined
         if (!b?.space) return 'Không làm được: brain_draft chỉ dùng khi đang nạp một nguồn.'
-        const path = String(args.duong_dan ?? '').replace(/^\/+/, '')
+        const path = String(args.path ?? '').replace(/^\/+/, '')
         const bad = checkDraftPath(path, b.space)
         if (bad) return `Không làm được: ${bad}`
         if (/\/(index|log)\.md$/.test(path)) return 'Không làm được: index.md và log.md do aris giữ.'
-        const kind = OP_KINDS.find((k) => k === args.loai) ?? 'bo-sung'
+        const kind = OP_KINDS.find((k) => k === args.kind) ?? 'bo-sung'
         const prev = b.ops.find((o) => o.path === path)
         const exists = existsSync(join(root, path))
         const base = prev ? prev.base : exists ? await readText(path) : undefined
-        const summary = String(args.tom_tat ?? '')
+        const summary = String(args.summary ?? '')
           .trim()
           .slice(0, 200)
-        const next = stampFront(String(args.noi_dung ?? ''), { 'tom-tat': summary, 'cap-nhat': today() })
+        const next = stampFront(String(args.content ?? ''), { 'tom-tat': summary, 'cap-nhat': today() })
         const op: Op = {
           path,
           title: parsePage(next, basename(path, '.md')).title,
@@ -631,7 +631,7 @@ export function startIngest(d: IngestDeps) {
           ...(base !== undefined ? { base } : {}),
           next,
           summary,
-          ...(String(args.canh_bao ?? '').trim() ? { warn: String(args.canh_bao).trim().slice(0, 400) } : {}),
+          ...(String(args.warning ?? '').trim() ? { warn: String(args.warning).trim().slice(0, 400) } : {}),
         }
         await put({ ...b, ops: [...b.ops.filter((o) => o.path !== path), op] })
         return `Đã ghi bản nháp ${path} (${op.kind}). Chưa đổi kho thật.`
@@ -646,17 +646,17 @@ export function startIngest(d: IngestDeps) {
       description:
         'Gửi một nguồn vào Hộp thư vào của bộ não người dùng để Thủ thư nạp vào wiki (người dùng duyệt): chữ, link web, hay một tệp trong thư mục làm việc của bạn (PDF, Word, ảnh, ghi âm, .md). Dùng khi người dùng nhờ lưu, hay khi bạn có kết quả đáng giữ lâu dài.',
       parameters: {
-        noi_dung: { type: 'string', description: 'Chữ cần lưu (Markdown).' },
+        text: { type: 'string', description: 'Chữ cần lưu (Markdown).' },
         link: { type: 'string', description: 'Link web cần lưu (http, https).' },
-        tep: { type: 'string', description: 'Đường dẫn tệp trong thư mục làm việc của bạn.' },
-        tieu_de: { type: 'string', description: 'Tiêu đề ngắn của nguồn.' },
+        file: { type: 'string', description: 'Đường dẫn tệp trong thư mục làm việc của bạn.' },
+        title: { type: 'string', description: 'Tiêu đề ngắn của nguồn.' },
       },
       output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
       async execute(args, exec) {
         const agent = exec.agent as (AgentLike & { session: { header?: { cwd?: string } } }) | undefined
         const by = d.botOf(agent?.session.id)
         try {
-          const file = String(args.tep ?? '').trim()
+          const file = String(args.file ?? '').trim()
           if (file) {
             const cwd = agent?.session.header?.cwd
             if (!cwd) return 'Không làm được: phiên không có thư mục làm việc.'
@@ -674,9 +674,9 @@ export function startIngest(d: IngestDeps) {
             return `Đã gửi tệp «${b.source.title}» vào Hộp thư vào; Thủ thư sẽ lập bản nạp, người dùng duyệt.`
           }
           const b = await add({
-            ...(String(args.noi_dung ?? '').trim() ? { text: String(args.noi_dung) } : {}),
+            ...(String(args.text ?? '').trim() ? { text: String(args.text) } : {}),
             ...(String(args.link ?? '').trim() ? { url: String(args.link) } : {}),
-            ...(String(args.tieu_de ?? '').trim() ? { title: String(args.tieu_de) } : {}),
+            ...(String(args.title ?? '').trim() ? { title: String(args.title) } : {}),
             from: 'bot',
             by,
           })
@@ -982,7 +982,7 @@ export function startIngest(d: IngestDeps) {
     on,
     add,
     addFile,
-    addSoat,
+    addAudit,
     rebuildIndex,
     appendLog,
     approve,

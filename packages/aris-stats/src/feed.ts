@@ -46,7 +46,7 @@ export interface FeedInput {
     at: number
     bot: string
     session?: string | undefined
-    type: 'duyet' | 'hoi'
+    type: 'approval' | 'question'
     what?: string | undefined
     tool?: string | undefined
     decision?: string | undefined
@@ -94,7 +94,7 @@ export function mergeFeed(input: FeedInput, limit = 30): FeedItem[] {
   for (const e of input.events) {
     const what = e.what ?? e.tool ?? ''
     const ses = withSession(e.session)
-    if (e.type === 'hoi') out.push({ at: e.at, bot: e.bot, kind: 'asked', tone: 'warn', what, ...ses })
+    if (e.type === 'question') out.push({ at: e.at, bot: e.bot, kind: 'asked', tone: 'warn', what, ...ses })
     else if (e.decision?.startsWith('allowed'))
       out.push({ at: e.at, bot: e.bot, kind: 'approved', tone: 'ok', what, ...ses })
     else if (e.decision === 'rejected')

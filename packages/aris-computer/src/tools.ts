@@ -7,8 +7,8 @@ import {
 } from '@deepseek-ai/dsh-tools'
 
 /**
- * Mô tả các công cụ điều khiển máy cho bot (tên tiếng Việt như các công cụ khác của aris). Lời dặn chung: ưu tiên bấm
- * theo mã phần tử lấy từ man_hinh_xem / man_hinh_tim; chỉ dùng toạ độ khi không có cách khác; toạ độ là điểm ảnh của
+ * Mô tả các công cụ điều khiển máy cho bot (tên, tham số tiếng Anh như các công cụ khác của aris). Lời dặn chung: ưu tiên bấm
+ * theo mã phần tử lấy từ screen_view / screen_find; chỉ dùng toạ độ khi không có cách khác; toạ độ là điểm ảnh của
  * ảnh chụp cửa sổ gần nhất.
  */
 
@@ -20,7 +20,7 @@ export interface ToolSpec {
 
 const WIN: ParameterPropertySpec = {
   type: 'string',
-  description: 'Cửa sổ dạng pid:mã_cửa_sổ, lấy từ man_hinh_xem. Bỏ trống là cửa sổ vừa làm.',
+  description: 'Cửa sổ dạng pid:mã_cửa_sổ, lấy từ screen_view. Bỏ trống là cửa sổ vừa làm.',
 }
 const POINT = (what: string): ParameterPropertySpec => ({
   type: 'object',
@@ -35,88 +35,88 @@ const POINT = (what: string): ParameterPropertySpec => ({
 
 export const TOOL_SPECS: readonly ToolSpec[] = [
   {
-    name: 'man_hinh_xem',
+    name: 'screen_view',
     description:
       'Chụp một cửa sổ trên máy Mac của người dùng: trả danh sách cửa sổ đang mở, các phần tử bấm được (mã trong ngoặc vuông, vai, nhãn, tâm @x,y) và ảnh chụp nếu model đọc được ảnh. Gọi trước mỗi thao tác vì màn hình đổi sau mỗi lần bấm, gõ.',
     parameters: {
-      ung_dung: {
+      app: {
         type: 'string',
         description:
           'Tên ứng dụng (ví dụ Notes, Finder) hay bundle id. Bỏ trống là cửa sổ vừa làm hay ứng dụng đang ở trước.',
       },
-      cua_so: WIN,
+      window: WIN,
     },
   },
   {
-    name: 'man_hinh_tim',
+    name: 'screen_find',
     description:
-      'Đọc cây phần tử (Trợ năng) của một cửa sổ, không chụp ảnh, rẻ hơn man_hinh_xem. Có tu_khoa thì chỉ trả phần tử khớp (nhãn, vai, giá trị). Dùng để lấy mã phần tử trước khi bấm.',
+      'Đọc cây phần tử (Trợ năng) của một cửa sổ, không chụp ảnh, rẻ hơn screen_view. Có query thì chỉ trả phần tử khớp (nhãn, vai, giá trị). Dùng để lấy mã phần tử trước khi bấm.',
     parameters: {
-      tu_khoa: {
+      query: {
         type: 'string',
         description: 'Chữ cần tìm trong nhãn hay giá trị, ví dụ "Lưu", "Ghi chú mới".',
       },
-      ung_dung: { type: 'string', description: 'Tên ứng dụng hay bundle id.' },
-      cua_so: WIN,
+      app: { type: 'string', description: 'Tên ứng dụng hay bundle id.' },
+      window: WIN,
     },
   },
   {
-    name: 'man_hinh_bam',
+    name: 'screen_click',
     description:
-      'Bấm một phần tử. Ưu tiên phan_tu (mã từ man_hinh_xem / man_hinh_tim); chỉ dùng x, y khi phần tử không có mã (ứng dụng tự vẽ). Mã phần tử cũ sau mỗi lần chụp lại cửa sổ.',
+      'Bấm một phần tử. Ưu tiên element (mã từ screen_view / screen_find); chỉ dùng x, y khi phần tử không có mã (ứng dụng tự vẽ). Mã phần tử cũ sau mỗi lần chụp lại cửa sổ.',
     parameters: {
-      phan_tu: { type: 'string', description: 'Mã phần tử, ví dụ "s3:12".' },
+      element: { type: 'string', description: 'Mã phần tử, ví dụ "s3:12".' },
       x: { type: 'number', description: 'Toạ độ ngang trên ảnh chụp (khi không có mã).' },
       y: { type: 'number', description: 'Toạ độ dọc trên ảnh chụp (khi không có mã).' },
-      nut: { type: 'string', enum: ['trai', 'phai'], description: 'Nút chuột, mặc định trai.' },
-      so_lan: { type: 'number', description: '1 (mặc định), 2 là bấm đúp, 3 là bấm ba lần (chọn cả dòng).' },
-      cua_so: WIN,
+      button: { type: 'string', enum: ['left', 'right'], description: 'Nút chuột, mặc định left (trái).' },
+      count: { type: 'number', description: '1 (mặc định), 2 là bấm đúp, 3 là bấm ba lần (chọn cả dòng).' },
+      window: WIN,
     },
   },
   {
-    name: 'man_hinh_go',
+    name: 'screen_type',
     description:
-      'Gõ chữ vào cửa sổ. Có phan_tu thì bấm vào ô đó trước để đặt con trỏ. Không gõ được vào ô mật khẩu (bị chặn): việc đăng nhập để người dùng tự làm.',
+      'Gõ chữ vào cửa sổ. Có element thì bấm vào ô đó trước để đặt con trỏ. Không gõ được vào ô mật khẩu (bị chặn): việc đăng nhập để người dùng tự làm.',
     parameters: {
-      chu: { type: 'string', required: true, description: 'Chữ cần gõ; xuống dòng bằng \\n.' },
-      phan_tu: { type: 'string', description: 'Mã ô nhập cần gõ vào.' },
-      cua_so: WIN,
+      text: { type: 'string', required: true, description: 'Chữ cần gõ; xuống dòng bằng \\n.' },
+      element: { type: 'string', description: 'Mã ô nhập cần gõ vào.' },
+      window: WIN,
     },
   },
   {
-    name: 'man_hinh_phim',
+    name: 'screen_key',
     description:
       'Bấm phím hay phím tắt, ví dụ "cmd+n", "cmd+shift+s", "enter", "esc", "tab". Phím khoá máy, đăng xuất, tắt máy, buộc thoát bị chặn.',
-    parameters: { phim: { type: 'string', required: true, description: 'Phím tắt.' }, cua_so: WIN },
+    parameters: { keys: { type: 'string', required: true, description: 'Phím tắt.' }, window: WIN },
   },
   {
-    name: 'man_hinh_cuon',
+    name: 'screen_scroll',
     description: 'Cuộn trong cửa sổ.',
     parameters: {
-      huong: {
+      direction: {
         type: 'string',
         required: true,
-        enum: ['len', 'xuong', 'trai', 'phai'],
+        enum: ['up', 'down', 'left', 'right'],
         description: 'Hướng cuộn.',
       },
-      so_buoc: { type: 'number', description: 'Số bước, mặc định 3 (tối đa 20).' },
+      steps: { type: 'number', description: 'Số bước, mặc định 3 (tối đa 20).' },
       x: { type: 'number', description: 'Cuộn tại điểm này trên ảnh chụp (bỏ trống là vùng đang chọn).' },
       y: { type: 'number', description: 'Toạ độ dọc của điểm cuộn.' },
-      cua_so: WIN,
+      window: WIN,
     },
   },
   {
-    name: 'man_hinh_keo',
+    name: 'screen_drag',
     description:
       'Kéo từ một điểm tới điểm khác trong cùng cửa sổ (ví dụ kéo thanh trượt, kéo tệp vào thư mục). Kéo vào Thùng rác bị chặn.',
-    parameters: { tu: POINT('Điểm bắt đầu'), den: POINT('Điểm thả'), cua_so: WIN },
+    parameters: { from: POINT('Điểm bắt đầu'), to: POINT('Điểm thả'), window: WIN },
   },
   {
-    name: 'ung_dung_mo',
+    name: 'open_app',
     description:
       'Mở một ứng dụng trên máy Mac của người dùng (ở nền, không đưa lên trước). Cài đặt hệ thống, Keychain, trình quản lý mật khẩu, Terminal, trình cài đặt bị chặn.',
     parameters: {
-      ten: {
+      name: {
         type: 'string',
         required: true,
         description: 'Tên ứng dụng (Notes, Calendar, Finder…) hay bundle id.',

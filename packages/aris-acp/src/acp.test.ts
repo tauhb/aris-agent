@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { appName, findOnPath } from './index.js'
+import { LEGACY_RESULTS, logRecord } from './domain.js'
 import {
   badGuestCwd,
   cleanRules,
@@ -34,7 +35,7 @@ describe('danh sách cấm (áp cả khi ứng dụng tự duyệt)', () => {
       'sudo ls',
       'rmdir old',
     ])
-      expect(v('bash', { command: cmd })?.code, cmd).toBe('cam')
+      expect(v('bash', { command: cmd })?.code, cmd).toBe('forbidden')
     for (const cmd of ['ls -la', 'git push origin main', 'npm run format', 'echo rm', 'git status'])
       expect(v('bash', { command: cmd }), cmd).toBeUndefined()
   })
@@ -42,13 +43,13 @@ describe('danh sách cấm (áp cả khi ứng dụng tự duyệt)', () => {
     expect(v('write', { file_path: 'notes/a.md' })).toBeUndefined()
     expect(v('edit', { file_path: `${CWD}/src/a.ts` })).toBeUndefined()
     expect(v('write', { file_path: '/Users/tau/Desktop/x.md' })?.what).toBe('sửa tệp ngoài thư mục được đưa')
-    expect(v('write', { file_path: '../khac/x.md' })?.code).toBe('cam')
+    expect(v('write', { file_path: '../khac/x.md' })?.code).toBe('forbidden')
     expect(v('read', { file_path: '/Users/tau/.ssh/id_ed25519' })?.what).toBe('đọc khoá, mật khẩu')
-    expect(v('read', { file_path: '.env' })?.code).toBe('cam')
+    expect(v('read', { file_path: '.env' })?.code).toBe('forbidden')
     expect(v('read', { file_path: 'src/index.ts' })).toBeUndefined()
-    expect(v('bash', { command: 'cat ~/.ssh/config' })?.code).toBe('cam')
+    expect(v('bash', { command: 'cat ~/.ssh/config' })?.code).toBe('forbidden')
     expect(v('channel_send', { text: 'chào' })?.what).toBe('gửi tin thay người dùng')
-    expect(v('subagent_claude_code', { prompt: 'rm -r x' })?.code).toBe('cam')
+    expect(v('subagent_claude_code', { prompt: 'rm -r x' })?.code).toBe('forbidden')
     expect(v('subagent_codex', {})?.what).toBe('giao việc cho tác nhân con, bot ngoài')
     expect(v('list_subagent_models', {})).toBeUndefined()
     expect(v('ask_user_question', {}, { ...DEFAULT_RULES, notools: false })?.what).toBe(
@@ -59,16 +60,16 @@ describe('danh sách cấm (áp cả khi ứng dụng tự duyệt)', () => {
     expect(secretPath('/Users/tau/code/app/src/credentials.ts', HOME)).toBe(false)
   })
   it('ký ức, công cụ của đội theo luật; tắt luật thì để luồng thường quyết', () => {
-    expect(v('memory', { action: 'save', text: 'x' })?.code).toBe('ky-uc')
+    expect(v('memory', { action: 'save', text: 'x' })?.code).toBe('memory')
     expect(v('memory', { action: 'search', query: 'x' })).toBeUndefined()
-    expect(v('brain_note', { noi_dung: 'x' })?.code).toBe('ky-uc')
-    expect(v('giao_viec', {})?.code).toBe('doi')
-    expect(v('schedule_create', {})?.code).toBe('doi')
+    expect(v('brain_note', { text: 'x' })?.code).toBe('memory')
+    expect(v('assign_task', {})?.code).toBe('team')
+    expect(v('schedule_create', {})?.code).toBe('team')
     const off = { ...DEFAULT_RULES, nomem: false, notools: false }
     expect(v('memory', { action: 'save' }, off)).toBeUndefined()
-    expect(v('giao_viec', {}, off)).toBeUndefined()
+    expect(v('assign_task', {}, off)).toBeUndefined()
     // Danh sách cấm không tắt được.
-    expect(v('bash', { command: 'rm -r x' }, off)?.code).toBe('cam')
+    expect(v('bash', { command: 'rm -r x' }, off)?.code).toBe('forbidden')
   })
   it('lời từ chối nói rõ danh sách cấm; mô tả việc cho nhật ký; lời dặn', () => {
     expect(v('bash', { command: 'rm -r drafts/cu' })?.reason).toContain('danh sách cấm của người dùng')
@@ -110,7 +111,7 @@ describe('đợt 7f · S11: bộ quyền khách chặt hơn', () => {
       'git reset --hard',
       'find . -delete',
     ])
-      expect(v('bash', { command: cmd })?.code, cmd).toBe('cam')
+      expect(v('bash', { command: cmd })?.code, cmd).toBe('forbidden')
   })
   it('ghi ngoài thư mục được đưa qua shell', () => {
     for (const cmd of [
@@ -209,7 +210,7 @@ describe('đợt 7f · S11: bộ quyền khách chặt hơn', () => {
       await rm(dir, { recursive: true, force: true })
     }
     expect(guestVerdict('write', { file_path: '/etc/hosts' }, undefined, DEFAULT_RULES, HOME)?.code).toBe(
-      'cam',
+      'forbidden',
     )
   })
   it('từ chối thư mục làm việc quá rộng khi bắt tay', () => {
@@ -308,5 +309,27 @@ describe('dây nối', () => {
     await new Promise((r) => setTimeout(r, 30))
     expect(replies.join('')).toContain('"id":2')
     client.destroy()
+  })
+})
+
+describe('nhật ký việc của phiên khách đã lưu', () => {
+  it('kết quả cũ (tiếng Việt) quy về giá trị mới khi đọc', () => {
+    const base = {
+      id: 'l1',
+      at: '2026-10-01T00:00:00.000Z',
+      app: 'Zed',
+      bot: 'aris',
+      session: 's1',
+      what: 'x',
+    }
+    expect(Object.keys(LEGACY_RESULTS).map((result) => logRecord.parse({ ...base, result }).result)).toEqual([
+      'session-opened',
+      'allowed',
+      'app-approved',
+      'app-rejected',
+      'blocked',
+    ])
+    expect(logRecord.parse({ ...base, result: 'blocked' }).result).toBe('blocked')
+    expect(() => logRecord.parse({ ...base, result: 'la' })).toThrow()
   })
 })

@@ -102,7 +102,7 @@ export type SessionRecord = z.infer<typeof sessionRecord>
 
 /**
  * Cách xưng hô với người dùng (một bản ghi, khoá `main`). Không viết cứng "anh", "chị", "chủ nhân":
- * bot hỏi lần đầu rồi lưu bằng tool `xung_ho`; sửa được ở trang Hồ sơ.
+ * bot hỏi lần đầu rồi lưu bằng tool `save_address_style`; sửa được ở trang Hồ sơ.
  */
 export const ownerRecord = z.object({
   /** Tên người dùng. */

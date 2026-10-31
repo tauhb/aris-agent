@@ -9,7 +9,7 @@ Quyết định 11: dự án là nơi vài bot cùng làm một việc lớn, c�
 | `workspace` | Mã workspace của dsh (khoá bản ghi) |
 | `name`, `goal` | Tên (đổi tên thì đổi cả tên workspace), mục tiêu (không bắt buộc) |
 | `members` | Mã nội bộ của bot thường; Aris không nằm trong danh sách vì luôn chủ trì |
-| `rules` | `maxRounds` (1–10, mặc định 3), `maxMessages` (1–30, mặc định 10), `stopCommand`, `arisSummarizes`; phòng nhóm dùng (bước 3e, xem [aris-commander.md](aris-commander.md#phòng-nhóm-của-dự-án-moi_noi-bước-3e)) |
+| `rules` | `maxRounds` (1–10, mặc định 3), `maxMessages` (1–30, mặc định 10), `stopCommand`, `arisSummarizes`; phòng nhóm dùng (bước 3e, xem [aris-commander.md](aris-commander.md#phòng-nhóm-của-dự-án-start_room_round-bước-3e)) |
 | `mainSession` | Phiên chính, Aris làm trưởng nhóm, ghim đầu dự án |
 
 ## Một dự án, một Team
@@ -18,7 +18,7 @@ Team của dsh gắn với một phiên trưởng nhóm (mã Team = mã phiên).
 
 ## Ngữ cảnh `aris:project`
 
-Mọi phiên trong một dự án có hồ sơ nạp `<aris-project>` (sau tính cách, trước hướng dẫn giao việc): tên, thư mục, mục tiêu, thành viên (`@tên gọi`, vai). Aris nhận thêm cách làm trong dự án: giao việc cho thành viên trước, cần bot ngoài dự án thì hỏi người dùng hoặc đề nghị thêm vào dự án. Riêng phiên chính (phòng nhóm): khi nào mở cuộc bàn bằng `moi_noi`, cách điều phối, luật số vòng và số tin, hỏi người dùng bằng `ask_user_question` trước khi chốt, lệnh dừng. Bot thành viên nhận mục tiêu và đồng đội.
+Mọi phiên trong một dự án có hồ sơ nạp `<aris-project>` (sau tính cách, trước hướng dẫn giao việc): tên, thư mục, mục tiêu, thành viên (`@tên gọi`, vai). Aris nhận thêm cách làm trong dự án: giao việc cho thành viên trước, cần bot ngoài dự án thì hỏi người dùng hoặc đề nghị thêm vào dự án. Riêng phiên chính (phòng nhóm): khi nào mở cuộc bàn bằng `start_room_round`, cách điều phối, luật số vòng và số tin, hỏi người dùng bằng `ask_user_question` trước khi chốt, lệnh dừng. Bot thành viên nhận mục tiêu và đồng đội.
 
 ## Đường máy chủ
 
@@ -36,7 +36,7 @@ Dịch vụ `arisProjects` (`store`, `ofSession`) cho Kanban và chat chung ở 
 
 Bảng việc của dự án gộp hai nguồn:
 
-- **Thẻ của đội** (`task-n`): bản ghi `team/task` trong phiên chính. Đọc bằng `ctx.sessionQuery.observeSession` (không đánh thức phiên), gom với `team/member` để biết bot nào giữ thẻ. Thẻ của đội chỉ ghi được bằng agent đang chạy, nên do Aris tạo (`tao_the`, `giao_viec`) và bot nhận thẻ đánh dấu xong (xem đặc tả Commander).
+- **Thẻ của đội** (`task-n`): bản ghi `team/task` trong phiên chính. Đọc bằng `ctx.sessionQuery.observeSession` (không đánh thức phiên), gom với `team/member` để biết bot nào giữ thẻ. Thẻ của đội chỉ ghi được bằng agent đang chạy, nên do Aris tạo (`create_cards`, `assign_task`) và bot nhận thẻ đánh dấu xong (xem đặc tả Commander).
 - **Thẻ người dùng tạo** (`c-n`, bảng `cards` của `aris_projects`): chờ chia việc tới khi Aris giao; giao xong thì thẻ của đội thay chỗ (`taskId`).
 
 | Cột | Thẻ |
@@ -46,7 +46,7 @@ Bảng việc của dự án gộp hai nguồn:
 | Đang làm / Chờ duyệt | Thẻ cũ nhất bot đang giữ, theo phiên của bot đang chạy hay đang đợi người dùng |
 | Xong | Thẻ hoàn tất |
 
-**Chia việc** (`split` của dự án): tự động (mặc định) thì ngữ cảnh `aris:project` liệt kê thẻ chờ để Aris giao ở lượt này hoặc lượt tới; thủ công thì Aris chỉ giao khi người dùng bảo. Nút "Giao ngay" trên một thẻ chờ (chọn bot hoặc để Aris chọn) gửi một tin vào phiên chính nhờ Aris giao thẻ đó (`giao_viec` với `the`), tốn một lượt của Aris.
+**Chia việc** (`split` của dự án): tự động (mặc định) thì ngữ cảnh `aris:project` liệt kê thẻ chờ để Aris giao ở lượt này hoặc lượt tới; thủ công thì Aris chỉ giao khi người dùng bảo. Nút "Giao ngay" trên một thẻ chờ (chọn bot hoặc để Aris chọn) gửi một tin vào phiên chính nhờ Aris giao thẻ đó (`assign_task` với `card`), tốn một lượt của Aris.
 
 Đường máy chủ thêm: `GET ?board=<workspace>` (thẻ, chế độ chia việc); `POST` `card-create`, `card-update`, `card-delete`, `card-dispatch`.
 
@@ -57,9 +57,9 @@ Chạy thử thật (24/10): dự án "Thử dự án aris", chế độ thủ c
 Không có Driver, mọi bước chuyển trên bảng chờ Aris tốn một lượt: thẻ trước xong thì thẻ sau đứng yên tới khi Aris đọc kết quả và giao tiếp. Driver làm phần cơ học đó, học cách bộ phân việc của Hermes (đọc tài liệu, nhật ký clean-room 25/10), viết lại trên Team của dsh.
 
 - **Bật theo dự án**, mặc định tắt (công tắc "Driver" ở thanh trên của 4.3). Trang Commander (2.5) dẫn về Kanban.
-- **Bot dự kiến cho thẻ**: `tao_the` nhận thêm `bot` cho từng thẻ (người sẽ làm khi thẻ sẵn sàng); aris lưu ở `aris_projects` (bảng `plans`), Kanban hiện tên bot dự kiến trên thẻ chờ.
+- **Bot dự kiến cho thẻ**: `create_cards` nhận thêm `bot` cho từng thẻ (người sẽ làm khi thẻ sẵn sàng); aris lưu ở `aris_projects` (bảng `plans`), Kanban hiện tên bot dự kiến trên thẻ chờ.
 - Mỗi **30 giây**, với mỗi dự án bật Driver (đọc bảng từ log phiên chính, không đánh thức phiên):
-  1. Thẻ chưa giao, mọi thẻ phụ thuộc đã xong, có bot dự kiến ⇒ Driver **giao thẳng** bằng đúng đường của `giao_viec` (mở lại agent phiên chính khi cần, không tốn lượt của Aris), lời giao kèm **kết quả của các thẻ phụ thuộc** (câu trả lời cuối của bot làm thẻ đó, cắt ngắn). Theo giới hạn số bot chạy cùng lúc của Commander.
+  1. Thẻ chưa giao, mọi thẻ phụ thuộc đã xong, có bot dự kiến ⇒ Driver **giao thẳng** bằng đúng đường của `assign_task` (mở lại agent phiên chính khi cần, không tốn lượt của Aris), lời giao kèm **kết quả của các thẻ phụ thuộc** (câu trả lời cuối của bot làm thẻ đó, cắt ngắn). Theo giới hạn số bot chạy cùng lúc của Commander.
   2. Thẻ sẵn sàng mà chưa có bot dự kiến ⇒ **đánh thức Aris** một lần cho thẻ đó (mỗi nhịp tối đa một thẻ) để Aris chọn người.
   3. Lượt của bot làm thẻ kết thúc vấp ⇒ Driver giao lại một lần kèm lý do vấp; **vấp 2 lần liên tiếp** thì ngừng tự đẩy thẻ đó, thẻ hiện "vấp", báo Telegram. Người dùng dừng tay thì Driver để yên.
   4. Thẻ đã giao mà 30 phút không có kết quả và bot không chạy ⇒ báo "kẹt" một lần.

@@ -261,7 +261,7 @@ Kèm 3 cổng giới hạn đồng thời (toàn app 10, việc lồng 4, mỗi 
 | Khía cạnh | aris |
 |---|---|
 | Ai là Commander | Một cờ đặc quyền gắn cho **một bot** (mặc định Aris), chuyển được sang bot khác. Anh **vẫn chat thẳng** với bất kỳ bot nào — Commander là cửa vào mặc định, không phải cổng bắt buộc |
-| Lệnh điều phối (chỉ Commander có) | `giao_viec` (= dispatch, nhận kết quả, song song) · `chuyen_giao` (= hand-off, bot đích trả lời anh) · `tro_ly_an` (= worker ẩn danh, dùng subagent của dsh) · `tao_the` (thẻ Kanban cho dự án dài) |
+| Lệnh điều phối (chỉ Commander có) | `assign_task` (= dispatch, nhận kết quả, song song) · `hand_off` (= hand-off, bot đích trả lời anh) · `tro_ly_an` (= worker ẩn danh, dùng subagent của dsh) · `create_cards` (thẻ Kanban cho dự án dài) |
 | Bot thường | Có `hoi_dong_doi` (nhắn hỏi bot khác như `message_agent` của Hermes) nhưng **không được tự giao việc tiếp** ⇒ không có vòng lặp giao qua giao lại |
 | Định tuyến | Theo thứ tự: chỉ định của anh → việc nhẹ tự làm → bot có mô tả năng lực/skill khớp → tự làm. Mỗi quyết định ghi sự kiện `aris/dispatch` (ai, vì sao, độ tin cậy) |
 | Giới hạn | Tối đa 4 việc song song mỗi hội thoại, 4 việc lồng toàn hệ, độ sâu 1 (bot được giao chỉ dùng được trợ lý ẩn danh), trần lượt và ngân sách theo việc |
@@ -269,7 +269,7 @@ Kèm 3 cổng giới hạn đồng thời (toàn app 10, việc lồng 4, mỗi 
 | Ký ức | Bot được giao học vào **ký ức riêng của nó** (như Hermes); Commander học **ai làm tốt việc gì** để định tuyến tốt dần (vòng học riêng cho định tuyến — Hermes và Tako đều không có) |
 | Model | Gợi ý theo kinh nghiệm của Hermes: Commander dùng model mạnh, bot làm việc dùng model rẻ; chỉnh theo từng bot |
 | Tự đẩy việc (Driver) | Tuỳ chọn, mặc định **tắt**: mỗi nhịp chọn một thẻ Kanban sẵn sàng, đánh thức Commander, rồi dừng |
-| Trên dsh | `giao_viec` = đưa tin vào inbox phiên của bot đích qua `ctx.agents` và chờ `turn/end`; `tro_ly_an` = `subagent`; chuyển giao = định tuyến câu trả lời của bot đích ra kênh của anh |
+| Trên dsh | `assign_task` = đưa tin vào inbox phiên của bot đích qua `ctx.agents` và chờ `turn/end`; `tro_ly_an` = `subagent`; chuyển giao = định tuyến câu trả lời của bot đích ra kênh của anh |
 
 Bảng tính năng bổ sung:
 
@@ -549,7 +549,7 @@ Quy tắc thiết kế:
 | M6 | **ACP server** đầy đủ: IDE, **Buzz Desktop**, `buzz-acp` | Thành viên | Profile `aris-acp` = acp của dsh + aris-bundle + preset "thành viên" | 6 (thử ở 0) |
 | M7 | **API tương thích OpenAI** (`/v1/chat/completions`, `/v1/responses`, SSE, khoá chống gửi lặp, chọn bot qua `model`) | Thành viên | Package `aris-api` (HTTP + SSE) | 6 |
 | M8 | **A2A server**: Agent Card, JSON-RPC, SSE, push có ký HMAC, token theo peer, chống vòng lặp, nhật ký kiểm toán | Thành viên | `aris-a2a` | 6 |
-| M9 | **MCP server**: mở `brain_search`, `memory_search`, `giao_viec`… cho agent khác (Claude Desktop, Cursor…) | Thành viên | Package `aris-mcp-server` | 6 |
+| M9 | **MCP server**: mở `brain_search`, `memory_search`, `assign_task`… cho agent khác (Claude Desktop, Cursor…) | Thành viên | Package `aris-mcp-server` | 6 |
 | M10 | Buzz như một kênh nhắn tin (ngang Telegram) | Thành viên + kênh | `aris-gateway-buzz` (Nostr) | 8 |
 
 🖥️ **Giao diện đã vẽ (23/10)**, cùng ngôn ngữ với các màn cũ: **2.1b Thêm bot ngoài** là tab "Bot ngoài" trong hộp Tạo bot: chọn agent bằng chip (aris tự dò trên máy), tên, thư mục làm việc; quyền, trần mỗi việc, worktree và lệnh khởi chạy nằm trong "Nâng cao". **6.3b Mặt tích hợp** là một trang Cài đặt kiểu màn Ngân sách: 4 thẻ ACP, API kiểu OpenAI, A2A, MCP, mỗi thẻ có viên trạng thái, nút Bật/Tắt và 1–3 dòng chi tiết (lệnh/địa chỉ, bot được mở ra); thêm một thẻ dẫn sang bộ quyền "Thành viên" và nhật ký truy cập.

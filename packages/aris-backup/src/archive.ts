@@ -302,7 +302,7 @@ async function countFiles(dir: string): Promise<number> {
   return n
 }
 
-export type DrillStepId = 'giai-ma' | 'giai-nen' | 'kho' | 'bo-nao' | 'khop'
+export type DrillStepId = 'decrypt' | 'unpack' | 'stores' | 'brain' | 'file-count'
 export interface DrillStep {
   id: DrillStepId
   ok: boolean
@@ -330,7 +330,7 @@ export async function drillBackup(
   const steps: DrillStep[] = []
   const done = () => ({ ok: steps.every((s) => s.ok), steps, ms: Date.now() - t0 })
   if (!code) {
-    steps.push({ id: 'giai-ma', ok: false, error: 'không thấy mã khôi phục của bản này trong Keychain' })
+    steps.push({ id: 'decrypt', ok: false, error: 'không thấy mã khôi phục của bản này trong Keychain' })
     return done()
   }
   const tmp = await mkdtemp(join(tmpdir(), 'aris-dien-tap-'))
@@ -338,13 +338,13 @@ export async function drillBackup(
     let header: Header
     try {
       header = await extractBackup(file, code, tmp)
-      steps.push({ id: 'giai-ma', ok: true })
+      steps.push({ id: 'decrypt', ok: true })
     } catch (e) {
-      steps.push({ id: 'giai-ma', ok: false, error: e instanceof Error ? e.message : String(e) })
+      steps.push({ id: 'decrypt', ok: false, error: e instanceof Error ? e.message : String(e) })
       return done()
     }
     const n = await countFiles(tmp)
-    steps.push({ id: 'giai-nen', ok: n > 0, n })
+    steps.push({ id: 'unpack', ok: n > 0, n })
     // Kho dữ liệu: mỗi thư mục trong storages là một kho; mọi tệp JSON phải đọc được. SQLite: integrity_check.
     let stores = 0
     let good = 0
@@ -374,7 +374,7 @@ export async function drillBackup(
         const res = await run(SQLITE, [join(tmp, p.id, r), 'PRAGMA integrity_check;'])
         if (res.code === 0 && res.stdout.trim() === 'ok') good++
       }
-    steps.push({ id: 'kho', ok: good === stores, n: good, of: stores })
+    steps.push({ id: 'stores', ok: good === stores, n: good, of: stores })
     const brain = join(tmp, 'brain')
     const pages = (await run('/usr/bin/find', [brain, '-name', '*.md', '-not', '-path', '*/.*'])).stdout
       .split('\n')
@@ -384,9 +384,9 @@ export async function drillBackup(
       () => false,
     )
     const fsck = hasGit ? await run('/usr/bin/git', ['-C', brain, 'fsck', '--no-progress']) : { code: 0 }
-    steps.push({ id: 'bo-nao', ok: fsck.code === 0, n: pages })
+    steps.push({ id: 'brain', ok: fsck.code === 0, n: pages })
     const expect = expectFiles ?? totalFiles(header)
-    steps.push({ id: 'khop', ok: n === expect, n, of: expect })
+    steps.push({ id: 'file-count', ok: n === expect, n, of: expect })
     return done()
   } finally {
     await rm(tmp, { recursive: true, force: true })

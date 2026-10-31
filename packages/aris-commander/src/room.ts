@@ -1,6 +1,6 @@
 /**
  * Phòng nhóm của dự án (bước 3e; đặc tả: docs/specs/aris-commander.md): trong phiên chính của dự án,
- * Aris điều phối một cuộc bàn chung. Mỗi lần Aris gọi `moi_noi` là một vòng: các bot được mời nói
+ * Aris điều phối một cuộc bàn chung. Mỗi lần Aris gọi `start_room_round` là một vòng: các bot được mời nói
  * lần lượt, mỗi bot đọc được những gì người dùng, Aris và đồng đội vừa nói. Luật của dự án giới hạn
  * số vòng và số tin của các bot cho mỗi tin của người dùng.
  */
@@ -320,7 +320,7 @@ export async function runRound<A>(
   return record
 }
 
-/** Câu trả lời của `moi_noi` cho Aris: ai nói gì, còn bao nhiêu vòng và tin, nên làm gì tiếp. */
+/** Câu trả lời của `start_room_round` cho Aris: ai nói gì, còn bao nhiêu vòng và tin, nên làm gì tiếp. */
 export function roundReport(r: RoundRecord, state: RoomState, rules: RoomRules): string {
   const lines = [`Vòng ${r.round}/${r.maxRounds} · đã dùng ${r.used}/${r.maxMessages} tin.`]
   for (const e of r.entries) {
@@ -335,7 +335,7 @@ export function roundReport(r: RoundRecord, state: RoomState, rules: RoomRules):
   else if (!said) lines.push('Không ai có ý mới: dừng mời, tổng hợp và trả lời người dùng.')
   else
     lines.push(
-      `Còn ${rules.maxRounds - state.round} vòng, ${rules.maxMessages - state.used} tin. Chỉ mời vòng sau (moi_noi) khi còn điểm cần bàn: có người bị hỏi lại bằng @tên, hoặc ý trái nhau; mời đúng những người đó. Không thì tổng hợp.`,
+      `Còn ${rules.maxRounds - state.round} vòng, ${rules.maxMessages - state.used} tin. Chỉ mời vòng sau (start_room_round) khi còn điểm cần bàn: có người bị hỏi lại bằng @tên, hoặc ý trái nhau; mời đúng những người đó. Không thì tổng hợp.`,
     )
   return lines.join('\n')
 }

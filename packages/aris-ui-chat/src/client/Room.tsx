@@ -1,5 +1,5 @@
 /**
- * Phòng nhóm trong khung chat (bản vẽ `Phong2.dc.html`): mỗi vòng Aris mời (`moi_noi`) vẽ thành
+ * Phòng nhóm trong khung chat (bản vẽ `Phong2.dc.html`): mỗi vòng Aris mời (`start_room_round`) vẽ thành
  * các tin của bot, bỏ lượt và bị bỏ qua là dòng ghi chú, bot đang nói có dấu "đang nghĩ". Thanh
  * phòng trên ô nhập: vòng, số tin, ai đang nói, nút Dừng phòng hoặc Gửi cả phòng.
  */
@@ -63,7 +63,7 @@ function Said({ e, t }: { e: RoomEntry; t: Translate }) {
   )
 }
 
-/** Một lần gọi `moi_noi` (`tool.call.toolview`, khoá `moi_noi`): các tin của vòng. */
+/** Một lần gọi `start_room_round` (`tool.call.toolview`, khoá `start_room_round`): các tin của vòng. */
 export function RoomRound(props: SubagentCall & { callId: string; t: Translate }) {
   useTeamData()
   const { t } = props

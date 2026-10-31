@@ -112,7 +112,7 @@ describe('đợt 7f · S5: origin=user chỉ tin trong chat trực tiếp của 
     ['Telegram không phải chủ', { arisChannels: { restricted: (id: string) => id === 'phien-test' } }],
   ])(
     'phiên %s: save origin=user thành đề xuất chờ duyệt; update, forget bị từ chối',
-    async (_ten, services) => {
+    async (_name, services) => {
       const { ctx, tools, map } = fakeContext(services)
       await apply(ctx)
       const memory = tools.find((t) => t.name === 'memory')!

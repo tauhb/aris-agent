@@ -185,17 +185,17 @@ describe('bản nháp và trang', () => {
     expect(classifyPrompt('chữ', 'A', depts)).toContain('van-hanh (Vận hành)')
     expect(
       parseClassify(
-        '```json\n{"khong_gian":"cong-ty","phong_ban":"van-hanh","tieu_de":"Quy trình","tom_tat":"x","nhay_cam":false}\n```',
+        '```json\n{"space":"cong-ty","department":"van-hanh","title":"Quy trình","summary":"x","sensitive":false}\n```',
         depts,
       ),
     ).toEqual({ space: 'cong-ty', dept: 'van-hanh', title: 'Quy trình', summary: 'x', sensitive: false })
-    expect(parseClassify('{"khong_gian":"ca-nhan","phong_ban":"van-hanh"}', depts)).toEqual({
+    expect(parseClassify('{"space":"ca-nhan","department":"van-hanh"}', depts)).toEqual({
       space: 'ca-nhan',
       sensitive: false,
     })
-    expect(parseClassify('{"khong_gian":"cong-ty","phong_ban":"khong-co"}', depts)?.dept).toBeUndefined()
+    expect(parseClassify('{"space":"cong-ty","department":"khong-co"}', depts)?.dept).toBeUndefined()
     expect(parseClassify('không có json', depts)).toBeUndefined()
-    expect(parseClassify('{"khong_gian":"ca-nhan","tieu_de":null,"nhay_cam":"true"}', depts)).toEqual({
+    expect(parseClassify('{"space":"ca-nhan","title":null,"sensitive":"true"}', depts)).toEqual({
       space: 'ca-nhan',
       sensitive: true,
     })

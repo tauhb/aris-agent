@@ -168,7 +168,7 @@ export async function apply(ctx: Context): Promise<void> {
       const job = jobs?.find((j) => j.session === sid)
       return botName(job?.parentSession)
     }
-    if (source === 'giao') return parent ? botName(parent) : ''
+    if (source === 'bot') return parent ? botName(parent) : ''
     return ''
   }
 
@@ -190,7 +190,7 @@ export async function apply(ctx: Context): Promise<void> {
     const price = spend()?.priceOf?.(c.provider, c.model)
     const save = cacheSavings(price, u)
     enqueue(async () => {
-      const key = sessionKey(day, sid, cls.kind === 'hoc' ? 'nen' : 'chat')
+      const key = sessionKey(day, sid, cls.kind === 'learning' ? 'nen' : 'chat')
       const prev = sessionsT.get(key)
       const kept = keepSpecific(prev, cls)
       await sessionsT.put(
@@ -303,7 +303,7 @@ export async function apply(ctx: Context): Promise<void> {
           putEvent({
             at: Date.now(),
             session: sid,
-            type: 'hoi',
+            type: 'question',
             tool: exec.name,
             callId: String(exec.callId),
             what,
@@ -336,7 +336,7 @@ export async function apply(ctx: Context): Promise<void> {
         putEvent({
           at: t0,
           session: sid,
-          type: 'duyet',
+          type: 'approval',
           tool: req.toolName,
           ...(callId ? { callId } : {}),
           ...(call?.what ? { what: call.what } : {}),

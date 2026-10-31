@@ -4,8 +4,8 @@
  */
 import { useCallback, useEffect, useState } from 'react'
 
-export type ComputerAction = 'xem' | 'bam' | 'go' | 'phim' | 'mo'
-export const COMPUTER_ACTIONS: readonly ComputerAction[] = ['xem', 'bam', 'go', 'phim', 'mo']
+export type ComputerAction = 'view' | 'click' | 'type' | 'key' | 'open'
+export const COMPUTER_ACTIONS: readonly ComputerAction[] = ['view', 'click', 'type', 'key', 'open']
 
 export interface ComputerSettings {
   on: boolean

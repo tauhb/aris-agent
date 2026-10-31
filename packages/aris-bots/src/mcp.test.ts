@@ -75,15 +75,15 @@ describe('kết nối nền tảng theo bot', () => {
       at: '',
       tools: [
         { name: 'echo', readOnly: true },
-        { name: 'ghi_chu', readOnly: false },
+        { name: 'take_note', readOnly: false },
       ],
     }))!
     const hit = connectionOf('mcp__echo__echo', s.list('b-1'))!
     expect(hit.raw).toBe('echo')
     expect(needsAsk(checked, 'echo')).toBe(false)
-    expect(needsAsk(checked, 'ghi_chu')).toBe(true)
+    expect(needsAsk(checked, 'take_note')).toBe(true)
     expect(needsAsk(checked, 'moi')).toBe(true)
-    expect(needsAsk({ ...checked, ask: 'never' }, 'ghi_chu')).toBe(false)
+    expect(needsAsk({ ...checked, ask: 'never' }, 'take_note')).toBe(false)
     expect(needsAsk({ ...checked, ask: 'always' }, 'echo')).toBe(true)
     expect(connectionOf('mcp__khac__echo', s.list('b-1'))).toBeUndefined()
   })
@@ -96,7 +96,7 @@ describe('kết nối nền tảng theo bot', () => {
       ok: true,
       tools: [
         { name: 'echo', readOnly: true },
-        { name: 'ghi_chu', readOnly: false },
+        { name: 'take_note', readOnly: false },
       ],
     })
     const bad = await s.add('b-1', { preset: 'custom', name: 'Sai', command: 'khong-co-lenh-nay-aris' })

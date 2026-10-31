@@ -1,5 +1,5 @@
 /**
- * Đọc lần gọi công cụ giao việc của Commander (`giao_viec`) thành các việc từng bot: bot nào, việc gì, phiên nào, lỗi gì.
+ * Đọc lần gọi công cụ giao việc của Commander (`assign_task`) thành các việc từng bot: bot nào, việc gì, phiên nào, lỗi gì.
  * Thuần, không phụ thuộc React. Khung chat vẽ thành nhánh "dòng việc" và Văn phòng vẽ thành khối "Đội đang làm" từ cùng
  * một nguồn này.
  */
@@ -22,7 +22,7 @@ export type SubagentCall =
 /** Lời dsh trả về khi người dùng từ chối lần gọi công cụ. */
 export const USER_REJECTED = /user rejected tool/i
 
-/** Một việc trong lần gọi `giao_viec` của Commander. */
+/** Một việc trong lần gọi `assign_task` của Commander. */
 export interface DispatchItem {
   handle: string
   title?: string | undefined
@@ -36,7 +36,7 @@ export interface DispatchItem {
   rejected?: boolean | undefined
 }
 
-/** Đọc lần gọi `giao_viec`: các việc trong tham số, ghép với phiên của từng bot trong kết quả. */
+/** Đọc lần gọi `assign_task`: các việc trong tham số, ghép với phiên của từng bot trong kết quả. */
 export function dispatchItems(call: SubagentCall): DispatchItem[] {
   const raw =
     call.phase === 'start'
@@ -46,22 +46,21 @@ export function dispatchItems(call: SubagentCall): DispatchItem[] {
         : undefined
   let items: DispatchItem[] = []
   try {
-    const v = JSON.parse(raw ?? '{}') as { viec?: { bot?: unknown; tieu_de?: unknown; noi_dung?: unknown }[] }
-    items = (v.viec ?? []).flatMap((x) =>
-      typeof x.bot === 'string'
-        ? [
-            {
-              handle: x.bot.replace(/^@/, '').toLowerCase(),
-              title:
-                typeof x.tieu_de === 'string'
-                  ? x.tieu_de
-                  : typeof x.noi_dung === 'string'
-                    ? x.noi_dung.split('\n')[0]
-                    : undefined,
-            },
-          ]
-        : [],
-    )
+    // Log cũ ghi tham số tiếng Việt (`viec`, `tieu_de`, `noi_dung`): đọc cả hai.
+    type Task = { bot?: unknown; title?: unknown; task?: unknown; tieu_de?: unknown; noi_dung?: unknown }
+    const v = JSON.parse(raw ?? '{}') as { tasks?: Task[]; viec?: Task[] }
+    items = (v.tasks ?? v.viec ?? []).flatMap((x) => {
+      if (typeof x.bot !== 'string') return []
+      const title = x.title ?? x.tieu_de
+      const task = x.task ?? x.noi_dung
+      return [
+        {
+          handle: x.bot.replace(/^@/, '').toLowerCase(),
+          title:
+            typeof title === 'string' ? title : typeof task === 'string' ? task.split('\n')[0] : undefined,
+        },
+      ]
+    })
   } catch {
     // Tham số đang truyền dở: chưa có việc nào để vẽ.
   }

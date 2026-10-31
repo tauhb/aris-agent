@@ -171,7 +171,7 @@ export async function apply(ctx: Context): Promise<void> {
   } satisfies ArisSkills)
 
   // /learn (đợt 6): lệnh mở một lượt cho bot tự gom tài liệu bằng công cụ sẵn có và viết skill;
-  // `luu_skill` chỉ nhận trong lượt đó và nộp thành đề xuất chờ duyệt như mọi đề xuất.
+  // `save_skill` chỉ nhận trong lượt đó và nộp thành đề xuất chờ duyệt như mọi đề xuất.
   const learning = new Map<string, { source: string; until: number }>()
   ctx.inject(['commands'], (ctx) => {
     ctx.effect(
@@ -217,18 +217,18 @@ export async function apply(ctx: Context): Promise<void> {
       description:
         'Chỉ dùng trong lượt người dùng gõ /learn: nộp skill vừa viết từ nguồn người dùng chỉ để người dùng duyệt. Lượt khác bị từ chối.',
       parameters: {
-        ten: {
+        name: {
           type: 'string',
           required: true,
           description: 'Tên skill: chữ thường không dấu, số, nối bằng "-".',
         },
-        mo_ta: { type: 'string', required: true, description: 'Một câu: skill dùng khi nào.' },
-        than: {
+        description: { type: 'string', required: true, description: 'Một câu: skill dùng khi nào.' },
+        body: {
           type: 'string',
           required: true,
           description: 'Thân Markdown: ## Khi nào dùng, ## Các bước, ## Lỗi thường gặp, ## Kiểm tra.',
         },
-        yeu_cau_mau: {
+        example_requests: {
           type: 'array',
           items: { type: 'string' },
           description: `1–${MAX_LEARN_CASES} câu người dùng có thể nhờ mà skill này giúp được (ca kiểm thử).`,
@@ -243,13 +243,13 @@ export async function apply(ctx: Context): Promise<void> {
         try {
           const v = await store.propose({
             bot: botOf(sid),
-            name: args.ten.trim(),
-            description: args.mo_ta.trim(),
-            body: args.than,
+            name: args.name.trim(),
+            description: args.description.trim(),
+            body: args.body,
             by: 'user',
             why: `Học từ: ${l.source}`,
             sessionId: sid,
-            cases: (args.yeu_cau_mau ?? [])
+            cases: (args.example_requests ?? [])
               .map((c) => c.trim())
               .filter(Boolean)
               .slice(0, MAX_LEARN_CASES),

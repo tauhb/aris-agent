@@ -11,9 +11,9 @@ describe('mergeFeed', () => {
         { bot: 'ha', kind: 'failed', task: 'Viết bài', at: 90 },
       ],
       events: [
-        { at: 120, bot: 'mai', type: 'hoi', what: 'Giọng văn nào?' },
-        { at: 110, bot: 'mai', type: 'duyet', what: 'gửi email', decision: 'allowed-once' },
-        { at: 95, bot: 'mai', type: 'duyet', what: 'xoá tệp', decision: 'rejected' },
+        { at: 120, bot: 'mai', type: 'question', what: 'Giọng văn nào?' },
+        { at: 110, bot: 'mai', type: 'approval', what: 'gửi email', decision: 'allowed-once' },
+        { at: 95, bot: 'mai', type: 'approval', what: 'xoá tệp', decision: 'rejected' },
       ],
       blocked: [{ at: 105, bot: 'lam', tool: 'bash', what: 'curl x' }],
       routines: [
@@ -43,7 +43,7 @@ describe('mergeFeed', () => {
         { bot: 'lam', kind: 'waiting', task: 'A', at: 1020 },
         { bot: 'ha', kind: 'started', task: 'B', at: 1030 },
       ],
-      events: [{ at: 1040, bot: 'lam', type: 'duyet', what: 'x', decision: 'cancelled' }],
+      events: [{ at: 1040, bot: 'lam', type: 'approval', what: 'x', decision: 'cancelled' }],
     })
     expect(feed.map((f) => `${f.bot}:${f.kind}`)).toEqual(['ha:started', 'lam:assigned'])
   })
@@ -68,8 +68,8 @@ describe('mergeFeed', () => {
         { bot: 'ha', kind: 'failed', task: 'B', at: 30 },
       ],
       events: [
-        { at: 40, bot: 'mai', session: 's9', type: 'hoi', what: 'Giọng nào?' },
-        { at: 50, bot: 'mai', session: 's9', type: 'duyet', what: 'gửi email', decision: 'allowed-once' },
+        { at: 40, bot: 'mai', session: 's9', type: 'question', what: 'Giọng nào?' },
+        { at: 50, bot: 'mai', session: 's9', type: 'approval', what: 'gửi email', decision: 'allowed-once' },
       ],
     })
     expect(feed.map((f) => `${f.kind}:${f.session ?? '-'}`)).toEqual([

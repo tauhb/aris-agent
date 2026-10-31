@@ -49,8 +49,8 @@ import { fold, keyTerms, linksOf, parsePage, snippetOf } from './page.js'
 import { kanbanOf, projectPageText, withKanban } from './project-page.js'
 import { buildGraph, linkMention, nodeType, unlinkedMention } from './graph.js'
 import { brainMap, MEMBER_GUIDE, mentioned, nudge, referenced, STRONG_LINE } from './hints.js'
-import { findingRecord, runRecord, type Finding, type SoatRun } from './soat.js'
-import { SoatError, startSoat } from './soat-run.js'
+import { findingRecord, runRecord, type Finding, type AuditRun } from './audit.js'
+import { AuditError, startAudit } from './audit-run.js'
 import { VectorStore } from './semantic.js'
 import {
   DEFAULT_SEMANTIC,
@@ -138,6 +138,7 @@ const ingestState = z.object({
   spendUsd: z.number().optional(),
   diaryDone: z.record(z.string(), z.string()).optional(),
   /** Ngày máy soát, tuần Thủ thư soát sâu gần nhất. */
+  // Tên trường đã lưu (soát = audit): giữ nguyên để đọc được dữ liệu cũ.
   soatDay: z.string().optional(),
   soatWeek: z.string().optional(),
 })
@@ -169,7 +170,7 @@ const brainDomain = defineDomain({
     ingest: domainTable<string, IngestState>(ingestState),
     lookups: domainTable<string, Lookups>(lookupRecord),
     findings: domainTable<string, Finding>(findingRecord),
-    soat_runs: domainTable<string, SoatRun>(runRecord),
+    soat_runs: domainTable<string, AuditRun>(runRecord),
   },
 })
 
@@ -740,15 +741,16 @@ export async function apply(ctx: Context): Promise<void> {
   }, 'aris-brain: dọn lượt tra cũ')
 
   // --- Soát bộ não (đợt 4a, bản vẽ 5.5) ------------------------------------------------------------
-  const soatT = domain.table('soat_runs') as unknown as Table<SoatRun>
-  const soat = startSoat({
+  // Tên bảng và khoá lưu trữ (`soat_runs`, `soat`) giữ nguyên: đổi là phải chuyển dữ liệu đã lưu.
+  const auditT = domain.table('soat_runs') as unknown as Table<AuditRun>
+  const audit = startAudit({
     ctx,
     logger,
     root,
     git,
     hasGit,
     findings: domain.table('findings') as unknown as Table<Finding>,
-    runs: soatT,
+    runs: auditT,
     state: () => ingestT.get('soat') ?? {},
     saveState: (patch) => ingestT.put('soat', { ...(ingestT.get('soat') ?? {}), ...patch }),
     catalog,
@@ -761,7 +763,7 @@ export async function apply(ctx: Context): Promise<void> {
     lookups: lookups7d,
     open: async (bot) => {
       const b = bots()
-      if (!b) throw new SoatError('Chưa có dịch vụ đội bot.')
+      if (!b) throw new AuditError('Chưa có dịch vụ đội bot.')
       return b.open(bot)
     },
     librarian: LIBRARIAN,
@@ -778,7 +780,7 @@ export async function apply(ctx: Context): Promise<void> {
         .map((m) => ({ id: m.id, bot: m.bot, text: m.text, at: m.at })),
     forgetMemory: async (id) => {
       const forget = memoryPort()?.forget
-      if (!forget) throw new SoatError('Chưa có dịch vụ ký ức.')
+      if (!forget) throw new AuditError('Chưa có dịch vụ ký ức.')
       await forget(id)
     },
     onBatch: (fn) =>
@@ -829,12 +831,12 @@ export async function apply(ctx: Context): Promise<void> {
       description:
         'Ghi nhanh một sự thật mới về người, dự án, khách hàng, sản phẩm hay số liệu vào nhật ký hôm nay của bộ não; Thủ thư nạp vào đúng trang lúc 23:00. Dùng thay cho ký ức khi điều cần giữ là kiến thức chung, không phải cách bạn làm việc. Số liệu hay đổi thì ghi kèm ngày (tính đến YYYY-MM-DD).',
       parameters: {
-        noi_dung: {
+        text: {
           type: 'string',
           required: true,
           description: 'Một hai câu, nêu rõ ai, dự án nào, con số nào; trích lời người dùng nếu có.',
         },
-        khong_gian: {
+        space: {
           type: 'string',
           enum: ['ca-nhan', 'cong-ty'],
           description:
@@ -845,13 +847,13 @@ export async function apply(ctx: Context): Promise<void> {
       async execute(args, exec) {
         const sid = (exec.agent as AgentLike | undefined)?.session.id
         if (asks.ofSession(sid)) return 'Không dùng được ở màn Hỏi bộ não.'
-        const text = String(args.noi_dung ?? '').trim()
+        const text = String(args.text ?? '').trim()
         if (!text) return 'Thiếu nội dung.'
         const reader = readerOf(sid)
         const open = SPACES.filter((space) =>
           canRead(reader, { space, layer: 'nhat-ky', dept: undefined, depts: [] }, rules()),
         )
-        const want = SPACES.find((s) => s === args.khong_gian)
+        const want = SPACES.find((s) => s === args.space)
         const space = want && open.includes(want) ? want : reader.role === 'member' ? open.at(-1) : open[0]
         if (!space) return 'Bạn không được ghi vào bộ não.'
         if (want && want !== space) return `Bạn không được ghi vào không gian ${SPACE_LABEL[want]}.`
@@ -885,23 +887,23 @@ export async function apply(ctx: Context): Promise<void> {
         'Tìm từ khoá trong bộ não của người dùng (wiki, nhật ký, nguồn), chỉ phần bạn được đọc. Gõ có dấu hay không dấu đều được. Trả về tên trang [[...]] kèm đoạn trích; đọc trọn trang bằng brain_read.',
       parameters: {
         query: { type: 'string', required: true, description: 'Từ khoá, ví dụ tên người, dự án, chủ đề.' },
-        khong_gian: {
+        space: {
           type: 'string',
           enum: ['ca-nhan', 'cong-ty'],
           description: 'Chỉ tìm trong một không gian.',
         },
-        so_ket_qua: { type: 'number', description: 'Tối đa bao nhiêu kết quả (mặc định 8, tối đa 20).' },
+        limit: { type: 'number', description: 'Tối đa bao nhiêu kết quả (mặc định 8, tối đa 20).' },
       },
       output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
       async execute(args, exec) {
         const sid = (exec.agent as AgentLike | undefined)?.session.id
         const reader = readerOf(sid)
-        const space = SPACES.find((s) => s === args.khong_gian)
+        const space = SPACES.find((s) => s === args.space)
         const can = allows(reader)
         const ok = (e: Entry) => can(e) || granted(sid, e)
         const inScope = scopeOf(sid)
         countLookup(sid, 'search')
-        const limit = Math.min(20, Math.max(1, Math.round(Number(args.so_ket_qua) || 8)))
+        const limit = Math.min(20, Math.max(1, Math.round(Number(args.limit) || 8)))
         const query = String(args.query ?? '')
         const hits = await semantic.searchPages(
           query,
@@ -917,7 +919,7 @@ export async function apply(ctx: Context): Promise<void> {
             (h, i) =>
               `${i + 1}. [[${h.entry.name}]] · ${h.entry.title} — ${where(h.entry)}${h.entry.binary ? ' (tệp gốc, không có chữ)' : ''}${h.via === 'nghia' ? ' · khớp theo nghĩa' : ''}\n   ${h.snippet}`,
           ),
-          'Đọc trọn trang bằng brain_read với ten là tên trong [[...]].',
+          'Đọc trọn trang bằng brain_read với name là tên trong [[...]].',
         ].join('\n')
       },
     }),
@@ -929,12 +931,12 @@ export async function apply(ctx: Context): Promise<void> {
       description:
         'Đọc trọn một trang của bộ não theo tên (phần trong [[...]]) hoặc đường dẫn trong kho; kèm nhãn đầu trang và các trang trỏ tới nó.',
       parameters: {
-        ten: {
+        name: {
           type: 'string',
           required: true,
           description: 'Tên trang, ví dụ chi-ha, hay đường dẫn ca-nhan/wiki/nguoi/chi-ha.md.',
         },
-        khong_gian: {
+        space: {
           type: 'string',
           enum: ['ca-nhan', 'cong-ty'],
           description: 'Không gian ưu tiên khi trùng tên.',
@@ -944,18 +946,18 @@ export async function apply(ctx: Context): Promise<void> {
       async execute(args, exec) {
         const sid = (exec.agent as AgentLike | undefined)?.session.id
         const reader = readerOf(sid)
-        const ten = String(args.ten ?? '')
+        const name = String(args.name ?? '')
           .trim()
           .replace(/^\[\[|\]\]$/g, '')
         // Thủ thư đang nạp: trang đã ghi lên bản nháp thì đọc bản nháp.
-        const draft = ingest.draftRead(sid, ten.includes('/') ? ten : '') ?? ingest.draftByName(sid, ten)
+        const draft = ingest.draftRead(sid, name.includes('/') ? name : '') ?? ingest.draftByName(sid, name)
         if (draft) return `(bản nháp của lần nạp này)\n\n${draft}`
         const inScope = scopeOf(sid)
         countLookup(sid, 'read')
         return readPage(
           reader,
-          ten,
-          SPACES.find((s) => s === args.khong_gian),
+          name,
+          SPACES.find((s) => s === args.space),
           inScope,
           sid,
           (e) => {
@@ -1006,13 +1008,13 @@ export async function apply(ctx: Context): Promise<void> {
 
   async function readPage(
     reader: Reader,
-    ten: string,
+    target: string,
     space?: Space,
     inScope: (e: Entry) => boolean = () => true,
     sessionId?: string,
     onRead?: (e: Entry) => void,
   ): Promise<string> {
-    const raw = ten
+    const raw = target
       .trim()
       .replace(/^\[\[|\]\]$/g, '')
       .trim()
@@ -1210,7 +1212,7 @@ export async function apply(ctx: Context): Promise<void> {
     const to = inVault(b.to)
     const fe = from ? catalog.get(from) : undefined
     const te = to ? catalog.get(to) : undefined
-    if (!fe || !te) throw new SoatError('Không có trang này.')
+    if (!fe || !te) throw new AuditError('Không có trang này.')
     if (b.op === 'link-dismiss') {
       const cur = settings().dismissedLinks ?? []
       await settingsT.put('main', {
@@ -1219,9 +1221,9 @@ export async function apply(ctx: Context): Promise<void> {
       })
       return {}
     }
-    if (!linkable(fe)) throw new SoatError('Nguồn giữ nguyên, không nối được.')
+    if (!linkable(fe)) throw new AuditError('Nguồn giữ nguyên, không nối được.')
     const text = linkMention(await readBody(fe.path), te.title, te.name)
-    if (text === undefined) throw new SoatError('Không còn chỗ nhắc tên chưa nối.')
+    if (text === undefined) throw new AuditError('Không còn chỗ nhắc tên chưa nối.')
     await writeFile(join(root, fe.path), text)
     await indexFile(fe.path)
     if (hasGit)
@@ -1259,11 +1261,11 @@ export async function apply(ctx: Context): Promise<void> {
   async function linkProject(o: { workspace: string; path?: string | undefined }) {
     const p = projects()
     const rec = p?.store.get(o.workspace)
-    if (!p || !rec) throw new SoatError('Không có dự án này.')
+    if (!p || !rec) throw new AuditError('Không có dự án này.')
     let rel: string
     if (o.path) {
       const e = catalog.get(o.path)
-      if (!e || !isProjectPage(e)) throw new SoatError('Chỉ nối được với trang Dự án trong wiki.')
+      if (!e || !isProjectPage(e)) throw new AuditError('Chỉ nối được với trang Dự án trong wiki.')
       rel = e.path
       const text = await readFile(join(root, rel), 'utf8')
       await writeFile(join(root, rel), withKanban(text, o.workspace))
@@ -1313,31 +1315,31 @@ export async function apply(ctx: Context): Promise<void> {
     return rec ? { workspace: rec.workspace, name: rec.name } : null
   }
 
-  async function soatOp(b: Record<string, unknown>): Promise<Record<string, unknown>> {
+  async function auditOp(b: Record<string, unknown>): Promise<Record<string, unknown>> {
     const id = typeof b.id === 'string' ? b.id : ''
     switch (b.op) {
-      case 'soat-run':
+      case 'audit-run':
         // Soát ngay: Thủ thư soát sâu rồi máy soát lại; chạy nền, màn 5.5 hỏi lại trạng thái.
-        if (soat.running()) throw new SoatError('Thủ thư đang soát, chờ xong đã.')
-        void soat
+        if (audit.running()) throw new AuditError('Thủ thư đang soát, chờ xong đã.')
+        void audit
           .deep()
           .catch((e: unknown) => logger.warn('soát sâu: %s', String(e)))
-          .finally(() => void soat.machine())
-        await soat.machine()
+          .finally(() => void audit.machine())
+        await audit.machine()
         return {}
-      case 'soat-dismiss':
-        await soat.dismiss(id)
+      case 'audit-dismiss':
+        await audit.dismiss(id)
         return {}
-      case 'soat-restore':
-        await soat.restore(id)
+      case 'audit-restore':
+        await audit.restore(id)
         return {}
-      case 'soat-fix':
-        return { batch: await soat.fix(id, b.forget === true) }
-      case 'soat-forget-after':
-        await soat.setForget(id, b.on === true)
+      case 'audit-fix':
+        return { batch: await audit.fix(id, b.forget === true) }
+      case 'audit-forget-after':
+        await audit.setForget(id, b.on === true)
         return {}
-      case 'soat-forget':
-        await soat.forgetNow(id)
+      case 'audit-forget':
+        await audit.forgetNow(id)
         return {}
       case 'project-link':
         return {
@@ -1346,22 +1348,22 @@ export async function apply(ctx: Context): Promise<void> {
             ...(typeof b.path === 'string' && b.path ? { path: b.path } : {}),
           }),
         }
-      case 'soat-date':
-        return { stamped: await soat.stamp(id, typeof b.date === 'string' ? b.date : undefined) }
-      case 'soat-relink':
-        return { changed: await soat.relinkTo(id, typeof b.to === 'string' ? b.to : '') }
-      case 'soat-move':
-        return { moved: await soat.move(id, typeof b.to === 'string' ? b.to : 'chung') }
-      case 'soat-strong': {
+      case 'audit-date':
+        return { stamped: await audit.stamp(id, typeof b.date === 'string' ? b.date : undefined) }
+      case 'audit-relink':
+        return { changed: await audit.relinkTo(id, typeof b.to === 'string' ? b.to : '') }
+      case 'audit-move':
+        return { moved: await audit.move(id, typeof b.to === 'string' ? b.to : 'chung') }
+      case 'audit-strong': {
         const bot = typeof b.bot === 'string' ? b.bot : ''
-        if (!bot) throw new SoatError('Thiếu bot.')
+        if (!bot) throw new AuditError('Thiếu bot.')
         const cur = settings().strong ?? []
         const next = b.on === true ? [...new Set([...cur, bot])] : cur.filter((x) => x !== bot)
         await settingsT.put('main', { ...settings(), strong: next })
         return { strong: next }
       }
       default:
-        throw new SoatError('op không hợp lệ')
+        throw new AuditError('op không hợp lệ')
     }
   }
 
@@ -1459,7 +1461,9 @@ export async function apply(ctx: Context): Promise<void> {
           }),
         }
       case 'approve': {
-        const chosen = Array.isArray(b.chon) ? b.chon.filter((n): n is number => typeof n === 'number') : []
+        // `chon` là tên trường cũ, vẫn nhận.
+        const picked = b.chosen ?? b.chon
+        const chosen = Array.isArray(picked) ? picked.filter((n): n is number => typeof n === 'number') : []
         return { batch: await ingest.approve(id, chosen) }
       }
       case 'keep':
@@ -1658,19 +1662,20 @@ export async function apply(ctx: Context): Promise<void> {
                 pages: list.map((e) => ({ ...view(e), readable: can(e) })),
               })
             }
-            // Soát bộ não (5.5): phát hiện, các lần soát, lịch; `soat=summary` cho thẻ trong Hộp duyệt.
-            const soatQ = q.get('soat')
-            if (soatQ !== null) {
-              const list = soat.list()
+            // Soát bộ não (5.5): phát hiện, các lần soát, lịch; `audit=summary` cho thẻ trong Hộp duyệt.
+            // `soat` là tên tham số cũ, vẫn nhận.
+            const auditQ = q.get('audit') ?? q.get('soat')
+            if (auditQ !== null) {
+              const list = audit.list()
               const open = list.filter((f) => f.status !== 'bo-qua')
-              if (soatQ === 'summary') {
+              if (auditQ === 'summary') {
                 const counts: Record<string, number> = {}
                 for (const f of open.filter((x) => x.status === 'mo'))
                   counts[f.kind] = (counts[f.kind] ?? 0) + 1
                 return json({
                   open: open.filter((x) => x.status === 'mo').length,
                   counts,
-                  runs: soat.recentRuns().slice(0, 1),
+                  runs: audit.recentRuns().slice(0, 1),
                 })
               }
               const titleOf = (p: string) => catalog.get(p)?.title ?? p.split('/').pop()!.replace(/\.md$/, '')
@@ -1681,8 +1686,8 @@ export async function apply(ctx: Context): Promise<void> {
                   batchStatus: f.batch ? (ingest.all().find((b) => b.id === f.batch)?.status ?? null) : null,
                 })),
                 dismissed: list.length - open.length,
-                runs: soat.recentRuns(),
-                running: soat.running(),
+                runs: audit.recentRuns(),
+                running: audit.running(),
                 schedule: { machineHour: 6, deepDay: 0, deepHour: 21, capUsd: 0.3 },
                 strong: settings().strong ?? [],
                 departments: depts().map((d) => ({ id: d.id, name: d.name })),
@@ -1786,7 +1791,9 @@ export async function apply(ctx: Context): Promise<void> {
               ),
             })
           }
-          const b = (await request.json().catch(() => ({}))) as Record<string, unknown>
+          const raw = (await request.json().catch(() => ({}))) as Record<string, unknown>
+          // Tên thao tác cũ `soat-*` (bản trước đổi tên) vẫn nhận: quy về `audit-*`.
+          const b = typeof raw.op === 'string' ? { ...raw, op: raw.op.replace(/^soat-/, 'audit-') } : raw
           switch (b.op) {
             case 'save': {
               const rel = inVault(b.path)
@@ -1919,24 +1926,25 @@ export async function apply(ctx: Context): Promise<void> {
               try {
                 return json({ ok: true, ...(await linkOp(b)) })
               } catch (e) {
-                if (e instanceof SoatError) return json({ error: e.message }, 409)
+                if (e instanceof AuditError) return json({ error: e.message }, 409)
                 throw e
               }
-            case 'soat-run':
-            case 'soat-dismiss':
-            case 'soat-restore':
-            case 'soat-fix':
-            case 'soat-relink':
-            case 'soat-move':
-            case 'soat-strong':
-            case 'soat-forget':
-            case 'soat-forget-after':
-            case 'soat-date':
+            case 'audit-run':
+            case 'audit-dismiss':
+            case 'audit-restore':
+            case 'audit-fix':
+            case 'audit-relink':
+            case 'audit-move':
+            case 'audit-strong':
+            case 'audit-forget':
+            case 'audit-forget-after':
+            case 'audit-date':
             case 'project-link':
               try {
-                return json({ ok: true, ...(await soatOp(b)) })
+                return json({ ok: true, ...(await auditOp(b)) })
               } catch (e) {
-                if (e instanceof SoatError || e instanceof IngestError) return json({ error: e.message }, 409)
+                if (e instanceof AuditError || e instanceof IngestError)
+                  return json({ error: e.message }, 409)
                 throw e
               }
             case 'ask':
