@@ -947,6 +947,46 @@
       "w": 1440,
       "x": 0,
       "y": 6080
+    },
+    "RkVanPhong.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "rk",
+      "title": "R1 · Văn phòng kiểu Rakazo (tối): danh bạ bot theo trạng thái, chat bong bóng, máy của bot, routine, kênh, skill",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "RkVanPhongSang.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "rk",
+      "title": "R1 · Văn phòng kiểu Rakazo (sáng)",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "RkCanAnh.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "rk",
+      "title": "R2 · Cần {you}: thẻ duyệt trong chat, cầm lái máy của bot khi trang đòi OTP",
+      "w": 1440,
+      "x": 0,
+      "y": 1080
+    },
+    "RkHoSoBot.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "rk",
+      "title": "R3 · Hồ sơ bot: model, lời dặn có hoàn tác, máy chung hay riêng, mức duyệt, ai được dùng",
+      "w": 1440,
+      "x": 1520,
+      "y": 1080
     }
   },
   "createdOnFiles": {
@@ -1148,9 +1188,17 @@
     "MayChat.dc.html",
     "MayDuyet.dc.html",
     "HoSoBotMay.dc.html",
-    "KhoDungSan.dc.html"
+    "KhoDungSan.dc.html",
+    "RkVanPhong.dc.html",
+    "RkVanPhongSang.dc.html",
+    "RkCanAnh.dc.html",
+    "RkHoSoBot.dc.html"
   ],
   "pages": [
+    {
+      "id": "rk",
+      "name": "Giao diện mới · kiểu Rakazo"
+    },
     {
       "id": "rv",
       "name": "Revamp nhẹ · đã áp dụng"
