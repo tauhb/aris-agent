@@ -5,6 +5,7 @@ Người dùng chốt: **giao diện theo OpenMausBot, kiến trúc theo Rakazo,
 1. [aris hiện tại](kien-truc/1-aris-hien-tai.md): bot, phiên, từng lối vào tạo phiên thế nào.
 2. [dsh cho bot liên tục](kien-truc/2-dsh-cho-bot-lien-tuc.md): dsh có gì, thiếu gì, bù bằng plugin ra sao.
 3. [Mô hình bot của Rakazo](kien-truc/3-rakazo-mo-hinh-bot.md): phần nào tạo cảm giác "đồng đội", phần nào độc lập với vòng gọi model.
+4. [Bản soát độc lập](kien-truc/4-opus-soat.md) (31/10): kết luận **duyệt có sửa**; mục 9 dưới đây là bản sửa và **thay cho các chỗ mâu thuẫn ở mục 1–6**.
 
 ## 1. Chẩn đoán: vì sao aris "theo phiên"
 
@@ -108,3 +109,59 @@ Lộ trình cũ đặt "Chạy bền" (9.1) trước. Sau khi đọc kỹ, **"Lu
 
 - Báo cáo do sub agent viết, có đánh dấu suy luận. Các điểm của dsh chưa đọc sâu: `dsh-workflow`, `dsh-acp*`, `dsh-api-job-controller`. Việc chen lời khi lượt đang chờ duyệt là suy luận, cần thử trước khi làm.
 - Chưa đo chi phí mở lại phiên nguội khi nhật ký dài; "sang trang" được đề xuất một phần vì lý do này.
+
+## 9. Bản sửa sau soát độc lập (31/10) — thay cho các chỗ mâu thuẫn ở trên
+
+Đã tự kiểm lại trong mã: `fork` của dsh chép nguyên phần đầu nhật ký (`dsh-session` README, mục Fork); yêu cầu duyệt của dsh không mang tham số công cụ và không có kho quyền (`dsh-user-approval` README, Known limitations); thẻ duyệt Telegram về đúng cuộc chat đang nói (`aris-channels/src/hub.ts`, hàm duyệt), không phải chat của Aris.
+
+### 9.1 Sửa chỗ sai
+
+- **Thẻ duyệt** đã về đúng chat đang nói (chỉ routine mới về chat của Aris). Mục 1 viết sai.
+- **Câu hỏi `timed`** của dsh có, nhưng aris **chưa bật** ở đâu cả.
+- **Lối vào** còn thiếu: lệnh `/ask` của daemon và nút routine trên Telegram (gắn lại cuộc chat vào phiên của routine).
+- **Zalo đã có nhường tay cho chủ** (chỉ giữ trong bộ nhớ), không phải "thiếu hẳn".
+- **Vòng tự học có học** từ phiên được Commander giao việc.
+- **Cache**: thu gọn chỉ phá cache một lần là đúng, nhưng mỗi bước vẫn trả tiền cho cả ngữ cảnh; với cửa sổ 1 triệu token, thu gọn tới quá muộn (gần 800 nghìn token).
+
+### 9.2 Sửa thiết kế (bắt buộc)
+
+1. **Sang trang = phiên mới + tóm tắt**, không bao giờ dùng `fork`.
+2. **Khi nào sang trang**: ngữ cảnh vượt khoảng 100 nghìn token, người dùng bấm "chủ đề mới", hay đổi cài đặt bot (lời dặn, model, connector). Như vậy "chủ đề mới" có tác dụng thật, và câu "có hiệu lực ở phiên mới" thành "áp dụng từ tin sau".
+3. **Chuyển theo khi sang trang**: lịch hẹn của dsh, `/loop`, `/heartbeat`, mục tiêu `/goal`, duyệt đang chờ; hoặc giữ chúng ở cấp luồng. Hiện chúng gọi về đúng phiên cũ.
+4. **Duyệt bền kiểu lai**: chờ ngắn trong lượt như bây giờ; quá hạn thì lưu yêu cầu kèm **mã băm tham số công cụ**, kết thúc lượt; người duyệt xong thì gửi `followup`, model gọi lại đúng công cụ đó, aris tự cho qua **một lần** nếu tham số khớp.
+5. **Mã chống lặp cho mọi thao tác ra ngoài** (gửi Zalo, Telegram, tin cho khách, thao tác tốn tiền): không bao giờ gửi hai lần khi thử lại hay khi kết quả không rõ.
+6. **Đưa `giao_viec` ra khỏi đội dsh của phiên Commander**: đội dsh chỉ nhận tối đa 16 thành viên trọn đời (tính cả lần lỗi) và không dùng lại tên; trong một luồng sống mãi, giao việc sẽ hỏng vĩnh viễn. Thay bằng bản ghi việc của aris và phiên việc riêng.
+7. **Bảng `người`** nối danh tính Telegram, Zalo, web của cùng một người; ghi `người` vào luồng, tin, ký ức, bài học, đề xuất skill, duyệt và chi phí **ngay từ 9.1** (hôm nay mọi thứ là `chủ`). Không có bảng này thì quyết định "một người một luồng gộp mọi kênh" không làm được, và 9.3 phải viết lại.
+8. **Ký ức mặc định riêng của người**: hôm nay "nhớ là…" của bất kỳ ai đều vào cuốn "hồ sơ chủ" dùng chung cho mọi bot. Đưa lên ký ức chung của bot thì phải qua duyệt.
+9. **`recall` và tìm kiếm chỉ trong (bot, người)**: hôm nay tìm trong mọi phiên, kể cả phiên của khách.
+10. **ACP, routine, `/goal`, `/ask`, việc của dự án đều là "việc" gắn với luồng**; bỏ việc nút routine gắn lại cuộc chat Telegram.
+11. **Có công tắc theo từng bot** (`threads.v1`): chỉ thêm bảng mới, vẫn ghi song song con trỏ cũ, không sửa nhật ký dsh; tắt công tắc là về đúng cách cũ.
+
+### 9.3 Nên làm
+
+- Đóng số thứ tự nhận tin **trước** khi chuyển giọng nói thành chữ hay tải tệp, để tin từ hai kênh giữ đúng thứ tự gửi.
+- Gửi kết quả và nhắc việc về **kênh người đó dùng gần nhất**.
+- **Khoá tài nguyên theo bot** (máy, thư mục dự án) cho việc phụ chạy song song với luồng chính.
+- **Tự đẩy thành việc**: lượt dài quá khoảng 2 phút hay quá nhiều bước thì aris tự chuyển thành thẻ việc ("làm ở nền, xong báo"); model có công cụ `bat_dau_viec`; nút "+ Việc" chỉ là lối tắt. Người dùng không phải chọn "nhắn hay giao việc".
+- Bỏ ba chế độ khi bot đang bận (chen, xếp hàng, ngắt): mặc định chen, có nút **Dừng**.
+- Luồng phòng (nhóm) có luật bận riêng và tin cậy theo người gửi.
+- Rút ký ức cả lúc sang trang, không chỉ lúc thu gọn.
+- **Tách giao diện kiểu OpenMausBot thành 9.1b**, làm sau khi phần định tuyến chạy ổn: giảm một nửa rủi ro.
+- **Spike trước khi lên plan** (3–4 ngày, không viết mã sản phẩm): thời gian mở lại phiên nguội theo độ dài nhật ký, chen lời khi đang chờ duyệt, lịch hẹn sau sang trang, đội dsh sau 16 thành viên, chi phí mỗi bước theo độ dài ngữ cảnh, duyệt bằng tin nhắn Zalo.
+
+### 9.4 Để sau hay bỏ khỏi 9.1
+
+- Để sau: đẩy phiên rảnh khỏi bộ nhớ (đo trước), cầm lái chung (thuộc 9.2 cùng khoá máy), Lark (sau khi Telegram và Zalo chạy ổn), cuộn vô hạn qua các trang (đầu tiên chỉ cần vạch trang và "xem trang trước").
+- Không chép: dựng lại ngữ cảnh mỗi lượt từ cơ sở dữ liệu như Rakazo (đánh vào cache, lợi thế của dsh); mô hình một chủ một bot của Rakazo; "mặc định toàn quyền, có nút hoàn tác" của OpenMausBot (tin đã gửi cho khách thì không hoàn tác được); gộp nhóm hay khách vào luồng riêng của một người.
+
+### 9.5 Thứ tự làm 9.1 (sau sửa)
+
+0. **Spike** (đo, không viết mã sản phẩm).
+1. **Dữ liệu chỉ thêm mới**: bảng `luồng` và bảng `người`; luồng đầu tiên của mỗi bot = cuộc chat Telegram riêng của chủ với bot đó nếu có, không thì phiên mở gần nhất; các phiên khác thành trang cũ tìm được.
+2. **Một cửa gửi tin** và gửi kết quả về kênh dùng gần nhất.
+3. **Việc**: routine, `/goal`, `giao_viec`, ACP, `/ask` thành phiên việc gắn luồng, đăng thẻ kết quả.
+4. **Duyệt bền** và mã chống lặp; sau đó câu hỏi `timed`.
+5. **Sang trang** bằng phiên mới + tóm tắt, chuyển lịch hẹn và mục tiêu, giới hạn `recall`.
+6. **Giao diện tối thiểu**: bỏ "Việc mới", `/new` thành "chủ đề mới"; giữ "Lịch sử trang" cho quản trị một bản phát hành.
+7. **Gỡ đường cũ** sau hai tuần chạy thật với công tắc bật cho mọi bot.
+8. **9.1b**: giao diện kiểu OpenMausBot.
