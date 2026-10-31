@@ -98,7 +98,7 @@ Lộ trình cũ đặt "Chạy bền" (9.1) trước. Sau khi đọc kỹ, **"Lu
 4. **9.4 Lên server.**
 5. Còn lại như cũ: 9.5 Đội tự vận hành, 9.6 Giọng nói, 9.7 App điện thoại, 9.8 Connector lớn.
 
-## 7. Cần người dùng quyết (trước khi lên plan 9.1)
+## 7. Người dùng đã quyết (31/10): đồng ý cả ba đề xuất dưới đây; yêu cầu một lượt soát độc lập trước khi lên plan 9.1
 
 1. **Một người, một luồng với mỗi bot, gộp mọi kênh** (web, Telegram, Zalo của chính người đó): đề xuất **có**.
 2. **Việc dài và routine chạy ở phiên phụ, đăng kết quả vào luồng** (đề xuất), hay chạy thẳng trong luồng như Rakazo (đơn giản hơn nhưng luồng rối và chỉ một việc một lúc).
