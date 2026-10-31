@@ -47,6 +47,8 @@ Ký hiệu cột cuối: **Giữ** (aris đang hơn, giữ nguyên), **Học** (
 
 ## 4. Lộ trình đề xuất (GĐ9 · aris thành Rakazo cho công ty)
 
+> **Sửa 31/10**: sau khi đọc kỹ kiến trúc, "Luồng bot liên tục" làm trước tiên (9.1 mới, gộp phần chạy bền). Lộ trình mới ở [kien-truc-bot.md](kien-truc-bot.md) mục 6; danh sách dưới đây là bản cũ.
+
 Điểm mạnh lấy thêm từ OpenMausBot cho từng mục: xem [openmausbot.md](openmausbot.md) mục 3.
 
 Thứ tự theo giá trị và theo phụ thuộc. 9.3 và 9.4 phải xong cùng nhau trước khi cho nhân sự vào: server mở ra ngoài thì phải có tài khoản và quyền.
