@@ -77,7 +77,7 @@ Bot (dùng chung): lời dặn có bản, ký ức, skill, máy, connector, mode
    - Chủ hay nhân sự: **mỗi người một luồng riêng với mỗi bot**. Web, Telegram, Zalo, điện thoại của cùng một người **đổ vào cùng một luồng**. Đây là chỗ aris vượt Rakazo (Rakazo chỉ có một chủ).
    - Khách trên Zalo hay Telegram của shop: mỗi khách một luồng loại "khách" (như hiện nay), chủ xem được.
    - Nhóm Telegram, Zalo, nhóm bot: luồng loại "phòng", ghi tên người gửi.
-2. **Một cửa gửi tin** `threads.send(luồng, tin, người gửi, requestId)`: rảnh thì bắt đầu lượt; đang trò chuyện thì `steer`; đang chạy việc nền thì `followup`. Mọi kênh và giao diện chỉ gọi cửa này. Không còn "Việc mới", không còn `/new`.
+2. **Một cửa gửi tin** `threads.send(thread, message, sender, requestId)`: rảnh thì bắt đầu lượt; đang trò chuyện thì `steer`; đang chạy việc nền thì `followup`. Mọi kênh và giao diện chỉ gọi cửa này. Không còn "Việc mới", không còn `/new`.
 3. **Sang trang ngầm**: khi phiên đủ dài và bot đang rảnh, `fork` sang phiên mới, mang tóm tắt và ký ức, giữ phần đầu ổn định để trúng cache. Người dùng chỉ thấy một luồng cuộn mãi; tìm trong luồng tìm được cả các trang cũ.
 4. **Việc (task)** cho việc dài hay chạy song song: bot hoặc người bấm **"+ Việc"** (như nút của OpenMausBot) → việc chạy ở phiên phụ, hiện thành thẻ "đang làm" trong luồng; xong thì đăng thẻ kết quả và một dòng tóm tắt vào luồng. Routine, `/goal`, `giao_viec` đều là việc. Luồng chính gọn, cache ổn, bot vẫn làm được nhiều việc cùng lúc (Rakazo chỉ cho một lượt dùng máy một lúc).
 5. **Chờ người bền**: duyệt, hỏi, cầm lái, xin khoá đều thành thẻ **trong chính luồng**; lượt kết thúc, nhả bộ nhớ; trả lời xong `followup` có `requestId` để thao tác chỉ chạy một lần; nhắc sau 4 giờ, hết hạn theo loại. Chuông "Cần {you}" và Hộp duyệt lấy từ trạng thái luồng.
@@ -133,18 +133,18 @@ Lộ trình cũ đặt "Chạy bền" (9.1) trước. Sau khi đọc kỹ, **"Lu
 4. **Duyệt bền kiểu lai**: chờ ngắn trong lượt như bây giờ; quá hạn thì lưu yêu cầu kèm **mã băm tham số công cụ**, kết thúc lượt; người duyệt xong thì gửi `followup`, model gọi lại đúng công cụ đó, aris tự cho qua **một lần** nếu tham số khớp.
 5. **Mã chống lặp cho mọi thao tác ra ngoài** (gửi Zalo, Telegram, tin cho khách, thao tác tốn tiền): không bao giờ gửi hai lần khi thử lại hay khi kết quả không rõ.
 6. **Đưa `giao_viec` ra khỏi đội dsh của phiên Commander**: đội dsh chỉ nhận tối đa 16 thành viên trọn đời (tính cả lần lỗi) và không dùng lại tên; trong một luồng sống mãi, giao việc sẽ hỏng vĩnh viễn. Thay bằng bản ghi việc của aris và phiên việc riêng.
-7. **Bảng `người`** nối danh tính Telegram, Zalo, web của cùng một người; ghi `người` vào luồng, tin, ký ức, bài học, đề xuất skill, duyệt và chi phí **ngay từ 9.1** (hôm nay mọi thứ là `chủ`). Không có bảng này thì quyết định "một người một luồng gộp mọi kênh" không làm được, và 9.3 phải viết lại.
+7. **Bảng `people`** nối danh tính Telegram, Zalo, web của cùng một người; ghi `person` vào luồng, tin, ký ức, bài học, đề xuất skill, duyệt và chi phí **ngay từ 9.1** (hôm nay mọi thứ là `chủ`). Không có bảng này thì quyết định "một người một luồng gộp mọi kênh" không làm được, và 9.3 phải viết lại.
 8. **Ký ức mặc định riêng của người**: hôm nay "nhớ là…" của bất kỳ ai đều vào cuốn "hồ sơ chủ" dùng chung cho mọi bot. Đưa lên ký ức chung của bot thì phải qua duyệt.
 9. **`recall` và tìm kiếm chỉ trong (bot, người)**: hôm nay tìm trong mọi phiên, kể cả phiên của khách.
 10. **ACP, routine, `/goal`, `/ask`, việc của dự án đều là "việc" gắn với luồng**; bỏ việc nút routine gắn lại cuộc chat Telegram.
-11. **Có công tắc theo từng bot** (`threads.v1`): chỉ thêm bảng mới, vẫn ghi song song con trỏ cũ, không sửa nhật ký dsh; tắt công tắc là về đúng cách cũ.
+11. **Có công tắc theo từng bot** (`teammates.v1`): chỉ thêm bảng mới, vẫn ghi song song con trỏ cũ, không sửa nhật ký dsh; tắt công tắc là về đúng cách cũ.
 
 ### 9.3 Nên làm
 
 - Đóng số thứ tự nhận tin **trước** khi chuyển giọng nói thành chữ hay tải tệp, để tin từ hai kênh giữ đúng thứ tự gửi.
 - Gửi kết quả và nhắc việc về **kênh người đó dùng gần nhất**.
 - **Khoá tài nguyên theo bot** (máy, thư mục dự án) cho việc phụ chạy song song với luồng chính.
-- **Tự đẩy thành việc**: lượt dài quá khoảng 2 phút hay quá nhiều bước thì aris tự chuyển thành thẻ việc ("làm ở nền, xong báo"); model có công cụ `bat_dau_viec`; nút "+ Việc" chỉ là lối tắt. Người dùng không phải chọn "nhắn hay giao việc".
+- **Tự đẩy thành việc**: lượt dài quá khoảng 2 phút hay quá nhiều bước thì aris tự chuyển thành thẻ việc ("làm ở nền, xong báo"); model có công cụ `start_task`; nút "+ Việc" chỉ là lối tắt. Người dùng không phải chọn "nhắn hay giao việc".
 - Bỏ ba chế độ khi bot đang bận (chen, xếp hàng, ngắt): mặc định chen, có nút **Dừng**.
 - Luồng phòng (nhóm) có luật bận riêng và tin cậy theo người gửi.
 - Rút ký ức cả lúc sang trang, không chỉ lúc thu gọn.
@@ -159,7 +159,7 @@ Lộ trình cũ đặt "Chạy bền" (9.1) trước. Sau khi đọc kỹ, **"Lu
 ### 9.5 Thứ tự làm 9.1 (sau sửa)
 
 0. **Spike** (đo, không viết mã sản phẩm).
-1. **Dữ liệu chỉ thêm mới**: bảng `luồng` và bảng `người`; luồng đầu tiên của mỗi bot = cuộc chat Telegram riêng của chủ với bot đó nếu có, không thì phiên mở gần nhất; các phiên khác thành trang cũ tìm được.
+1. **Dữ liệu chỉ thêm mới**: bảng `threads` và bảng `people`; luồng đầu tiên của mỗi bot = cuộc chat Telegram riêng của chủ với bot đó nếu có, không thì phiên mở gần nhất; các phiên khác thành trang cũ tìm được.
 2. **Một cửa gửi tin** và gửi kết quả về kênh dùng gần nhất.
 3. **Việc**: routine, `/goal`, `giao_viec`, ACP, `/ask` thành phiên việc gắn luồng, đăng thẻ kết quả.
 4. **Duyệt bền** và mã chống lặp; sau đó câu hỏi `timed`.

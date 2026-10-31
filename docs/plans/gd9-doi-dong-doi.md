@@ -6,6 +6,7 @@
 - [kien-truc/5-aris-chi-huy-kiem-ke.md](../nghien-cuu/kien-truc/5-aris-chi-huy-kiem-ke.md): mọi chỗ trong mã đang dựa vào "Aris là chỉ huy".
 - [kien-truc/6-bot-ngang-hang.md](../nghien-cuu/kien-truc/6-bot-ngang-hang.md): Rakazo và OpenMausBot cho bot làm đồng đội của nhau thế nào.
 - Giao diện: bản vẽ kiểu OpenMausBot (`design/canvas/Mb*.dc.html`).
+- **Quy ước tên**: định danh mới trong mã (bảng, công cụ, hàm, cờ) đặt bằng tiếng Anh; chữ hiển thị cho người dùng vẫn tiếng Việt.
 
 ## 1. Người dùng đã chốt
 
@@ -19,9 +20,9 @@
 1. **Bot** là đồng đội: lời dặn có bản và hoàn tác, **mô tả công khai** (đồng đội khác đọc để biết nhờ ai việc gì), ký ức của bot, skill, model, máy, connector, routine của chính nó.
 2. **Luồng** = (bot, người). Một cửa gửi tin; rảnh thì làm, đang làm thì chen lời; phiên dsh là trang, sang trang bằng phiên mới + tóm tắt.
 3. **Việc** = công việc chạy ở phiên phụ, có bản ghi bền của aris (ai nhờ, ai làm, điều kiện xong, trần tiền, trạng thái), xong thì **tự gửi kết quả về** nơi nhờ.
-4. **Bot nhờ bot** (`nhan_dong_doi`): tạo một việc cho đồng đội; luồng người nhờ hiện chip "Đã nhờ Mai…", luồng của Mai hiện thẻ "Lâm nhờ: …"; kết quả tự quay về và **gấp gọn dưới chip**. Không đi qua đội dsh.
-5. **Chuyển hẳn cho đồng đội** (`chuyen_cho_dong_doi`): người dùng hỏi nhầm bot thì bot chuyển, bot kia trả lời thẳng người dùng; cấm chuyển ngược lại cho người vừa chuyển.
-6. **Không có chỉ huy về mặt kiến trúc.** Bot **Aris vẫn còn** (linh vật, tên quen thuộc) nhưng là bot bình thường được bật công tắc **"Quản đội"**: tạo bot mới, sửa lời dặn và model của bot do nó tạo (luôn hỏi người duyệt), xem danh sách đội. Công tắc tắt mặc định ở bot khác, chỉ dùng trong lượt do người bắt đầu.
+4. **Bot nhờ bot** (`ask_teammate`): tạo một việc cho đồng đội; luồng người nhờ hiện chip "Đã nhờ Mai…", luồng của Mai hiện thẻ "Lâm nhờ: …"; kết quả tự quay về và **gấp gọn dưới chip**. Không đi qua đội dsh.
+5. **Chuyển hẳn cho đồng đội** (`hand_off_to_teammate`): người dùng hỏi nhầm bot thì bot chuyển, bot kia trả lời thẳng người dùng; cấm chuyển ngược lại cho người vừa chuyển.
+6. **Không có chỉ huy về mặt kiến trúc.** Bot **Aris vẫn còn** (linh vật, tên quen thuộc) nhưng là bot bình thường được bật công tắc **"Quản đội"** (`canManageTeam`): tạo bot mới, sửa lời dặn và model của bot do nó tạo (luôn hỏi người duyệt), xem danh sách đội. Công tắc tắt mặc định ở bot khác, chỉ dùng trong lượt do người bắt đầu.
 7. **Chặn vòng lặp và chi phí** (học cả hai bên, và làm hơn cả hai):
    - tối đa 6 bước nhờ nối tiếp (như Rakazo); độ sâu cây tối đa 4, mỗi chuỗi tối đa 24 lần nhờ (như OpenMausBot);
    - **trần tiền cho cả chuỗi** (cả hai sản phẩm đều chưa có): mặc định 1 USD, quá trần thì dừng và hỏi người;
@@ -38,11 +39,11 @@
 | 3 | Phòng nhóm dự án (`moi_noi`, Aris tóm tắt) | **Đổi về sau** thành **Nhóm bot** (luồng loại phòng, ai được nhắc tên thì trả lời), làm ở giai đoạn sau |
 | 4 | Driver Kanban tự đẩy thẻ, Aris tự chia thẻ | **Bỏ driver**; giữ **Bảng việc** cho người và bot nhận việc, làm sau |
 | 5 | Commander tự học "bot nào hợp việc nào" | **Bỏ** (mô tả công khai của bot thay thế) |
-| 6 | Trợ lý ẩn danh của Commander | **Đổi**: mọi bot dùng bot phụ của dsh (một tầng) |
+| 6 | Trợ lý ẩn danh của Commander | **Đổi**: mọi bot dùng bot phụ của dsh (`run_subagent`, một tầng) |
 | 7 | Duyệt mỗi lần giao việc cho bot X | **Đổi**: công tắc theo bot "nhận việc từ đồng đội phải hỏi người" |
 | 8 | Trần tiền mỗi việc (tính theo phiên đội dsh) | **Đổi**: trần trên bản ghi việc + trần cả chuỗi |
-| 9 | Chuyển giao một chiều | **Giữ**, thành `chuyen_cho_dong_doi` |
-| 10 | Cuộc trò chuyện "chính" với Aris; `/ask`, `aris send` luôn qua Aris; routine gửi kết quả qua Telegram của Aris | **Đổi**: mỗi bot có luồng riêng; `/ask` và `aris send` nhận tên bot (mặc định Aris); kết quả gửi về kênh người dùng dùng gần nhất |
+| 9 | Chuyển giao một chiều | **Giữ**, thành `hand_off_to_teammate` |
+| 10 | Cuộc trò chuyện "chính" với Aris; `/ask`, `aris send` luôn qua Aris; routine gửi kết quả qua Telegram của Aris | **Đổi**: mỗi bot có luồng riêng; `/ask` và `aris send` nhận tham số `--bot` (mặc định Aris); kết quả gửi về kênh người dùng dùng gần nhất |
 | 11 | Chỉ Aris được tạo và bật routine | **Đổi**: mỗi bot tạo routine của chính nó (người duyệt) |
 | 12 | Bot thường không được lập đội | **Thay** bằng luật chặn vòng lặp và trần chuỗi ở mục 2.7 |
 | 13 | Trang Commander, Cài đặt › Commander, cây đội có Commander ở giữa, nút "Aris" ở đầu thanh bên | **Bỏ**; thanh bên là danh bạ bot phẳng (bản vẽ kiểu OpenMausBot) |
@@ -50,25 +51,25 @@
 
 Giữ nguyên: kho skill và connector chung của đội, trần chi phí cả đội, hàng rào, sao lưu, điểm khôi phục, `/goal` có giám khảo, vòng tự học (đổi đích duyệt), Second Brain, bot ngoài (Claude Code, Codex: tách khỏi gói Commander thành gói riêng).
 
-## 4. Các đợt (thứ tự theo phụ thuộc, có công tắc `doi.v1` theo từng bot)
+## 4. Các đợt (thứ tự theo phụ thuộc, có công tắc `teammates.v1` theo từng bot)
 
 **9.0 Spike (3–4 ngày, không viết mã sản phẩm).** Đo: thời gian mở lại phiên nguội theo độ dài nhật ký; chen lời khi lượt đang chờ duyệt; lịch hẹn và `/goal` sau sang trang; chi phí mỗi bước theo độ dài ngữ cảnh (để chọn ngưỡng sang trang, dự kiến khoảng 100 nghìn token); bot phụ dsh từ một phiên việc; duyệt bằng tin nhắn Zalo. Kết quả ghi `docs/spikes/gd9-luong-bot.md`. **Điểm dừng 2.**
 
 **9.1 Nền: người, luồng, một cửa gửi tin.**
-- Bảng `nguoi` (nối danh tính Telegram, Zalo, web; hôm nay chỉ có "chủ") và bảng `luong` (bot, người, loại riêng | phòng | khách, trang hiện tại, trang cũ, trạng thái, kênh gần nhất). Chỉ thêm mới, vẫn ghi song song con trỏ cũ.
-- `luong.gui(người, bot, tin, nguồn, số thứ tự nhận)`: web và kênh gọi khi công tắc bật; số thứ tự đóng trước khi chuyển giọng nói hay tải tệp.
-- Một hàm `bao(người | luồng)` thay khoảng 14 chỗ gửi cứng về chat của Aris.
+- Bảng `people` (nối danh tính Telegram, Zalo, web; hôm nay chỉ có "chủ") và bảng `threads` (bot, person, kind `direct` | `room` | `customer`, trang hiện tại, trang cũ, trạng thái, kênh gần nhất). Chỉ thêm mới, vẫn ghi song song con trỏ cũ.
+- `threads.send(person, bot, message, origin, receiptSeq)`: web và kênh gọi khi công tắc bật; số thứ tự đóng trước khi chuyển giọng nói hay tải tệp.
+- Một hàm `notify(person | thread)` thay khoảng 14 chỗ gửi cứng về chat của Aris.
 - `botOf` không còn trả "aris" cho phiên chưa gắn thẻ: phiên mới luôn có bot thật.
 
 **9.2 Đồng đội ngang hàng.**
 - Mô tả công khai của bot; danh bạ đồng đội nạp vào lời dặn (gắn nhãn "do đồng đội tự viết").
-- Bản ghi `viec` (ai nhờ, ai làm, chế độ làm | hỏi ý | báo, điều kiện xong, trần tiền, chuỗi, trạng thái, kết quả); công cụ `nhan_dong_doi`, `chuyen_cho_dong_doi`; kết quả tự quay về (cả khi khởi động lại); chặn vòng lặp và trần chuỗi.
+- Bản ghi `tasks` (ai nhờ, ai làm, chế độ `work` | `consult` | `notify`, điều kiện xong `doneWhen`, trần tiền, chuỗi, trạng thái, kết quả); công cụ `ask_teammate`, `hand_off_to_teammate`; kết quả tự quay về (cả khi khởi động lại); chặn vòng lặp và trần chuỗi.
 - Bỏ đường giao việc qua đội dsh; tắt `giao_viec`, `giao_phong`, `moi_noi`, Driver sau công tắc.
 - Bot Aris thành bot thường + công tắc "Quản đội"; công cụ tạo bot, sửa bot con (luôn duyệt).
 - Bot ngoài tách thành gói riêng.
 
 **9.3 Việc và chờ người bền.**
-- Routine, `/goal`, ACP, `/ask`, việc của dự án đều là việc gắn luồng, đăng thẻ kết quả; bỏ nút routine gắn lại cuộc chat Telegram; tự đẩy thành việc khi lượt quá khoảng 2 phút.
+- Routine, `/goal`, ACP, `/ask`, việc của dự án đều là việc gắn luồng, đăng thẻ kết quả; bỏ nút routine gắn lại cuộc chat Telegram; tự đẩy thành việc khi lượt quá khoảng 2 phút (model có công cụ `start_task`).
 - Duyệt bền kiểu lai (chờ ngắn trong lượt, quá hạn thì lưu yêu cầu với mã băm tham số, cho qua đúng một lần khi model gọi lại) + **mã chống lặp cho mọi thao tác ra ngoài**; thẻ "Cần {you}" lấy từ trạng thái luồng và việc; sau đó bật câu hỏi `timed`.
 - Ký ức mặc định riêng của người (chuyển cuốn "hồ sơ chủ" sang người "chủ"); `recall` và tìm kiếm chỉ trong (bot, người).
 - Sang trang bằng phiên mới + tóm tắt (ngưỡng từ spike, "chủ đề mới", đổi cài đặt bot); chuyển lịch hẹn, `/loop`, `/heartbeat`, `/goal`, duyệt đang chờ sang trang mới; rút ký ức lúc sang trang.
