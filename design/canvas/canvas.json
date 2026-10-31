@@ -987,6 +987,66 @@
       "w": 1440,
       "x": 1520,
       "y": 1080
+    },
+    "MbVanPhong.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "mb",
+      "title": "M1 · Văn phòng kiểu OpenMausBot (tối): danh bạ linh vật lớn, chat, thẻ câu hỏi A B C, bảng Máy tính",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "MbVanPhongSang.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "mb",
+      "title": "M1 · Văn phòng kiểu OpenMausBot (sáng)",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "MbCanAnh.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "mb",
+      "title": "M2 · Cần {you} duyệt và cầm lái (tối)",
+      "w": 1440,
+      "x": 0,
+      "y": 1080
+    },
+    "MbCanAnhSang.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "mb",
+      "title": "M2 · Cần {you} duyệt và cầm lái (sáng)",
+      "w": 1440,
+      "x": 1520,
+      "y": 1080
+    },
+    "MbHoSoBot.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "mb",
+      "title": "M3 · Hồ sơ bot ở bảng phải: linh vật, màu, tên, lời dặn có hoàn tác, ai được dùng (tối)",
+      "w": 1440,
+      "x": 0,
+      "y": 2160
+    },
+    "MbHoSoBotSang.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "mb",
+      "title": "M3 · Hồ sơ bot (sáng)",
+      "w": 1440,
+      "x": 1520,
+      "y": 2160
     }
   },
   "createdOnFiles": {
@@ -1192,12 +1252,22 @@
     "RkVanPhong.dc.html",
     "RkVanPhongSang.dc.html",
     "RkCanAnh.dc.html",
-    "RkHoSoBot.dc.html"
+    "RkHoSoBot.dc.html",
+    "MbVanPhong.dc.html",
+    "MbVanPhongSang.dc.html",
+    "MbCanAnh.dc.html",
+    "MbCanAnhSang.dc.html",
+    "MbHoSoBot.dc.html",
+    "MbHoSoBotSang.dc.html"
   ],
   "pages": [
     {
       "id": "rk",
       "name": "Giao diện mới · kiểu Rakazo"
+    },
+    {
+      "id": "mb",
+      "name": "Giao diện mới · kiểu OpenMausBot"
     },
     {
       "id": "rv",
