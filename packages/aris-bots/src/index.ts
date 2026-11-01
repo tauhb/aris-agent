@@ -45,6 +45,7 @@ import {
 import { renderPersona } from './persona.js'
 import { botDenyReason, botToolOf, denyReason, insideDir, needOf, writeTarget } from './policy.js'
 import { SoulHistory, type SoulRecord } from './soul.js'
+import { registerManageTools } from './manage-tools.js'
 import { BotError, BotStore, COMMANDER_ID } from './store.js'
 import { loadTemplates } from './templates.js'
 
@@ -66,6 +67,7 @@ export * from './portable.js'
 export * from './mcp.js'
 export * from './mcp-import.js'
 export * from './soul.js'
+export * from './manage.js'
 
 export const name = 'aris-bots'
 export const inject = [
@@ -148,6 +150,8 @@ export async function apply(ctx: Context): Promise<void> {
   }
   const souls = new SoulHistory(domain.table('souls') as unknown as Table<SoulRecord>)
   await store.ensureCommander()
+  // Aris quản đội (GĐ9.2): tạo bot, sửa và khôi phục lời dặn bằng lời, luôn qua thẻ duyệt.
+  registerManageTools(ctx, store, souls)
   await store.ensurePolicies(await loadTemplates())
 
   // Việc gần đây lưu bền: giữ 8 ngày (số liệu 7 ngày ở cột phải hồ sơ bot), tối đa 3.000 mục; nạp lại

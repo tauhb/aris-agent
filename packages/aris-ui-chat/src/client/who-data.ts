@@ -186,6 +186,36 @@ export function splitMentions(
   return out
 }
 
+/**
+ * Như {@link splitMentions}, thêm tên bot viết thẳng không có `@` (giao diện GĐ9): tên phải đứng riêng (không
+ * dính chữ hay số hai bên), đúng hoa thường, ít nhất 2 ký tự. `names` là tên → tên gọi.
+ */
+export function splitRefs(
+  text: string,
+  handles: ReadonlySet<string>,
+  names: ReadonlyMap<string, string>,
+): ({ kind: 'text'; text: string } | { kind: 'mention'; handle: string; text: string })[] {
+  const list = [...names.keys()].filter((n) => n.length >= 2).sort((a, b) => b.length - a.length)
+  if (!list.length) return splitMentions(text, handles)
+  const esc = list.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
+  const re = new RegExp(`(?<![\\p{L}\\p{N}_@])(?:${esc})(?![\\p{L}\\p{N}_])`, 'gu')
+  const out: ({ kind: 'text'; text: string } | { kind: 'mention'; handle: string; text: string })[] = []
+  for (const part of splitMentions(text, handles)) {
+    if (part.kind === 'mention') {
+      out.push(part)
+      continue
+    }
+    let at = 0
+    for (const m of part.text.matchAll(re)) {
+      if (m.index > at) out.push({ kind: 'text', text: part.text.slice(at, m.index) })
+      out.push({ kind: 'mention', handle: names.get(m[0])!, text: m[0] })
+      at = m.index + m[0].length
+    }
+    if (at < part.text.length) out.push({ kind: 'text', text: part.text.slice(at) })
+  }
+  return out
+}
+
 /** Một đoạn chữ trong lời bot: thường, đậm (`**x**`), mã (`` `x` ``). */
 export interface InlinePart {
   kind: 'text' | 'bold' | 'code'

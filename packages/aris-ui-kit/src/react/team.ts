@@ -32,6 +32,10 @@ export interface BotData {
   soulMeta?: { version: number; at: string }
   /** Commander được giao việc (bot thường); không có là có. */
   assignable?: boolean
+  /** Chỉ dùng skill được gán (GĐ9.3). */
+  skillsOnlyAssigned?: boolean
+  /** Chỉ dùng kết nối được gán (GĐ9.3). */
+  connectorsOnlyAssigned?: boolean
   createdAt: string
 }
 

@@ -156,4 +156,6 @@ export const CSS = `
 .aris-bpick .lock{margin-left:auto;font-size:11px;font-weight:600;border-radius:6px;padding:1px 7px;background:var(--a-warnSoft);color:var(--a-warn);white-space:nowrap}
 .aris-bpick .foot{border-top:1px solid var(--a-line);padding:6px 8px 2px;font-size:12px}
 [id^="dsh-slash-option-aris-brain-"] [class*="itemIcon"]{width:auto;height:auto;flex:none}
+body.aris-v2 .aris-who,body.aris-v2 .aris .aris-who{height:24px;padding:0 9px 0 4px;gap:5px;border:0;font-weight:500;background:color-mix(in srgb,var(--who) 18%,transparent);color:color-mix(in srgb,var(--who) 62%,var(--g9-ink))}
+body.aris-v2 .aris-who:hover,body.aris-v2 .aris .aris-who:hover{background:color-mix(in srgb,var(--who) 28%,transparent)}
 `

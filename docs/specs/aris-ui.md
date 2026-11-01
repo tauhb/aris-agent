@@ -38,3 +38,18 @@ Plan: [plans/gd9-1-khung-giao-dien.md](../plans/gd9-1-khung-giao-dien.md). Bản
 - "Luồng" của bot là phiên mở gần nhất (`openBotSession`); luồng thật ở 9.6.
 - Tìm kiếm là hộp "Tìm trong mọi phiên" cũ.
 - Thẻ duyệt chi tiết cho tạo bot và sửa lời dặn (V3, V4): 9.2.
+
+## 9.2 · Aris quản đội (`@aris/bots`, `manage.ts`, `manage-tools.ts`)
+
+- Công cụ chỉ phiên của Aris dùng được: `create_bot` (tên, vai, mô tả cho đồng đội, toàn văn lời dặn, phòng, linh vật), `read_bot_instructions`, `update_bot_instructions` (toàn văn mới kèm lý do), `restore_bot_instructions` (về một bản cũ).
+- Tạo bot và đổi lời dặn luôn hỏi duyệt: hook `tools/pre-execute` thay câu hỏi chung bằng thẻ đủ chi tiết (thẻ tạo: tên, @tên gọi, vai, phòng, model, mô tả, toàn văn lời dặn; thẻ sửa: bản cũ → bản mới, số ký tự, lý do, chỗ đổi theo dòng "−"/"+", toàn văn bản mới). Lời từ chối của hook khác giữ nguyên.
+- Đổi lời dặn ghi bản lịch sử `aris` (khôi phục: `restore`), trang hồ sơ bot vẫn hoàn tác được như trước. Lời dặn của Aris và bot ngoài không sửa bằng công cụ.
+- Tên gọi bot mới tự sinh từ tên (bỏ dấu, thêm số khi trùng). Linh vật chọn trong `MASCOT_CHOICES`, mã lạ thì `tron`.
+- Hướng dẫn của Aris (`aris-commander`, `GUIDE`) có mục "Quản đội". Đội chưa có bot nào ngoài Aris (không tính Thủ thư) thì thêm `FIRST_RUN`: chào ngắn bằng tiếng Việt theo cách xưng hô, hỏi bằng `ask_user_question` 3–4 lựa chọn, gõ tự do cũng được. Lời chào đến khi người dùng nhắn tin đầu tiên (không tự chạy để khỏi tốn tiền khi chưa ai mở).
+- Tên bot trong câu trả lời: `@tên` thành viên tên như trước; bật giao diện mới thì tên viết thẳng (đứng riêng, đúng hoa thường) cũng thành viên tên (`splitRefs`), kiểu viên theo bản vẽ (nền màu linh vật nhạt, không viền).
+
+## 9.3 · Hai công tắc skill và kết nối
+
+- Bản ghi bot có `skillsOnlyAssigned`, `connectorsOnlyAssigned` (mặc định không có = tắt). Bật hay tắt ở Cài đặt bot (khung phải, nhóm "Skill và kết nối") hoặc API `op: 'update'`.
+- Skill (`SkillStore.activeFor`, `resolveFor`): skill riêng + skill của đội gán đích danh luôn dùng; skill của đội gán cả đội (`assigned: 'all'`) chỉ dùng khi công tắc tắt.
+- Kết nối (`McpStore.forBot`): được gán = kết nối riêng của bot + kết nối của đội gán đích danh bot; dùng chung = kết nối của đội cho cả đội hay theo phòng. Công tắc bật thì chỉ phần được gán. Tắt thì cộng phần dùng chung, trừ dịch vụ đã có kết nối được gán (`serviceOf`: mục danh mục, không thì bộ dựng sẵn, không thì URL hay lệnh). Đây là luật mới cho mọi bot: trước đây hai kết nối cùng dịch vụ đều gắn.

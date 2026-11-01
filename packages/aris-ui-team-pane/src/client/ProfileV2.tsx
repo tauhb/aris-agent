@@ -11,6 +11,7 @@ import {
   arisNavigate,
   openBotSession,
   useSessionBot,
+  teamAction,
   useTeamData,
   type BotData,
 } from '@aris/ui-kit/react'
@@ -209,6 +210,7 @@ export function ProfileV2({
       {groups.map((g) => (
         <Group key={g.key} group={g} t={t} onRow={onRow} />
       ))}
+      {view === 'settings' && <OnlyAssigned bot={bot} t={t} />}
       {view === 'computer' && (
         <>
           <div className="g9-shot">
@@ -245,4 +247,45 @@ export function ProfileV2({
 export function ProfileTitle({ sessionId }: { sessionId?: string }) {
   const bot = useProfileBot(sessionId)
   return <>{bot?.name ?? 'Aris'}</>
+}
+
+/** Hai công tắc của GĐ9.3 (bản vẽ V20, V21): chỉ dùng skill được gán, chỉ dùng kết nối được gán. */
+function OnlyAssigned({ bot, t }: { bot: BotData; t: Translate }) {
+  const [busy, setBusy] = useState(false)
+  const flip = (key: 'skillsOnlyAssigned' | 'connectorsOnlyAssigned') => {
+    setBusy(true)
+    void teamAction({ op: 'update', id: bot.id, patch: { [key]: !bot[key] } })
+      .catch(() => {})
+      .finally(() => setBusy(false))
+  }
+  const row = (
+    key: 'skillsOnlyAssigned' | 'connectorsOnlyAssigned',
+    label: 'pf.onlySkills' | 'pf.onlyApps',
+    on: 'pf.onlySkillsOn' | 'pf.onlyAppsOn',
+    off: 'pf.onlySkillsOff' | 'pf.onlyAppsOff',
+  ) => (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={bot[key] === true}
+      disabled={busy}
+      className="g9-swr"
+      onClick={() => flip(key)}
+    >
+      <span className="b">
+        {t(label)}
+        <span>{t(bot[key] ? on : off)}</span>
+      </span>
+      <span className="g9-tg" aria-hidden="true" />
+    </button>
+  )
+  return (
+    <>
+      <div className="g9-sub">{t('pf.library')}</div>
+      <div className="g9-box">
+        {row('skillsOnlyAssigned', 'pf.onlySkills', 'pf.onlySkillsOn', 'pf.onlySkillsOff')}
+        {row('connectorsOnlyAssigned', 'pf.onlyApps', 'pf.onlyAppsOn', 'pf.onlyAppsOff')}
+      </div>
+    </>
+  )
 }

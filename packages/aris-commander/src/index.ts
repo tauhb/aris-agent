@@ -73,7 +73,7 @@ import {
   externalBudget,
   type CommanderSettings,
 } from './settings.js'
-import { EXTERNAL_AGENTS, EXTERNAL_PACKAGES, providerOf, type BotRecord } from '@aris/bots'
+import { EXTERNAL_AGENTS, EXTERNAL_PACKAGES, LIBRARIAN_ID, providerOf, type BotRecord } from '@aris/bots'
 import {
   dispatch,
   DispatchError,
@@ -184,7 +184,18 @@ Cách giao:
 - Giao việc sửa mã cho bot ngoài trên một repo khác thư mục của cuộc này: ghi đường dẫn tuyệt đối của repo vào dir (bot ngoài làm trong worktree riêng của repo đó).
 - Việc lặt vặt không cần chuyên môn (đọc một tệp lớn, tra cứu nhỏ): dùng subagent (trợ lý ẩn danh) thay vì giao bot.
 - Việc lớn: assign_department; trưởng nhóm tự chia cho thành viên phòng, báo cáo của phòng về đây thành tin nhắn sau, không cần đợi.
+
+Quản đội (bạn tạo và sửa bot cho người dùng):
+- Người dùng nhờ tạo bot, hay việc cứ lặp lại mà đội chưa ai hợp: đề xuất bot (tên, vai, việc gì), người dùng đồng ý thì gọi create_bot, mỗi lần một bot. Thẻ duyệt hiện đủ chi tiết nên đừng chép lại toàn văn lời dặn vào câu trả lời.
+- Lời dặn của bot mới: tiếng Việt, ngôi thứ hai ("Bạn là…"), nói rõ việc, cách xưng hô với người dùng, việc không được làm (không đoán khi thiếu dữ liệu, hỏi trước khi gửi gì ra ngoài), khi nào hỏi lại. Chọn phòng ban hợp nếu có.
+- Sửa cách một bot làm việc: read_bot_instructions, viết lại toàn văn, rồi update_bot_instructions kèm lý do. Muốn quay lại bản cũ: restore_bot_instructions.
+- Người dùng từ chối ở thẻ duyệt thì hỏi muốn đổi gì, không gọi lại y nguyên.
 </aris-commander>`
+
+/** Thêm vào hướng dẫn khi đội chưa có bot nào ngoài Aris: lời chào lần đầu (bản vẽ V2). */
+export const FIRST_RUN = `<aris-first-run>
+Đội chưa có bot nào ngoài bạn. Ở tin trả lời đầu tiên: chào ngắn một câu bằng tiếng Việt theo cách xưng hô ở <aris-bot>, nói bạn lập được đội bot làm thay việc lặp lại, rồi hỏi người dùng muốn bắt đầu từ đâu bằng ask_user_question với 3–4 lựa chọn ngắn theo điều người dùng vừa nói (ví dụ: "Lập đội bot cho việc kinh doanh", "Tạo một bot thư ký lo lịch và email", "Xem aris làm được gì"). Người dùng gõ tự do cũng được. Khi đã rõ thì đề xuất 2–3 bot và tạo bằng create_bot.
+</aris-first-run>`
 
 interface AgentLike {
   session: { id: string }
@@ -323,7 +334,10 @@ export async function apply(ctx: Context): Promise<void> {
           const id = c?.agent?.session.id
           if (isCommander(id)) {
             const history = learnedContext(learned(), (bot) => bots().store.get(bot)?.name ?? bot)
-            return history ? `${GUIDE}\n\n${history}` : GUIDE
+            const alone = !bots()
+              .store.list()
+              .some((b) => b.kind === 'member' && b.id !== LIBRARIAN_ID)
+            return [GUIDE, alone ? FIRST_RUN : '', history].filter(Boolean).join('\n\n')
           }
           const job = jobOf(id)
           return job

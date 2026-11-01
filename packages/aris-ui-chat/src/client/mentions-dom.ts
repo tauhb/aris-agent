@@ -4,7 +4,7 @@
  * đoạn chữ nào thì aris trả đoạn đó về nguyên trạng trước rồi mới thay lại, để không lệch với React.
  */
 import { mascotSvg } from '@aris/ui-kit'
-import { splitMentions } from './who-data.js'
+import { splitRefs } from './who-data.js'
 
 export interface MentionBot {
   id: string
@@ -52,6 +52,7 @@ interface Split {
  * @param bots - đội hiện tại theo `handle` (chữ thường).
  * @param titleOf - chữ gợi ý khi rê chuột lên tên.
  * @param open - mở hồ sơ bot khi bấm.
+ * @param withNames - thay cả tên bot viết thẳng không có `@` (giao diện GĐ9).
  * @returns hàm gỡ: trả mọi đoạn chữ về nguyên trạng.
  */
 export function watchMentions(
@@ -59,6 +60,7 @@ export function watchMentions(
   titleOf: (bot: MentionBot) => string,
   open: (bot: MentionBot) => void,
   doc: Document = document,
+  withNames = false,
 ): () => void {
   const splits = new Map<Text, Split>()
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -79,7 +81,10 @@ export function watchMentions(
 
   const decorate = (node: Text, team: ReadonlyMap<string, MentionBot>) => {
     const full = node.data
-    const parts = splitMentions(full, new Set(team.keys()))
+    const names = withNames
+      ? new Map([...team].map(([handle, b]) => [b.name, handle]))
+      : new Map<string, string>()
+    const parts = splitRefs(full, new Set(team.keys()), names)
     if (!parts.some((p) => p.kind === 'mention')) return
     const added: Node[] = []
     let first = true
@@ -110,7 +115,7 @@ export function watchMentions(
       const found: Text[] = []
       for (let n = walker.nextNode(); n; n = walker.nextNode()) {
         const t = n as Text
-        if (splits.has(t) || !t.data.includes('@') || t.parentElement?.closest(SKIP)) continue
+        if (splits.has(t) || (!withNames && !t.data.includes('@')) || t.parentElement?.closest(SKIP)) continue
         found.push(t)
       }
       for (const t of found) decorate(t, team)

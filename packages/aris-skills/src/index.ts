@@ -131,6 +131,13 @@ export async function apply(ctx: Context): Promise<void> {
   const store = new SkillStore(
     domain.table('skills') as unknown as Table<never>,
     domain.table('versions') as unknown as Table<never>,
+    undefined,
+    // Công tắc "Chỉ dùng skill được gán" nằm trên bản ghi bot (`@aris/bots`).
+    (bot) =>
+      (
+        ctx.get('arisBots') as
+          { store?: { get(id: string): { skillsOnlyAssigned?: boolean } | undefined } } | undefined
+      )?.store?.get(bot)?.skillsOnlyAssigned === true,
   )
   const evals = domain.table('evals') as unknown as Table<EvalRecord> & {
     delete(k: string): Promise<boolean>

@@ -59,6 +59,10 @@ export const botRecord = z.object({
   media: z.object({ image: mediaPolicy, video: mediaPolicy }).partial().optional(),
   /** Commander được giao việc cho bot (bot thường); bot ngoài dùng `external.assignable`. Mặc định có. */
   assignable: z.boolean().optional(),
+  /** Chỉ dùng skill được gán (GĐ9.3): bật thì bỏ skill dùng chung của cả đội. Mặc định tắt. */
+  skillsOnlyAssigned: z.boolean().optional(),
+  /** Chỉ dùng kết nối được gán (GĐ9.3): bật thì bỏ kết nối dùng chung. Mặc định tắt. */
+  connectorsOnlyAssigned: z.boolean().optional(),
   createdAt: z.string(),
 })
 export type BotRecord = z.infer<typeof botRecord>

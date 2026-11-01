@@ -427,6 +427,15 @@ Lộ trình đề xuất (sửa 31/10, xem [nghien-cuu/kien-truc-bot.md](nghien-
 - Còn dùng trình sửa cũ: mọi dòng của hồ sơ bot mở trang hồ sơ bot cũ ở đúng thẻ. Tìm kiếm vẫn là hộp "Tìm trong mọi phiên" cũ.
 - Lỗi có sẵn, không do đợt này: `aris-backup` test "giữ bản mới nhất mỗi ngày và mỗi tuần" còn chờ nhãn cũ `ngay`.
 
+**Nghiệm thu 9.2 · Aris quản đội và 9.3 · hai công tắc (1/11)**, đặc tả ở [specs/aris-ui.md](specs/aris-ui.md):
+
+- Aris có bốn công cụ: tạo bot, đọc lời dặn, sửa lời dặn, khôi phục bản cũ. Tạo và sửa luôn hiện thẻ duyệt đủ chi tiết (toàn văn lời dặn, chỗ đổi, lý do). Đổi lời dặn có bản lịch sử, hoàn tác được.
+- Lời chào lần đầu: khi đội chưa có bot nào, Aris chào và hỏi bằng thẻ lựa chọn ở tin trả lời đầu tiên.
+- Tên bot trong câu trả lời thành viên tên (cả khi viết thẳng, lúc bật giao diện mới).
+- Hai công tắc "Chỉ dùng skill được gán", "Chỉ dùng kết nối được gán" ở Cài đặt bot; kết nối được gán thắng kết nối dùng chung cùng dịch vụ (luật này áp cho mọi bot, kể cả khi tắt công tắc).
+- Đã thử: test đơn vị (soạn thẻ, so khác lời dặn, tên gọi, hai công tắc, tên bot viết thẳng); bản thử cổng 3301 nạp được các công cụ, bật công tắc lưu đúng (ảnh `design/gd9/anh-thuc-te/07-…`).
+- **Chưa thử với model thật** (bản thử chưa có khoá, mỗi lượt thật tốn tiền): Aris gọi `create_bot`, thẻ duyệt hiện trong chat, lời chào lần đầu. Cần người dùng thử trên bản đang dùng.
+
 ---
 
 ## Bù năng lực một bot so với Hermes (đánh giá 25/10)

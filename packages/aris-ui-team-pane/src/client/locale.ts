@@ -84,6 +84,13 @@ export const EN = {
   'pf.where': 'Where the bot works',
   'pf.fallback': 'Backup model',
   'pf.noScreen': 'The bot is not using the computer in this chat.',
+  'pf.library': 'Skills and connections',
+  'pf.onlySkills': 'Only use assigned skills',
+  'pf.onlySkillsOn': 'On: only skills assigned to this bot.',
+  'pf.onlySkillsOff': 'Off: assigned skills plus the shared skill library.',
+  'pf.onlyApps': 'Only use assigned connections',
+  'pf.onlyAppsOn': 'On: only connections assigned to this bot.',
+  'pf.onlyAppsOff': 'Off: assigned connections plus shared ones; for the same service the assigned one wins.',
 }
 
 export type PaneKey = keyof typeof EN
@@ -171,6 +178,13 @@ export const VI: Record<PaneKey, string> = {
   'pf.where': 'Bot làm việc ở đâu',
   'pf.fallback': 'Model dự phòng',
   'pf.noScreen': 'Trong chat này bot chưa dùng máy.',
+  'pf.library': 'Skill và kết nối',
+  'pf.onlySkills': 'Chỉ dùng skill được gán',
+  'pf.onlySkillsOn': 'Bật: chỉ dùng skill được gán cho bot này.',
+  'pf.onlySkillsOff': 'Tắt: skill được gán cộng kho skill dùng chung.',
+  'pf.onlyApps': 'Chỉ dùng kết nối được gán',
+  'pf.onlyAppsOn': 'Bật: chỉ dùng kết nối được gán cho bot này.',
+  'pf.onlyAppsOff': 'Tắt: kết nối được gán cộng kết nối dùng chung; cùng dịch vụ thì dùng kết nối được gán.',
 }
 
 export type Translate = (key: PaneKey, params?: Record<string, unknown>) => string

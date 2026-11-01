@@ -152,7 +152,8 @@ describe('kết nối dùng chung của đội', () => {
 
   it('tên máy chủ của đội có tiền tố riêng, không trùng kết nối riêng cùng tên và tự thêm số khi trùng', async () => {
     const s = new McpStore(memTable())
-    const own = await s.add('b-1', { preset: 'custom', name: 'Echo', command: 'node a' })
+    // Lệnh khác nhau: cùng một dịch vụ thì kết nối riêng thắng, kết nối của đội không gắn.
+    const own = await s.add('b-1', { preset: 'custom', name: 'Echo', command: 'node b' })
     const t1 = await s.addTeam({ preset: 'custom', name: 'Echo', command: 'node a' }, { bots: 'all' })
     const t2 = await s.addTeam({ preset: 'custom', name: 'Echo', command: 'node a' }, { bots: 'all' })
     expect([own.serverName, t1.serverName, t2.serverName]).toEqual(['echo', 'doi-echo', 'doi-echo_2'])
@@ -207,5 +208,24 @@ describe('kết nối dùng chung của đội', () => {
     )
     expect(JSON.stringify(viewOf(r))).not.toContain('abc')
     expect(viewOf(r).secretKeys).toEqual(['Authorization'])
+  })
+})
+
+describe('công tắc "Chỉ dùng kết nối được gán"', () => {
+  it('được gán thắng dùng chung cùng dịch vụ; bật công tắc thì bỏ hẳn phần dùng chung', async () => {
+    const s = new McpStore(memTable())
+    const git = {
+      preset: 'custom' as const,
+      transport: 'streamable-http' as const,
+      url: 'https://git.example/mcp',
+    }
+    const own = await s.add('b-1', { ...git, name: 'Git của Khoa' })
+    const sharedGit = await s.addTeam({ ...git, name: 'Git công ty' }, { bots: 'all' })
+    const sharedCal = await s.addTeam({ preset: 'custom', name: 'Lịch', command: 'node l' }, { bots: 'all' })
+    const named = await s.addTeam({ preset: 'custom', name: 'Kho', command: 'node k' }, { bots: ['b-1'] })
+    const ids = (b: Parameters<typeof s.forBot>[0]) => s.forBot(b).map((r) => r.id)
+    expect(ids({ id: 'b-1' })).toEqual([own.id, named.id, sharedCal.id])
+    expect(ids({ id: 'b-1', connectorsOnlyAssigned: true })).toEqual([own.id, named.id])
+    expect(ids({ id: 'b-2' })).toEqual([sharedGit.id, sharedCal.id])
   })
 })

@@ -3,7 +3,14 @@
  * gói nào (trừ nhãn model "1017" tạm của DeepSeek, row này tắt trong patch).
  */
 import { getMascot, toolNamesOf } from '@aris/ui-kit'
-import { arisNavigate, currentTeam, mountKitCss, refreshTeam, registerPersonal } from '@aris/ui-kit/react'
+import {
+  arisNavigate,
+  currentTeam,
+  isUiV2,
+  mountKitCss,
+  refreshTeam,
+  registerPersonal,
+} from '@aris/ui-kit/react'
 import { DispatchBranches, HeroMark, ModelLabel, SubagentBranch, TriggerButtons } from './Chat.js'
 import { EN, NS, VI } from './locale.js'
 import { RoomDock, RoomLead, RoomRound, RoomSay } from './Room.js'
@@ -258,6 +265,9 @@ export function apply(ctx: ClientContext): void {
         teamBots,
         (b) => b.name,
         (b) => arisNavigate('bot', { id: b.id }),
+        document,
+        // Giao diện GĐ9: tên bot viết thẳng cũng thành viên tên bot.
+        isUiV2(),
       ),
     'aris-ui-chat: reply mentions',
   )
