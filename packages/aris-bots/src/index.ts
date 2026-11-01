@@ -586,10 +586,33 @@ export async function apply(ctx: Context): Promise<void> {
     )
   }
 
+  /**
+   * Dấu của đội (bot, tên, phòng, linh vật, hai công tắc), gửi kèm trạng thái trực tiếp: giao diện thấy dấu đổi thì tải
+   * lại đội ngay (ví dụ Aris vừa tạo bot), không đợi lượt tải 30 giây.
+   */
+  const teamStamp = (bots: ReturnType<BotStore['list']>) => {
+    let h = 5381
+    for (const ch of bots
+      .map((b) =>
+        [
+          b.id,
+          b.name,
+          b.role,
+          b.department ?? '',
+          b.mascot,
+          b.skillsOnlyAssigned,
+          b.connectorsOnlyAssigned,
+        ].join(':'),
+      )
+      .join('|'))
+      h = ((h << 5) + h + ch.charCodeAt(0)) | 0
+    return (h >>> 0).toString(36)
+  }
+
   async function liveView() {
     const snap = live.snapshot(store.list().map((b) => b.id))
     const ids = [...new Set(Object.values(snap.status).flatMap((l) => l.sessions))]
-    return { ...snap, titles: await titlesFor(ids) }
+    return { ...snap, titles: await titlesFor(ids), team: teamStamp(store.list()) }
   }
 
   // Phiên gần đây của một bot cho ô chọn phiên ở bảng chat Văn phòng (`?sessions=<bot>`): tối đa 5 phiên có nội dung,

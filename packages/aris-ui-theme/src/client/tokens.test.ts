@@ -34,6 +34,11 @@ describe('theme aris', () => {
     expect(G9_TOKENS['--dsw-alias-bg-base']).toEqual({ light: '#ffffff', dark: '#0e0e0e' })
     expect(G9_TOKENS['--dsw-specific-bubble']?.dark).toBe(G9_THEMES.dark.ubub)
     expect(G9_TOKENS['--dsh-font-family-text-default']?.light).toMatch(/Inter/)
+    // Chữ trên nút chính không trùng màu nền nút.
+    for (const m of ['light', 'dark'] as const)
+      expect(G9_TOKENS['--dsw-alias-label-primary-foreground']?.[m]).not.toBe(
+        G9_TOKENS['--dsw-alias-button-primary-fill']?.[m],
+      )
   })
 
   it('bảng màu GĐ9 có đủ khoá cho cả hai nền và sinh đúng biến CSS', () => {

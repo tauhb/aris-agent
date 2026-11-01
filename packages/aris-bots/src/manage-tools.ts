@@ -41,6 +41,10 @@ export const MANAGE_TOOLS = [
 
 const ONLY = 'Chỉ Aris (Commander) được tạo bot và sửa lời dặn của bot.'
 
+/** Lời báo lời dặn quá dài, kèm số ký tự cần bớt để model khỏi phải tự đếm. */
+const tooLong = (n: number) =>
+  `Lời dặn dài ${n} ký tự, quá giới hạn ${SOUL_MAX}: bớt ít nhất ${n - SOUL_MAX} ký tự (gộp ý trùng, bỏ ví dụ) rồi gọi lại.`
+
 type Args = Record<string, unknown>
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
 
@@ -71,7 +75,7 @@ export function registerManageTools(ctx: Context, store: BotStore, souls: SoulHi
     if (!name) return 'Bot mới cần có tên.'
     const soul = str(a.instructions)
     if (!soul) return 'Cần lời dặn (instructions) cho bot mới.'
-    if (soul.length > SOUL_MAX) return `Lời dặn dài quá ${SOUL_MAX} ký tự; viết gọn lại.`
+    if (soul.length > SOUL_MAX) return tooLong(soul.length)
     const dep = str(a.department)
     const d = dep ? department(dep) : undefined
     if (dep && !d)
@@ -109,7 +113,7 @@ export function registerManageTools(ctx: Context, store: BotStore, souls: SoulHi
     }
     const soul = str(a.instructions)
     if (!soul) return 'Cần toàn văn lời dặn mới (instructions).'
-    if (soul.length > SOUL_MAX) return `Lời dặn dài quá ${SOUL_MAX} ký tự; viết gọn lại.`
+    if (soul.length > SOUL_MAX) return tooLong(soul.length)
     if (soul === bot.soul) return `Lời dặn mới giống hệt bản hiện tại của ${bot.name}.`
     return { bot, soul, version: { from: meta.version, to: meta.version + 1 } }
   }
@@ -165,7 +169,11 @@ export function registerManageTools(ctx: Context, store: BotStore, souls: SoulHi
           required: true,
           description: 'Mô tả cho đồng đội: bot này làm gì, khi nào nên nhờ (một hai câu).',
         },
-        instructions: { type: 'string', required: true, description: 'Toàn văn lời dặn (SOUL) của bot.' },
+        instructions: {
+          type: 'string',
+          required: true,
+          description: `Toàn văn lời dặn (SOUL) của bot, tối đa ${SOUL_MAX} ký tự (nên dưới 1.500).`,
+        },
         department: { type: 'string', description: 'Tên phòng ban bot thuộc về (bỏ trống nếu chưa có).' },
         mascot: { type: 'string', description: `Linh vật, một trong: ${MASCOT_CHOICES.join(', ')}.` },
       },
@@ -205,7 +213,7 @@ export function registerManageTools(ctx: Context, store: BotStore, souls: SoulHi
           .slice(0, 10)
           .map((v) => `bản ${v.version} · ${v.at.slice(0, 16).replace('T', ' ')} · ${v.by}`)
         return [
-          `${bot.name} (@${bot.handle}) · bản hiện tại ${meta.version}`,
+          `${bot.name} (@${bot.handle}) · bản hiện tại ${meta.version} · ${bot.soul.length}/${SOUL_MAX} ký tự`,
           `Lời dặn:\n${bot.soul || '(trống)'}`,
           versions.length ? `Các bản:\n${versions.join('\n')}` : '',
         ]
@@ -222,7 +230,11 @@ export function registerManageTools(ctx: Context, store: BotStore, souls: SoulHi
         'Chỉ Aris: thay lời dặn của một bot (đọc bằng read_bot_instructions trước). Gửi toàn văn bản mới, không gửi riêng chỗ đổi. Người dùng thấy thẻ duyệt có chỗ đổi và toàn văn; bản cũ vẫn giữ để hoàn tác.',
       parameters: {
         bot: { type: 'string', required: true, description: 'Tên hay @tên gọi của bot.' },
-        instructions: { type: 'string', required: true, description: 'Toàn văn lời dặn mới.' },
+        instructions: {
+          type: 'string',
+          required: true,
+          description: `Toàn văn lời dặn mới, tối đa ${SOUL_MAX} ký tự.`,
+        },
         reason: { type: 'string', required: true, description: 'Vì sao sửa, theo lời người dùng.' },
       },
       output: text,

@@ -39,7 +39,7 @@ export const EN = {
   'projects.title': 'Projects',
   'projects.add': 'New project',
   'project.label': 'Project {name}',
-  'v2.needs': 'Needs {you} to approve {n}',
+  'v2.needs': 'Needs you to approve {n}',
   'v2.activity': 'Activity, {n} waiting',
   'v2.activityTitle': 'Activity',
   'v2.newChat': 'New chat with Aris',

@@ -434,7 +434,9 @@ Lộ trình đề xuất (sửa 31/10, xem [nghien-cuu/kien-truc-bot.md](nghien-
 - Tên bot trong câu trả lời thành viên tên (cả khi viết thẳng, lúc bật giao diện mới).
 - Hai công tắc "Chỉ dùng skill được gán", "Chỉ dùng kết nối được gán" ở Cài đặt bot; kết nối được gán thắng kết nối dùng chung cùng dịch vụ (luật này áp cho mọi bot, kể cả khi tắt công tắc).
 - Đã thử: test đơn vị (soạn thẻ, so khác lời dặn, tên gọi, hai công tắc, tên bot viết thẳng); bản thử cổng 3301 nạp được các công cụ, bật công tắc lưu đúng (ảnh `design/gd9/anh-thuc-te/07-…`).
-- **Chưa thử với model thật** (bản thử chưa có khoá, mỗi lượt thật tốn tiền): Aris gọi `create_bot`, thẻ duyệt hiện trong chat, lời chào lần đầu. Cần người dùng thử trên bản đang dùng.
+- **Thử với model thật (1/11)**: mã mới chạy trên bản chép dữ liệu thật (DeepSeek-V4.1-Flash), bản aris đang dùng tắt trong lúc thử rồi bật lại, dữ liệu thật không đổi. Nhờ Aris tạo bot CSKH "Hằng" ở phòng Tăng trưởng → thẻ duyệt đủ chi tiết (ảnh `08-the-duyet-tao-bot.jpg`) → cho phép → Hằng có trên thanh bên, đúng phòng, lời dặn 1.708 ký tự, tên Hằng trong câu trả lời thành viên tên. Nhờ sửa lời dặn (khách xin giảm giá thì hỏi số lượng rồi báo anh) → Aris đọc lời dặn, thẻ duyệt bản 1 → 2 có chỗ đổi và lý do (ảnh `09-the-duyet-sua-loi-dan.jpg`) → cho phép → bản 2 lưu đúng.
+- Lỗi tìm ra khi thử và đã sửa: chữ trên nút chính trùng màu nền (giao diện mới); thẻ duyệt mất xuống dòng; tên `{you}` hiện nguyên trong chữ tiếng Anh; thanh bên đợi tới 30 giây mới thấy bot mới (nay trạng thái trực tiếp gửi kèm dấu của đội, đổi là tải lại ngay); Aris phải tự đếm ký tự khi lời dặn vượt 2.000 (nay công cụ báo số ký tự và số cần bớt).
+- Chưa thử với model thật: lời chào lần đầu (cần đội trống), khôi phục bản cũ bằng lời.
 
 ---
 

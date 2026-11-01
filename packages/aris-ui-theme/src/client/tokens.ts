@@ -162,6 +162,8 @@ export const G9_TOKENS: Record<string, TokenModes> = {
   '--dsw-specific-sidebar-fill': pair(GL.win, GD.win),
   '--dsw-specific-input-major': pair(GL.card, GD.card),
   '--dsw-specific-bubble': pair(GL.ubub, GD.ubub),
+  // Chữ trên nút chính (nền màu chữ): màu ngược.
+  '--dsw-alias-label-primary-foreground': pair(GL.inv, GD.inv),
   '--dsw-alias-border-l3': pair(GL.pill2, GD.pill2),
   '--dsw-alias-border-l4': pair(GL.pill2, GD.pill2),
   '--dsw-alias-label-tertiary': pair(GL.ink3, GD.ink3),

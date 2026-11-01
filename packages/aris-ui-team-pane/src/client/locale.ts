@@ -78,7 +78,7 @@ export const EN = {
   'pf.about': 'Description for teammates',
   'pf.safety': 'Before it acts',
   'pf.before': 'Risky actions',
-  'pf.ask': 'Ask {you} first',
+  'pf.ask': 'Ask you first',
   'pf.deny': 'Never',
   'pf.apps': 'Apps it can use',
   'pf.where': 'Where the bot works',

@@ -229,6 +229,8 @@ export interface TeamLive {
   activity: ActivityItem[]
   /** Tên các phiên đang chạy hay đang đợi, theo mã phiên (phiên chưa có tên thì không có). */
   titles?: Record<string, string>
+  /** Dấu của đội; đổi thì tải lại đội ngay. */
+  team?: string
 }
 
 const endpoint = () => new URL('api/aris/bots', document.baseURI)
@@ -367,6 +369,8 @@ function loadLive() {
     .then((r) => (r.ok ? (r.json() as Promise<TeamLive>) : undefined))
     .then((d) => {
       if (!d) return
+      // Đội đổi ở máy chủ (Aris tạo bot, đổi công tắc…): tải lại đội ngay.
+      if (live?.team && d.team && live.team !== d.team) void refreshTeam().catch(() => undefined)
       live = d
       for (const l of liveListeners) l()
     })
