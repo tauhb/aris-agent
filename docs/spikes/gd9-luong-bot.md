@@ -103,3 +103,9 @@ Thử thật: nhờ Aris khôi phục lời dặn của Hằng về bản 1, th�
 - Ngưỡng sang trang 100k (đề xuất) hay số khác?
 - Nhắn chen khi chờ duyệt: A, B (đề xuất) hay C?
 - Thứ tự tiếp theo: 9.5 Đồng đội hỏi nhau (chỉ chế độ hỏi ý, như plan), hay đưa 9.7 Duyệt bền lên trước?
+
+**Người dùng chốt (1/11):**
+
+- Nhắn chen khi chờ duyệt: **B**. Gõ tin khi đang chờ duyệt thì từ chối yêu cầu đó, lấy tin làm chỉ dẫn mới.
+- Thứ tự: **9.7 Duyệt bền lên trước**, 9.5 Đồng đội hỏi nhau làm sau.
+- Ngưỡng sang trang: người dùng hỏi 100k có ít quá không; chưa chốt.

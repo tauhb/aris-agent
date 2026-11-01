@@ -43,6 +43,8 @@ Sau 9.11: lên server, app điện thoại (V15), nhóm bot (V16), giọng nói.
 
 Plan chi tiết của đợt sau viết khi đợt trước xong, để bám đúng mã lúc đó.
 
+**Tiến độ (1/11)**: xong 9.1, 9.2, 9.3, spike 9.4. Sau Điểm dừng 2, người dùng đưa 9.7 (duyệt bền, chống lặp, ký ức theo người; gồm nhắn chen kiểu B khi chờ duyệt) lên làm trước 9.5.
+
 ## Kiểm tra thêm cho GĐ9
 
 Ngoài phần "Kiểm tra" của `gd8-chung.md`:
