@@ -58,6 +58,8 @@ export interface SidebarProps {
   usePanelInfo: Selector<PanelInfo>
   useWorkspaces: Selector<WorkspaceSnapshot>
   useSessions: Selector<SessionListSnapshot>
+  /** Phiên đang hiện ở vùng chính (giao diện GĐ9 dùng để sáng bot đang chat). */
+  useMounted: Selector<string | undefined>
   renderSlot: RenderSlot
   /** Bộ dịch của namespace `aris.sidebar`, dsh truyền vào nhờ `locale: NS` khi đăng ký slot. */
   t: Translate

@@ -2,8 +2,9 @@
  * Đầu khung chat aris, cắm vào ba slot đầu khung mà
  * `@deepseek-ai/dsh-client-ui-conversation` khai báo; không thay thế gói nào của dsh.
  */
-import { mountKitCss, registerPersonal } from '@aris/ui-kit/react'
+import { PROFILE_TAB, isUiV2, mountKitCss, registerPersonal } from '@aris/ui-kit/react'
 import { Leading, NewSessionButton, SessionSwitcher } from './Header.js'
+import { ActionsV2, LeadingV2 } from './HeaderV2.js'
 import { EN, NS, VI } from './locale.js'
 import { MoreMenu, type LogDownloadState } from './MoreMenu.js'
 import { CSS } from './styles.js'
@@ -19,7 +20,10 @@ interface ClientContext {
   }
   locale: { register(ns: string, locale: string, dict: Record<string, string>): () => void }
   shortcuts: { catalog: unknown }
-  sidebarRight: { mounted: unknown }
+  sidebarRight: {
+    mounted: unknown
+    openTab(kind: string, options?: { params?: Record<string, unknown> }): void
+  }
 }
 
 export const inject = ['slots', 'uiWorkspace', 'locale', 'shortcuts', 'sidebarRight']
@@ -47,41 +51,60 @@ export function apply(ctx: ClientContext): void {
     hooks: { shortcuts: ctx.shortcuts.catalog },
   })
 
+  // Giao diện mới GĐ9: viên tên bot ở giữa, viên model và nút máy; bỏ danh sách phiên và nút phiên mới.
+  const v2 = isUiV2()
+  const openProfile = (view: 'details' | 'computer') =>
+    ctx.sidebarRight.openTab(PROFILE_TAB, { params: { view } })
   ctx.slots.inject('conversation.header.leading', () =>
     ctx.slots.register(
       {
         name: 'conversation.header.leading',
         locale: NS,
         // Phiên đang hiện ở vùng chính, để biết phiên thuộc dự án nào.
-        inject: () => ({ hooks: { mounted: ctx.sidebarRight.mounted } }),
+        inject: () => ({ hooks: { mounted: ctx.sidebarRight.mounted }, openProfile }),
       },
-      Leading,
+      v2 ? LeadingV2 : Leading,
     ),
   )
-  ctx.slots.inject('conversation.session.header.actions', () =>
-    ctx.slots.register(
-      {
-        name: 'conversation.session.header.actions',
-        id: 'aris-session-switcher',
-        order: -1000,
-        locale: NS,
-        inject: actions,
-      },
-      SessionSwitcher,
-    ),
-  )
-  ctx.slots.inject('conversation.session.header.utilities', () =>
-    ctx.slots.register(
-      {
-        name: 'conversation.session.header.utilities',
-        id: 'aris-new-session',
-        order: -1000,
-        locale: NS,
-        inject: actions,
-      },
-      NewSessionButton,
-    ),
-  )
+  if (v2)
+    ctx.slots.inject('conversation.session.header.actions', () =>
+      ctx.slots.register(
+        {
+          name: 'conversation.session.header.actions',
+          id: 'aris-session-switcher',
+          order: 1000,
+          locale: NS,
+          inject: () => ({ openProfile }),
+        },
+        ActionsV2,
+      ),
+    )
+  else
+    ctx.slots.inject('conversation.session.header.actions', () =>
+      ctx.slots.register(
+        {
+          name: 'conversation.session.header.actions',
+          id: 'aris-session-switcher',
+          order: -1000,
+          locale: NS,
+          inject: actions,
+        },
+        SessionSwitcher,
+      ),
+    )
+  if (!v2)
+    ctx.slots.inject('conversation.session.header.utilities', () =>
+      ctx.slots.register(
+        {
+          name: 'conversation.session.header.utilities',
+          id: 'aris-new-session',
+          order: -1000,
+          locale: NS,
+          inject: actions,
+        },
+        NewSessionButton,
+      ),
+    )
 
   // Nút "…": thay menu của dsh-session-log-export (bỏ "Góp ý", thêm "Mở hồ sơ").
   ctx.inject(['sessionLogDownload'], (scope) => {
@@ -101,6 +124,8 @@ export function apply(ctx: ClientContext): void {
             hooks: { logDownload: logs.store as LogDownloadState },
             download: (sessionId: string) => void logs.download(sessionId),
             dismiss: (sessionId: string) => logs.dismiss(sessionId),
+            openSession: (sessionId: string) => workspace.openSession(sessionId),
+            startSession: () => workspace.startSession(),
           }),
         },
         MoreMenu,

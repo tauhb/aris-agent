@@ -1,5 +1,6 @@
 /** Từ điển các trang aris (namespace `aris.pages`), gộp từ từng khu; tiếng Trung lùi về tiếng Anh. */
 import type { PageText } from './page.js'
+import { ACTIVITY_TEXT } from './activity/text.js'
 import { AUTO_TEXT } from './auto/text.js'
 import { BRAIN_TEXT } from './brain/text.js'
 import { COMPUTER_TEXT } from './computer/text.js'
@@ -19,6 +20,7 @@ export const TEXTS: readonly PageText[] = [
   BRAIN_TEXT,
   OFFICE_TEXT,
   COMPUTER_TEXT,
+  ACTIVITY_TEXT,
   // Nhãn mục thanh bên của các trang có mục riêng.
   text(
     {

@@ -7,6 +7,7 @@
  * từng gói không đặt các tên trơn này cho phần tử nằm trong gốc `aris`.
  */
 import { FONTS, dshScopedVars } from '../tokens.js'
+import { G9_CSS } from './css-v2.js'
 
 /** Thành phần chỉ có kiểu khi nằm trong gốc `aris` (chính gốc hoặc phần tử con). */
 const IN_KIT = ':is(.aris,.aris *)'
@@ -254,6 +255,7 @@ ${scope(`
 
 `)}
 @media (prefers-reduced-motion:reduce){.aris *{transition:none!important;animation:none!important}}
+${G9_CSS}
 `
 
 /**

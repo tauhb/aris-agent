@@ -20,6 +20,8 @@ export async function buildClient(dir) {
     target: 'es2022',
     jsx: 'automatic',
     external: EXTERNAL,
+    // Phông chữ (Inter của giao diện GĐ9) nhúng thẳng vào gói, không cần mạng.
+    loader: { '.woff2': 'dataurl' },
     legalComments: 'none',
     logLevel: 'warning',
   })

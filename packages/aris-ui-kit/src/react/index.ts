@@ -91,6 +91,9 @@ export {
   type ProjectRules,
 } from './projects.js'
 export * from './external.js'
+export * from './ui-v2.js'
+export * from './roster-v2.js'
+export * from './activity-v2.js'
 export { fetchInboxCount, inboxTotal, useInboxCount, type InboxCount } from './inbox.js'
 export {
   fetchRoomStatus,

@@ -2,13 +2,15 @@
  * Cột phải aris: "Đội bot lúc này" chiếm trang bắt đầu của cột phải dsh (chỗ cắm
  * dạng chuỗi `sidebar.right.tab.guide`), các lối mở Tệp, Terminal… vẫn ở cuối trang.
  */
-import { mountKitCss, registerPersonal } from '@aris/ui-kit/react'
+import { PROFILE_TAB, isUiV2, mountKitCss, registerPersonal } from '@aris/ui-kit/react'
 import { EN, NS, VI } from './locale.js'
 import { CSS } from './styles.js'
+import { ProfileTitle, ProfileV2 } from './ProfileV2.js'
 import { TeamPane, TeamTitle } from './TeamPane.js'
 
 // Bối cảnh client của dsh; chỉ khai báo phần cột phải dùng.
 interface ClientContext {
+  get(name: string): unknown
   effect(fn: () => () => void, label?: string): void
   slots: {
     inject(name: string, fn: () => () => void): void
@@ -16,7 +18,11 @@ interface ClientContext {
   }
   locale: { register(ns: string, locale: string, dict: Record<string, string>): () => void }
   layout: { selectPanel(id: string | null): void }
-  sidebarRightTabs: { guide(): readonly unknown[]; subscribe(listener: () => void): () => void }
+  sidebarRightTabs: {
+    guide(): readonly unknown[]
+    subscribe(listener: () => void): () => void
+    register(definition: Record<string, unknown>): () => void
+  }
   sidebarRight: { mounted: unknown }
 }
 
@@ -94,5 +100,36 @@ export function apply(ctx: ClientContext): void {
       },
       TeamTitle,
     ),
+  )
+
+  // Giao diện mới GĐ9: hồ sơ bot là một loại tab của khung phải, mở từ viên tên bot ở đầu chat.
+  if (!isUiV2()) return
+  const PROFILE_ID = '@aris/ui-team-pane/profile'
+  const t = (key: string) => (ctx.get('locale') as { bind(ns: string): (k: string) => string }).bind(NS)(key)
+  ctx.effect(
+    () =>
+      ctx.sidebarRightTabs.register({
+        id: PROFILE_ID,
+        kind: PROFILE_TAB,
+        title: () => t('pf.title'),
+      }),
+    'aris-ui-team-pane: profile tab type',
+  )
+  ctx.slots.inject('sidebar.right.pane.tab', () =>
+    ctx.slots.register(
+      {
+        name: 'sidebar.right.pane.tab',
+        key: PROFILE_ID,
+        locale: NS,
+        inject: () => ({
+          openSession: (id: string) =>
+            (ctx.get('uiWorkspace') as { openSession(id: string): void } | undefined)?.openSession(id),
+        }),
+      },
+      ProfileV2,
+    ),
+  )
+  ctx.slots.inject('sidebar.right.pane.tab.title', () =>
+    ctx.slots.register({ name: 'sidebar.right.pane.tab.title', key: PROFILE_ID, locale: NS }, ProfileTitle),
   )
 }

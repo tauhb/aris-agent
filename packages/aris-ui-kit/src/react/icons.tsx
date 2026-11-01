@@ -141,3 +141,44 @@ export function CrownIcon({ size = 13, width = 1.75 }: IconProps) {
     </Icon>
   )
 }
+
+/** Chuông của bảng Hoạt động (giao diện GĐ9). */
+export function BellIcon({ size, width = 1.75 }: IconProps) {
+  return (
+    <Icon size={size}>
+      <path
+        d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2.2 2.2 0 0 0 4 0"
+        {...stroke}
+        strokeWidth={width}
+      />
+    </Icon>
+  )
+}
+
+/** Màn hình máy của bot (giao diện GĐ9). */
+export function ScreenIcon({ size, width = 1.75 }: IconProps) {
+  return (
+    <Icon size={size}>
+      <rect x="3" y="4.5" width="18" height="12" rx="2.5" {...stroke} strokeWidth={width} />
+      <path d="M9 20h6M12 16.5V20" {...stroke} strokeWidth={width} />
+    </Icon>
+  )
+}
+
+/** Mũi tên sang phải ở cuối dòng mở được (giao diện GĐ9). */
+export function ChevronRightIcon({ size = 14, width = 2 }: IconProps) {
+  return (
+    <Icon size={size}>
+      <path d="M9.5 6l6 6-6 6" {...stroke} strokeWidth={width} />
+    </Icon>
+  )
+}
+
+/** Mũi tên quay lại (giao diện GĐ9). */
+export function ChevronLeftIcon({ size = 14, width = 2 }: IconProps) {
+  return (
+    <Icon size={size}>
+      <path d="M14.5 6l-6 6 6 6" {...stroke} strokeWidth={width} />
+    </Icon>
+  )
+}

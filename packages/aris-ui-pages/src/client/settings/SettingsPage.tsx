@@ -7,6 +7,7 @@
 import { SettingsShell } from '@aris/ui-kit/react'
 import type { ComponentType } from 'react'
 import type { PageProps } from '../page.js'
+import { Appearance } from './Appearance.js'
 import { Backup } from './Backup.js'
 import { Channels } from './Channels.js'
 import { Commander } from './Commander.js'
@@ -22,6 +23,7 @@ import { Stats } from './Stats.js'
 
 // Màn mẫu "Màn hình của bot" (6.6, `Screen.tsx`) tạm gỡ khỏi menu; sẽ làm lại ở giai đoạn 8.
 export const SECTIONS: Record<string, ComponentType<PageProps>> = {
+  appearance: Appearance,
   provider: Provider,
   model: ModelPage,
   semantic: SemanticPage,
@@ -38,6 +40,7 @@ export const SECTIONS: Record<string, ComponentType<PageProps>> = {
 
 /** Thứ tự mục và nhóm trong menu bên trái (mục "Chung" của dsh đứng đầu, không nhóm). */
 const GROUPS = [
+  { group: 'grp.look', ids: ['appearance'] },
   { group: 'grp.model', ids: ['provider', 'model', 'semantic'] },
   { group: 'grp.channels', ids: ['channels', 'integrations'] },
   { group: 'grp.safety', ids: ['guard', 'backup', 'stats'] },

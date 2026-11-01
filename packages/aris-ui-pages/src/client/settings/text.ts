@@ -151,6 +151,11 @@ export const SETTINGS_TEXT = text(
     'grp.safety': 'Safe operation',
     'grp.team': 'Bot team',
     'grp.extend': 'Extensions',
+    'grp.look': 'Display',
+    'sec.appearance': 'Appearance',
+    'ap.v2': 'New interface (phase 9)',
+    'ap.v2Hint':
+      'Bot list grouped by department, bot name pill in the chat header, bot profile in the right pane, Activity bell. The page reloads when you switch.',
     'md.keyTitle': 'API key',
     'md.keyNote': 'Write-only: saved as {ref}, cannot be read back. Get a key at {site}.',
     'md.providerModels': 'Image and video models · {n}',
@@ -1262,6 +1267,11 @@ export const SETTINGS_TEXT = text(
     'grp.safety': 'Vận hành an toàn',
     'grp.team': 'Đội bot',
     'grp.extend': 'Mở rộng',
+    'grp.look': 'Hiển thị',
+    'sec.appearance': 'Giao diện',
+    'ap.v2': 'Giao diện mới (GĐ9)',
+    'ap.v2Hint':
+      'Danh bạ bot theo phòng ban, viên tên bot ở đầu chat, hồ sơ bot ở khung phải, chuông Hoạt động. Trang nạp lại khi đổi.',
     'md.keyTitle': 'Khoá API',
     'md.keyNote': 'Chỉ ghi: lưu thành {ref}, không đọc lại được. Lấy khoá ở {site}.',
     'md.providerModels': 'Model ảnh và video · {n}',

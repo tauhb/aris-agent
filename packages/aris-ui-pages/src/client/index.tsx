@@ -5,6 +5,7 @@
  */
 import {
   announceRoute,
+  isUiV2,
   mountKitCss,
   onArisNavigate,
   PROJECTS_CHANGED,
@@ -52,6 +53,7 @@ import {
   type Params,
   type RouteId,
 } from './routes.js'
+import { ActivityDrawer } from './activity/Activity.js'
 import { Routine } from './auto/Routine.js'
 import { RoutineNew } from './auto/RoutineNew.js'
 import { Brain } from './brain/Brain.js'
@@ -312,6 +314,15 @@ export function apply(ctx: ClientContext): void {
       DialogHost,
     ),
   )
+  // Giao diện mới (GĐ9): bảng Hoạt động mở từ chuông ở thanh bên.
+  if (isUiV2()) {
+    const Activity = ({ t }: { t: Translate }) => (
+      <ActivityDrawer t={t} openSession={(id) => service('uiWorkspace').openSession(id)} />
+    )
+    ctx.slots.inject('shell.overlay', () =>
+      ctx.slots.register({ name: 'shell.overlay', id: 'aris-activity', locale: NS }, Activity),
+    )
+  }
 
   // ⌘K vẫn là bộ tìm phiên của dsh (`session.search`, có dữ liệu thật); hộp "Tìm trong
   // mọi phiên" của aris mở từ nút tìm trên thanh bên, nhận ⌘K khi nối dữ liệu ở giai đoạn 1.

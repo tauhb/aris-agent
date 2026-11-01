@@ -410,11 +410,22 @@ Code, Codex làm bot ngoài: cùng một lõi, một bộ dữ liệu.
 
 ---
 
-## Giai đoạn 9 · aris thành Rakazo cho công ty (đề xuất 31/10, chưa bắt đầu)
+## Giai đoạn 9 · aris thành Rakazo cho công ty (bắt đầu 1/11, đang làm đợt 9.1)
 
 Người dùng muốn giữ aris và lõi dsh, đắp những gì Rakazo (bản mã nguồn mở của Grok Bot) có, giữ chỗ aris hơn, và **cho công ty dùng**: dựng trên server của công ty, chạy 24/7, cấp tài khoản cho nhân sự tạo bot và làm việc. Nghiên cứu và lộ trình: [nghien-cuu/rakazo.md](nghien-cuu/rakazo.md). Đọc thêm OpenMausBot (31/10) để lấy điểm mạnh Rakazo còn mỏng: [nghien-cuu/openmausbot.md](nghien-cuu/openmausbot.md).
 
 Lộ trình đề xuất (sửa 31/10, xem [nghien-cuu/kien-truc-bot.md](nghien-cuu/kien-truc-bot.md)): 9.1 Luồng bot liên tục (mỗi người một luồng với mỗi bot, một cửa gửi tin, sang trang ngầm, việc và chờ người bền; giao diện Văn phòng kiểu OpenMausBot) → 9.2 Máy riêng cho bot (Docker) → 9.3 Công ty nhiều nhân sự → 9.4 Lên server → 9.5 Đội tự vận hành → 9.6 Giọng nói → 9.7 App điện thoại → 9.8 Connector lớn. Người dùng chọn giao diện kiểu OpenMausBot, kiến trúc kiểu Rakazo, lõi giữ dsh. **Sửa lần 2 (31/10)**: bỏ mô hình "Aris chỉ huy", mọi bot là đồng đội ngang hàng; plan mới ở [plans/gd9-doi-dong-doi.md](plans/gd9-doi-dong-doi.md) (9.0 Spike → 9.1 Người, luồng, một cửa gửi tin → 9.2 Đồng đội ngang hàng → 9.3 Việc và chờ người bền → 9.4 Giao diện kiểu OpenMausBot → 9.5 Gỡ đường cũ). Chốt 31/10: một công ty trên một server, nhiều nhân sự. Còn chờ người dùng: thứ tự, cách lấy mã từ Rakazo (Apache-2.0), máy của bot chạy trên Mac hay VPS trước.
+
+**Lộ trình bản 3 (1/11)**: [plans/gd9-chung.md](plans/gd9-chung.md). Giao diện mới làm trước: 9.1 khung giao diện → 9.2 Aris quản đội → 9.3 hai công tắc skill và kết nối → 9.4 spike → … → 9.10 công ty → 9.11 gỡ đường cũ.
+
+**Nghiệm thu 9.1 · Khung giao diện (1/11)** theo [plans/gd9-1-khung-giao-dien.md](plans/gd9-1-khung-giao-dien.md), đặc tả [specs/aris-ui.md](specs/aris-ui.md):
+
+- Bật ở Cài đặt › Giao diện › "Giao diện mới (GĐ9)", mặc định tắt. Đã thử tắt: aris về y giao diện cũ.
+- Đã làm: thanh bên danh bạ (Aris ghim đầu, nhóm theo phòng gập mở được, linh vật màu, chấm và dòng việc theo trạng thái, chuông có số việc chờ, dấu cộng, menu ảnh đại diện có các trang cũ và Dự án, nút Kết nối ứng dụng); viên tên bot ở giữa đầu chat, viên model, nút máy, bỏ danh sách phiên ("Chủ đề mới" nằm trong menu "…"); hồ sơ bot là một tab của khung phải (Chi tiết, Thư viện, Máy, Cài đặt bot); bảng Hoạt động (Cần {you}, Đang chạy kèm việc xong hôm nay, Routine); bảng màu và chữ Inter nhúng sẵn (gói `@fontsource-variable/inter` 5.3.0, OFL-1.1, người dùng đồng ý 1/11); thẻ duyệt viền cam nhẹ, nút viên, lựa chọn của thẻ câu hỏi thành nút viên.
+- Thử trên một bản aris riêng (dữ liệu tách, cổng 3301, đội mẫu "theo bản thiết kế", chưa có model nên bot báo lỗi khoá). Ảnh tối và sáng ở `design/gd9/anh-thuc-te/`.
+- Chưa thử được với dữ liệu thật: thẻ duyệt và thẻ câu hỏi kiểu mới (cần một lượt bot chạy thật), ảnh màn hình máy trong hồ sơ, bảng Hoạt động khi có việc chờ.
+- Còn dùng trình sửa cũ: mọi dòng của hồ sơ bot mở trang hồ sơ bot cũ ở đúng thẻ. Tìm kiếm vẫn là hộp "Tìm trong mọi phiên" cũ.
+- Lỗi có sẵn, không do đợt này: `aris-backup` test "giữ bản mới nhất mỗi ngày và mỗi tuần" còn chờ nhãn cũ `ngay`.
 
 ---
 

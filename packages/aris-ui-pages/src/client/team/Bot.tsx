@@ -324,7 +324,10 @@ function ModelCard({ t, bot, team, nav }: { t: T; bot: BotData; team: TeamView; 
 }
 
 export function BotProfile({ t, nav, params, plugins }: PageProps) {
-  const [tab, setTab] = useState<Tab>('soul')
+  // Mở thẳng một thẻ (hồ sơ bot ở khung phải của giao diện GĐ9 trỏ tới đây).
+  const [tab, setTab] = useState<Tab>(
+    () => (['soul', 'model', 'skills', 'perms', 'routine'] as const).find((x) => x === params.tab) ?? 'soul',
+  )
   const team = useTeam()
   const bot = team.bots.find((b) => b.id === params.id) ?? team.bots.find((b) => b.kind === 'commander')
   // Routine của bot (tab 2.2e và số trên nhãn tab); bot ngoài không chạy routine.

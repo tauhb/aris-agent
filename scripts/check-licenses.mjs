@@ -21,6 +21,8 @@ export const ALLOWED = new Set([
 
 /** Gói được phép dù giấy phép ngoài danh sách, kèm lý do. */
 export const EXCEPTIONS = {
+  // Phông Inter của giao diện GĐ9, nhúng nguyên tệp vào app, không sửa; người dùng đồng ý 1/11/2026.
+  '@fontsource-variable/inter': 'OFL-1.1, phông chữ nhúng không sửa đổi',
   // Thư viện libvips dựng sẵn của sharp (do dsh kéo vào), liên kết động, không sửa đổi.
   '@img/sharp-libvips-darwin-arm64': 'LGPL-3.0-or-later, liên kết động qua sharp',
   '@img/sharp-libvips-linux-x64': 'LGPL-3.0-or-later, liên kết động qua sharp',

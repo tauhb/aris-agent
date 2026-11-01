@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { THEMES } from '@aris/ui-kit'
-import { ARIS_TOKENS } from './tokens.js'
+import { G9_THEMES, THEMES, g9Vars } from '@aris/ui-kit'
+import { ARIS_TOKENS, G9_TOKENS } from './tokens.js'
 
 describe('theme aris', () => {
   const entries = Object.entries(ARIS_TOKENS)
@@ -26,5 +26,19 @@ describe('theme aris', () => {
   it('phông là bộ phông mặc định của DeepSeek (hệ thống, SF Mono)', () => {
     expect(ARIS_TOKENS['--dsh-font-family-text-default']?.light).toMatch(/^-apple-system/)
     expect(ARIS_TOKENS['--dsh-font-family-code-default']?.light).toMatch(/^"SF Mono"/)
+  })
+
+  it('giao diện GĐ9: cùng mọi khoá với bảng cũ, màu theo bản vẽ, phông Inter', () => {
+    expect(Object.keys(G9_TOKENS).sort()).toEqual(Object.keys(ARIS_TOKENS).sort())
+    expect(G9_TOKENS['--dsw-specific-sidebar-fill']).toEqual({ light: '#f1f1f1', dark: '#000000' })
+    expect(G9_TOKENS['--dsw-alias-bg-base']).toEqual({ light: '#ffffff', dark: '#0e0e0e' })
+    expect(G9_TOKENS['--dsw-specific-bubble']?.dark).toBe(G9_THEMES.dark.ubub)
+    expect(G9_TOKENS['--dsh-font-family-text-default']?.light).toMatch(/Inter/)
+  })
+
+  it('bảng màu GĐ9 có đủ khoá cho cả hai nền và sinh đúng biến CSS', () => {
+    expect(Object.keys(G9_THEMES.dark).sort()).toEqual(Object.keys(G9_THEMES.light).sort())
+    for (const key of Object.keys(THEMES.light)) expect(G9_THEMES.light).toHaveProperty(key)
+    expect(g9Vars('dark')).toContain('--g9-acc2:#7fb4ff;')
   })
 })
