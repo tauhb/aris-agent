@@ -436,7 +436,13 @@ Lộ trình đề xuất (sửa 31/10, xem [nghien-cuu/kien-truc-bot.md](nghien-
 - Đã thử: test đơn vị (soạn thẻ, so khác lời dặn, tên gọi, hai công tắc, tên bot viết thẳng); bản thử cổng 3301 nạp được các công cụ, bật công tắc lưu đúng (ảnh `design/gd9/anh-thuc-te/07-…`).
 - **Thử với model thật (1/11)**: mã mới chạy trên bản chép dữ liệu thật (DeepSeek-V4.1-Flash), bản aris đang dùng tắt trong lúc thử rồi bật lại, dữ liệu thật không đổi. Nhờ Aris tạo bot CSKH "Hằng" ở phòng Tăng trưởng → thẻ duyệt đủ chi tiết (ảnh `08-the-duyet-tao-bot.jpg`) → cho phép → Hằng có trên thanh bên, đúng phòng, lời dặn 1.708 ký tự, tên Hằng trong câu trả lời thành viên tên. Nhờ sửa lời dặn (khách xin giảm giá thì hỏi số lượng rồi báo anh) → Aris đọc lời dặn, thẻ duyệt bản 1 → 2 có chỗ đổi và lý do (ảnh `09-the-duyet-sua-loi-dan.jpg`) → cho phép → bản 2 lưu đúng.
 - Lỗi tìm ra khi thử và đã sửa: chữ trên nút chính trùng màu nền (giao diện mới); thẻ duyệt mất xuống dòng; tên `{you}` hiện nguyên trong chữ tiếng Anh; thanh bên đợi tới 30 giây mới thấy bot mới (nay trạng thái trực tiếp gửi kèm dấu của đội, đổi là tải lại ngay); Aris phải tự đếm ký tự khi lời dặn vượt 2.000 (nay công cụ báo số ký tự và số cần bớt).
-- Chưa thử với model thật: lời chào lần đầu (cần đội trống), khôi phục bản cũ bằng lời.
+- Chưa thử với model thật: lời chào lần đầu (cần đội trống). Khôi phục bản cũ bằng lời đã thử ở spike 9.4: chạy đúng.
+
+**Spike 9.4 (1/11)**: [spikes/gd9-luong-bot.md](spikes/gd9-luong-bot.md).
+- Giá mỗi bước gần như không đổi theo độ dài ngữ cảnh nhờ bộ nhớ đệm DeepSeek (0,0015–0,0027 USD từ 20k tới 155k); thời gian mỗi bước cũng không đổi (trung vị khoảng 2,5 s).
+- Trên web không nhắn chen được khi đang chờ duyệt (dsh thu ô nhập); duyệt chưa bền.
+- Lịch nhắc, `/goal`, `/loop` gắn theo phiên, sang trang chuyển được mà không sửa dsh; Zalo chưa duyệt được bằng tin.
+- **Đang ở Điểm dừng 2**: chờ người dùng chọn ngưỡng sang trang, cách nhắn chen khi chờ duyệt, thứ tự 9.5 và 9.7.
 
 ---
 
