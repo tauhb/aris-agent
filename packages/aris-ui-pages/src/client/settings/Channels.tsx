@@ -14,7 +14,6 @@ import {
   Segmented,
   Select,
   Switch,
-  SwitchRow,
   TextInput,
   useTeamData,
   type BotOption,
@@ -522,16 +521,6 @@ export function Channels({ t }: PageProps) {
     >
       {error && <div className="ap-error">{error}</div>}
       <div className="ap-col">
-        {/* Luồng chung (GĐ9.6a): chủ nhắn riêng cho bot ở Telegram vào cùng phiên với chat web. */}
-        <Card>
-          <SwitchRow
-            label={t('ch.sharedThreads')}
-            hint={t('ch.sharedThreadsHint')}
-            checked={data?.settings.sharedThreads ?? false}
-            disabled={busy || !data}
-            onChange={(on) => void act({ op: 'settings', sharedThreads: on })}
-          />
-        </Card>
         <div className="ap-ac-wrap">
           <AccountList t={t} data={data} picked={cur} onPick={setPicked} />
           {cur?.channel === 'lark' ? (

@@ -5,7 +5,6 @@
  * duyệt/câu hỏi cho phiên của kênh, kho khoá cho token, tệp đính kèm, nhận dạng giọng nói.
  * @module @aris/channels
  */
-import type { PeoplePort } from './people-link.js'
 import { ensureHome } from '@aris/home'
 import { getMascot } from '@aris/ui-kit'
 import type { Context } from '@deepseek-ai/cordis'
@@ -55,9 +54,6 @@ declare module '@deepseek-ai/dsh-llm' {
     'aris-channel': { kind: 'aris-channel' } & ContextFormed
   }
 }
-
-/** Dấu trên yêu cầu duyệt đã được các kênh xem (xem `arisChannelApprovals`). */
-export const CHANNELS_CHECKED = Symbol.for('aris.channels.approval-checked')
 
 export const name = 'aris-channels'
 export const inject = [
@@ -174,8 +170,6 @@ export async function apply(ctx: Context): Promise<void> {
       return ctx.get('speechToText') as SpeechToText | undefined
     },
     logger: ctx.logger('aris-channels'),
-    people: () => ctx.get('arisPeople') as PeoplePort | undefined,
-    ownerFallback: (md) => lark.sendOwners(md),
   })
   // Kênh Lark chạy cạnh Telegram: dùng chung kho, phiên, đội; hub hỏi nó khi cần biết lượt có bị hạn chế không.
   const lark = new LarkChannel({
@@ -194,7 +188,6 @@ export async function apply(ctx: Context): Promise<void> {
   ctx.effect(() => hub.attachPeer(lark), 'aris-channels: lark')
   // Kênh Zalo cá nhân (zca-js, không chính thức): báo chủ qua Telegram vì chính Zalo có thể đang mất kết nối.
   const zalo = new ZaloChannel({
-    people: () => ctx.get('arisPeople') as PeoplePort | undefined,
     store,
     docs,
     media,
@@ -214,10 +207,6 @@ export async function apply(ctx: Context): Promise<void> {
 
   // Cho lệnh `aris send` (qua @aris/daemon) và các plugin khác gửi Telegram.
   ctx.provide('arisChannels', hub)
-  // Một cửa báo tin (GĐ9.6a): người nhận đợt này là chủ; các gói mới gọi đây thay cho `sendHome`.
-  ctx.provide('arisNotify', {
-    notify: (o: { bot: string; person?: string }, markdown: string) => hub.sendHome(o.bot, markdown),
-  })
   // Duyệt tập trung: hộp duyệt chung của @aris/commander có thể nạp sau, nên dò tới khi có.
   ctx.effect(() => {
     let off: (() => void) | undefined
@@ -296,29 +285,15 @@ export async function apply(ctx: Context): Promise<void> {
   ctx.on('agent/assistant-stream', ({ agent, frame }) => hub.onStream(agent.session.id, frame as never))
   // Phiên của kênh: duyệt và câu hỏi đi qua Telegram trước; phiên Lark từ chối người ngoài, còn chủ nhân thì duyệt ở web;
   // phiên khác để người trả lời sau lo.
-  // Gói khác (duyệt bền của Commander) gọi được cùng chuỗi này; yêu cầu đã qua kênh thì được đánh dấu để không
-  // hỏi kênh hai lần dù hook nào chạy trước.
-  const channelApprove = async (req: { agent: { session: { id: string } } }) => {
-    const r = req as { agent: { session: { id: string } }; [CHANNELS_CHECKED]?: boolean }
-    if (r[CHANNELS_CHECKED]) return undefined
-    r[CHANNELS_CHECKED] = true
-    const sid = r.agent.session.id
-    return (
-      (await hub.approve(sid, req as never)) ??
-      (await lark.approve(sid, req as never)) ??
-      (await zalo.approve(sid, req as never))
-    )
-  }
-  ctx.provide('arisChannelApprovals', { approve: channelApprove })
-  // Lượt này của chủ hay của khách (đồng đội hỏi nhau GĐ9.5 chỉ mở cho lượt của chủ). Thấp nhất giữa các kênh biết phiên.
-  ctx.provide('arisChannelTrust', {
-    of: (sessionId: string) => {
-      const all = [hub.trustOf(sessionId), lark.trustOf(sessionId), zalo.trustOf(sessionId)].filter(Boolean)
-      if (!all.length) return undefined
-      return all.includes('guest') ? 'guest' : all.includes('member') ? 'member' : 'owner'
-    },
-  })
-  ctx.on('approval/request', async (req, next) => (await channelApprove(req)) ?? next(), true)
+  ctx.on(
+    'approval/request',
+    async (req, next) =>
+      (await hub.approve(req.agent.session.id, req as never)) ??
+      (await lark.approve(req.agent.session.id, req as never)) ??
+      (await zalo.approve(req.agent.session.id, req as never)) ??
+      next(),
+    true,
+  )
   ctx.on(
     'user-questions/request',
     async (req, next) =>

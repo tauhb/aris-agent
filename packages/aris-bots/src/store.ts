@@ -36,8 +36,6 @@ export interface BotInput {
   /** Quyền riêng: chỉ trường gửi lên mới đổi. */
   perms?: { write?: unknown; danger?: unknown }
   assignable?: boolean
-  skillsOnlyAssigned?: boolean
-  connectorsOnlyAssigned?: boolean
   /** Model theo việc; `null` là bỏ (về mặc định). */
   models?: { goal?: ModelRef | null; fallback?: ModelRef | null }
   /** Tạo ảnh, tạo video; `null` ở một loại là về theo thứ tự chung. */
@@ -296,8 +294,6 @@ export class BotStore {
       ...(input.models ? { models: cleanModels(input.models) } : {}),
       ...(input.media ? { media: cleanMedia(input.media) } : {}),
       ...(input.assignable === false ? { assignable: false } : {}),
-      ...(input.skillsOnlyAssigned ? { skillsOnlyAssigned: true } : {}),
-      ...(input.connectorsOnlyAssigned ? { connectorsOnlyAssigned: true } : {}),
       createdAt: this.now().toISOString(),
     }
     await this.t.bots.put(id, rec)
@@ -329,9 +325,6 @@ export class BotStore {
     if (patch.models) rec.models = cleanModels(patch.models, prev.models)
     if (patch.media) rec.media = cleanMedia(patch.media, prev.media)
     if (typeof patch.assignable === 'boolean') rec.assignable = patch.assignable
-    for (const k of ['skillsOnlyAssigned', 'connectorsOnlyAssigned'] as const)
-      if (patch[k] === true) rec[k] = true
-      else if (patch[k] === false) delete rec[k]
     if (patch.external === null) delete rec.external
     else if (patch.external !== undefined) rec.external = this.external(patch.external, prev.external)
     await this.t.bots.put(id, rec)

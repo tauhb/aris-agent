@@ -204,7 +204,7 @@ export async function dispatch<A extends { session: { id: string } }>(
         if (!bot.external.assignable)
           return { handle, ok: false, error: `@${handle} là bot ngoài không nhận giao việc từ Commander.` }
         if (a.card?.trim())
-          return { handle, ok: false, error: 'Bot ngoài chưa nhận thẻ Kanban; giao không kèm card.' }
+          return { handle, ok: false, error: 'Bot ngoài chưa nhận thẻ Kanban; giao không kèm the.' }
         if (!d.external) return { handle, ok: false, error: 'Chưa bật chạy bot ngoài.' }
         const title = clip((a.title ?? a.task).trim().split('\n')[0]!, 80)
         try {
@@ -329,7 +329,7 @@ export function parseSummary(text: string): { handle: string; sessionId?: string
   return out
 }
 
-/** Một thẻ Aris chia (`create_cards`): tiêu đề, nội dung, chờ thẻ nào. */
+/** Một thẻ Aris chia (`tao_the`): tiêu đề, nội dung, chờ thẻ nào. */
 export interface PlannedCard {
   title: string
   description?: string | undefined

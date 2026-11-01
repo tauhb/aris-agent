@@ -3,7 +3,6 @@
  * tin của {you}, tin của bot, dòng tiến độ gộp các bước suy nghĩ và công cụ giữa hai tin, và khối "Đội đang làm" cho lần
  * Aris giao việc. Không gọi mạng.
  */
-import { argOf, currentToolName } from '@aris/ui-kit'
 
 /** Một bước phát lại (`/api/aris/stats?replay=`), phần bảng chat dùng. */
 export interface ConvStep {
@@ -26,13 +25,13 @@ export type Turn =
   | { kind: 'assistant'; key: string; at: number; text: string }
   /** Các bước suy nghĩ và công cụ giữa hai tin; `live` là đoạn cuối của phiên đang chạy. */
   | { kind: 'progress'; key: string; steps: ConvStep[]; live: boolean }
-  /** Lần Aris giao việc cho đội (`assign_task`, `assign_department`): vẽ thành khối "Đội đang làm". */
+  /** Lần Aris giao việc cho đội (`giao_viec`, `giao_phong`): vẽ thành khối "Đội đang làm". */
   | { kind: 'team'; key: string; at: number; step: ConvStep }
 
 type Tr = (key: string, params?: Record<string, unknown>) => string
 
-/** Công cụ giao việc của Commander: cho từng bot (`assign_task`) hay cả phòng (`assign_department`); khối "Đội đang làm" đọc từ lần gọi này. */
-export const DISPATCH_TOOLS: ReadonlySet<string> = new Set(['assign_task', 'assign_department'])
+/** Công cụ giao việc của Commander: cho từng bot (`giao_viec`) hay cả phòng (`giao_phong`); khối "Đội đang làm" đọc từ lần gọi này. */
+export const DISPATCH_TOOLS: ReadonlySet<string> = new Set(['giao_viec', 'giao_phong'])
 
 /**
  * Gộp các bước thành lượt chat: tin người dùng và tin trợ lý đứng riêng, mọi bước suy nghĩ, công cụ, duyệt giữa hai tin
@@ -52,7 +51,7 @@ export function toTurns(steps: readonly ConvStep[], running: boolean): Turn[] {
     } else if (s.type === 'assistant') {
       flush()
       out.push({ kind: 'assistant', key: `a${s.n}`, at: s.at, text: s.body })
-    } else if (s.type === 'tool' && DISPATCH_TOOLS.has(currentToolName(s.tool ?? ''))) {
+    } else if (s.type === 'tool' && DISPATCH_TOOLS.has(s.tool ?? '')) {
       flush()
       out.push({ kind: 'team', key: `t${s.n}`, at: s.at, step: s })
     } else group.push(s)
@@ -103,11 +102,11 @@ export function stepLabel(s: ConvStep, t: Tr): string {
   switch (s.type) {
     case 'thinking':
       return t('of.ch.think', { title: s.title })
-    case 'question':
+    case 'hoi':
       return t('of.ch.ask', { title: s.title })
-    case 'approval':
+    case 'duyet':
       return t('of.ch.approval', { title: s.title })
-    case 'blocked':
+    case 'chan':
       return t('of.ch.blocked', { title: s.title })
     default:
       return s.title
@@ -163,7 +162,7 @@ export function teamProgress(states: readonly BranchState[]): { done: number; to
   return { done, total: states.length, pct: states.length ? Math.round((done / states.length) * 100) : 0 }
 }
 
-// --- Giao cả phòng (`assign_department`) ------------------------------------------------------------------------------------
+// --- Giao cả phòng (`giao_phong`) ------------------------------------------------------------------------------------
 
 /** Việc lớn của phòng ban (`/api/aris/commander?jobs=1`), phần dùng tới. */
 export interface JobLike {
@@ -181,24 +180,22 @@ export interface JobLike {
   createdAt: string
 }
 
-/** Tên phòng và tên việc trong tham số của lần gọi `assign_department`; tên việc cắt giống lúc máy chủ ghi việc (dòng đầu, 80 ký tự). */
-export function departmentArgs(body: string): { department: string; title: string } | null {
+/** Tên phòng và tên việc trong tham số của lần gọi `giao_phong`; tên việc cắt giống lúc máy chủ ghi việc (dòng đầu, 80 ký tự). */
+export function phongArgs(body: string): { phong: string; title: string } | null {
   try {
-    // Log cũ ghi tham số tiếng Việt (`phong`, `tieu_de`, `noi_dung`): đọc cả hai.
-    const v = JSON.parse(body) as Record<string, unknown>
-    const title = String(argOf(v, 'title', 'tieu_de') ?? argOf(v, 'task', 'noi_dung') ?? '')
+    const v = JSON.parse(body) as { phong?: unknown; tieu_de?: unknown; noi_dung?: unknown }
+    const title = String(v.tieu_de ?? v.noi_dung ?? '')
       .trim()
       .split('\n')[0]!
       .slice(0, 80)
-    const department = argOf(v, 'department', 'phong')
-    return { department: typeof department === 'string' ? department : '', title }
+    return { phong: typeof v.phong === 'string' ? v.phong : '', title }
   } catch {
     return null
   }
 }
 
 /**
- * Việc lớn do đúng lần gọi `assign_department` này tạo ra: cùng phiên giao, cùng tên việc, gần lúc gọi nhất. Dữ liệu có cấu trúc
+ * Việc lớn do đúng lần gọi `giao_phong` này tạo ra: cùng phiên giao, cùng tên việc, gần lúc gọi nhất. Dữ liệu có cấu trúc
  * của máy chủ, không đọc lại từ câu chữ trả về.
  */
 export function matchJob(
@@ -206,7 +203,7 @@ export function matchJob(
   parent: string | undefined,
   jobs: readonly JobLike[],
 ): JobLike | undefined {
-  const args = departmentArgs(step.body)
+  const args = phongArgs(step.body)
   if (!args || !parent) return undefined
   return jobs
     .filter((j) => j.parentSession === parent && j.title === args.title)
@@ -231,15 +228,15 @@ export function jobState(
 }
 
 /**
- * Nhánh của lần `assign_department`: trưởng nhóm theo việc lớn tìm được (phiên của trưởng nhóm, tên việc); chưa tìm được và lần
+ * Nhánh của lần `giao_phong`: trưởng nhóm theo việc lớn tìm được (phiên của trưởng nhóm, tên việc); chưa tìm được và lần
  * gọi đã trả lời không phải "Đã giao…" thì là lỗi (lời báo dòng đầu); còn lại là đang giao.
  */
-export function departmentItem(
+export function phongItem(
   step: { body: string; out?: string | undefined },
   job: JobLike | undefined,
   leadHandle: string,
 ): (BranchItem & { handle: string; title: string }) | null {
-  const args = departmentArgs(step.body)
+  const args = phongArgs(step.body)
   if (!args) return null
   if (job) return { handle: leadHandle, title: job.title, sessionId: job.session }
   const first = step.out

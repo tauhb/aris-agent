@@ -131,13 +131,6 @@ export async function apply(ctx: Context): Promise<void> {
   const store = new SkillStore(
     domain.table('skills') as unknown as Table<never>,
     domain.table('versions') as unknown as Table<never>,
-    undefined,
-    // Công tắc "Chỉ dùng skill được gán" nằm trên bản ghi bot (`@aris/bots`).
-    (bot) =>
-      (
-        ctx.get('arisBots') as
-          { store?: { get(id: string): { skillsOnlyAssigned?: boolean } | undefined } } | undefined
-      )?.store?.get(bot)?.skillsOnlyAssigned === true,
   )
   const evals = domain.table('evals') as unknown as Table<EvalRecord> & {
     delete(k: string): Promise<boolean>
@@ -178,7 +171,7 @@ export async function apply(ctx: Context): Promise<void> {
   } satisfies ArisSkills)
 
   // /learn (đợt 6): lệnh mở một lượt cho bot tự gom tài liệu bằng công cụ sẵn có và viết skill;
-  // `save_skill` chỉ nhận trong lượt đó và nộp thành đề xuất chờ duyệt như mọi đề xuất.
+  // `luu_skill` chỉ nhận trong lượt đó và nộp thành đề xuất chờ duyệt như mọi đề xuất.
   const learning = new Map<string, { source: string; until: number }>()
   ctx.inject(['commands'], (ctx) => {
     ctx.effect(
@@ -224,18 +217,18 @@ export async function apply(ctx: Context): Promise<void> {
       description:
         'Chỉ dùng trong lượt người dùng gõ /learn: nộp skill vừa viết từ nguồn người dùng chỉ để người dùng duyệt. Lượt khác bị từ chối.',
       parameters: {
-        name: {
+        ten: {
           type: 'string',
           required: true,
           description: 'Tên skill: chữ thường không dấu, số, nối bằng "-".',
         },
-        description: { type: 'string', required: true, description: 'Một câu: skill dùng khi nào.' },
-        body: {
+        mo_ta: { type: 'string', required: true, description: 'Một câu: skill dùng khi nào.' },
+        than: {
           type: 'string',
           required: true,
           description: 'Thân Markdown: ## Khi nào dùng, ## Các bước, ## Lỗi thường gặp, ## Kiểm tra.',
         },
-        example_requests: {
+        yeu_cau_mau: {
           type: 'array',
           items: { type: 'string' },
           description: `1–${MAX_LEARN_CASES} câu người dùng có thể nhờ mà skill này giúp được (ca kiểm thử).`,
@@ -250,13 +243,13 @@ export async function apply(ctx: Context): Promise<void> {
         try {
           const v = await store.propose({
             bot: botOf(sid),
-            name: args.name.trim(),
-            description: args.description.trim(),
-            body: args.body,
+            name: args.ten.trim(),
+            description: args.mo_ta.trim(),
+            body: args.than,
             by: 'user',
             why: `Học từ: ${l.source}`,
             sessionId: sid,
-            cases: (args.example_requests ?? [])
+            cases: (args.yeu_cau_mau ?? [])
               .map((c) => c.trim())
               .filter(Boolean)
               .slice(0, MAX_LEARN_CASES),

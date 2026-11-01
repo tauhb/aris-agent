@@ -80,12 +80,12 @@ export const layerClass = (layer: string) => (layer === 'nguon' ? 'src' : layer 
 /** Tóm tắt của trang: nhãn `tom-tat` ở đầu trang, không có thì đoạn đầu (bỏ tiêu đề). */
 export function summaryOf(text: string, max = 220): string {
   const front = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)
-  const summaryLine = front && /^tom-tat:\s*"?(.+?)"?\s*$/m.exec(front[1]!)
+  const tom = front && /^tom-tat:\s*"?(.+?)"?\s*$/m.exec(front[1]!)
   const body = (front ? text.slice(front[0].length) : text)
     .split(/\n{2,}/)
     .map((p) => p.trim())
     .find((p) => p && !p.startsWith('#'))
-  const s = (summaryLine?.[1] ?? body ?? '')
+  const s = (tom?.[1] ?? body ?? '')
     .replace(LINK, (_m, a: string, b?: string) => b || a)
     .replace(/\[\^[^\]]*\]/g, '')
     .replace(/[*_`>#]/g, '')

@@ -1,12 +1,12 @@
 /**
  * Commander của aris (đặc tả: docs/specs/aris-commander.md):
- * - Công cụ `assign_task`, chỉ Commander dùng: giao việc cho bot qua Team của dsh, mỗi việc một thẻ.
- * - Công cụ `hand_off`, chỉ Commander dùng: bot làm và câu trả lời của bot gửi thẳng cho người dùng.
+ * - Công cụ `giao_viec`, chỉ Commander dùng: giao việc cho bot qua Team của dsh, mỗi việc một thẻ.
+ * - Công cụ `chuyen_giao`, chỉ Commander dùng: bot làm và câu trả lời của bot gửi thẳng cho người dùng.
  * - Nhật ký định tuyến: bản ghi `plugin:aris/dispatch` trong log phiên, và kho `aris_commander`
  *   cho trang 2.5 (`/api/aris/commander`).
  * - Luật đội: bot thường không tự lập đội (chặn `spawn_teammate` ở phiên của bot thường).
  * - Hướng dẫn giao việc: ngữ cảnh động chỉ nạp ở phiên của Commander.
- * - Việc lớn của phòng ban (`assign_department`) và phòng nhóm của dự án (`start_room_round`).
+ * - Việc lớn của phòng ban (`giao_phong`) và phòng nhóm của dự án (`moi_noi`).
  * @module @aris/commander
  */
 import { randomUUID } from 'node:crypto'
@@ -50,9 +50,6 @@ import {
   type PluginModule,
 } from './external.js'
 import { ApprovalHub } from './approval.js'
-import { DurableApprovals, RepeatGuard, argsHash, isOutbound, type DurableRecord } from './durable.js'
-import { LIMITS, answerText, cannotAsk, consultMessage, returnMessage, type TaskRecord } from './teammates.js'
-import { COMPACT_AT, contextTokens, shouldCompact } from './page.js'
 import { learnedContext, learnedFrom } from './learned.js'
 import {
   DRIVER_TICK_MS,
@@ -76,7 +73,7 @@ import {
   externalBudget,
   type CommanderSettings,
 } from './settings.js'
-import { EXTERNAL_AGENTS, EXTERNAL_PACKAGES, LIBRARIAN_ID, providerOf, type BotRecord } from '@aris/bots'
+import { EXTERNAL_AGENTS, EXTERNAL_PACKAGES, providerOf, type BotRecord } from '@aris/bots'
 import {
   dispatch,
   DispatchError,
@@ -104,9 +101,6 @@ export * from './dispatch.js'
 export * from './jobs.js'
 export * from './external.js'
 export * from './approval.js'
-export * from './durable.js'
-export * from './teammates.js'
-export * from './page.js'
 export * from './claude-driver.js'
 export * from './codex-driver.js'
 export * from './cli.js'
@@ -171,44 +165,33 @@ Thước đo (đếm, không đoán):
 
 Ba mức:
 - Việc nhỏ: 1 phần, bạn tự làm được, xong trong vài bước (hỏi nhanh, trò chuyện, tóm tắt một đoạn, sửa một câu). Tự làm, không giao. Ví dụ: "tóm tắt email này".
-- Việc vừa: 1 phần (hoặc vài phần rời, mỗi phần một chuyên môn), cần một lượt làm việc dài hoặc đúng chuyên môn một bot. Giao bằng assign_task. Ví dụ: "viết một bài Facebook về khoá học".
-- Việc lớn: từ 2 phần trở lên, cần nhiều vai trong cùng một phòng ban, nhiều lượt rồi tổng hợp. Giao cả phòng bằng assign_department. Ví dụ: "lên chiến dịch ra mắt khoá học: nghiên cứu khách, 5 bài viết, kịch bản bán hàng".
+- Việc vừa: 1 phần (hoặc vài phần rời, mỗi phần một chuyên môn), cần một lượt làm việc dài hoặc đúng chuyên môn một bot. Giao bằng giao_viec. Ví dụ: "viết một bài Facebook về khoá học".
+- Việc lớn: từ 2 phần trở lên, cần nhiều vai trong cùng một phòng ban, nhiều lượt rồi tổng hợp. Giao cả phòng bằng giao_phong. Ví dụ: "lên chiến dịch ra mắt khoá học: nghiên cứu khách, 5 bài viết, kịch bản bán hàng".
 
 Luật xếp mức:
 - Lời người dùng là trên hết: họ nói rõ "cả phòng", "giao cho X" hay "tự làm" thì làm đúng như vậy.
-- Đứng giữa hai mức: chọn mức nhỏ hơn. Việc lớn mà không phòng nào đủ chuyên môn: chia thẻ và giao từng bot (việc vừa), không assign_department.
+- Đứng giữa hai mức: chọn mức nhỏ hơn. Việc lớn mà không phòng nào đủ chuyên môn: chia thẻ và giao từng bot (việc vừa), không giao_phong.
 - Không rõ người dùng muốn gì đến mức không xếp được: hỏi lại đúng một câu ngắn.
 - Khi giao (việc vừa hoặc việc lớn), nói ngắn gọn một câu: xếp mức nào và vì sao (số phần, kỹ năng), để người dùng sửa nếu bạn hiểu sai. Việc nhỏ thì không cần nói.
 
 Cách giao:
 - Việc vừa: chọn bot theo mô tả việc của bot, ghi lý do. Nhiều phần độc lập thì giao song song trong một lần gọi; phần sau cần kết quả phần trước thì giao phần trước, đợi, rồi giao tiếp kèm kết quả đó.
-- Việc nhiều bước có thứ tự: chia thành thẻ bằng create_cards (thẻ nào chờ thẻ nào, ghi bot dự kiến cho từng thẻ), rồi giao thẻ đang sẵn sàng bằng assign_task với tham số card. Dự án bật Driver thì thẻ sau tự tới bot dự kiến khi thẻ trước xong; không cần giao lại.
-- Sau khi assign_task: dùng wait_agent đợi kết quả, rồi tổng hợp trả lời người dùng. Nói rõ ai đã làm phần nào.
-- Chuyển giao (hand_off) thay cho assign_task khi việc vừa thuộc hẳn chuyên môn một bot và người dùng chỉ cần đúng kết quả của bot đó, không cần bạn tổng hợp hay làm tiếp (ví dụ: viết một bài cho bot nội dung, trả lời một câu hỏi chuyên môn). Câu trả lời của bot hiện thẳng cho người dùng như lời của bot; sau đó bạn kết thúc lượt, không viết thêm. Cần gom nhiều bot, sửa lại, hay dùng kết quả cho bước sau thì dùng assign_task.
+- Việc nhiều bước có thứ tự: chia thành thẻ bằng tao_the (thẻ nào chờ thẻ nào, ghi bot dự kiến cho từng thẻ), rồi giao thẻ đang sẵn sàng bằng giao_viec với tham số the. Dự án bật Driver thì thẻ sau tự tới bot dự kiến khi thẻ trước xong; không cần giao lại.
+- Sau khi giao_viec: dùng wait_agent đợi kết quả, rồi tổng hợp trả lời người dùng. Nói rõ ai đã làm phần nào.
+- Chuyển giao (chuyen_giao) thay cho giao_viec khi việc vừa thuộc hẳn chuyên môn một bot và người dùng chỉ cần đúng kết quả của bot đó, không cần bạn tổng hợp hay làm tiếp (ví dụ: viết một bài cho bot nội dung, trả lời một câu hỏi chuyên môn). Câu trả lời của bot hiện thẳng cho người dùng như lời của bot; sau đó bạn kết thúc lượt, không viết thêm. Cần gom nhiều bot, sửa lại, hay dùng kết quả cho bước sau thì dùng giao_viec.
 - Bot đã làm việc trong cuộc này thì giao tiếp cho chính bot đó (nó nhớ việc trước).
-- Mỗi việc giao ghi kind (loại việc ngắn, dùng lại cùng tên cho việc cùng loại) để bạn học được bot nào làm tốt loại việc nào; khối <aris-routing-history> (nếu có) là kết quả các lần trước.
-- Giao việc sửa mã cho bot ngoài trên một repo khác thư mục của cuộc này: ghi đường dẫn tuyệt đối của repo vào dir (bot ngoài làm trong worktree riêng của repo đó).
+- Mỗi việc giao ghi loai (loại việc ngắn, dùng lại cùng tên cho việc cùng loại) để bạn học được bot nào làm tốt loại việc nào; khối <aris-routing-history> (nếu có) là kết quả các lần trước.
+- Giao việc sửa mã cho bot ngoài trên một repo khác thư mục của cuộc này: ghi đường dẫn tuyệt đối của repo vào thu_muc (bot ngoài làm trong worktree riêng của repo đó).
 - Việc lặt vặt không cần chuyên môn (đọc một tệp lớn, tra cứu nhỏ): dùng subagent (trợ lý ẩn danh) thay vì giao bot.
-- Việc lớn: assign_department; trưởng nhóm tự chia cho thành viên phòng, báo cáo của phòng về đây thành tin nhắn sau, không cần đợi.
-
-Quản đội (bạn tạo và sửa bot cho người dùng):
-- Người dùng nhờ tạo bot, hay việc cứ lặp lại mà đội chưa ai hợp: đề xuất bot (tên, vai, việc gì), người dùng đồng ý thì gọi create_bot, mỗi lần một bot. Thẻ duyệt hiện đủ chi tiết nên đừng chép lại toàn văn lời dặn vào câu trả lời.
-- Lời dặn của bot mới: tiếng Việt, ngôi thứ hai ("Bạn là…"), nói rõ việc, cách xưng hô với người dùng, việc không được làm (không đoán khi thiếu dữ liệu, hỏi trước khi gửi gì ra ngoài), khi nào hỏi lại. Chọn phòng ban hợp nếu có.
-- Sửa cách một bot làm việc: read_bot_instructions, viết lại toàn văn, rồi update_bot_instructions kèm lý do. Muốn quay lại bản cũ: restore_bot_instructions.
-- Người dùng từ chối ở thẻ duyệt thì hỏi muốn đổi gì, không gọi lại y nguyên.
+- Việc lớn: giao_phong; trưởng nhóm tự chia cho thành viên phòng, báo cáo của phòng về đây thành tin nhắn sau, không cần đợi.
 </aris-commander>`
-
-/** Thêm vào hướng dẫn khi đội chưa có bot nào ngoài Aris: lời chào lần đầu (bản vẽ V2). */
-export const FIRST_RUN = `<aris-first-run>
-Đội chưa có bot nào ngoài bạn. Ở tin trả lời đầu tiên: chào ngắn một câu bằng tiếng Việt theo cách xưng hô ở <aris-bot>, nói bạn lập được đội bot làm thay việc lặp lại, rồi hỏi người dùng muốn bắt đầu từ đâu bằng ask_user_question với 3–4 lựa chọn ngắn theo điều người dùng vừa nói (ví dụ: "Lập đội bot cho việc kinh doanh", "Tạo một bot thư ký lo lịch và email", "Xem aris làm được gì"). Người dùng gõ tự do cũng được. Khi đã rõ thì đề xuất 2–3 bot và tạo bằng create_bot.
-</aris-first-run>`
 
 interface AgentLike {
   session: { id: string }
 }
 
 /** Phần bộ điều khiển phiên của dsh dùng cho việc lớn. */
-/** Phần dự án Driver và `create_cards` dùng. */
+/** Phần dự án Driver và `tao_the` dùng. */
 type DriverProjects = Pick<ArisProjects, 'store' | 'plans' | 'team' | 'ofSession'>
 
 interface SessionPort {
@@ -340,10 +323,7 @@ export async function apply(ctx: Context): Promise<void> {
           const id = c?.agent?.session.id
           if (isCommander(id)) {
             const history = learnedContext(learned(), (bot) => bots().store.get(bot)?.name ?? bot)
-            const alone = !bots()
-              .store.list()
-              .some((b) => b.kind === 'member' && b.id !== LIBRARIAN_ID)
-            return [GUIDE, alone ? FIRST_RUN : '', history].filter(Boolean).join('\n\n')
+            return history ? `${GUIDE}\n\n${history}` : GUIDE
           }
           const job = jobOf(id)
           return job
@@ -355,13 +335,11 @@ export async function apply(ctx: Context): Promise<void> {
     'aris-commander: guide',
   )
 
-  /** Tên các bot trong lời gọi assign_task / hand_off mà người dùng muốn duyệt mỗi lần giao. */
+  /** Tên các bot trong lời gọi giao_viec / chuyen_giao mà người dùng muốn duyệt mỗi lần giao. */
   const approveNeeded = (args: unknown, cfg: CommanderSettings): string[] => {
     if (!cfg.approve.length) return []
-    const a = (args ?? {}) as { bot?: unknown; tasks?: unknown }
-    const handles = Array.isArray(a.tasks)
-      ? a.tasks.map((v) => (v as { bot?: unknown } | null)?.bot)
-      : [a.bot]
+    const a = (args ?? {}) as { bot?: unknown; viec?: unknown }
+    const handles = Array.isArray(a.viec) ? a.viec.map((v) => (v as { bot?: unknown } | null)?.bot) : [a.bot]
     const store = (ctx.get('arisBots') as ArisBots | undefined)?.store
     const names: string[] = []
     for (const h of handles) {
@@ -389,10 +367,10 @@ export async function apply(ctx: Context): Promise<void> {
         return {
           kind: 'deny',
           reason:
-            'Người dùng đã tắt trợ lý ẩn danh của Commander (trang Commander). Tự làm, hoặc assign_task cho một bot trong đội.',
+            'Người dùng đã tắt trợ lý ẩn danh của Commander (trang Commander). Tự làm, hoặc giao_viec cho một bot trong đội.',
         }
       const asked =
-        exec.name === 'assign_task' || exec.name === 'hand_off' ? approveNeeded(exec.arguments, cfg) : []
+        exec.name === 'giao_viec' || exec.name === 'chuyen_giao' ? approveNeeded(exec.arguments, cfg) : []
       if (!asked.length) return next()
       const decision = await next()
       if (decision.kind === 'deny') return decision
@@ -455,11 +433,11 @@ export async function apply(ctx: Context): Promise<void> {
 
   ctx.tools.register(
     defineTool({
-      name: 'assign_task',
+      name: 'giao_viec',
       description:
         'Chỉ Commander: giao việc cho một hoặc nhiều bot trong đội (chạy song song). Mỗi việc ghi bot (tên gọi), nội dung đủ để bot tự làm, lý do chọn bot. Sau đó dùng wait_agent để đợi kết quả.',
       parameters: {
-        tasks: {
+        viec: {
           type: 'array',
           required: true,
           description: 'Danh sách việc, tối đa 4, mỗi bot một việc.',
@@ -468,20 +446,20 @@ export async function apply(ctx: Context): Promise<void> {
             additionalProperties: false,
             properties: {
               bot: { type: 'string', required: true, description: 'Tên gọi của bot, ví dụ minh.' },
-              title: { type: 'string', description: 'Tên ngắn của việc (thẻ trên bảng việc).' },
-              task: { type: 'string', required: true, description: 'Việc cần làm, đủ ngữ cảnh.' },
-              reason: { type: 'string', required: true, description: 'Vì sao chọn bot này.' },
-              card: {
+              tieu_de: { type: 'string', description: 'Tên ngắn của việc (thẻ trên bảng việc).' },
+              noi_dung: { type: 'string', required: true, description: 'Việc cần làm, đủ ngữ cảnh.' },
+              ly_do: { type: 'string', required: true, description: 'Vì sao chọn bot này.' },
+              the: {
                 type: 'string',
                 description:
                   'Mã thẻ có sẵn để giao: task-n (thẻ đã chia) hoặc c-n (thẻ người dùng tạo trên Kanban).',
               },
-              kind: {
+              loai: {
                 type: 'string',
                 description:
                   'Loại việc ngắn, chữ thường, dùng lại cùng tên cho việc cùng loại (ví dụ: nghiên cứu thị trường, lịch và email, viết bài facebook). Để Commander học bot nào làm tốt việc gì.',
               },
-              dir: {
+              thu_muc: {
                 type: 'string',
                 description:
                   'Chỉ bot ngoài: đường dẫn tuyệt đối tới repo hoặc thư mục cần làm, khi khác thư mục của phiên này (ví dụ người dùng nói "sửa lỗi trong repo X"). Bỏ trống thì dùng thư mục của phiên.',
@@ -494,23 +472,23 @@ export async function apply(ctx: Context): Promise<void> {
       async execute(args, exec) {
         const agent = exec.agent as unknown as AgentLike | undefined
         if (!agent) return 'Không có phiên để giao việc.'
-        const list = (args.tasks ?? []) as {
+        const list = (args.viec ?? []) as {
           bot: string
-          title?: string
-          task: string
-          reason: string
-          card?: string
-          dir?: string
-          kind?: string
+          tieu_de?: string
+          noi_dung: string
+          ly_do: string
+          the?: string
+          thu_muc?: string
+          loai?: string
         }[]
         const assignments: Assignment[] = list.map((v) => ({
           bot: v.bot,
-          title: v.title,
-          task: v.task,
-          reason: v.reason,
-          card: v.card,
-          dir: v.dir,
-          kind: v.kind,
+          title: v.tieu_de,
+          task: v.noi_dung,
+          reason: v.ly_do,
+          card: v.the,
+          dir: v.thu_muc,
+          kind: v.loai,
         }))
         try {
           const results = await dispatch(
@@ -530,11 +508,11 @@ export async function apply(ctx: Context): Promise<void> {
 
   ctx.tools.register(
     defineTool({
-      name: 'create_cards',
+      name: 'tao_the',
       description:
-        'Chỉ Commander: chia một việc lớn thành các thẻ trên bảng việc của đội (Kanban), chưa giao ai. Thẻ phải đợi thẻ khác xong thì ghi sau (mã task-n hoặc tiêu đề một thẻ ghi trước trong cùng lần). Giao từng thẻ sau bằng assign_task với card.',
+        'Chỉ Commander: chia một việc lớn thành các thẻ trên bảng việc của đội (Kanban), chưa giao ai. Thẻ phải đợi thẻ khác xong thì ghi sau (mã task-n hoặc tiêu đề một thẻ ghi trước trong cùng lần). Giao từng thẻ sau bằng giao_viec với the.',
       parameters: {
-        cards: {
+        the: {
           type: 'array',
           required: true,
           description: 'Các thẻ theo thứ tự, tối đa 12.',
@@ -542,14 +520,14 @@ export async function apply(ctx: Context): Promise<void> {
             type: 'object',
             additionalProperties: false,
             properties: {
-              title: { type: 'string', required: true, description: 'Tên ngắn của thẻ.' },
-              description: { type: 'string', description: 'Việc cần làm, đủ ngữ cảnh.' },
+              tieu_de: { type: 'string', required: true, description: 'Tên ngắn của thẻ.' },
+              noi_dung: { type: 'string', description: 'Việc cần làm, đủ ngữ cảnh.' },
               bot: {
                 type: 'string',
                 description:
                   'Tên gọi của bot dự kiến làm thẻ này khi thẻ sẵn sàng (Driver của dự án tự giao cho bot này).',
               },
-              after: {
+              sau: {
                 type: 'array',
                 items: { type: 'string' },
                 description: 'Thẻ phải xong trước: mã task-n hoặc tiêu đề thẻ ghi trước.',
@@ -563,17 +541,17 @@ export async function apply(ctx: Context): Promise<void> {
         const agent = exec.agent as unknown as AgentLike | undefined
         if (!agent || (!isCommander(agent.session.id) && !jobOf(agent.session.id)))
           return 'Chỉ Commander, hoặc trưởng nhóm đang nhận việc lớn của phòng, được chia việc thành thẻ.'
-        const list = (args.cards ?? []) as {
-          title: string
-          description?: string
-          after?: string[]
+        const list = (args.the ?? []) as {
+          tieu_de: string
+          noi_dung?: string
+          sau?: string[]
           bot?: string
         }[]
         try {
           const made = await planCards(
             team(),
             agent,
-            list.map((c) => ({ title: c.title, description: c.description, after: c.after })),
+            list.map((c) => ({ title: c.tieu_de, description: c.noi_dung, after: c.sau })),
           )
           // Bot dự kiến cho từng thẻ (Driver giao khi thẻ sẵn sàng).
           const projects = ctx.get('arisProjects') as DriverProjects | undefined
@@ -590,7 +568,7 @@ export async function apply(ctx: Context): Promise<void> {
             ...made.map(
               (m) => `- ${m.id} «${m.title}»${m.after.length ? ` (chờ ${m.after.join(', ')})` : ''}`,
             ),
-            'Thẻ đã lên bảng việc, chưa giao ai. Giao thẻ sẵn sàng bằng assign_task với card; thẻ chờ thì giao sau khi thẻ kia xong.',
+            'Thẻ đã lên bảng việc, chưa giao ai. Giao thẻ sẵn sàng bằng giao_viec với the; thẻ chờ thì giao sau khi thẻ kia xong.',
           ].join('\n')
         } catch (e) {
           if (e instanceof DispatchError) return `Không chia được: ${e.message}`
@@ -737,13 +715,13 @@ export async function apply(ctx: Context): Promise<void> {
           state.gaveUp.push(a.task.id)
           await prompt(
             p.mainSession,
-            `[Driver] Không giao được thẻ ${a.task.id} «${a.task.subject}» cho @${a.bot}: ${r.error ?? 'lỗi'}. Xem lại và giao bằng assign_task với card=${a.task.id}.`,
+            `[Driver] Không giao được thẻ ${a.task.id} «${a.task.subject}» cho @${a.bot}: ${r.error ?? 'lỗi'}. Xem lại và giao bằng giao_viec với the=${a.task.id}.`,
           ).catch(() => undefined)
         } else logger.info('Driver %s: giao %s cho @%s', p.name, a.task.id, a.bot)
       } else if (a.kind === 'wake') {
         await prompt(
           p.mainSession,
-          `[Driver] Thẻ ${a.task.id} «${a.task.subject}» đã sẵn sàng (các thẻ trước đã xong) nhưng chưa có bot dự kiến. Chọn bot và giao bằng assign_task với card=${a.task.id}.`,
+          `[Driver] Thẻ ${a.task.id} «${a.task.subject}» đã sẵn sàng (các thẻ trước đã xong) nhưng chưa có bot dự kiến. Chọn bot và giao bằng giao_viec với the=${a.task.id}.`,
         ).catch((e: unknown) => logger.warn('Driver đánh thức Aris: %s', String(e)))
       } else if (a.kind === 'give-up')
         void notify(
@@ -879,25 +857,25 @@ export async function apply(ctx: Context): Promise<void> {
 
   ctx.tools.register(
     defineTool({
-      name: 'hand_off',
+      name: 'chuyen_giao',
       description:
-        'Chỉ Commander: chuyển giao hẳn một việc cho một bot trong đội. Bot làm và câu trả lời cuối của bot gửi thẳng cho người dùng; bạn không tổng hợp, không viết lại. Dùng khi việc thuộc hẳn chuyên môn một bot và người dùng chỉ cần kết quả của bot đó (ví dụ viết bài cho bot nội dung). Cần gom kết quả nhiều bot hoặc làm tiếp thì dùng assign_task.',
+        'Chỉ Commander: chuyển giao hẳn một việc cho một bot trong đội. Bot làm và câu trả lời cuối của bot gửi thẳng cho người dùng; bạn không tổng hợp, không viết lại. Dùng khi việc thuộc hẳn chuyên môn một bot và người dùng chỉ cần kết quả của bot đó (ví dụ viết bài cho bot nội dung). Cần gom kết quả nhiều bot hoặc làm tiếp thì dùng giao_viec.',
       parameters: {
         bot: { type: 'string', required: true, description: 'Tên gọi của bot, ví dụ tho.' },
-        title: { type: 'string', description: 'Tên ngắn của việc.' },
-        task: {
+        tieu_de: { type: 'string', description: 'Tên ngắn của việc.' },
+        noi_dung: {
           type: 'string',
           required: true,
           description: 'Việc cần làm, đủ ngữ cảnh để bot tự làm (bot không thấy cuộc trò chuyện).',
         },
-        reason: {
+        ly_do: {
           type: 'string',
           required: true,
           description: 'Vì sao chuyển cho bot này (hiện cho người dùng).',
         },
-        kind: {
+        loai: {
           type: 'string',
-          description: 'Loại việc ngắn, chữ thường, như ở assign_task.',
+          description: 'Loại việc ngắn, chữ thường, như ở giao_viec.',
         },
       },
       output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
@@ -910,8 +888,7 @@ export async function apply(ctx: Context): Promise<void> {
           .replace(/^@/, '')
           .toLowerCase()
         const bot = bots().store.byHandle(handle)
-        if (bot?.external)
-          return `@${handle} là bot ngoài: dùng assign_task rồi tự báo kết quả cho người dùng.`
+        if (bot?.external) return `@${handle} là bot ngoài: dùng giao_viec rồi tự báo kết quả cho người dùng.`
         const signal = exec.signal ?? new AbortController().signal
         const since = Date.now()
         try {
@@ -921,11 +898,11 @@ export async function apply(ctx: Context): Promise<void> {
             [
               {
                 bot: handle,
-                title: args.title as string | undefined,
-                task: String(args.task ?? ''),
-                reason: String(args.reason ?? ''),
+                title: args.tieu_de as string | undefined,
+                task: String(args.noi_dung ?? ''),
+                reason: String(args.ly_do ?? ''),
                 handoff: true,
-                kind: args.kind as string | undefined,
+                kind: args.loai as string | undefined,
               },
             ],
             signal,
@@ -939,8 +916,8 @@ export async function apply(ctx: Context): Promise<void> {
           ).catch((): Spoken => ({ kind: signal.aborted ? 'interrupted' : 'timeout', text: '' }))
           if (spoken.kind !== 'completed' || !spoken.text.trim()) handedOff.delete(r.sessionId)
           if (spoken.kind !== 'completed' || !spoken.text.trim())
-            return `@${handle} chưa trả lời được (${spoken.kind === 'timeout' ? 'quá lâu' : spoken.kind === 'error' ? 'gặp lỗi' : 'bị dừng'}). Tự trả lời người dùng, hoặc assign_task cho bot khác.`
-          const title = String(args.title ?? args.task ?? '')
+            return `@${handle} chưa trả lời được (${spoken.kind === 'timeout' ? 'quá lâu' : spoken.kind === 'error' ? 'gặp lỗi' : 'bị dừng'}). Tự trả lời người dùng, hoặc giao_viec cho bot khác.`
+          const title = String(args.tieu_de ?? args.noi_dung ?? '')
             .trim()
             .split('\n')[0]!
             .slice(0, 80)
@@ -949,7 +926,7 @@ export async function apply(ctx: Context): Promise<void> {
             handle,
             name: bot.name,
             ...(bot.role ? { role: bot.role } : {}),
-            reason: String(args.reason ?? '').trim(),
+            reason: String(args.ly_do ?? '').trim(),
             title,
             text: spoken.text.trim(),
             member: r.sessionId,
@@ -968,22 +945,18 @@ export async function apply(ctx: Context): Promise<void> {
 
   ctx.tools.register(
     defineTool({
-      name: 'assign_department',
+      name: 'giao_phong',
       description:
         'Chỉ Commander: giao một việc lớn cho cả phòng ban. Trưởng nhóm của phòng nhận việc ở một phiên riêng, tự chia cho thành viên phòng, rồi nộp báo cáo về đây thành tin nhắn (không cần đợi).',
       parameters: {
-        department: {
-          type: 'string',
-          required: true,
-          description: 'Tên hoặc mã phòng ban, ví dụ Tăng trưởng.',
-        },
-        title: { type: 'string', description: 'Tên ngắn của việc.' },
-        task: {
+        phong: { type: 'string', required: true, description: 'Tên hoặc mã phòng ban, ví dụ Tăng trưởng.' },
+        tieu_de: { type: 'string', description: 'Tên ngắn của việc.' },
+        noi_dung: {
           type: 'string',
           required: true,
           description: 'Việc cần làm, đủ ngữ cảnh, kết quả mong muốn.',
         },
-        reason: { type: 'string', required: true, description: 'Vì sao giao cho phòng này.' },
+        ly_do: { type: 'string', required: true, description: 'Vì sao giao cho phòng này.' },
       },
       output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
       async execute(args, exec) {
@@ -991,20 +964,20 @@ export async function apply(ctx: Context): Promise<void> {
         if (!agent || !isCommander(agent.session.id)) return 'Chỉ Commander được giao việc cho cả phòng.'
         const b = bots()
         const deps = b.store.departments()
-        const dep = findDepartment(deps, String(args.department ?? ''))
+        const dep = findDepartment(deps, String(args.phong ?? ''))
         if (!dep)
-          return `Không có phòng «${args.department}». Các phòng: ${deps.map((d) => d.name).join(', ') || '(chưa có)'}.`
+          return `Không có phòng «${args.phong}». Các phòng: ${deps.map((d) => d.name).join(', ') || '(chưa có)'}.`
         const lead = dep.lead ? b.store.get(dep.lead) : undefined
         if (!lead)
-          return `Phòng ${dep.name} chưa có trưởng nhóm: nhờ người dùng đặt trưởng nhóm ở trang Phòng ban, hoặc assign_task cho từng bot.`
-        const task = String(args.task ?? '').trim()
+          return `Phòng ${dep.name} chưa có trưởng nhóm: nhờ người dùng đặt trưởng nhóm ở trang Phòng ban, hoặc giao_viec cho từng bot.`
+        const task = String(args.noi_dung ?? '').trim()
         if (!task) return 'Cần nội dung việc.'
         const maxJobs = settings().nested
         if (maxJobs === 0)
-          return 'Người dùng đã tắt giao việc lớn cho cả phòng (trang Commander). Chia thẻ và assign_task cho từng bot.'
+          return 'Người dùng đã tắt giao việc lớn cho cả phòng (trang Commander). Chia thẻ và giao_viec cho từng bot.'
         if (allJobs().filter((j) => j.status === 'running').length >= maxJobs)
           return `Đang có ${maxJobs} việc lớn của phòng ban chạy; đợi bớt rồi giao tiếp.`
-        const title = String(args.title ?? task)
+        const title = String(args.tieu_de ?? task)
           .trim()
           .split('\n')[0]!
           .slice(0, 80)
@@ -1040,7 +1013,7 @@ export async function apply(ctx: Context): Promise<void> {
               handle: lead.handle,
               title: `[Phòng ${dep.name}] ${title}`,
               task,
-              reason: String(args.reason ?? ''),
+              reason: String(args.ly_do ?? ''),
               member: sessionId,
               reused: false,
             })
@@ -1267,7 +1240,7 @@ export async function apply(ctx: Context): Promise<void> {
 
   ctx.tools.register(
     defineTool({
-      name: 'start_room_round',
+      name: 'moi_noi',
       description:
         'Chỉ Aris trong phiên chính của dự án: mở một vòng bàn trong phòng nhóm. Các bot được mời nói lần lượt, nghe được nhau; công cụ đợi hết vòng rồi trả lại các tin. Luật dự án giới hạn số vòng và số tin cho mỗi tin của người dùng.',
       parameters: {
@@ -1277,7 +1250,7 @@ export async function apply(ctx: Context): Promise<void> {
           description:
             'Tên gọi bot được mời nói vòng này, theo thứ tự nói. Bỏ trống là mọi thành viên dự án (@all).',
         },
-        prompt: {
+        loi_moi: {
           type: 'string',
           required: true,
           description:
@@ -1291,7 +1264,7 @@ export async function apply(ctx: Context): Promise<void> {
         if (!agent || !sid || !isCommander(sid)) return 'Chỉ Aris (Commander) điều phối phòng nhóm.'
         const project = mainProject(sid)
         if (!project)
-          return 'Phòng nhóm chỉ có trong phiên chính của một dự án. Ở đây thì giao việc bằng assign_task.'
+          return 'Phòng nhóm chỉ có trong phiên chính của một dự án. Ở đây thì giao việc bằng giao_viec.'
         const b = bots()
         const members: RoomBot[] = project.members.flatMap((id) => {
           const x = b.store.get(id)
@@ -1334,7 +1307,7 @@ export async function apply(ctx: Context): Promise<void> {
               rules: project.rules,
               members,
               invite: ((args.bot ?? []) as string[]).filter((h) => !/^@?all$/i.test(h.trim())),
-              prompt: String(args.prompt ?? ''),
+              prompt: String(args.loi_moi ?? ''),
               signal: exec.signal ?? new AbortController().signal,
             },
           )
@@ -1456,55 +1429,9 @@ export async function apply(ctx: Context): Promise<void> {
   // Duyệt tập trung: yêu cầu quyền của bot ngoài (ApprovalHub) và bot trong đội (phiên con) về một
   // danh sách; web và Telegram cùng đọc. Bot ngoài còn ghi yêu cầu lên bản ghi lần chạy (thẻ trên nhánh).
   const center = new ApprovalCenter()
-  // Duyệt bền (GĐ9.7a): bản ghi yêu cầu của phiên chính; công tắc ở trang Commander, mặc định bật.
-  const durable = new DurableApprovals(domain.table('approvals') as unknown as Table<DurableRecord>)
-  const durableOn = () => settings().durable !== false
-  const repeats = new RepeatGuard()
-  const sessionRun = (sid: string) => `session:${sid}`
-  /** Phiên đang trả lời câu hỏi ý của đồng đội (GĐ9.5): mã phiên → mã việc. */
-  const consultSessions = new Map<string, string>()
-  const sessionItem = (
-    r: Pick<DurableRecord, 'id' | 'session' | 'bot' | 'name' | 'tool' | 'reason' | 'at'>,
-    run: string,
-  ) => ({
-    id: r.id,
-    source: 'session' as const,
-    run,
-    bot: r.bot,
-    name: r.name,
-    parentSession: r.session,
-    kind: 'other' as const,
-    tool: r.tool,
-    reason: r.reason,
-    at: r.at,
-  })
-  /**
-   * Trả lời một yêu cầu mà lượt không còn chờ (hết giờ hay aris khởi động lại). Cho phép: được phép một lần cho
-   * đúng thao tác, nhắn vào phiên để bot làm tiếp. Từ chối: bỏ.
-   */
-  const answerOrphan = (id: string, allow: boolean, by: 'user' | 'telegram'): boolean => {
-    const r = durable.get(id)
-    if (!r || r.status !== 'pending') return false
-    center.close(id, allow, by)
-    if (!allow) {
-      void durable.done(id)
-      return true
-    }
-    void durable
-      .grant(id)
-      .then(() =>
-        relay(
-          r.session,
-          `[aris] Người dùng vừa cho phép ${r.tool}${r.reason ? ` («${r.reason.split('\n')[0]!.slice(0, 120)}»)` : ''}. Lượt trước đã dừng khi chờ duyệt. Nếu việc vẫn cần, gọi lại đúng thao tác đó với cùng tham số: lần này chạy luôn, không hỏi lại.`,
-          { bot: 'aris', name: 'aris' },
-        ).catch((e: unknown) => logger.warn('báo đã cho phép: %s', String(e))),
-      )
-    return true
-  }
   ctx.provide('arisApprovals', {
     list: (parentSession?: string) => center.list(parentSession),
-    answer: (id: string, allow: boolean, by: 'user' | 'telegram' = 'user') =>
-      hub.answer(id, allow, by) || answerOrphan(id, allow, by),
+    answer: (id: string, allow: boolean, by: 'user' | 'telegram' = 'user') => hub.answer(id, allow, by),
     on: (fn: (e: ApprovalEvent) => void) => center.on(fn),
     /**
      * Plugin khác mở một yêu cầu trong hộp duyệt chung (web, Telegram cùng thấy) và chờ trả lời. `run` riêng cho mỗi
@@ -1544,12 +1471,6 @@ export async function apply(ctx: Context): Promise<void> {
           preview: i.preview,
           at: req.at,
         })
-        return
-      }
-      if (req.run.startsWith('session:')) {
-        const rec = { ...(req.input as Omit<DurableRecord, 'id' | 'at' | 'status'>), id: req.id, at: req.at }
-        center.open(sessionItem(rec, req.run))
-        void durable.open(rec).catch((e: unknown) => logger.warn('lưu yêu cầu duyệt: %s', String(e)))
         return
       }
       if (req.run.startsWith('member:')) {
@@ -1598,15 +1519,6 @@ export async function apply(ctx: Context): Promise<void> {
     },
     closed(req, allow, by) {
       center.close(req.id, allow, by)
-      if (req.run.startsWith('session:')) {
-        // Người dùng trả lời: xong. Hết giờ chờ hay lượt dừng: giữ yêu cầu trong hộp duyệt, trả lời muộn vẫn được.
-        if (by === 'user' || by === 'telegram') void durable.done(req.id)
-        else {
-          const rec = durable.get(req.id)
-          if (rec) center.open(sessionItem(rec, `orphan:${rec.id}`))
-        }
-        return
-      }
       if (req.run.startsWith('member:') || req.run.startsWith('computer:')) return
       const r = externals.get(req.run)
       if (!r) return
@@ -1635,35 +1547,7 @@ export async function apply(ctx: Context): Promise<void> {
     }
   }
   ctx.on('session/event', (session, event) => {
-    // Nhắn chen khi đang chờ duyệt (GĐ9.7a, cách B): tin của người dùng vào phiên thì từ chối yêu cầu đang chờ.
-    if ((event.type as string) === 'agent/inbox/spliced' && durableOn()) {
-      const inserted = (event.data as { inserted?: { role?: string; source?: { kind?: string } }[] }).inserted
-      const waiting = hub.of(sessionRun(session.id))
-      if (
-        waiting.length &&
-        inserted?.some((m) => m.role === 'user' && !String(m.source?.kind ?? '').startsWith('aris'))
-      ) {
-        for (const r of waiting) hub.answer(r.id, false, 'user')
-        // Kết quả "từ chối" của dsh không kèm lý do: chèn một lời nhắc vào lượt đang chạy để bot không nhờ
-        // người dùng bấm duyệt mà kết thúc lượt, đọc tin mới.
-        const agent = (ctx.get('agents') as { get(id: string): unknown } | undefined)?.get(session.id) as
-          { steer?(m: unknown): void } | undefined
-        agent?.steer?.(
-          createUserMessage({
-            content: [
-              {
-                type: 'text',
-                text: '[aris] Người dùng vừa nhắn tin mới trong lúc thẻ duyệt đang chờ, nên yêu cầu vừa rồi bị từ chối theo ý người dùng. Đừng nhờ người dùng bấm duyệt; trả lời một câu ngắn rồi kết thúc lượt để đọc và làm theo tin mới.',
-              },
-            ],
-            source: { kind: 'aris-bot', form: 'relay', bot: 'aris', name: 'aris' },
-          }),
-        )
-      }
-      return
-    }
-    // Tham số lời gọi: phiên con (thẻ duyệt hiện đúng lệnh) và phiên chính (duyệt bền khớp đúng thao tác).
-    if ((event.type as string) !== 'tool/call') return
+    if ((event.type as string) !== 'tool/call' || !members.has(session.id)) return
     const d = event.data as unknown as { callId?: string; name?: string; arguments?: unknown }
     if (!d.callId || !d.name) return
     calls.set(d.callId, { name: d.name, args: d.arguments })
@@ -1691,302 +1575,6 @@ export async function apply(ctx: Context): Promise<void> {
     },
     true,
   )
-  // --- Duyệt bền và chống lặp (GĐ9.7a, docs/plans/gd9-7-duyet-ben.md) -------------------------------------
-  // Phiên chính: aris giữ yêu cầu duyệt ở hộp chung (thanh duyệt aris, chuông, Telegram) thay cho thẻ của dsh nên
-  // ô nhập không bị che; yêu cầu lưu xuống đĩa.
-  ctx.on(
-    'approval/request',
-    async (req, next) => {
-      const sid = req.agent.session.id
-      // Phiên đang trả lời câu hỏi ý của đồng đội (GĐ9.5): không làm việc cần duyệt.
-      if (consultSessions.has(sid)) {
-        const agent = (ctx.get('agents') as { get(id: string): unknown } | undefined)?.get(sid) as
-          { steer?(m: unknown): void } | undefined
-        agent?.steer?.(
-          createUserMessage({
-            content: [
-              {
-                type: 'text',
-                text: '[aris] Bạn đang trả lời câu hỏi ý của đồng đội: thao tác cần duyệt bị từ chối. Đừng thử cách khác; trả lời bằng những gì đã biết và nói rõ việc nào cần chủ làm hay duyệt.',
-              },
-            ],
-            source: { kind: 'aris-bot', form: 'relay', bot: 'aris', name: 'aris' },
-          }),
-        )
-        return 'rejected'
-      }
-      if (!durableOn() || members.has(sid)) return next()
-      // Phiên của kênh (Telegram, Lark, Zalo): kênh lo như trước.
-      const channels = ctx.get('arisChannelApprovals') as
-        { approve(req: unknown): Promise<string | undefined> } | undefined
-      const claimed = await channels?.approve(req)
-      if (claimed !== undefined) return claimed as Awaited<ReturnType<typeof next>>
-      const call = req.callId ? calls.get(req.callId) : undefined
-      const tool = call?.name ?? req.toolName
-      const hash = argsHash(tool, call?.args ?? null)
-      // Người dùng đã cho phép muộn đúng thao tác này: chạy luôn, dùng một lần.
-      if (await durable.take(sid, tool, hash)) return 'allowed-once'
-      const bot = bots().store.botOf(sid)
-      const reason = (req.displayReason as Record<string, string> | undefined)?.vi ?? req.reason
-      const run = sessionRun(sid)
-      const onAbort = () => hub.endRun(run)
-      req.signal?.addEventListener('abort', onAbort, { once: true })
-      try {
-        const allow = await hub.request(run, tool, {
-          session: sid,
-          bot: bot.id,
-          name: bot.name,
-          tool,
-          hash,
-          ...(reason ? { reason } : {}),
-        })
-        if (req.signal?.aborted) return 'cancelled'
-        return allow ? 'allowed-once' : 'rejected'
-      } finally {
-        req.signal?.removeEventListener('abort', onAbort)
-      }
-    },
-    // Đứng trước thẻ duyệt của dsh trong chuỗi (như mọi hook duyệt của aris).
-    true,
-  )
-
-  // --- Đồng đội hỏi nhau (GĐ9.5, docs/plans/gd9-5-dong-doi-hoi-nhau.md) -----------------------------------------
-  const tasks = domain.table('tasks') as unknown as Table<TaskRecord>
-  const teammatesOn = () => settings().teammates !== false
-  /** Lúc bắt đầu lượt hiện tại của mỗi phiên (gốc của chuỗi hỏi). */
-  const turnStarted = new Map<string, number>()
-  ctx.on('session/event', (session, event) => {
-    if ((event.type as string) !== 'turn/start') return
-    turnStarted.set(session.id, Date.now())
-    if (turnStarted.size > 500) turnStarted.delete(turnStarted.keys().next().value!)
-  })
-  const allTasks = () => [...tasks.entries()].map(([, t]) => t)
-  /** Kết quả chờ nhắn về phiên của bot hỏi (lượt đã dừng), gom theo phiên. */
-  const returning = new Map<string, { list: TaskRecord[]; timer: ReturnType<typeof setTimeout> }>()
-  const queueReturn = (t: TaskRecord) => {
-    const cur = returning.get(t.fromSession)
-    if (cur) return void cur.list.push(t)
-    const entry = {
-      list: [t],
-      timer: setTimeout(() => {
-        returning.delete(t.fromSession)
-        const at = new Date().toISOString()
-        void relay(t.fromSession, returnMessage(entry.list), { bot: 'aris', name: 'aris' })
-          .then(() => Promise.all(entry.list.map((x) => tasks.put(x.id, { ...x, returnedAt: at }))))
-          .catch((e: unknown) => logger.warn('nhắn kết quả hỏi đồng đội: %s', String(e)))
-      }, LIMITS.batchMs),
-    }
-    returning.set(t.fromSession, entry)
-  }
-  const findTeammate = (ref: string) => {
-    const r = ref.replace(/^@/, '').trim().toLowerCase()
-    const store = bots().store
-    return (
-      store.byHandle(r) ??
-      store.get(ref.trim()) ??
-      store.list().find((b) => b.name.trim().toLowerCase() === r)
-    )
-  }
-
-  ctx.tools.register(
-    defineTool({
-      name: 'ask_teammate',
-      description:
-        'Hỏi ý một đồng đội trong đội (danh sách và việc của từng người ở <aris-bot>) khi câu hỏi thuộc chuyên môn của họ. Đồng đội trả lời ở phiên riêng, câu trả lời về đây làm kết quả để bạn làm tiếp. Chỉ hỏi ý: đồng đội không gửi tin hay sửa gì ra ngoài. Đồng đội không thấy cuộc trò chuyện này, nên ghi đủ ngữ cảnh. Không hỏi điều bạn tự trả lời được; mỗi lượt hỏi tối đa 6 lần.',
-      parameters: {
-        teammate: { type: 'string', required: true, description: '@tên gọi hay tên của đồng đội.' },
-        question: { type: 'string', required: true, description: 'Câu hỏi, rõ ràng, một ý.' },
-        context: {
-          type: 'string',
-          description: 'Ngữ cảnh đồng đội cần để trả lời (đồng đội không thấy cuộc này).',
-        },
-      },
-      output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
-      async execute(args, exec) {
-        if (!teammatesOn()) return 'Người dùng đã tắt "Đồng đội hỏi nhau" (trang Commander). Tự trả lời.'
-        const sid = (exec.agent as unknown as AgentLike | undefined)?.session.id
-        if (!sid) return 'Không có phiên để hỏi đồng đội.'
-        const me = bots().store.botOf(sid)
-        const parentId = consultSessions.get(sid)
-        const parent = parentId ? tasks.get(parentId) : undefined
-        const depth = parent ? parent.depth + 1 : 1
-        const root = parent?.root ?? `${sid}@${turnStarted.get(sid) ?? 0}`
-        const trust = parent
-          ? undefined
-          : (
-              ctx.get('arisChannelTrust') as
-                { of(sid: string): 'owner' | 'member' | 'guest' | undefined } | undefined
-            )?.of(sid)
-        const ref = String(args.teammate ?? '')
-        const target = findTeammate(ref)
-        const question = String(args.question ?? '').trim()
-        if (!question) return 'Cần câu hỏi.'
-        const why = cannotAsk({
-          depth,
-          rootCount: allTasks().filter((t) => t.root === root).length,
-          trust,
-          self: me.id,
-          target,
-          targetRef: ref,
-        })
-        if (why || !target) return why ?? `Không có đồng đội «${ref}».`
-        const task: TaskRecord = {
-          id: randomUUID(),
-          root,
-          ...(parent ? { parent: parent.id } : {}),
-          depth,
-          from: me.id,
-          fromName: me.name,
-          fromSession: sid,
-          to: target.id,
-          toName: target.name,
-          question,
-          status: 'running',
-          startedAt: new Date().toISOString(),
-        }
-        let toSession: string
-        try {
-          toSession = await bots().open(target.id)
-        } catch (e) {
-          return `Không mở được phiên cho ${target.name}: ${String(e)}`
-        }
-        consultSessions.set(toSession, task.id)
-        await tasks.put(task.id, { ...task, toSession })
-        const since = Date.now()
-        await relay(toSession, consultMessage(me.name, question, args.context as string | undefined), {
-          bot: me.id,
-          name: me.name,
-        })
-        // Chờ đồng đội không theo lượt của bot hỏi: lượt đó dừng thì kết quả vẫn được nhắn về sau.
-        const finish = waitTurn(toSession, since, AbortSignal.timeout(LIMITS.waitMs))
-          .catch((): Spoken => ({ kind: 'timeout', text: '' }))
-          .then(async (spoken) => {
-            consultSessions.delete(toSession)
-            const ok = spoken.kind === 'completed' && !!spoken.text.trim()
-            const done: TaskRecord = {
-              ...task,
-              toSession,
-              status: ok ? 'done' : 'failed',
-              ...(ok ? { answer: spoken.text.trim() } : {}),
-              finishedAt: new Date().toISOString(),
-            }
-            await tasks.put(done.id, done)
-            return done
-          })
-        const signal = exec.signal
-        const stopped = new Promise<'stopped'>((resolve) => {
-          if (signal?.aborted) resolve('stopped')
-          signal?.addEventListener('abort', () => resolve('stopped'), { once: true })
-        })
-        const first = await Promise.race([finish, stopped])
-        if (first === 'stopped') {
-          void finish.then(queueReturn)
-          return `Đã gửi câu hỏi cho ${target.name}; kết quả sẽ được nhắn về sau.`
-        }
-        return first.status === 'done'
-          ? answerText(target.name, first.answer ?? '')
-          : `${target.name} chưa trả lời được (quá ${LIMITS.waitMs / 60_000} phút hay gặp lỗi). Tự trả lời bằng những gì bạn biết, nói rõ chỗ chưa chắc.`
-      },
-    }),
-  )
-
-  // Khởi động lại: câu hỏi đang chạy bị ngắt; báo bot hỏi (gom theo phiên).
-  void (async () => {
-    for (const t of allTasks().filter((x) => x.status === 'running')) {
-      const cut: TaskRecord = { ...t, status: 'interrupted', finishedAt: new Date().toISOString() }
-      await tasks.put(t.id, cut)
-      queueReturn(cut)
-    }
-  })().catch((e: unknown) => logger.warn('nạp câu hỏi đồng đội cũ: %s', String(e)))
-
-  // --- Sang trang (GĐ9.8a): ngữ cảnh vượt trần tuyệt đối thì nhờ dsh nén ngay trong cùng phiên khi bot rảnh. ---
-  const lastContext = new Map<string, number>()
-  // Nén bằng lệnh `/compact` của dsh (dịch vụ nén nằm ở phạm vi khác, lệnh thì tới được từ đây).
-  type Commands = {
-    execute(
-      agent: unknown,
-      line: string,
-      attachments: readonly unknown[],
-      signal: AbortSignal,
-    ): Promise<unknown>
-  }
-  let commands: Commands | undefined
-  ctx.inject(['commands'], (scope) => {
-    commands = (scope as unknown as { commands: Commands }).commands
-    scope.effect(
-      () => () => {
-        commands = undefined
-      },
-      'aris-commander: lệnh nén',
-    )
-  })
-  ctx.on('session/event', (session, event) => {
-    const type = event.type as string
-    if (type === 'assistant/message') {
-      const n = contextTokens((event.data as { usage?: Parameters<typeof contextTokens>[0] }).usage)
-      if (n) lastContext.set(session.id, n)
-      if (lastContext.size > 500) lastContext.delete(lastContext.keys().next().value!)
-      return
-    }
-    if (type !== 'turn/end') return
-    const kind = (event.data as { reason?: { kind?: string } }).reason?.kind
-    const cap = settings().compactAt ?? COMPACT_AT
-    if (!shouldCompact(lastContext.get(session.id), kind, cap)) return
-    const sid = session.id
-    lastContext.delete(sid)
-    // Đợi lượt khép hẳn rồi mới nén (dsh chỉ nén khi agent rảnh).
-    setTimeout(() => {
-      const agent = (ctx.get('agents') as { get(id: string): unknown } | undefined)?.get(sid) as
-        { status?: string } | undefined
-      if (!agent || !commands || agent.status === 'running') {
-        logger.info(
-          'sang trang: chưa nén phiên %s (agent %s, lệnh %s)',
-          sid,
-          agent?.status ?? 'không có',
-          commands ? 'có' : 'không có',
-        )
-        return
-      }
-      commands
-        .execute(agent, '/compact', [], AbortSignal.timeout(5 * 60_000))
-        .then(() => logger.info('sang trang: đã nén phiên %s (vượt %d token)', sid, cap))
-        .catch((e: unknown) => logger.warn('sang trang: nén phiên %s: %s', sid, String(e)))
-    }, 1500)
-  })
-
-  // Chống lặp: thao tác ra ngoài (gửi tin, ghi qua kết nối) cùng bot, cùng tham số vừa chạy xong thì chặn.
-  const mcpWrites = (tool: string) =>
-    /(create|update|delete|remove|send|post|write|add|publish|insert|upsert|comment|reply|move|archive)/i.test(
-      tool.split('__').pop() ?? '',
-    )
-  ctx.on('tools/pre-execute', async (exec, next) => {
-    const decision = await next()
-    const sid = exec.agent?.session.id
-    if (decision.kind === 'deny' || !sid || !durableOn() || !isOutbound(exec.name, mcpWrites)) return decision
-    const at = repeats.last(bots().store.botOf(sid).id, argsHash(exec.name, exec.arguments ?? null))
-    if (at === undefined) return decision
-    const hhmm = new Date(at).toTimeString().slice(0, 5)
-    return {
-      kind: 'deny',
-      reason: `Thao tác này (${exec.name}, cùng nội dung) đã chạy xong lúc ${hhmm}. Không làm lại để tránh gửi trùng; nếu người dùng thật sự muốn gửi lại thì hỏi họ trước.`,
-    }
-  })
-  ctx.on('tools/post-execute', async (exec, result, next) => {
-    const out = await next()
-    const sid = exec.agent?.session.id
-    if (sid && durableOn() && !(result as { isError?: boolean }).isError && isOutbound(exec.name, mcpWrites))
-      repeats.record(bots().store.botOf(sid).id, argsHash(exec.name, exec.arguments ?? null))
-    return out
-  })
-
-  // Khởi động lại: yêu cầu còn chờ từ lần chạy trước vào lại hộp duyệt (lượt đã dừng); bỏ bản quá hạn.
-  void durable
-    .prune()
-    .then(() => {
-      for (const r of durable.pending()) center.open(sessionItem(r, `orphan:${r.id}`))
-    })
-    .catch((e: unknown) => logger.warn('nạp yêu cầu duyệt cũ: %s', String(e)))
-
   ctx.effect(() => {
     hub.start().catch((e: unknown) => logger.warn('mở socket duyệt quyền: %s', String(e)))
     return () => hub.stop()
@@ -2368,9 +1956,7 @@ export async function apply(ctx: Context): Promise<void> {
             const body = (await request.json().catch(() => ({}))) as { op?: string; session?: string }
             if (body.op === 'external-approve') {
               const b = body as { id?: unknown; allow?: unknown }
-              const ok =
-                typeof b.id === 'string' &&
-                (hub.answer(b.id, b.allow === true) || answerOrphan(b.id, b.allow === true, 'user'))
+              const ok = typeof b.id === 'string' && hub.answer(b.id, b.allow === true)
               return json({ ok }, ok ? 200 : 404)
             }
             if (body.op === 'external-stop' && typeof (body as { run?: unknown }).run === 'string') {

@@ -6,7 +6,7 @@ import { MASCOTS, USER_REJECTED, type BotStatus, type SubagentCall } from '@aris
 import { currentTeam } from '@aris/ui-kit/react'
 import type { ChatKey } from './locale.js'
 
-// Đọc lần gọi `assign_task` nằm ở `@aris/ui-kit` để Văn phòng dùng lại đúng dữ liệu của khung chat.
+// Đọc lần gọi `giao_viec` nằm ở `@aris/ui-kit` để Văn phòng dùng lại đúng dữ liệu của khung chat.
 export { dispatchItems, type DispatchItem, type SubagentCall } from '@aris/ui-kit'
 
 export interface SubagentArgs {

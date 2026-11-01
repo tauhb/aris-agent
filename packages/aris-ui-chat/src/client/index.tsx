@@ -2,15 +2,8 @@
  * Khung chat aris: cắm vào chỗ cắm hội thoại, ô nhập và công cụ của dsh, không thay
  * gói nào (trừ nhãn model "1017" tạm của DeepSeek, row này tắt trong patch).
  */
-import { getMascot, toolNamesOf } from '@aris/ui-kit'
-import {
-  arisNavigate,
-  currentTeam,
-  isUiV2,
-  mountKitCss,
-  refreshTeam,
-  registerPersonal,
-} from '@aris/ui-kit/react'
+import { getMascot } from '@aris/ui-kit'
+import { arisNavigate, currentTeam, mountKitCss, refreshTeam, registerPersonal } from '@aris/ui-kit/react'
 import { DispatchBranches, HeroMark, ModelLabel, SubagentBranch, TriggerButtons } from './Chat.js'
 import { EN, NS, VI } from './locale.js'
 import { RoomDock, RoomLead, RoomRound, RoomSay } from './Room.js'
@@ -22,7 +15,6 @@ import { botTriggerSource } from './bot-source.js'
 import { botReportDefinition, findMention, handoffDefinition, turnHeadDefinition } from './who-data.js'
 import { CSS } from './styles.js'
 import { BrainPicker, BrainReadCall, BrainSearchCall, UserPage, brainTriggerSource } from './Brain.js'
-import { TeammateCall } from './Teammate.js'
 import { MediaCall, MediaShow, mediaDefinition } from './Media.js'
 import { brainPages, cachedPages, LINK } from './brain-data.js'
 import { openPeek, watchPageLinks } from './brain-dom.js'
@@ -135,29 +127,27 @@ export function apply(ctx: ClientContext): void {
     ),
   )
 
-  // Commander giao việc (`assign_task` của @aris/commander): mỗi bot một nhánh. Cả tên cũ cho log phiên cũ.
-  for (const key of toolNamesOf('assign_task'))
-    ctx.slots.inject('tool.call.toolview', () =>
-      ctx.slots.register(
-        {
-          name: 'tool.call.toolview',
-          key,
-          priority: -1,
-          locale: NS,
-          inject: () => ({
-            hooks: { sessions: ctx.sessions.list },
-            openSession: (sessionId: string) => workspace.openSession(sessionId),
-          }),
-        },
-        DispatchBranches,
-      ),
-    )
+  // Commander giao việc (`giao_viec` của @aris/commander): mỗi bot một nhánh.
+  ctx.slots.inject('tool.call.toolview', () =>
+    ctx.slots.register(
+      {
+        name: 'tool.call.toolview',
+        key: 'giao_viec',
+        priority: -1,
+        locale: NS,
+        inject: () => ({
+          hooks: { sessions: ctx.sessions.list },
+          openSession: (sessionId: string) => workspace.openSession(sessionId),
+        }),
+      },
+      DispatchBranches,
+    ),
+  )
 
-  // Phòng nhóm của dự án (`start_room_round` của @aris/commander): tin của các bot trong một vòng.
-  for (const key of toolNamesOf('start_room_round'))
-    ctx.slots.inject('tool.call.toolview', () =>
-      ctx.slots.register({ name: 'tool.call.toolview', key, priority: -1, locale: NS }, RoomRound),
-    )
+  // Phòng nhóm của dự án (`moi_noi` của @aris/commander): tin của các bot trong một vòng.
+  ctx.slots.inject('tool.call.toolview', () =>
+    ctx.slots.register({ name: 'tool.call.toolview', key: 'moi_noi', priority: -1, locale: NS }, RoomRound),
+  )
 
   // Mỗi tin trong phòng là một dòng riêng của bot (không gập vào lượt của Aris).
   ctx.uiConversation.events.register(roomSayDefinition)
@@ -266,9 +256,6 @@ export function apply(ctx: ClientContext): void {
         teamBots,
         (b) => b.name,
         (b) => arisNavigate('bot', { id: b.id }),
-        document,
-        // Giao diện GĐ9: tên bot viết thẳng cũng thành viên tên bot.
-        isUiV2(),
       ),
     'aris-ui-chat: reply mentions',
   )
@@ -332,13 +319,6 @@ export function apply(ctx: ClientContext): void {
       BrainReadCall,
     ),
   )
-  // Đồng đội hỏi nhau (GĐ9.5): dòng "Đã hỏi <đồng đội>" kèm câu trả lời gấp gọn.
-  ctx.slots.inject('tool.call.toolview', () =>
-    ctx.slots.register(
-      { name: 'tool.call.toolview', key: 'ask_teammate', priority: -1, locale: NS },
-      TeammateCall,
-    ),
-  )
   // Ảnh, video bot tạo (đợt 5c, bản vẽ 1.9): dòng riêng của lượt, ngoài phần gọi công cụ đã gập.
   ctx.uiConversation.events.register(mediaDefinition)
   ctx.slots.inject('conversation.chat.node', () =>
@@ -346,14 +326,12 @@ export function apply(ctx: ClientContext): void {
   )
   const ImageCall = (p: Parameters<typeof MediaCall>[0]) => <MediaCall {...p} kind="image" />
   const VideoCall = (p: Parameters<typeof MediaCall>[0]) => <MediaCall {...p} kind="video" />
-  for (const key of toolNamesOf('generate_image'))
-    ctx.slots.inject('tool.call.toolview', () =>
-      ctx.slots.register({ name: 'tool.call.toolview', key, priority: -1, locale: NS }, ImageCall),
-    )
-  for (const key of toolNamesOf('generate_video'))
-    ctx.slots.inject('tool.call.toolview', () =>
-      ctx.slots.register({ name: 'tool.call.toolview', key, priority: -1, locale: NS }, VideoCall),
-    )
+  ctx.slots.inject('tool.call.toolview', () =>
+    ctx.slots.register({ name: 'tool.call.toolview', key: 'tao_anh', priority: -1, locale: NS }, ImageCall),
+  )
+  ctx.slots.inject('tool.call.toolview', () =>
+    ctx.slots.register({ name: 'tool.call.toolview', key: 'tao_video', priority: -1, locale: NS }, VideoCall),
+  )
   // Nút "Từ Brain" ở ô nhập; nhóm "Trang bộ não" trong menu `@`.
   ctx.slots.inject('conversation.input.left', () =>
     ctx.slots.register(

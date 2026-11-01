@@ -18,7 +18,7 @@ import {
   sameDay,
 } from './stats-format.js'
 
-type StepType = 'user' | 'assistant' | 'thinking' | 'tool' | 'approval' | 'question' | 'blocked'
+type StepType = 'user' | 'assistant' | 'thinking' | 'tool' | 'duyet' | 'hoi' | 'chan'
 interface Step {
   n: number
   at: number
@@ -72,19 +72,19 @@ const endpoint = (sid: string, extra: Record<string, string> = {}) => {
 
 /** Màu ô của bước (bản vẽ: tin nhắn, gọi công cụ, duyệt, lỗi hay bị chặn). */
 const colorOf = (s: Step) =>
-  s.type === 'blocked' || (s.type === 'tool' && s.error)
+  s.type === 'chan' || (s.type === 'tool' && s.error)
     ? 'var(--a-danger)'
     : s.type === 'tool'
       ? 'var(--ap-c2)'
-      : s.type === 'approval' || s.type === 'question'
+      : s.type === 'duyet' || s.type === 'hoi'
         ? 'var(--ap-c4)'
         : 'var(--ap-c1)'
 const toneOf = (s: Step) =>
-  s.type === 'blocked' || (s.type === 'tool' && s.error)
+  s.type === 'chan' || (s.type === 'tool' && s.error)
     ? 'danger'
     : s.type === 'tool'
       ? 'ok'
-      : s.type === 'approval' || s.type === 'question'
+      : s.type === 'duyet' || s.type === 'hoi'
         ? 'warn'
         : 'accent'
 
@@ -415,7 +415,7 @@ export function Replay({ t, nav, sid }: PageProps & { sid: string }) {
                   {view.usd !== undefined && <span className="ap-rpfig">{fmtUsd(view.usd, dec)} USD</span>}
                   {view.ms !== undefined && (
                     <span className="ap-rpfig">
-                      {view.type === 'approval' || view.type === 'question'
+                      {view.type === 'duyet' || view.type === 'hoi'
                         ? t('rp.waited', { time: dur(view.ms) })
                         : dur(view.ms)}
                     </span>

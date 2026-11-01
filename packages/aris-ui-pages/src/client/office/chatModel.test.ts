@@ -4,8 +4,8 @@ import {
   fmtDuration,
   jobState,
   matchJob,
-  departmentArgs,
-  departmentItem,
+  phongArgs,
+  phongItem,
   type JobLike,
   pendingEcho,
   progressMs,
@@ -64,7 +64,7 @@ describe('toTurns', () => {
         step(1, 'user'),
         step(2, 'tool', { tool: 'brain_search' }),
         step(3, 'assistant'),
-        step(4, 'tool', { tool: 'assign_task' }),
+        step(4, 'tool', { tool: 'giao_viec' }),
         step(5, 'tool', { tool: 'wait_agent' }),
         step(6, 'assistant'),
       ],
@@ -135,9 +135,9 @@ describe('thời gian và dòng tiến độ', () => {
 
   it('stepLabel gắn nhãn cho suy nghĩ, hỏi, duyệt, chặn; công cụ giữ tiêu đề', () => {
     expect(stepLabel(step(1, 'thinking', { title: 'chọn 2 điểm' }), t)).toBe('of.ch.think(chọn 2 điểm)')
-    expect(stepLabel(step(1, 'question', { title: 'Giọng nào?' }), t)).toBe('of.ch.ask(Giọng nào?)')
-    expect(stepLabel(step(1, 'approval', { title: 'bash x' }), t)).toBe('of.ch.approval(bash x)')
-    expect(stepLabel(step(1, 'blocked', { title: 'bash y' }), t)).toBe('of.ch.blocked(bash y)')
+    expect(stepLabel(step(1, 'hoi', { title: 'Giọng nào?' }), t)).toBe('of.ch.ask(Giọng nào?)')
+    expect(stepLabel(step(1, 'duyet', { title: 'bash x' }), t)).toBe('of.ch.approval(bash x)')
+    expect(stepLabel(step(1, 'chan', { title: 'bash y' }), t)).toBe('of.ch.blocked(bash y)')
     expect(stepLabel(step(1, 'tool', { title: 'read a.md' }), t)).toBe('read a.md')
   })
 })
@@ -178,12 +178,12 @@ describe('khối "Đội đang làm"', () => {
   })
 })
 
-describe('giao cả phòng (assign_department)', () => {
+describe('giao cả phòng (giao_phong)', () => {
   const body = JSON.stringify({
-    department: 'Tăng trưởng',
-    title: 'Chiến dịch ra mắt khoá học',
-    task: 'Làm đủ bộ',
-    reason: 'Cần nhiều vai',
+    phong: 'Tăng trưởng',
+    tieu_de: 'Chiến dịch ra mắt khoá học',
+    noi_dung: 'Làm đủ bộ',
+    ly_do: 'Cần nhiều vai',
   })
   const job = (extra: Partial<JobLike>): JobLike => ({
     id: 'job-1',
@@ -198,22 +198,14 @@ describe('giao cả phòng (assign_department)', () => {
     ...extra,
   })
 
-  it('departmentArgs: tên phòng và tên việc; không có title thì lấy dòng đầu task, cắt 80 ký tự', () => {
-    expect(departmentArgs(body)).toEqual({ department: 'Tăng trưởng', title: 'Chiến dịch ra mắt khoá học' })
-    expect(departmentArgs(JSON.stringify({ department: 'X', task: `Dòng đầu\ndòng hai` }))).toEqual({
-      department: 'X',
+  it('phongArgs: tên phòng và tên việc; không có tieu_de thì lấy dòng đầu noi_dung, cắt 80 ký tự', () => {
+    expect(phongArgs(body)).toEqual({ phong: 'Tăng trưởng', title: 'Chiến dịch ra mắt khoá học' })
+    expect(phongArgs(JSON.stringify({ phong: 'X', noi_dung: `Dòng đầu\ndòng hai` }))).toEqual({
+      phong: 'X',
       title: 'Dòng đầu',
     })
-    expect(departmentArgs(JSON.stringify({ department: 'X', task: 'a'.repeat(200) }))?.title).toHaveLength(80)
-    expect(departmentArgs('{"department": "dở dang')).toBeNull()
-  })
-
-  it('departmentArgs: lời gọi trong log cũ (giao_phong, tham số tiếng Việt) vẫn đọc được', () => {
-    const old = JSON.stringify({ phong: 'Tăng trưởng', tieu_de: 'Chiến dịch', noi_dung: 'x', ly_do: 'y' })
-    expect(departmentArgs(old)).toEqual({ department: 'Tăng trưởng', title: 'Chiến dịch' })
-    expect(departmentArgs(JSON.stringify({ phong: 'X', noi_dung: `Dòng đầu\ndòng hai` }))?.title).toBe(
-      'Dòng đầu',
-    )
+    expect(phongArgs(JSON.stringify({ phong: 'X', noi_dung: 'a'.repeat(200) }))?.title).toHaveLength(80)
+    expect(phongArgs('{"phong": "dở dang')).toBeNull()
   })
 
   it('matchJob: cùng phiên giao, cùng tên việc, gần lúc gọi nhất', () => {
@@ -236,39 +228,31 @@ describe('giao cả phòng (assign_department)', () => {
     expect(jobState({ status: 'running' }, undefined, false)).toBe('running')
   })
 
-  it('departmentItem: trưởng nhóm theo việc lớn; lời báo lỗi; đang giao', () => {
-    expect(departmentItem({ body }, job({}), 'tho')).toEqual({
+  it('phongItem: trưởng nhóm theo việc lớn; lời báo lỗi; đang giao', () => {
+    expect(phongItem({ body }, job({}), 'tho')).toEqual({
       handle: 'tho',
       title: 'Chiến dịch ra mắt khoá học',
       sessionId: 'lead-s1',
     })
-    expect(departmentItem({ body, out: 'Không có phòng «X». Các phòng: A.' }, undefined, '')).toEqual({
+    expect(phongItem({ body, out: 'Không có phòng «X». Các phòng: A.' }, undefined, '')).toEqual({
       handle: '',
       title: 'Chiến dịch ra mắt khoá học',
       error: 'Không có phòng «X». Các phòng: A.',
     })
     // Đã giao nhưng chưa tìm thấy bản ghi việc (danh sách chưa tải): chưa phải lỗi.
-    expect(departmentItem({ body, out: 'Đã giao cho phòng A: …' }, undefined, '')).toEqual({
+    expect(phongItem({ body, out: 'Đã giao cho phòng A: …' }, undefined, '')).toEqual({
       handle: '',
       title: 'Chiến dịch ra mắt khoá học',
     })
-    expect(departmentItem({ body }, undefined, '')?.error).toBeUndefined()
-    expect(departmentItem({ body: 'hỏng' }, undefined, '')).toBeNull()
+    expect(phongItem({ body }, undefined, '')?.error).toBeUndefined()
+    expect(phongItem({ body: 'hỏng' }, undefined, '')).toBeNull()
   })
 
-  it('toTurns tách cả lần assign_department thành khối riêng', () => {
+  it('toTurns tách cả lần giao_phong thành khối riêng', () => {
     const turns = toTurns(
-      [step(1, 'user'), step(2, 'tool', { tool: 'assign_department' }), step(3, 'assistant')],
+      [step(1, 'user'), step(2, 'tool', { tool: 'giao_phong' }), step(3, 'assistant')],
       false,
     )
     expect(turns.map((x) => x.kind)).toEqual(['user', 'team', 'assistant'])
-  })
-
-  it('toTurns nhận cả tên công cụ cũ trong log phiên cũ (giao_viec, giao_phong)', () => {
-    const turns = toTurns(
-      [step(1, 'tool', { tool: 'giao_viec' }), step(2, 'tool', { tool: 'giao_phong' }), step(3, 'assistant')],
-      false,
-    )
-    expect(turns.map((x) => x.kind)).toEqual(['team', 'team', 'assistant'])
   })
 })

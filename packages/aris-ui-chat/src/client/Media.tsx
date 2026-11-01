@@ -4,7 +4,6 @@
  * không tạo được thì nói đã thử model nào, vì sao. Tệp lấy qua `/api/aris/media?file=<mã>`.
  */
 import { useState } from 'react'
-import { argOf } from '@aris/ui-kit'
 import type { SubagentCall } from './branch.js'
 import type { ChatKey, Translate } from './locale.js'
 
@@ -107,11 +106,8 @@ export function MediaCall(props: SubagentCall & { t: Translate; kind: Meta['kind
   const done = props.phase === 'result'
   const text = resultText(props)
   const meta = done ? mediaMeta(text) : undefined
-  // Log cũ ghi tham số tiếng Việt (`so_luong`, `ti_le`, `mo_ta`): đọc cả hai.
-  const count = kind === 'video' ? 1 : Math.min(4, Math.max(1, Number(argOf(args, 'count', 'so_luong')) || 1))
-  const rawRatio = argOf(args, 'aspect_ratio', 'ti_le')
-  const ratio = typeof rawRatio === 'string' ? rawRatio : kind === 'video' ? '16:9' : '1:1'
-  const prompt = argOf(args, 'prompt', 'mo_ta')
+  const count = kind === 'video' ? 1 : Math.min(4, Math.max(1, Number(args.so_luong) || 1))
+  const ratio = typeof args.ti_le === 'string' ? args.ti_le : kind === 'video' ? '16:9' : '1:1'
   const failed = done && (!meta || !meta.ids.length)
   const go = () =>
     document.dispatchEvent(
@@ -129,7 +125,7 @@ export function MediaCall(props: SubagentCall & { t: Translate; kind: Meta['kind
           {!done ? t('media.making') : failed ? t('media.failed') : t('media.done')}
         </span>
       </div>
-      {typeof prompt === 'string' && <div className="p">{prompt}</div>}
+      {typeof args.mo_ta === 'string' && <div className="p">{args.mo_ta}</div>}
       {!done && (
         <div className={`grid ${count > 1 ? 'two' : ''}`}>
           {Array.from({ length: count }, (_, i) => (

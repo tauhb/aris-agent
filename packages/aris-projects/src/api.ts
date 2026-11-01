@@ -78,7 +78,7 @@ export function dispatchPrompt(
   return [
     `Giao thẻ ${card.id} «${card.title}» ${handle ? `cho @${handle}` : 'cho bot hợp nhất trong dự án'} (người dùng bấm "Giao ngay" trên Kanban).`,
     card.description ? `Nội dung thẻ: ${card.description}` : '',
-    `Dùng assign_task với card=${card.id}; xong thì báo ngắn đã giao cho ai.`,
+    `Dùng giao_viec với the=${card.id}; xong thì báo ngắn đã giao cho ai.`,
   ]
     .filter(Boolean)
     .join('\n')

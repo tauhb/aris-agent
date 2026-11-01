@@ -124,7 +124,7 @@ describe('cài từ kho', () => {
     pack = await findPack('ban-hang-cskh', dir)
 
     // Người dùng sửa xu-ly-tu-choi (bản mới do người dùng).
-    const rejectSkill = skillId(TEAM_OWNER, 'xu-ly-tu-choi')
+    const tuChoi = skillId(TEAM_OWNER, 'xu-ly-tu-choi')
     const mine = await store.propose({
       bot: TEAM_OWNER,
       name: 'xu-ly-tu-choi',
@@ -156,7 +156,7 @@ describe('cài từ kho', () => {
       'xu-ly-tu-choi': 'edited',
     })
     expect(store.active(skillId(TEAM_OWNER, 'chot-don'))!.source?.libVersion).toBe(2)
-    expect(store.active(rejectSkill)!.body).toContain('Hỏi lý do')
+    expect(store.active(tuChoi)!.body).toContain('Hỏi lý do')
 
     // Người dùng đồng ý ghi đè.
     const forced = await installFromLibrary(store, pack, {
@@ -165,7 +165,7 @@ describe('cài từ kho', () => {
       filesBase: await files(),
     })
     expect(forced[0]!.status).toBe('installed')
-    expect(store.active(rejectSkill)!.source?.kind).toBe('library')
+    expect(store.active(tuChoi)!.source?.kind).toBe('library')
   })
 
   it('skill đã cất được lấy ra lại khi cài', async () => {

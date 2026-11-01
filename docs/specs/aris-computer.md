@@ -22,15 +22,15 @@ Lõi cua-driver dùng API không công khai của Apple (SkyLight) để gửi s
 
 | Công cụ | Việc | Loại thao tác |
 |---|---|---|
-| `screen_view` | Chụp một cửa sổ: danh sách cửa sổ đang mở, phần tử bấm được (mã, vai, nhãn, tâm `@x,y`), ảnh chụp nếu model đọc được ảnh | `view` |
-| `screen_find` | Chỉ cây Trợ năng (lọc theo `query`), không chụp ảnh | `view` |
-| `screen_click` | Bấm theo `element` (ưu tiên) hay `x`, `y`; `button` left/right, `count` 1–3 lần | `click` |
-| `screen_drag`, `screen_scroll` | Kéo trong cửa sổ, cuộn | `click` |
-| `screen_type` | Gõ `text`; có `element` thì bấm vào ô đó trước | `type` |
-| `screen_key` | Phím tắt (`cmd+shift+s`, `⌘S`, `enter`…) | `key` |
-| `open_app` | Mở ứng dụng (ở nền) | mở |
+| `man_hinh_xem` | Chụp một cửa sổ: danh sách cửa sổ đang mở, phần tử bấm được (mã, vai, nhãn, tâm `@x,y`), ảnh chụp nếu model đọc được ảnh | xem |
+| `man_hinh_tim` | Chỉ cây Trợ năng (lọc theo `tu_khoa`), không chụp ảnh | xem |
+| `man_hinh_bam` | Bấm theo `phan_tu` (ưu tiên) hay `x`, `y`; nút trái/phải, 1–3 lần | bấm |
+| `man_hinh_keo`, `man_hinh_cuon` | Kéo trong cửa sổ, cuộn | bấm |
+| `man_hinh_go` | Gõ chữ; có `phan_tu` thì bấm vào ô đó trước | gõ |
+| `man_hinh_phim` | Phím tắt (`cmd+shift+s`, `⌘S`, `enter`…) | phím |
+| `ung_dung_mo` | Mở ứng dụng (ở nền) | mở |
 
-Cửa sổ chọn theo `window` (`pid:mã cửa sổ` từ `screen_view`), không thì theo `app`, không thì cửa sổ vừa làm, không thì ứng dụng đang ở trước. Mã phần tử hết hạn khi chụp lại cửa sổ đó; mã cũ thì bị từ chối kèm lời dặn chụp lại.
+Cửa sổ chọn theo `cua_so` (`pid:mã cửa sổ` từ `man_hinh_xem`), không thì theo `ung_dung`, không thì cửa sổ vừa làm, không thì ứng dụng đang ở trước. Mã phần tử hết hạn khi chụp lại cửa sổ đó; mã cũ thì bị từ chối kèm lời dặn chụp lại.
 
 **Model đọc ảnh** (người dùng chốt 27/10): bot luôn nhận danh sách phần tử; ảnh chụp chỉ đính kèm khi model của phiên khai báo đọc được ảnh (cùng cách kiểm như `read_image` của dsh: `llm.resolveModelInfo(...).inputModalities` có `image`). Ảnh lưu qua dịch vụ `attachments` của dsh rồi trả trong kết quả công cụ. Model không đọc ảnh thì kết quả ghi rõ "chỉ dựa vào danh sách phần tử".
 
@@ -43,7 +43,7 @@ Cửa sổ chọn theo `window` (`pid:mã cửa sổ` từ `screen_view`), khôn
 | `on` | Bật điều khiển máy. Mặc định **tắt** |
 | `mode` | `ask`: hỏi từng bước (mặc định). `bounded`: trong phạm vi |
 | `apps` | Ứng dụng được phép trong chế độ trong phạm vi (tên hay bundle id) |
-| `actions` | Loại thao tác được phép trong chế độ trong phạm vi: `view`, `click`, `type`, `key`, `open` (cài đặt cũ lưu `xem`, `bam`, `go`, `phim`, `mo` được quy đổi khi đọc) |
+| `actions` | Loại thao tác được phép trong chế độ trong phạm vi: `xem`, `bam`, `go`, `phim`, `mo` |
 
 **Duyệt** (hook `tools/pre-execute`, `src/gate.ts`), theo thứ tự:
 1. Bot chưa bật: từ chối.

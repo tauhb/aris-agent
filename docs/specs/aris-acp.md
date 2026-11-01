@@ -35,7 +35,7 @@ Buzz Desktop / IDE ──stdio──▶ aris-acp --bot <tên> ──socket ~/.ar
 | Quyền khác hỏi lại ứng dụng | Duyệt của dsh đi qua `session/request_permission` của ACP (dsh-acp); tắt thì aris từ chối mọi việc cần duyệt | có |
 | Nội dung gửi đến không tin cậy | Đoạn lời dặn riêng cho phiên khách | có |
 | Không tự ghi ký ức, hồ sơ, bộ não | Chặn `memory` (trừ `search`), `brain_note`, `brain_capture`; vòng học nền và hồ sơ chung bỏ qua phiên khách | có |
-| Bỏ công cụ của đội | Chặn giao việc, chuyển giao, mời nói, thẻ Kanban, kênh, routine, lịch, đội của dsh, mục tiêu, vòng lặp, `learn`, `save_address_style` | có |
+| Bỏ công cụ của đội | Chặn giao việc, chuyển giao, mời nói, thẻ Kanban, kênh, routine, lịch, đội của dsh, mục tiêu, vòng lặp, `learn`, `xung_ho` | có |
 
 `ask_user_question` luôn bị chặn ở phiên khách: ACP không có câu hỏi dạng chọn nên lời gọi chờ mãi; bot hỏi
 bằng lời trong câu trả lời. Danh sách cấm áp cả khi ứng dụng tự duyệt mọi quyền (Buzz Desktop làm vậy). Lời từ chối gửi về ứng dụng nói rõ
@@ -44,9 +44,8 @@ bằng lời trong câu trả lời. Danh sách cấm áp cả khi ứng dụng 
 ## Dữ liệu (`aris_acp`)
 
 - `settings`: `enabled` (mặc định tắt), `open` (mã bot mở cho ứng dụng khác, mặc định rỗng), `rules`.
-- `log`: mỗi việc của phiên khách: giờ, ứng dụng, bot, phiên, việc, kết quả (`session-opened`, `allowed`, `app-approved`,
-  `app-rejected`, `blocked`; nhật ký cũ ghi `mo-phien`, `cho-phep`, `ung-dung-duyet`, `ung-dung-tu-choi`, `chan` được quy
-  đổi khi đọc), lý do. Giữ 7 ngày.
+- `log`: mỗi việc của phiên khách: giờ, ứng dụng, bot, phiên, việc, kết quả (`cho-phep`, `ung-dung-duyet`,
+  `ung-dung-tu-choi`, `chan`), lý do. Giữ 7 ngày.
 - Kết nối đang mở giữ trong bộ nhớ: ứng dụng, phiên bản, bot, thư mục, phiên, lần cuối.
 
 ## Đường máy chủ

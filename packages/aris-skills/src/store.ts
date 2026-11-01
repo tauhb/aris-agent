@@ -183,14 +183,7 @@ export class SkillStore {
     private readonly skills: Table<SkillRecord>,
     private readonly versions: Table<VersionRecord>,
     private readonly now: () => Date = () => new Date(),
-    /** Bot bật "Chỉ dùng skill được gán" (GĐ9.3): bỏ skill của đội gán cho cả đội. */
-    private readonly onlyAssigned: (bot: string) => boolean = () => false,
   ) {}
-
-  /** Skill của đội mà bot được dùng: gán đích danh, hay gán cả đội khi bot chưa bật "Chỉ dùng skill được gán". */
-  private teamFor(s: SkillRecord, bot: string): boolean {
-    return assignedTo(s, bot) && !(s.assigned === 'all' && this.onlyAssigned(bot))
-  }
 
   /** Skill (mọi bot hoặc một bot), mới cập nhật trước; bỏ skill có bản đầu bị từ chối. */
   list(bot?: string): SkillRecord[] {
@@ -232,7 +225,7 @@ export class SkillStore {
 
   /**
    * Skill đang dùng của một bot (nguồn skill của agent, lời nhắc vòng học): skill riêng của bot, cộng skill của đội
-   * đã gán cho bot (gán cả đội thì bỏ khi bot bật "Chỉ dùng skill được gán"). Trùng tên thì skill riêng thắng.
+   * đã gán cho bot. Trùng tên thì skill riêng thắng.
    */
   activeFor(bot: string): { skill: SkillRecord; version: VersionRecord }[] {
     const live = (skill: SkillRecord) => {
@@ -242,7 +235,7 @@ export class SkillStore {
     const own = bot === TEAM_OWNER ? [] : this.list(bot).flatMap(live)
     const names = new Set(own.map((x) => x.skill.name))
     const team = this.list(TEAM_OWNER)
-      .filter((s) => this.teamFor(s, bot) && !names.has(s.name))
+      .filter((s) => assignedTo(s, bot) && !names.has(s.name))
       .flatMap(live)
     return [...own, ...team]
   }
@@ -252,7 +245,7 @@ export class SkillStore {
     const own = this.get(skillId(bot, name))
     if (own && own.status === 'active') return own
     const team = this.get(skillId(TEAM_OWNER, name))
-    return team && team.status === 'active' && this.teamFor(team, bot) ? team : undefined
+    return team && team.status === 'active' && assignedTo(team, bot) ? team : undefined
   }
 
   /**

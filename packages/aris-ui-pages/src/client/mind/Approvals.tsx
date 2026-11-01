@@ -83,7 +83,7 @@ interface SkillItem {
 }
 
 /** Tóm tắt soát bộ não (`@aris/brain`, `?soat=summary`): một thẻ khi còn phát hiện chưa xử lý. */
-interface AuditSummary {
+interface SoatSummary {
   open: number
   counts: Record<string, number>
   runs: { at: string; by: string }[]
@@ -95,7 +95,7 @@ type Row =
   | { type: 'memory'; m: MemoryItem }
   | { type: 'skill'; s: SkillItem }
   | { type: 'imports'; g: ImportGroup<SkillItem> }
-  | { type: 'soat'; b: AuditSummary }
+  | { type: 'soat'; b: SoatSummary }
 
 /** Yêu cầu quyền tự từ chối sau 15 phút (như thẻ Telegram). */
 const ACTION_MINUTES = 15
@@ -118,7 +118,7 @@ function useInbox() {
   const [actions, setActions] = useState<ActionItem[] | null>(null)
   const [memories, setMemories] = useState<MemoryItem[] | null>(null)
   const [skills, setSkills] = useState<SkillItem[] | null>(null)
-  const [audit, setAudit] = useState<AuditSummary | null>(null)
+  const [soat, setSoat] = useState<SoatSummary | null>(null)
   const [done, setDone] = useState({ actions: 0, memories: 0, skills: 0 })
   const load = useCallback(async () => {
     const [a, m, s, b] = await Promise.all([
@@ -131,11 +131,11 @@ function useInbox() {
       fetch(url('api/aris/skills?pending=all'), { credentials: 'same-origin' })
         .then((r) => (r.ok ? (r.json() as Promise<{ pending: SkillItem[]; doneToday: number }>) : null))
         .catch(() => null),
-      fetch(url('api/aris/brain?audit=summary'), { credentials: 'same-origin' })
-        .then((r) => (r.ok ? (r.json() as Promise<AuditSummary>) : null))
+      fetch(url('api/aris/brain?soat=summary'), { credentials: 'same-origin' })
+        .then((r) => (r.ok ? (r.json() as Promise<SoatSummary>) : null))
         .catch(() => null),
     ])
-    setAudit(b && b.open > 0 ? b : null)
+    setSoat(b && b.open > 0 ? b : null)
     if (a) setActions(a.approvals)
     if (m) setMemories(m.pending)
     if (s) setSkills(s.pending)
@@ -150,7 +150,7 @@ function useInbox() {
     const timer = setInterval(() => void load(), 4000)
     return () => clearInterval(timer)
   }, [load])
-  return { actions, memories, skills, audit, done: done.actions + done.memories + done.skills, reload: load }
+  return { actions, memories, skills, soat, done: done.actions + done.memories + done.skills, reload: load }
 }
 
 const hhmm = (iso: string) => {
@@ -165,7 +165,7 @@ const daysLeft = (m: MemoryItem) =>
 const skillDaysLeft = (s: SkillItem) =>
   Math.max(0, Math.ceil((Date.parse(s.at) + 7 * 86_400_000 - Date.now()) / 86_400_000))
 /** "2 mâu thuẫn, 5 liên kết gãy…" từ số phát hiện theo loại. */
-const AUDIT_ORDER = [
+const SOAT_ORDER = [
   'mau-thuan',
   'nhan-dinh-cu',
   'lien-ket-gay',
@@ -177,8 +177,8 @@ const AUDIT_ORDER = [
   'trung-ten',
   'lau-chua-cap-nhat',
 ]
-const auditLine = (t: T, b: AuditSummary) =>
-  AUDIT_ORDER.filter((k) => b.counts[k])
+const soatLine = (t: T, b: SoatSummary) =>
+  SOAT_ORDER.filter((k) => b.counts[k])
     .map((k) => t(`ap.soatKind.${k}`, { n: b.counts[k] }))
     .join(', ')
 const actionLabel = (t: T, a: ActionItem) =>
@@ -186,7 +186,7 @@ const actionLabel = (t: T, a: ActionItem) =>
 
 export function Approvals({ t, nav }: PageProps) {
   const team = useTeamData()
-  const { actions, memories, skills, audit, done, reload } = useInbox()
+  const { actions, memories, skills, soat, done, reload } = useInbox()
   const [filter, setFilter] = useState<'all' | Kind>('all')
   const [selected, setSelected] = useState<string | null>(null)
   const botOf = (id: string): BotData | undefined => team?.bots.find((b) => b.id === id)
@@ -201,7 +201,7 @@ export function Approvals({ t, nav }: PageProps) {
         ...rest.map((s) => ({ type: 'skill' as const, s })),
       ]
     })(),
-    ...(audit ? [{ type: 'soat' as const, b: audit }] : []),
+    ...(soat ? [{ type: 'soat' as const, b: soat }] : []),
   ]
   const idOf = (r: Row) =>
     r.type === 'action'
@@ -241,7 +241,7 @@ export function Approvals({ t, nav }: PageProps) {
       : r.type === 'memory'
         ? `“${r.m.text}”`
         : r.type === 'soat'
-          ? auditLine(t, r.b)
+          ? soatLine(t, r.b)
           : r.type === 'imports'
             ? t('ski.groupSub', { n: r.g.items.filter((i) => i.risks?.length).length })
             : r.s.by === 'merge'
@@ -258,7 +258,7 @@ export function Approvals({ t, nav }: PageProps) {
     ['action', t('ap.action', { n: actions?.length ?? 0 })],
     ['memory', t('ap.memory', { n: memories?.length ?? 0 })],
     ['skill', t('ap.skill', { n: skills?.length ?? 0 })],
-    ...(audit ? [['soat', t('ap.soat')] as ['soat', string]] : []),
+    ...(soat ? [['soat', t('ap.soat')] as ['soat', string]] : []),
   ]
   return (
     <div className="ap-split">
@@ -366,12 +366,12 @@ export function Approvals({ t, nav }: PageProps) {
           <div className="ap-soatcard">
             <Mascot id="trang-giay" size={44} />
             <h2>{t('ap.soatTitle')}</h2>
-            <div>{auditLine(t, current.b)}</div>
+            <div>{soatLine(t, current.b)}</div>
             <div className="a-muted" style={{ fontSize: 13 }}>
               {t('ap.soatHint')}
             </div>
             <div>
-              <Button variant="primary" onClick={() => nav.go('brain', { view: 'audit' })}>
+              <Button variant="primary" onClick={() => nav.go('brain', { view: 'soat' })}>
                 {t('ap.soatOpenBtn')}
               </Button>
             </div>

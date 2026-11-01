@@ -45,6 +45,6 @@ body[data-ds-dark-theme] [class*="_bubble"]{color:${THEMES.dark.panel}}
 body ${CARD}{border:0;border-radius:14px;background:var(--dsw-alias-state-warn-tertiary);box-shadow:none}
 body ${CARD}>[class*="_strip"]{background:transparent;font-weight:600;padding:12px 16px 0}
 body [data-approval-scroll]{padding:6px 16px 0}
-body [data-approval-scroll]>[class*="_headline"]{font-size:14px;white-space:pre-line}
+body [data-approval-scroll]>[class*="_headline"]{font-size:14px}
 body ${CARD}>[class*="_actionRow"]{flex-direction:row-reverse;justify-content:flex-end;padding:12px 16px 14px}
 `

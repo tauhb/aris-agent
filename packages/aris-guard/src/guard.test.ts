@@ -331,13 +331,13 @@ describe('đợt 7f · S9: lượt của người không phải chủ nhân ch�
     for (const [tool, args] of [
       ['memory', { action: 'save', text: 'x', origin: 'user' }],
       ['memory', { action: 'forget', id: 'm-1' }],
-      ['brain_note', { text: 'x' }],
+      ['brain_note', { noi_dung: 'x' }],
       ['channel_send', { text: 'x' }],
       ['bash', { command: 'ls' }],
       ['write', { file_path: 'a' }],
       ['edit', { file_path: 'a' }],
       ['subagent_codex', {}],
-      ['assign_task', {}],
+      ['giao_viec', {}],
       ['recall', {}],
       ['ask_user_question', {}],
     ] as const) {

@@ -196,8 +196,8 @@ describe('ghi từng lần gọi', () => {
       input: 2000,
       cacheRead: 18000,
     })
-    expect(rows['s-job']).toMatchObject({ kind: 'delegated', source: 'commander', bot: 'lam', by: 'Aris' })
-    expect(rows['s-rt']).toMatchObject({ kind: 'routine', source: 'schedule' })
+    expect(rows['s-job']).toMatchObject({ kind: 'giao', source: 'commander', bot: 'lam', by: 'Aris' })
+    expect(rows['s-rt']).toMatchObject({ kind: 'routine', source: 'lich' })
     expect(rows['s-tg']).toMatchObject({ kind: 'chat', source: 'telegram' })
     expect(rows['s-lk']).toMatchObject({ kind: 'chat', source: 'lark' })
     expect(rows['s-zl']).toMatchObject({ kind: 'chat', source: 'zalo' })
@@ -219,9 +219,9 @@ describe('ghi từng lần gọi', () => {
     })
     await vi.waitFor(() => expect(s.tables.calls!.size).toBe(2))
     const pseudo = [...s.tables.sessions!.values()].find((r: Rec) => r.session === '')
-    expect(pseudo).toMatchObject({ kind: 'learning', source: 'background', bot: 'tin' })
+    expect(pseudo).toMatchObject({ kind: 'hoc', source: 'nen', bot: 'tin' })
     const o = await s.get('?range=today')
-    expect(o.body.days.at(-1)).toMatchObject({ learning: 0.01, chat: 0.04 })
+    expect(o.body.days.at(-1)).toMatchObject({ hoc: 0.01, chat: 0.04 })
     // Gom ngoài phiên không vào nhật ký.
     expect(o.body.log.map((r: Rec) => r.session)).toEqual(['s-chat'])
   })
@@ -245,7 +245,7 @@ describe('duyệt và hỏi người dùng', () => {
     expect(out).toBe('allowed-once')
     await vi.waitFor(() => expect(s.tables.events!.size).toBe(1))
     expect([...s.tables.events!.values()][0]).toMatchObject({
-      type: 'approval',
+      type: 'duyet',
       session: 's-chat',
       tool: 'bash',
       callId: 'c1',
@@ -279,7 +279,7 @@ describe('duyệt và hỏi người dùng', () => {
     )
     expect(r).toBe('next-ok')
     await vi.waitFor(() => expect(s.tables.events!.size).toBe(2))
-    expect([...s.tables.events!.values()].find((e: Rec) => e.type === 'question')).toMatchObject({
+    expect([...s.tables.events!.values()].find((e: Rec) => e.type === 'hoi')).toMatchObject({
       what: 'Chọn hướng nào?',
     })
   })
@@ -356,7 +356,7 @@ describe('dòng Vừa làm gì', () => {
     s.tables.events!.set('e1', {
       at: Date.now() - 500,
       session: 's-chat',
-      type: 'question',
+      type: 'hoi',
       what: 'Giọng văn nào?',
     })
     const all = (await s.get('?feed=1')) as unknown as { body: { feed: Rec[] } }

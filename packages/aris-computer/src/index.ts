@@ -19,14 +19,7 @@ import { z } from 'zod'
 import { loadCua } from './cua.js'
 import { doctor, doctorText, type DoctorReport } from './doctor.js'
 import { decide } from './gate.js'
-import {
-  cleanActions,
-  cleanSettings,
-  COMPUTER_TOOLS,
-  DEFAULT_SETTINGS,
-  toolName,
-  type ComputerSettings,
-} from './policy.js'
+import { ACTIONS, cleanSettings, COMPUTER_TOOLS, DEFAULT_SETTINGS, type ComputerSettings } from './policy.js'
 import { ComputerRuntime, type Inspected } from './runtime.js'
 import { makeTools, NO_IMAGE_NOTE } from './tools.js'
 import { ComputerError, type ComputerDriver, type Point, type Rect } from './types.js'
@@ -47,8 +40,7 @@ const settingsRecord: z.ZodType<ComputerSettings> = z.object({
   on: z.boolean(),
   mode: z.enum(['ask', 'bounded']),
   apps: z.array(z.string()),
-  // Cài đặt cũ lưu loại thao tác bằng tiếng Việt (xem, bam, go, phim, mo): đọc thì quy về giá trị mới.
-  actions: z.array(z.string()).transform((a) => cleanActions(a)),
+  actions: z.array(z.enum(ACTIONS)),
 })
 
 export const computerDomain = defineDomain({
@@ -126,7 +118,7 @@ export async function apply(ctx: Context): Promise<void> {
   const domain = await ctx.storageDomain.open(computerDomain)
   ctx.effect(() => () => void domain.close(), 'aris-computer: domain')
   const table = domain.table('settings') as unknown as Table<ComputerSettings>
-  const settingsOf = (bot: string): ComputerSettings => cleanSettings(table.get(bot) ?? {}, DEFAULT_SETTINGS)
+  const settingsOf = (bot: string): ComputerSettings => ({ ...DEFAULT_SETTINGS, ...(table.get(bot) ?? {}) })
   const bots = () => ctx.get('arisBots') as BotsLike | undefined
   const botOf = (sessionId: string) => bots()?.botOf(sessionId) ?? { id: 'aris', name: 'Aris' }
 
@@ -305,7 +297,7 @@ export async function apply(ctx: Context): Promise<void> {
     await ensureDriver()
     previews.delete(String(exec.callId))
     const r = await runtime.run(sid, bot.name, name, args, exec.signal)
-    if (toolName(name) === 'screen_view') viewed.add(sid)
+    if (name === 'man_hinh_xem') viewed.add(sid)
     if (!r.image) return { text: r.text }
     const attachments = ctx.get('attachments') as AttachmentsLike | undefined
     if (!attachments || !(await imageCapable(agent, exec.signal)))

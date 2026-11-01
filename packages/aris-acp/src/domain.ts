@@ -11,17 +11,8 @@ export const settingsRecord = z.object({
 })
 export type SettingsRecord = z.infer<typeof settingsRecord>
 
-export const RESULTS = ['session-opened', 'allowed', 'app-approved', 'app-rejected', 'blocked'] as const
+export const RESULTS = ['mo-phien', 'cho-phep', 'ung-dung-duyet', 'ung-dung-tu-choi', 'chan'] as const
 export type LogResult = (typeof RESULTS)[number]
-
-/** Kết quả cũ (tiếng Việt) còn trong nhật ký đã lưu: đọc thì quy về giá trị mới. */
-export const LEGACY_RESULTS: Readonly<Record<string, LogResult>> = {
-  'mo-phien': 'session-opened',
-  'cho-phep': 'allowed',
-  'ung-dung-duyet': 'app-approved',
-  'ung-dung-tu-choi': 'app-rejected',
-  chan: 'blocked',
-}
 
 export const logRecord = z.object({
   id: z.string(),
@@ -30,7 +21,7 @@ export const logRecord = z.object({
   bot: z.string(),
   session: z.string(),
   what: z.string(),
-  result: z.preprocess((v) => (typeof v === 'string' ? (LEGACY_RESULTS[v] ?? v) : v), z.enum(RESULTS)),
+  result: z.enum(RESULTS),
   reason: z.string().optional(),
   callId: z.string().optional(),
 })

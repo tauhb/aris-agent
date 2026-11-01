@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Máy chủ MCP nhỏ cho kiểm thử và chạy thử thật (stdio, JSON-RPC mỗi dòng một tin):
-// `echo` (chỉ đọc) trả lại chữ; `take_note` (ghi) giả vờ lưu ghi chú.
+// `echo` (chỉ đọc) trả lại chữ; `ghi_chu` (ghi) giả vờ lưu ghi chú.
 import process from 'node:process'
 import { createInterface } from 'node:readline'
 
@@ -12,7 +12,7 @@ const tools = [
     annotations: { readOnlyHint: true },
   },
   {
-    name: 'take_note',
+    name: 'ghi_chu',
     description: 'Lưu một ghi chú (thử nghiệm, không ghi gì thật).',
     inputSchema: { type: 'object', properties: { text: { type: 'string' } }, required: ['text'] },
     annotations: { readOnlyHint: false },
@@ -42,7 +42,7 @@ createInterface({ input: process.stdin }).on('line', (line) => {
   if (method === 'tools/call') {
     const text = String(params?.arguments?.text ?? '')
     const out =
-      params?.name === 'take_note' ? `Đã lưu ghi chú: ${text}` : `${process.env.ECHO_PREFIX ?? ''}${text}`
+      params?.name === 'ghi_chu' ? `Đã lưu ghi chú: ${text}` : `${process.env.ECHO_PREFIX ?? ''}${text}`
     return send({ id: req.id, result: { content: [{ type: 'text', text: out }] } })
   }
   if (method === 'ping') return send({ id: req.id, result: {} })

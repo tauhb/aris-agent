@@ -947,106 +947,6 @@
       "w": 1440,
       "x": 0,
       "y": 6080
-    },
-    "RkVanPhong.dc.html": {
-      "expand": "fill",
-      "h": 900,
-      "is_interactive": true,
-      "page": "rk",
-      "title": "R1 · Văn phòng kiểu Rakazo (tối): danh bạ bot theo trạng thái, chat bong bóng, máy của bot, routine, kênh, skill",
-      "w": 1440,
-      "x": 0,
-      "y": 0
-    },
-    "RkVanPhongSang.dc.html": {
-      "expand": "fill",
-      "h": 900,
-      "is_interactive": true,
-      "page": "rk",
-      "title": "R1 · Văn phòng kiểu Rakazo (sáng)",
-      "w": 1440,
-      "x": 1520,
-      "y": 0
-    },
-    "RkCanAnh.dc.html": {
-      "expand": "fill",
-      "h": 900,
-      "is_interactive": true,
-      "page": "rk",
-      "title": "R2 · Cần {you}: thẻ duyệt trong chat, cầm lái máy của bot khi trang đòi OTP",
-      "w": 1440,
-      "x": 0,
-      "y": 1080
-    },
-    "RkHoSoBot.dc.html": {
-      "expand": "fill",
-      "h": 900,
-      "is_interactive": true,
-      "page": "rk",
-      "title": "R3 · Hồ sơ bot: model, lời dặn có hoàn tác, máy chung hay riêng, mức duyệt, ai được dùng",
-      "w": 1440,
-      "x": 1520,
-      "y": 1080
-    },
-    "MbVanPhong.dc.html": {
-      "expand": "fill",
-      "h": 900,
-      "is_interactive": true,
-      "page": "mb",
-      "title": "M1 · Văn phòng kiểu OpenMausBot (tối): danh bạ linh vật lớn, chat, thẻ câu hỏi A B C, bảng Máy tính",
-      "w": 1440,
-      "x": 0,
-      "y": 0
-    },
-    "MbVanPhongSang.dc.html": {
-      "expand": "fill",
-      "h": 900,
-      "is_interactive": true,
-      "page": "mb",
-      "title": "M1 · Văn phòng kiểu OpenMausBot (sáng)",
-      "w": 1440,
-      "x": 1520,
-      "y": 0
-    },
-    "MbCanAnh.dc.html": {
-      "expand": "fill",
-      "h": 900,
-      "is_interactive": true,
-      "page": "mb",
-      "title": "M2 · Cần {you} duyệt và cầm lái (tối)",
-      "w": 1440,
-      "x": 0,
-      "y": 1080
-    },
-    "MbCanAnhSang.dc.html": {
-      "expand": "fill",
-      "h": 900,
-      "is_interactive": true,
-      "page": "mb",
-      "title": "M2 · Cần {you} duyệt và cầm lái (sáng)",
-      "w": 1440,
-      "x": 1520,
-      "y": 1080
-    },
-    "MbHoSoBot.dc.html": {
-      "expand": "fill",
-      "h": 900,
-      "is_interactive": true,
-      "page": "mb",
-      "title": "M3 · Hồ sơ bot ở bảng phải: linh vật, màu, tên, lời dặn có hoàn tác, ai được dùng (tối)",
-      "w": 1440,
-      "x": 0,
-      "y": 2160
-    },
-    "MbHoSoBotSang.dc.html": {
-      "expand": "fill",
-      "h": 900,
-      "is_interactive": true,
-      "page": "mb",
-      "title": "M3 · Hồ sơ bot (sáng)",
-      "w": 1440,
-      "x": 1520,
-      "y": 2160
     }
   },
   "createdOnFiles": {
@@ -1248,27 +1148,9 @@
     "MayChat.dc.html",
     "MayDuyet.dc.html",
     "HoSoBotMay.dc.html",
-    "KhoDungSan.dc.html",
-    "RkVanPhong.dc.html",
-    "RkVanPhongSang.dc.html",
-    "RkCanAnh.dc.html",
-    "RkHoSoBot.dc.html",
-    "MbVanPhong.dc.html",
-    "MbVanPhongSang.dc.html",
-    "MbCanAnh.dc.html",
-    "MbCanAnhSang.dc.html",
-    "MbHoSoBot.dc.html",
-    "MbHoSoBotSang.dc.html"
+    "KhoDungSan.dc.html"
   ],
   "pages": [
-    {
-      "id": "rk",
-      "name": "Giao diện mới · kiểu Rakazo"
-    },
-    {
-      "id": "mb",
-      "name": "Giao diện mới · kiểu OpenMausBot"
-    },
     {
       "id": "rv",
       "name": "Revamp nhẹ · đã áp dụng"

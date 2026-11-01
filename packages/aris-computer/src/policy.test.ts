@@ -4,17 +4,13 @@ import { parseIdle, parseLocked } from './cua.js'
 import { doctor, doctorText } from './doctor.js'
 import { comboText, dangerousCombo, parseCombo } from './keys.js'
 import {
-  actionOf,
   appAllowed,
   blockedApp,
   boundedVerdict,
-  cleanActions,
   cleanSettings,
-  COMPUTER_TOOLS,
   DEFAULT_SETTINGS,
   hardVerdict,
   secureField,
-  toolName,
 } from './policy.js'
 import { FakeDriver } from './runtime.test.js'
 
@@ -88,11 +84,11 @@ describe('điều khiển máy · luật', () => {
   })
 
   it('chặn cứng áp cho mọi thao tác trong ứng dụng nhạy cảm, cả xem', () => {
-    expect(hardVerdict({ action: 'view', app: { name: 'Keychain Access' } })?.what).toBe(
+    expect(hardVerdict({ action: 'xem', app: { name: 'Keychain Access' } })?.what).toBe(
       'thao tác trong Keychain Access',
     )
-    expect(hardVerdict({ action: 'open', app: { name: 'Terminal' } })?.reason).toContain('cấm cứng')
-    expect(hardVerdict({ action: 'view', app: { name: 'Notes' } })).toBeUndefined()
+    expect(hardVerdict({ action: 'mo', app: { name: 'Terminal' } })?.reason).toContain('cấm cứng')
+    expect(hardVerdict({ action: 'xem', app: { name: 'Notes' } })).toBeUndefined()
   })
 
   it('chế độ trong phạm vi: theo ứng dụng và theo loại thao tác', () => {
@@ -100,14 +96,14 @@ describe('điều khiển máy · luật', () => {
       on: true,
       mode: 'bounded',
       apps: ['Notes', 'com.apple.finder'],
-      actions: ['view', 'click'],
+      actions: ['xem', 'bam'],
     })
-    expect(boundedVerdict(s, { action: 'click', app: { name: 'Notes' } })).toBeUndefined()
+    expect(boundedVerdict(s, { action: 'bam', app: { name: 'Notes' } })).toBeUndefined()
     expect(
-      boundedVerdict(s, { action: 'view', app: { name: 'Finder', bundleId: 'com.apple.finder' } }),
+      boundedVerdict(s, { action: 'xem', app: { name: 'Finder', bundleId: 'com.apple.finder' } }),
     ).toBeUndefined()
-    expect(boundedVerdict(s, { action: 'click', app: { name: 'Safari' } })?.what).toBe('Safari ngoài phạm vi')
-    expect(boundedVerdict(s, { action: 'type', app: { name: 'Notes' } })?.what).toBe('gõ chữ ngoài phạm vi')
+    expect(boundedVerdict(s, { action: 'bam', app: { name: 'Safari' } })?.what).toBe('Safari ngoài phạm vi')
+    expect(boundedVerdict(s, { action: 'go', app: { name: 'Notes' } })?.what).toBe('gõ chữ ngoài phạm vi')
     expect(appAllowed(s, undefined)).toBe(false)
   })
 
@@ -117,33 +113,10 @@ describe('điều khiển máy · luật', () => {
       on: true,
       mode: 'lung-tung',
       apps: ['Notes', 'Notes', '', 5],
-      actions: ['click', 'xoa'],
+      actions: ['bam', 'xoa'],
     })
-    expect(a).toEqual({ on: true, mode: 'ask', apps: ['Notes'], actions: ['click'] })
+    expect(a).toEqual({ on: true, mode: 'ask', apps: ['Notes'], actions: ['bam'] })
     expect(cleanSettings({ mode: 'bounded' }, a)).toEqual({ ...a, mode: 'bounded' })
-  })
-
-  it('cài đặt đã lưu bằng giá trị cũ (tiếng Việt) quy về giá trị mới; tên công cụ cũ vẫn ra loại thao tác', () => {
-    const old = {
-      on: true,
-      mode: 'bounded',
-      apps: ['Notes'],
-      actions: ['xem', 'bam', 'go', 'phim', 'mo', 'xem'],
-    }
-    expect(cleanSettings(old)).toEqual({
-      on: true,
-      mode: 'bounded',
-      apps: ['Notes'],
-      actions: ['view', 'click', 'type', 'key', 'open'],
-    })
-    expect(cleanActions(['go', 'view', 'la'])).toEqual(['view', 'type'])
-    // Cài đặt cũ không gửi actions: giữ giá trị cũ, đã quy đổi.
-    expect(cleanSettings({}, { ...DEFAULT_SETTINGS, actions: ['xem'] as never }).actions).toEqual(['view'])
-    expect(actionOf('man_hinh_bam')).toBe('click')
-    expect(actionOf('screen_click')).toBe('click')
-    expect(toolName('ung_dung_mo')).toBe('open_app')
-    expect(COMPUTER_TOOLS.has('man_hinh_xem')).toBe(true)
-    expect(actionOf('read')).toBeUndefined()
   })
 })
 

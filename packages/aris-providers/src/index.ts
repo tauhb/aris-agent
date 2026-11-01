@@ -491,8 +491,8 @@ export async function apply(ctx: Context): Promise<void> {
   /** Tệp vừa tạo theo phiên, chờ kênh nhắn tin (Telegram) gửi kèm câu trả lời. */
   const fresh = new Map<string, string[]>()
   const KIND_TEXT: Record<MediaKind, { one: string; dir: string; tool: string }> = {
-    image: { one: 'ảnh', dir: 'anh', tool: 'generate_image' },
-    video: { one: 'video', dir: 'video', tool: 'generate_video' },
+    image: { one: 'ảnh', dir: 'anh', tool: 'tao_anh' },
+    video: { one: 'video', dir: 'video', tool: 'tao_video' },
   }
   const slugOf = (s: string) =>
     s
@@ -615,26 +615,26 @@ export async function apply(ctx: Context): Promise<void> {
   ]
   ctx.tools.register(
     defineTool({
-      name: 'generate_image',
+      name: 'tao_anh',
       description:
-        'Tạo ảnh từ lời mô tả (ảnh bìa, minh hoạ, ảnh sản phẩm…). Riêng tham số prompt viết bằng tiếng Anh (model ảnh hiểu tiếng Anh tốt nhất); trả lời người dùng vẫn bằng ngôn ngữ của họ. Mô tả cụ thể: chủ thể, bố cục, phong cách, màu; chữ cần có trên ảnh giữ nguyên tiếng Việt đúng dấu trong ngoặc kép. Ảnh lưu vào thư mục làm việc và hiện ngay trong khung chat. Chỉ dùng khi người dùng muốn có ảnh.',
+        'Tạo ảnh từ lời mô tả (ảnh bìa, minh hoạ, ảnh sản phẩm…). Riêng tham số mo_ta viết bằng tiếng Anh (model ảnh hiểu tiếng Anh tốt nhất); trả lời người dùng vẫn bằng ngôn ngữ của họ. Mô tả cụ thể: chủ thể, bố cục, phong cách, màu; chữ cần có trên ảnh giữ nguyên tiếng Việt đúng dấu trong ngoặc kép. Ảnh lưu vào thư mục làm việc và hiện ngay trong khung chat. Chỉ dùng khi người dùng muốn có ảnh.',
       parameters: {
-        prompt: {
+        mo_ta: {
           type: 'string',
           required: true,
           description: 'Mô tả ảnh cần tạo, viết bằng tiếng Anh (chỉ tham số này).',
         },
-        aspect_ratio: { type: 'string', enum: ratioEnum('image'), description: 'Tỉ lệ khung, mặc định 1:1.' },
-        count: { type: 'number', description: 'Số phương án (1–4, mặc định 1).' },
+        ti_le: { type: 'string', enum: ratioEnum('image'), description: 'Tỉ lệ khung, mặc định 1:1.' },
+        so_luong: { type: 'number', description: 'Số phương án (1–4, mặc định 1).' },
       },
       output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
       async execute(args, exec) {
         return runMedia(
           'image',
           {
-            prompt: String(args.prompt ?? ''),
-            ratio: typeof args.aspect_ratio === 'string' ? args.aspect_ratio : undefined,
-            count: Math.min(4, Math.max(1, Math.round(Number(args.count) || 1))),
+            prompt: String(args.mo_ta ?? ''),
+            ratio: typeof args.ti_le === 'string' ? args.ti_le : undefined,
+            count: Math.min(4, Math.max(1, Math.round(Number(args.so_luong) || 1))),
           },
           exec,
         )
@@ -643,16 +643,16 @@ export async function apply(ctx: Context): Promise<void> {
   )
   ctx.tools.register(
     defineTool({
-      name: 'generate_video',
+      name: 'tao_video',
       description:
-        'Tạo một đoạn video ngắn (5–8 giây tuỳ model, không chọn được độ dài) từ lời mô tả (tham số prompt viết bằng tiếng Anh; trả lời người dùng vẫn bằng ngôn ngữ của họ): cảnh, chuyển động máy quay, ánh sáng, âm thanh nếu cần. Tốn tiền hơn ảnh nhiều; chỉ dùng khi người dùng muốn có video. Video lưu vào thư mục làm việc và hiện trong khung chat.',
+        'Tạo một đoạn video ngắn (5–8 giây tuỳ model, không chọn được độ dài) từ lời mô tả (tham số mo_ta viết bằng tiếng Anh; trả lời người dùng vẫn bằng ngôn ngữ của họ): cảnh, chuyển động máy quay, ánh sáng, âm thanh nếu cần. Tốn tiền hơn ảnh nhiều; chỉ dùng khi người dùng muốn có video. Video lưu vào thư mục làm việc và hiện trong khung chat.',
       parameters: {
-        prompt: {
+        mo_ta: {
           type: 'string',
           required: true,
           description: 'Mô tả video cần tạo, viết bằng tiếng Anh (chỉ tham số này).',
         },
-        aspect_ratio: {
+        ti_le: {
           type: 'string',
           enum: ratioEnum('video'),
           description: 'Khung ngang 16:9 hay dọc 9:16, mặc định 16:9.',
@@ -663,8 +663,8 @@ export async function apply(ctx: Context): Promise<void> {
         return runMedia(
           'video',
           {
-            prompt: String(args.prompt ?? ''),
-            ratio: typeof args.aspect_ratio === 'string' ? args.aspect_ratio : undefined,
+            prompt: String(args.mo_ta ?? ''),
+            ratio: typeof args.ti_le === 'string' ? args.ti_le : undefined,
           },
           exec,
         )

@@ -19,7 +19,7 @@ interface Settings {
   codeId?: string
   codeSetAt?: string
 }
-type StepId = 'decrypt' | 'unpack' | 'stores' | 'brain' | 'file-count'
+type StepId = 'giai-ma' | 'giai-nen' | 'kho' | 'bo-nao' | 'khop'
 interface Run {
   kind: 'backup' | 'drill'
   at: string
@@ -42,7 +42,7 @@ interface State {
     name: string
     at: string
     bytes: number
-    kind: 'daily' | 'weekly' | null
+    kind: 'ngay' | 'tuan' | null
     drilled: boolean
     oldCode: boolean
   }[]

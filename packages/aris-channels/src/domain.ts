@@ -192,8 +192,6 @@ export const settingsRecord = z.object({
   guestMode: z.boolean(),
   /** Lần cuối báo chủ nhân về từng người lạ (ms). */
   strangers: z.record(z.string(), z.number()),
-  /** Luồng chung (GĐ9.6a): tin của chủ nhắn riêng cho bot ở kênh vào cùng phiên với chat web. Mặc định tắt. */
-  sharedThreads: z.boolean().optional(),
 })
 export type SettingsRecord = z.infer<typeof settingsRecord>
 

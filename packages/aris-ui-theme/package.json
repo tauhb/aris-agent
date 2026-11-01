@@ -28,8 +28,5 @@
   },
   "dependencies": {
     "@aris/ui-kit": "workspace:*"
-  },
-  "devDependencies": {
-    "@fontsource-variable/inter": "5.3.0"
   }
 }

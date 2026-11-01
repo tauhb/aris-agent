@@ -308,7 +308,7 @@ describe('giao cho bot ngoài', () => {
     )
     expect(r.map((x) => [x.handle, x.ok, x.error])).toEqual([
       ['lan', false, '@lan là bot ngoài không nhận giao việc từ Commander.'],
-      ['khoa', false, 'Bot ngoài chưa nhận thẻ Kanban; giao không kèm card.'],
+      ['khoa', false, 'Bot ngoài chưa nhận thẻ Kanban; giao không kèm the.'],
     ])
   })
 

@@ -46,7 +46,7 @@ Phòng ban (bảng `departments`): `id`, `name`, `lead` (mã bot trưởng nhóm
 Không viết cứng "anh", "chị", "chủ nhân" ở bất cứ đâu (lời nhắc cho model, chữ giao diện, tin Telegram):
 
 - **Hồ sơ xưng hô** (bảng `owner` của `aris_bots`): tên người dùng, bot gọi người dùng là gì, bot tự xưng là gì. Cả đội dùng chung.
-- **Lần đầu**: ngữ cảnh `aris:bot` báo chưa biết; bot vẫn làm việc được nhờ rồi hỏi ngắn một lần, nhận câu trả lời thì lưu bằng tool `save_address_style`. Người dùng không muốn trả lời thì thôi. Trước khi biết, dùng cách gọi trung tính hợp với ngôn ngữ người dùng đang viết.
+- **Lần đầu**: ngữ cảnh `aris:bot` báo chưa biết; bot vẫn làm việc được nhờ rồi hỏi ngắn một lần, nhận câu trả lời thì lưu bằng tool `xung_ho`. Người dùng không muốn trả lời thì thôi. Trước khi biết, dùng cách gọi trung tính hợp với ngôn ngữ người dùng đang viết.
 - **Biết rồi**: ngữ cảnh ghi rõ tên, cách gọi, cách xưng; mọi bot theo.
 - **Lời nhắc cho model** gọi là "người dùng" (vai "người dùng chính" khi cần phân biệt với người khác trên Telegram).
 - **Chữ giao diện tiếng Việt** (của aris và bản dịch chữ dsh) dùng `{you}` / `{You}`, điền lúc đăng ký chữ theo hồ sơ (`registerPersonal` trong `@aris/ui-kit/react`), chưa có thì "bạn"; đổi hồ sơ thì chữ đổi theo. Chân thanh bên hiện tên người dùng.
@@ -100,7 +100,7 @@ Màn hồ sơ bot làm đủ theo bản vẽ 2.2 qua 4 đợt; phần thuộc gi
 
 **Bộ công cụ theo bot** (trường `tools` của bot): tìm và đọc web, đọc tệp (`read`, `read_image`, `glob`, `grep`, `str_replace_editor view`), chạy lệnh terminal. Tắt thì bot bị từ chối kèm lý do. Bot chỉ dùng được khi cả bộ công cụ của bot và chính sách phòng đều cho; phòng không cho thì ô tích bị khoá, ghi "Phòng X không cho". Ghi tệp nằm ở Quyền & kênh. Second Brain (giai đoạn 5), gửi email / tin nhắn ra ngoài (giai đoạn 4), danh sách skill (giai đoạn 3) hiện mờ.
 
-Chạy thử thật (24/10): thêm cho Khoa kết nối "Tự thêm" tới máy chủ thử `packages/aris-bots/test/echo-mcp.mjs` (công cụ `echo` chỉ đọc, `take_note` ghi) → Kiểm tra kết nối báo 2 công cụ; trong phiên mới, Khoa gọi `mcp__echo_thu__echo` chạy luôn, `mcp__echo_thu__take_note` hiện thanh duyệt "Khoa muốn dùng Echo thử · take_note", cho phép thì chạy, biến môi trường tới được máy chủ; Minh (bot khác) không thấy công cụ `mcp__` nào; Aris giao việc cho Khoa thì phiên con của Khoa cũng dùng được kết nối.
+Chạy thử thật (24/10): thêm cho Khoa kết nối "Tự thêm" tới máy chủ thử `packages/aris-bots/test/echo-mcp.mjs` (công cụ `echo` chỉ đọc, `ghi_chu` ghi) → Kiểm tra kết nối báo 2 công cụ; trong phiên mới, Khoa gọi `mcp__echo_thu__echo` chạy luôn, `mcp__echo_thu__ghi_chu` hiện thanh duyệt "Khoa muốn dùng Echo thử · ghi_chu", cho phép thì chạy, biến môi trường tới được máy chủ; Minh (bot khác) không thấy công cụ `mcp__` nào; Aris giao việc cho Khoa thì phiên con của Khoa cũng dùng được kết nối.
 
 ## Kết nối dùng chung của đội (giai đoạn 8, plan 8.1 phần B; bản vẽ 6.7, 6.7b, 2.2d)
 
@@ -150,7 +150,7 @@ Bốn mẫu cũ (GitHub, Lark, Notion trên máy, Trình duyệt) là các mục
 
 - **Ghi file**: không ghi; chỉ trong thư mục làm việc (`session.header.cwd` của phiên; ngoài đó thì từ chối kèm lý do); mọi nơi (mặc định; ghi ngoài thư mục làm việc thì hỏi người dùng). Áp cho `write`, `edit`, `str_replace_editor` (trừ `view`); lệnh terminal thuộc Bộ công cụ. Phòng không cho ghi thì ô khoá, ghi "Phòng X không cho". Không áp cho Commander.
 - **Hành động nguy hiểm**: luôn hỏi người dùng (mặc định) hoặc tự từ chối: mọi `approval/request` của phiên bot trả `rejected` ngay (cả phiên con khi được giao việc, qua bộ duyệt của commander).
-- **Commander được giao việc cho bot này** (`assignable`, mặc định có): tắt thì `assign_task` báo lỗi, đội hình trong lời nhắc ghi "không nhận giao việc từ Commander". Bot ngoài vẫn dùng `external.assignable`.
+- **Commander được giao việc cho bot này** (`assignable`, mặc định có): tắt thì `giao_viec` báo lỗi, đội hình trong lời nhắc ghi "không nhận giao việc từ Commander". Bot ngoài vẫn dùng `external.assignable`.
 - Kênh riêng: Telegram như cũ; Lark hiện mờ "Giai đoạn 7".
 
 **Cột phải "Tóm tắt bot"** (vẽ lại theo bản vẽ 2.2d, phương án A: thẻ đầu tô theo màu linh vật có tên, vai, phòng, trạng thái và việc đang làm; 4 ô chỉ số không viền có dòng phụ; việc Aris giao gần đây có dấu ✓ / ! / • theo kết quả và ngày; học gần đây dạng dòng thời gian) (`GET /api/aris/bots?profile=<mã bot>`, tải lại 15 giây một lần): trạng thái trực tiếp và việc đang làm; số việc được giao 7 ngày, tỉ lệ hoàn thành (việc giao có kết quả xong / vấp sau đó, theo tên việc), chi phí 7 ngày của riêng bot, mức đầy ký ức lõi (cuốn `notes`); 3 việc Aris giao gần nhất; 3 ký ức mới học. "Skill tự cải tiến" hiện mờ "Giai đoạn 3".

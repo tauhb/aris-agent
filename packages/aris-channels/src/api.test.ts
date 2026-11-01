@@ -56,7 +56,7 @@ describe('/api/aris/channels', () => {
       settings: unknown
       codes: unknown[]
     }
-    expect(snap.settings).toEqual({ busy: 'queue', guestMode: true, sharedThreads: false })
+    expect(snap.settings).toEqual({ busy: 'queue', guestMode: true })
     expect(snap.codes).toHaveLength(2)
     expect((await handleApi(store, hub, post({ op: 'nope' }))).status).toBe(400)
   })

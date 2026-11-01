@@ -401,7 +401,7 @@ export function Inbox({ t, nav }: PageProps) {
               <Button
                 variant="primary"
                 disabled={busy || (!chosen.length && b.ops.length > 0)}
-                onClick={() => void post({ op: 'approve', id: b.id, chosen })}
+                onClick={() => void post({ op: 'approve', id: b.id, chon: chosen })}
               >
                 {b.ops.length ? t('ib.approve', { n: chosen.length, m: b.ops.length }) : t('ib.approveNone')}
               </Button>

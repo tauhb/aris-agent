@@ -22,20 +22,8 @@ const stateRecord: z.ZodType<RunState> = z.object({
   ok: z.boolean(),
 })
 
-/** Mã bước diễn tập cũ (tiếng Việt) còn trong nhật ký đã lưu: đọc thì quy về mã mới. */
-export const LEGACY_STEP_IDS: Readonly<Record<string, string>> = {
-  'giai-ma': 'decrypt',
-  'giai-nen': 'unpack',
-  kho: 'stores',
-  'bo-nao': 'brain',
-  khop: 'file-count',
-}
-
 const step = z.object({
-  id: z.preprocess(
-    (v) => (typeof v === 'string' ? (LEGACY_STEP_IDS[v] ?? v) : v),
-    z.enum(['decrypt', 'unpack', 'stores', 'brain', 'file-count']),
-  ),
+  id: z.enum(['giai-ma', 'giai-nen', 'kho', 'bo-nao', 'khop']),
   ok: z.boolean(),
   n: z.number().optional(),
   of: z.number().optional(),

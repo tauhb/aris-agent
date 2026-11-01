@@ -173,7 +173,7 @@ export async function apply(ctx: Context): Promise<void> {
       const what = describeCall(exec.name, exec.arguments)
       const v = guestVerdict(exec.name, exec.arguments, g.cwd, rules())
       if (v) {
-        await log(g, sid, what, 'blocked', { reason: v.what, callId: String(exec.callId) })
+        await log(g, sid, what, 'chan', { reason: v.what, callId: String(exec.callId) })
         return { kind: 'deny', reason: v.reason }
       }
       const d = await next()
@@ -182,14 +182,14 @@ export async function apply(ctx: Context): Promise<void> {
       const result: LogResult =
         d.kind === 'deny' || d.kind === 'cancel'
           ? a === 'rejected'
-            ? 'app-rejected'
-            : 'blocked'
+            ? 'ung-dung-tu-choi'
+            : 'chan'
           : a === 'allowed'
-            ? 'app-approved'
-            : 'allowed'
+            ? 'ung-dung-duyet'
+            : 'cho-phep'
       await log(g, sid, what, result, {
         callId: String(exec.callId),
-        ...(d.kind === 'deny' && result === 'blocked' ? { reason: d.reason.slice(0, 160) } : {}),
+        ...(d.kind === 'deny' && result === 'chan' ? { reason: d.reason.slice(0, 160) } : {}),
       })
       return d
     },
@@ -257,7 +257,7 @@ export async function apply(ctx: Context): Promise<void> {
     } catch (e) {
       logger.warn('đưa phiên %s vào workspace %s: %s', sid, conn.cwd, String(e))
     }
-    await log(conn, sid, `Mở phiên trong ${conn.cwd.replace(homedir(), '~')}`, 'session-opened')
+    await log(conn, sid, `Mở phiên trong ${conn.cwd.replace(homedir(), '~')}`, 'mo-phien')
   }
 
   // --- Socket nội bộ (chỉ trong daemon có máy chủ web) ---------------------------------------------

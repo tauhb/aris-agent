@@ -48,7 +48,7 @@ import { FONTS } from '../src/tokens.js'
 import { STATUSES, type BotStatus } from '../src/status.js'
 
 const noop = () => {}
-const TEAL = '#0F766E'
+const LAM = '#0F766E'
 
 function Block({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -132,7 +132,7 @@ function Column() {
       <Block title="Công tắc và ô tích">
         <SwitchRow
           checked
-          color={TEAL}
+          color={LAM}
           label="Aris được giao việc cho Lâm"
           hint="Bật: việc nghiên cứu sẽ tự đến tay Lâm, anh không cần gọi tên"
           onChange={noop}
@@ -145,8 +145,8 @@ function Column() {
         />
         <Switch checked label="Bật" onChange={noop} />
         <Switch checked={false} label="Tắt" onChange={noop} />
-        <Checkbox checked color={TEAL} label="Đọc web" onChange={noop} />
-        <Checkbox checked color={TEAL} label="Đọc tệp" onChange={noop} />
+        <Checkbox checked color={LAM} label="Đọc web" onChange={noop} />
+        <Checkbox checked color={LAM} label="Đọc tệp" onChange={noop} />
         <Checkbox checked={false} label="Chạy lệnh" onChange={noop} />
         <Checkbox checked disabled label="Luôn bật" onChange={noop} />
       </Block>

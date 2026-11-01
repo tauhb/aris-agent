@@ -8,7 +8,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { PageProps } from '../page.js'
 import { Col } from '../ui.js'
 
-type Result = 'session-opened' | 'allowed' | 'app-approved' | 'app-rejected' | 'blocked'
+type Result = 'mo-phien' | 'cho-phep' | 'ung-dung-duyet' | 'ung-dung-tu-choi' | 'chan'
 type RuleKey = 'ask' | 'untrusted' | 'nomem' | 'notools'
 
 interface State {
@@ -58,11 +58,11 @@ const hm = (iso: string) => {
 /** Lần chặn gần nhất chỉ lên dải cảnh báo trong ngần này thời gian. */
 const BLOCK_ALERT_MS = 24 * 3_600_000
 const TONE: Record<Result, 'ok' | 'warn' | 'danger' | 'muted'> = {
-  'session-opened': 'muted',
-  allowed: 'muted',
-  'app-approved': 'warn',
-  'app-rejected': 'warn',
-  blocked: 'danger',
+  'mo-phien': 'muted',
+  'cho-phep': 'muted',
+  'ung-dung-duyet': 'warn',
+  'ung-dung-tu-choi': 'warn',
+  chan: 'danger',
 }
 const RULES: RuleKey[] = ['ask', 'untrusted', 'nomem', 'notools']
 const DENY = ['rm', 'push', 'outside', 'secrets', 'send', 'sudo'] as const
@@ -71,7 +71,7 @@ export function Integrations({ t, nav }: PageProps) {
   const [s, setS] = useState<State | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [filter, setFilter] = useState<'all' | 'ask' | 'blocked'>('all')
+  const [filter, setFilter] = useState<'all' | 'ask' | 'chan'>('all')
   const [pick, setPick] = useState('')
   const [copied, setCopied] = useState(false)
 
@@ -108,15 +108,15 @@ export function Integrations({ t, nav }: PageProps) {
   const open = s.bots.filter((b) => b.open)
   const cmdBot = open.find((b) => b.handle === pick) ?? open[0]
   const cmd = `aris-acp --bot ${cmdBot?.handle ?? '<tên>'}`
-  const work = s.log.filter((l) => l.result !== 'session-opened')
+  const work = s.log.filter((l) => l.result !== 'mo-phien')
   const n = (r: Result) => work.filter((l) => l.result === r).length
-  const nAsk = n('app-approved') + n('app-rejected')
+  const nAsk = n('ung-dung-duyet') + n('ung-dung-tu-choi')
   const rows = work.filter((l) =>
-    filter === 'all' ? true : filter === 'blocked' ? l.result === 'blocked' : l.result.startsWith('app-'),
+    filter === 'all' ? true : filter === 'chan' ? l.result === 'chan' : l.result.startsWith('ung-dung'),
   )
   // Dải đỏ chỉ báo lần chặn trong 24 giờ qua; cũ hơn chỉ còn trong nhật ký bên dưới.
   const lastBlocked = work.find(
-    (l) => l.result === 'blocked' && l.reason?.length && Date.now() - Date.parse(l.at) < BLOCK_ALERT_MS,
+    (l) => l.result === 'chan' && l.reason?.length && Date.now() - Date.parse(l.at) < BLOCK_ALERT_MS,
   )
   const faceOf = (botId: string) => {
     const b = s.bots.find((x) => x.id === botId)
@@ -153,7 +153,7 @@ export function Integrations({ t, nav }: PageProps) {
               <b>{t('int.blockedHead', { time: hm(lastBlocked.at), app: lastBlocked.app })}</b>{' '}
               {t('int.blockedBody', { what: lastBlocked.what })}
             </span>
-            <Button size="sm" onClick={() => setFilter('blocked')}>
+            <Button size="sm" onClick={() => setFilter('chan')}>
               {t('int.seeLog')}
             </Button>
           </div>
@@ -220,7 +220,7 @@ export function Integrations({ t, nav }: PageProps) {
                   [
                     ['all', t('int.all', { n: work.length })],
                     ['ask', t('int.asked', { n: nAsk })],
-                    ['blocked', t('int.blockedN', { n: n('blocked') })],
+                    ['chan', t('int.blockedN', { n: n('chan') })],
                   ] as const
                 ).map(([k, label]) => (
                   <button
@@ -252,7 +252,7 @@ export function Integrations({ t, nav }: PageProps) {
                   </span>
                 </span>
                 <Pill tone={TONE[l.result]}>
-                  {l.result === 'blocked' && l.reason
+                  {l.result === 'chan' && l.reason
                     ? t('int.res.chanWhy', { why: l.reason })
                     : t(`int.res.${l.result}`)}
                 </Pill>

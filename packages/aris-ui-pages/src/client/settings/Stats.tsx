@@ -12,9 +12,9 @@ import { providerLabel } from './Media.js'
 import { dayLabel, fmtInt, fmtTokens, fmtUsd, logTime } from './stats-format.js'
 
 type Range = 'today' | '7d' | '30d'
-type KindKey = 'chat' | 'delegated' | 'routine' | 'learning'
+type KindKey = 'chat' | 'giao' | 'routine' | 'hoc'
 /** Thứ tự các loại trong cột chồng (từ đáy lên) và màu của chúng (theo bản vẽ). */
-const KINDS: readonly KindKey[] = ['chat', 'delegated', 'routine', 'learning']
+const KINDS: readonly KindKey[] = ['chat', 'giao', 'routine', 'hoc']
 const SERIES = ['var(--ap-c1)', 'var(--ap-c2)', 'var(--ap-c3)', 'var(--ap-c4)'] as const
 /** Chiều cao cột cao nhất (px) trong khung 170px của biểu đồ. */
 const BAR_MAX = 160

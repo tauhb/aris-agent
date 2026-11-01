@@ -571,9 +571,9 @@ export async function apply(ctx: Context): Promise<void> {
       const decision = await next()
       if (decision.kind !== 'allow') return decision
       const a = exec.arguments as Record<string, unknown> | undefined
-      if (a?.enabled !== true) return decision
-      if (exec.name === 'set_routine_enabled') {
-        const r = routines.get(String(a.id ?? ''))
+      if (a?.bat !== true) return decision
+      if (exec.name === 'bat_routine') {
+        const r = routines.get(String(a.ma ?? ''))
         if (!r) return decision
         const text = summary(r)
         return {
@@ -582,14 +582,14 @@ export async function apply(ctx: Context): Promise<void> {
           displayReason: { en: `Turn on routine ${text}`, vi: `Bật routine ${text}` },
         }
       }
-      if (exec.name !== 'create_routine') return decision
+      if (exec.name !== 'tao_routine') return decision
       const text = summary({
-        title: String(a.title ?? ''),
+        title: String(a.ten ?? ''),
         bot: String(a.bot ?? ''),
-        cron: String(a.cron ?? ''),
+        cron: String(a.lich_cron ?? ''),
         tz: DEFAULT_TZ,
-        deliver: a.deliver === 'none' ? 'none' : 'telegram',
-        perms: a.perms === 'bot' ? 'bot' : 'read',
+        deliver: a.gui_ve === 'none' ? 'none' : 'telegram',
+        perms: a.quyen === 'bot' ? 'bot' : 'read',
       })
       return {
         kind: 'ask',
@@ -602,38 +602,35 @@ export async function apply(ctx: Context): Promise<void> {
 
   ctx.tools.register(
     defineTool({
-      name: 'create_routine',
+      name: 'tao_routine',
       description:
-        'Chỉ Commander: tạo routine (việc tự chạy theo lịch ở phiên mới của một bot, kết quả gửi về Telegram). Mặc định lưu ở trạng thái tắt để người dùng xem lại và bật ở trang Routine; chỉ đặt enabled=true khi người dùng nói rõ muốn bật ngay (sẽ hỏi duyệt).',
+        'Chỉ Commander: tạo routine (việc tự chạy theo lịch ở phiên mới của một bot, kết quả gửi về Telegram). Mặc định lưu ở trạng thái tắt để người dùng xem lại và bật ở trang Routine; chỉ đặt bat=true khi người dùng nói rõ muốn bật ngay (sẽ hỏi duyệt).',
       parameters: {
-        title: { type: 'string', required: true, description: 'Tên ngắn của routine.' },
+        ten: { type: 'string', required: true, description: 'Tên ngắn của routine.' },
         bot: { type: 'string', required: true, description: 'Mã hay tên gọi của bot làm việc này.' },
-        cron: {
+        lich_cron: {
           type: 'string',
           required: true,
           description:
             'Cron 5 trường "phút giờ ngày tháng thứ" theo giờ Việt Nam (thứ: 0 = Chủ nhật … 6 = Thứ 7).',
         },
-        task: {
+        viec: {
           type: 'string',
           required: true,
           description: 'Lời dặn cho bot mỗi lần chạy: làm gì, lọc gì, định dạng gì; không nhắc lịch.',
         },
-        deliver: {
+        gui_ve: {
           type: 'string',
           enum: ['telegram', 'none'],
           description: 'Nơi gửi kết quả; mặc định telegram.',
         },
-        perms: {
+        quyen: {
           type: 'string',
           enum: ['read', 'bot'],
           description: 'read (mặc định): chỉ đọc, việc khác hỏi người dùng; bot: theo quyền thường của bot.',
         },
-        catchup_hours: {
-          type: 'number',
-          description: 'Trễ tối đa (giờ) vẫn chạy bù khi máy tắt; mặc định 3.',
-        },
-        enabled: { type: 'boolean', description: 'Bật ngay (hỏi duyệt người dùng). Mặc định false.' },
+        chay_bu_gio: { type: 'number', description: 'Trễ tối đa (giờ) vẫn chạy bù khi máy tắt; mặc định 3.' },
+        bat: { type: 'boolean', description: 'Bật ngay (hỏi duyệt người dùng). Mặc định false.' },
       },
       output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
       async execute(args, exec) {
@@ -649,17 +646,17 @@ export async function apply(ctx: Context): Promise<void> {
         try {
           const rec = clean({
             bot: bot.id,
-            title: args.title,
-            task: args.task,
-            cron: args.cron,
-            ...(args.deliver ? { deliver: args.deliver } : {}),
-            ...(args.perms ? { perms: args.perms } : {}),
-            ...(args.catchup_hours !== undefined ? { catchupHours: args.catchup_hours } : {}),
+            title: args.ten,
+            task: args.viec,
+            cron: args.lich_cron,
+            ...(args.gui_ve ? { deliver: args.gui_ve } : {}),
+            ...(args.quyen ? { perms: args.quyen } : {}),
+            ...(args.chay_bu_gio !== undefined ? { catchupHours: args.chay_bu_gio } : {}),
             mode: 'agent',
-            enabled: args.enabled === true,
+            enabled: args.bat === true,
           })
           await routines.put(rec.id, rec)
-          return `Đã lưu routine ${summary(rec)}\nMã: ${rec.id}\n${rec.enabled ? 'Đang bật.' : 'Đang tắt: người dùng xem lại và bật ở trang Routine, hoặc bảo bạn bật (dùng set_routine_enabled với mã này, đừng tạo lại).'}`
+          return `Đã lưu routine ${summary(rec)}\nMã: ${rec.id}\n${rec.enabled ? 'Đang bật.' : 'Đang tắt: người dùng xem lại và bật ở trang Routine, hoặc bảo bạn bật (dùng bat_routine với mã này, đừng tạo lại).'}`
         } catch (e) {
           if (e instanceof RoutineError) return `Chưa lưu được: ${e.message}`
           throw e
@@ -670,30 +667,30 @@ export async function apply(ctx: Context): Promise<void> {
 
   ctx.tools.register(
     defineTool({
-      name: 'set_routine_enabled',
+      name: 'bat_routine',
       description:
-        'Chỉ Commander: bật hay tắt một routine đã có theo mã (mã có trong câu trả lời của create_routine). Bật thì hỏi duyệt người dùng.',
+        'Chỉ Commander: bật hay tắt một routine đã có theo mã (mã có trong câu trả lời của tao_routine). Bật thì hỏi duyệt người dùng.',
       parameters: {
-        id: { type: 'string', required: true, description: 'Mã routine, dạng r-…' },
-        enabled: { type: 'boolean', required: true, description: 'true: bật; false: tắt.' },
+        ma: { type: 'string', required: true, description: 'Mã routine, dạng r-…' },
+        bat: { type: 'boolean', required: true, description: 'true: bật; false: tắt.' },
       },
       output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
       async execute(args, exec) {
         if (bots()?.botOf(exec.agent?.session.id).kind !== 'commander')
           return 'Chỉ Commander bật tắt được routine.'
-        const r = routines.get(args.id.trim())
-        if (!r) return `Không có routine mã ${args.id}.`
-        const nextAt = args.enabled ? next(r) : undefined
+        const r = routines.get(args.ma.trim())
+        if (!r) return `Không có routine mã ${args.ma}.`
+        const nextAt = args.bat ? next(r) : undefined
         const rest: RoutineRecord = { ...r }
         delete rest.nextAt
         const rec: RoutineRecord = {
           ...rest,
-          enabled: args.enabled,
+          enabled: args.bat,
           updatedAt: iso(),
           ...(nextAt ? { nextAt } : {}),
         }
         await routines.put(rec.id, rec)
-        return `${args.enabled ? 'Đã bật' : 'Đã tắt'} routine ${summary(rec)}`
+        return `${args.bat ? 'Đã bật' : 'Đã tắt'} routine ${summary(rec)}`
       },
     }),
   )

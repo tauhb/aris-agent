@@ -7,13 +7,12 @@
 import {
   Button,
   IconDownloadOutlineRegular,
-  IconEditOutlineRegular,
   IconEllipsisOutlineRegular,
   IconUserOutlineRegular,
   Menu,
   Modal,
 } from '@deepseek-ai/dsh-client-ui-primitives'
-import { arisNavigate, isUiV2, openBotSession, useSessionBot } from '@aris/ui-kit/react'
+import { arisNavigate, useSessionBot } from '@aris/ui-kit/react'
 import { useState } from 'react'
 import type { Translate } from './locale.js'
 
@@ -34,21 +33,9 @@ export interface MoreMenuProps {
   useLogDownload: Selector<LogDownloadState>
   download(sessionId: string): void
   dismiss(sessionId: string): void
-  /** Mở một phiên (chủ đề mới của giao diện GĐ9). */
-  openSession?: (sessionId: string) => void
-  /** Việc mới của dsh (chủ đề mới với Aris). */
-  startSession?: () => void
 }
 
-export function MoreMenu({
-  sessionId,
-  t,
-  useLogDownload,
-  download,
-  dismiss,
-  openSession,
-  startSession,
-}: MoreMenuProps) {
+export function MoreMenu({ sessionId, t, useLogDownload, download, dismiss }: MoreMenuProps) {
   const bot = useSessionBot(sessionId)
   const entry = useLogDownload((s) => s.bySession[String(sessionId)])
   const busy = entry?.status === 'downloading'
@@ -62,18 +49,12 @@ export function MoreMenu({
         dense
         onClose={() => setOpen(false)}
         items={[
-          // Giao diện GĐ9 bỏ danh sách phiên ở đầu chat: chủ đề mới với cùng bot nằm ở đây.
-          ...(isUiV2() ? [{ id: 'topic', label: t('more.newTopic'), icon: <IconEditOutlineRegular /> }] : []),
           { id: 'profile', label: t('more.profile'), icon: <IconUserOutlineRegular /> },
           { id: 'download', label: t('more.download'), icon: <IconDownloadOutlineRegular />, disabled: busy },
         ]}
         onSelect={(id) => {
           setOpen(false)
-          if (id === 'topic') {
-            if (bot && bot.kind !== 'commander')
-              void openBotSession(bot.id, true).then(openSession, () => startSession?.())
-            else startSession?.()
-          } else if (id === 'profile') arisNavigate('bot', { id: bot?.id ?? 'aris' })
+          if (id === 'profile') arisNavigate('bot', { id: bot?.id ?? 'aris' })
           else download(sessionId)
         }}
         anchor={

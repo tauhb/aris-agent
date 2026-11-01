@@ -24,16 +24,16 @@ Phân loại làm ngay lúc ghi (các tập trong bộ nhớ của routine, ACP�
 
 | Điều kiện | `kind` | `source` |
 | --- | --- | --- |
-| `arisRoutine.isRoutine(sid)` | `routine` | `schedule` |
-| `arisBrain.isLibrarian(sid)` hay `arisSkills.isEval(sid)` | `learning` | `background` |
-| `arisAcp.isGuest(sid)` | `delegated` | `app` |
-| `arisBots.store.tagOf(sid).via === 'dispatch'` (việc lớn Commander giao cho phòng ban) | `delegated` | `commander` |
-| `via === 'team'` hay phiên có `parentSession` | `delegated` | `bot` |
+| `arisRoutine.isRoutine(sid)` | `routine` | `lich` |
+| `arisBrain.isLibrarian(sid)` hay `arisSkills.isEval(sid)` | `hoc` | `nen` |
+| `arisAcp.isGuest(sid)` | `giao` | `app` |
+| `arisBots.store.tagOf(sid).via === 'dispatch'` (việc lớn Commander giao cho phòng ban) | `giao` | `commander` |
+| `via === 'team'` hay phiên có `parentSession` | `giao` | `giao` |
 | `arisChannels.isChannelSession(sid)` (phiên của cuộc trò chuyện Telegram) | `chat` | `telegram` |
 | còn lại | `chat` | `web` |
 
-Lần gọi không có phiên: scope có `reflect` hay `profile` (vòng học hồ sơ, ký ức) là `learning`/`background`, còn lại `chat`/`web`.
-Phân loại mới không kéo một phiên đã là việc nền về `chat` (tag đến chậm). Bản ghi cũ lưu giá trị tiếng Việt (`giao`, `hoc`, `lich`, `nen`) được quy đổi khi đọc; khoá bản ghi gom chạy nền vẫn dùng `nen`.
+Lần gọi không có phiên: scope có `reflect` hay `profile` (vòng học hồ sơ, ký ức) là `hoc`/`nen`, còn lại `chat`/`web`.
+Phân loại mới không kéo một phiên đã là việc nền về `chat` (tag đến chậm).
 
 `by` (cột "do X giao") là tên bot của phiên cha với `source: giao`, và tên bot của phiên Commander đã giao việc lớn
 (`arisJobs.list()`) với `source: commander`.
@@ -47,7 +47,7 @@ Nhận ra phiên Telegram bằng `arisChannels.isChannelSession(sid)` (dịch v�
 | --- | --- | --- | --- |
 | `calls` | `<lúc>-<ngẫu nhiên>` | `at`, `day`, `session?`, `bot?`, `kind`, `source`, `provider`, `model`, `input`, `output`, `cacheRead`, `cacheWrite`, `usd` | 30 ngày |
 | `sessions` | `<ngày>-<mã phiên đã thay ký tự lạ bằng ->` | `day`, `session`, `bot`, `kind`, `source`, `by?`, `firstAt`, `lastAt`, `calls`, `input`, `output`, `cacheRead`, `cacheWrite`, `usd`, `saveUsd`, `fullInUsd`, `asked` | 90 ngày |
-| `events` | `<lúc>-<ngẫu nhiên>` | `at`, `session`, `type` (`approval` hay `question`; bản ghi cũ `duyet`, `hoi` được quy đổi khi đọc), `tool?`, `callId?`, `what?`, `decision?`, `waitedMs?` | 30 ngày |
+| `events` | `<lúc>-<ngẫu nhiên>` | `at`, `session`, `type` (`duyet` hay `hoi`), `tool?`, `callId?`, `what?`, `decision?`, `waitedMs?` | 30 ngày |
 
 - `sessions` là tổng theo (ngày, phiên), nguồn của biểu đồ, thẻ số và nhật ký (đọc `sessions` thôi, không quét `calls`).
   Các lần gọi ngoài phiên gom vào bản ghi `session: ''` của ngày đó (khoá `<ngày>-~nen`), vào biểu đồ và cache, không vào
@@ -62,10 +62,10 @@ Nhận ra phiên Telegram bằng `arisChannels.isChannelSession(sid)` (dịch v�
 ### Hook duyệt và hỏi
 
 - `approval/request` (prepend): `@aris/stats` xếp sau `@aris/guard` trong `cordis.patch.yml` nên đứng ngoài hàng rào.
-  Đánh dấu `asked` ngay lúc xin, `await next()`, rồi ghi sự kiện `approval` kèm kết quả (`allowed-once`, `rejected`,
+  Đánh dấu `asked` ngay lúc xin, `await next()`, rồi ghi sự kiện `duyet` kèm kết quả (`allowed-once`, `rejected`,
   `cancelled`, `unavailable`) và thời gian chờ. Không đổi kết quả; `next()` ném lỗi thì ghi `cancelled` rồi ném tiếp.
 - `tools/pre-execute` (prepend): nhớ mô tả lời gọi theo `callId` (1 giờ) để gắn nhãn cho sự kiện duyệt; công cụ
-  `ask_user_question` ghi sự kiện `question` và đặt `asked`. Luôn `return next()`.
+  `ask_user_question` ghi sự kiện `hoi` và đặt `asked`. Luôn `return next()`.
 - Bị chặn: `@aris/guard` đã ghi bảng `blocked` (giữ 7 ngày). Dịch vụ `arisGuard` có thêm `blocked(sessionId)` trả các bản
   ghi của phiên, cũ trước. Không ghi trùng.
 
@@ -108,20 +108,20 @@ Phần tổng của đầu trang lấy từ `sessions` (cộng các ngày); phi�
 
 Dựng bước là hàm thuần `buildSteps(entries, calls, events, blocked, opts)` trong `policy.ts`:
 
-- `type`: `user`, `assistant`, `thinking`, `tool`, `approval`, `question`, `blocked`. Tin người dùng chỉ là ngữ cảnh chèn vào cho
+- `type`: `user`, `assistant`, `thinking`, `tool`, `duyet`, `hoi`, `chan`. Tin người dùng chỉ là ngữ cảnh chèn vào cho
   model (có `source.form`, hay các loại `runtime-context`, `tool-registry`…) thì bỏ. Mỗi tin trợ lý tách suy nghĩ
   (`reasoning`) và chữ (`text`) thành hai bước.
 - Lời gọi công cụ ghép với kết quả theo `callId` thành một bước `tool`; `ms` là thời gian chạy; kết quả báo lỗi đặt
-  `error: true`. `ask_user_question` là bước `question`, `ms` là thời gian chờ trả lời.
+  `error: true`. `ask_user_question` là bước `hoi`, `ms` là thời gian chờ trả lời.
 - Token và tiền: token lấy từ `usage` của chính tin trợ lý (đúng cho cả phiên cũ), gắn vào bước đầu tiên sinh ra từ lần
   gọi model đó (suy nghĩ, trả lời, hay công cụ đầu tiên nếu tin chỉ có lời gọi công cụ), nên tổng các bước bằng tổng
   phiên. `input` của bước đã gồm phần cache (`cacheRead` là phần trong đó). Tiền ghép với bảng `calls` của phiên theo
   thứ tự, cùng số token, bỏ qua khoản không có token (ảnh, video); không ghép được thì tính theo `priceOf`; không có giá
   thì để trống.
-- `approval`: lấy từ log phiên (`approval/asked`, `approval/decided`) hợp với bảng `events` theo `callId` (hay công cụ và
+- `duyet`: lấy từ log phiên (`approval/asked`, `approval/decided`) hợp với bảng `events` theo `callId` (hay công cụ và
   thời gian cách nhau tối đa 2 giây). Bước đứng ngay trước bước công cụ của nó, `ms` là thời gian chờ, `out` là mã kết
   quả. Bản ghi `events` không có trong log vẫn thành bước, xếp theo thời gian.
-- `blocked`: bản ghi chặn của hàng rào đánh dấu bước công cụ trùng tên, gần thời điểm chặn nhất (`outLabel: rule`, `out` là
+- `chan`: bản ghi chặn của hàng rào đánh dấu bước công cụ trùng tên, gần thời điểm chặn nhất (`outLabel: rule`, `out` là
   lý do); không có bước trùng thì thêm bước riêng theo thời gian. Bản ghi chặn chỉ giữ 7 ngày, phiên cũ hơn chỉ còn bước
   công cụ có lỗi.
 - Nhãn đi theo mã để màn dịch: `inLabel` là `message`, `content`, `args` (tham số, JSON thụt đầu dòng), `command`,

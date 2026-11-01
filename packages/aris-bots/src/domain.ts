@@ -2,7 +2,6 @@
  * Storage domain `aris_bots` (backend của dsh, mỗi bản ghi một tệp). Khoá bản ghi chỉ gồm chữ,
  * số và `-` (ràng buộc của storage dsh).
  */
-import { personRecord, threadRecord, type PersonRecord, type ThreadRecord } from './people.js'
 import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 import { z } from 'zod'
 import { externalRecord } from './external.js'
@@ -60,10 +59,6 @@ export const botRecord = z.object({
   media: z.object({ image: mediaPolicy, video: mediaPolicy }).partial().optional(),
   /** Commander được giao việc cho bot (bot thường); bot ngoài dùng `external.assignable`. Mặc định có. */
   assignable: z.boolean().optional(),
-  /** Chỉ dùng skill được gán (GĐ9.3): bật thì bỏ skill dùng chung của cả đội. Mặc định tắt. */
-  skillsOnlyAssigned: z.boolean().optional(),
-  /** Chỉ dùng kết nối được gán (GĐ9.3): bật thì bỏ kết nối dùng chung. Mặc định tắt. */
-  connectorsOnlyAssigned: z.boolean().optional(),
   createdAt: z.string(),
 })
 export type BotRecord = z.infer<typeof botRecord>
@@ -107,7 +102,7 @@ export type SessionRecord = z.infer<typeof sessionRecord>
 
 /**
  * Cách xưng hô với người dùng (một bản ghi, khoá `main`). Không viết cứng "anh", "chị", "chủ nhân":
- * bot hỏi lần đầu rồi lưu bằng tool `save_address_style`; sửa được ở trang Hồ sơ.
+ * bot hỏi lần đầu rồi lưu bằng tool `xung_ho`; sửa được ở trang Hồ sơ.
  */
 export const ownerRecord = z.object({
   /** Tên người dùng. */
@@ -143,9 +138,6 @@ export const botsDomain = defineDomain({
     owner: domainTable<string, OwnerRecord>(ownerRecord),
     mcp: domainTable<string, McpRecord>(mcpRecord),
     souls: domainTable<string, SoulRecord>(soulRecord),
-    /** Người và luồng (GĐ9.6a). */
-    people: domainTable<string, PersonRecord>(personRecord),
-    threads: domainTable<string, ThreadRecord>(threadRecord),
   },
 })
 

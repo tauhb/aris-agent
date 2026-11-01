@@ -67,18 +67,6 @@ export const CSS = `
 .aris-ext-ask{background:var(--a-warnSoft);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin:2px 0}
 .aris-ext-ask .h{color:var(--a-warn);font-weight:600;font-size:13px}
 .aris-ext-ask .what{font-family:'JetBrains Mono',monospace;font-size:12.5px;background:var(--a-panel);border-radius:8px;padding:6px 10px;overflow-wrap:anywhere}
-.aris-tm{display:flex;flex-direction:column;gap:6px;padding:4px 0;font-size:13.5px}
-.aris-tm .h{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.aris-tm .lb{color:var(--a-muted);font-size:12.5px}
-.aris-tm .q{color:var(--a-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;min-width:0;flex:1}
-.aris-tm .a{white-space:pre-line;border-left:2px solid var(--a-line);padding:2px 0 2px 10px;line-height:1.5}
-.aris-tm .a.muted{color:var(--a-muted)}
-.aris-tm .more{color:var(--a-accent);font-size:12.5px;margin-left:6px}
-.aris-ext-ask .full{font-size:13.5px;line-height:1.5;white-space:pre-line;background:var(--a-panel);border-radius:8px;padding:8px 12px;max-height:40vh;overflow-y:auto;overflow-wrap:anywhere}
-body.aris-v2 .aris-ext-ask{background:var(--g9-bub);border-radius:18px;box-shadow:inset 0 0 0 1px var(--g9-warnline);padding:14px 16px}
-body.aris-v2 .aris-ext-ask .h{color:var(--g9-warn);font-size:12.5px}
-body.aris-v2 .aris-ext-ask .full,body.aris-v2 .aris-ext-ask .what{background:var(--g9-card2)}
-body.aris-v2 .aris-ext-ask .row .a-btn{border-radius:999px;height:34px;padding:0 16px;white-space:nowrap}
 .aris-ext-ask .row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .aris-ext-ask .note{font-size:12px;color:var(--a-muted)}
 .aris-ext-result{border:1px solid var(--a-line);border-radius:12px;background:var(--a-panel);padding:10px 12px;display:flex;flex-direction:column;gap:6px;margin-top:4px}
@@ -168,6 +156,4 @@ body.aris-v2 .aris-ext-ask .row .a-btn{border-radius:999px;height:34px;padding:0
 .aris-bpick .lock{margin-left:auto;font-size:11px;font-weight:600;border-radius:6px;padding:1px 7px;background:var(--a-warnSoft);color:var(--a-warn);white-space:nowrap}
 .aris-bpick .foot{border-top:1px solid var(--a-line);padding:6px 8px 2px;font-size:12px}
 [id^="dsh-slash-option-aris-brain-"] [class*="itemIcon"]{width:auto;height:auto;flex:none}
-body.aris-v2 .aris-who,body.aris-v2 .aris .aris-who{height:24px;padding:0 9px 0 4px;gap:5px;border:0;font-weight:500;background:color-mix(in srgb,var(--who) 18%,transparent);color:color-mix(in srgb,var(--who) 62%,var(--g9-ink))}
-body.aris-v2 .aris-who:hover,body.aris-v2 .aris .aris-who:hover{background:color-mix(in srgb,var(--who) 28%,transparent)}
 `

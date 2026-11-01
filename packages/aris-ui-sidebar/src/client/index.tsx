@@ -3,12 +3,11 @@
  * Đăng ký đúng slot `sidebar` cùng 7 chỗ cắm con và slot `shell.leading` như gói
  * gốc, để mọi plugin khác của dsh vẫn cắm vào được; phần trình bày theo canvas.
  */
-import { arisNavigate, isUiV2, mountKitCss, registerPersonal } from '@aris/ui-kit/react'
+import { arisNavigate, mountKitCss, registerPersonal } from '@aris/ui-kit/react'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
 import { EN, NS, VI } from './locale.js'
 import { LeadingControls, SidebarRoot } from './SidebarRoot.js'
-import { SidebarV2 } from './SidebarV2.js'
 import { CSS } from './styles.js'
 import type { PanelEntry } from './types.js'
 
@@ -29,10 +28,9 @@ interface ClientContext {
     bind(ns: string): (key: string) => string
   }
   shortcuts: { catalog: unknown; register(command: Record<string, unknown>): () => void }
-  sidebarRight: { mounted: unknown }
 }
 
-export const inject = ['slots', 'layout', 'uiWorkspace', 'locale', 'shortcuts', 'sidebarRight']
+export const inject = ['slots', 'layout', 'uiWorkspace', 'locale', 'shortcuts']
 
 // Phông do theme aris (`@aris/ui-theme`) nạp cho cả app.
 function injectStyle(): () => void {
@@ -100,7 +98,7 @@ export function apply(ctx: ClientContext): void {
     selectPanel: (id: string | null) => ctx.layout.selectPanel(id),
     openProject: (workspaceId: string) => void workspace.openWorkspace(workspaceId),
     openSession: (sessionId: string) => workspace.openSession(sessionId),
-    hooks: { panels, shortcuts: ctx.shortcuts.catalog, mounted: ctx.sidebarRight.mounted },
+    hooks: { panels, shortcuts: ctx.shortcuts.catalog },
   })
 
   const single = { kind: 'single', scope: 'root' }
@@ -120,8 +118,7 @@ export function apply(ctx: ClientContext): void {
         },
         inject: injectProps,
       },
-      // Công tắc "Giao diện mới (GĐ9)" đọc lúc nạp: đổi công tắc thì trang nạp lại.
-      isUiV2() ? SidebarV2 : SidebarRoot,
+      SidebarRoot,
     ),
   )
   // Một chỗ cài đặt duy nhất là bánh răng (trang Cài đặt aris, đã gồm các mục của dsh). Thanh bên

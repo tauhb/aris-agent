@@ -3,7 +3,7 @@
  * thì từ chối; chế độ "trong phạm vi" thì trong phạm vi cho làm, ngoài phạm vi từ chối (không hỏi); chế độ "hỏi từng
  * bước" thì thao tác thay đổi luôn hỏi, xem màn hình chỉ hỏi lần đầu mỗi phiên.
  */
-import { actionOf, boundedVerdict, hardVerdict, type ComputerSettings } from './policy.js'
+import { boundedVerdict, hardVerdict, TOOL_ACTION, type ComputerSettings } from './policy.js'
 import type { ComputerRuntime, Inspected } from './runtime.js'
 import { ComputerError } from './types.js'
 
@@ -29,7 +29,7 @@ export async function decide(o: {
       what: 'điều khiển máy đang tắt',
       reason: `Bot ${o.bot} chưa được bật điều khiển máy (Hồ sơ bot › Quyền › Điều khiển máy). Đừng tìm cách khác; báo người dùng nếu việc này cần điều khiển máy.`,
     }
-  if (!actionOf(o.tool)) return { kind: 'allow' }
+  if (!TOOL_ACTION[o.tool]) return { kind: 'allow' }
   let inspected: Inspected
   try {
     inspected = await o.runtime.inspect(o.sessionId, o.tool, o.args)
@@ -44,7 +44,7 @@ export async function decide(o: {
     const v = boundedVerdict(s, inspected)
     return v ? { kind: 'deny', ...v } : { kind: 'allow', inspected }
   }
-  if (inspected.action === 'view') {
+  if (inspected.action === 'xem') {
     if (o.viewed.has(o.sessionId)) return { kind: 'allow', inspected }
     return { kind: 'ask', reason: `${o.bot} muốn xem màn hình: ${inspected.describe}`, inspected }
   }

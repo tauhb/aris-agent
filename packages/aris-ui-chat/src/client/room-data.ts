@@ -1,5 +1,5 @@
 /**
- * Phòng nhóm của dự án (bước 3e): đọc một vòng (`start_room_round`) và trạng thái phòng từ
+ * Phòng nhóm của dự án (bước 3e): đọc một vòng (`moi_noi`) và trạng thái phòng từ
  * `/api/aris/commander`, đổi thành dòng để vẽ. Thuần, không phụ thuộc React.
  */
 import type { ChatKey } from './locale.js'

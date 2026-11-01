@@ -53,7 +53,6 @@ export function rangeDays(range: Range, now = Date.now()): { days: string[]; sin
 }
 
 /** Khoá bản ghi tổng theo phiên: `<ngày>-<mã phiên đã thay ký tự lạ bằng ->` (gom ngoài phiên: `<ngày>-~nen`). */
-// Khoá lưu trữ: `nen` (chạy nền) giữ nguyên tên cũ để bản ghi trong ngày không tách đôi.
 export const sessionKey = (day: string, session: string, pseudo = 'nen'): string =>
   `${day}-${session ? session.replace(/[^A-Za-z0-9-]/g, '-') : `~${pseudo}`}`
 
@@ -85,11 +84,11 @@ export interface Facts {
  * việc bot khác giao (đội hay phiên cha), Lark, Zalo, Telegram, còn lại là chat ở web.
  */
 export function classify(f: Facts): { kind: Kind; source: Source } {
-  if (f.routine) return { kind: 'routine', source: 'schedule' }
-  if (f.librarian || f.eval) return { kind: 'learning', source: 'background' }
-  if (f.guest) return { kind: 'delegated', source: 'app' }
-  if (f.via === 'dispatch') return { kind: 'delegated', source: 'commander' }
-  if (f.via === 'team' || f.parent) return { kind: 'delegated', source: 'bot' }
+  if (f.routine) return { kind: 'routine', source: 'lich' }
+  if (f.librarian || f.eval) return { kind: 'hoc', source: 'nen' }
+  if (f.guest) return { kind: 'giao', source: 'app' }
+  if (f.via === 'dispatch') return { kind: 'giao', source: 'commander' }
+  if (f.via === 'team' || f.parent) return { kind: 'giao', source: 'giao' }
   if (f.lark) return { kind: 'chat', source: 'lark' }
   if (f.zalo) return { kind: 'chat', source: 'zalo' }
   if (f.channel) return { kind: 'chat', source: 'telegram' }
@@ -102,7 +101,7 @@ const LEARNING_SCOPES = new Set(['reflect', 'profile'])
 /** Lần gọi ngoài phiên: vòng học nền thì là `hoc`, còn lại tính là chat. */
 export function classifyNoSession(scope: readonly string[]): { kind: Kind; source: Source } {
   return scope.some((s) => LEARNING_SCOPES.has(s))
-    ? { kind: 'learning', source: 'background' }
+    ? { kind: 'hoc', source: 'nen' }
     : { kind: 'chat', source: 'web' }
 }
 
@@ -211,7 +210,7 @@ const round1 = (n: number) => Math.round(n * 10) / 10
  */
 export function overview(records: Iterable<SessionRecord>, range: Range, now = Date.now()): Overview {
   const { days } = rangeDays(range, now)
-  const perDay = new Map(days.map((day) => [day, { day, chat: 0, delegated: 0, routine: 0, learning: 0 }]))
+  const perDay = new Map(days.map((day) => [day, { day, chat: 0, giao: 0, routine: 0, hoc: 0 }]))
   const sum = { input: 0, cacheRead: 0, cacheWrite: 0, saveUsd: 0, fullInUsd: 0 }
   const autonomous = { done: 0, total: 0 }
   const bySession = new Map<string, LogRow>()
@@ -352,7 +351,7 @@ export interface BlockedLike {
   what: string
 }
 
-export type StepType = 'user' | 'assistant' | 'thinking' | 'tool' | 'approval' | 'question' | 'blocked'
+export type StepType = 'user' | 'assistant' | 'thinking' | 'tool' | 'duyet' | 'hoi' | 'chan'
 export type InLabel = 'message' | 'content' | 'args' | 'command' | 'question'
 export type OutLabel = 'result' | 'error' | 'decision' | 'rule' | 'answer'
 
@@ -638,7 +637,7 @@ export function buildSteps(
         const d: Draft = {
           n: 0,
           at: e.time,
-          type: asking ? 'question' : 'tool',
+          type: asking ? 'hoi' : 'tool',
           title: toolTitle(name, args),
           tool: name,
           callId: String(data.callId ?? ''),
@@ -662,7 +661,7 @@ export function buildSteps(
         const text = textOf(m?.content)
         d.out = text
         d.outFull = true
-        d.outLabel = d.type === 'question' ? 'answer' : m?.isError ? 'error' : 'result'
+        d.outLabel = d.type === 'hoi' ? 'answer' : m?.isError ? 'error' : 'result'
         if (m?.isError) d.error = true
         d.ms = Math.max(0, e.time - d.at)
         d.endAt = e.time
@@ -724,7 +723,7 @@ export function buildSteps(
       )
       .at(-1)
     if (hit) {
-      hit.type = 'blocked'
+      hit.type = 'chan'
       hit.error = true
       hit.outLabel = 'rule'
       hit.out = hit.out ? `${b.what}\n${hit.out}` : b.what
@@ -733,7 +732,7 @@ export function buildSteps(
       rest.push({
         n: 0,
         at,
-        type: 'blocked',
+        type: 'chan',
         title: oneLine(`${b.tool} (${b.what})`),
         tool: b.tool,
         error: true,
@@ -745,7 +744,7 @@ export function buildSteps(
   }
 
   // Duyệt: log phiên hợp với bản ghi events; hỏi chưa có bước công cụ thì thêm bước riêng.
-  const table = events.filter((x) => x.type === 'approval')
+  const table = events.filter((x) => x.type === 'duyet')
   const used = new Set<EventRecord>()
   const approvals: Draft[] = []
   for (const a of asked.values()) {
@@ -781,11 +780,11 @@ export function buildSteps(
         }),
       )
   for (const x of events) {
-    if (x.type !== 'question' || (x.callId && byCall.has(x.callId))) continue
+    if (x.type !== 'hoi' || (x.callId && byCall.has(x.callId))) continue
     rest.push({
       n: 0,
       at: x.at,
-      type: 'question',
+      type: 'hoi',
       title: oneLine(`${x.tool ?? 'ask_user_question'} ${x.what ?? ''}`),
       ...(x.tool ? { tool: x.tool } : {}),
       inLabel: 'question',
@@ -824,7 +823,7 @@ function approvalStep(a: {
   return {
     n: 0,
     at: a.at,
-    type: 'approval',
+    type: 'duyet',
     title,
     ...(a.tool ? { tool: a.tool } : {}),
     ...(a.callId ? { callId: a.callId } : {}),

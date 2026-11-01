@@ -75,15 +75,15 @@ describe('kết nối nền tảng theo bot', () => {
       at: '',
       tools: [
         { name: 'echo', readOnly: true },
-        { name: 'take_note', readOnly: false },
+        { name: 'ghi_chu', readOnly: false },
       ],
     }))!
     const hit = connectionOf('mcp__echo__echo', s.list('b-1'))!
     expect(hit.raw).toBe('echo')
     expect(needsAsk(checked, 'echo')).toBe(false)
-    expect(needsAsk(checked, 'take_note')).toBe(true)
+    expect(needsAsk(checked, 'ghi_chu')).toBe(true)
     expect(needsAsk(checked, 'moi')).toBe(true)
-    expect(needsAsk({ ...checked, ask: 'never' }, 'take_note')).toBe(false)
+    expect(needsAsk({ ...checked, ask: 'never' }, 'ghi_chu')).toBe(false)
     expect(needsAsk({ ...checked, ask: 'always' }, 'echo')).toBe(true)
     expect(connectionOf('mcp__khac__echo', s.list('b-1'))).toBeUndefined()
   })
@@ -96,7 +96,7 @@ describe('kết nối nền tảng theo bot', () => {
       ok: true,
       tools: [
         { name: 'echo', readOnly: true },
-        { name: 'take_note', readOnly: false },
+        { name: 'ghi_chu', readOnly: false },
       ],
     })
     const bad = await s.add('b-1', { preset: 'custom', name: 'Sai', command: 'khong-co-lenh-nay-aris' })
@@ -152,8 +152,7 @@ describe('kết nối dùng chung của đội', () => {
 
   it('tên máy chủ của đội có tiền tố riêng, không trùng kết nối riêng cùng tên và tự thêm số khi trùng', async () => {
     const s = new McpStore(memTable())
-    // Lệnh khác nhau: cùng một dịch vụ thì kết nối riêng thắng, kết nối của đội không gắn.
-    const own = await s.add('b-1', { preset: 'custom', name: 'Echo', command: 'node b' })
+    const own = await s.add('b-1', { preset: 'custom', name: 'Echo', command: 'node a' })
     const t1 = await s.addTeam({ preset: 'custom', name: 'Echo', command: 'node a' }, { bots: 'all' })
     const t2 = await s.addTeam({ preset: 'custom', name: 'Echo', command: 'node a' }, { bots: 'all' })
     expect([own.serverName, t1.serverName, t2.serverName]).toEqual(['echo', 'doi-echo', 'doi-echo_2'])
@@ -208,24 +207,5 @@ describe('kết nối dùng chung của đội', () => {
     )
     expect(JSON.stringify(viewOf(r))).not.toContain('abc')
     expect(viewOf(r).secretKeys).toEqual(['Authorization'])
-  })
-})
-
-describe('công tắc "Chỉ dùng kết nối được gán"', () => {
-  it('được gán thắng dùng chung cùng dịch vụ; bật công tắc thì bỏ hẳn phần dùng chung', async () => {
-    const s = new McpStore(memTable())
-    const git = {
-      preset: 'custom' as const,
-      transport: 'streamable-http' as const,
-      url: 'https://git.example/mcp',
-    }
-    const own = await s.add('b-1', { ...git, name: 'Git của Khoa' })
-    const sharedGit = await s.addTeam({ ...git, name: 'Git công ty' }, { bots: 'all' })
-    const sharedCal = await s.addTeam({ preset: 'custom', name: 'Lịch', command: 'node l' }, { bots: 'all' })
-    const named = await s.addTeam({ preset: 'custom', name: 'Kho', command: 'node k' }, { bots: ['b-1'] })
-    const ids = (b: Parameters<typeof s.forBot>[0]) => s.forBot(b).map((r) => r.id)
-    expect(ids({ id: 'b-1' })).toEqual([own.id, named.id, sharedCal.id])
-    expect(ids({ id: 'b-1', connectorsOnlyAssigned: true })).toEqual([own.id, named.id])
-    expect(ids({ id: 'b-2' })).toEqual([sharedGit.id, sharedCal.id])
   })
 })

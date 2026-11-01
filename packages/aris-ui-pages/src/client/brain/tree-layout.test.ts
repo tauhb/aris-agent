@@ -32,9 +32,9 @@ describe('đồ thị cây thư mục', () => {
     for (const l of leaves) expect(Math.hypot(l.x, l.y)).toBeCloseTo(LEAF_R)
     const folders = t.all.filter((n) => n.leaf === undefined && n.depth > 0)
     for (const f of folders) expect(f.r).toBeLessThan(LEAF_R)
-    const personal = t.all.find((n) => n.key === 'ca-nhan')!
-    expect(personal.count).toBe(3)
-    expect(personal.depth).toBe(1)
+    const caNhan = t.all.find((n) => n.key === 'ca-nhan')!
+    expect(caNhan.count).toBe(3)
+    expect(caNhan.depth).toBe(1)
     // Các trang khác nhau không chồng góc.
     expect(new Set(leaves.map((l) => l.angle.toFixed(4))).size).toBe(5)
   })

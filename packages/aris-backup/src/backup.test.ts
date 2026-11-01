@@ -159,13 +159,13 @@ describe('sao lưu, diễn tập, khôi phục thật trên thư mục tạm', (
     expect(header.codeId).toBe(codeIdOf(code))
     const d = await drillBackup(file, code, r.files)
     expect(d.steps.map((s) => [s.id, s.ok])).toEqual([
-      ['decrypt', true],
-      ['unpack', true],
-      ['stores', true],
-      ['brain', true],
-      ['file-count', true],
+      ['giai-ma', true],
+      ['giai-nen', true],
+      ['kho', true],
+      ['bo-nao', true],
+      ['khop', true],
     ])
-    expect(d.steps.find((s) => s.id === 'stores')).toMatchObject({ n: 3, of: 3 })
+    expect(d.steps.find((s) => s.id === 'kho')).toMatchObject({ n: 3, of: 3 })
   })
 
   it('sai mã, tệp bị sửa: không giải nén được', async () => {

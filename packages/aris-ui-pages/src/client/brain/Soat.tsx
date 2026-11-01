@@ -143,7 +143,7 @@ function Pg({
   )
 }
 
-export function Audit({ t, nav }: PageProps) {
+export function Soat({ t, nav }: PageProps) {
   const [data, setData] = useState<Data | null>(null)
   const [pick, setPick] = useState<Kind>('mau-thuan')
   const [space, setSpace] = useState<'' | Space>('')
@@ -155,7 +155,7 @@ export function Audit({ t, nav }: PageProps) {
   const [moveTo, setMoveTo] = useState<Record<string, string>>({})
 
   const load = useCallback(async () => {
-    const r = await fetch(endpoint('?audit=1')).catch(() => null)
+    const r = await fetch(endpoint('?soat=1')).catch(() => null)
     if (r?.ok) setData((await r.json()) as Data)
   }, [])
   useEffect(() => {
@@ -197,7 +197,7 @@ export function Audit({ t, nav }: PageProps) {
 
   const actions = (f: Finding, fixLabel = t('sb.fix')) =>
     f.status === 'bo-qua' ? (
-      <Button size="sm" disabled={busy} onClick={() => void post({ op: 'audit-restore', id: f.id })}>
+      <Button size="sm" disabled={busy} onClick={() => void post({ op: 'soat-restore', id: f.id })}>
         {t('sb.restore')}
       </Button>
     ) : f.status === 'xu-ly' ? (
@@ -213,7 +213,7 @@ export function Audit({ t, nav }: PageProps) {
           size="sm"
           variant="primary"
           disabled={busy}
-          onClick={() => void post({ op: 'audit-fix', id: f.id })}
+          onClick={() => void post({ op: 'soat-fix', id: f.id })}
         >
           {fixLabel}
         </Button>
@@ -221,7 +221,7 @@ export function Audit({ t, nav }: PageProps) {
           size="sm"
           variant="ghost"
           disabled={busy}
-          onClick={() => void post({ op: 'audit-dismiss', id: f.id })}
+          onClick={() => void post({ op: 'soat-dismiss', id: f.id })}
         >
           {t('sb.dismiss')}
         </Button>
@@ -256,7 +256,7 @@ export function Audit({ t, nav }: PageProps) {
           <Button
             variant="primary"
             disabled={busy || data?.running}
-            onClick={() => void post({ op: 'audit-run' })}
+            onClick={() => void post({ op: 'soat-run' })}
           >
             {data?.running ? t('sb.running') : t('sb.runNow')}
           </Button>
@@ -384,7 +384,7 @@ export function Audit({ t, nav }: PageProps) {
                             <Button
                               size="sm"
                               disabled={busy || !relinkTo[f.id]?.trim()}
-                              onClick={() => void post({ op: 'audit-relink', id: f.id, to: relinkTo[f.id] })}
+                              onClick={() => void post({ op: 'soat-relink', id: f.id, to: relinkTo[f.id] })}
                             >
                               {t('sb.relink')}
                             </Button>
@@ -432,7 +432,7 @@ export function Audit({ t, nav }: PageProps) {
                         size="sm"
                         variant="primary"
                         disabled={busy}
-                        onClick={() => void post({ op: 'audit-move', id: f.id, to: moveTo[f.id] ?? 'chung' })}
+                        onClick={() => void post({ op: 'soat-move', id: f.id, to: moveTo[f.id] ?? 'chung' })}
                       >
                         {t('sb.move')}
                       </Button>
@@ -440,7 +440,7 @@ export function Audit({ t, nav }: PageProps) {
                         size="sm"
                         variant="ghost"
                         disabled={busy}
-                        onClick={() => void post({ op: 'audit-dismiss', id: f.id })}
+                        onClick={() => void post({ op: 'soat-dismiss', id: f.id })}
                       >
                         {t('sb.dismiss')}
                       </Button>
@@ -538,7 +538,7 @@ export function Audit({ t, nav }: PageProps) {
                             checked={!!f.forget}
                             disabled={busy}
                             onChange={(e) =>
-                              void post({ op: 'audit-forget-after', id: f.id, on: e.target.checked })
+                              void post({ op: 'soat-forget-after', id: f.id, on: e.target.checked })
                             }
                           />
                           {t('sb.forgetAfter', { bot })}
@@ -553,7 +553,7 @@ export function Audit({ t, nav }: PageProps) {
                             size="sm"
                             variant="primary"
                             disabled={busy}
-                            onClick={() => void post({ op: 'audit-forget', id: f.id })}
+                            onClick={() => void post({ op: 'soat-forget', id: f.id })}
                           >
                             {t('sb.forgetNow')}
                           </Button>
@@ -562,7 +562,7 @@ export function Audit({ t, nav }: PageProps) {
                           size="sm"
                           variant={has ? 'secondary' : 'primary'}
                           disabled={busy}
-                          onClick={() => void post({ op: 'audit-fix', id: f.id, forget: true })}
+                          onClick={() => void post({ op: 'soat-fix', id: f.id, forget: true })}
                         >
                           {t('sb.toBrain')}
                         </Button>
@@ -570,7 +570,7 @@ export function Audit({ t, nav }: PageProps) {
                           size="sm"
                           variant="ghost"
                           disabled={busy}
-                          onClick={() => void post({ op: 'audit-dismiss', id: f.id })}
+                          onClick={() => void post({ op: 'soat-dismiss', id: f.id })}
                         >
                           {t('sb.dismiss')}
                         </Button>
@@ -612,7 +612,7 @@ export function Audit({ t, nav }: PageProps) {
                           variant="primary"
                           disabled={busy}
                           title={t('sb.dateTip', { day: f.detail })}
-                          onClick={() => void post({ op: 'audit-date', id: f.id })}
+                          onClick={() => void post({ op: 'soat-date', id: f.id })}
                         >
                           {t(f.target === 'nguon' ? 'sb.dateSource' : 'sb.dateEdit', { day: ddmm(f.detail) })}
                         </Button>
@@ -622,7 +622,7 @@ export function Audit({ t, nav }: PageProps) {
                           <Button
                             size="sm"
                             disabled={busy}
-                            onClick={() => void post({ op: 'audit-fix', id: f.id })}
+                            onClick={() => void post({ op: 'soat-fix', id: f.id })}
                           >
                             {t('sb.checkSource')}
                           </Button>
@@ -630,7 +630,7 @@ export function Audit({ t, nav }: PageProps) {
                             size="sm"
                             variant="ghost"
                             disabled={busy}
-                            onClick={() => void post({ op: 'audit-dismiss', id: f.id })}
+                            onClick={() => void post({ op: 'soat-dismiss', id: f.id })}
                           >
                             {t('sb.dismiss')}
                           </Button>
@@ -671,7 +671,7 @@ export function Audit({ t, nav }: PageProps) {
                         size="sm"
                         variant={strong ? 'secondary' : 'primary'}
                         disabled={busy}
-                        onClick={() => void post({ op: 'audit-strong', bot: f.bot, on: !strong })}
+                        onClick={() => void post({ op: 'soat-strong', bot: f.bot, on: !strong })}
                       >
                         {strong ? t('sb.strongOn') : t('sb.strong')}
                       </Button>
@@ -680,7 +680,7 @@ export function Audit({ t, nav }: PageProps) {
                           size="sm"
                           variant="ghost"
                           disabled={busy}
-                          onClick={() => void post({ op: 'audit-dismiss', id: f.id })}
+                          onClick={() => void post({ op: 'soat-dismiss', id: f.id })}
                         >
                           {t('sb.dismiss')}
                         </Button>

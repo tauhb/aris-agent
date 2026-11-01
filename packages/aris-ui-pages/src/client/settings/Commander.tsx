@@ -37,10 +37,7 @@ interface Settings {
   parallel: number
   nested: number
   budgetUsd?: number
-  compactAt?: number
   helpers: boolean
-  durable?: boolean
-  teammates?: boolean
   approve: string[]
 }
 
@@ -240,34 +237,6 @@ export function Commander({ t, nav }: PageProps) {
                 style={check}
               />
             </label>
-            <label className="a-row" title={t('cmd.durableHint')}>
-              <span className="ap-av" style={{ width: 24, height: 24 }}>
-                ✓
-              </span>
-              <span className="grow">{t('cmd.durable')}</span>
-              <input
-                type="checkbox"
-                checked={settings?.durable ?? true}
-                disabled={!settings}
-                aria-label={t('cmd.durable')}
-                onChange={(e) => void save({ durable: e.target.checked })}
-                style={check}
-              />
-            </label>
-            <label className="a-row" title={t('cmd.teammatesHint')}>
-              <span className="ap-av" style={{ width: 24, height: 24 }}>
-                ?
-              </span>
-              <span className="grow">{t('cmd.teammates')}</span>
-              <input
-                type="checkbox"
-                checked={settings?.teammates ?? true}
-                disabled={!settings}
-                aria-label={t('cmd.teammates')}
-                onChange={(e) => void save({ teammates: e.target.checked })}
-                style={check}
-              />
-            </label>
             {(botError ?? errors.approve ?? errors.helpers) && (
               <div className="a-row" style={{ color: 'var(--a-danger)', fontSize: 12.5 }}>
                 {botError ?? errors.approve ?? errors.helpers}
@@ -321,20 +290,6 @@ export function Commander({ t, nav }: PageProps) {
                 onSave={(v) => save({ budgetUsd: v })}
               />
               <span className="a-muted">USD</span>
-            </div>
-            <div className="a-row">
-              <span className="grow ap-limit">
-                {t('cmd.compactAt')}
-                <span className="a-muted">{t('cmd.compactAtHint')}</span>
-                {errors.compactAt && <span className="err">{errors.compactAt}</span>}
-              </span>
-              <LimitInput
-                value={settings?.compactAt ?? 200_000}
-                label={t('cmd.compactAt')}
-                placeholder="200000"
-                onSave={(v) => save({ compactAt: v ?? 200_000 })}
-              />
-              <span className="a-muted">token</span>
             </div>
             <div className="a-row">
               <span className="grow">{t('cmd.driver')}</span>

@@ -72,7 +72,7 @@ export interface ArisProjects {
   ofSession(sessionId: string): { project: ProjectRecord; path: string } | undefined
   /** Bảng việc của dự án (Kanban, cột phải). */
   board(workspaceId: string): Promise<CardView[]>
-  /** Bot dự kiến cho thẻ của Team (`create_cards`, Driver). */
+  /** Bot dự kiến cho thẻ của Team (`tao_the`, Driver). */
   plans: PlanStore
   /** Bảng việc của Team trong phiên chính, đọc log (không đánh thức phiên): Driver. */
   team(workspaceId: string): Promise<TeamState>

@@ -45,8 +45,6 @@ import {
 import { renderPersona } from './persona.js'
 import { botDenyReason, botToolOf, denyReason, insideDir, needOf, writeTarget } from './policy.js'
 import { SoulHistory, type SoulRecord } from './soul.js'
-import { registerManageTools } from './manage-tools.js'
-import { OWNER_ID, PeopleStore, type PersonRecord, type ThreadRecord } from './people.js'
 import { BotError, BotStore, COMMANDER_ID } from './store.js'
 import { loadTemplates } from './templates.js'
 
@@ -68,8 +66,6 @@ export * from './portable.js'
 export * from './mcp.js'
 export * from './mcp-import.js'
 export * from './soul.js'
-export * from './manage.js'
-export * from './people.js'
 
 export const name = 'aris-bots'
 export const inject = [
@@ -152,39 +148,6 @@ export async function apply(ctx: Context): Promise<void> {
   }
   const souls = new SoulHistory(domain.table('souls') as unknown as Table<SoulRecord>)
   await store.ensureCommander()
-  // Aris quản đội (GĐ9.2): tạo bot, sửa và khôi phục lời dặn bằng lời, luôn qua thẻ duyệt.
-  registerManageTools(ctx, store, souls)
-
-  // Người và luồng (GĐ9.6a): người "chủ"; luồng web của chủ với từng bot dựng từ phiên gần nhất (lần đầu).
-  const people = new PeopleStore(
-    domain.table('people') as unknown as Table<PersonRecord>,
-    domain.table('threads') as unknown as Table<ThreadRecord>,
-  )
-  await people.ensureOwner(store.owner().name ?? 'Chủ')
-  for (const b of store.list()) {
-    const last = store.latestOpen(b.id)
-    if (
-      last &&
-      !people.current(b.id, OWNER_ID, 'direct', 'web') &&
-      !people.current(b.id, OWNER_ID, 'direct', 'shared')
-    )
-      await people.touch({
-        bot: b.id,
-        person: OWNER_ID,
-        kind: 'direct',
-        channel: 'web',
-        session: last,
-        via: 'web',
-      })
-  }
-  /** Luồng chung của chủ trên mọi kênh (công tắc ở trang Kênh, `@aris/channels`). */
-  const sharedThreads = () =>
-    (ctx.get('arisChannels') as { sharedThreads?(): boolean } | undefined)?.sharedThreads?.() === true
-  const ownerChannel = () => (sharedThreads() ? 'shared' : 'web') as 'shared' | 'web'
-  ctx.provide('arisPeople', {
-    store: people,
-    shared: sharedThreads,
-  })
   await store.ensurePolicies(await loadTemplates())
 
   // Việc gần đây lưu bền: giữ 8 ngày (số liệu 7 ngày ở cột phải hồ sơ bot), tối đa 3.000 mục; nạp lại
@@ -244,20 +207,20 @@ export async function apply(ctx: Context): Promise<void> {
   // Cách xưng hô: bot hỏi người dùng lần đầu rồi lưu ở đây.
   ctx.tools.register(
     defineTool({
-      name: 'save_address_style',
+      name: 'xung_ho',
       description:
         'Lưu cách xưng hô với người dùng sau khi hỏi: tên, người dùng muốn được gọi là gì, bạn xưng là gì. Chỉ điền phần người dùng vừa nói; cả đội bot dùng chung.',
       parameters: {
-        name: { type: 'string', description: 'Tên người dùng.' },
-        call: { type: 'string', description: 'Gọi người dùng là gì, ví dụ "anh", "chị Hà", "bạn", "sếp".' },
-        self: { type: 'string', description: 'Bạn tự xưng là gì, ví dụ "em", "tôi", "mình".' },
+        ten: { type: 'string', description: 'Tên người dùng.' },
+        goi: { type: 'string', description: 'Gọi người dùng là gì, ví dụ "anh", "chị Hà", "bạn", "sếp".' },
+        xung: { type: 'string', description: 'Bạn tự xưng là gì, ví dụ "em", "tôi", "mình".' },
       },
       output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
       async execute(args) {
         const o = await store.setOwner({
-          ...(args.name !== undefined ? { name: args.name } : {}),
-          ...(args.call !== undefined ? { call: args.call } : {}),
-          ...(args.self !== undefined ? { self: args.self } : {}),
+          ...(args.ten !== undefined ? { name: args.ten } : {}),
+          ...(args.goi !== undefined ? { call: args.goi } : {}),
+          ...(args.xung !== undefined ? { self: args.xung } : {}),
         })
         return `Đã lưu: ${[o.name && `tên ${o.name}`, o.call && `gọi «${o.call}»`, o.self && `xưng «${o.self}»`].filter(Boolean).join(', ') || 'chưa có gì'}.`
       },
@@ -619,33 +582,10 @@ export async function apply(ctx: Context): Promise<void> {
     )
   }
 
-  /**
-   * Dấu của đội (bot, tên, phòng, linh vật, hai công tắc), gửi kèm trạng thái trực tiếp: giao diện thấy dấu đổi thì tải
-   * lại đội ngay (ví dụ Aris vừa tạo bot), không đợi lượt tải 30 giây.
-   */
-  const teamStamp = (bots: ReturnType<BotStore['list']>) => {
-    let h = 5381
-    for (const ch of bots
-      .map((b) =>
-        [
-          b.id,
-          b.name,
-          b.role,
-          b.department ?? '',
-          b.mascot,
-          b.skillsOnlyAssigned,
-          b.connectorsOnlyAssigned,
-        ].join(':'),
-      )
-      .join('|'))
-      h = ((h << 5) + h + ch.charCodeAt(0)) | 0
-    return (h >>> 0).toString(36)
-  }
-
   async function liveView() {
     const snap = live.snapshot(store.list().map((b) => b.id))
     const ids = [...new Set(Object.values(snap.status).flatMap((l) => l.sessions))]
-    return { ...snap, titles: await titlesFor(ids), team: teamStamp(store.list()) }
+    return { ...snap, titles: await titlesFor(ids) }
   }
 
   // Phiên gần đây của một bot cho ô chọn phiên ở bảng chat Văn phòng (`?sessions=<bot>`): tối đa 5 phiên có nội dung,
@@ -706,19 +646,6 @@ export async function apply(ctx: Context): Promise<void> {
               },
               souls,
               rewrite,
-              threads: {
-                current: (bot) => people.current(bot, OWNER_ID, 'direct', ownerChannel()),
-                opened: async (bot, session) => {
-                  await people.touch({
-                    bot,
-                    person: OWNER_ID,
-                    kind: 'direct',
-                    channel: ownerChannel(),
-                    session,
-                    via: 'web',
-                  })
-                },
-              },
               spend: () =>
                 (ctx.get('arisSpend') as { today(): Record<string, number> } | undefined)?.today() ?? {},
             },

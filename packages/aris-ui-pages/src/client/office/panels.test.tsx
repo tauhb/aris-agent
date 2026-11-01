@@ -192,12 +192,12 @@ describe('TeamBlock', () => {
     n: 4,
     at: 0,
     type: 'tool',
-    tool: 'assign_task',
-    title: 'assign_task',
+    tool: 'giao_viec',
+    title: 'giao_viec',
     body: JSON.stringify({
-      tasks: [
-        { bot: 'minh', title: 'So sánh 3 đối thủ' },
-        { bot: 'an', title: 'Gửi email mời 120 học viên' },
+      viec: [
+        { bot: 'minh', tieu_de: 'So sánh 3 đối thủ' },
+        { bot: 'an', tieu_de: 'Gửi email mời 120 học viên' },
       ],
     }),
     bodyFull: true,
@@ -235,21 +235,21 @@ describe('TeamBlock', () => {
 
   it('giao cả phòng: một nhánh cho phòng theo tên việc; lỗi giao thì hiện lời báo', () => {
     const props = { parent: 'aris-s', team, approvals: [], t, onChat: () => {}, reload: () => {} }
-    const dept = (out: string | undefined): ConvStep => ({
+    const phong = (out: string | undefined): ConvStep => ({
       n: 24,
       at: 0,
       type: 'tool',
-      tool: 'assign_department',
-      title: 'assign_department',
-      body: JSON.stringify({ department: 'Tăng trưởng', title: 'Chiến dịch ra mắt', task: 'x', reason: 'y' }),
+      tool: 'giao_phong',
+      title: 'giao_phong',
+      body: JSON.stringify({ phong: 'Tăng trưởng', tieu_de: 'Chiến dịch ra mắt', noi_dung: 'x', ly_do: 'y' }),
       bodyFull: true,
       ...(out === undefined ? {} : { out, outFull: true }),
     })
-    const html = renderToStaticMarkup(<TeamBlock step={dept(undefined)} {...props} />)
+    const html = renderToStaticMarkup(<TeamBlock step={phong(undefined)} {...props} />)
     expect(html).toContain('Tăng trưởng')
     expect(html).toContain('Chiến dịch ra mắt')
     expect(html).toContain('of.ch.teamDone(0,1)')
-    const bad = renderToStaticMarkup(<TeamBlock step={dept('Không có phòng «X».')} {...props} />)
+    const bad = renderToStaticMarkup(<TeamBlock step={phong('Không có phòng «X».')} {...props} />)
     expect(bad).toContain('Không có phòng «X».')
   })
 })

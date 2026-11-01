@@ -91,16 +91,6 @@ export const TEAM_PREFIX = 'doi-'
 export const isTeam = (r: Pick<McpRecord, 'bot'>) => r.bot === TEAM_OWNER
 
 /** Bot (mã và phòng) có nằm trong phạm vi của kết nối dùng chung không; chưa xét bot tự tắt. */
-/**
- * Dịch vụ của một kết nối, để biết hai kết nối cùng một dịch vụ: mục danh mục, không thì bộ dựng sẵn, không thì
- * địa chỉ hay lệnh chạy.
- */
-export function serviceOf(r: Pick<McpRecord, 'catalog' | 'preset' | 'url' | 'command' | 'args'>): string {
-  if (r.catalog) return `catalog:${r.catalog}`
-  if (r.preset !== 'custom') return `preset:${r.preset}`
-  return r.url ? `url:${r.url}` : `cmd:${[r.command ?? '', ...(r.args ?? [])].join(' ')}`
-}
-
 export function inScope(r: McpRecord, bot: { id: string; department?: string | undefined }): boolean {
   if (!isTeam(r) || !r.scope) return false
   if (r.scope.bots === 'all' || r.scope.bots.includes(bot.id)) return true
@@ -417,23 +407,9 @@ export class McpStore {
     return this.list(TEAM_OWNER)
   }
 
-  /**
-   * Mọi kết nối bot dùng được. Kết nối được gán là của riêng bot và kết nối của đội gán đích danh bot; kết nối
-   * dùng chung là kết nối của đội cho cả đội hay theo phòng. Bot bật "Chỉ dùng kết nối được gán" thì chỉ có
-   * phần được gán; không thì cộng phần dùng chung, trừ dịch vụ bot đã có kết nối được gán (được gán thắng).
-   * Kết nối dùng chung mà bot đã tắt thì bỏ.
-   */
-  forBot(bot: {
-    id: string
-    department?: string | undefined
-    connectorsOnlyAssigned?: boolean | undefined
-  }): McpRecord[] {
-    const team = this.team().filter((r) => inScope(r, bot) && !r.off?.includes(bot.id))
-    const named = (r: McpRecord) => Array.isArray(r.scope?.bots) && r.scope.bots.includes(bot.id)
-    const assigned = [...this.list(bot.id), ...team.filter(named)]
-    if (bot.connectorsOnlyAssigned) return assigned
-    const have = new Set(assigned.map(serviceOf))
-    return [...assigned, ...team.filter((r) => !named(r) && !have.has(serviceOf(r)))]
+  /** Mọi kết nối bot dùng được: của riêng bot, cộng kết nối của đội trong phạm vi mà bot chưa tắt. */
+  forBot(bot: { id: string; department?: string | undefined }): McpRecord[] {
+    return [...this.list(bot.id), ...this.team().filter((r) => inScope(r, bot) && !r.off?.includes(bot.id))]
   }
 
   async add(bot: string, input: McpInput): Promise<McpRecord> {

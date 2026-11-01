@@ -112,7 +112,7 @@ Plugin máy chủ `@aris/providers` thêm ba phần. Dữ liệu ở storage dom
   ghi bot `media.image`/`media.video`: `off`, `shared`, `own` + danh sách nhiều model + `fallback` rơi về chung + trần
   riêng). Model lỗi thì thử model kế: thiếu khoá, khoá hỏng, chưa bật thanh toán, hết tiền, giới hạn tốc độ, không làm
   được yêu cầu, không có model, lỗi mạng. Hết danh sách thì dừng, tin trả lời ghi từng lý do.
-- **Công cụ** `generate_image` (`prompt`, `aspect_ratio`, `count` 1–4 phương án) và `generate_video` (`prompt`, `aspect_ratio` 16:9 hay 9:16) đăng ký cho mọi bot; bot để
+- **Công cụ** `tao_anh` (mô tả, tỉ lệ, 1–4 phương án) và `tao_video` (mô tả, 16:9 hay 9:16) đăng ký cho mọi bot; bot để
   Tắt thì công cụ trả lời "chưa được bật" (dsh không ẩn công cụ theo từng agent). Trần mỗi ngày: chung ảnh 1 USD, video
   2 USD; riêng theo bot nếu đặt; tiền cộng vào sổ chi phí (`media-<loại>`, `bot:<mã>`, phòng ban).
 - Tệp lưu ở `<thư mục làm việc của phiên>/anh|video/<ngày>/`, ghi bảng `media_files`; giao diện lấy qua

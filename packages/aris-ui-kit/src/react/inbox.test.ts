@@ -3,9 +3,9 @@ import { fetchInboxCount, inboxTotal } from './inbox.js'
 
 describe('inboxTotal', () => {
   it('cộng yêu cầu quyền, ký ức, skill và một thẻ soát bộ não khi còn phát hiện', () => {
-    expect(inboxTotal({ actions: 2, memories: 3, skills: 1, auditOpen: 0 })).toBe(6)
-    expect(inboxTotal({ actions: 2, memories: 3, skills: 1, auditOpen: 7 })).toBe(7)
-    expect(inboxTotal({ actions: 0, memories: 0, skills: 0, auditOpen: 0 })).toBe(0)
+    expect(inboxTotal({ actions: 2, memories: 3, skills: 1, soatOpen: 0 })).toBe(6)
+    expect(inboxTotal({ actions: 2, memories: 3, skills: 1, soatOpen: 7 })).toBe(7)
+    expect(inboxTotal({ actions: 0, memories: 0, skills: 0, soatOpen: 0 })).toBe(0)
   })
 })
 
@@ -26,16 +26,16 @@ describe('fetchInboxCount', () => {
       'commander?approvals=all': { approvals: [{}, {}] },
       'memory?pending=all': { pending: [{}] },
       'skills?pending=all': { pending: [{}, {}, {}] },
-      'brain?audit=summary': { open: 4 },
+      'brain?soat=summary': { open: 4 },
     })
-    const c = await fetchInboxCount({ actions: 0, memories: 0, skills: 0, auditOpen: 0 })
-    expect(c).toEqual({ actions: 2, memories: 1, skills: 3, auditOpen: 4 })
+    const c = await fetchInboxCount({ actions: 0, memories: 0, skills: 0, soatOpen: 0 })
+    expect(c).toEqual({ actions: 2, memories: 1, skills: 3, soatOpen: 4 })
     expect(inboxTotal(c)).toBe(7)
   })
 
   it('nguồn nào lỗi thì giữ số cũ của nguồn đó', async () => {
     stub({ 'memory?pending=all': { pending: [] } })
-    const c = await fetchInboxCount({ actions: 2, memories: 5, skills: 1, auditOpen: 3 })
-    expect(c).toEqual({ actions: 2, memories: 0, skills: 1, auditOpen: 3 })
+    const c = await fetchInboxCount({ actions: 2, memories: 5, skills: 1, soatOpen: 3 })
+    expect(c).toEqual({ actions: 2, memories: 0, skills: 1, soatOpen: 3 })
   })
 })

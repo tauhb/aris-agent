@@ -65,12 +65,13 @@ describe('nhánh việc từ lần gọi subagent', () => {
 })
 
 describe('nhánh giao việc', () => {
-  const NEW_ARGS = '{"tasks":[{"bot":"khoa","title":"Trả lời ok"},{"bot":"minh","task":"Tóm tắt"}]}'
-  const call = (text: string, isError = false, argsRaw = NEW_ARGS): SubagentCall => ({
+  const call = (text: string, isError = false): SubagentCall => ({
     phase: 'result',
     block: {
       callId: 'c2',
-      call: { argsRaw },
+      call: {
+        argsRaw: '{"viec":[{"bot":"khoa","tieu_de":"Trả lời ok"},{"bot":"minh","noi_dung":"Tóm tắt"}]}',
+      },
       content: [{ type: 'text', text }],
       isError,
     },
@@ -88,14 +89,6 @@ describe('nhánh giao việc', () => {
     expect(
       dispatchItems(call('Không giao được: Đã có 6 bot đang chạy (tối đa 6).')).map((i) => i.error),
     ).toEqual(['Đã có 6 bot đang chạy (tối đa 6).', 'Đã có 6 bot đang chạy (tối đa 6).'])
-    expect(dispatchItems(call('Error: the user rejected tool "assign_task"', true))[0]?.rejected).toBe(true)
-  })
-  it('lời gọi trong log cũ (giao_viec, tham số tiếng Việt) vẫn đọc được', () => {
-    const old =
-      '{"viec":[{"bot":"khoa","tieu_de":"Trả lời ok"},{"bot":"minh","noi_dung":"Tóm tắt\\ndòng hai"}]}'
-    expect(dispatchItems(call('- @khoa (Khoa): đã nhận việc, phiên p-1', false, old))).toMatchObject([
-      { handle: 'khoa', title: 'Trả lời ok', sessionId: 'p-1' },
-      { handle: 'minh', title: 'Tóm tắt' },
-    ])
+    expect(dispatchItems(call('Error: the user rejected tool "giao_viec"', true))[0]?.rejected).toBe(true)
   })
 })

@@ -111,19 +111,3 @@ describe('khối Markdown', () => {
     ])
   })
 })
-
-describe('tên bot viết thẳng (giao diện GĐ9)', () => {
-  it('nhận tên đứng riêng, không nhận khi dính chữ khác; @tên vẫn như cũ', async () => {
-    const { splitRefs } = await import('./who-data.js')
-    const names = new Map([
-      ['Mai', 'mai'],
-      ['Lâm', 'lam'],
-    ])
-    const parts = splitRefs('Mai và @lam nhờ Lâm, còn Maika thì không', new Set(['mai', 'lam']), names)
-    expect(parts.filter((p) => p.kind === 'mention').map((p) => [p.handle, p.text])).toEqual([
-      ['mai', 'Mai'],
-      ['lam', '@lam'],
-      ['lam', 'Lâm'],
-    ])
-  })
-})

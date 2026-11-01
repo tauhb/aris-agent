@@ -4,7 +4,6 @@
  * duyệt và câu hỏi. Mọi phụ thuộc của dsh đi qua `HubDeps` để kiểm thử bằng bản giả.
  */
 import { commandAllowed, decide, type Trust } from './access.js'
-import { linkThread, type ChatWho, type PeoplePort } from './people-link.js'
 import { NOT_OWNER_NOTE, T } from './copy.js'
 import type { BotRecord, InboxRecord, OutboxRecord } from './domain.js'
 import { sttNotReady, textToVoice, transcribe, type SpeechToText } from './media.js'
@@ -296,10 +295,6 @@ export interface HubDeps {
   /** Nhịp nghỉ giữa các phần của một câu trả lời dài (mặc định 0,6 giây; kiểm thử đặt 0). */
   partGapMs?: number
   sleep?: (ms: number) => Promise<void>
-  /** Người và luồng (`@aris/bots`, GĐ9.6a); không có thì như trước. */
-  people?: () => PeoplePort | undefined
-  /** Báo chủ khi không có Telegram (nhắn riêng trên Lark); trả true khi đã gửi. */
-  ownerFallback?: (markdown: string) => Promise<boolean>
 }
 
 /** Câu trả lời cắt ở chừng này ký tự, theo đoạn rồi dòng rồi câu (GĐ8.7 đợt A). */
@@ -899,35 +894,18 @@ export class ChannelHub {
     chatId: number,
     topic: number | undefined,
     fresh = false,
-    who?: ChatWho,
   ): Promise<LiveAgent> {
-    const bind = async (sessionId: string) =>
-      this.store.bindThread({ key, bot, chatId, ...(topic ? { threadId: topic } : {}), sessionId })
-    // Người và luồng (GĐ9.6a): ghi luồng; bật luồng chung thì chủ nhắn riêng dùng chung trang với chat web.
-    const sessionId = await linkThread(this.d.people?.(), this.sharedThreads(), bot, who, async (shared) => {
-      const t = this.store.thread(key)
-      if (shared && !fresh) {
-        if (t?.sessionId !== shared) await bind(shared)
-        return shared
+    const t = this.store.thread(key)
+    if (t && !fresh) {
+      try {
+        return await this.d.sessions.agent(t.sessionId)
+      } catch (e) {
+        this.d.logger.warn('aris-channels: mở lại phiên %s: %s, mở phiên mới', t.sessionId, String(e))
       }
-      if (t && !fresh) {
-        try {
-          await this.d.sessions.agent(t.sessionId)
-          return t.sessionId
-        } catch (e) {
-          this.d.logger.warn('aris-channels: mở lại phiên %s: %s, mở phiên mới', t.sessionId, String(e))
-        }
-      }
-      const created = await this.d.sessions.create(bot)
-      await bind(created)
-      return created
-    })
+    }
+    const sessionId = await this.d.sessions.create(bot)
+    await this.store.bindThread({ key, bot, chatId, ...(topic ? { threadId: topic } : {}), sessionId })
     return this.d.sessions.agent(sessionId)
-  }
-
-  /** Luồng chung của chủ trên mọi kênh (GĐ9.6a), bật ở trang Kênh. */
-  sharedThreads(): boolean {
-    return this.store.settings().sharedThreads === true
   }
 
   private async content(
@@ -1007,13 +985,7 @@ export class ChannelHub {
     const content = await this.content(rt, m, trust, text)
     if (!content) return false
     if (resumed) await this.reply(rt.api, m, T.restarted)
-    const agent = await this.sessionFor(rt.rec.bot, key, m.chat.id, topic, false, {
-      channel: 'telegram',
-      ref: String(m.from?.id ?? m.chat.id),
-      name: [m.from?.first_name, m.from?.last_name].filter(Boolean).join(' ') || (m.from?.username ?? ''),
-      trust,
-      group: m.chat.type !== 'private',
-    })
+    const agent = await this.sessionFor(rt.rec.bot, key, m.chat.id, topic)
     const group = m.chat.type !== 'private' ? this.store.group(m.chat.id, rt.id) : undefined
     if (group?.prompt)
       agent.inject(
@@ -1788,11 +1760,6 @@ export class ChannelHub {
   }
 
   /** Lượt hiện tại của phiên có phải của kênh không; nếu có thì người gửi có quyền thấp nhất là gì. */
-  /** Mức tin cậy của lượt đang chạy ở phiên của kênh (thấp nhất trong các tin của lượt); không phải phiên của kênh thì undefined. */
-  trustOf(sessionId: string): Trust | undefined {
-    return this.turnOf(sessionId)?.trust
-  }
-
   private turnOf(sessionId: string): { last: Pending; trust: Trust } | undefined {
     const ours = this.tracker.active(sessionId)
     const last = ours.at(-1)
@@ -2393,29 +2360,14 @@ export class ChannelHub {
     return 'Đã báo chủ.'
   }
 
-  /**
-   * Một cửa báo tin cho chủ (GĐ9.6a): mọi gói báo chủ qua đây. Gửi bằng tài khoản Telegram chính của bot; bot không có
-   * tài khoản thì qua tài khoản của Aris, kèm tên bot; không có Telegram thì nhắn riêng chủ trên Lark.
-   */
   async sendHome(bot: string, markdown: string): Promise<string> {
     // `bot` là mã bot (hay mã tài khoản): gửi bằng tài khoản chính của bot đó.
-    let rt = this.runtimes.get(bot) ?? this.rtOfBot(bot)
-    if (!rt && bot !== 'aris') {
-      const home = this.homeAccount()
-      rt = home ? this.runtimes.get(home) : undefined
-      const name = this.d.team?.().find((b) => b.id === bot)?.name
-      if (rt && name) markdown = `**${name}:** ${markdown}`
-    }
-    const home = rt
-      ? (this.store.bot(rt.id)?.home ??
-        (this.store.owners()[0] ? { chatId: this.store.owners()[0]!.userId } : undefined))
-      : undefined
-    if (!rt || !home) {
-      if (await this.d.ownerFallback?.(markdown)) return 'Đã gửi.'
-      return rt
-        ? 'Chưa có nơi nhận: người dùng chưa ghép đôi hoặc chưa /sethome.'
-        : 'Bot chưa kết nối Telegram.'
-    }
+    const rt = this.runtimes.get(bot) ?? this.rtOfBot(bot)
+    if (!rt) return 'Bot chưa kết nối Telegram.'
+    const home =
+      this.store.bot(rt.id)?.home ??
+      (this.store.owners()[0] ? { chatId: this.store.owners()[0]!.userId } : undefined)
+    if (!home) return 'Chưa có nơi nhận: người dùng chưa ghép đôi hoặc chưa /sethome.'
     const rec: OutboxRecord = {
       id: `${keyNum(home.chatId)}-${this.now()}-${randomId()}`,
       bot: rt.id,

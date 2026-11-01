@@ -73,8 +73,8 @@ Khi agent được tạo, aris gắn một nguồn skill vào phạm vi của ag
 
 ### `/learn` — học skill từ nguồn
 
-- `/learn <nguồn>` trong chat của một bot: nguồn là thư mục, tệp, URL, hay một quy trình tả bằng lời / vừa làm trong cuộc này. Lệnh không tự đọc gì: nó gửi cho bot một lượt có chuẩn viết skill của aris (tên chữ thường nối gạch, mô tả một câu, các mục Khi nào dùng / Các bước / Lỗi thường gặp / Kiểm tra, bài học tổng quát chứ không phải nhật ký), bot tự gom tài liệu bằng công cụ sẵn có (đọc tệp, tìm, đọc web) rồi gọi công cụ `save_skill`.
-- `save_skill` chỉ dùng được trong lượt do `/learn` mở (lượt khác bị từ chối kèm lý do). Nó tạo **đề xuất** của bot đó (`by: user`, lý do "Học từ: <nguồn>", 1–3 ca thử là các yêu cầu mẫu bot viết), qua bộ kiểm như mọi đề xuất; trùng tên skill đang có thì thành bản vá. Duyệt như cũ: Hộp duyệt, thẻ Telegram, màn 3.3 (kiểm thử được).
+- `/learn <nguồn>` trong chat của một bot: nguồn là thư mục, tệp, URL, hay một quy trình tả bằng lời / vừa làm trong cuộc này. Lệnh không tự đọc gì: nó gửi cho bot một lượt có chuẩn viết skill của aris (tên chữ thường nối gạch, mô tả một câu, các mục Khi nào dùng / Các bước / Lỗi thường gặp / Kiểm tra, bài học tổng quát chứ không phải nhật ký), bot tự gom tài liệu bằng công cụ sẵn có (đọc tệp, tìm, đọc web) rồi gọi công cụ `luu_skill`.
+- `luu_skill` chỉ dùng được trong lượt do `/learn` mở (lượt khác bị từ chối kèm lý do). Nó tạo **đề xuất** của bot đó (`by: user`, lý do "Học từ: <nguồn>", 1–3 ca thử là các yêu cầu mẫu bot viết), qua bộ kiểm như mọi đề xuất; trùng tên skill đang có thì thành bản vá. Duyệt như cũ: Hộp duyệt, thẻ Telegram, màn 3.3 (kiểm thử được).
 - Màn 3.2: nút "Học skill từ tài liệu…" chưa có bảng nhập (chưa vẽ); nhãn đổi thành hướng dẫn dùng `/learn` trong chat.
 
 ### Người dọn kho

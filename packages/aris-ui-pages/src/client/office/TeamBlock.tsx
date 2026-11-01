@@ -1,11 +1,11 @@
 /**
  * Khối "Đội đang làm" trong bảng chat với Aris (bản vẽ `VanPhongChatAris`): hiện ngay sau tin Aris chia việc. Giao cho từng
- * bot (`assign_task`): dữ liệu là chính lần gọi mà khung chat đầy đủ vẽ thành nhánh (`dispatchItems` của `@aris/ui-kit`).
- * Giao cả phòng (`assign_department`): một nhánh cho trưởng nhóm, tìm theo bảng việc lớn của máy chủ (`?jobs=1`), kèm các nhánh con
- * thụt vào cho thành viên trưởng nhóm đã giao (một cấp, đọc từ các lần `assign_task` trong phiên của trưởng nhóm). Trạng
+ * bot (`giao_viec`): dữ liệu là chính lần gọi mà khung chat đầy đủ vẽ thành nhánh (`dispatchItems` của `@aris/ui-kit`).
+ * Giao cả phòng (`giao_phong`): một nhánh cho trưởng nhóm, tìm theo bảng việc lớn của máy chủ (`?jobs=1`), kèm các nhánh con
+ * thụt vào cho thành viên trưởng nhóm đã giao (một cấp, đọc từ các lần `giao_viec` trong phiên của trưởng nhóm). Trạng
  * thái từng nhánh đọc từ kết quả phiên, lần chạy của bot ngoài và danh sách yêu cầu quyền đang chờ.
  */
-import { argOf, currentToolName, dispatchItems, type DispatchItem, type SubagentCall } from '@aris/ui-kit'
+import { dispatchItems, type DispatchItem, type SubagentCall } from '@aris/ui-kit'
 import {
   Mascot,
   answerApproval,
@@ -20,7 +20,7 @@ import {
   branchState,
   jobState,
   matchJob,
-  departmentItem,
+  phongItem,
   teamProgress,
   type BranchState,
   type ConvStep,
@@ -37,7 +37,7 @@ const PILL: Record<BranchState, { tone: string; key: string }> = {
   failed: { tone: 'err', key: 'of.feed.k.failed' },
 }
 
-/** Lần gọi `assign_task` từ bước phát lại: có kết quả rồi thì pha `result`, chưa thì pha `start`. */
+/** Lần gọi `giao_viec` từ bước phát lại: có kết quả rồi thì pha `result`, chưa thì pha `start`. */
 export function callOfStep(step: ConvStep): SubagentCall {
   return step.out !== undefined
     ? {
@@ -148,7 +148,7 @@ function Branch({
 }
 
 /**
- * Nhánh con của trưởng nhóm: các việc trưởng nhóm đã giao cho thành viên (`assign_task` trong phiên của trưởng nhóm), một
+ * Nhánh con của trưởng nhóm: các việc trưởng nhóm đã giao cho thành viên (`giao_viec` trong phiên của trưởng nhóm), một
  * cấp, thụt vào dưới nhánh trưởng nhóm. Đọc lại chậm khi việc lớn đã xong.
  */
 function LeadKids({
@@ -168,7 +168,7 @@ function LeadKids({
   const kids = useMemo(
     () =>
       (conv?.steps ?? [])
-        .filter((s) => s.type === 'tool' && currentToolName(s.tool ?? '') === 'assign_task')
+        .filter((s) => s.type === 'tool' && s.tool === 'giao_viec')
         .flatMap((s) => dispatchItems(callOfStep(s))),
     [conv],
   )
@@ -196,7 +196,7 @@ export function TeamBlock({
   reload,
 }: {
   step: ConvStep
-  /** Phiên Aris đang xem (phiên giao việc), để tìm việc lớn của lần `assign_department`. */
+  /** Phiên Aris đang xem (phiên giao việc), để tìm việc lớn của lần `giao_phong`. */
   parent: string | undefined
   team: TeamView
   approvals: readonly PendingApproval[]
@@ -204,14 +204,14 @@ export function TeamBlock({
   onChat: (bot: string, session?: string) => void
   reload: () => void
 }) {
-  const wholeDept = currentToolName(step.tool ?? '') === 'assign_department'
+  const wholeDept = step.tool === 'giao_phong'
   const jobs = useJobs(wholeDept)
   // Mỗi nhánh gồm việc, và việc lớn (có khi là lần giao cả phòng).
   const entries = useMemo(() => {
     if (!wholeDept) return dispatchItems(callOfStep(step)).map((item) => ({ item, job: undefined }))
     const job = matchJob(step, parent, jobs ?? [])
     const leadHandle = team.bots.find((b) => b.id === job?.lead)?.handle ?? ''
-    const item = departmentItem(step, job, leadHandle)
+    const item = phongItem(step, job, leadHandle)
     return item ? [{ item, job }] : []
   }, [step.body, step.out, step.error, step.at, wholeDept, parent, jobs, team.bots])
   const [states, setStates] = useState<Record<string, BranchState>>({})
@@ -239,7 +239,7 @@ export function TeamBlock({
           key={keyOf(e)}
           item={e.item}
           job={e.job}
-          dept={e.job?.departmentName ?? (wholeDept ? departmentName(step) : undefined)}
+          dept={e.job?.departmentName ?? (wholeDept ? phongName(step) : undefined)}
           team={team}
           approvals={approvals}
           t={t}
@@ -264,13 +264,11 @@ export function TeamBlock({
   )
 }
 
-/** Tên phòng người giao gõ trong lần `assign_department` (khi chưa có bản ghi việc lớn). */
-function departmentName(step: ConvStep): string | undefined {
+/** Tên phòng người giao gõ trong lần `giao_phong` (khi chưa có bản ghi việc lớn). */
+function phongName(step: ConvStep): string | undefined {
   try {
-    // Log cũ ghi tham số `phong`: đọc cả hai.
-    const v = JSON.parse(step.body) as Record<string, unknown>
-    const name = argOf(v, 'department', 'phong')
-    return typeof name === 'string' ? name : undefined
+    const v = JSON.parse(step.body) as { phong?: unknown }
+    return typeof v.phong === 'string' ? v.phong : undefined
   } catch {
     return undefined
   }

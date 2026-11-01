@@ -124,7 +124,7 @@ export function weekKey(d: Date): string {
   return dayKey(x)
 }
 
-export type KeepReason = 'daily' | 'weekly'
+export type KeepReason = 'ngay' | 'tuan'
 
 /**
  * Bản nào giữ: bản mới nhất của mỗi ngày trong `keepDaily` ngày gần nhất có bản, và bản mới nhất của mỗi tuần
@@ -144,14 +144,14 @@ export function pickKeep<T extends { at: Date }>(
     if (days.has(d)) continue
     if (days.size >= keepDaily) break
     days.add(d)
-    keep.set(c, 'daily')
+    keep.set(c, 'ngay')
   }
   for (const c of sorted) {
     const w = weekKey(c.at)
     if (weeks.has(w)) continue
     if (weeks.size >= keepWeekly) break
     weeks.add(w)
-    if (!keep.has(c)) keep.set(c, 'weekly')
+    if (!keep.has(c)) keep.set(c, 'tuan')
   }
   return { keep, drop: sorted.filter((c) => !keep.has(c)) }
 }

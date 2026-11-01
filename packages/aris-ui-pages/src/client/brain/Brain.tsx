@@ -11,11 +11,11 @@ import { BrainGraph } from './Graph.js'
 import { Inbox } from './Inbox.js'
 import { BrainLog } from './Log.js'
 import { Notes, type Space } from './Notes.js'
-import { Audit } from './Audit.js'
+import { Soat } from './Soat.js'
 import { Ico } from './tree.js'
 
 /** Các trang con không có thanh tab và ô tìm. */
-const SUBPAGES = { inbox: Inbox, ask: Ask, log: BrainLog, audit: Audit } as const
+const SUBPAGES = { inbox: Inbox, ask: Ask, log: BrainLog, soat: Soat } as const
 type View = 'graph' | 'notes' | keyof typeof SUBPAGES
 const VIEW_KEYS: readonly string[] = ['graph', 'notes', ...Object.keys(SUBPAGES)]
 
@@ -23,11 +23,7 @@ const VIEW_KEYS: readonly string[] = ['graph', 'notes', ...Object.keys(SUBPAGES)
 const DEFAULT_VIEW: View = 'graph'
 const SPACES = ['ca-nhan', 'cong-ty'] as const
 
-/** Đường vào cũ dùng `view=soat`: quy về `audit`. */
-const viewOf = (raw: string | undefined): View => {
-  const v = raw === 'soat' ? 'audit' : raw
-  return v && VIEW_KEYS.includes(v) ? (v as View) : DEFAULT_VIEW
-}
+const viewOf = (v: string | undefined): View => (v && VIEW_KEYS.includes(v) ? (v as View) : DEFAULT_VIEW)
 const spaceOf = (v: string | undefined): Space => (v === 'cong-ty' ? 'cong-ty' : 'ca-nhan')
 
 export function Brain(props: PageProps) {
