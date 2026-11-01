@@ -1,6 +1,7 @@
 /** Storage domain `aris_commander`: nhật ký giao việc (quyết định định tuyến) cho trang 2.5. */
 import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 import { durableRecord, type DurableRecord } from './durable.js'
+import { taskRecord, type TaskRecord } from './teammates.js'
 import { z } from 'zod'
 import { commanderSettings, type CommanderSettings } from './settings.js'
 
@@ -168,6 +169,8 @@ export const commanderDomain = defineDomain({
     driver: domainTable<string, z.infer<typeof driverRecord>>(driverRecord),
     /** Duyệt bền (GĐ9.7a): yêu cầu đang chờ và lần được phép một lần. */
     approvals: domainTable<string, DurableRecord>(durableRecord),
+    /** Đồng đội hỏi nhau (GĐ9.5): mỗi câu hỏi một bản ghi. */
+    tasks: domainTable<string, TaskRecord>(taskRecord),
   },
 })
 

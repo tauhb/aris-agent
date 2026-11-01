@@ -1760,6 +1760,11 @@ export class ChannelHub {
   }
 
   /** Lượt hiện tại của phiên có phải của kênh không; nếu có thì người gửi có quyền thấp nhất là gì. */
+  /** Mức tin cậy của lượt đang chạy ở phiên của kênh (thấp nhất trong các tin của lượt); không phải phiên của kênh thì undefined. */
+  trustOf(sessionId: string): Trust | undefined {
+    return this.turnOf(sessionId)?.trust
+  }
+
   private turnOf(sessionId: string): { last: Pending; trust: Trust } | undefined {
     const ours = this.tracker.active(sessionId)
     const last = ours.at(-1)

@@ -302,6 +302,14 @@ export async function apply(ctx: Context): Promise<void> {
     )
   }
   ctx.provide('arisChannelApprovals', { approve: channelApprove })
+  // Lượt này của chủ hay của khách (đồng đội hỏi nhau GĐ9.5 chỉ mở cho lượt của chủ). Thấp nhất giữa các kênh biết phiên.
+  ctx.provide('arisChannelTrust', {
+    of: (sessionId: string) => {
+      const all = [hub.trustOf(sessionId), lark.trustOf(sessionId), zalo.trustOf(sessionId)].filter(Boolean)
+      if (!all.length) return undefined
+      return all.includes('guest') ? 'guest' : all.includes('member') ? 'member' : 'owner'
+    },
+  })
   ctx.on('approval/request', async (req, next) => (await channelApprove(req)) ?? next(), true)
   ctx.on(
     'user-questions/request',

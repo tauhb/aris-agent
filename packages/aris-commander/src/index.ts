@@ -51,6 +51,7 @@ import {
 } from './external.js'
 import { ApprovalHub } from './approval.js'
 import { DurableApprovals, RepeatGuard, argsHash, isOutbound, type DurableRecord } from './durable.js'
+import { LIMITS, answerText, cannotAsk, consultMessage, returnMessage, type TaskRecord } from './teammates.js'
 import { learnedContext, learnedFrom } from './learned.js'
 import {
   DRIVER_TICK_MS,
@@ -103,6 +104,7 @@ export * from './jobs.js'
 export * from './external.js'
 export * from './approval.js'
 export * from './durable.js'
+export * from './teammates.js'
 export * from './claude-driver.js'
 export * from './codex-driver.js'
 export * from './cli.js'
@@ -1457,6 +1459,8 @@ export async function apply(ctx: Context): Promise<void> {
   const durableOn = () => settings().durable !== false
   const repeats = new RepeatGuard()
   const sessionRun = (sid: string) => `session:${sid}`
+  /** Phiên đang trả lời câu hỏi ý của đồng đội (GĐ9.5): mã phiên → mã việc. */
+  const consultSessions = new Map<string, string>()
   const sessionItem = (
     r: Pick<DurableRecord, 'id' | 'session' | 'bot' | 'name' | 'tool' | 'reason' | 'at'>,
     run: string,
@@ -1692,6 +1696,23 @@ export async function apply(ctx: Context): Promise<void> {
     'approval/request',
     async (req, next) => {
       const sid = req.agent.session.id
+      // Phiên đang trả lời câu hỏi ý của đồng đội (GĐ9.5): không làm việc cần duyệt.
+      if (consultSessions.has(sid)) {
+        const agent = (ctx.get('agents') as { get(id: string): unknown } | undefined)?.get(sid) as
+          { steer?(m: unknown): void } | undefined
+        agent?.steer?.(
+          createUserMessage({
+            content: [
+              {
+                type: 'text',
+                text: '[aris] Bạn đang trả lời câu hỏi ý của đồng đội: thao tác cần duyệt bị từ chối. Đừng thử cách khác; trả lời bằng những gì đã biết và nói rõ việc nào cần chủ làm hay duyệt.',
+              },
+            ],
+            source: { kind: 'aris-bot', form: 'relay', bot: 'aris', name: 'aris' },
+          }),
+        )
+        return 'rejected'
+      }
       if (!durableOn() || members.has(sid)) return next()
       // Phiên của kênh (Telegram, Lark, Zalo): kênh lo như trước.
       const channels = ctx.get('arisChannelApprovals') as
@@ -1726,6 +1747,155 @@ export async function apply(ctx: Context): Promise<void> {
     // Đứng trước thẻ duyệt của dsh trong chuỗi (như mọi hook duyệt của aris).
     true,
   )
+
+  // --- Đồng đội hỏi nhau (GĐ9.5, docs/plans/gd9-5-dong-doi-hoi-nhau.md) -----------------------------------------
+  const tasks = domain.table('tasks') as unknown as Table<TaskRecord>
+  const teammatesOn = () => settings().teammates !== false
+  /** Lúc bắt đầu lượt hiện tại của mỗi phiên (gốc của chuỗi hỏi). */
+  const turnStarted = new Map<string, number>()
+  ctx.on('session/event', (session, event) => {
+    if ((event.type as string) !== 'turn/start') return
+    turnStarted.set(session.id, Date.now())
+    if (turnStarted.size > 500) turnStarted.delete(turnStarted.keys().next().value!)
+  })
+  const allTasks = () => [...tasks.entries()].map(([, t]) => t)
+  /** Kết quả chờ nhắn về phiên của bot hỏi (lượt đã dừng), gom theo phiên. */
+  const returning = new Map<string, { list: TaskRecord[]; timer: ReturnType<typeof setTimeout> }>()
+  const queueReturn = (t: TaskRecord) => {
+    const cur = returning.get(t.fromSession)
+    if (cur) return void cur.list.push(t)
+    const entry = {
+      list: [t],
+      timer: setTimeout(() => {
+        returning.delete(t.fromSession)
+        const at = new Date().toISOString()
+        void relay(t.fromSession, returnMessage(entry.list), { bot: 'aris', name: 'aris' })
+          .then(() => Promise.all(entry.list.map((x) => tasks.put(x.id, { ...x, returnedAt: at }))))
+          .catch((e: unknown) => logger.warn('nhắn kết quả hỏi đồng đội: %s', String(e)))
+      }, LIMITS.batchMs),
+    }
+    returning.set(t.fromSession, entry)
+  }
+  const findTeammate = (ref: string) => {
+    const r = ref.replace(/^@/, '').trim().toLowerCase()
+    const store = bots().store
+    return (
+      store.byHandle(r) ??
+      store.get(ref.trim()) ??
+      store.list().find((b) => b.name.trim().toLowerCase() === r)
+    )
+  }
+
+  ctx.tools.register(
+    defineTool({
+      name: 'ask_teammate',
+      description:
+        'Hỏi ý một đồng đội trong đội (danh sách và việc của từng người ở <aris-bot>) khi câu hỏi thuộc chuyên môn của họ. Đồng đội trả lời ở phiên riêng, câu trả lời về đây làm kết quả để bạn làm tiếp. Chỉ hỏi ý: đồng đội không gửi tin hay sửa gì ra ngoài. Đồng đội không thấy cuộc trò chuyện này, nên ghi đủ ngữ cảnh. Không hỏi điều bạn tự trả lời được; mỗi lượt hỏi tối đa 6 lần.',
+      parameters: {
+        teammate: { type: 'string', required: true, description: '@tên gọi hay tên của đồng đội.' },
+        question: { type: 'string', required: true, description: 'Câu hỏi, rõ ràng, một ý.' },
+        context: {
+          type: 'string',
+          description: 'Ngữ cảnh đồng đội cần để trả lời (đồng đội không thấy cuộc này).',
+        },
+      },
+      output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+      async execute(args, exec) {
+        if (!teammatesOn()) return 'Người dùng đã tắt "Đồng đội hỏi nhau" (trang Commander). Tự trả lời.'
+        const sid = (exec.agent as unknown as AgentLike | undefined)?.session.id
+        if (!sid) return 'Không có phiên để hỏi đồng đội.'
+        const me = bots().store.botOf(sid)
+        const parentId = consultSessions.get(sid)
+        const parent = parentId ? tasks.get(parentId) : undefined
+        const depth = parent ? parent.depth + 1 : 1
+        const root = parent?.root ?? `${sid}@${turnStarted.get(sid) ?? 0}`
+        const trust = parent
+          ? undefined
+          : (
+              ctx.get('arisChannelTrust') as
+                { of(sid: string): 'owner' | 'member' | 'guest' | undefined } | undefined
+            )?.of(sid)
+        const ref = String(args.teammate ?? '')
+        const target = findTeammate(ref)
+        const question = String(args.question ?? '').trim()
+        if (!question) return 'Cần câu hỏi.'
+        const why = cannotAsk({
+          depth,
+          rootCount: allTasks().filter((t) => t.root === root).length,
+          trust,
+          self: me.id,
+          target,
+          targetRef: ref,
+        })
+        if (why || !target) return why ?? `Không có đồng đội «${ref}».`
+        const task: TaskRecord = {
+          id: randomUUID(),
+          root,
+          ...(parent ? { parent: parent.id } : {}),
+          depth,
+          from: me.id,
+          fromName: me.name,
+          fromSession: sid,
+          to: target.id,
+          toName: target.name,
+          question,
+          status: 'running',
+          startedAt: new Date().toISOString(),
+        }
+        let toSession: string
+        try {
+          toSession = await bots().open(target.id)
+        } catch (e) {
+          return `Không mở được phiên cho ${target.name}: ${String(e)}`
+        }
+        consultSessions.set(toSession, task.id)
+        await tasks.put(task.id, { ...task, toSession })
+        const since = Date.now()
+        await relay(toSession, consultMessage(me.name, question, args.context as string | undefined), {
+          bot: me.id,
+          name: me.name,
+        })
+        // Chờ đồng đội không theo lượt của bot hỏi: lượt đó dừng thì kết quả vẫn được nhắn về sau.
+        const finish = waitTurn(toSession, since, AbortSignal.timeout(LIMITS.waitMs))
+          .catch((): Spoken => ({ kind: 'timeout', text: '' }))
+          .then(async (spoken) => {
+            consultSessions.delete(toSession)
+            const ok = spoken.kind === 'completed' && !!spoken.text.trim()
+            const done: TaskRecord = {
+              ...task,
+              toSession,
+              status: ok ? 'done' : 'failed',
+              ...(ok ? { answer: spoken.text.trim() } : {}),
+              finishedAt: new Date().toISOString(),
+            }
+            await tasks.put(done.id, done)
+            return done
+          })
+        const signal = exec.signal
+        const stopped = new Promise<'stopped'>((resolve) => {
+          if (signal?.aborted) resolve('stopped')
+          signal?.addEventListener('abort', () => resolve('stopped'), { once: true })
+        })
+        const first = await Promise.race([finish, stopped])
+        if (first === 'stopped') {
+          void finish.then(queueReturn)
+          return `Đã gửi câu hỏi cho ${target.name}; kết quả sẽ được nhắn về sau.`
+        }
+        return first.status === 'done'
+          ? answerText(target.name, first.answer ?? '')
+          : `${target.name} chưa trả lời được (quá ${LIMITS.waitMs / 60_000} phút hay gặp lỗi). Tự trả lời bằng những gì bạn biết, nói rõ chỗ chưa chắc.`
+      },
+    }),
+  )
+
+  // Khởi động lại: câu hỏi đang chạy bị ngắt; báo bot hỏi (gom theo phiên).
+  void (async () => {
+    for (const t of allTasks().filter((x) => x.status === 'running')) {
+      const cut: TaskRecord = { ...t, status: 'interrupted', finishedAt: new Date().toISOString() }
+      await tasks.put(t.id, cut)
+      queueReturn(cut)
+    }
+  })().catch((e: unknown) => logger.warn('nạp câu hỏi đồng đội cũ: %s', String(e)))
 
   // Chống lặp: thao tác ra ngoài (gửi tin, ghi qua kết nối) cùng bot, cùng tham số vừa chạy xong thì chặn.
   const mcpWrites = (tool: string) =>

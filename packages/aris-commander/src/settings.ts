@@ -17,6 +17,8 @@ export const commanderSettings = z.object({
   approve: z.array(z.string()),
   /** Duyệt bền (GĐ9.7a): aris giữ và lưu yêu cầu duyệt, nhắn chen thì từ chối, chống lặp. Không có là bật. */
   durable: z.boolean().optional(),
+  /** Đồng đội hỏi nhau (GĐ9.5): bot hỏi ý đồng đội bằng `ask_teammate`. Không có là bật. */
+  teammates: z.boolean().optional(),
 })
 export type CommanderSettings = z.infer<typeof commanderSettings>
 
@@ -31,7 +33,8 @@ export class SettingsError extends Error {}
 export function cleanSettings(patch: unknown, current: CommanderSettings): CommanderSettings {
   const p = (patch && typeof patch === 'object' ? patch : {}) as Record<string, unknown>
   const next: Record<string, unknown> = { ...current }
-  for (const k of ['parallel', 'nested', 'helpers', 'approve', 'durable'] as const) if (k in p) next[k] = p[k]
+  for (const k of ['parallel', 'nested', 'helpers', 'approve', 'durable', 'teammates'] as const)
+    if (k in p) next[k] = p[k]
   if ('budgetUsd' in p) {
     if (p.budgetUsd === null || p.budgetUsd === '' || p.budgetUsd === 0) delete next.budgetUsd
     else next.budgetUsd = p.budgetUsd

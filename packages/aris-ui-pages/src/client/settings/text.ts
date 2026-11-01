@@ -1024,6 +1024,9 @@ export const SETTINGS_TEXT = text(
     'cmd.delegates': 'Can delegate to',
     'cmd.delegatesHint': 'Commander routes by capability descriptions and past results',
     'cmd.helpers': 'Anonymous helpers for parallel scans',
+    'cmd.teammates': 'Teammates ask each other: bots consult a teammate for expertise (only in your turns)',
+    'cmd.teammatesHint':
+      'The teammate answers in its own session and does not send or change anything outside. At most 2 levels, 6 questions per turn.',
     'cmd.durable':
       'Durable approvals: aris keeps and saves approval requests, typing while waiting denies, repeated sends are blocked',
     'cmd.durableHint':
@@ -2140,6 +2143,9 @@ export const SETTINGS_TEXT = text(
     'cmd.delegates': 'Được giao việc cho',
     'cmd.delegatesHint': 'Commander định tuyến theo mô tả năng lực và kết quả các lần trước',
     'cmd.helpers': 'Trợ lý ẩn danh cho việc quét song song',
+    'cmd.teammates': 'Đồng đội hỏi nhau: bot hỏi ý đồng đội khi cần chuyên môn (chỉ trong lượt của {you})',
+    'cmd.teammatesHint':
+      'Đồng đội trả lời ở phiên riêng, không gửi tin hay sửa gì ra ngoài. Tối đa 2 tầng, 6 câu mỗi lượt.',
     'cmd.durable': 'Duyệt bền: aris giữ và lưu yêu cầu duyệt, gõ tin khi đang chờ là từ chối, chặn gửi trùng',
     'cmd.durableHint':
       'Yêu cầu duyệt không mất khi aris khởi động lại; cho phép muộn thì bot làm tiếp. Tắt thì về thẻ duyệt của dsh như trước.',

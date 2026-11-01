@@ -455,6 +455,12 @@ Lộ trình đề xuất (sửa 31/10, xem [nghien-cuu/kien-truc-bot.md](nghien-
 - Còn lại của 9.7: ký ức theo người (cần bảng người của 9.6), duyệt qua Zalo bằng chữ có mã ngắn.
 - Thấy thêm: tên bot viết thẳng đôi khi trùng tên khách trong ví dụ ("chị Lan" thành viên tên bot Lan).
 
+**Nghiệm thu 9.5 · Đồng đội hỏi nhau (1/11)** theo [plans/gd9-5-dong-doi-hoi-nhau.md](plans/gd9-5-dong-doi-hoi-nhau.md):
+- Công cụ `ask_teammate` cho mọi bot (chế độ hỏi ý): đồng đội trả lời ở phiên riêng; thao tác cần duyệt trong phiên được hỏi bị từ chối; chỉ trong lượt của chủ (kênh báo mức tin cậy qua `arisChannelTrust`); tối đa 2 tầng, 6 câu mỗi lượt, chờ 5 phút; lượt của bot hỏi dừng thì kết quả nhắn về sau (gom một tin); khởi động lại thì báo câu hỏi bị ngắt. Danh bạ đồng đội trong lời dặn có mô tả công khai. Công tắc ở trang Commander, mặc định bật.
+- Thử thật trên bản chép dữ liệu (đã gỡ kênh): nhờ Hằng trả lời khách muốn đổi trả hàng mua 20/10 và hỏi ý Ngân → Hằng gọi `ask_teammate`, Ngân trả lời sau 28 giây (bộ não chưa có chính sách đổi trả), Hằng soạn nháp trung tính cho khách và hỏi lại chủ; chat hiện dòng "Đã hỏi Ngân" kèm câu trả lời gấp gọn (ảnh `13-hang-hoi-ngan.jpg`).
+- Chưa thử thật: chặn lượt của khách (mới có test đơn vị), kết quả quay về sau khi lượt dừng, khởi động lại giữa chừng. Chưa làm: trần tiền mỗi gốc.
+- Thấy thêm: thanh bên giao diện mới vỡ khi cửa sổ hẹp (dòng bot bị ép).
+
 ---
 
 ## Bù năng lực một bot so với Hermes (đánh giá 25/10)

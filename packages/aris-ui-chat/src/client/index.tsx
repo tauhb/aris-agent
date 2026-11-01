@@ -22,6 +22,7 @@ import { botTriggerSource } from './bot-source.js'
 import { botReportDefinition, findMention, handoffDefinition, turnHeadDefinition } from './who-data.js'
 import { CSS } from './styles.js'
 import { BrainPicker, BrainReadCall, BrainSearchCall, UserPage, brainTriggerSource } from './Brain.js'
+import { TeammateCall } from './Teammate.js'
 import { MediaCall, MediaShow, mediaDefinition } from './Media.js'
 import { brainPages, cachedPages, LINK } from './brain-data.js'
 import { openPeek, watchPageLinks } from './brain-dom.js'
@@ -329,6 +330,13 @@ export function apply(ctx: ClientContext): void {
     ctx.slots.register(
       { name: 'tool.call.toolview', key: 'brain_read', priority: -1, locale: NS },
       BrainReadCall,
+    ),
+  )
+  // Đồng đội hỏi nhau (GĐ9.5): dòng "Đã hỏi <đồng đội>" kèm câu trả lời gấp gọn.
+  ctx.slots.inject('tool.call.toolview', () =>
+    ctx.slots.register(
+      { name: 'tool.call.toolview', key: 'ask_teammate', priority: -1, locale: NS },
+      TeammateCall,
     ),
   )
   // Ảnh, video bot tạo (đợt 5c, bản vẽ 1.9): dòng riêng của lượt, ngoài phần gọi công cụ đã gập.
