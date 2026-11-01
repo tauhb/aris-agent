@@ -46,6 +46,7 @@ import { renderPersona } from './persona.js'
 import { botDenyReason, botToolOf, denyReason, insideDir, needOf, writeTarget } from './policy.js'
 import { SoulHistory, type SoulRecord } from './soul.js'
 import { registerManageTools } from './manage-tools.js'
+import { OWNER_ID, PeopleStore, type PersonRecord, type ThreadRecord } from './people.js'
 import { BotError, BotStore, COMMANDER_ID } from './store.js'
 import { loadTemplates } from './templates.js'
 
@@ -68,6 +69,7 @@ export * from './mcp.js'
 export * from './mcp-import.js'
 export * from './soul.js'
 export * from './manage.js'
+export * from './people.js'
 
 export const name = 'aris-bots'
 export const inject = [
@@ -152,6 +154,37 @@ export async function apply(ctx: Context): Promise<void> {
   await store.ensureCommander()
   // Aris quản đội (GĐ9.2): tạo bot, sửa và khôi phục lời dặn bằng lời, luôn qua thẻ duyệt.
   registerManageTools(ctx, store, souls)
+
+  // Người và luồng (GĐ9.6a): người "chủ"; luồng web của chủ với từng bot dựng từ phiên gần nhất (lần đầu).
+  const people = new PeopleStore(
+    domain.table('people') as unknown as Table<PersonRecord>,
+    domain.table('threads') as unknown as Table<ThreadRecord>,
+  )
+  await people.ensureOwner(store.owner().name ?? 'Chủ')
+  for (const b of store.list()) {
+    const last = store.latestOpen(b.id)
+    if (
+      last &&
+      !people.current(b.id, OWNER_ID, 'direct', 'web') &&
+      !people.current(b.id, OWNER_ID, 'direct', 'shared')
+    )
+      await people.touch({
+        bot: b.id,
+        person: OWNER_ID,
+        kind: 'direct',
+        channel: 'web',
+        session: last,
+        via: 'web',
+      })
+  }
+  /** Luồng chung của chủ trên mọi kênh (công tắc ở trang Kênh, `@aris/channels`). */
+  const sharedThreads = () =>
+    (ctx.get('arisChannels') as { sharedThreads?(): boolean } | undefined)?.sharedThreads?.() === true
+  const ownerChannel = () => (sharedThreads() ? 'shared' : 'web') as 'shared' | 'web'
+  ctx.provide('arisPeople', {
+    store: people,
+    shared: sharedThreads,
+  })
   await store.ensurePolicies(await loadTemplates())
 
   // Việc gần đây lưu bền: giữ 8 ngày (số liệu 7 ngày ở cột phải hồ sơ bot), tối đa 3.000 mục; nạp lại
@@ -673,6 +706,19 @@ export async function apply(ctx: Context): Promise<void> {
               },
               souls,
               rewrite,
+              threads: {
+                current: (bot) => people.current(bot, OWNER_ID, 'direct', ownerChannel()),
+                opened: async (bot, session) => {
+                  await people.touch({
+                    bot,
+                    person: OWNER_ID,
+                    kind: 'direct',
+                    channel: ownerChannel(),
+                    session,
+                    via: 'web',
+                  })
+                },
+              },
               spend: () =>
                 (ctx.get('arisSpend') as { today(): Record<string, number> } | undefined)?.today() ?? {},
             },

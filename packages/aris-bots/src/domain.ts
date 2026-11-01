@@ -2,6 +2,7 @@
  * Storage domain `aris_bots` (backend của dsh, mỗi bản ghi một tệp). Khoá bản ghi chỉ gồm chữ,
  * số và `-` (ràng buộc của storage dsh).
  */
+import { personRecord, threadRecord, type PersonRecord, type ThreadRecord } from './people.js'
 import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 import { z } from 'zod'
 import { externalRecord } from './external.js'
@@ -142,6 +143,9 @@ export const botsDomain = defineDomain({
     owner: domainTable<string, OwnerRecord>(ownerRecord),
     mcp: domainTable<string, McpRecord>(mcpRecord),
     souls: domainTable<string, SoulRecord>(soulRecord),
+    /** Người và luồng (GĐ9.6a). */
+    people: domainTable<string, PersonRecord>(personRecord),
+    threads: domainTable<string, ThreadRecord>(threadRecord),
   },
 })
 

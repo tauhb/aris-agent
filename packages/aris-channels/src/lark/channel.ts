@@ -439,6 +439,14 @@ export class LarkChannel implements ChannelPeer {
     }
   }
 
+  /** Báo chủ qua Lark khi không có Telegram (một cửa báo tin, GĐ9.6a); trả true khi có tài khoản và chủ để nhắn. */
+  async sendOwners(md: string): Promise<boolean> {
+    const rt = [...this.apps.values()][0]
+    if (!rt || !this.store.larkOwners().some((o) => o.openId)) return false
+    await this.toOwners(rt, md)
+    return true
+  }
+
   /** Báo các chủ nhân đã ghép đôi trên Lark (nhắn riêng). */
   private async toOwners(rt: LarkRuntime, md: string) {
     for (const o of this.store.larkOwners()) {

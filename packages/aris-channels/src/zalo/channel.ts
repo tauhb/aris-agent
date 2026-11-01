@@ -12,6 +12,7 @@
  * thay cho cảm xúc.
  */
 import { commandAllowed, type Trust } from '../access.js'
+import { linkThread, type ChatWho, type PeoplePort } from '../people-link.js'
 import { NOT_OWNER_NOTE, T } from '../copy.js'
 import type { BotRecord, InboxRecord, OutboxRecord } from '../domain.js'
 import type {
@@ -57,6 +58,8 @@ export interface ZaloPending extends PendingBase {
 }
 
 export interface ZaloDeps {
+  /** Người và luồng (`@aris/bots`, GĐ9.6a). */
+  people?: () => PeoplePort | undefined
   store: ChannelStore
   credentials: CredentialPort
   sessions: SessionPort
@@ -1061,17 +1064,28 @@ export class ZaloChannel implements ChannelPeer {
   // Đưa tin vào phiên
   // ======================================================================================
 
-  private async sessionFor(bot: string, key: string, threadId: string, fresh = false): Promise<LiveAgent> {
-    const t = this.store.thread(key)
-    if (t && !fresh) {
-      try {
-        return await this.d.sessions.agent(t.sessionId)
-      } catch (e) {
-        this.d.logger.warn('aris-channels: zalo mở lại phiên %s: %s, mở phiên mới', t.sessionId, String(e))
+  private async sessionFor(
+    bot: string,
+    key: string,
+    threadId: string,
+    fresh = false,
+    who?: ChatWho,
+  ): Promise<LiveAgent> {
+    // Người và luồng (GĐ9.6a): Zalo chỉ ghi luồng, chưa dùng chung với web.
+    const sessionId = await linkThread(this.d.people?.(), false, bot, who, async () => {
+      const t = this.store.thread(key)
+      if (t && !fresh) {
+        try {
+          await this.d.sessions.agent(t.sessionId)
+          return t.sessionId
+        } catch (e) {
+          this.d.logger.warn('aris-channels: zalo mở lại phiên %s: %s, mở phiên mới', t.sessionId, String(e))
+        }
       }
-    }
-    const sessionId = await this.d.sessions.create(bot)
-    await this.store.bindThread({ key, bot, chatId: 0, chatRef: threadId, sessionId })
+      const created = await this.d.sessions.create(bot)
+      await this.store.bindThread({ key, bot, chatId: 0, chatRef: threadId, sessionId: created })
+      return created
+    })
     return this.d.sessions.agent(sessionId)
   }
 
@@ -1147,7 +1161,14 @@ export class ZaloChannel implements ChannelPeer {
     const content = await this.content(rt, ev, parsed, here, trust)
     if (!content) return false
     if (resumed) await this.say(rt, here, T.restarted)
-    const agent = await this.sessionFor(rt.rec.bot, key, ev.threadId)
+    const agent = await this.sessionFor(rt.rec.bot, key, ev.threadId, false, {
+      channel: 'zalo',
+      ref: ev.senderId,
+      account: rt.id,
+      name: ev.senderName,
+      trust,
+      group: ev.isGroup,
+    })
     const group = ev.isGroup ? this.store.zaloGroup(ev.threadId, rt.id) : undefined
     if (group?.prompt)
       agent.inject(

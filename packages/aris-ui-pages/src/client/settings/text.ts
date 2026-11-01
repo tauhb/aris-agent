@@ -493,6 +493,9 @@ export const SETTINGS_TEXT = text(
     'ch.removeGroup': 'Forget this group',
     'ch.more': 'Settings',
     'ch.less': 'Close',
+    'ch.sharedThreads':
+      'Shared thread: your private Telegram messages to a bot join the same chat as the web',
+    'ch.sharedThreadsHint': 'One chat per bot with you wherever you write. Zalo and Lark are not shared yet.',
     'ch.guestMode': 'Unknown groups: answer explicit @mentions (guest mode)',
     'ch.zalo': 'Zalo personal',
     'ch.noCode': 'No active code',
@@ -1613,6 +1616,9 @@ export const SETTINGS_TEXT = text(
     'ch.removeGroup': 'Quên nhóm này',
     'ch.more': 'Cài đặt',
     'ch.less': 'Đóng',
+    'ch.sharedThreads': 'Luồng chung: {you} nhắn riêng cho bot trên Telegram thì vào cùng cuộc chat với web',
+    'ch.sharedThreadsHint':
+      'Một bot một cuộc chat với {you} dù nhắn ở đâu. Zalo và Lark chưa dùng chung ở bản này.',
     'ch.guestMode': 'Nhóm lạ: vẫn trả lời khi được @ đích danh (chế độ khách)',
     'ch.zalo': 'Zalo cá nhân',
     'ch.noCode': 'Chưa có mã',

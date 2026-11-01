@@ -461,6 +461,14 @@ Lộ trình đề xuất (sửa 31/10, xem [nghien-cuu/kien-truc-bot.md](nghien-
 - Chưa thử thật: chặn lượt của khách (mới có test đơn vị), kết quả quay về sau khi lượt dừng, khởi động lại giữa chừng. Chưa làm: trần tiền mỗi gốc.
 - Thấy thêm: thanh bên giao diện mới vỡ khi cửa sổ hẹp (dòng bot bị ép).
 
+**Nghiệm thu 9.6a · Người, luồng, một cửa báo tin (1/11)** theo [plans/gd9-6-nguoi-va-luong.md](plans/gd9-6-nguoi-va-luong.md):
+- Bảng `people` và `threads` trong kho `aris_bots` (chỉ thêm mới, bảng cũ ghi song song). Khởi động: có người "chủ" và luồng web của chủ với từng bot từ phiên gần nhất (bản chép dữ liệu thật: 9 luồng).
+- Web mở chat với bot theo trang hiện tại của luồng; "Chủ đề mới" thành trang mới, trang cũ giữ lại (đã thử: Hằng có trang hiện tại mới và một trang cũ).
+- Telegram và Zalo nối người nhắn vào kho người (chủ, thành viên, khách) và ghi luồng mỗi khi gắn cuộc chat với phiên. Công tắc "Luồng chung" ở trang Kênh (mặc định tắt): bật thì chủ nhắn riêng cho bot trên Telegram vào cùng phiên với chat web.
+- Một cửa báo tin: `sendHome` (bảy chỗ báo chủ) gửi bằng tài khoản Telegram của bot, bot không có tài khoản thì qua tài khoản của Aris kèm tên bot, không có Telegram thì nhắn riêng chủ trên Lark; dịch vụ `arisNotify` cho các gói mới.
+- Chưa thử với kênh thật (bản chép đã gỡ kênh): luồng chung qua Telegram, ghi người của Telegram, Zalo; báo tin qua Lark. Cần thử trên bản đang dùng.
+- Chưa làm: Lark ghi luồng; luồng chat web với Aris (Aris vẫn mở phiên gần nhất như cũ); `threads.send` một cửa cho tin vào; ghi `person` lên mọi bản ghi mới; `botOf` thôi trả Aris cho phiên chưa gắn bot; ký ức theo người.
+
 ---
 
 ## Bù năng lực một bot so với Hermes (đánh giá 25/10)

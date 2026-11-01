@@ -164,7 +164,7 @@ export interface ChannelSnapshot {
   people: ChannelPerson[]
   groups: ChannelGroup[]
   codes: PairCode[]
-  settings: { busy: 'steer' | 'queue' | 'interrupt'; guestMode: boolean }
+  settings: { busy: 'steer' | 'queue' | 'interrupt'; guestMode: boolean; sharedThreads?: boolean }
   lark: LarkSnapshot
   zalo: ZaloSnapshot
   /** Thư mục bộ não chọn được làm nguồn (rỗng khi bộ não chưa chạy). */

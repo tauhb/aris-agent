@@ -189,7 +189,11 @@ export function snapshot(
     people: store.people(),
     groups: store.groups(),
     codes: store.activeCodes(),
-    settings: { busy: store.settings().busy, guestMode: store.settings().guestMode },
+    settings: {
+      busy: store.settings().busy,
+      guestMode: store.settings().guestMode,
+      sharedThreads: store.settings().sharedThreads === true,
+    },
     lark: larkSnapshot(store, extra.lark, extra.larkCli ?? null),
     zalo: zaloSnapshot(store, extra.zalo),
   }
@@ -308,6 +312,7 @@ export async function handleApi(
             ? { busy: body.busy }
             : {}),
           ...(typeof body.guestMode === 'boolean' ? { guestMode: body.guestMode } : {}),
+          ...(typeof body.sharedThreads === 'boolean' ? { sharedThreads: body.sharedThreads } : {}),
         })
         break
       case 'voice':

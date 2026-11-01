@@ -5,6 +5,7 @@
  * duyệt/câu hỏi cho phiên của kênh, kho khoá cho token, tệp đính kèm, nhận dạng giọng nói.
  * @module @aris/channels
  */
+import type { PeoplePort } from './people-link.js'
 import { ensureHome } from '@aris/home'
 import { getMascot } from '@aris/ui-kit'
 import type { Context } from '@deepseek-ai/cordis'
@@ -173,6 +174,8 @@ export async function apply(ctx: Context): Promise<void> {
       return ctx.get('speechToText') as SpeechToText | undefined
     },
     logger: ctx.logger('aris-channels'),
+    people: () => ctx.get('arisPeople') as PeoplePort | undefined,
+    ownerFallback: (md) => lark.sendOwners(md),
   })
   // Kênh Lark chạy cạnh Telegram: dùng chung kho, phiên, đội; hub hỏi nó khi cần biết lượt có bị hạn chế không.
   const lark = new LarkChannel({
@@ -191,6 +194,7 @@ export async function apply(ctx: Context): Promise<void> {
   ctx.effect(() => hub.attachPeer(lark), 'aris-channels: lark')
   // Kênh Zalo cá nhân (zca-js, không chính thức): báo chủ qua Telegram vì chính Zalo có thể đang mất kết nối.
   const zalo = new ZaloChannel({
+    people: () => ctx.get('arisPeople') as PeoplePort | undefined,
     store,
     docs,
     media,
@@ -210,6 +214,10 @@ export async function apply(ctx: Context): Promise<void> {
 
   // Cho lệnh `aris send` (qua @aris/daemon) và các plugin khác gửi Telegram.
   ctx.provide('arisChannels', hub)
+  // Một cửa báo tin (GĐ9.6a): người nhận đợt này là chủ; các gói mới gọi đây thay cho `sendHome`.
+  ctx.provide('arisNotify', {
+    notify: (o: { bot: string; person?: string }, markdown: string) => hub.sendHome(o.bot, markdown),
+  })
   // Duyệt tập trung: hộp duyệt chung của @aris/commander có thể nạp sau, nên dò tới khi có.
   ctx.effect(() => {
     let off: (() => void) | undefined

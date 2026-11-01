@@ -56,6 +56,14 @@ export interface ApiDeps {
   rewrite?: (prompt: string, signal?: AbortSignal) => Promise<string>
   /** Kết nối nền tảng (MCP) theo bot. */
   mcp?: McpStore
+  /**
+   * Luồng của chủ với bot (GĐ9.6a): trang hiện tại để mở lại, và ghi luồng sau khi mở. Không có thì như trước
+   * (phiên gần nhất).
+   */
+  threads?: {
+    current(bot: string): string | undefined
+    opened(bot: string, session: string): Promise<void>
+  }
   /** Kết nối thử một máy chủ MCP. */
   checkMcp?: (r: McpRecord) => Promise<McpCheck>
   /** Quét cấu hình MCP của Claude Code và Codex trên máy (thay được khi thử). */
@@ -218,8 +226,10 @@ export async function handleApi(d: ApiDeps, request: Request): Promise<Response>
         if (d.store.get(id)?.external)
           return json({ error: 'Bot ngoài không có phiên chat riêng; giao việc cho bot qua Aris.' }, 400)
         // Bấm bot trên thanh bên: mở lại phiên gần nhất; "Việc mới với …" thì tạo phiên mới.
-        const reuse = body.fresh === true ? undefined : d.store.latestOpen(id)
-        return json({ sessionId: reuse ?? (await d.open(id)), reused: !!reuse })
+        const reuse = body.fresh === true ? undefined : (d.threads?.current(id) ?? d.store.latestOpen(id))
+        const sessionId = reuse ?? (await d.open(id))
+        await d.threads?.opened(id, sessionId)
+        return json({ sessionId, reused: !!reuse })
       }
       case 'mcp-test': {
         // "Kiểm tra kết nối" trong hộp, chưa lưu: khoá để trống khi sửa thì dùng khoá đã lưu.

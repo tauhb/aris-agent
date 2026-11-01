@@ -1184,4 +1184,11 @@ describe('trung tâm kênh · GĐ8.7 nhiều tài khoản Telegram cho một bot
     expect(await s.hub.sendHome('mai', 'báo cáo')).toBe('Đã gửi.')
     expect(s.tg.sent('sendMessage', CSKH).at(-1)).toMatchObject({ chat_id: OWNER })
   })
+
+  it('một cửa báo tin: bot không có tài khoản Telegram thì báo qua tài khoản của Aris', async () => {
+    const s = await setup()
+    await pairOwner(s)
+    expect(await s.hub.sendHome('ngan', 'báo cáo của Ngân')).toBe('Đã gửi.')
+    expect(s.tg.sent('sendMessage').at(-1)).toMatchObject({ chat_id: OWNER })
+  })
 })
