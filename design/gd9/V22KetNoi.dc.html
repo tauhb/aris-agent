@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>V22 · Kết nối ứng dụng</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="gd9.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="wrap">
+<sc-for list="{{themes}}" as="th" hint-placeholder-count="2">
+<div class="mb {{th.cls}}">
+<nav class="side" aria-label="Bot">
+  <div class="stop"><button type="button" class="ib" aria-label="Tìm"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg></button><button type="button" class="ib" aria-label="Hoạt động"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></button><button type="button" class="ib" aria-label="Tạo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
+  <div class="tiles">
+    <button type="button" class="tile" aria-current="true"><span class="mas"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8Q56 8 60 12L88 40Q92 44 92 50T88 60L60 88Q56 92 50 92T40 88L12 60Q8 56 8 50T12 40L40 12Q44 8 50 8Z"/><ellipse cx="42" cy="50" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="58" cy="50" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Aris</b><span class="l">Đã chia việc sáng nay</span></span></button>
+    <button type="button" class="tile"><span class="mas"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="52" r="42"/><ellipse cx="41" cy="52" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="52" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Mai</b><span class="l">Đã trả lời 41 tin Zalo</span></span></button>
+  </div>
+  <div class="foot"><button type="button" class="av" aria-label="Tài khoản">T</button><button type="button" class="apps" style="box-shadow:0 0 0 2px var(--ink)">Kết nối ứng dụng<span class="lgs"><span class="lg">Z</span><span class="lg">T</span><span class="lg">G</span></span></button></div>
+</nav>
+<main class="main"><div class="hd"><button type="button" class="who">Aris</button></div></main>
+<div class="scrim" style="z-index:2"></div>
+<section class="sheet" role="dialog" aria-label="Kết nối ứng dụng">
+  <nav class="snav" aria-label="Lọc kết nối">
+    <span class="lab">Kết nối ứng dụng</span>
+    <button type="button" class="mi" aria-current="true">Tất cả<span class="v">9</span></button>
+    <button type="button" class="mi">Của tôi<span class="v">3</span></button>
+    <button type="button" class="mi">Dùng chung công ty<span class="v">4</span></button>
+    <button type="button" class="mi">Của nhân sự<span class="v">5</span></button>
+    <button type="button" class="mi">Danh mục ứng dụng</button>
+  </nav>
+  <div class="sbody">
+    <div class="shd"><h2>Tất cả kết nối</h2><span class="r"><button type="button" class="bt p">Thêm kết nối</button><button type="button" class="ib" aria-label="Đóng"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></span></div>
+    <div class="grp">
+      <div class="li"><span class="cols"><span class="h">Kết nối</span><span class="h">Người tạo</span><span class="h">Chia sẻ</span><span class="h">Bot dùng</span><span class="h"></span></span></div>
+      <div class="li"><span class="cols"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="margin:0;box-shadow:none;background:#34A853">S</span>Google Sheets</span><span class="s2">Tầu</span><span><span class="tag co">Công ty</span></span><span>4</span><span class="s3" style="text-align:right">›</span></span></div>
+      <div class="li"><span class="cols"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="margin:0;box-shadow:none;background:#EA4335">G</span>Gmail công ty</span><span class="s2">Tầu</span><span><span class="tag co">Công ty</span></span><span>2</span><span class="s3" style="text-align:right">›</span></span></div>
+      <div class="li"><span class="cols"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="margin:0;box-shadow:none;background:#FF7A59">H</span>HubSpot</span><span class="s2">Minh</span><span><span class="tag co">Công ty</span></span><span>3</span><span class="s3" style="text-align:right">›</span></span></div>
+      <div class="li"><span class="cols"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="margin:0;box-shadow:none;background:#EA4335">G</span>Gmail của Hằng</span><span class="s2">Hằng</span><span><span class="tag">Riêng</span></span><span>1</span><span style="text-align:right"><button type="button" class="bt sm">Thu hồi</button></span></span></div>
+      <div class="li"><span class="cols"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="margin:0;box-shadow:none;background:#111">N</span>Notion của Quân</span><span class="s2">Quân</span><span><span class="tag wn">Cần đăng nhập lại</span></span><span>1</span><span style="text-align:right"><button type="button" class="bt sm">Thu hồi</button></span></span></div>
+      <div class="li"><span class="cols"><span style="display:flex;align-items:center;gap:10px"><span class="lg" style="margin:0;box-shadow:none;background:#0068FF">Z</span>Zalo của Linh</span><span class="s2">Linh</span><span><span class="tag dp">Kinh doanh</span></span><span>2</span><span class="s3" style="text-align:right">›</span></span></div>
+    </div>
+    <span class="s3" style="font-size:12.5px">Quản trị thấy mọi kết nối và thu hồi được, nhưng không xem được khoá hay token của nhân sự.</span>
+  </div>
+</section>
+</div>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2960,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { themes: [{ cls: 't-dark' }, { cls: 't-light' }] };
+  }
+}
+</script>
+</body>
+</html>

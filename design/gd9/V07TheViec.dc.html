@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>V7 · Thẻ việc trong chat</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="gd9.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="wrap">
+<sc-for list="{{themes}}" as="th" hint-placeholder-count="2">
+<div class="mb {{th.cls}}">
+<nav class="side" aria-label="Bot">
+  <div class="stop"><button type="button" class="ib" aria-label="Tìm"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg></button><button type="button" class="ib" aria-label="Hoạt động, 1 việc cần anh"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span class="n1">1</span></button><button type="button" class="ib" aria-label="Tạo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
+  <div class="tiles">
+    <button type="button" class="tile"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><path d="M50 8Q56 8 60 12L88 40Q92 44 92 50T88 60L60 88Q56 92 50 92T40 88L12 60Q8 56 8 50T12 40L40 12Q44 8 50 8Z" fill="url(#cr)"/><ellipse cx="42" cy="50" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="58" cy="50" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Aris</b><span class="l">Đã sửa lời dặn của Mai</span></span></button>
+    <button type="button" class="tile" aria-current="true"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><circle cx="50" cy="52" r="42" fill="url(#cr)"/><ellipse cx="41" cy="52" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="52" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Mai</b><span class="l">2 khách đòi gặp người thật</span></span><span class="bd">1</span></button>
+    <button type="button" class="tile"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><path d="M50 6C62 28 86 42 86 62A36 36 0 0 1 14 62C14 42 38 28 50 6Z" fill="url(#cr)"/><ellipse cx="41" cy="62" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="62" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Lâm</b><span class="l">3 bài Facebook đã xong</span></span></button>
+    <button type="button" class="tile"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><rect x="6" y="26" width="88" height="54" rx="27" fill="url(#cr)"/><ellipse cx="41" cy="53" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="53" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Hà</b><span class="l">Đã trả lời Lâm</span></span></button>
+  </div>
+  <div class="foot"><button type="button" class="av" aria-label="Tài khoản">T</button><button type="button" class="apps">Kết nối ứng dụng<span class="lgs"><span class="lg">Z</span><span class="lg">T</span><span class="lg">G</span></span></button></div>
+</nav>
+<main class="main">
+  <div class="hd"><button type="button" class="who"><span class="mas"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><circle cx="50" cy="52" r="42" fill="url(#cr)"/></svg></span>Mai</button>
+    <div class="hr"><button type="button" class="mp">DeepSeek V4 Flash<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><button type="button" class="ib" aria-label="Máy của Mai"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></button></div></div>
+  <div class="col">
+    <div class="card" style="padding:12px 14px;gap:4px"><div style="display:flex;align-items:center;gap:8px;font-size:14px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg><b style="font-weight:500">Quét tin Zalo buổi sáng</b><span class="s3" style="margin-left:auto;font-size:12.5px">Routine · 7:30</span></div>
+      <span class="s2" style="font-size:13.5px;padding-left:23px">41 tin: 26 hỏi giá, 6 hẹn học thử, 5 khiếu nại đã xử lý</span></div>
+    <div class="user">Nhắn lại cả 38 khách chưa chốt nhé.</div>
+    <div class="card" style="padding:12px 14px;gap:8px"><div style="display:flex;align-items:center;gap:8px;font-size:14px"><span class="spin"></span><b style="font-weight:500">Nhắn lại 38 khách</b><span class="s3" style="margin-left:auto;font-size:12.5px">12 trên 38</span><button type="button" class="bt sm">Dừng</button></div>
+      <div class="bar"><i style="width:32%"></i></div></div>
+    <div class="card" role="group" aria-label="Mai xin ý kiến">
+      <h3>2 khách đòi gặp người thật</h3><span class="sub">Mai tạm ngừng nhắn 2 khách này.</span>
+      <dl class="kv" style="grid-template-columns:90px minmax(0,1fr)">
+        <dt>Anh Quân</dt><dd>"Cho anh nói chuyện với chủ shop, đơn giao chậm 2 lần rồi."</dd>
+        <dt>Chị Hạnh</dt><dd>"Em gọi lại cho chị trước 17 giờ được không?"</dd>
+      </dl>
+      <div class="chips"><button type="button" class="chip">Để anh trả lời</button><button type="button" class="chip">Mai hẹn gọi lại</button></div>
+    </div>
+  </div>
+  <div class="comp"><div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span style="flex:1">Nhắn Mai</span><button type="button" class="go" aria-label="Gửi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></div></div>
+  <div class="menu" style="left:calc(50% - 330px + 24px);bottom:70px;width:220px" role="menu" aria-label="Thêm">
+    <button type="button" class="mi" role="menuitem">Giao việc chạy nền</button>
+    <button type="button" class="mi" role="menuitem">Tạo routine</button>
+    <button type="button" class="mi" role="menuitem">Đính kèm tệp</button>
+    <button type="button" class="mi" role="menuitem">Chủ đề mới</button>
+  </div>
+</main>
+</div>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2960,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { you: 'anh Tầu', themes: [{ cls: 't-dark' }, { cls: 't-light' }] };
+  }
+}
+</script>
+</body>
+</html>

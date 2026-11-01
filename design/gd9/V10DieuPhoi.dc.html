@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>V10 · Hồ sơ Aris · Điều phối</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="gd9.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="wrap">
+<sc-for list="{{themes}}" as="th" hint-placeholder-count="2">
+<div class="mb {{th.cls}}" style="height:1000px">
+<nav class="side" aria-label="Bot">
+  <div class="stop"><button type="button" class="ib" aria-label="Tìm"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg></button><button type="button" class="ib" aria-label="Hoạt động"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></button><button type="button" class="ib" aria-label="Tạo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
+  <div class="tiles">
+    <button type="button" class="tile" aria-current="true"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><path d="M50 8Q56 8 60 12L88 40Q92 44 92 50T88 60L60 88Q56 92 50 92T40 88L12 60Q8 56 8 50T12 40L40 12Q44 8 50 8Z" fill="url(#cr)"/><ellipse cx="42" cy="50" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="58" cy="50" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Aris</b><span class="l">Đề xuất skill mới</span></span></button>
+    <button type="button" class="tile"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><circle cx="50" cy="52" r="42" fill="url(#cr)"/><ellipse cx="41" cy="52" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="52" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Mai</b><span class="l">Đã gửi 12 tin mời học thử</span></span></button>
+    <button type="button" class="tile"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><path d="M50 6C62 28 86 42 86 62A36 36 0 0 1 14 62C14 42 38 28 50 6Z" fill="url(#cr)"/><ellipse cx="41" cy="62" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="62" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Lâm</b><span class="l">2 bài TikTok đã xong</span></span></button>
+    <button type="button" class="tile"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><rect x="6" y="26" width="88" height="54" rx="27" fill="url(#cr)"/><ellipse cx="41" cy="53" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="53" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Hà</b><span class="l">Đã ghi Google Sheets</span></span></button>
+    <button type="button" class="tile"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><rect x="12" y="12" width="76" height="76" rx="24" fill="url(#cr)"/><ellipse cx="41" cy="50" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="50" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Tín</b><span class="l">Báo cáo chi phí tuần</span></span></button>
+    <button type="button" class="tile"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><path d="M50 8L87 29V71L50 92L13 71V29Z" fill="url(#cr)" stroke="url(#cr)" stroke-width="8" stroke-linejoin="round"/><ellipse cx="41" cy="50" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="50" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Dev</b><span class="l">Đã đăng nhập lại GitHub</span></span></button>
+  </div>
+  <div class="foot"><button type="button" class="av" aria-label="Tài khoản">T</button><button type="button" class="apps">Kết nối ứng dụng<span class="lgs"><span class="lg">Z</span><span class="lg">T</span><span class="lg">G</span></span></button></div>
+</nav>
+<main class="main" style="border-radius:14px 0 0 14px">
+  <div class="hd"><button type="button" class="who"><span class="mas"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><path d="M50 8Q56 8 60 12L88 40Q92 44 92 50T88 60L60 88Q56 92 50 92T40 88L12 60Q8 56 8 50T12 40L40 12Q44 8 50 8Z" fill="url(#cr)"/></svg></span>Aris</button></div>
+  <div class="col">
+    <div class="user">Việc GitHub tuần này ai làm tốt nhất?</div>
+    <div class="bot"><p><span class="bm dev"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8L87 29V71L50 92L13 71V29Z" stroke-width="8" stroke-linejoin="round"/></svg>Dev</span> làm 5 việc, xong 3, hai lần lỗi đăng nhập. Tuần tới việc GitHub em sẽ hỏi {{you}} trước khi giao.</p></div>
+  </div>
+  <div class="comp"><div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span style="flex:1">Nhắn Aris</span><button type="button" class="go" aria-label="Gửi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></div></div>
+</main>
+<aside class="rp" aria-label="Hồ sơ Aris">
+  <div class="rtop"><button type="button" class="ib" aria-label="Chia sẻ"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v5h14v-5"/></svg></button><button type="button" class="ib" aria-label="Cài đặt bot"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></button><button type="button" class="ib" aria-label="Đóng"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="prof"><span class="mas"><svg width="76" height="76" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><path d="M50 8Q56 8 60 12L88 40Q92 44 92 50T88 60L60 88Q56 92 50 92T40 88L12 60Q8 56 8 50T12 40L40 12Q44 8 50 8Z" fill="url(#cr)"/><ellipse cx="42" cy="50" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="58" cy="50" rx="4.5" ry="6.5" fill="#111"/></svg></span><b>Aris</b>
+    <div class="tabs"><button type="button" class="tab" aria-pressed="true">Chi tiết</button><button type="button" class="tab" aria-pressed="false">Thư viện</button><button type="button" class="tab" aria-pressed="false">Máy</button></div></div>
+  <div class="grp">
+    <div class="li"><span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/></svg></span>Model<span class="v">DeepSeek V4 Pro</span></div>
+    <div class="li"><span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></span>Chủ đề mới</div>
+  </div>
+  <div class="lab">Điều phối</div>
+  <div class="grp">
+    <div class="li">Quản đội<span class="v"><button type="button" class="tg" aria-pressed="true" aria-label="Quản đội"></button></span></div>
+    <div class="li">Ai hợp việc gì<span class="v">6 bot ›</span></div>
+    <div class="li">Giới hạn khi nhờ nhau<span class="v">3 bước · 0,30 USD ›</span></div>
+    <div class="li">Nhận việc phải hỏi {{you}}<span class="v">Mai, Tín ›</span></div>
+  </div>
+  <div class="lab">Gợi ý hỏi</div>
+  <div class="grp">
+    <div class="li">Đội đang làm gì?</div>
+    <div class="li">Tạo bot chăm sóc khách Zalo</div>
+    <div class="li">Lập routine buổi sáng</div>
+  </div>
+</aside>
+</div>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2960,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { you: 'anh Tầu', themes: [{ cls: 't-dark' }, { cls: 't-light' }] };
+  }
+}
+</script>
+</body>
+</html>

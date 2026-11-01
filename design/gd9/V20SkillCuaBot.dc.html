@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>V20 · Cài đặt bot › Skill</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="gd9.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="wrap">
+<sc-for list="{{themes}}" as="th" hint-placeholder-count="2">
+<div class="mb {{th.cls}}">
+<nav class="side" aria-label="Bot">
+  <div class="stop"><button type="button" class="ib" aria-label="Tìm"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg></button><button type="button" class="ib" aria-label="Hoạt động"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></button><button type="button" class="ib" aria-label="Tạo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
+  <div class="tiles">
+    <button type="button" class="tile"><span class="mas"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8Q56 8 60 12L88 40Q92 44 92 50T88 60L60 88Q56 92 50 92T40 88L12 60Q8 56 8 50T12 40L40 12Q44 8 50 8Z"/><ellipse cx="42" cy="50" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="58" cy="50" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Aris</b><span class="l">Đã chia việc sáng nay</span></span></button>
+    <button type="button" class="tile" aria-current="true"><span class="mas"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="52" r="42"/><ellipse cx="41" cy="52" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="52" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Mai</b><span class="l">Đã trả lời 41 tin Zalo</span></span></button>
+    <button type="button" class="tile"><span class="mas"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C62 28 86 42 86 62A36 36 0 0 1 14 62C14 42 38 28 50 6Z"/><ellipse cx="41" cy="62" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="62" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Lâm</b><span class="l">3 bài Facebook đã xong</span></span></button>
+  </div>
+  <div class="foot"><button type="button" class="av" aria-label="Tài khoản">T</button><button type="button" class="apps">Kết nối ứng dụng<span class="lgs"><span class="lg">Z</span><span class="lg">T</span><span class="lg">G</span></span></button></div>
+</nav>
+<main class="main">
+  <div class="hd"><button type="button" class="who"><span class="mas"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="52" r="42"/></svg></span>Mai</button></div>
+  <div class="col"><div class="bot"><p>Dạ, em đã gửi 12 tin mời học thử.</p></div></div>
+  <div class="comp"><div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span style="flex:1">Nhắn Mai</span><button type="button" class="go" aria-label="Gửi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></div></div>
+</main>
+<aside class="rp" aria-label="Skill của Mai" style="flex-basis:380px;gap:10px">
+  <div class="rtop"><button type="button" class="ib" aria-label="Đóng"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <span class="s3" style="font-size:13px">‹ Cài đặt bot</span>
+  <b style="font-size:18px;font-weight:600">Skill của Mai</b>
+  <div class="grp"><div class="swr"><span class="b">Chỉ dùng skill được gán<span>Bật: Mai chỉ dùng skill gán dưới đây. Tắt: Mai dùng thêm kho skill dùng chung.</span></span><button type="button" class="tg" aria-pressed="false" aria-label="Chỉ dùng skill được gán"></button></div></div>
+  <div class="lab">Được gán · 3</div>
+  <div class="grp">
+    <div class="li">tra-loi-khach-hoi-gia<span class="v"><span class="tag co">Công ty</span></span></div>
+    <div class="li">xu-ly-khieu-nai<span class="v"><span class="tag co">Công ty</span></span></div>
+    <div class="li">bao-gia-nhanh<span class="v"><span class="tag dp">Kinh doanh</span></span></div>
+  </div>
+  <div class="lab">Từ kho dùng chung · 6 · đang dùng vì công tắc tắt</div>
+  <div class="grp">
+    <div class="li">viet-bai-facebook<span class="v"><span class="tag co">Công ty</span></span></div>
+    <div class="li">hen-lich-hoc-thu<span class="v"><span class="tag co">Công ty</span></span></div>
+    <div class="li s3">và 4 skill khác<span class="v">›</span></div>
+  </div>
+  <div class="acts"><button type="button" class="bt">Gán skill</button><button type="button" class="bt">Tạo skill riêng</button></div>
+</aside>
+</div>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2960,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { themes: [{ cls: 't-dark' }, { cls: 't-light' }] };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>V12 · Máy của bot</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="gd9.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="wrap">
+<sc-for list="{{themes}}" as="th" hint-placeholder-count="2">
+<div class="mb {{th.cls}}">
+<nav class="side" aria-label="Bot">
+  <div class="stop"><button type="button" class="ib" aria-label="Tìm"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg></button><button type="button" class="ib" aria-label="Hoạt động"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></button><button type="button" class="ib" aria-label="Tạo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
+  <div class="tiles">
+    <button type="button" class="tile"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><path d="M50 8Q56 8 60 12L88 40Q92 44 92 50T88 60L60 88Q56 92 50 92T40 88L12 60Q8 56 8 50T12 40L40 12Q44 8 50 8Z" fill="url(#cr)"/><ellipse cx="42" cy="50" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="58" cy="50" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Aris</b><span class="l">Đã chia việc sáng nay</span></span></button>
+    <button type="button" class="tile" aria-current="true"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><circle cx="50" cy="52" r="42" fill="url(#cr)"/><ellipse cx="41" cy="52" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="52" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Mai</b><span class="l">Đang đọc tin Zalo</span></span><span class="bd r"></span></button>
+    <button type="button" class="tile"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><path d="M50 6C62 28 86 42 86 62A36 36 0 0 1 14 62C14 42 38 28 50 6Z" fill="url(#cr)"/><ellipse cx="41" cy="62" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="62" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Lâm</b><span class="l">3 bài Facebook đã xong</span></span></button>
+    <button type="button" class="tile"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><rect x="6" y="26" width="88" height="54" rx="27" fill="url(#cr)"/><ellipse cx="41" cy="53" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="53" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Hà</b><span class="l">Đã lọc 214 khách</span></span></button>
+  </div>
+  <div class="foot"><button type="button" class="av" aria-label="Tài khoản">T</button><button type="button" class="apps">Kết nối ứng dụng<span class="lgs"><span class="lg">Z</span><span class="lg">T</span><span class="lg">G</span></span></button></div>
+</nav>
+<main class="main">
+  <div class="hd"><button type="button" class="who"><span class="mas"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><circle cx="50" cy="52" r="42" fill="url(#cr)"/></svg></span>Mai</button>
+    <div class="hr"><button type="button" class="ib on" aria-label="Máy của Mai, đang mở"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></button></div></div>
+  <div class="col">
+    <div class="card" style="padding:12px 14px;gap:4px"><div style="display:flex;align-items:center;gap:8px;font-size:14px"><span class="spin"></span><b style="font-weight:500">Quét tin Zalo buổi sáng</b><span class="s3" style="margin-left:auto;font-size:12.5px">Routine · 7:30</span></div></div>
+    <div class="step"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>Bật máy chung · 6 giây</div>
+    <div class="step"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>Mở Zalo Web</div>
+    <div class="run"><span class="spin"></span>Đang đọc 41 tin mới</div>
+  </div>
+  <div class="comp"><div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span style="flex:1">Nhắn Mai</span><button type="button" class="go" aria-label="Dừng Mai"><svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg></button></div></div>
+</main>
+<aside class="rp" aria-label="Máy của Mai">
+  <div class="rtop"><button type="button" class="ib" aria-label="Cài đặt bot"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></button><button type="button" class="ib" aria-label="Đóng"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="prof"><span class="mas"><svg width="60" height="60" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><circle cx="50" cy="52" r="42" fill="url(#cr)"/><ellipse cx="41" cy="52" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="52" rx="4.5" ry="6.5" fill="#111"/></svg></span><b>Mai</b>
+    <div class="tabs"><button type="button" class="tab" aria-pressed="false">Chi tiết</button><button type="button" class="tab" aria-pressed="false">Thư viện</button><button type="button" class="tab" aria-pressed="true">Máy</button></div></div>
+  <div class="shot" style="height:200px;font-size:8.5px;line-height:1.35;color:#222">
+    <div style="height:16px;background:#ececec;display:flex;align-items:center;padding:0 8px;color:#777">chat.zalo.me</div>
+    <div style="display:flex;height:calc(100% - 16px)">
+      <div style="width:42%;display:flex;flex-direction:column;background:#fafafa">
+        <div style="padding:6px 8px;background:#ececec"><b>Chị Lan</b><br><span style="color:#777">Lớp tối còn chỗ…</span></div>
+        <div style="padding:6px 8px"><b>Anh Minh</b><br><span style="color:#777">Đổi lịch giúp anh…</span></div>
+        <div style="padding:6px 8px"><b>Cô Hạnh</b><br><span style="color:#777">Học phí bao nhiêu…</span></div>
+      </div>
+      <div style="flex:1;padding:8px;display:flex;flex-direction:column;gap:5px;background:#f3f3f3"><span style="align-self:flex-start;background:#fff;border-radius:6px;padding:4px 6px">Shop ơi lớp tối còn chỗ không ạ?</span></div>
+    </div>
+  </div>
+  <div class="acts" style="justify-content:center"><button type="button" class="bt p">Cầm lái</button><button type="button" class="bt">Phóng to</button></div>
+  <div class="grp">
+    <div class="li"><span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/></svg></span>Mai làm việc ở đâu<span class="v">Máy chung ›</span></div>
+    <div class="li"><span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="9" r="3"/><circle cx="16" cy="15" r="3"/></svg></span>Dùng chung với<span class="v">Hà</span></div>
+    <div class="li"><span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="11" r="3"/><path d="M5 11a7 7 0 0 1 14 0v7H5z"/></svg></span>Trang đã đăng nhập<span class="v">Zalo Web ›</span></div>
+  </div>
+</aside>
+</div>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2960,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { you: 'anh Tầu', themes: [{ cls: 't-dark' }, { cls: 't-light' }] };
+  }
+}
+</script>
+</body>
+</html>

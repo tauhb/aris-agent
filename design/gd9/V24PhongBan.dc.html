@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>V24 · Cài đặt › Phòng ban</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="gd9.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="wrap">
+<sc-for list="{{themes}}" as="th" hint-placeholder-count="2">
+<div class="mb {{th.cls}}">
+<nav class="side" aria-label="Bot">
+  <div class="stop"><button type="button" class="ib" aria-label="Tìm"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg></button><button type="button" class="ib" aria-label="Hoạt động"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></button><button type="button" class="ib" aria-label="Tạo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
+  <div class="tiles">
+    <button type="button" class="tile" aria-current="true"><span class="mas"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8Q56 8 60 12L88 40Q92 44 92 50T88 60L60 88Q56 92 50 92T40 88L12 60Q8 56 8 50T12 40L40 12Q44 8 50 8Z"/><ellipse cx="42" cy="50" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="58" cy="50" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Aris</b><span class="l">Đã chia việc sáng nay</span></span></button>
+    <button type="button" class="tile"><span class="mas"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="52" r="42"/><ellipse cx="41" cy="52" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="52" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Mai</b><span class="l">Đã trả lời 41 tin Zalo</span></span></button>
+  </div>
+  <div class="foot"><button type="button" class="av" aria-label="Tài khoản" style="box-shadow:0 0 0 2px var(--ink)">T</button><button type="button" class="apps">Kết nối ứng dụng<span class="lgs"><span class="lg">Z</span><span class="lg">T</span><span class="lg">G</span></span></button></div>
+</nav>
+<main class="main"><div class="hd"><button type="button" class="who">Aris</button></div></main>
+<div class="scrim" style="z-index:2"></div>
+<section class="sheet" role="dialog" aria-label="Cài đặt">
+  <nav class="snav" aria-label="Mục cài đặt">
+    <span class="lab">Của anh</span>
+    <button type="button" class="mi">Tài khoản</button>
+    <button type="button" class="mi">Giao diện</button>
+    <span class="lab">Công ty</span>
+    <button type="button" class="mi">Nhân sự</button>
+    <button type="button" class="mi" aria-current="true">Phòng ban</button>
+    <button type="button" class="mi">Skill dùng chung</button>
+    <button type="button" class="mi">Kết nối dùng chung</button>
+    <button type="button" class="mi">Ngân sách</button>
+    <button type="button" class="mi">Nhật ký</button>
+    <span class="lab">Hệ thống</span>
+    <button type="button" class="mi">Model</button>
+    <button type="button" class="mi">Sao lưu</button>
+  </nav>
+  <div class="sbody">
+    <div class="shd"><h2>Phòng ban</h2><span class="r"><button type="button" class="bt p">Tạo phòng ban</button><button type="button" class="ib" aria-label="Đóng"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></span></div>
+    <span class="s3" style="font-size:13px;margin-top:-6px">Mỗi phòng ban là một không gian riêng: bot, chat, ký ức, máy, skill và kết nối của phòng nằm trong phòng. Tạo phòng mới là có Aris của phòng.</span>
+    <div class="grp">
+      <div class="li"><span class="cols" style="grid-template-columns:minmax(0,1.4fr) 130px 90px 70px 170px 20px"><span class="h">Phòng</span><span class="h">Trưởng phòng</span><span class="h">Nhân sự</span><span class="h">Bot</span><span class="h">Chi phí tháng này</span><span></span></span></div>
+      <div class="li"><span class="cols" style="grid-template-columns:minmax(0,1.4fr) 130px 90px 70px 170px 20px"><span>Kinh doanh</span><span style="display:flex;align-items:center;gap:8px"><span class="av sm">H</span>Hằng</span><span>3</span><span>5</span><span style="display:flex;flex-direction:column;gap:5px"><span style="font-size:13px">42 / 80 USD</span><span class="bar"><i style="width:52%"></i></span></span><span class="s3">›</span></span></div>
+      <div class="li"><span class="cols" style="grid-template-columns:minmax(0,1.4fr) 130px 90px 70px 170px 20px"><span>Nội dung</span><span style="display:flex;align-items:center;gap:8px"><span class="av sm">Q</span>Quân</span><span>2</span><span>3</span><span style="display:flex;flex-direction:column;gap:5px"><span style="font-size:13px">27 / 30 USD</span><span class="bar"><i style="width:90%;background:var(--warn)"></i></span></span><span class="s3">›</span></span></div>
+      <div class="li"><span class="cols" style="grid-template-columns:minmax(0,1.4fr) 130px 90px 70px 170px 20px"><span>Vận hành</span><span style="display:flex;align-items:center;gap:8px"><span class="av sm">M</span>Minh</span><span>1</span><span>3</span><span style="display:flex;flex-direction:column;gap:5px"><span style="font-size:13px">9 / 40 USD</span><span class="bar"><i style="width:22%"></i></span></span><span class="s3">›</span></span></div>
+      <div class="li"><span class="cols" style="grid-template-columns:minmax(0,1.4fr) 130px 90px 70px 170px 20px"><span style="display:flex;align-items:center;gap:8px">Đào tạo<span class="tag">Mới</span></span><span class="s3">Chưa có</span><span>0</span><span>1</span><span style="display:flex;flex-direction:column;gap:5px"><span style="font-size:13px">0 / 20 USD</span><span class="bar"><i style="width:0"></i></span></span><span class="s3">›</span></span></div>
+    </div>
+    <div class="grp">
+      <div class="swr"><span class="b">Bot nhờ được bot của phòng khác<span>Tắt: bot chỉ nhờ đồng đội trong cùng phòng. Aris của công ty luôn nhờ được mọi phòng.</span></span><button type="button" class="tg" aria-pressed="false" aria-label="Bot nhờ được bot của phòng khác"></button></div>
+    </div>
+  </div>
+</section>
+</div>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2960,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { themes: [{ cls: 't-dark' }, { cls: 't-light' }] };
+  }
+}
+</script>
+</body>
+</html>

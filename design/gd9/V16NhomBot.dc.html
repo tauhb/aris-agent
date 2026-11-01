@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>V16 · Nhóm bot</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="gd9.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="wrap">
+<sc-for list="{{themes}}" as="th" hint-placeholder-count="2">
+<div class="mb {{th.cls}}">
+<nav class="side" aria-label="Bot">
+  <div class="stop"><button type="button" class="ib" aria-label="Tìm"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg></button><button type="button" class="ib" aria-label="Hoạt động"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></button><button type="button" class="ib" aria-label="Tạo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
+  <div class="tiles">
+    <button type="button" class="tile"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><path d="M50 8Q56 8 60 12L88 40Q92 44 92 50T88 60L60 88Q56 92 50 92T40 88L12 60Q8 56 8 50T12 40L40 12Q44 8 50 8Z" fill="url(#cr)"/><ellipse cx="42" cy="50" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="58" cy="50" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Aris</b><span class="l">Đã chia việc sáng nay</span></span></button>
+    <button type="button" class="tile"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><circle cx="50" cy="52" r="42" fill="url(#cr)"/><ellipse cx="41" cy="52" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="52" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Mai</b><span class="l">Đã gửi 12 tin mời học thử</span></span></button>
+    <button type="button" class="tile"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><path d="M50 6C62 28 86 42 86 62A36 36 0 0 1 14 62C14 42 38 28 50 6Z" fill="url(#cr)"/><ellipse cx="41" cy="62" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="62" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Lâm</b><span class="l">Trả lời trong nhóm</span></span></button>
+    <button type="button" class="tile"><span class="mas"><svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><rect x="6" y="26" width="88" height="54" rx="27" fill="url(#cr)"/><ellipse cx="41" cy="53" rx="4.5" ry="6.5" fill="#111"/><ellipse cx="59" cy="53" rx="4.5" ry="6.5" fill="#111"/></svg></span><span class="tb"><b>Hà</b><span class="l">Trả lời trong nhóm</span></span></button>
+    <button type="button" class="tile" aria-current="true"><span style="position:relative;width:48px;height:48px"><svg width="30" height="30" viewBox="0 0 100 100" aria-hidden="true" style="position:absolute;left:0;top:2px"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><path d="M50 6C62 28 86 42 86 62A36 36 0 0 1 14 62C14 42 38 28 50 6Z" fill="url(#cr)"/></svg><svg width="30" height="30" viewBox="0 0 100 100" aria-hidden="true" style="position:absolute;right:0;bottom:0"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><rect x="6" y="26" width="88" height="54" rx="27" fill="url(#cr)"/></svg></span><span class="tb"><b>Ra mắt khoá mới</b><span class="l">Lâm: Bản nháp bài ra mắt</span></span></button>
+  </div>
+  <div class="foot"><button type="button" class="av" aria-label="Tài khoản">T</button><button type="button" class="apps">Kết nối ứng dụng<span class="lgs"><span class="lg">Z</span><span class="lg">T</span><span class="lg">G</span></span></button></div>
+</nav>
+<main class="main">
+  <div class="hd"><button type="button" class="who">Ra mắt khoá mới<span class="s3" style="font-weight:400;font-size:13px">· Lâm, Hà, Mai</span></button></div>
+  <div class="col">
+    <div class="user"><span class="bm ha"><svg viewBox="0 0 100 100" aria-hidden="true"><rect x="6" y="26" width="88" height="54" rx="27"/></svg>Hà</span> cho anh số khách cũ quan tâm khoá Giao tiếp. <span class="bm lam"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C62 28 86 42 86 62A36 36 0 0 1 14 62C14 42 38 28 50 6Z"/></svg>Lâm</span> viết bài ra mắt dựa trên số đó.</div>
+    <div style="display:flex;gap:10px;align-items:flex-start"><span class="mas"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><rect x="6" y="26" width="88" height="54" rx="27" fill="url(#cr)"/></svg></span><div style="display:flex;flex-direction:column;gap:4px"><span class="s3" style="font-size:12.5px">Hà</span><div class="bot" style="max-width:none"><p>64 khách cũ từng hỏi khoá Giao tiếp, 21 người hỏi trong 3 tháng gần đây.</p></div></div></div>
+    <div style="display:flex;gap:10px;align-items:flex-start"><span class="mas"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cr" cx="34%" cy="26%" r="82%"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#c4c4c4"/><stop offset=".78" stop-color="#555"/><stop offset="1" stop-color="#1b1b1b"/></radialGradient></defs><path d="M50 6C62 28 86 42 86 62A36 36 0 0 1 14 62C14 42 38 28 50 6Z" fill="url(#cr)"/></svg></span><div style="display:flex;flex-direction:column;gap:4px"><span class="s3" style="font-size:12.5px">Lâm</span><div class="bot" style="max-width:none"><p>Bản nháp bài ra mắt: "64 học viên đã hỏi, giờ khoá Giao tiếp chính thức mở…"</p></div></div></div>
+    <span class="meta">Mai không được nhắc tên nên không trả lời</span>
+  </div>
+  <div class="comp"><div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span style="flex:1">Nhắn nhóm, gõ @ để gọi bot</span><button type="button" class="go" aria-label="Gửi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></div></div>
+</main>
+</div>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2960,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { you: 'anh Tầu', themes: [{ cls: 't-dark' }, { cls: 't-light' }] };
+  }
+}
+</script>
+</body>
+</html>

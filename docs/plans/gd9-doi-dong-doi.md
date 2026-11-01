@@ -179,3 +179,20 @@ Chạy thật ngày 1/11 trên app Rakazo cho Mac, máy chủ "This computer" (D
 - **Bot con**: `canManageTeam` **tắt** mặc định, kể cả bot do Aris tạo (Rakazo để bật cho cả bot con).
 - **Chen lời** và **duyệt chạy tiếp đúng lượt** của Rakazo khớp với 9.2 (duyệt bền, mã chống lặp) và chen lời của dsh; nên thêm việc bot báo "đã nhận" giữa lượt như `message_user`.
 - **Máy chung theo không gian** là mặc định hợp lý cho máy riêng của bot sau 9.6.
+
+## 10. Công ty nhiều nhân sự: skill và kết nối riêng (người dùng chốt 1/11)
+
+Công ty host aris, quản trị cấp tài khoản cho nhân sự. Nhân sự tự tạo bot, tự xây skill, tự thêm kết nối; quản trị vẫn quản được tất cả.
+
+- **Chủ sở hữu và mức chia sẻ**: mỗi skill và mỗi kết nối ghi người tạo (`owner`) và mức chia sẻ (`share`): *Riêng tôi* / *Phòng ban* / *Dùng chung công ty*.
+- **Quản trị**: xem danh sách và nội dung skill của mọi nhân sự, tắt hay thu hồi; với kết nối thì thấy tên, người tạo, bot nào dùng và thu hồi được, **không bao giờ xem được khoá hay token**.
+- **Hai công tắc trên mỗi bot** (mặc định tắt):
+  - **Chỉ dùng skill được gán** (`skillsOnlyAssigned`): bật thì bot chỉ dùng skill được gán; tắt thì dùng skill được gán cộng kho skill dùng chung (của công ty, và của phòng ban bot thuộc về).
+  - **Chỉ dùng kết nối được gán** (`connectorsOnlyAssigned`): bật thì chỉ dùng kết nối được gán; tắt thì dùng kết nối được gán cộng kết nối dùng chung; cùng một dịch vụ (cùng mục danh mục) thì kết nối được gán thắng kết nối chung.
+- **Đưa lên dùng chung**: nhân sự bấm "Đề xuất dùng chung", quản trị duyệt (thẻ trong chat của Aris và Hộp duyệt); skill quét nguy hiểm như khi nhập, kết nối dùng chung thì khoá chuyển thành khoá của công ty.
+- **So với hôm nay**: skill đội đang là `bot = '_doi'` + `assigned: 'all' | danh sách` và cộng dồn với skill riêng; kết nối đội có phạm vi cả đội / phòng / bot và cộng dồn. Đổi sang mô hình trên: "dùng chung công ty" thay cho `assigned: 'all'`, gán cụ thể thành danh sách gán của bot, thêm hai công tắc; dữ liệu cũ đọc được (skill đội cũ thành *Dùng chung công ty*, chủ là chủ công ty).
+- **Phòng ban = không gian** (như space của Rakazo): ranh giới của bot, chat, ký ức chung, máy, skill và kết nối của phòng; mỗi phòng có Aris riêng, tạo ở máy chủ. Khác Rakazo: nhiều nhân sự, trưởng phòng, ngân sách, máy chung.
+- **Một bot một phòng gốc** (Rakazo cũng vậy: `bots.spaceId` bắt buộc, bot nhắn sang không gian khác chỉ khi cả hai bot bật `crossSpaceCommunication`). Ký ức chung, máy, lịch sử việc ở phòng gốc. Bot **chia sẻ được** sang phòng khác hay cho từng người theo mức *xem* / *chat* / *sửa* (học từ OpenMausBot); chat của mỗi người vẫn riêng, ký ức theo người nên không lẫn dữ liệu giữa phòng. Bot cần cho cả công ty đặt ở nhóm **Cả công ty**. Bot nhờ bot phòng khác: công tắc của công ty, mặc định tắt; Aris của công ty luôn nhờ được mọi phòng.
+- **Thanh bên nhóm theo phòng** như Rakazo: Aris công ty ghim đầu, rồi các nhóm *Cả công ty* và từng phòng người đó thuộc về, tiêu đề chữ thường, gập mở được; bot được chia sẻ hiện trong nhóm phòng nhận kèm "từ <phòng gốc>". Không có nút chuyển phòng.
+- **Bản vẽ**: V17–V25 trên canvas GĐ9 (trang "Đợt 4 · Công ty"); thanh bên nhóm theo phòng ở V1 và V13; chia sẻ sang phòng khác ở V11.
+- **Đặt vào đợt**: phần công ty nhiều nhân sự (sau 9.6 theo plan hiện tại); hai công tắc làm được sớm hơn trên một chủ vì chỉ đổi cách tính skill và kết nối của bot.
