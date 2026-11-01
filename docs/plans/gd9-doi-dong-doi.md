@@ -134,9 +134,48 @@ Sau 9.6 mới tới: máy riêng cho bot, công ty nhiều nhân sự, lên serv
 
 Theo `gd8-chung.md`. Thêm: test luật chặn vòng lặp và trần chuỗi; test không gửi trùng khi thử lại; test kết quả việc quay về sau khởi động lại; thử thật một buổi với Telegram và Zalo của người dùng trước Điểm dừng 4.
 
-## 9. Chief của Rakazo thực chất là gì (đọc mã 31/10)
+## 9. Chief của Rakazo thực chất là gì (đọc mã 31/10, chạy thật 1/11)
 
-- **Chief là một bot bình thường**, không có gì đặc biệt trong kiến trúc: tạo lúc onboarding với tên "Chief", lời dặn và mô tả để trống, khoá `spawnKey = "onboarding:first"` (duy nhất theo từng không gian) (`apps/web/src/pages/Onboarding.tsx`). Bot nào cũng có `fleetManagement` mặc định bật (`packages/db/prisma/schema.prisma`), nên Chief tạo được bot khác chỉ vì công tắc này và lời mời của onboarding (chào, rồi hỏi người dùng muốn được giúp việc gì).
-- **Không gian mới không tự có Chief** trong mã hiện tại: máy chủ tạo không gian với 0 bot (`apps/api/src/routes/spaces.ts`), và giao diện chỉ đưa vào onboarding (tạo Chief) khi **cả tài khoản chưa có nội dung ở đâu cả** (`apps/web/src/pages/shell/use-space-roster.ts`: "Only the very first bot everywhere needs onboarding"). Điều người dùng thấy (không gian mới có sẵn Chief) có thể là bản dịch vụ trên app.rakazo.com, bản cũ hơn, hay lần đầu dùng; **chưa xác nhận được bằng chạy thật** (xem dưới).
-- **aris làm khác và rõ ràng hơn**: mỗi không gian (sau này: mỗi công ty hay phòng ban có không gian riêng) tạo sẵn một bot Aris với vai `coordinator` và `canManageTeam`, có lời dặn đầy đủ bằng tiếng Việt; không phụ thuộc giao diện có chạy onboarding hay không. Bot do người dùng tự tạo thì `canManageTeam` mặc định **tắt** (Rakazo để bật cho mọi bot).
-- **Chưa chạy thử Rakazo**: dựng từ mã nguồn cần cài gói và chạy mã của Rakazo, bị chặn trong phiên này; dùng ảnh Docker đóng gói thì mạng của phiên chặn máy chủ `pkg-containers.githubusercontent.com`.
+Chạy thật ngày 1/11 trên app Rakazo cho Mac, máy chủ "This computer" (Docker trên Mac), ảnh `ghcr.io/elie222/rakazo/app:v0.3.6`, model có sẵn `openai-codex / gpt-6-luna` (đăng nhập gói ChatGPT), chế độ duyệt mặc định **Ask**. Thử trong không gian thử "Thu GD9"; mỗi điều dưới đây đối chiếu cả giao diện lẫn bảng dữ liệu (`spaces`, `bots`, `runs`, `messages`, `external_effects`, `computers`). Ảnh từng bước: [`docs/nghien-cuu/rakazo/anh-chay-thu/`](../nghien-cuu/rakazo/anh-chay-thu/).
+
+**Chief là ai**
+
+- **Chief là một bot bình thường**, không có gì đặc biệt trong kiến trúc: tạo lúc onboarding với tên "Chief", lời dặn và mô tả **rỗng** (đã thấy trong dữ liệu: độ dài 0), khoá `spawnKey = "onboarding:first"` (duy nhất theo từng không gian) (`apps/web/src/pages/Onboarding.tsx`). Bot nào cũng có `fleetManagement` mặc định bật (`packages/db/prisma/schema.prisma`), nên Chief tạo được bot khác chỉ vì công tắc này và lời mời của onboarding.
+- **Lời chào là thẻ câu hỏi do model sinh**, không phải mẫu cố định: lượt có trigger `created` đăng thẻ "Hi Tuan! What would you like Chief to help with?" với bốn lựa chọn A/B/C/D, lựa chọn đổi theo tên không gian (không gian CSKH được "Draft customer replies", "Analyze CSKH data"), rồi lượt đứng ở `waiting_input` (ảnh 08). Lời chào bằng tiếng Anh dù người dùng nói tiếng Việt.
+- **Gõ thẳng thay vì bấm lựa chọn** thì tin gõ được ghi làm câu trả lời của thẻ và chính lượt đang chờ chạy tiếp (ảnh 09, 10).
+- **Thẻ chào không ai trả lời thì đúng 24 giờ sau tự dừng**, để lại dòng "Stopped. This was still waiting for an answer." trong luồng (ảnh 03, không gian CSKH tạo 29/10, dừng 30/10).
+
+**Không gian mới có Chief không: CÓ** (sửa kết luận đọc mã hôm 31/10)
+
+- Tạo không gian bằng menu **Create → New private space** thì **2,2 giây sau đã có Chief** (`spawnKey = onboarding:first`) đang "Working…", rồi hiện thẻ chào (ảnh 05–08). Không gian CSKH tạo hôm 29/10 cũng có Chief sau 4 giây.
+- Lý do trong mã (bản v0.3.6 và `main` giống nhau): đọc mã hôm 31/10 chỉ thấy lối chuyển tự động (`use-space-roster.ts`, chỉ khi cả tài khoản chưa có gì) mà bỏ sót hai lối khác: hộp thoại tạo không gian xong thì **chuyển thẳng tới `/onboarding`** (`apps/web/src/pages/shell/shell-dialogs.tsx`, `NewSpaceDialog.onDone`), và bấm vào một không gian trống ở thanh bên cũng mở onboarding (`sidebar-roster.tsx`, `openSpaceChat(emptySpaceId, "/onboarding")`). Onboarding tạo Chief cho không gian đó.
+- Nghĩa là Chief của không gian mới vẫn do **giao diện** tạo: máy chủ tạo không gian với 0 bot (`apps/api/src/routes/spaces.ts`); không gian tạo qua API hay công cụ `create_space` sẽ trống cho tới khi có người mở nó trong app.
+
+**Nhờ Chief tạo bot mới** (ảnh 09, 10)
+
+- "Tạo giúp anh một bot chăm sóc khách hàng tên Lan…" → Chief gọi `spawn_bot` **không hỏi duyệt** (chế độ Ask), mất 66 giây. Luồng Chief có thẻ `child_bot` "Lan", trả lời bằng tiếng Việt; luồng của Lan mở đầu bằng dòng "Created by Chief"; Lan hiện ngay trong danh bạ thanh bên.
+- Chief tự viết **mô tả công khai** ("Chăm sóc khách hàng: trả lời lịch sự bằng tiếng Việt về giá và lịch giao hàng.") và **lời dặn** khoảng 460 ký tự cho Lan (có cả "không tự đoán khi chưa có dữ liệu"); `parentBotId` = Chief.
+- Bot con được tạo với **`fleetManagement` bật** (báo cáo đọc mã [kien-truc/6](../nghien-cuu/kien-truc/6-bot-ngang-hang.md) mục 1.6 ghi "tắt, không kế thừa": thực tế bản v0.3.6 để bật).
+
+**Nhắn khi bot đang làm** (ảnh 11–13)
+
+- Nhờ Lan mở VnExpress lấy 3 tiêu đề; trong lúc Lan "Working…" nhắn chen "lấy thêm giờ đăng". Kết quả: **một lượt duy nhất** chứa cả hai tin của người dùng (tin chen không tạo lượt mới); Lan gọi `message_user` báo "Dạ được ạ, em sẽ lấy thêm giờ đăng…" ngay giữa lượt, rồi trả kết quả có giờ đăng. Nút gửi đổi thành nút Dừng khi bot đang làm.
+
+**Màn hình máy của bot** (ảnh 12, 13)
+
+- Nút màn hình ở góc phải mở khung bên: ảnh màn hình nhỏ của máy (Chromium đang mở VnExpress), nhãn "Team Computer", mục "Routines". Lan dùng `browser_navigate` + `browser_snapshot` (trình duyệt qua CDP), không bấm tọa độ; vào trang mới **không hỏi duyệt**.
+- **Mỗi không gian một máy chung** (scope `team`, một container `rakazo-bot-team-…`), mọi bot trong không gian dùng chung; máy của các không gian không dùng tới ở trạng thái `suspended` (ngủ).
+
+**Thẻ duyệt** (ảnh 14–16)
+
+- Nhờ Chief sửa lời dặn của Lan → thẻ "Replace the instructions of Lan?" hiện **ngay trong luồng Chief**, kèm độ dài cũ/mới và **toàn văn lời dặn mới**; chỉ có "Allow once" và "Deny" (không có "luôn cho phép"). Lượt đứng ở `waiting_input`, khung chat vẫn gõ được.
+- Bấm "Allow once" → thẻ thành "Allowed once", **chính lượt đó chạy tiếp** tới `completed`; thao tác ghi một dòng `external_effects` có mã chống lặp; lời dặn của Lan có thêm một bản lịch sử "Updated by Chief" (hoàn tác được).
+
+**Bài học cho aris**
+
+- Hướng "mỗi không gian có sẵn một Aris" đúng với trải nghiệm Rakazo, và **aris làm ở máy chủ** (tạo không gian là có Aris, kèm lời dặn đầy đủ tiếng Việt, vai `coordinator`, `canManageTeam`), chắc hơn Rakazo (dựa vào giao diện chuyển trang, không gian tạo bằng API thì trống).
+- **Lời chào**: soạn bằng tiếng Việt theo cách xưng hô của người dùng; thẻ A/B/C là gợi ý, gõ tự do cũng trả lời được; **không để thẻ chào thành việc "chờ người" có hạn 24 giờ** rồi hiện dòng "đã dừng" (lời chào không phải việc dở).
+- **Tạo bot**: Rakazo không hỏi; plan aris để người dùng duyệt từng bot. Đề xuất: giữ duyệt, nhưng thẻ duyệt hiện đủ tên, mô tả công khai, lời dặn, model, skill sẽ gắn (như thẻ sửa lời dặn của Rakazo hiện toàn văn), và tạo xong đăng thẻ bot con vào luồng Aris.
+- **Bot con**: `canManageTeam` **tắt** mặc định, kể cả bot do Aris tạo (Rakazo để bật cho cả bot con).
+- **Chen lời** và **duyệt chạy tiếp đúng lượt** của Rakazo khớp với 9.2 (duyệt bền, mã chống lặp) và chen lời của dsh; nên thêm việc bot báo "đã nhận" giữa lượt như `message_user`.
+- **Máy chung theo không gian** là mặc định hợp lý cho máy riêng của bot sau 9.6.
