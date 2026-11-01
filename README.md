@@ -28,3 +28,15 @@ pnpm aris:setup
 - [Tính năng](docs/tinh-nang-aris.md)
 - [Kế hoạch triển khai](docs/ke-hoach-trien-khai.md) · [Kết quả giai đoạn 0](docs/spikes/giai-doan-0.md)
 - [Thiết kế giao diện](design/README.md)
+
+## Trạng thái
+
+Tác giả đã dừng phát triển bản aris này và mở mã nguồn cho cộng đồng tiếp tục dùng và phát triển. Issue và pull request luôn được chào đón.
+
+## Đóng góp
+
+Xem [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Giấy phép
+
+[MIT](LICENSE) © 2026 Hoàng Bá Tầu
