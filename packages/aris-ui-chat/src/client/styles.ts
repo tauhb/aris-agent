@@ -67,6 +67,11 @@ export const CSS = `
 .aris-ext-ask{background:var(--a-warnSoft);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin:2px 0}
 .aris-ext-ask .h{color:var(--a-warn);font-weight:600;font-size:13px}
 .aris-ext-ask .what{font-family:'JetBrains Mono',monospace;font-size:12.5px;background:var(--a-panel);border-radius:8px;padding:6px 10px;overflow-wrap:anywhere}
+.aris-ext-ask .full{font-size:13.5px;line-height:1.5;white-space:pre-line;background:var(--a-panel);border-radius:8px;padding:8px 12px;max-height:40vh;overflow-y:auto;overflow-wrap:anywhere}
+body.aris-v2 .aris-ext-ask{background:var(--g9-bub);border-radius:18px;box-shadow:inset 0 0 0 1px var(--g9-warnline);padding:14px 16px}
+body.aris-v2 .aris-ext-ask .h{color:var(--g9-warn);font-size:12.5px}
+body.aris-v2 .aris-ext-ask .full,body.aris-v2 .aris-ext-ask .what{background:var(--g9-card2)}
+body.aris-v2 .aris-ext-ask .row .a-btn{border-radius:999px;height:34px;padding:0 16px;white-space:nowrap}
 .aris-ext-ask .row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .aris-ext-ask .note{font-size:12px;color:var(--a-muted)}
 .aris-ext-result{border:1px solid var(--a-line);border-radius:12px;background:var(--a-panel);padding:10px 12px;display:flex;flex-direction:column;gap:6px;margin-top:4px}

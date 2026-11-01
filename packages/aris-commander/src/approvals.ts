@@ -11,8 +11,11 @@ export type AnsweredBy = 'user' | 'telegram' | 'timeout' | 'ended'
 
 export interface CentralApproval {
   id: string
-  /** Bot ngoài (lần chạy CLI), bot trong đội (phiên con), hay bot điều khiển máy (@aris/computer). */
-  source: 'external' | 'member' | 'computer'
+  /**
+   * Bot ngoài (lần chạy CLI), bot trong đội (phiên con), bot điều khiển máy (@aris/computer), hay phiên chính
+   * (duyệt bền GĐ9.7a; `run` là `session:<mã phiên>`, hay `orphan:<mã yêu cầu>` khi lượt đã dừng).
+   */
+  source: 'external' | 'member' | 'computer' | 'session'
   /** Mã lần chạy (bot ngoài) hoặc `member:<phiên con>`. */
   run: string
   bot: string

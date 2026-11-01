@@ -50,6 +50,7 @@ import {
   type PluginModule,
 } from './external.js'
 import { ApprovalHub } from './approval.js'
+import { DurableApprovals, RepeatGuard, argsHash, isOutbound, type DurableRecord } from './durable.js'
 import { learnedContext, learnedFrom } from './learned.js'
 import {
   DRIVER_TICK_MS,
@@ -101,6 +102,7 @@ export * from './dispatch.js'
 export * from './jobs.js'
 export * from './external.js'
 export * from './approval.js'
+export * from './durable.js'
 export * from './claude-driver.js'
 export * from './codex-driver.js'
 export * from './cli.js'
@@ -1450,9 +1452,53 @@ export async function apply(ctx: Context): Promise<void> {
   // Duyệt tập trung: yêu cầu quyền của bot ngoài (ApprovalHub) và bot trong đội (phiên con) về một
   // danh sách; web và Telegram cùng đọc. Bot ngoài còn ghi yêu cầu lên bản ghi lần chạy (thẻ trên nhánh).
   const center = new ApprovalCenter()
+  // Duyệt bền (GĐ9.7a): bản ghi yêu cầu của phiên chính; công tắc ở trang Commander, mặc định bật.
+  const durable = new DurableApprovals(domain.table('approvals') as unknown as Table<DurableRecord>)
+  const durableOn = () => settings().durable !== false
+  const repeats = new RepeatGuard()
+  const sessionRun = (sid: string) => `session:${sid}`
+  const sessionItem = (
+    r: Pick<DurableRecord, 'id' | 'session' | 'bot' | 'name' | 'tool' | 'reason' | 'at'>,
+    run: string,
+  ) => ({
+    id: r.id,
+    source: 'session' as const,
+    run,
+    bot: r.bot,
+    name: r.name,
+    parentSession: r.session,
+    kind: 'other' as const,
+    tool: r.tool,
+    reason: r.reason,
+    at: r.at,
+  })
+  /**
+   * Trả lời một yêu cầu mà lượt không còn chờ (hết giờ hay aris khởi động lại). Cho phép: được phép một lần cho
+   * đúng thao tác, nhắn vào phiên để bot làm tiếp. Từ chối: bỏ.
+   */
+  const answerOrphan = (id: string, allow: boolean, by: 'user' | 'telegram'): boolean => {
+    const r = durable.get(id)
+    if (!r || r.status !== 'pending') return false
+    center.close(id, allow, by)
+    if (!allow) {
+      void durable.done(id)
+      return true
+    }
+    void durable
+      .grant(id)
+      .then(() =>
+        relay(
+          r.session,
+          `[aris] Người dùng vừa cho phép ${r.tool}${r.reason ? ` («${r.reason.split('\n')[0]!.slice(0, 120)}»)` : ''}. Lượt trước đã dừng khi chờ duyệt. Nếu việc vẫn cần, gọi lại đúng thao tác đó với cùng tham số: lần này chạy luôn, không hỏi lại.`,
+          { bot: 'aris', name: 'aris' },
+        ).catch((e: unknown) => logger.warn('báo đã cho phép: %s', String(e))),
+      )
+    return true
+  }
   ctx.provide('arisApprovals', {
     list: (parentSession?: string) => center.list(parentSession),
-    answer: (id: string, allow: boolean, by: 'user' | 'telegram' = 'user') => hub.answer(id, allow, by),
+    answer: (id: string, allow: boolean, by: 'user' | 'telegram' = 'user') =>
+      hub.answer(id, allow, by) || answerOrphan(id, allow, by),
     on: (fn: (e: ApprovalEvent) => void) => center.on(fn),
     /**
      * Plugin khác mở một yêu cầu trong hộp duyệt chung (web, Telegram cùng thấy) và chờ trả lời. `run` riêng cho mỗi
@@ -1492,6 +1538,12 @@ export async function apply(ctx: Context): Promise<void> {
           preview: i.preview,
           at: req.at,
         })
+        return
+      }
+      if (req.run.startsWith('session:')) {
+        const rec = { ...(req.input as Omit<DurableRecord, 'id' | 'at' | 'status'>), id: req.id, at: req.at }
+        center.open(sessionItem(rec, req.run))
+        void durable.open(rec).catch((e: unknown) => logger.warn('lưu yêu cầu duyệt: %s', String(e)))
         return
       }
       if (req.run.startsWith('member:')) {
@@ -1540,6 +1592,15 @@ export async function apply(ctx: Context): Promise<void> {
     },
     closed(req, allow, by) {
       center.close(req.id, allow, by)
+      if (req.run.startsWith('session:')) {
+        // Người dùng trả lời: xong. Hết giờ chờ hay lượt dừng: giữ yêu cầu trong hộp duyệt, trả lời muộn vẫn được.
+        if (by === 'user' || by === 'telegram') void durable.done(req.id)
+        else {
+          const rec = durable.get(req.id)
+          if (rec) center.open(sessionItem(rec, `orphan:${rec.id}`))
+        }
+        return
+      }
       if (req.run.startsWith('member:') || req.run.startsWith('computer:')) return
       const r = externals.get(req.run)
       if (!r) return
@@ -1568,7 +1629,35 @@ export async function apply(ctx: Context): Promise<void> {
     }
   }
   ctx.on('session/event', (session, event) => {
-    if ((event.type as string) !== 'tool/call' || !members.has(session.id)) return
+    // Nhắn chen khi đang chờ duyệt (GĐ9.7a, cách B): tin của người dùng vào phiên thì từ chối yêu cầu đang chờ.
+    if ((event.type as string) === 'agent/inbox/spliced' && durableOn()) {
+      const inserted = (event.data as { inserted?: { role?: string; source?: { kind?: string } }[] }).inserted
+      const waiting = hub.of(sessionRun(session.id))
+      if (
+        waiting.length &&
+        inserted?.some((m) => m.role === 'user' && !String(m.source?.kind ?? '').startsWith('aris'))
+      ) {
+        for (const r of waiting) hub.answer(r.id, false, 'user')
+        // Kết quả "từ chối" của dsh không kèm lý do: chèn một lời nhắc vào lượt đang chạy để bot không nhờ
+        // người dùng bấm duyệt mà kết thúc lượt, đọc tin mới.
+        const agent = (ctx.get('agents') as { get(id: string): unknown } | undefined)?.get(session.id) as
+          { steer?(m: unknown): void } | undefined
+        agent?.steer?.(
+          createUserMessage({
+            content: [
+              {
+                type: 'text',
+                text: '[aris] Người dùng vừa nhắn tin mới trong lúc thẻ duyệt đang chờ, nên yêu cầu vừa rồi bị từ chối theo ý người dùng. Đừng nhờ người dùng bấm duyệt; trả lời một câu ngắn rồi kết thúc lượt để đọc và làm theo tin mới.',
+              },
+            ],
+            source: { kind: 'aris-bot', form: 'relay', bot: 'aris', name: 'aris' },
+          }),
+        )
+      }
+      return
+    }
+    // Tham số lời gọi: phiên con (thẻ duyệt hiện đúng lệnh) và phiên chính (duyệt bền khớp đúng thao tác).
+    if ((event.type as string) !== 'tool/call') return
     const d = event.data as unknown as { callId?: string; name?: string; arguments?: unknown }
     if (!d.callId || !d.name) return
     calls.set(d.callId, { name: d.name, args: d.arguments })
@@ -1596,6 +1685,81 @@ export async function apply(ctx: Context): Promise<void> {
     },
     true,
   )
+  // --- Duyệt bền và chống lặp (GĐ9.7a, docs/plans/gd9-7-duyet-ben.md) -------------------------------------
+  // Phiên chính: aris giữ yêu cầu duyệt ở hộp chung (thanh duyệt aris, chuông, Telegram) thay cho thẻ của dsh nên
+  // ô nhập không bị che; yêu cầu lưu xuống đĩa.
+  ctx.on(
+    'approval/request',
+    async (req, next) => {
+      const sid = req.agent.session.id
+      if (!durableOn() || members.has(sid)) return next()
+      // Phiên của kênh (Telegram, Lark, Zalo): kênh lo như trước.
+      const channels = ctx.get('arisChannelApprovals') as
+        { approve(req: unknown): Promise<string | undefined> } | undefined
+      const claimed = await channels?.approve(req)
+      if (claimed !== undefined) return claimed as Awaited<ReturnType<typeof next>>
+      const call = req.callId ? calls.get(req.callId) : undefined
+      const tool = call?.name ?? req.toolName
+      const hash = argsHash(tool, call?.args ?? null)
+      // Người dùng đã cho phép muộn đúng thao tác này: chạy luôn, dùng một lần.
+      if (await durable.take(sid, tool, hash)) return 'allowed-once'
+      const bot = bots().store.botOf(sid)
+      const reason = (req.displayReason as Record<string, string> | undefined)?.vi ?? req.reason
+      const run = sessionRun(sid)
+      const onAbort = () => hub.endRun(run)
+      req.signal?.addEventListener('abort', onAbort, { once: true })
+      try {
+        const allow = await hub.request(run, tool, {
+          session: sid,
+          bot: bot.id,
+          name: bot.name,
+          tool,
+          hash,
+          ...(reason ? { reason } : {}),
+        })
+        if (req.signal?.aborted) return 'cancelled'
+        return allow ? 'allowed-once' : 'rejected'
+      } finally {
+        req.signal?.removeEventListener('abort', onAbort)
+      }
+    },
+    // Đứng trước thẻ duyệt của dsh trong chuỗi (như mọi hook duyệt của aris).
+    true,
+  )
+
+  // Chống lặp: thao tác ra ngoài (gửi tin, ghi qua kết nối) cùng bot, cùng tham số vừa chạy xong thì chặn.
+  const mcpWrites = (tool: string) =>
+    /(create|update|delete|remove|send|post|write|add|publish|insert|upsert|comment|reply|move|archive)/i.test(
+      tool.split('__').pop() ?? '',
+    )
+  ctx.on('tools/pre-execute', async (exec, next) => {
+    const decision = await next()
+    const sid = exec.agent?.session.id
+    if (decision.kind === 'deny' || !sid || !durableOn() || !isOutbound(exec.name, mcpWrites)) return decision
+    const at = repeats.last(bots().store.botOf(sid).id, argsHash(exec.name, exec.arguments ?? null))
+    if (at === undefined) return decision
+    const hhmm = new Date(at).toTimeString().slice(0, 5)
+    return {
+      kind: 'deny',
+      reason: `Thao tác này (${exec.name}, cùng nội dung) đã chạy xong lúc ${hhmm}. Không làm lại để tránh gửi trùng; nếu người dùng thật sự muốn gửi lại thì hỏi họ trước.`,
+    }
+  })
+  ctx.on('tools/post-execute', async (exec, result, next) => {
+    const out = await next()
+    const sid = exec.agent?.session.id
+    if (sid && durableOn() && !(result as { isError?: boolean }).isError && isOutbound(exec.name, mcpWrites))
+      repeats.record(bots().store.botOf(sid).id, argsHash(exec.name, exec.arguments ?? null))
+    return out
+  })
+
+  // Khởi động lại: yêu cầu còn chờ từ lần chạy trước vào lại hộp duyệt (lượt đã dừng); bỏ bản quá hạn.
+  void durable
+    .prune()
+    .then(() => {
+      for (const r of durable.pending()) center.open(sessionItem(r, `orphan:${r.id}`))
+    })
+    .catch((e: unknown) => logger.warn('nạp yêu cầu duyệt cũ: %s', String(e)))
+
   ctx.effect(() => {
     hub.start().catch((e: unknown) => logger.warn('mở socket duyệt quyền: %s', String(e)))
     return () => hub.stop()
@@ -1977,7 +2141,9 @@ export async function apply(ctx: Context): Promise<void> {
             const body = (await request.json().catch(() => ({}))) as { op?: string; session?: string }
             if (body.op === 'external-approve') {
               const b = body as { id?: unknown; allow?: unknown }
-              const ok = typeof b.id === 'string' && hub.answer(b.id, b.allow === true)
+              const ok =
+                typeof b.id === 'string' &&
+                (hub.answer(b.id, b.allow === true) || answerOrphan(b.id, b.allow === true, 'user'))
               return json({ ok }, ok ? 200 : 404)
             }
             if (body.op === 'external-stop' && typeof (body as { run?: unknown }).run === 'string') {

@@ -108,4 +108,4 @@ Thử thật: nhờ Aris khôi phục lời dặn của Hằng về bản 1, th�
 
 - Nhắn chen khi chờ duyệt: **B**. Gõ tin khi đang chờ duyệt thì từ chối yêu cầu đó, lấy tin làm chỉ dẫn mới.
 - Thứ tự: **9.7 Duyệt bền lên trước**, 9.5 Đồng đội hỏi nhau làm sau.
-- Ngưỡng sang trang: người dùng hỏi 100k có ít quá không; chưa chốt.
+- Ngưỡng sang trang: **70% sức chứa ngữ cảnh của model đang dùng, tối đa 200 nghìn token**, sửa được trong Cài đặt (thay cho 100k cứng).

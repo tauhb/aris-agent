@@ -38,6 +38,7 @@ interface Settings {
   nested: number
   budgetUsd?: number
   helpers: boolean
+  durable?: boolean
   approve: string[]
 }
 
@@ -234,6 +235,20 @@ export function Commander({ t, nav }: PageProps) {
                 disabled={!settings}
                 aria-label={t('cmd.helpers')}
                 onChange={(e) => void save({ helpers: e.target.checked })}
+                style={check}
+              />
+            </label>
+            <label className="a-row" title={t('cmd.durableHint')}>
+              <span className="ap-av" style={{ width: 24, height: 24 }}>
+                ✓
+              </span>
+              <span className="grow">{t('cmd.durable')}</span>
+              <input
+                type="checkbox"
+                checked={settings?.durable ?? true}
+                disabled={!settings}
+                aria-label={t('cmd.durable')}
+                onChange={(e) => void save({ durable: e.target.checked })}
                 style={check}
               />
             </label>

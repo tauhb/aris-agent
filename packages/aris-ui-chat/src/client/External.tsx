@@ -195,7 +195,12 @@ export function ApprovalDock({ sessionId, t }: { sessionId: string; t: Translate
           <div className="h">
             <Mascot {...mascotOf(p.bot)} size={18} /> {t('ext.ask.title', { name: p.name })}
           </div>
-          <div className="what">{stepText(t, p)}</div>
+          {p.source === 'session' && p.reason ? (
+            // Duyệt bền (GĐ9.7a): thẻ đủ chi tiết do aris soạn (tạo bot, sửa lời dặn, gửi tin…).
+            <div className="full">{p.reason}</div>
+          ) : (
+            <div className="what">{stepText(t, p)}</div>
+          )}
           <div className="row">
             <Button
               size="sm"
@@ -218,7 +223,13 @@ export function ApprovalDock({ sessionId, t }: { sessionId: string; t: Translate
             >
               {t('ext.ask.deny')}
             </Button>
-            <span className="note">{t('ext.ask.expire')}</span>
+            <span className="note">
+              {p.source !== 'session'
+                ? t('ext.ask.expire')
+                : p.run.startsWith('orphan:')
+                  ? t('ext.ask.orphan')
+                  : t('ext.ask.typeToDeny')}
+            </span>
           </div>
         </div>
       ))}

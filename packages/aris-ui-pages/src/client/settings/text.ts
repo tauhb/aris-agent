@@ -1024,6 +1024,10 @@ export const SETTINGS_TEXT = text(
     'cmd.delegates': 'Can delegate to',
     'cmd.delegatesHint': 'Commander routes by capability descriptions and past results',
     'cmd.helpers': 'Anonymous helpers for parallel scans',
+    'cmd.durable':
+      'Durable approvals: aris keeps and saves approval requests, typing while waiting denies, repeated sends are blocked',
+    'cmd.durableHint':
+      'Approval requests survive restarts; allowing later lets the bot continue. Off means the old dsh approval card.',
     'cmd.limits': 'Limits',
     'cmd.parallel': 'Bots running at once',
     'cmd.nested': 'Department jobs at once',
@@ -2136,6 +2140,9 @@ export const SETTINGS_TEXT = text(
     'cmd.delegates': 'Được giao việc cho',
     'cmd.delegatesHint': 'Commander định tuyến theo mô tả năng lực và kết quả các lần trước',
     'cmd.helpers': 'Trợ lý ẩn danh cho việc quét song song',
+    'cmd.durable': 'Duyệt bền: aris giữ và lưu yêu cầu duyệt, gõ tin khi đang chờ là từ chối, chặn gửi trùng',
+    'cmd.durableHint':
+      'Yêu cầu duyệt không mất khi aris khởi động lại; cho phép muộn thì bot làm tiếp. Tắt thì về thẻ duyệt của dsh như trước.',
     'cmd.limits': 'Giới hạn',
     'cmd.parallel': 'Bot chạy cùng lúc',
     'cmd.nested': 'Việc lớn của phòng chạy cùng lúc',

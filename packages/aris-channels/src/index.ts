@@ -55,6 +55,9 @@ declare module '@deepseek-ai/dsh-llm' {
   }
 }
 
+/** Dấu trên yêu cầu duyệt đã được các kênh xem (xem `arisChannelApprovals`). */
+export const CHANNELS_CHECKED = Symbol.for('aris.channels.approval-checked')
+
 export const name = 'aris-channels'
 export const inject = [
   'storageDomain',
@@ -285,15 +288,21 @@ export async function apply(ctx: Context): Promise<void> {
   ctx.on('agent/assistant-stream', ({ agent, frame }) => hub.onStream(agent.session.id, frame as never))
   // Phiên của kênh: duyệt và câu hỏi đi qua Telegram trước; phiên Lark từ chối người ngoài, còn chủ nhân thì duyệt ở web;
   // phiên khác để người trả lời sau lo.
-  ctx.on(
-    'approval/request',
-    async (req, next) =>
-      (await hub.approve(req.agent.session.id, req as never)) ??
-      (await lark.approve(req.agent.session.id, req as never)) ??
-      (await zalo.approve(req.agent.session.id, req as never)) ??
-      next(),
-    true,
-  )
+  // Gói khác (duyệt bền của Commander) gọi được cùng chuỗi này; yêu cầu đã qua kênh thì được đánh dấu để không
+  // hỏi kênh hai lần dù hook nào chạy trước.
+  const channelApprove = async (req: { agent: { session: { id: string } } }) => {
+    const r = req as { agent: { session: { id: string } }; [CHANNELS_CHECKED]?: boolean }
+    if (r[CHANNELS_CHECKED]) return undefined
+    r[CHANNELS_CHECKED] = true
+    const sid = r.agent.session.id
+    return (
+      (await hub.approve(sid, req as never)) ??
+      (await lark.approve(sid, req as never)) ??
+      (await zalo.approve(sid, req as never))
+    )
+  }
+  ctx.provide('arisChannelApprovals', { approve: channelApprove })
+  ctx.on('approval/request', async (req, next) => (await channelApprove(req)) ?? next(), true)
   ctx.on(
     'user-questions/request',
     async (req, next) =>

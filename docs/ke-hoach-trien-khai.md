@@ -442,7 +442,18 @@ Lộ trình đề xuất (sửa 31/10, xem [nghien-cuu/kien-truc-bot.md](nghien-
 - Giá mỗi bước gần như không đổi theo độ dài ngữ cảnh nhờ bộ nhớ đệm DeepSeek (0,0015–0,0027 USD từ 20k tới 155k); thời gian mỗi bước cũng không đổi (trung vị khoảng 2,5 s).
 - Trên web không nhắn chen được khi đang chờ duyệt (dsh thu ô nhập); duyệt chưa bền.
 - Lịch nhắc, `/goal`, `/loop` gắn theo phiên, sang trang chuyển được mà không sửa dsh; Zalo chưa duyệt được bằng tin.
-- **Đang ở Điểm dừng 2**: chờ người dùng chọn ngưỡng sang trang, cách nhắn chen khi chờ duyệt, thứ tự 9.5 và 9.7.
+- Điểm dừng 2 đã chốt: nhắn chen cách B; ngưỡng sang trang 70% sức chứa ngữ cảnh của model, tối đa 200 nghìn token; duyệt bền (9.7) làm trước đồng đội hỏi nhau (9.5).
+
+**Nghiệm thu 9.7a · Duyệt bền, chống lặp, nhắn chen (1/11)** theo [plans/gd9-7-duyet-ben.md](plans/gd9-7-duyet-ben.md):
+- aris giữ yêu cầu duyệt của phiên chính (thanh duyệt aris trên ô nhập, chuông, Telegram) thay cho thẻ của dsh, lưu xuống đĩa; phiên của kênh vẫn do kênh lo. Công tắc "Duyệt bền" ở trang Commander, mặc định bật.
+- Thử thật trên bản chép dữ liệu (đã gỡ kênh), DeepSeek-V4.1-Flash:
+  - thẻ duyệt sửa lời dặn hiện đủ chi tiết, **ô nhập vẫn gõ được** (ảnh `10-…`);
+  - gõ chen thì yêu cầu bị từ chối, Aris làm theo tin mới;
+  - tắt aris khi thẻ đang chờ rồi bật lại: yêu cầu còn, ghi "lượt đã dừng" (ảnh `11-…`); bấm cho phép thì aris nhắn vào phiên, Aris gọi lại đúng thao tác và chạy luôn không hỏi lại, Hằng lên bản 4 (ảnh `12-…`).
+- Lỗi tìm ra khi thử và đã sửa: hook giữ duyệt đứng sau thẻ dsh nên không chạy (đổi sang đứng trước, hỏi kênh trước); nút cho phép ở web không tới được yêu cầu "lượt đã dừng"; sau khi bị từ chối vì gõ chen, Aris nhờ người dùng bấm duyệt (nay aris chèn lời nhắc vào lượt).
+- Chống lặp (`channel_send`, `channel_notify_owner`, công cụ MCP có ghi; cùng bot, cùng tham số trong 10 phút) mới có test đơn vị, chưa thử với kênh thật vì bản chép đã gỡ kênh.
+- Còn lại của 9.7: ký ức theo người (cần bảng người của 9.6), duyệt qua Zalo bằng chữ có mã ngắn.
+- Thấy thêm: tên bot viết thẳng đôi khi trùng tên khách trong ví dụ ("chị Lan" thành viên tên bot Lan).
 
 ---
 
