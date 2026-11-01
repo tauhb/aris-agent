@@ -67,3 +67,9 @@
 - id: goal
   config:
     defaultMaxGoalRounds: 20
+
+# Sang trang (GĐ9.8a, docs/spikes/gd9-luong-bot.md): dsh tự nén ngữ cảnh trong cùng phiên khi chạm 70% sức chứa của
+# model (dsh để 80%); trần tuyệt đối (mặc định 200 nghìn token, sửa ở trang Commander) do @aris/commander gọi nén.
+- id: compaction-basic
+  config:
+    thresholdRatio: 0.7

@@ -469,6 +469,11 @@ Lộ trình đề xuất (sửa 31/10, xem [nghien-cuu/kien-truc-bot.md](nghien-
 - Chưa thử với kênh thật (bản chép đã gỡ kênh): luồng chung qua Telegram, ghi người của Telegram, Zalo; báo tin qua Lark. Cần thử trên bản đang dùng.
 - Chưa làm: Lark ghi luồng; luồng chat web với Aris (Aris vẫn mở phiên gần nhất như cũ); `threads.send` một cửa cho tin vào; ghi `person` lên mọi bản ghi mới; `botOf` thôi trả Aris cho phiên chưa gắn bot; ký ức theo người.
 
+**Nghiệm thu 9.8a · Sang trang (1/11)**:
+- Không tự làm "sang trang bằng phiên mới": dsh đã có nén ngữ cảnh trong cùng phiên (`dsh-compaction-basic`), giữ nguyên lịch nhắc, `/goal`, duyệt. aris đặt ngưỡng tự nén của dsh xuống 70% sức chứa của model (dsh để 80%) và thêm trần tuyệt đối: lượt xong mà ngữ cảnh vượt trần (mặc định 200 nghìn token, sửa ở trang Commander) thì aris gọi lệnh `/compact` của dsh khi bot rảnh.
+- Thử thật trên bản chép dữ liệu, trần thử 20 nghìn: lượt của Hằng xong ở khoảng 32 nghìn token, aris tự nén 29 mục lịch sử (khoảng 10.900 token) trong cùng phiên; nhật ký phiên có `compaction/start`, bản tóm tắt, `compaction/end`.
+- Ghi chú: dịch vụ nén của dsh nằm ở phạm vi khác plugin aris nên aris gọi qua bộ lệnh (`commands.execute(agent, '/compact')`).
+
 ---
 
 ## Bù năng lực một bot so với Hermes (đánh giá 25/10)

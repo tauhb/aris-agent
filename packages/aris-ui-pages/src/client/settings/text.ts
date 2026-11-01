@@ -1027,6 +1027,9 @@ export const SETTINGS_TEXT = text(
     'cmd.delegates': 'Can delegate to',
     'cmd.delegatesHint': 'Commander routes by capability descriptions and past results',
     'cmd.helpers': 'Anonymous helpers for parallel scans',
+    'cmd.compactAt': 'Compact context above',
+    'cmd.compactAtHint':
+      'A chat longer than this is summarised in the same session (dsh also compacts at 70% of the model window).',
     'cmd.teammates': 'Teammates ask each other: bots consult a teammate for expertise (only in your turns)',
     'cmd.teammatesHint':
       'The teammate answers in its own session and does not send or change anything outside. At most 2 levels, 6 questions per turn.',
@@ -2149,6 +2152,9 @@ export const SETTINGS_TEXT = text(
     'cmd.delegates': 'Được giao việc cho',
     'cmd.delegatesHint': 'Commander định tuyến theo mô tả năng lực và kết quả các lần trước',
     'cmd.helpers': 'Trợ lý ẩn danh cho việc quét song song',
+    'cmd.compactAt': 'Nén ngữ cảnh khi vượt',
+    'cmd.compactAtHint':
+      'Một cuộc chat dài quá ngần này thì tóm tắt phần cũ trong cùng phiên (ngoài ra dsh tự nén ở 70% sức chứa của model).',
     'cmd.teammates': 'Đồng đội hỏi nhau: bot hỏi ý đồng đội khi cần chuyên môn (chỉ trong lượt của {you})',
     'cmd.teammatesHint':
       'Đồng đội trả lời ở phiên riêng, không gửi tin hay sửa gì ra ngoài. Tối đa 2 tầng, 6 câu mỗi lượt.',

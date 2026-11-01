@@ -37,6 +37,7 @@ interface Settings {
   parallel: number
   nested: number
   budgetUsd?: number
+  compactAt?: number
   helpers: boolean
   durable?: boolean
   teammates?: boolean
@@ -320,6 +321,20 @@ export function Commander({ t, nav }: PageProps) {
                 onSave={(v) => save({ budgetUsd: v })}
               />
               <span className="a-muted">USD</span>
+            </div>
+            <div className="a-row">
+              <span className="grow ap-limit">
+                {t('cmd.compactAt')}
+                <span className="a-muted">{t('cmd.compactAtHint')}</span>
+                {errors.compactAt && <span className="err">{errors.compactAt}</span>}
+              </span>
+              <LimitInput
+                value={settings?.compactAt ?? 200_000}
+                label={t('cmd.compactAt')}
+                placeholder="200000"
+                onSave={(v) => save({ compactAt: v ?? 200_000 })}
+              />
+              <span className="a-muted">token</span>
             </div>
             <div className="a-row">
               <span className="grow">{t('cmd.driver')}</span>

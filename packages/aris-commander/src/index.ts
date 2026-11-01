@@ -52,6 +52,7 @@ import {
 import { ApprovalHub } from './approval.js'
 import { DurableApprovals, RepeatGuard, argsHash, isOutbound, type DurableRecord } from './durable.js'
 import { LIMITS, answerText, cannotAsk, consultMessage, returnMessage, type TaskRecord } from './teammates.js'
+import { COMPACT_AT, contextTokens, shouldCompact } from './page.js'
 import { learnedContext, learnedFrom } from './learned.js'
 import {
   DRIVER_TICK_MS,
@@ -105,6 +106,7 @@ export * from './external.js'
 export * from './approval.js'
 export * from './durable.js'
 export * from './teammates.js'
+export * from './page.js'
 export * from './claude-driver.js'
 export * from './codex-driver.js'
 export * from './cli.js'
@@ -1896,6 +1898,61 @@ export async function apply(ctx: Context): Promise<void> {
       queueReturn(cut)
     }
   })().catch((e: unknown) => logger.warn('nạp câu hỏi đồng đội cũ: %s', String(e)))
+
+  // --- Sang trang (GĐ9.8a): ngữ cảnh vượt trần tuyệt đối thì nhờ dsh nén ngay trong cùng phiên khi bot rảnh. ---
+  const lastContext = new Map<string, number>()
+  // Nén bằng lệnh `/compact` của dsh (dịch vụ nén nằm ở phạm vi khác, lệnh thì tới được từ đây).
+  type Commands = {
+    execute(
+      agent: unknown,
+      line: string,
+      attachments: readonly unknown[],
+      signal: AbortSignal,
+    ): Promise<unknown>
+  }
+  let commands: Commands | undefined
+  ctx.inject(['commands'], (scope) => {
+    commands = (scope as unknown as { commands: Commands }).commands
+    scope.effect(
+      () => () => {
+        commands = undefined
+      },
+      'aris-commander: lệnh nén',
+    )
+  })
+  ctx.on('session/event', (session, event) => {
+    const type = event.type as string
+    if (type === 'assistant/message') {
+      const n = contextTokens((event.data as { usage?: Parameters<typeof contextTokens>[0] }).usage)
+      if (n) lastContext.set(session.id, n)
+      if (lastContext.size > 500) lastContext.delete(lastContext.keys().next().value!)
+      return
+    }
+    if (type !== 'turn/end') return
+    const kind = (event.data as { reason?: { kind?: string } }).reason?.kind
+    const cap = settings().compactAt ?? COMPACT_AT
+    if (!shouldCompact(lastContext.get(session.id), kind, cap)) return
+    const sid = session.id
+    lastContext.delete(sid)
+    // Đợi lượt khép hẳn rồi mới nén (dsh chỉ nén khi agent rảnh).
+    setTimeout(() => {
+      const agent = (ctx.get('agents') as { get(id: string): unknown } | undefined)?.get(sid) as
+        { status?: string } | undefined
+      if (!agent || !commands || agent.status === 'running') {
+        logger.info(
+          'sang trang: chưa nén phiên %s (agent %s, lệnh %s)',
+          sid,
+          agent?.status ?? 'không có',
+          commands ? 'có' : 'không có',
+        )
+        return
+      }
+      commands
+        .execute(agent, '/compact', [], AbortSignal.timeout(5 * 60_000))
+        .then(() => logger.info('sang trang: đã nén phiên %s (vượt %d token)', sid, cap))
+        .catch((e: unknown) => logger.warn('sang trang: nén phiên %s: %s', sid, String(e)))
+    }, 1500)
+  })
 
   // Chống lặp: thao tác ra ngoài (gửi tin, ghi qua kết nối) cùng bot, cùng tham số vừa chạy xong thì chặn.
   const mcpWrites = (tool: string) =>

@@ -19,6 +19,8 @@ export const commanderSettings = z.object({
   durable: z.boolean().optional(),
   /** Đồng đội hỏi nhau (GĐ9.5): bot hỏi ý đồng đội bằng `ask_teammate`. Không có là bật. */
   teammates: z.boolean().optional(),
+  /** Sang trang (GĐ9.8a): ngữ cảnh của một phiên vượt ngần này token thì nén ngay khi rảnh. Không có là 200 nghìn. */
+  compactAt: z.number().int().min(20_000).max(1_000_000).optional(),
 })
 export type CommanderSettings = z.infer<typeof commanderSettings>
 
@@ -33,7 +35,7 @@ export class SettingsError extends Error {}
 export function cleanSettings(patch: unknown, current: CommanderSettings): CommanderSettings {
   const p = (patch && typeof patch === 'object' ? patch : {}) as Record<string, unknown>
   const next: Record<string, unknown> = { ...current }
-  for (const k of ['parallel', 'nested', 'helpers', 'approve', 'durable', 'teammates'] as const)
+  for (const k of ['parallel', 'nested', 'helpers', 'approve', 'durable', 'teammates', 'compactAt'] as const)
     if (k in p) next[k] = p[k]
   if ('budgetUsd' in p) {
     if (p.budgetUsd === null || p.budgetUsd === '' || p.budgetUsd === 0) delete next.budgetUsd
@@ -50,7 +52,9 @@ export function cleanSettings(patch: unknown, current: CommanderSettings): Comma
         ? 'Số việc lớn chạy cùng lúc phải từ 0 đến 6.'
         : field === 'budgetUsd'
           ? 'Trần tiền mỗi việc phải lớn hơn 0 và không quá 100 USD.'
-          : 'Cấu hình Commander không hợp lệ.',
+          : field === 'compactAt'
+            ? 'Ngưỡng nén ngữ cảnh phải từ 20.000 đến 1.000.000 token.'
+            : 'Cấu hình Commander không hợp lệ.',
   )
 }
 
